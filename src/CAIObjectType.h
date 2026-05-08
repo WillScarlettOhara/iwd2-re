@@ -403,7 +403,7 @@ public:
     CGameObject* sub_40CB20(CGameAIBase* caller, BYTE type, BOOL checkBackList) const;
     BOOL Equal(const CAIObjectType& type) const;
     CGameObject* sub_40CCA0(CGameAIBase* caller, BOOL checkBackList) const;
-    BOOL sub_40CD80(CGameAIBase* caller, CPoint& pt, INT& nRadius) const;
+    BOOL GetCenterPoint(CGameAIBase* caller, CPoint& pt, INT& nRadius) const;
     LONG sub_40CED0(CGameAIBase* caller, BOOL checkBackList) const;
     CGameObject* sub_40D050(CGameAIBase* caller, BYTE type, BOOL checkBackList) const;
     CGameObject* sub_40D0F0(CGameAIBase* caller, BOOL checkBackList) const;
@@ -413,9 +413,9 @@ public:
     CAIObjectType GetEnemyOf() const;
     BOOL IsClassValid(BYTE nClass) const;
     void AddClass(BYTE nClass);
-    BOOL sub_40D8A0(const CPoint& pt) const;
-    BOOL sub_40D900(const CPoint& pt) const;
-    BOOL sub_40D920(const CPoint& pt) const;
+    BOOL IsPointInRange(const CPoint& pt) const;
+    BOOL IsPointInRect(const CPoint& pt) const;
+    BOOL GetPoint(const CPoint& pt) const;
     void SetCenter(const CPoint& pt);
     void SetRadius(int radius);
     void SetRect(const CRect& rect);

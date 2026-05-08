@@ -1798,7 +1798,7 @@ BOOLEAN CInfGame::CanSaveGame(STRREF& strError, BOOLEAN bInRestGame, BOOLEAN bIn
 
     if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL
         && !bInRestGame
-        && g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->sub_5186A0() > 0) {
+        && g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->GetReadyCount() > 0) {
         // "Cannot save while someone is levelling up."
         strError = 41397;
         return FALSE;
@@ -1806,7 +1806,7 @@ BOOLEAN CInfGame::CanSaveGame(STRREF& strError, BOOLEAN bInRestGame, BOOLEAN bIn
 
     if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL
         && !bInRestGame
-        && g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->sub_518560() > 0) {
+        && g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->GetCharacterViewingCount() > 0) {
         // "Cannot save while someone is in the Inventory Screen."
         strError = 26546;
         return FALSE;
@@ -2631,8 +2631,8 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     // __LINE__: 8447
     UTIL_ASSERT(m_sSaveGame != "");
 
-    g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->sub_518650();
-    g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->sub_518690();
+    g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->ClearCharacterViewing();
+    g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->ClearReadyState();
 
     g_pBaldurChitin->GetTlkTable().m_override.CloseFiles();
 

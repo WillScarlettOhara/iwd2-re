@@ -245,12 +245,12 @@ void CGameAreaNotes::Add()
         m_cAreaNote.m_startX,
         m_cAreaNote.m_startY,
         m_szBuffer,
-        sub_47B140() << 16,
+        GetMField8D() << 16,
         -1);
 }
 
 // 0x47B140
-BYTE CGameAreaNotes::sub_47B140()
+BYTE CGameAreaNotes::GetMField8D()
 {
     return bm_field_8D;
 }

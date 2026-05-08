@@ -529,7 +529,7 @@ public:
     void DisplayTextRef(STRREF nameRef, STRREF textRef, COLORREF nameColor, COLORREF textColor);
     void GetNumInventoryPersonalSlots(INT& nUsedSlots, INT& nTotalSlots);
     void SetModalState(BYTE modalState, BOOL bUpdateToolbar);
-    BOOL sub_7202E0();
+    BOOL IsActionAllowed();
     void CheckSequence(BYTE& sequence);
     void sub_7204C0();
     void sub_720B50(CMemINIValue* a1, CMemINIValue* a2);
@@ -543,7 +543,7 @@ public:
     INT sub_723F60();
     void sub_72DE60();
     void sub_71E760(CDerivedStats& DStats, int a2);
-    int sub_71F6E0();
+    int GetBaseAttackBonus();
     const CString& GetName();
     STRREF GetNameRef();
     void PlaySound(const CResRef& res);
@@ -625,12 +625,12 @@ public:
     void MoveOntoArea(CGameArea* pArea, const CPoint& dest, SHORT facingDirection);
 
     void SetResRef(const CResRef& resRef);
-    void sub_453160(int a1);
-    int sub_453170();
+    void SetBHiding(int a1);
+    int GetBHiding();
     SHORT GetSequence();
     CCreatureFileHeader* GetBaseStats();
     CDerivedStats* GetDerivedStats();
-    void sub_4531B0();
+    void SetField562C();
     CGameEffectList* GetEquipedEffectList();
     CGameEffectList* GetTimedEffectList();
     void SetStealthGreyOut(LONG greyOut);
@@ -639,12 +639,12 @@ public:
     CGameSpriteSpellList* GetInnateSpells();
     CGameSpriteSpellList* GetSongs();
     CGameSpriteSpellList* GetShapeshifts();
-    DWORD sub_5940D0();
+    DWORD GetField_80C();
     INT sub_5940E0(BYTE buttonNum);
     void sub_594120(BYTE buttonNum, int a2);
     BYTE GetModalState();
 
-    int sub_45B710();
+    int GetField70F2();
     SHORT GetDirection(const CPoint& target);
     SHORT GetDirection();
     static SHORT GetDirection(const CPoint& ptStart, const CPoint& ptTarget);
@@ -662,7 +662,7 @@ public:
     BOOL CheckAranceFailure(INT nRoll);
     INT sub_724430();
     BOOL CheckDivineFailure(INT nRoll);
-    BOOLEAN sub_7245D0();
+    BOOLEAN IsHeld();
     INT GetNextHatedRacesSlot();
     void ResetQuickSlots();
     BOOL sub_724690(SHORT a1);

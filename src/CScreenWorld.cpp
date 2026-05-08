@@ -3069,13 +3069,13 @@ void CScreenWorld::SetLeaveAreaLuaPanicData(CPoint ptValue, SHORT nValue, CStrin
 }
 
 // 0x453780
-BOOL CScreenWorld::sub_453780()
+BOOL CScreenWorld::GetAutoUnhideInterface()
 {
     return m_nAutoUnhideInterface > 0;
 }
 
 // 0x453790
-void CScreenWorld::sub_453790(BOOL bEnabled)
+void CScreenWorld::SetAutoUnhideInterface(BOOL bEnabled)
 {
     if (bEnabled) {
         m_nAutoUnhideInterface++;

@@ -9385,7 +9385,7 @@ void CGameSprite::SetModalState(BYTE modalState, BOOL bUpdateToolbar)
 }
 
 // 0x7202E0
-BOOL CGameSprite::sub_7202E0()
+BOOL CGameSprite::IsActionAllowed()
 {
     if (g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_cutScene) {
         return FALSE;
@@ -10161,7 +10161,7 @@ void CGameSprite::sub_71E760(CDerivedStats& DStats, int a2)
 }
 
 // 0x71F6E0
-int CGameSprite::sub_71F6E0()
+int CGameSprite::GetBaseAttackBonus()
 {
     int v1;
 
@@ -14716,13 +14716,13 @@ void CGameSprite::SetResRef(const CResRef& resRef)
 }
 
 // 0x453160
-void CGameSprite::sub_453160(int a1)
+void CGameSprite::SetBHiding(int a1)
 {
     m_bHiding = a1;
 }
 
 // 0x453170
-int CGameSprite::sub_453170()
+int CGameSprite::GetBHiding()
 {
     return m_bHiding;
 }
@@ -14746,7 +14746,7 @@ CDerivedStats* CGameSprite::GetDerivedStats()
 }
 
 // 0x4531B0
-void CGameSprite::sub_4531B0()
+void CGameSprite::SetField562C()
 {
     nfield_562C = 1;
 }
@@ -14805,7 +14805,7 @@ CGameSpriteSpellList* CGameSprite::GetShapeshifts()
 }
 
 // 0x5940D0
-DWORD CGameSprite::sub_5940D0()
+DWORD CGameSprite::GetField_80C()
 {
     return m_baseStats.m_specialization;
 }
@@ -14837,7 +14837,7 @@ BYTE CGameSprite::GetModalState()
 }
 
 // 0x45B710
-int CGameSprite::sub_45B710()
+int CGameSprite::GetField70F2()
 {
     return nfield_70F2;
 }
@@ -15245,7 +15245,7 @@ BOOL CGameSprite::CheckDivineFailure(INT nRoll)
 }
 
 // 0x7245D0
-BOOLEAN CGameSprite::sub_7245D0()
+BOOLEAN CGameSprite::IsHeld()
 {
     return m_derivedStats.m_spellStates[SPLSTATE_HELD]
         || m_derivedStats.m_spellStates[SPLSTATE_HOPELESSNESS]

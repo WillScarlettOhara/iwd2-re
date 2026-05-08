@@ -1884,7 +1884,7 @@ void CGameAIBase::SetLastActionReturn(SHORT returnValue)
 }
 
 // 0x45B6D0
-int CGameAIBase::sub_45B6D0()
+int CGameAIBase::GetField58C()
 {
     return nfield_58C;
 }

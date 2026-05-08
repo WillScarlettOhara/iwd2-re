@@ -957,7 +957,7 @@ CGameObject* CAIObjectType::sub_40CCA0(CGameAIBase* caller, BOOL checkBackList) 
 }
 
 // 0x40CD80
-BOOL CAIObjectType::sub_40CD80(CGameAIBase* caller, CPoint& pt, INT& nRadius) const
+BOOL CAIObjectType::GetCenterPoint(CGameAIBase* caller, CPoint& pt, INT& nRadius) const
 {
     nRadius = 0;
     pt.x = 0;
@@ -1001,7 +1001,7 @@ LONG CAIObjectType::sub_40CED0(CGameAIBase* caller, BOOL checkBackList) const
             INT nRadius;
 
             // NOTE: Uninline.
-            sub_40CD80(caller, pt, nRadius);
+            GetCenterPoint(caller, pt, nRadius);
 
             nId = caller->GetArea()->sub_46DAE0(pt.x,
                 pt.y,
@@ -1235,7 +1235,7 @@ BOOL CAIObjectType::IsClassValid(BYTE nClass) const
 }
 
 // 0x40D8A0
-BOOL CAIObjectType::sub_40D8A0(const CPoint& pt) const
+BOOL CAIObjectType::IsPointInRange(const CPoint& pt) const
 {
     if (m_ptCenter == pt) {
         return TRUE;
@@ -1251,20 +1251,20 @@ BOOL CAIObjectType::sub_40D8A0(const CPoint& pt) const
 }
 
 // 0x40D900
-BOOL CAIObjectType::sub_40D900(const CPoint& pt) const
+BOOL CAIObjectType::IsPointInRect(const CPoint& pt) const
 {
     return PtInRect(m_rect, pt);
 }
 
 // 0x40D920
-BOOL CAIObjectType::sub_40D920(const CPoint& pt) const
+BOOL CAIObjectType::GetPoint(const CPoint& pt) const
 {
     // NOTE: Jump table at 0x40BA04.
     switch (m_nLocationType) {
     case CAIOBJECTTYPE_LOCATION_TYPE_POINT:
-        return sub_40D8A0(pt);
+        return IsPointInRange(pt);
     case CAIOBJECTTYPE_LOCATION_TYPE_RECT:
-        return sub_40D900(pt);
+        return IsPointInRect(pt);
     default:
         return TRUE;
     }

@@ -602,7 +602,7 @@ void CMultiplayerSettings::SetPlayerReady(PLAYER_ID playerID, BOOLEAN bValue, BO
 }
 
 // 0x518560
-int CMultiplayerSettings::sub_518560()
+int CMultiplayerSettings::GetCharacterViewingCount()
 {
     int count = 0;
 
@@ -651,7 +651,7 @@ void CMultiplayerSettings::sub_518580(PLAYER_ID playerID, INT characterSlotBeing
 }
 
 // 0x518650
-void CMultiplayerSettings::sub_518650()
+void CMultiplayerSettings::ClearCharacterViewing()
 {
     for (int index = 0; index < 6; index++) {
         bfield_AC[index] = -1;
@@ -666,7 +666,7 @@ void CMultiplayerSettings::sub_518660(PLAYER_ID playerID, BOOLEAN a2)
 }
 
 // 0x518690
-void CMultiplayerSettings::sub_518690()
+void CMultiplayerSettings::ClearReadyState()
 {
     for (int index = 0; index < 6; index++) {
         bfield_B2[index] = FALSE;
@@ -674,7 +674,7 @@ void CMultiplayerSettings::sub_518690()
 }
 
 // 0x5186A0
-int CMultiplayerSettings::sub_5186A0()
+int CMultiplayerSettings::GetReadyCount()
 {
     int count = 0;
 

@@ -127,7 +127,7 @@ public:
     void sub_4530F0(const CAIObjectType& type);
     void sub_453110(const CAIObjectType& type);
     void SetLastActionReturn(SHORT returnValue);
-    int sub_45B6D0();
+    int GetField58C();
     void sub_45B6E0(const CAIObjectType& type);
 
     /* 006E */ CAIObjectType m_lAttacker;
