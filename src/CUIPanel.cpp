@@ -43,7 +43,7 @@ CUIPanel::CUIPanel(CUIManager* manager, UI_PANELHEADER* panelInfo)
     m_bNeedAsyncUpdate = FALSE;
     m_bNeedMouseMove = FALSE;
     m_bInactiveRender = FALSE;
-    nm_field_112 = 0;
+    m_bPendingActivation = 0;
 
     SetRectEmpty(&m_rImeSuggestionsFrame);
 
@@ -201,19 +201,19 @@ BOOL CUIPanel::sub_4D2D20()
     }
 
     m_wFlags &= ~0x1;
-    nm_field_112 = TRUE;
+    m_bPendingActivation = TRUE;
     return TRUE;
 }
 
 // 0x4D2D50
 BOOL CUIPanel::sub_4D2D50()
 {
-    if (!nm_field_112) {
+    if (!m_bPendingActivation) {
         return FALSE;
     }
 
     m_wFlags |= 0x1;
-    nm_field_112 = FALSE;
+    m_bPendingActivation = FALSE;
 
     return TRUE;
 }

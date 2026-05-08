@@ -962,11 +962,11 @@ CInfinity::CInfinity()
     rVRamRect.top = -1;
     rVRamRect.right = -1;
     rVRamRect.bottom = -1;
-    nfield_68 = -1;
-    nfield_6C = -1;
-    nfield_70 = -1;
-    nfield_74 = -1;
-    nm_field_196 = 0;
+    m_nRequestRectLeft = -1;
+    m_nRequestRectTop = -1;
+    m_nRequestRectRight = -1;
+    m_nRequestRectBottom = -1;
+    m_bScrolling = 0;
     pTileSets[0] = NULL;
     pTileSets[1] = NULL;
     pTileSets[2] = NULL;
@@ -1013,7 +1013,7 @@ CInfinity::CInfinity()
     m_strMessageText = -1;
     m_nMessageEndTime = -1;
     m_bRenderMessage = 0;
-    wm_field_286 = 0;
+    m_wMessageScreenLine = 0;
     m_bScreenShake = FALSE;
     m_screenShakeDelta.x = 0;
     m_screenShakeDelta.y = 0;
@@ -1371,18 +1371,18 @@ BOOL CInfinity::AttachVRamRect(int x1, int y1, int x2, int y2)
 // 0x5CD2E0
 BOOL CInfinity::CancelRequestRect(unsigned char a1)
 {
-    if (nfield_68 < 0) {
+    if (m_nRequestRectLeft < 0) {
         return FALSE;
     }
 
-    if (nm_field_196) {
+    if (m_bScrolling) {
         ScrollingCancelRequestRect(a1);
     }
 
-    int nMinX = nfield_68;
-    int nMinY = nfield_6C;
-    int nMaxX = nfield_70;
-    int nMaxY = nfield_74;
+    int nMinX = m_nRequestRectLeft;
+    int nMinY = m_nRequestRectTop;
+    int nMaxX = m_nRequestRectRight;
+    int nMaxY = m_nRequestRectBottom;
 
     if (nMinX < 0) {
         nMinX = 0;
@@ -1422,10 +1422,10 @@ BOOL CInfinity::CancelRequestRect(unsigned char a1)
         }
     }
 
-    nfield_68 = -1;
-    nfield_6C = -1;
-    nfield_70 = -1;
-    nfield_74 = -1;
+    m_nRequestRectLeft = -1;
+    m_nRequestRectTop = -1;
+    m_nRequestRectRight = -1;
+    m_nRequestRectBottom = -1;
 
     return TRUE;
 }
@@ -2175,7 +2175,7 @@ DWORD CInfinity::Render(CVidMode* pNewVidMode, INT nSurface, INT nScrollState, C
             nCurrentTileY,
             nCurrentTileX + nVisibleTilesX - 1,
             nCurrentTileY + nVisibleTilesY - 1);
-    } else if (nm_field_196) {
+    } else if (m_bScrolling) {
         if (nCurrentX >= 0) {
             nCurrentTileX = nCurrentX / 64;
         } else {
@@ -2465,12 +2465,12 @@ BOOL CInfinity::RequestRect(int x1, int y1, int x2, int y2)
         }
     }
 
-    nfield_68 = x1;
-    nfield_6C = y1;
-    nfield_70 = x2;
-    nfield_74 = y2;
+    m_nRequestRectLeft = x1;
+    m_nRequestRectTop = y1;
+    m_nRequestRectRight = x2;
+    m_nRequestRectBottom = y2;
 
-    nm_field_196 = 0;
+    m_bScrolling = 0;
 
     return TRUE;
 }
@@ -2824,10 +2824,10 @@ BOOL CInfinity::InitViewPort(const CRect& rRect)
     rVRamRect.right = -1;
     rVRamRect.bottom = -1;
 
-    nfield_68 = -1;
-    nfield_6C = -1;
-    nfield_70 = -1;
-    nfield_74 = -1;
+    m_nRequestRectLeft = -1;
+    m_nRequestRectTop = -1;
+    m_nRequestRectRight = -1;
+    m_nRequestRectBottom = -1;
 
     nOffsetX = 0;
     nOffsetY = 0;
@@ -3184,12 +3184,12 @@ void CInfinity::AIUpdate()
         && m_nMessageEndTime < GetTickCount()) {
         m_bRenderMessage = FALSE;
         m_nMessageEndTime = -1;
-        for (WORD cnt = 0; cnt < wm_field_286; cnt++) {
+        for (WORD cnt = 0; cnt < m_wMessageScreenLine; cnt++) {
             if (m_vbMessageScreen.GetRes() != NULL) {
                 m_vbMessageScreen.GetRes()->CancelRequest();
             }
         }
-        wm_field_286 = 0;
+        m_wMessageScreenLine = 0;
     }
 
     if (m_nScrollDelay > 0) {
@@ -3320,7 +3320,7 @@ void CInfinity::SetMessageScreen(CResRef resRef, DWORD strText, DWORD nDuration)
     m_vbMessageScreen.SetResRef(resRef, TRUE, TRUE);
     m_vbMessageScreen.m_bDoubleSize = g_pBaldurChitin->nm_field_4A2C;
 
-    wm_field_286++;
+    m_wMessageScreenLine++;
     m_strMessageText = strText;
 
     if (nDuration == -1) {

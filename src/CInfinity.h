@@ -233,10 +233,10 @@ public:
     /* 0044 */ int nNewY;
     /* 0048 */ CRect rViewPort;
     /* 0058 */ CRect rVRamRect;
-    /* 0068 */ int nfield_68;
-    /* 006C */ int nfield_6C;
-    /* 0070 */ int nfield_70;
-    /* 0074 */ int nfield_74;
+    /* 0068 */ int m_nRequestRectLeft;
+    /* 006C */ int m_nRequestRectTop;
+    /* 0070 */ int m_nRequestRectRight;
+    /* 0074 */ int m_nRequestRectBottom;
     /* 0078 */ int nVisibleTilesX;
     /* 007C */ int nVisibleTilesY;
     /* 0080 */ int nAreaX;
@@ -280,7 +280,7 @@ public:
     /* 016C */ CCriticalSection m_currentPosCritSect;
     /* 018C */ SHORT m_autoScrollSpeed;
     /* 018E */ CPoint m_ptScrollDest;
-    /* 0196 */ int nm_field_196;
+    /* 0196 */ int m_bScrolling;
     /* 019A */ BYTE m_nScrollDelay;
     /* 019B */ BOOLEAN m_bMovieBroadcast;
     /* 019C */ BOOL m_bStartLightning;
@@ -297,7 +297,7 @@ public:
     /* 01C6 */ CVidBitmap m_vbMessageScreen;
     /* 0280 */ DWORD m_strMessageText;
     /* 0284 */ BOOLEAN m_bRenderMessage;
-    /* 0286 */ WORD wm_field_286;
+    /* 0286 */ WORD m_wMessageScreenLine;
     /* 0288 */ DWORD m_nMessageEndTime;
     /* 028C */ BOOL m_bScreenShake;
     /* 0290 */ CPoint m_screenShakeDelta;
