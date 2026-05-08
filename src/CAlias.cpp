@@ -21,15 +21,15 @@ BOOL CAlias::ParseRawData(CString& a2)
 {
     CString temp;
 
-    field_4 = FALSE;
+    nm_field_4 = FALSE;
 
     int pos = a2.FindOneOf(":=");
     if (pos > 0) {
-        field_8 = a2.Left(pos + 1);
+        nm_field_8 = a2.Left(pos + 1);
 
-        field_8 += '\\';
-        if (field_8.GetLength() > 2 && a2.GetLength() > pos + 2) {
-            field_4 = TRUE;
+        nm_field_8 += '\\';
+        if (nm_field_8.GetLength() > 2 && a2.GetLength() > pos + 2) {
+            nm_field_4 = TRUE;
 
             a2 = a2.Right(a2.GetLength() - pos - 2);
 
@@ -40,7 +40,7 @@ BOOL CAlias::ParseRawData(CString& a2)
                     if (temp.GetAt(temp.GetLength() - 1) != '\\') {
                         temp += ";";
                     }
-                    field_C.AddTail(temp);
+                    nfield_C.AddTail(temp);
                     a2 = "";
                 } else {
                     temp = a2.Left(semicolonPos);
@@ -49,7 +49,7 @@ BOOL CAlias::ParseRawData(CString& a2)
                         temp += ";";
                     }
 
-                    field_C.AddTail(temp);
+                    nfield_C.AddTail(temp);
 
                     a2 = a2.Right(a2.GetLength() - semicolonPos - 1);
                 }
@@ -57,5 +57,12 @@ BOOL CAlias::ParseRawData(CString& a2)
         }
     }
 
-    return field_4;
+    return nm_field_4;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x781790
+void FUN_00781790() {
+    // TODO: Incomplete.
+}
+

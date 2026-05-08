@@ -31,7 +31,7 @@ public:
     /* 0308 */ ULONG m_nTime;
     /* 030C */ int m_nChapter;
     /* 0310 */ CString m_sChapter;
-    /* 0314 */ CString field_314;
+    /* 0314 */ CString sm_field_314;
 };
 
 class CScreenSave : public CBaldurEngine {

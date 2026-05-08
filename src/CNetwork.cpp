@@ -223,13 +223,13 @@ BOOLEAN CNetworkWindow::CheckIncomingQueue()
         return FALSE;
     }
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     POSITION pos = m_lQueueIncomingMessages.GetHeadPosition();
     BYTE* pData = m_lQueueIncomingMessages.GetAt(pos)->pData;
 
     if (memcmp(pData + CNetwork::dword_85E698, (LPCSTR)CNetwork::MG, CNetwork::dword_85E69C) == 0) {
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
         return TRUE;
     }
 
@@ -244,11 +244,11 @@ BOOLEAN CNetworkWindow::CheckIncomingQueue()
             cnt--;
         }
 
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
         return cnt == 0;
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     CString v1;
     CString v2;
@@ -288,7 +288,7 @@ BOOLEAN CNetworkWindow::CheckIncomingQueue()
 // 0x7A2370
 BOOLEAN CNetworkWindow::CheckIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nSpecMsgSubType)
 {
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     if (!m_lQueueIncomingMessages.IsEmpty()) {
         POSITION pos = m_lQueueIncomingMessages.GetHeadPosition();
@@ -300,7 +300,7 @@ BOOLEAN CNetworkWindow::CheckIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nSpec
                 if (pData[CNetwork::SPEC_MSG_FLAG] == CNetwork::SPEC_MSG_FLAG_ENABLED
                     && pData[CNetwork::SPEC_MSG_TYPE] == nSpecMsgType
                     && pData[CNetwork::SPEC_MSG_SUBTYPE] == nSpecMsgSubType) {
-                    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+                    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
                     return TRUE;
                 }
             }
@@ -320,14 +320,14 @@ BOOLEAN CNetworkWindow::CheckIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nSpec
                         cnt--;
                     }
 
-                    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+                    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
                     return cnt == 0;
                 }
             }
         }
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
     return FALSE;
 }
 
@@ -402,13 +402,13 @@ void CNetworkWindow::FrameSend(BYTE nFrameKind, WORD nFrameNumber)
 
     PLAYER_ID idTo = g_pChitin->cNetwork.GetPlayerID(m_nPlayerNumber);
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F6A));
+    EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F6A));
     g_pChitin->cNetwork.m_lpDirectPlay->Send(g_pChitin->cNetwork.m_idLocalPlayer,
         idTo,
         0,
         pData,
         dwSize);
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F6A));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F6A));
 
     if (nFrameKind == 0) {
         m_pbTimeOutSet[0] = TRUE;
@@ -475,7 +475,7 @@ void CNetworkWindow::ShutDown()
 
     SHORT nServerLocation = g_pChitin->cNetwork.FindPlayerLocationByID(nServerID, TRUE);
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     // NOTE: Lots of jumps and conditions, probably wrong.
     while (m_nAckExpected != m_nNextFrameToSend) {
@@ -592,7 +592,7 @@ void CNetworkWindow::ShutDown()
         delete node;
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     RemoveFromAllQueues();
 
@@ -641,7 +641,7 @@ void CNetworkWindow::RemoveFromAllQueues()
         m_pIncomingBuffers[0].dwSize = 0;
     }
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     pos = m_lQueueIncomingMessages.GetHeadPosition();
     while (pos != NULL) {
@@ -660,16 +660,16 @@ void CNetworkWindow::RemoveFromAllQueues()
     }
 
     m_bInitialized = FALSE;
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 }
 
 // 0x7A2DE0
 BYTE* CNetworkWindow::RemoveFromIncomingQueue(PLAYER_ID& idDPFrom, PLAYER_ID& idDPTo, DWORD& dwDataSize, BOOLEAN& bCompressed)
 {
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     if (m_lQueueIncomingMessages.IsEmpty()) {
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
         return NULL;
     }
 
@@ -689,7 +689,7 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueue(PLAYER_ID& idDPFrom, PLAYER_ID& id
             delete node;
         }
 
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
         return pData;
     }
 
@@ -786,11 +786,11 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueue(PLAYER_ID& idDPFrom, PLAYER_ID& id
                 }
             }
 
-            LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+            LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
             return pMessage;
         }
 
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
         return NULL;
     }
 
@@ -830,17 +830,17 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueue(PLAYER_ID& idDPFrom, PLAYER_ID& id
         UTIL_ASSERT_MSG(FALSE, (LPCSTR)v5);
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
     return NULL;
 }
 
 // 0x7A3380
 BYTE* CNetworkWindow::RemoveFromIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nSpecMsgSubType, PLAYER_ID& idDPFrom, PLAYER_ID& idDPTo, DWORD& dwDataSize, BOOLEAN& bCompressed)
 {
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     if (m_lQueueIncomingMessages.IsEmpty()) {
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
         return NULL;
     }
 
@@ -867,7 +867,7 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nS
                     delete node;
                 }
 
-                LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+                LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
                 return pMessage;
             }
         }
@@ -972,11 +972,11 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nS
                         }
                     }
 
-                    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+                    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
                     return pMessage;
                 }
 
-                LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+                LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
                 return NULL;
             } else {
                 while (cnt - 1 > 0) {
@@ -989,7 +989,7 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nS
         m_lQueueIncomingMessages.GetNext(pos);
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
     return NULL;
 }
 
@@ -1002,7 +1002,7 @@ void CNetworkWindow::SendCall()
         return;
     }
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     while (!m_lQueueOutgoingMessages.IsEmpty() && m_nNumBuffered == 0) {
         CNETWORKWINDOW_QUEUEENTRY* node = m_lQueueOutgoingMessages.RemoveHead();
@@ -1085,7 +1085,7 @@ void CNetworkWindow::SendCall()
         }
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 }
 
 // 0x7A3B50
@@ -1093,7 +1093,7 @@ void CNetworkWindow::ReceiveCall(BYTE* pData, DWORD dwSize)
 {
     BOOLEAN v1 = FALSE;
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     BOOLEAN v2 = TRUE;
     m_bSomethingHappened = TRUE;
@@ -1170,7 +1170,7 @@ void CNetworkWindow::ReceiveCall(BYTE* pData, DWORD dwSize)
         v2 = v1;
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
     // NOTE: Uninline.
     SetPlayerTimeout();
@@ -1273,17 +1273,17 @@ CNetwork::CNetwork()
     InitDirectPlay();
 #endif
 
-    field_9D = 0;
-    field_9E = 0;
+    bfield_9D = 0;
+    bfield_9E = 0;
     m_bDirectPlayAddressCreated = FALSE;
-    field_796 = 0;
-    InitializeCriticalSection(&field_F52);
-    InitializeCriticalSection(&field_F6A);
+    nfield_796 = 0;
+    InitializeCriticalSection(&pfield_F52);
+    InitializeCriticalSection(&pfield_F6A);
     m_lpDirectPlay = NULL;
     m_lpDirectPlayLobby = NULL;
     m_nApplicationGuid = GUID_NULL;
     m_bApplicationGuidDefined = FALSE;
-    field_19 = 0;
+    bm_field_19 = 0;
     m_bServiceProviderEnumerated = FALSE;
     m_bServiceProviderSelected = FALSE;
     m_nServiceProvider = -1;
@@ -1327,7 +1327,7 @@ CNetwork::CNetwork()
     m_dwLastSessionBufferSize = 0;
     m_bConnectionEstablished = FALSE;
     m_bIsHost = FALSE;
-    field_6EA = 0;
+    bfield_6EA = 0;
     m_bSessionOptionsDefined = 0;
     m_nMaxPlayers = CNETWORK_MAX_PLAYERS;
     m_dwSessionFlags = 0;
@@ -1364,7 +1364,7 @@ CNetwork::CNetwork()
     }
 
     for (INT nSlot = 0; nSlot < CNETWORK_MAX_PLAYERS; nSlot++) {
-        field_71A[nSlot] = FALSE;
+        bfield_71A[nSlot] = FALSE;
     }
 
     m_pDirectPlayAddress = NULL;
@@ -1386,7 +1386,7 @@ CNetwork::~CNetwork()
     }
 
     if (m_nServiceProvider != SERV_PROV_NULL) {
-        EnterCriticalSection(&field_F6A);
+        EnterCriticalSection(&pfield_F6A);
 
         if (m_lpDirectPlay != NULL) {
             m_lpDirectPlay->Release();
@@ -1398,11 +1398,11 @@ CNetwork::~CNetwork()
             m_lpDirectPlayLobby = NULL;
         }
 
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
     }
 
-    DeleteCriticalSection(&field_F6A);
-    DeleteCriticalSection(&field_F52);
+    DeleteCriticalSection(&pfield_F6A);
+    DeleteCriticalSection(&pfield_F52);
 
 #if DPLAY_COMPAT
     FreeDirectPlay();
@@ -1547,7 +1547,7 @@ BOOLEAN CNetwork::CreateDirectPlayAddress(BOOLEAN bHostingGame)
         dwElementCount++;
     }
 
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     if (m_lpDirectPlayLobby == NULL) {
         if (SendMessageA(g_pChitin->GetWnd()->GetSafeHwnd(), 0x405, (WPARAM)&m_lpDirectPlayLobby, 0) == 0) {
@@ -1556,7 +1556,7 @@ BOOLEAN CNetwork::CreateDirectPlayAddress(BOOLEAN bHostingGame)
                 m_bDirectPlayAddressCreated = FALSE;
             }
 
-            LeaveCriticalSection(&field_F6A);
+            LeaveCriticalSection(&pfield_F6A);
             return FALSE;
         }
     }
@@ -1571,13 +1571,13 @@ BOOLEAN CNetwork::CreateDirectPlayAddress(BOOLEAN bHostingGame)
             m_bDirectPlayAddressCreated = FALSE;
         }
 
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
         return FALSE;
     }
 
     m_pDirectPlayAddress = new BYTE[m_pDirectPlayAddressSize];
     if (m_pDirectPlayAddress == NULL) {
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
         return FALSE;
     }
 
@@ -1591,13 +1591,13 @@ BOOLEAN CNetwork::CreateDirectPlayAddress(BOOLEAN bHostingGame)
             m_bDirectPlayAddressCreated = FALSE;
         }
 
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
         return FALSE;
     }
 
     m_bDirectPlayAddressCreated = TRUE;
 
-    LeaveCriticalSection(&field_F6A);
+    LeaveCriticalSection(&pfield_F6A);
     return TRUE;
 }
 
@@ -1837,12 +1837,12 @@ void CNetwork::EnumerateModems()
     if (lpAddress != NULL) {
         if (dwSize != 0) {
             if (hr == DP_OK) {
-                EnterCriticalSection(&field_F6A);
+                EnterCriticalSection(&pfield_F6A);
                 m_lpDirectPlayLobby->EnumAddress(CNetworkEnumAddressCallback,
                     lpAddress,
                     dwSize,
                     NULL);
-                LeaveCriticalSection(&field_F6A);
+                LeaveCriticalSection(&pfield_F6A);
             }
         }
         delete lpAddress;
@@ -1877,7 +1877,7 @@ static BOOL CALLBACK CNetworkEnumConnectionsCallback(LPCGUID lpguidSP, LPVOID lp
 // 0x7A5340
 BOOLEAN CNetwork::EnumerateServiceProviders()
 {
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     if (m_lpDirectPlay != NULL) {
         m_lpDirectPlay->Release();
@@ -1885,7 +1885,7 @@ BOOLEAN CNetwork::EnumerateServiceProviders()
     }
 
     if (!CreateDirectPlayInterface(&GUID_NULL, &m_lpDirectPlay)) {
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
         return FALSE;
     }
 
@@ -1895,7 +1895,7 @@ BOOLEAN CNetwork::EnumerateServiceProviders()
     }
 
     if (!SendMessageA(g_pChitin->GetWnd()->GetSafeHwnd(), 0x405, reinterpret_cast<WPARAM>(&m_lpDirectPlayLobby), 0)) {
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
         return FALSE;
     }
 
@@ -1907,7 +1907,7 @@ BOOLEAN CNetwork::EnumerateServiceProviders()
     m_nTotalServiceProviders++;
 
     m_lpDirectPlay->EnumConnections(&m_nApplicationGuid, CNetworkEnumConnectionsCallback, NULL, DPCONNECTION_DIRECTPLAY);
-    LeaveCriticalSection(&field_F6A);
+    LeaveCriticalSection(&pfield_F6A);
 
     for (INT nIndex = 0; nIndex < m_nTotalServiceProviders; nIndex++) {
         if (IsEqualGUID(m_serviceProviderGuids[nIndex], DPSPGUID_MODEM)) {
@@ -1994,7 +1994,7 @@ BOOLEAN CNetwork::InitializeConnectionToServiceProvider(BOOLEAN bHostingGame)
         return FALSE;
     }
 
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     if (m_lpDirectPlay == NULL) {
         if (SendMessageA(g_pChitin->GetWnd()->GetSafeHwnd(), 0x406, (WPARAM)&m_lpDirectPlay, 0) == 0) {
@@ -2005,7 +2005,7 @@ BOOLEAN CNetwork::InitializeConnectionToServiceProvider(BOOLEAN bHostingGame)
                 m_bDirectPlayAddressCreated = FALSE;
             }
 
-            LeaveCriticalSection(&field_F6A);
+            LeaveCriticalSection(&pfield_F6A);
             m_bConnectionInitialized = FALSE;
             return FALSE;
         }
@@ -2016,7 +2016,7 @@ BOOLEAN CNetwork::InitializeConnectionToServiceProvider(BOOLEAN bHostingGame)
         hr = m_lpDirectPlay->InitializeConnection(m_pDirectPlayAddress, 0);
     }
 
-    LeaveCriticalSection(&field_F6A);
+    LeaveCriticalSection(&pfield_F6A);
 
     if (m_nServiceProvider != 0) {
         if (hr != DP_OK && hr != DPERR_ALREADYINITIALIZED) {
@@ -2046,14 +2046,14 @@ BOOLEAN CNetwork::InitializeConnectionToServiceProvider(BOOLEAN bHostingGame)
 // 0x7A5720
 void CNetwork::RemoveInitializeConnection()
 {
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     if (m_lpDirectPlay != NULL) {
         m_lpDirectPlay->Release();
         m_lpDirectPlay = NULL;
     }
 
-    LeaveCriticalSection(&field_F6A);
+    LeaveCriticalSection(&pfield_F6A);
 
     m_bConnectionInitialized = FALSE;
 }
@@ -2177,7 +2177,7 @@ void CNetwork::OnCloseSession()
     g_pChitin->OnMultiplayerSessionClose();
 
     if (m_bPlayerCreated == TRUE) {
-        EnterCriticalSection(&field_F6A);
+        EnterCriticalSection(&pfield_F6A);
 
         HRESULT hr;
         if (m_lpDirectPlay != NULL) {
@@ -2186,7 +2186,7 @@ void CNetwork::OnCloseSession()
             hr = DPERR_NOMEMORY;
         }
 
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
 
         if (hr == DP_OK) {
             m_bPlayerCreated = FALSE;
@@ -2202,13 +2202,13 @@ void CNetwork::OnCloseSession()
 
     m_nTotalPlayers = 0;
 
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     if (m_lpDirectPlay != NULL) {
         m_lpDirectPlay->Close();
     }
 
-    LeaveCriticalSection(&field_F6A);
+    LeaveCriticalSection(&pfield_F6A);
 
     m_bConnectionInitialized = FALSE;
     m_bSessionEnumerated = FALSE;
@@ -2229,7 +2229,7 @@ void CNetwork::OnCloseSession()
     m_bSessionPasswordEnabled = FALSE;
     m_sSessionPassword = "";
 
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     if (m_pLastSessionBuffer != NULL) {
         delete m_pLastSessionBuffer;
@@ -2238,11 +2238,11 @@ void CNetwork::OnCloseSession()
 
     m_dwLastSessionBufferSize = 0;
 
-    LeaveCriticalSection(&field_F6A);
+    LeaveCriticalSection(&pfield_F6A);
 
     m_bConnectionEstablished = FALSE;
     m_bIsHost = FALSE;
-    field_6EA = 0;
+    bfield_6EA = 0;
     m_bSessionOptionsDefined = FALSE;
     m_nMaxPlayers = CNETWORK_MAX_PLAYERS;
     m_dwSessionFlags = 0;
@@ -2265,7 +2265,7 @@ void CNetwork::OnCloseSession()
     m_SystemWindow.RemoveFromAllQueues();
 
     for (int index = 0; index < 6; index++) {
-        field_71A[index] = FALSE;
+        bfield_71A[index] = FALSE;
     }
 }
 
@@ -2281,7 +2281,7 @@ BOOLEAN CNetwork::CheckSessionStatus(BOOLEAN bInThreadLoop)
         return TRUE;
     }
 
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     if (m_lpDirectPlay != NULL) {
         hr = m_lpDirectPlay->GetSessionDesc(NULL, &dwSize);
@@ -2289,11 +2289,11 @@ BOOLEAN CNetwork::CheckSessionStatus(BOOLEAN bInThreadLoop)
         hr = DPERR_NOMEMORY;
     }
 
-    LeaveCriticalSection(&field_F6A);
+    LeaveCriticalSection(&pfield_F6A);
 
     if (hr == DPERR_BUFFERTOOSMALL) {
         if (m_dwLastSessionBufferSize < dwSize) {
-            EnterCriticalSection(&field_F6A);
+            EnterCriticalSection(&pfield_F6A);
 
             if (m_pLastSessionBuffer != NULL) {
                 delete m_pLastSessionBuffer;
@@ -2303,18 +2303,18 @@ BOOLEAN CNetwork::CheckSessionStatus(BOOLEAN bInThreadLoop)
             m_pLastSessionBuffer = new BYTE[dwSize];
             m_dwLastSessionBufferSize = dwSize;
 
-            LeaveCriticalSection(&field_F6A);
+            LeaveCriticalSection(&pfield_F6A);
         }
 
         if (m_pLastSessionBuffer == NULL) {
             UTIL_ASSERT_MSG(FALSE, "CNetwork::CheckSessionStatus: Can't create session descriptor.");
         }
 
-        EnterCriticalSection(&field_F6A);
+        EnterCriticalSection(&pfield_F6A);
 
         hr = m_lpDirectPlay->GetSessionDesc(m_pLastSessionBuffer, &dwSize);
 
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
 
         nCurrentPlayers = reinterpret_cast<DPSESSIONDESC2*>(m_pLastSessionBuffer)->dwCurrentPlayers;
         nMaxPlayers = reinterpret_cast<DPSESSIONDESC2*>(m_pLastSessionBuffer)->dwMaxPlayers;
@@ -2429,7 +2429,7 @@ BOOLEAN CNetwork::EnumerateSessions(BOOLEAN a1, BOOLEAN a2)
         m_nTotalSessions = 0;
     }
 
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     HRESULT hr;
     if (m_lpDirectPlay != NULL) {
@@ -2444,7 +2444,7 @@ BOOLEAN CNetwork::EnumerateSessions(BOOLEAN a1, BOOLEAN a2)
         hr = DPERR_NOMEMORY;
     }
 
-    LeaveCriticalSection(&field_F6A);
+    LeaveCriticalSection(&pfield_F6A);
 
     if (hr != DP_OK) {
         m_bSessionEnumerated = FALSE;
@@ -2559,7 +2559,7 @@ BOOLEAN CNetwork::HostNewSession()
     }
 
     if (m_nServiceProvider != 0) {
-        EnterCriticalSection(&field_F6A);
+        EnterCriticalSection(&pfield_F6A);
 
         HRESULT hr;
         if (m_lpDirectPlay != NULL) {
@@ -2570,7 +2570,7 @@ BOOLEAN CNetwork::HostNewSession()
             hr = DPERR_NOMEMORY;
         }
 
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
 
         if (hr != DP_OK) {
             return FALSE;
@@ -2619,7 +2619,7 @@ BOOLEAN CNetwork::JoinSelectedSession(INT& nErrorCode)
         m_sessionDesc.lpszPasswordA = szSessionPassword;
     }
 
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     HRESULT hr;
     if (m_lpDirectPlay != NULL) {
@@ -2630,7 +2630,7 @@ BOOLEAN CNetwork::JoinSelectedSession(INT& nErrorCode)
         hr = DPERR_NOMEMORY;
     }
 
-    LeaveCriticalSection(&field_F6A);
+    LeaveCriticalSection(&pfield_F6A);
 
     if (hr == DPERR_INVALIDPASSWORD) {
         nErrorCode = ERROR_INVALIDPASSWORD;
@@ -2713,17 +2713,17 @@ BOOLEAN CNetwork::SetInSessionOptions()
         m_sessionDesc.lpszPasswordA = szSessionPassword;
     }
 
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     if (m_lpDirectPlay != NULL) {
         HRESULT hr = m_lpDirectPlay->SetSessionDesc(&m_sessionDesc, 0);
         if (hr != DP_OK) {
-            LeaveCriticalSection(&field_F6A);
+            LeaveCriticalSection(&pfield_F6A);
             return FALSE;
         }
     }
 
-    LeaveCriticalSection(&field_F6A);
+    LeaveCriticalSection(&pfield_F6A);
     return TRUE;
 }
 
@@ -2780,13 +2780,13 @@ BOOLEAN CNetwork::CreatePlayer(INT& nErrorCode)
     }
 
     if (m_nServiceProvider != SERV_PROV_NULL) {
-        EnterCriticalSection(&field_F6A);
+        EnterCriticalSection(&pfield_F6A);
 
         HRESULT hr;
         if (m_lpDirectPlay != NULL) {
             hr = m_lpDirectPlay->CreatePlayer(&m_idLocalPlayer,
                 &dpName,
-                g_pChitin->field_180,
+                g_pChitin->pm_field_180,
                 NULL,
                 0,
                 dwPlayerFlags);
@@ -2794,7 +2794,7 @@ BOOLEAN CNetwork::CreatePlayer(INT& nErrorCode)
             hr = DPERR_NOMEMORY;
         }
 
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
 
         if (hr == DPERR_NOCONNECTION || hr == DPERR_GENERIC) {
             m_bPlayerCreated = FALSE;
@@ -2812,7 +2812,7 @@ BOOLEAN CNetwork::CreatePlayer(INT& nErrorCode)
     } else {
         INT nSlot;
         for (nSlot = 0; nSlot < CNETWORK_MAX_PLAYERS; nSlot++) {
-            if (!field_71A[nSlot]) {
+            if (!bfield_71A[nSlot]) {
                 break;
             }
         }
@@ -2822,8 +2822,8 @@ BOOLEAN CNetwork::CreatePlayer(INT& nErrorCode)
         }
 
         m_idLocalPlayer = nSlot + 1;
-        field_702[nSlot] = szPlayerName;
-        field_71A[nSlot] = TRUE;
+        sfield_702[nSlot] = szPlayerName;
+        bfield_71A[nSlot] = TRUE;
     }
 
     m_bPlayerCreated = TRUE;
@@ -3044,14 +3044,14 @@ void CNetwork::EnumeratePlayers(BOOLEAN bProtectList)
         m_pbPlayerEnumerateFlag[nPlayer] = FALSE;
     }
 
-    EnterCriticalSection(&field_F6A);
+    EnterCriticalSection(&pfield_F6A);
 
     if (m_lpDirectPlay != NULL) {
         m_lpDirectPlay->EnumPlayers(NULL,
             CNetworkEnumPlayersCallback,
             NULL,
             0);
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
 
         if (bProtectList == TRUE) {
             for (INT nPlayer = 0; nPlayer < CNETWORK_MAX_PLAYERS; nPlayer++) {
@@ -3086,7 +3086,7 @@ void CNetwork::EnumeratePlayers(BOOLEAN bProtectList)
             }
         }
     } else {
-        LeaveCriticalSection(&field_F6A);
+        LeaveCriticalSection(&pfield_F6A);
     }
 }
 
@@ -3214,7 +3214,7 @@ INT CNetwork::FindPlayerLocationByName(const CString& sPlayerName, BOOLEAN bInvi
 static BOOL CALLBACK CNetworkLobbyEnumAddressCallback(REFGUID guidDataType, DWORD dwDataSize, LPCVOID lpData, LPVOID lpContext)
 {
     if (IsEqualGUID(guidDataType, DPAID_INet)) {
-        g_pChitin->cNetwork.field_792 = CString((LPCSTR)lpData);
+        g_pChitin->cNetwork.sfield_792 = CString((LPCSTR)lpData);
     }
 
     return TRUE;
@@ -3240,12 +3240,12 @@ void CNetwork::sub_7A73D0(CString& a1)
             hr = m_lpDirectPlay->GetPlayerAddress(1, pData, &dwSize);
             if (hr == DP_OK) {
                 if (m_lpDirectPlayLobby != NULL) {
-                    field_792 = "";
+                    sfield_792 = "";
                     m_lpDirectPlayLobby->EnumAddress(CNetworkLobbyEnumAddressCallback,
                         pData,
                         dwSize,
                         NULL);
-                    a1 = field_792;
+                    a1 = sfield_792;
                 }
             }
         }
@@ -3382,7 +3382,7 @@ BYTE* CNetwork::FetchFrame(PLAYER_ID& idFrom, DWORD& dwSize)
     DPID to;
     DWORD dwDataSize = MINIMAL_PACKET_SIZE;
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F6A));
+    EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F6A));
 
     while (1) {
         hr = g_pChitin->cNetwork.m_lpDirectPlay->Receive(&from,
@@ -3403,7 +3403,7 @@ BYTE* CNetwork::FetchFrame(PLAYER_ID& idFrom, DWORD& dwSize)
         }
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F6A));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F6A));
 
     if (hr != DP_OK) {
         dwSize = 0;
@@ -3537,7 +3537,7 @@ void CNetwork::AddMessageToWindow(PLAYER_ID idTo, DWORD dwFlags, BYTE* pData, DW
                 TRUE,
                 0);
 
-            EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+            EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
             CNETWORKWINDOW_QUEUEENTRY* pEntry = new CNETWORKWINDOW_QUEUEENTRY();
             pEntry->idFrom = m_idLocalPlayer;
@@ -3546,7 +3546,7 @@ void CNetwork::AddMessageToWindow(PLAYER_ID idTo, DWORD dwFlags, BYTE* pData, DW
             pEntry->dwSize = dwChunkSize + 12;
             m_pSlidingWindow[nPlayer].m_lQueueOutgoingMessages.AddTail(pEntry);
 
-            LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+            LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
         } else {
             BYTE* pMessage = CreateCopyMessage(pData + dwOffset,
                 dwChunkSize,
@@ -3554,7 +3554,7 @@ void CNetwork::AddMessageToWindow(PLAYER_ID idTo, DWORD dwFlags, BYTE* pData, DW
                 TRUE,
                 nPackets);
 
-            EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+            EnterCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
 
             CNETWORKWINDOW_QUEUEENTRY* pEntry = new CNETWORKWINDOW_QUEUEENTRY();
             pEntry->idFrom = m_idLocalPlayer;
@@ -3563,7 +3563,7 @@ void CNetwork::AddMessageToWindow(PLAYER_ID idTo, DWORD dwFlags, BYTE* pData, DW
             pEntry->dwSize = dwChunkSize + 16;
             m_pSlidingWindow[nPlayer].m_lQueueOutgoingMessages.AddTail(pEntry);
 
-            LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+            LeaveCriticalSection(&(g_pChitin->cNetwork.pfield_F52));
         }
 
         dwOffset += dwChunkSize;
@@ -4133,3 +4133,25 @@ void CNetwork::FreeDirectPlay()
 }
 
 #endif
+
+// Phase 1-2: Scaffold functions
+// 0x452B00
+void FUN_00452b00() {
+    // TODO: Incomplete.
+}
+
+// 0x452B20
+void FUN_00452b20() {
+    // TODO: Incomplete.
+}
+
+// 0x7A1E20
+void FUN_007a1e20() {
+    // TODO: Incomplete.
+}
+
+// 0x7A6895
+void FUN_007a6895() {
+    // TODO: Incomplete.
+}
+

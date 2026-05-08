@@ -35,9 +35,9 @@ public:
     /* 0048 */ CString m_playerName;
     /* 004C */ LONG m_dialogFreezeCounter;
     /* 0050 */ LONG m_dialogFreezeMultiplayer;
-    /* 0054 */ unsigned char field_54;
-    /* 0055 */ unsigned char field_55;
-    /* 0056 */ CString field_56;
+    /* 0054 */ unsigned char bfield_54;
+    /* 0055 */ unsigned char bfield_55;
+    /* 0056 */ CString sfield_56;
     /* 005A */ BOOL m_bMusicThreadPriorityChanged;
     /* 005E */ int m_nMusicThreadPriority;
 };

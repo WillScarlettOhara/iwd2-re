@@ -27,7 +27,7 @@ void CDungeonMaster::EngineActivated()
         g_pBaldurChitin->m_pEngineWorld->TogglePauseGame(0, 1, 0);
     }
 
-    g_pBaldurChitin->m_pEngineConnection->field_FB0 = 0;
+    g_pBaldurChitin->m_pEngineConnection->nfield_FB0 = 0;
     g_pBaldurChitin->m_pEngineConnection->StartConnection(FALSE);
     SelectEngine(g_pBaldurChitin->m_pEngineConnection);
 }
@@ -56,3 +56,10 @@ void CDungeonMaster::TimerSynchronousUpdate()
     pVidMode->DoTextOut(0, CString("Master Engine"), 30, 30, RGB(255, 255, 255));
     pVidMode->Flip(TRUE);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x5995F0
+void FUN_005995f0() {
+    // TODO: Incomplete.
+}
+

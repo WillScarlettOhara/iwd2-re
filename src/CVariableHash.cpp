@@ -155,7 +155,7 @@ BOOL CVariableHash::AddKey(CVariable& var)
     int end = Hash(sName);
     int curr = end;
 
-    BOOL v1 = g_pBaldurChitin->GetObjectGame()->field_1B84;
+    BOOL v1 = g_pBaldurChitin->GetObjectGame()->bm_field_1B84;
     BOOL bDone = FALSE;
     BOOL bResult = FALSE;
     while (!bDone) {
@@ -621,3 +621,125 @@ void CNamedCreatureVariableHash::Marshal(CVariable** pList, WORD* pCount)
 void CNamedCreatureVariableHash::MarshalToCharacter(CGameSprite* pSprite)
 {
 }
+
+// Phase 1-2: Scaffold functions
+// 0x45B610
+void FUN_0045b610() {
+    // TODO: Incomplete.
+}
+
+// 0x4EC030
+void FUN_004ec030() {
+    // TODO: Incomplete.
+}
+
+// 0x4EC1C0
+void FUN_004ec1c0() {
+    // TODO: Incomplete.
+}
+
+// 0x4EC250
+void FUN_004ec250() {
+    // TODO: Incomplete.
+}
+
+// 0x4EC350
+void FUN_004ec350() {
+    // TODO: Incomplete.
+}
+
+// 0x4EC370
+void FUN_004ec370() {
+    // TODO: Incomplete.
+}
+
+// 0x4EC390
+void FUN_004ec390() {
+    // TODO: Incomplete.
+}
+
+// 0x4EC870
+void FUN_004ec870() {
+    // TODO: Incomplete.
+}
+
+// 0x4ECA80
+void FUN_004eca80() {
+    // TODO: Incomplete.
+}
+
+// 0x4ECAB0
+void FUN_004ecab0() {
+    // TODO: Incomplete.
+}
+
+// 0x4ECAD0
+void FUN_004ecad0() {
+    // TODO: Incomplete.
+}
+
+// 0x4ECC70
+void FUN_004ecc70() {
+    // TODO: Incomplete.
+}
+
+// 0x4ED230
+void FUN_004ed230() {
+    // TODO: Incomplete.
+}
+
+// 0x4ED250
+void FUN_004ed250() {
+    // TODO: Incomplete.
+}
+
+// 0x4ED2C0
+void FUN_004ed2c0() {
+    // TODO: Incomplete.
+}
+
+// 0x4ED500
+void FUN_004ed500() {
+    // TODO: Incomplete.
+}
+
+// 0x4ED730
+void FUN_004ed730() {
+    // TODO: Incomplete.
+}
+
+// 0x4EDA50
+void FUN_004eda50() {
+    // TODO: Incomplete.
+}
+
+// 0x4EDAB0
+void FUN_004edab0() {
+    // TODO: Incomplete.
+}
+
+// 0x4EDCA0
+void FUN_004edca0() {
+    // TODO: Incomplete.
+}
+
+// 0x54FAC0
+void FUN_0054fac0() {
+    // TODO: Incomplete.
+}
+
+// 0x5513F0
+void FUN_005513f0() {
+    // TODO: Incomplete.
+}
+
+// 0x551490
+void FUN_00551490() {
+    // TODO: Incomplete.
+}
+
+// 0x551520
+void FUN_00551520() {
+    // TODO: Incomplete.
+}
+

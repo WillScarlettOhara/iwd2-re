@@ -14,7 +14,7 @@ CResCell::CResCell()
     m_nFrameListSize = 0;
     m_pPalette = NULL;
     m_bParsing = FALSE;
-    field_18 = 1;
+    nm_field_18 = 1;
     m_bCacheHeader = TRUE;
 }
 
@@ -100,15 +100,15 @@ BYTE* CResCell::GetFrameData(FRAMEENTRY* pFrame, BOOL bDoubleSize)
         return reinterpret_cast<BYTE*>(m_pBamHeader) + (pFrame->nOffset & 0x7FFFFFFF);
     }
 
-    if (m_pDimmKeyTableEntry->resRef == g_pChitin->cVideo.field_114
-        && m_pDimmKeyTableEntry->nResType == g_pChitin->cVideo.field_11C
-        && pFrame->nOffset == g_pChitin->cVideo.field_11E) {
+    if (m_pDimmKeyTableEntry->resRef == g_pChitin->cVideo.sm_field_114
+        && m_pDimmKeyTableEntry->nResType == g_pChitin->cVideo.wm_field_11C
+        && pFrame->nOffset == g_pChitin->cVideo.nm_m_field_11E) {
         return reinterpret_cast<BYTE*>(g_pChitin->cVideo.m_doubleSizeData);
     }
 
-    g_pChitin->cVideo.field_114 = m_pDimmKeyTableEntry->resRef;
-    g_pChitin->cVideo.field_11C = m_pDimmKeyTableEntry->nResType;
-    g_pChitin->cVideo.field_11E = pFrame->nOffset;
+    g_pChitin->cVideo.sm_field_114 = m_pDimmKeyTableEntry->resRef;
+    g_pChitin->cVideo.wm_field_11C = m_pDimmKeyTableEntry->nResType;
+    g_pChitin->cVideo.nm_m_field_11E = pFrame->nOffset;
     g_pChitin->cVideo.SetDoubleSizeData(pFrame->nHeight * pFrame->nWidth);
 
     BYTE* pFrameData = reinterpret_cast<BYTE*>(m_pBamHeader) + (pFrame->nOffset & 0x7FFFFFFF);
@@ -206,7 +206,7 @@ int CResCell::Release()
 void CResCell::ResRefChange()
 {
     if (m_bCacheHeader) {
-        CSingleLock lock(&field_20, FALSE);
+        CSingleLock lock(&nm_field_20, FALSE);
         lock.Lock(INFINITE);
 
         // __FILE__: C:\Projects\Icewind2\src\chitin\ChDataTypes.cpp
@@ -261,7 +261,7 @@ BOOL CResCell::Parse(void* pData)
         return m_bParsed;
     }
 
-    CSingleLock lock(&field_20, FALSE);
+    CSingleLock lock(&nm_field_20, FALSE);
     lock.Lock(INFINITE);
 
     // __FILE__: C:\Projects\Icewind2\src\chitin\ChDataTypes.cpp
@@ -363,3 +363,10 @@ BOOL CResCell::Parse(void* pData)
 
     return m_bParsed;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x77F430
+void FUN_0077f430() {
+    // TODO: Incomplete.
+}
+

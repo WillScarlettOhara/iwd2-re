@@ -34,10 +34,10 @@ public:
     /* 0000 */ BOOL m_bInitialized;
     /* 0004 */ char workingDirectory[260]; // #guess
     /* 0108 */ CString m_sDirName;
-    /* 010C */ CString field_10C;
-    /* 0110 */ int field_110;
-    /* 0114 */ int field_114;
-    /* 0118 */ int field_118;
+    /* 010C */ CString sm_field_10C;
+    /* 0110 */ int nm_field_110;
+    /* 0114 */ int nm_field_114;
+    /* 0118 */ int nm_field_118;
     /* 011C */ int m_nCacheSize;
     /* 0120 */ int m_nAvailableCacheSize;
     /* 0124 */ int m_nEntries;

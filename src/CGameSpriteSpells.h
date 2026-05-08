@@ -15,9 +15,9 @@
 class CGameSpriteSpellListEntry {
 public:
     /* 0000 */ UINT m_nID;
-    /* 0004 */ unsigned int field_4;
-    /* 0008 */ unsigned int field_8;
-    /* 000C */ unsigned int field_C;
+    /* 0004 */ unsigned int nm_field_4;
+    /* 0008 */ unsigned int nm_field_8;
+    /* 000C */ unsigned int nfield_C;
 };
 
 class CGameSpriteSpellList {
@@ -38,9 +38,9 @@ public:
     void Clear();
 
     /* 0000 */ std::vector<CGameSpriteSpellListEntry> m_List;
-    /* 0010 */ unsigned int field_10;
-    /* 0014 */ unsigned int field_14;
-    /* 0018 */ unsigned int field_18;
+    /* 0010 */ unsigned int nm_field_10;
+    /* 0014 */ unsigned int nm_field_14;
+    /* 0018 */ unsigned int nm_field_18;
 };
 
 class CGameSpriteGroupedSpellList {

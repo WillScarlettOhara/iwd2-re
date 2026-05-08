@@ -95,7 +95,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
 
     CBaldurChitin baldurChitin;
-    if (baldurChitin.field_1932 != 0) {
+    if (baldurChitin.m_m_field_1932 != 0) {
         CloseHandle(mutexHandle);
         return 0;
     }
@@ -125,3 +125,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     CloseHandle(mutexHandle);
     return rc;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4218F0
+void FUN_004218f0() {
+    // TODO: Incomplete.
+}
+

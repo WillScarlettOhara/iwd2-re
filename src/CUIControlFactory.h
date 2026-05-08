@@ -318,8 +318,8 @@ public:
 
     /* 0873 */ BYTE m_nHistorySize;
     /* 0874 */ CString m_sHistory[10];
-    /* 08A2 */ LONG field_8A2;
-    /* 08A6 */ unsigned char field_8A6;
+    /* 08A2 */ LONG nm_field_8A2;
+    /* 08A6 */ unsigned char bm_field_8A6;
 };
 
 class CUIControlEncumbrance : public CUIControlButton {
@@ -331,11 +331,11 @@ public:
     void SetEncumbrance(int a1, int a2);
     void SetVolume(int a1, int a2);
 
-    /* 0666 */ CVidFont field_666;
-    /* 0B66 */ int field_B66;
-    /* 0B6A */ int field_B6A;
-    /* 0B6E */ int field_B6E;
-    /* 0B72 */ int field_B72;
+    /* 0666 */ CVidFont pfield_666;
+    /* 0B66 */ int nfield_B66;
+    /* 0B6A */ int nfield_B6A;
+    /* 0B6E */ int nfield_B6E;
+    /* 0B72 */ int nfield_B72;
 };
 
 class CUIControlButtonGeneralBase : public CUIControlButton3State {
@@ -344,7 +344,7 @@ public:
     ~CUIControlButtonGeneralBase() override;
     void OnLButtonClick(CPoint pt) override;
 
-    /* 066E */ CBaldurEngine* field_66E;
+    /* 066E */ CBaldurEngine* pfield_66E;
 };
 
 class CUIControlButtonGeneralWorld : public CUIControlButtonGeneralBase {
@@ -411,8 +411,8 @@ public:
     BOOL Render(BOOL bForce) override;
     void TimerAsynchronousUpdate(BOOLEAN bInside) override;
 
-    /* 0666 */ short field_666;
-    /* 0668 */ short field_668;
+    /* 0666 */ short pfield_666;
+    /* 0668 */ short wfield_668;
 };
 
 #endif /* CUICONTROLFACTORY_H_ */

@@ -124,8 +124,8 @@ CGameObject::CGameObject()
     m_typeAI.Set(CAIObjectType::NOT_SPRITE);
     m_remotePlayerID = 0;
     m_remoteObjectID = CGameObjectArray::INVALID_INDEX;
-    field_6B = 0;
-    field_1C = 0;
+    bfield_6B = 0;
+    nm_field_1C = 0;
     m_listType = LIST_FRONT;
     m_AIInhibitor = 0;
 }
@@ -458,3 +458,15 @@ BOOLEAN CGameObject::InControl()
         return TRUE;
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x44CC50
+void FUN_0044cc50() {
+    // TODO: Incomplete.
+}
+
+// 0x4C80E0
+void FUN_004c80e0() {
+    // TODO: Incomplete.
+}
+

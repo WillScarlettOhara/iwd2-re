@@ -1681,14 +1681,14 @@ BOOLEAN CBaldurMessage::OnSettingsArbitrationLockStatus(INT nMsgFrom, BYTE* pMes
             && g_pBaldurChitin->GetActiveEngine() != g_pBaldurChitin->m_pEngineConnection) {
             g_pBaldurChitin->GetObjectGame()->SetTempCursor(4);
 
-            g_pBaldurChitin->m_pEngineMultiPlayer->field_45C = 1;
+            g_pBaldurChitin->m_pEngineMultiPlayer->nm_field_45C = 1;
             g_pBaldurChitin->m_pEngineMultiPlayer->StartMultiPlayer(1);
             g_pBaldurChitin->GetActiveEngine()->SelectEngine(g_pBaldurChitin->m_pEngineMultiPlayer);
         }
 
         if (g_pBaldurChitin->GetActiveEngine() == g_pBaldurChitin->m_pEngineMultiPlayer
-            && g_pBaldurChitin->m_pEngineMultiPlayer->field_45C != 1) {
-            g_pBaldurChitin->m_pEngineMultiPlayer->field_45C = 1;
+            && g_pBaldurChitin->m_pEngineMultiPlayer->nm_field_45C != 1) {
+            g_pBaldurChitin->m_pEngineMultiPlayer->nm_field_45C = 1;
             g_pBaldurChitin->m_pEngineMultiPlayer->StartMultiPlayer(1);
         }
     }
@@ -1943,7 +1943,7 @@ BOOL CBaldurMessage::OnKickPlayerHoofedOut(INT nMsgFrom)
 // 0x42D6E0
 BOOL CBaldurMessage::AddDroppedPlayer(PLAYER_ID playerID)
 {
-    CSingleLock lock(&field_9A, FALSE);
+    CSingleLock lock(&pfield_9A, FALSE);
     lock.Lock(INFINITE);
 
     // NOTE: Original code is slightly different but does the same thing.
@@ -1963,7 +1963,7 @@ BOOL CBaldurMessage::AddDroppedPlayer(PLAYER_ID playerID)
 // 0x42D7A0
 BOOL CBaldurMessage::PurgeDroppedPlayers()
 {
-    CSingleLock lock(&field_9A, FALSE);
+    CSingleLock lock(&pfield_9A, FALSE);
 
     if (m_bRemovedPlayerID == TRUE) {
         lock.Lock(INFINITE);
@@ -4952,7 +4952,7 @@ void CMessageHandler::AsynchronousUpdate()
 // 0x4F7110
 void CMessageHandler::PostAsynchronousUpdate()
 {
-    if (g_pChitin->field_1932 == TRUE) {
+    if (g_pChitin->nm_m_field_1932 == TRUE) {
         return;
     }
 
@@ -4971,12 +4971,12 @@ void CMessageHandler::PostAsynchronousUpdate()
                     && g_pBaldurChitin->GetActiveEngine() != g_pBaldurChitin->m_pEngineSinglePlayer
                     && g_pBaldurChitin->GetActiveEngine() != g_pBaldurChitin->m_pEngineConnection)
                 || (g_pBaldurChitin->GetActiveEngine() == g_pBaldurChitin->m_pEngineMultiPlayer
-                    && g_pBaldurChitin->m_pEngineMultiPlayer->field_45C != 1)) {
+                    && g_pBaldurChitin->m_pEngineMultiPlayer->nm_field_45C != 1)) {
                 g_pBaldurChitin->GetObjectGame()->MultiplayerSetCharacterCreationLocation();
 
                 g_pBaldurChitin->GetObjectGame()->m_tempCursor = 4;
 
-                g_pBaldurChitin->m_pEngineMultiPlayer->field_45C = 1;
+                g_pBaldurChitin->m_pEngineMultiPlayer->nm_field_45C = 1;
                 g_pBaldurChitin->m_pEngineMultiPlayer->StartMultiPlayer(1);
                 g_pBaldurChitin->GetActiveEngine()->SelectEngine(g_pBaldurChitin->m_pEngineMultiPlayer);
 
@@ -5310,8 +5310,8 @@ void CMessageAnimationChange::Run()
                                                                   pSprite->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY),
                         pSprite->GetAIType().m_nEnemyAlly,
                         pSprite->GetAnimation()->GetPersonalSpace(),
-                        pSprite->field_54A8,
-                        pSprite->field_7430);
+                        pSprite->nfield_54A8,
+                        pSprite->bfield_7430);
                 }
             }
             pSprite->GetAnimation()->SetAnimationType(m_animationId,
@@ -5323,8 +5323,8 @@ void CMessageAnimationChange::Run()
                                                                pSprite->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY),
                         pSprite->GetAIType().m_nEnemyAlly,
                         pSprite->GetAnimation()->GetPersonalSpace(),
-                        pSprite->field_54A8,
-                        pSprite->field_7430);
+                        pSprite->nfield_54A8,
+                        pSprite->bfield_7430);
                 }
             }
             pSprite->EquipAll(TRUE);
@@ -7353,7 +7353,7 @@ CMessageEnterDialog::CMessageEnterDialog(DWORD entryNum, BOOLEAN a2, LONG caller
     : CMessage(caller, target)
 {
     m_entryNum = entryNum;
-    field_10 = a2;
+    wm_field_10 = a2;
 }
 
 // 0x453510
@@ -7419,7 +7419,7 @@ void CMessageEnterDialog::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<DWORD*>(*pData + cnt) = m_entryNum;
         cnt += sizeof(DWORD);
 
-        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = field_10;
+        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = wm_field_10;
         cnt += sizeof(BOOLEAN);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -7455,7 +7455,7 @@ BOOL CMessageEnterDialog::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     m_entryNum = *reinterpret_cast<DWORD*>(pData + cnt);
     cnt += sizeof(DWORD);
 
-    field_10 = *reinterpret_cast<BOOLEAN*>(pData + cnt);
+    wm_field_10 = *reinterpret_cast<BOOLEAN*>(pData + cnt);
     cnt += sizeof(BOOLEAN);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -7482,7 +7482,7 @@ void CMessageEnterDialog::Run()
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
             g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.EnterDialog(m_entryNum,
                 static_cast<CGameSprite*>(pObject),
-                field_10);
+                wm_field_10);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
@@ -7746,7 +7746,7 @@ void CMessageExitDialogMode::MarshalMessage(BYTE** pData, DWORD* dwSize)
     *reinterpret_cast<BOOLEAN*>(*pData + cnt) = m_bButtonPushed;
     cnt += sizeof(BOOLEAN);
 
-    *reinterpret_cast<unsigned char*>(*pData + cnt) = g_pBaldurChitin->m_pEngineWorld->field_1204;
+    *reinterpret_cast<unsigned char*>(*pData + cnt) = g_pBaldurChitin->m_pEngineWorld->bm_m_field_1204;
     cnt += sizeof(unsigned char);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -7779,7 +7779,7 @@ BOOL CMessageExitDialogMode::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     m_bButtonPushed = *reinterpret_cast<BOOLEAN*>(pData + cnt);
     cnt += sizeof(BOOLEAN);
 
-    g_pBaldurChitin->m_pEngineWorld->field_1204 = *reinterpret_cast<unsigned char*>(pData + cnt);
+    g_pBaldurChitin->m_pEngineWorld->bm_m_field_1204 = *reinterpret_cast<unsigned char*>(pData + cnt);
     cnt += sizeof(unsigned char);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -7792,9 +7792,9 @@ BOOL CMessageExitDialogMode::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 // 0x4FFB70
 void CMessageExitDialogMode::Run()
 {
-    g_pBaldurChitin->m_pEngineWorld->field_1150 = 0;
+    g_pBaldurChitin->m_pEngineWorld->bm_m_field_1150 = 0;
     g_pBaldurChitin->m_pEngineWorld->EndDialog(1, 1);
-    g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.field_54 = 0;
+    g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.nfield_54 = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -10977,10 +10977,10 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
 {
     m_nTranslucent = 0;
     m_nFadeSpeed = 0;
-    field_64 = 0;
-    field_66 = 0;
-    field_68 = 0;
-    field_6A = 0;
+    wfield_64 = 0;
+    wfield_66 = 0;
+    nfield_68 = 0;
+    wfield_6A = 0;
     m_nACCrushingMod = 0;
     m_nACMissileMod = 0;
     m_nACPiercingMod = 0;
@@ -10994,11 +10994,11 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
     m_bLevelUp = FALSE;
     m_pPath = 0;
     m_nPath = 0;
-    field_74 = 0;
-    field_76 = NULL;
+    nfield_74 = 0;
+    nfield_76 = NULL;
     m_currPath = 0;
-    field_108 = 0;
-    field_56 = 0;
+    nm_field_108 = 0;
+    pfield_56 = 0;
 
     if (pSprite != NULL) {
         m_nFadeSpeed = pSprite->GetBaseStats()->m_fadeSpeed;
@@ -11007,18 +11007,18 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
         m_spellStates = pSprite->GetDerivedStats()->m_spellStates;
         memcpy(m_baseSkills, pSprite->GetBaseStats()->m_skills, sizeof(m_baseSkills));
         memcpy(m_skills, pSprite->GetDerivedStats()->m_nSkills, sizeof(m_skills));
-        field_106 = pSprite->GetBaseStats()->field_2FF;
+        pm_m_field_106 = pSprite->GetBaseStats()->bm_field_2FF;
         m_nSequence = pSprite->m_nSequence;
         m_ptPosition = pSprite->GetPos();
         m_nFacing = pSprite->m_nDirection;
         m_dwState = pSprite->GetDerivedStats()->m_generalState;
         m_nHitPoints = pSprite->GetBaseStats()->m_hitPoints;
         m_nMaxHitPoints = pSprite->GetDerivedStats()->m_nMaxHitPoints;
-        field_60 = pSprite->GetBaseStats()->m_flags;
-        field_64 = pSprite->GetDerivedStats()->field_6;
-        field_66 = pSprite->GetDerivedStats()->field_8;
-        field_68 = pSprite->GetDerivedStats()->field_A;
-        field_6A = pSprite->GetDerivedStats()->field_C;
+        bfield_61 = pSprite->GetBaseStats()->m_flags;
+        wfield_64 = pSprite->GetDerivedStats()->wfield_6;
+        wfield_66 = pSprite->GetDerivedStats()->nm_field_8;
+        nfield_68 = pSprite->GetDerivedStats()->wfield_A;
+        wfield_6A = pSprite->GetDerivedStats()->nfield_C;
         m_nACCrushingMod = pSprite->GetDerivedStats()->m_nACCrushingMod;
         m_nACMissileMod = pSprite->GetDerivedStats()->m_nACMissileMod;
         m_nACPiercingMod = pSprite->GetDerivedStats()->m_nACPiercingMod;
@@ -11031,7 +11031,7 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
         m_bLevelUp = static_cast<BOOLEAN>(pSprite->m_bLevelUp);
         m_nHPCONBonusTotalOld = pSprite->m_nHPCONBonusTotalOld;
         m_ptDest = pSprite->m_curDest;
-        field_108 = 0;
+        nm_field_108 = 0;
         if (pSprite->GetArea() != NULL) {
             m_nPath = pSprite->m_nPath;
             m_currPath = pSprite->m_currPath;
@@ -11048,7 +11048,7 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
             m_pPath = NULL;
             m_currPath = 0;
         }
-        field_85 = 0;
+        bm_field_85 = 0;
     }
 }
 
@@ -11059,8 +11059,8 @@ CMessageSpriteUpdate::~CMessageSpriteUpdate()
         delete m_pPath;
     }
 
-    if (field_76 != NULL) {
-        delete field_76;
+    if (nfield_76 != NULL) {
+        delete nfield_76;
     }
 }
 
@@ -13232,7 +13232,7 @@ void CMessageStartTextScreen::Run()
 CMessage90::CMessage90(LONG caller, LONG target, int a3)
     : CMessage(caller, target)
 {
-    field_C = a3;
+    nfield_C = a3;
 }
 
 // 0x66F250
@@ -13295,7 +13295,7 @@ void CMessage90::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
         cnt += sizeof(LONG);
 
-        *reinterpret_cast<int*>(*pData + cnt) = field_C;
+        *reinterpret_cast<int*>(*pData + cnt) = nfield_C;
         cnt += sizeof(int);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -13328,7 +13328,7 @@ BOOL CMessage90::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 
     m_targetId = localObjectID;
 
-    field_C = *reinterpret_cast<int*>(pData + cnt);
+    nfield_C = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     // NOTE: Missing trailing guard.
@@ -13351,7 +13351,7 @@ void CMessage90::Run()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
-            static_cast<CGameSprite*>(pObject)->sub_75F3D0(field_C);
+            static_cast<CGameSprite*>(pObject)->sub_75F3D0(nfield_C);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
@@ -13515,7 +13515,7 @@ void CMessageFloatText::Run()
 CMessage92::CMessage92(LONG caller, LONG target, int a3)
     : CMessage(caller, target)
 {
-    field_C = a3;
+    nfield_C = a3;
 }
 
 // 0x453510
@@ -13577,7 +13577,7 @@ void CMessage92::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
         cnt += sizeof(LONG);
 
-        *reinterpret_cast<int*>(*pData + cnt) = field_C;
+        *reinterpret_cast<int*>(*pData + cnt) = nfield_C;
         cnt += sizeof(int);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -13610,7 +13610,7 @@ BOOL CMessage92::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 
     m_targetId = localObjectID;
 
-    field_C = *reinterpret_cast<int*>(pData + cnt);
+    nfield_C = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     // NOTE: Missing trailing guard.
@@ -13633,7 +13633,7 @@ void CMessage92::Run()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
-            static_cast<CGameSprite*>(pObject)->sub_7615F0(field_C);
+            static_cast<CGameSprite*>(pObject)->sub_7615F0(nfield_C);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
@@ -14375,9 +14375,9 @@ CMessageStoreRemoveItem::CMessageStoreRemoveItem(const CResRef& store, const CRe
 {
     m_store = store;
     m_itemId = itemId;
-    field_1C = a3;
-    field_20 = a4;
-    field_24 = a5;
+    nm_field_1C = a3;
+    nm_field_20 = a4;
+    nm_field_24 = a5;
 }
 
 // 0x848F48
@@ -14423,13 +14423,13 @@ void CMessageStoreRemoveItem::MarshalMessage(BYTE** pData, DWORD* dwSize)
     memcpy(*pData + cnt, m_itemId.GetResRef(), RESREF_SIZE);
     cnt += RESREF_SIZE;
 
-    *reinterpret_cast<int*>(*pData + cnt) = field_1C;
+    *reinterpret_cast<int*>(*pData + cnt) = nm_field_1C;
     cnt += sizeof(int);
 
-    *reinterpret_cast<int*>(*pData + cnt) = field_20;
+    *reinterpret_cast<int*>(*pData + cnt) = nm_field_20;
     cnt += sizeof(int);
 
-    *reinterpret_cast<int*>(*pData + cnt) = field_24;
+    *reinterpret_cast<int*>(*pData + cnt) = nm_field_24;
     cnt += sizeof(int);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -14452,13 +14452,13 @@ BOOL CMessageStoreRemoveItem::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     m_itemId = pData + cnt;
     cnt += RESREF_SIZE;
 
-    field_1C = *reinterpret_cast<int*>(pData + cnt);
+    nm_field_1C = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
-    field_20 = *reinterpret_cast<int*>(pData + cnt);
+    nm_field_20 = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
-    field_24 = *reinterpret_cast<int*>(pData + cnt);
+    nm_field_24 = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     // NOTE: Missing trailing guard.
@@ -14480,9 +14480,9 @@ void CMessageStoreRemoveItem::Run()
 
         if (pStore->GetItemIndex(m_itemId) != INT_MAX) {
             pStore->RemoveItemExt(m_itemId,
-                field_1C,
-                field_20,
-                field_24,
+                nm_field_1C,
+                nm_field_20,
+                nm_field_24,
                 NULL);
         }
     } else if (g_pChitin->cNetwork.GetSessionOpen()) {
@@ -14494,9 +14494,9 @@ void CMessageStoreRemoveItem::Run()
         if (pStore->m_resRef == m_store) {
             if (pStore->GetItemIndex(m_itemId) != INT_MAX) {
                 pStore->RemoveItemExt(m_itemId,
-                    field_1C,
-                    field_20,
-                    field_24,
+                    nm_field_1C,
+                    nm_field_20,
+                    nm_field_24,
                     NULL);
 
                 g_pBaldurChitin->m_pEngineStore->UpdateStoreItems();
@@ -14508,9 +14508,9 @@ void CMessageStoreRemoveItem::Run()
             if (pStore != NULL && pStore->m_resRef == m_store) {
                 if (pStore->GetItemIndex(m_itemId) != INT_MAX) {
                     pStore->RemoveItemExt(m_itemId,
-                        field_1C,
-                        field_20,
-                        field_24,
+                        nm_field_1C,
+                        nm_field_20,
+                        nm_field_24,
                         NULL);
 
                     g_pBaldurChitin->m_pEngineStore->UpdateGroupItems();
@@ -14770,8 +14770,8 @@ CMessageFireProjectile::CMessageFireProjectile(WORD projectileType, LONG project
     m_projectileTargetId = projectileTargetId;
     m_projectileTarget = projectileTarget;
     m_height = height;
-    field_1E = a7;
-    field_20 = 0;
+    bm_field_1E = a7;
+    nm_field_20 = 0;
 }
 
 // 0x453510
@@ -15459,8 +15459,8 @@ void CMessageStoreDemand::Run()
 CMessage101::CMessage101(BOOLEAN a1, LONG caller, LONG target, BOOLEAN a4)
     : CMessage(caller, target)
 {
-    field_C = a1;
-    field_D = a4;
+    nfield_C = a1;
+    bfield_D = a4;
 }
 
 // 0x43E170
@@ -15523,10 +15523,10 @@ void CMessage101::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
         cnt += sizeof(LONG);
 
-        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = field_C;
+        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = nfield_C;
         cnt += sizeof(BOOLEAN);
 
-        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = field_D;
+        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = bfield_D;
         cnt += sizeof(BOOLEAN);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -15559,10 +15559,10 @@ BOOL CMessage101::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 
     m_targetId = localObjectID;
 
-    field_C = *reinterpret_cast<BOOLEAN*>(pData + cnt);
+    nfield_C = *reinterpret_cast<BOOLEAN*>(pData + cnt);
     cnt += sizeof(BOOLEAN);
 
-    field_D = *reinterpret_cast<BOOLEAN*>(pData + cnt);
+    bfield_D = *reinterpret_cast<BOOLEAN*>(pData + cnt);
     cnt += sizeof(BOOLEAN);
 
     // NOTE: Missing trailing guard.
@@ -15586,7 +15586,7 @@ void CMessage101::Run()
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
             CGameSprite* pSprite = static_cast<CGameSprite*>(pObject);
-            pSprite->sub_723BF0(field_C, field_D);
+            pSprite->sub_723BF0(nfield_C, bfield_D);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
@@ -15756,7 +15756,7 @@ void CMessageWeaponImmumityUpdate::Run()
 CMessage103::CMessage103(BOOLEAN a1, PLAYER_ID idPlayer, INT nPortrait, LONG caller, LONG target)
     : CMessage(caller, target)
 {
-    field_C = a1;
+    nfield_C = a1;
     m_idPlayer = idPlayer;
     m_nCharacterPortraitSlotNumber = nPortrait;
 }
@@ -15822,7 +15822,7 @@ void CMessage103::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
         cnt += sizeof(LONG);
 
-        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = field_C;
+        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = nfield_C;
         cnt += sizeof(BOOLEAN);
 
         *reinterpret_cast<PLAYER_ID*>(*pData + cnt) = m_idPlayer;
@@ -15861,7 +15861,7 @@ BOOL CMessage103::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 
     m_targetId = localObjectID;
 
-    field_C = *reinterpret_cast<BOOLEAN*>(pData + cnt);
+    nfield_C = *reinterpret_cast<BOOLEAN*>(pData + cnt);
     cnt += sizeof(BOOLEAN);
 
     m_idPlayer = *reinterpret_cast<PLAYER_ID*>(pData + cnt);
@@ -15900,7 +15900,7 @@ CMessage120::CMessage120(PLAYER_ID idPlayer, BOOLEAN a2, LONG caller, LONG targe
     : CMessage(caller, target)
 {
     m_idPlayer = idPlayer;
-    field_10 = a2;
+    wm_field_10 = a2;
 }
 
 // 0x43E170
@@ -15966,7 +15966,7 @@ void CMessage120::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<PLAYER_ID*>(*pData + cnt) = m_idPlayer;
         cnt += sizeof(PLAYER_ID);
 
-        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = field_10;
+        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = wm_field_10;
         cnt += sizeof(BOOLEAN);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -16002,7 +16002,7 @@ BOOL CMessage120::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     m_idPlayer = *reinterpret_cast<PLAYER_ID*>(pData + cnt);
     cnt += sizeof(PLAYER_ID);
 
-    field_10 = *reinterpret_cast<BOOLEAN*>(pData + cnt);
+    wm_field_10 = *reinterpret_cast<BOOLEAN*>(pData + cnt);
     cnt += sizeof(BOOLEAN);
 
     // NOTE: Missing trailing guard.
@@ -16020,7 +16020,7 @@ void CMessage120::Run()
         // __LINE__: 30686
         UTIL_ASSERT(pGame != NULL);
 
-        pGame->GetMultiplayerSettings()->sub_518660(m_idPlayer, field_10);
+        pGame->GetMultiplayerSettings()->sub_518660(m_idPlayer, wm_field_10);
     }
 }
 
@@ -16357,7 +16357,7 @@ void CMessageToggleInterface::Run()
 CMessage107::CMessage107(unsigned char a1, LONG caller, LONG target)
     : CMessage(caller, target)
 {
-    field_C = a1;
+    nfield_C = a1;
 }
 
 // 0x43E170
@@ -16420,7 +16420,7 @@ void CMessage107::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
         cnt += sizeof(LONG);
 
-        *reinterpret_cast<unsigned char*>(*pData + cnt) = field_C;
+        *reinterpret_cast<unsigned char*>(*pData + cnt) = nfield_C;
         cnt += sizeof(unsigned char);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -16446,7 +16446,7 @@ BOOL CMessage107::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     LONG remoteObjectID = *reinterpret_cast<LONG*>(pData + cnt);
     cnt += sizeof(LONG);
 
-    field_C = *reinterpret_cast<unsigned char*>(pData + cnt);
+    nfield_C = *reinterpret_cast<unsigned char*>(pData + cnt);
     cnt += sizeof(unsigned char);
 
     LONG localObjectID;
@@ -16476,7 +16476,7 @@ void CMessage107::Run()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
-            static_cast<CGameSprite*>(pObject)->field_580 = field_C;
+            static_cast<CGameSprite*>(pObject)->nfield_580 = nfield_C;
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
@@ -16573,8 +16573,8 @@ void CMessageSetAreaExplored::Run()
 CMessageEndGame::CMessageEndGame(int a1, int a2, LONG caller, LONG target)
     : CMessage(caller, target)
 {
-    field_C = a1;
-    field_10 = a2;
+    nfield_C = a1;
+    wm_field_10 = a2;
 }
 
 // 0x453330
@@ -16615,10 +16615,10 @@ void CMessageEndGame::MarshalMessage(BYTE** pData, DWORD* dwSize)
 
     DWORD cnt = 0;
 
-    *reinterpret_cast<int*>(*pData + cnt) = field_C;
+    *reinterpret_cast<int*>(*pData + cnt) = nfield_C;
     cnt += sizeof(int);
 
-    *reinterpret_cast<int*>(*pData + cnt) = field_10;
+    *reinterpret_cast<int*>(*pData + cnt) = wm_field_10;
     cnt += sizeof(int);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -16635,10 +16635,10 @@ BOOL CMessageEndGame::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 
     DWORD cnt = CNetwork::SPEC_MSG_HEADER_LENGTH;
 
-    field_C = *reinterpret_cast<int*>(pData + cnt);
+    nfield_C = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
-    field_10 = *reinterpret_cast<int*>(pData + cnt);
+    wm_field_10 = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -16651,7 +16651,7 @@ BOOL CMessageEndGame::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 // 0x516650
 void CMessageEndGame::Run()
 {
-    g_pBaldurChitin->GetObjectGame()->ReadyCharacterTerminationSequence(field_C, field_10);
+    g_pBaldurChitin->GetObjectGame()->ReadyCharacterTerminationSequence(nfield_C, wm_field_10);
 }
 
 // -----------------------------------------------------------------------------
@@ -16804,3 +16804,1305 @@ void CMessageChangeStat::Run()
             INFINITE);
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x405220
+void FUN_00405220() {
+    // TODO: Incomplete.
+}
+
+// 0x409350
+void FUN_00409350() {
+    // TODO: Incomplete.
+}
+
+// 0x409800
+void FUN_00409800() {
+    // TODO: Incomplete.
+}
+
+// 0x40A100
+void FUN_0040a100() {
+    // TODO: Incomplete.
+}
+
+// 0x40A110
+void FUN_0040a110() {
+    // TODO: Incomplete.
+}
+
+// 0x40A130
+void FUN_0040a130() {
+    // TODO: Incomplete.
+}
+
+// 0x428F90
+void FUN_00428f90() {
+    // TODO: Incomplete.
+}
+
+// 0x429032
+void Catch@00429032() {
+    // TODO: Incomplete.
+}
+
+// 0x429061
+void FUN_00429061() {
+    // TODO: Incomplete.
+}
+
+// 0x429100
+void FUN_00429100() {
+    // TODO: Incomplete.
+}
+
+// 0x429170
+void FUN_00429170() {
+    // TODO: Incomplete.
+}
+
+// 0x4291F0
+void FUN_004291f0() {
+    // TODO: Incomplete.
+}
+
+// 0x42939F
+void Catch@0042939f() {
+    // TODO: Incomplete.
+}
+
+// 0x4293CB
+void FUN_004293cb() {
+    // TODO: Incomplete.
+}
+
+// 0x4296B0
+void FUN_004296b0() {
+    // TODO: Incomplete.
+}
+
+// 0x4296D0
+void FUN_004296d0() {
+    // TODO: Incomplete.
+}
+
+// 0x42A3F0
+void FUN_0042a3f0() {
+    // TODO: Incomplete.
+}
+
+// 0x42ABA0
+void FUN_0042aba0() {
+    // TODO: Incomplete.
+}
+
+// 0x42ADF0
+void FUN_0042adf0() {
+    // TODO: Incomplete.
+}
+
+// 0x42DF50
+void FUN_0042df50() {
+    // TODO: Incomplete.
+}
+
+// 0x42E1B0
+void FUN_0042e1b0() {
+    // TODO: Incomplete.
+}
+
+// 0x42E630
+void FUN_0042e630() {
+    // TODO: Incomplete.
+}
+
+// 0x42FFD0
+void FUN_0042ffd0() {
+    // TODO: Incomplete.
+}
+
+// 0x430910
+void FUN_00430910() {
+    // TODO: Incomplete.
+}
+
+// 0x430BE0
+void FUN_00430be0() {
+    // TODO: Incomplete.
+}
+
+// 0x430D40
+void FUN_00430d40() {
+    // TODO: Incomplete.
+}
+
+// 0x430DC0
+void FUN_00430dc0() {
+    // TODO: Incomplete.
+}
+
+// 0x431020
+void FUN_00431020() {
+    // TODO: Incomplete.
+}
+
+// 0x431140
+void FUN_00431140() {
+    // TODO: Incomplete.
+}
+
+// 0x4313E0
+void FUN_004313e0() {
+    // TODO: Incomplete.
+}
+
+// 0x431560
+void FUN_00431560() {
+    // TODO: Incomplete.
+}
+
+// 0x431CA0
+void FUN_00431ca0() {
+    // TODO: Incomplete.
+}
+
+// 0x431F10
+void FUN_00431f10() {
+    // TODO: Incomplete.
+}
+
+// 0x432050
+void FUN_00432050() {
+    // TODO: Incomplete.
+}
+
+// 0x4324E0
+void FUN_004324e0() {
+    // TODO: Incomplete.
+}
+
+// 0x432610
+void FUN_00432610() {
+    // TODO: Incomplete.
+}
+
+// 0x432A10
+void FUN_00432a10() {
+    // TODO: Incomplete.
+}
+
+// 0x432BA0
+void FUN_00432ba0() {
+    // TODO: Incomplete.
+}
+
+// 0x434BA0
+void FUN_00434ba0() {
+    // TODO: Incomplete.
+}
+
+// 0x434D80
+void FUN_00434d80() {
+    // TODO: Incomplete.
+}
+
+// 0x4352A0
+void FUN_004352a0() {
+    // TODO: Incomplete.
+}
+
+// 0x435470
+void FUN_00435470() {
+    // TODO: Incomplete.
+}
+
+// 0x4355F0
+void FUN_004355f0() {
+    // TODO: Incomplete.
+}
+
+// 0x4356E0
+void FUN_004356e0() {
+    // TODO: Incomplete.
+}
+
+// 0x4358B0
+void FUN_004358b0() {
+    // TODO: Incomplete.
+}
+
+// 0x435C30
+void FUN_00435c30() {
+    // TODO: Incomplete.
+}
+
+// 0x435E00
+void FUN_00435e00() {
+    // TODO: Incomplete.
+}
+
+// 0x4361D0
+void FUN_004361d0() {
+    // TODO: Incomplete.
+}
+
+// 0x436290
+void FUN_00436290() {
+    // TODO: Incomplete.
+}
+
+// 0x436440
+void FUN_00436440() {
+    // TODO: Incomplete.
+}
+
+// 0x436500
+void FUN_00436500() {
+    // TODO: Incomplete.
+}
+
+// 0x436610
+void FUN_00436610() {
+    // TODO: Incomplete.
+}
+
+// 0x436860
+void FUN_00436860() {
+    // TODO: Incomplete.
+}
+
+// 0x436B60
+void FUN_00436b60() {
+    // TODO: Incomplete.
+}
+
+// 0x436C00
+void FUN_00436c00() {
+    // TODO: Incomplete.
+}
+
+// 0x436D10
+void FUN_00436d10() {
+    // TODO: Incomplete.
+}
+
+// 0x436D40
+void FUN_00436d40() {
+    // TODO: Incomplete.
+}
+
+// 0x436EF0
+void FUN_00436ef0() {
+    // TODO: Incomplete.
+}
+
+// 0x437050
+void FUN_00437050() {
+    // TODO: Incomplete.
+}
+
+// 0x4371B0
+void FUN_004371b0() {
+    // TODO: Incomplete.
+}
+
+// 0x437390
+void FUN_00437390() {
+    // TODO: Incomplete.
+}
+
+// 0x4373E0
+void FUN_004373e0() {
+    // TODO: Incomplete.
+}
+
+// 0x437D20
+void FUN_00437d20() {
+    // TODO: Incomplete.
+}
+
+// 0x437D70
+void FUN_00437d70() {
+    // TODO: Incomplete.
+}
+
+// 0x437FD0
+void FUN_00437fd0() {
+    // TODO: Incomplete.
+}
+
+// 0x4381C0
+void FUN_004381c0() {
+    // TODO: Incomplete.
+}
+
+// 0x438F40
+void FUN_00438f40() {
+    // TODO: Incomplete.
+}
+
+// 0x438F90
+void FUN_00438f90() {
+    // TODO: Incomplete.
+}
+
+// 0x439250
+void FUN_00439250() {
+    // TODO: Incomplete.
+}
+
+// 0x43A210
+void FUN_0043a210() {
+    // TODO: Incomplete.
+}
+
+// 0x43A7C0
+void FUN_0043a7c0() {
+    // TODO: Incomplete.
+}
+
+// 0x43AE40
+void FUN_0043ae40() {
+    // TODO: Incomplete.
+}
+
+// 0x43B080
+void FUN_0043b080() {
+    // TODO: Incomplete.
+}
+
+// 0x43B1A0
+void FUN_0043b1a0() {
+    // TODO: Incomplete.
+}
+
+// 0x43B380
+void FUN_0043b380() {
+    // TODO: Incomplete.
+}
+
+// 0x43B4E0
+void FUN_0043b4e0() {
+    // TODO: Incomplete.
+}
+
+// 0x43B680
+void FUN_0043b680() {
+    // TODO: Incomplete.
+}
+
+// 0x43B7E0
+void FUN_0043b7e0() {
+    // TODO: Incomplete.
+}
+
+// 0x43D8D0
+void FUN_0043d8d0() {
+    // TODO: Incomplete.
+}
+
+// 0x43DC40
+void FUN_0043dc40() {
+    // TODO: Incomplete.
+}
+
+// 0x43DD20
+void FUN_0043dd20() {
+    // TODO: Incomplete.
+}
+
+// 0x43DE50
+void FUN_0043de50() {
+    // TODO: Incomplete.
+}
+
+// 0x43E070
+void FUN_0043e070() {
+    // TODO: Incomplete.
+}
+
+// 0x43E190
+void FUN_0043e190() {
+    // TODO: Incomplete.
+}
+
+// 0x453310
+void FUN_00453310() {
+    // TODO: Incomplete.
+}
+
+// 0x4533F0
+void FUN_004533f0() {
+    // TODO: Incomplete.
+}
+
+// 0x453490
+void FUN_00453490() {
+    // TODO: Incomplete.
+}
+
+// 0x453570
+void FUN_00453570() {
+    // TODO: Incomplete.
+}
+
+// 0x453590
+void FUN_00453590() {
+    // TODO: Incomplete.
+}
+
+// 0x45B820
+void FUN_0045b820() {
+    // TODO: Incomplete.
+}
+
+// 0x45B890
+void FUN_0045b890() {
+    // TODO: Incomplete.
+}
+
+// 0x45BD20
+void FUN_0045bd20() {
+    // TODO: Incomplete.
+}
+
+// 0x45BDD0
+void FUN_0045bdd0() {
+    // TODO: Incomplete.
+}
+
+// 0x45F560
+void FUN_0045f560() {
+    // TODO: Incomplete.
+}
+
+// 0x462470
+void FUN_00462470() {
+    // TODO: Incomplete.
+}
+
+// 0x462910
+void FUN_00462910() {
+    // TODO: Incomplete.
+}
+
+// 0x462F90
+void FUN_00462f90() {
+    // TODO: Incomplete.
+}
+
+// 0x463290
+void FUN_00463290() {
+    // TODO: Incomplete.
+}
+
+// 0x4632B0
+void FUN_004632b0() {
+    // TODO: Incomplete.
+}
+
+// 0x4637B0
+void FUN_004637b0() {
+    // TODO: Incomplete.
+}
+
+// 0x463B30
+void FUN_00463b30() {
+    // TODO: Incomplete.
+}
+
+// 0x464180
+void FUN_00464180() {
+    // TODO: Incomplete.
+}
+
+// 0x464200
+void FUN_00464200() {
+    // TODO: Incomplete.
+}
+
+// 0x464950
+void FUN_00464950() {
+    // TODO: Incomplete.
+}
+
+// 0x466220
+void FUN_00466220() {
+    // TODO: Incomplete.
+}
+
+// 0x4670A0
+void FUN_004670a0() {
+    // TODO: Incomplete.
+}
+
+// 0x4670C0
+void FUN_004670c0() {
+    // TODO: Incomplete.
+}
+
+// 0x47DFA0
+void FUN_0047dfa0() {
+    // TODO: Incomplete.
+}
+
+// 0x4824F0
+void FUN_004824f0() {
+    // TODO: Incomplete.
+}
+
+// 0x482A40
+void FUN_00482a40() {
+    // TODO: Incomplete.
+}
+
+// 0x4844D0
+void FUN_004844d0() {
+    // TODO: Incomplete.
+}
+
+// 0x4844F0
+void FUN_004844f0() {
+    // TODO: Incomplete.
+}
+
+// 0x484550
+void FUN_00484550() {
+    // TODO: Incomplete.
+}
+
+// 0x485750
+void FUN_00485750() {
+    // TODO: Incomplete.
+}
+
+// 0x489680
+void FUN_00489680() {
+    // TODO: Incomplete.
+}
+
+// 0x4A8DF0
+void FUN_004a8df0() {
+    // TODO: Incomplete.
+}
+
+// 0x4A9E30
+void FUN_004a9e30() {
+    // TODO: Incomplete.
+}
+
+// 0x4AA6D0
+void FUN_004aa6d0() {
+    // TODO: Incomplete.
+}
+
+// 0x4AB0A0
+void FUN_004ab0a0() {
+    // TODO: Incomplete.
+}
+
+// 0x4AB370
+void FUN_004ab370() {
+    // TODO: Incomplete.
+}
+
+// 0x4AB510
+void FUN_004ab510() {
+    // TODO: Incomplete.
+}
+
+// 0x4AD3A0
+void FUN_004ad3a0() {
+    // TODO: Incomplete.
+}
+
+// 0x4AD3C0
+void FUN_004ad3c0() {
+    // TODO: Incomplete.
+}
+
+// 0x4B2070
+void FUN_004b2070() {
+    // TODO: Incomplete.
+}
+
+// 0x4B2340
+void FUN_004b2340() {
+    // TODO: Incomplete.
+}
+
+// 0x4B34F0
+void FUN_004b34f0() {
+    // TODO: Incomplete.
+}
+
+// 0x4EDF60
+void FUN_004edf60() {
+    // TODO: Incomplete.
+}
+
+// 0x4EDF80
+void FUN_004edf80() {
+    // TODO: Incomplete.
+}
+
+// 0x4F4F30
+void FUN_004f4f30() {
+    // TODO: Incomplete.
+}
+
+// 0x4F4F60
+void FUN_004f4f60() {
+    // TODO: Incomplete.
+}
+
+// 0x4F5130
+void FUN_004f5130() {
+    // TODO: Incomplete.
+}
+
+// 0x4F53E0
+void FUN_004f53e0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F5400
+void FUN_004f5400() {
+    // TODO: Incomplete.
+}
+
+// 0x4F54F0
+void FUN_004f54f0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F5610
+void FUN_004f5610() {
+    // TODO: Incomplete.
+}
+
+// 0x4F59D0
+void FUN_004f59d0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F5A90
+void FUN_004f5a90() {
+    // TODO: Incomplete.
+}
+
+// 0x4F5B20
+void FUN_004f5b20() {
+    // TODO: Incomplete.
+}
+
+// 0x4F5B40
+void FUN_004f5b40() {
+    // TODO: Incomplete.
+}
+
+// 0x4F5BF0
+void FUN_004f5bf0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F5C70
+void FUN_004f5c70() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6040
+void FUN_004f6040() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6150
+void FUN_004f6150() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6170
+void FUN_004f6170() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6370
+void FUN_004f6370() {
+    // TODO: Incomplete.
+}
+
+// 0x4F68A0
+void FUN_004f68a0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6920
+void FUN_004f6920() {
+    // TODO: Incomplete.
+}
+
+// 0x4F69B0
+void FUN_004f69b0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6A80
+void FUN_004f6a80() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6AA0
+void FUN_004f6aa0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6B20
+void FUN_004f6b20() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6B60
+void FUN_004f6b60() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6B80
+void FUN_004f6b80() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6BC0
+void FUN_004f6bc0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6C50
+void FUN_004f6c50() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6C90
+void FUN_004f6c90() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6E50
+void FUN_004f6e50() {
+    // TODO: Incomplete.
+}
+
+// 0x4F6EF0
+void FUN_004f6ef0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F70C0
+void FUN_004f70c0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F7AE0
+void FUN_004f7ae0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F80B0
+void FUN_004f80b0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F8470
+void FUN_004f8470() {
+    // TODO: Incomplete.
+}
+
+// 0x4F8880
+void FUN_004f8880() {
+    // TODO: Incomplete.
+}
+
+// 0x4F8D60
+void FUN_004f8d60() {
+    // TODO: Incomplete.
+}
+
+// 0x4F8FA0
+void FUN_004f8fa0() {
+    // TODO: Incomplete.
+}
+
+// 0x4F9150
+void FUN_004f9150() {
+    // TODO: Incomplete.
+}
+
+// 0x4FAA20
+void FUN_004faa20() {
+    // TODO: Incomplete.
+}
+
+// 0x4FAE00
+void FUN_004fae00() {
+    // TODO: Incomplete.
+}
+
+// 0x4FB060
+void FUN_004fb060() {
+    // TODO: Incomplete.
+}
+
+// 0x4FB490
+void FUN_004fb490() {
+    // TODO: Incomplete.
+}
+
+// 0x4FB500
+void FUN_004fb500() {
+    // TODO: Incomplete.
+}
+
+// 0x4FB800
+void FUN_004fb800() {
+    // TODO: Incomplete.
+}
+
+// 0x4FC390
+void FUN_004fc390() {
+    // TODO: Incomplete.
+}
+
+// 0x4FD0E0
+void FUN_004fd0e0() {
+    // TODO: Incomplete.
+}
+
+// 0x4FD1D0
+void FUN_004fd1d0() {
+    // TODO: Incomplete.
+}
+
+// 0x4FDD30
+void FUN_004fdd30() {
+    // TODO: Incomplete.
+}
+
+// 0x4FDF80
+void FUN_004fdf80() {
+    // TODO: Incomplete.
+}
+
+// 0x4FE3D0
+void FUN_004fe3d0() {
+    // TODO: Incomplete.
+}
+
+// 0x4FE500
+void FUN_004fe500() {
+    // TODO: Incomplete.
+}
+
+// 0x4FE5B0
+void FUN_004fe5b0() {
+    // TODO: Incomplete.
+}
+
+// 0x4FECF0
+void FUN_004fecf0() {
+    // TODO: Incomplete.
+}
+
+// 0x4FF170
+void FUN_004ff170() {
+    // TODO: Incomplete.
+}
+
+// 0x5006C0
+void FUN_005006c0() {
+    // TODO: Incomplete.
+}
+
+// 0x5007F0
+void FUN_005007f0() {
+    // TODO: Incomplete.
+}
+
+// 0x500960
+void FUN_00500960() {
+    // TODO: Incomplete.
+}
+
+// 0x500BB0
+void FUN_00500bb0() {
+    // TODO: Incomplete.
+}
+
+// 0x500CE0
+void FUN_00500ce0() {
+    // TODO: Incomplete.
+}
+
+// 0x500E10
+void FUN_00500e10() {
+    // TODO: Incomplete.
+}
+
+// 0x501420
+void FUN_00501420() {
+    // TODO: Incomplete.
+}
+
+// 0x5017E0
+void FUN_005017e0() {
+    // TODO: Incomplete.
+}
+
+// 0x501FE0
+void FUN_00501fe0() {
+    // TODO: Incomplete.
+}
+
+// 0x502570
+void FUN_00502570() {
+    // TODO: Incomplete.
+}
+
+// 0x502D60
+void FUN_00502d60() {
+    // TODO: Incomplete.
+}
+
+// 0x503AA0
+void FUN_00503aa0() {
+    // TODO: Incomplete.
+}
+
+// 0x503CB0
+void FUN_00503cb0() {
+    // TODO: Incomplete.
+}
+
+// 0x503E60
+void FUN_00503e60() {
+    // TODO: Incomplete.
+}
+
+// 0x504C80
+void FUN_00504c80() {
+    // TODO: Incomplete.
+}
+
+// 0x504CA0
+void FUN_00504ca0() {
+    // TODO: Incomplete.
+}
+
+// 0x505C00
+void FUN_00505c00() {
+    // TODO: Incomplete.
+}
+
+// 0x505DC0
+void FUN_00505dc0() {
+    // TODO: Incomplete.
+}
+
+// 0x506000
+void FUN_00506000() {
+    // TODO: Incomplete.
+}
+
+// 0x5061D0
+void FUN_005061d0() {
+    // TODO: Incomplete.
+}
+
+// 0x507050
+void FUN_00507050() {
+    // TODO: Incomplete.
+}
+
+// 0x5073C0
+void FUN_005073c0() {
+    // TODO: Incomplete.
+}
+
+// 0x507640
+void FUN_00507640() {
+    // TODO: Incomplete.
+}
+
+// 0x5079B0
+void FUN_005079b0() {
+    // TODO: Incomplete.
+}
+
+// 0x508320
+void FUN_00508320() {
+    // TODO: Incomplete.
+}
+
+// 0x5084C0
+void FUN_005084c0() {
+    // TODO: Incomplete.
+}
+
+// 0x5089E0
+void FUN_005089e0() {
+    // TODO: Incomplete.
+}
+
+// 0x508BA0
+void FUN_00508ba0() {
+    // TODO: Incomplete.
+}
+
+// 0x509100
+void FUN_00509100() {
+    // TODO: Incomplete.
+}
+
+// 0x509730
+void FUN_00509730() {
+    // TODO: Incomplete.
+}
+
+// 0x509B80
+void FUN_00509b80() {
+    // TODO: Incomplete.
+}
+
+// 0x509C40
+void FUN_00509c40() {
+    // TODO: Incomplete.
+}
+
+// 0x50A090
+void FUN_0050a090() {
+    // TODO: Incomplete.
+}
+
+// 0x50B600
+void FUN_0050b600() {
+    // TODO: Incomplete.
+}
+
+// 0x50B680
+void FUN_0050b680() {
+    // TODO: Incomplete.
+}
+
+// 0x50B9A0
+void FUN_0050b9a0() {
+    // TODO: Incomplete.
+}
+
+// 0x50BBC0
+void FUN_0050bbc0() {
+    // TODO: Incomplete.
+}
+
+// 0x50D290
+void FUN_0050d290() {
+    // TODO: Incomplete.
+}
+
+// 0x50D660
+void FUN_0050d660() {
+    // TODO: Incomplete.
+}
+
+// 0x50D6F0
+void FUN_0050d6f0() {
+    // TODO: Incomplete.
+}
+
+// 0x511640
+void FUN_00511640() {
+    // TODO: Incomplete.
+}
+
+// 0x5117F0
+void FUN_005117f0() {
+    // TODO: Incomplete.
+}
+
+// 0x511950
+void FUN_00511950() {
+    // TODO: Incomplete.
+}
+
+// 0x5119E0
+void FUN_005119e0() {
+    // TODO: Incomplete.
+}
+
+// 0x511BA0
+void FUN_00511ba0() {
+    // TODO: Incomplete.
+}
+
+// 0x511D00
+void FUN_00511d00() {
+    // TODO: Incomplete.
+}
+
+// 0x511F40
+void FUN_00511f40() {
+    // TODO: Incomplete.
+}
+
+// 0x512310
+void FUN_00512310() {
+    // TODO: Incomplete.
+}
+
+// 0x5124D0
+void FUN_005124d0() {
+    // TODO: Incomplete.
+}
+
+// 0x5125A0
+void FUN_005125a0() {
+    // TODO: Incomplete.
+}
+
+// 0x512950
+void FUN_00512950() {
+    // TODO: Incomplete.
+}
+
+// 0x5129D0
+void FUN_005129d0() {
+    // TODO: Incomplete.
+}
+
+// 0x512AC0
+void FUN_00512ac0() {
+    // TODO: Incomplete.
+}
+
+// 0x512C80
+void FUN_00512c80() {
+    // TODO: Incomplete.
+}
+
+// 0x512D50
+void FUN_00512d50() {
+    // TODO: Incomplete.
+}
+
+// 0x513100
+void FUN_00513100() {
+    // TODO: Incomplete.
+}
+
+// 0x513180
+void FUN_00513180() {
+    // TODO: Incomplete.
+}
+
+// 0x514040
+void FUN_00514040() {
+    // TODO: Incomplete.
+}
+
+// 0x5140D0
+void FUN_005140d0() {
+    // TODO: Incomplete.
+}
+
+// 0x514220
+void FUN_00514220() {
+    // TODO: Incomplete.
+}
+
+// 0x514360
+void FUN_00514360() {
+    // TODO: Incomplete.
+}
+
+// 0x5143D0
+void FUN_005143d0() {
+    // TODO: Incomplete.
+}
+
+// 0x514810
+void FUN_00514810() {
+    // TODO: Incomplete.
+}
+
+// 0x514F00
+void FUN_00514f00() {
+    // TODO: Incomplete.
+}
+
+// 0x514F60
+void FUN_00514f60() {
+    // TODO: Incomplete.
+}
+
+// 0x514FF0
+void FUN_00514ff0() {
+    // TODO: Incomplete.
+}
+
+// 0x515180
+void FUN_00515180() {
+    // TODO: Incomplete.
+}
+
+// 0x515210
+void FUN_00515210() {
+    // TODO: Incomplete.
+}
+
+// 0x5152C0
+void FUN_005152c0() {
+    // TODO: Incomplete.
+}
+
+// 0x515410
+void FUN_00515410() {
+    // TODO: Incomplete.
+}
+
+// 0x515430
+void FUN_00515430() {
+    // TODO: Incomplete.
+}
+
+// 0x515670
+void FUN_00515670() {
+    // TODO: Incomplete.
+}
+
+// 0x5157F0
+void FUN_005157f0() {
+    // TODO: Incomplete.
+}
+
+// 0x515BA0
+void FUN_00515ba0() {
+    // TODO: Incomplete.
+}
+
+// 0x515C50
+void FUN_00515c50() {
+    // TODO: Incomplete.
+}
+
+// 0x515CC0
+void FUN_00515cc0() {
+    // TODO: Incomplete.
+}
+
+// 0x516A80
+void FUN_00516a80() {
+    // TODO: Incomplete.
+}
+
+// 0x516B70
+void FUN_00516b70() {
+    // TODO: Incomplete.
+}
+

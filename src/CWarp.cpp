@@ -308,3 +308,10 @@ void CWarp::TimerUpdate()
 {
     // TODO: Incomplete.
 }
+
+// Phase 1-2: Scaffold functions
+// 0x7B5370
+void FUN_007b5370() {
+    // TODO: Incomplete.
+}
+

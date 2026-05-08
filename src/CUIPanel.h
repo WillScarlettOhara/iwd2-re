@@ -47,7 +47,7 @@ public:
     /* 0109 */ BOOLEAN m_bNeedMouseMove;
     /* 010A */ BOOL m_bInactiveRender;
     /* 010E */ BOOL m_bEnabled;
-    /* 0112 */ int field_112;
+    /* 0112 */ int nm_field_112;
     /* 0116 */ CRect m_rImeSuggestionsFrame;
     /* 0126 */ CVidFont* m_pImeSuggestionsFont;
 };

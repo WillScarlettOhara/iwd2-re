@@ -46,7 +46,7 @@ ITEM_EFFECT* CResSpell::GetAbilityEffect(int nAbility, int nEffect, int a4)
             if (nEffect >= 0 && nEffect < m_pAbilities[nAbility].effectCount) {
                 ITEM_EFFECT* pEffect = &(m_pEffects[m_pAbilities[nAbility].startingEffect + nEffect]);
                 if ((m_pHeader->itemFlags & 0x4000) != 0) {
-                    pEffect->duration = 7 * (m_pHeader->field_73 + a4 * m_pHeader->field_72);
+                    pEffect->duration = 7 * (m_pHeader->bfield_73 + a4 * m_pHeader->bfield_72);
                 }
                 return pEffect;
             }
@@ -130,3 +130,15 @@ BOOL CResSpell::Parse(void* pData)
 
     return m_bParsed;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x401A00
+void FUN_00401a00() {
+    // TODO: Incomplete.
+}
+
+// 0x401A20
+void FUN_00401a20() {
+    // TODO: Incomplete.
+}
+

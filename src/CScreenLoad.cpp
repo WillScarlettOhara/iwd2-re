@@ -243,10 +243,10 @@ void CScreenLoad::EngineDestroyed()
 // 0x63B590
 void CScreenLoad::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUILOAD"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUILOAD"), g_pBaldurChitin->nm_field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -539,8 +539,8 @@ void CScreenLoad::LoadGame(INT nSlot)
             }
         }
 
-        g_pBaldurChitin->field_4F38 = g_pBaldurChitin->cSoundMixer.GetSectionPlaying();
-        g_pBaldurChitin->field_4F3C = g_pBaldurChitin->cSoundMixer.GetMusicPosition();
+        g_pBaldurChitin->nm_field_4F38 = g_pBaldurChitin->cSoundMixer.GetSectionPlaying();
+        g_pBaldurChitin->nm_field_4F3C = g_pBaldurChitin->cSoundMixer.GetMusicPosition();
 
         CString sFileName(m_aGameSlots[nGameSlot]->m_sFileName);
         if (pGame->SaveGameExists(sFileName)) {
@@ -606,12 +606,12 @@ void CScreenLoad::LoadGame(INT nSlot)
 
                 if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
                     CScreenSinglePlayer* pSinglePlayer = g_pBaldurChitin->m_pEngineSinglePlayer;
-                    pSinglePlayer->field_45C = 1;
+                    pSinglePlayer->nm_field_45C = 1;
                     pSinglePlayer->StartSinglePlayer(1);
                     SelectEngine(pSinglePlayer);
                 } else {
                     CScreenMultiPlayer* pMultiPlayer = g_pBaldurChitin->m_pEngineMultiPlayer;
-                    pMultiPlayer->field_45C = 1;
+                    pMultiPlayer->nm_field_45C = 1;
                     pMultiPlayer->StartMultiPlayer(1);
                     SelectEngine(pMultiPlayer);
                 }
@@ -628,7 +628,7 @@ void CScreenLoad::LoadGame(INT nSlot)
 // 0x63C3E0
 void CScreenLoad::OnDeleteButtonClick(INT nSlot)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
     // __LINE__: 1097
@@ -949,7 +949,7 @@ void CScreenLoad::RefreshGameSlots()
 // 0x63D460
 BOOL CScreenLoad::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rClip)
 {
-    CVidBitmap vbScreenShot(CResRef(""), g_pBaldurChitin->field_4A28);
+    CVidBitmap vbScreenShot(CResRef(""), g_pBaldurChitin->nm_field_4A28);
 
     INT nGameSlot = nSlot + m_nTopGameSlot;
     if (nGameSlot >= m_nNumGameSlots) {
@@ -968,7 +968,7 @@ BOOL CScreenLoad::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rCl
         UTIL_ASSERT(bResult);
     } else {
         vbScreenShot.SetResRef(CResRef("ICEWIND2"), TRUE, TRUE);
-        vbScreenShot.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+        vbScreenShot.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
         bResult = vbScreenShot.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
@@ -982,7 +982,7 @@ BOOL CScreenLoad::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rCl
 // 0x63D720
 BOOL CScreenLoad::DrawPortrait(USHORT nPortrait, INT nSlot, const CRect& rArea, const CRect& rClip)
 {
-    CVidBitmap vbPortrait(CResRef(""), g_pBaldurChitin->field_4A28);
+    CVidBitmap vbPortrait(CResRef(""), g_pBaldurChitin->nm_field_4A28);
 
     INT nGameSlot = nSlot + m_nTopGameSlot;
     if (nGameSlot >= m_nNumGameSlots) {
@@ -1097,7 +1097,7 @@ void CScreenLoad::EnableMainPanel(BOOL bEnable)
 
     pPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -1335,7 +1335,7 @@ void CScreenLoad::sub_63E150(CUIPanel* pPanel)
 // 0x63E2C0
 void CScreenLoad::OnErrorButtonClick(INT nButton)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_dwErrorTextId) {
@@ -1368,7 +1368,7 @@ void CScreenLoad::OnErrorButtonClick(INT nButton)
 // 0x63E440
 void CScreenLoad::sub_63E440(INT nButton)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -1394,7 +1394,7 @@ void CScreenLoad::DeleteGame(INT nGameSlot)
 // 0x63E630
 void CScreenLoad::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -1517,7 +1517,7 @@ BOOL CUIControlButtonLoadScreenShot::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1579,7 +1579,7 @@ BOOL CUIControlButtonLoadPortrait::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1730,7 +1730,7 @@ void CUIControlScrollBarLoadGames::OnScroll()
     // __LINE__: 3020
     UTIL_ASSERT(pLoad != NULL);
 
-    pLoad->m_nTopGameSlot = max(pLoad->m_nNumGameSlots - GAME_SLOTS, 0) * field_144 / field_142;
+    pLoad->m_nTopGameSlot = max(pLoad->m_nNumGameSlots - GAME_SLOTS, 0) * wm_field_144 / wm_m_field_142;
 
     // NOTE: Uninline.
     UpdateMainPanel();
@@ -1774,7 +1774,7 @@ void CUIControlButtonLoadError::OnLButtonClick(CPoint pt)
     // __LINE__: 3105
     UTIL_ASSERT(pLoad != NULL);
 
-    CSingleLock renderLock(&(pLoad->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pLoad->GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = pLoad->GetTopPopup();
@@ -1783,7 +1783,7 @@ void CUIControlButtonLoadError::OnLButtonClick(CPoint pt)
         case 1:
             // NOTE: Inlining.
             if (1) {
-                CSingleLock renderLock(&(pLoad->m_cUIManager.field_36), FALSE);
+                CSingleLock renderLock(&(pLoad->m_cUIManager.pm_field_36), FALSE);
                 renderLock.Lock(INFINITE);
                 pLoad->DismissPopup();
                 renderLock.Unlock();
@@ -1799,3 +1799,40 @@ void CUIControlButtonLoadError::OnLButtonClick(CPoint pt)
 
     renderLock.Unlock();
 }
+
+// Phase 1-2: Scaffold functions
+// 0x63B350
+void FUN_0063b350() {
+    // TODO: Incomplete.
+}
+
+// 0x63E790
+void FUN_0063e790() {
+    // TODO: Incomplete.
+}
+
+// 0x63E960
+void FUN_0063e960() {
+    // TODO: Incomplete.
+}
+
+// 0x63EB30
+void FUN_0063eb30() {
+    // TODO: Incomplete.
+}
+
+// 0x63EC60
+void FUN_0063ec60() {
+    // TODO: Incomplete.
+}
+
+// 0x63EF00
+void FUN_0063ef00() {
+    // TODO: Incomplete.
+}
+
+// 0x63F700
+void FUN_0063f700() {
+    // TODO: Incomplete.
+}
+

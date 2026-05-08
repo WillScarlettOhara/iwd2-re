@@ -775,3 +775,40 @@ LONG* CPathSearch::GetPath(SHORT* nSteps)
 
     return path;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x51C310
+void FUN_0051c310() {
+    // TODO: Incomplete.
+}
+
+// 0x51C330
+void FUN_0051c330() {
+    // TODO: Incomplete.
+}
+
+// 0x51C3D0
+void FUN_0051c3d0() {
+    // TODO: Incomplete.
+}
+
+// 0x51CE50
+void FUN_0051ce50() {
+    // TODO: Incomplete.
+}
+
+// 0x51D480
+void FUN_0051d480() {
+    // TODO: Incomplete.
+}
+
+// 0x51DE20
+void FUN_0051de20() {
+    // TODO: Incomplete.
+}
+
+// 0x51E8B0
+void FUN_0051e8b0() {
+    // TODO: Incomplete.
+}
+

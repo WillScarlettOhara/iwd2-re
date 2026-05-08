@@ -199,3 +199,15 @@ void CGameStatsSprite::SetWeaponStats(BYTE index, BYTE* name, SHORT count)
     m_pWeaponStats[index].m_cResRef = name;
     m_pWeaponStats[index].m_nTimesUsed = count;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4CAEA0
+void FUN_004caea0() {
+    // TODO: Incomplete.
+}
+
+// 0x6F2CC0
+void FUN_006f2cc0() {
+    // TODO: Incomplete.
+}
+

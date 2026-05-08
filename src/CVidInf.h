@@ -88,13 +88,13 @@ public:
 
     /* 00F4 */ DDSURFACEDESC m_SurfaceDesc;
     /* 0160 */ CRect m_rLockedRect;
-    /* 0170 */ int field_170;
-    /* 0174 */ int field_174;
-    /* 0178 */ CVidFont field_178;
+    /* 0170 */ int nm_field_170;
+    /* 0174 */ int nm_field_174;
+    /* 0178 */ CVidFont pm_field_178;
     /* 0678 */ IDirectDrawSurface** m_pVRamSurfaces;
     /* 067C */ int m_nVRamSurfaces;
-    /* 0680 */ CVidBitmap field_680;
-    /* 073A */ CString field_73A;
+    /* 0680 */ CVidBitmap pfield_680;
+    /* 073A */ CString sfield_73A;
 };
 
 #endif /* CVIDINF_H_ */

@@ -61,11 +61,11 @@ public:
 
     static BYTE m_tSqrtTable[10001];
 
-    /* 0000 */ int field_0;
+    /* 0000 */ int nm_field_0;
     /* 0004 */ IDirectSound* m_pDirectSound; // #guess
     /* 0008 */ IDirectSoundBuffer* m_pPrimarySoundBuffer; // #guess
     /* 003C */ BOOL m_bMixerInitialized;
-    /* 0040 */ int field_40;
+    /* 0040 */ int nm_field_40;
     /* 0044 */ BOOL m_bInLoopingUpdate;
     /* 0048 */ BOOL m_bInPositionUpdate;
     /* 004C */ BOOL m_bInReleaseAll; // #guess
@@ -75,12 +75,12 @@ public:
     /* 0084 */ CObList m_lVoices;
     /* 00A0 */ CObList m_lWaiting; // #guess
     /* 00BC */ HWND m_hWnd;
-    /* 00C0 */ int field_C0;
-    /* 00C4 */ int field_C4;
-    /* 00C8 */ int field_C8;
-    /* 00CC */ int field_CC;
-    /* 00D0 */ int field_D0;
-    /* 00D4 */ int field_D4;
+    /* 00C0 */ int nfield_C0;
+    /* 00C4 */ int nfield_C4;
+    /* 00C8 */ int nfield_C8;
+    /* 00CC */ int nfield_CC;
+    /* 00D0 */ int nfield_D0;
+    /* 00D4 */ int nfield_D4;
     /* 00D8 */ int m_nMaxChannels;
     /* 00DC */ int m_nMaxVoices;
     /* 00E0 */ int m_nPanRange;
@@ -88,9 +88,9 @@ public:
     /* 00E8 */ int m_nYCoordinate;
     /* 00EC */ int m_nZCoordinate;
     /* 00F0 */ DWORD m_nActiveArea;
-    /* 00F4 */ int field_F4;
-    /* 00F8 */ int field_F8;
-    /* 00FC */ int field_FC;
+    /* 00F4 */ int nfield_F4;
+    /* 00F8 */ int nfield_F8;
+    /* 00FC */ int nfield_FC;
     /* 0100 */ CDWordArray m_aMusicSlots;
     /* 0114 */ CString m_sMusicPath; // #guess
     /* 0118 */ BOOL m_bMusicInitialized;
@@ -100,8 +100,8 @@ public:
     /* 0128 */ CSoundProperties m_cSoundProperties; // #guess
     /* 013C */ IDirectSound3DListener* m_pDirectSound3DListener; // #guess
     /* 0140 */ DWORD m_dwEAXProperties;
-    /* 0144 */ CUnknown2 field_144;
-    /* 0178 */ int field_178;
+    /* 0144 */ CUnknown2 pm_field_144;
+    /* 0178 */ int nm_field_178;
 };
 
 #endif /* CSOUNDMIXER_H_ */

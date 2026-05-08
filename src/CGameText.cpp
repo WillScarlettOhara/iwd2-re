@@ -30,7 +30,7 @@ CGameText::CGameText(CGameArea* pArea, const CPoint& pt, BYTE nDuration, BYTE nB
     if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE) == CGameObjectArray::SUCCESS) {
         AddToArea(pArea, pt, 0, LIST_FLIGHT);
         SetText(pt, nDuration, nBeginFade, sText);
-        field_1C = 0;
+        nm_field_1C = 0;
     } else {
         // FIXME: Doesn't look cool.
         delete this;
@@ -147,23 +147,45 @@ CGameText::~CGameText()
         delete m_szLine;
     }
 
-    if (field_1C != 0) {
+    if (nm_field_1C != 0) {
         CGameObject* pObject;
 
         BYTE rc;
         do {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(field_1C,
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(nm_field_1C,
                 CGameObjectArray::THREAD_ASYNCH,
                 &pObject,
                 INFINITE);
         } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
         if (rc == CGameObjectArray::SUCCESS) {
-            pObject->field_1C = 0;
+            pObject->nm_field_1C = 0;
 
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(field_1C,
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(nm_field_1C,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
         }
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4CB490
+void FUN_004cb490() {
+    // TODO: Incomplete.
+}
+
+// 0x4CB820
+void FUN_004cb820() {
+    // TODO: Incomplete.
+}
+
+// 0x4CB9B0
+void FUN_004cb9b0() {
+    // TODO: Incomplete.
+}
+
+// 0x4CBB20
+void FUN_004cbb20() {
+    // TODO: Incomplete.
+}
+

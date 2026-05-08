@@ -55,16 +55,16 @@ BOOLEAN CScreenConnection::byte_8F376C;
 // 0x5F9BB0
 CScreenConnection::CScreenConnection()
 {
-    field_106 = 0;
+    pm_m_field_106 = 0;
     m_nSerialPort = 0;
     m_nSerialBaudRate = 0;
     m_dwLastSessionRefresh = 0;
     m_nErrorState = 0;
     m_nNumErrorButtons = 0;
     m_bAllowInput = FALSE;
-    field_FB0 = 0;
-    field_FA8 = 1;
-    field_FA6 = 0;
+    nfield_FB0 = 0;
+    nfield_FA8 = 1;
+    bfield_FA6 = 0;
     m_bIsNight = FALSE;
 
     SetVideoMode(0);
@@ -171,7 +171,7 @@ CScreenConnection::CScreenConnection()
     m_strErrorText = -1;
     m_strErrorButtonText[0] = -1;
     m_strErrorButtonText[1] = -1;
-    field_496 = 0;
+    bm_field_496 = 0;
     m_bEliminateInitialize = FALSE;
     m_nEnumServiceProvidersCountDown = -1;
     m_bDirectPlayLobby = FALSE;
@@ -188,9 +188,9 @@ CScreenConnection::CScreenConnection()
     m_nJoinErrorCode = CNetwork::ERROR_NONE;
     m_bJoinReturnValue = FALSE;
     m_bExitProgram = FALSE;
-    field_FAC = 1;
-    field_FB4 = 1;
-    field_FB8 = 0;
+    nfield_FAC = 1;
+    nfield_FB4 = 1;
+    nfield_FB8 = 0;
     m_bPlayEndCredits = FALSE;
 }
 
@@ -286,7 +286,7 @@ CScreenConnection::~CScreenConnection()
 // 0x5FA9B0
 void CScreenConnection::EngineActivated()
 {
-    g_pBaldurChitin->GetObjectGame()->field_366E = 0;
+    g_pBaldurChitin->GetObjectGame()->nm_field_366E = 0;
 
     m_preLoadFontRealms.SetResRef(CResRef("REALMS"), FALSE, TRUE);
     m_preLoadFontRealms.RegisterFont();
@@ -295,9 +295,9 @@ void CScreenConnection::EngineActivated()
     m_preLoadFontStnSml.RegisterFont();
 
     // NOTE: Uninline.
-    m_vcTorch.SetResRef(CResRef("MMTRCHB"), g_pBaldurChitin->field_4A28, TRUE, TRUE);
+    m_vcTorch.SetResRef(CResRef("MMTRCHB"), g_pBaldurChitin->nm_field_4A28, TRUE, TRUE);
 
-    if (field_FA8) {
+    if (nfield_FA8) {
         DWORD dwSectorsPerCluster;
         DWORD dwBytesPerSector;
         DWORD dwNumberOfFreeClusters;
@@ -309,7 +309,7 @@ void CScreenConnection::EngineActivated()
                 g_pBaldurChitin->m_dwCloseConfirmationStrId = 10248;
                 g_pBaldurChitin->m_dwCloseConfirmationFlags = 0x10;
                 PostMessageA(g_pBaldurChitin->cWnd.GetSafeHwnd(), WM_CLOSE, 0, 0);
-                field_FA8 = FALSE;
+                nfield_FA8 = FALSE;
                 return;
             }
         }
@@ -322,7 +322,7 @@ void CScreenConnection::EngineActivated()
     if (!m_bStartedCountDown && m_nEnumServiceProvidersCountDown == 2) {
         m_bStartedCountDown = TRUE;
 
-        CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock lock(&(m_cUIManager.pm_field_36), FALSE);
         lock.Lock(INFINITE);
 
         if (byte_8B3340) {
@@ -389,10 +389,10 @@ void CScreenConnection::EngineDeactivated()
 // 0x5FADD0
 void CScreenConnection::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUICONN"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUICONN"), g_pBaldurChitin->nm_field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -454,7 +454,7 @@ void CScreenConnection::RenderTorch()
 
     CPoint pt(106, 383);
 
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x *= 2;
         pt.y *= 2;
     }
@@ -501,10 +501,10 @@ void CScreenConnection::OnKeyDown(SHORT nKeysFlags)
                 break;
             case VK_RETURN:
                 if (GetTopPopup() != NULL) {
-                    if (g_pBaldurChitin->field_1A0) {
+                    if (g_pBaldurChitin->nm_field_1A0) {
                         // FIXME: Unused.
                         g_pChitin->GetWnd();
-                        if (g_pBaldurChitin->cImm.field_128) {
+                        if (g_pBaldurChitin->cImm.nm_field_128) {
                             m_cUIManager.OnKeyDown(VK_RETURN);
                         } else {
                             OnDoneButtonClick();
@@ -603,14 +603,14 @@ void CScreenConnection::TimerAsynchronousUpdate()
         m_bPlayEndCredits = FALSE;
     }
 
-    if (field_FA8) {
+    if (nfield_FA8) {
         // TODO: Incomplete (detecting/switching CD).
 
         srand(static_cast<unsigned int>(time(NULL)));
         rand();
 
-        field_FA8 = FALSE;
-        field_FA6 = TRUE;
+        nfield_FA8 = FALSE;
+        bfield_FA6 = TRUE;
 
         UpdateMainPanel();
         m_cUIManager.InvalidateRect(NULL);
@@ -673,7 +673,7 @@ void CScreenConnection::TimerAsynchronousUpdate()
     }
 
     if (m_nEnumServiceProvidersCountDown == 0) {
-        CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock lock(&(m_cUIManager.pm_field_36), FALSE);
         lock.Lock(INFINITE);
         if (!byte_8F376C) {
             DismissPopup();
@@ -691,8 +691,8 @@ void CScreenConnection::TimerAsynchronousUpdate()
             AutoSelectServiceProvider();
             UpdateMainPanel();
         } else {
-            if (g_pBaldurChitin->field_110) {
-                if (g_pChitin->field_131) {
+            if (g_pBaldurChitin->nm_field_110) {
+                if (g_pChitin->bm_field_131) {
                     WritePrivateProfileStringA("GameSpy",
                         "Location",
                         g_pChitin->GetStartUpGameSpyLocation(),
@@ -706,7 +706,7 @@ void CScreenConnection::TimerAsynchronousUpdate()
                 g_pBaldurChitin->m_bIsAutoStarting = FALSE;
                 m_bAllowInput = TRUE;
             } else {
-                if (g_pBaldurChitin->m_bStartUpConnect || g_pBaldurChitin->field_130) {
+                if (g_pBaldurChitin->m_bStartUpConnect || g_pBaldurChitin->sm_field_130) {
                     if (g_pBaldurChitin->m_bStartUpConnect) {
                         AutoStartConnect();
                     }
@@ -776,8 +776,8 @@ void CScreenConnection::TimerAsynchronousUpdate()
             }
         }
 
-        if (field_FA6) {
-            field_FA6 = FALSE;
+        if (bfield_FA6) {
+            bfield_FA6 = FALSE;
             g_pBaldurChitin->GetObjectCursor()->SetCursor(0, TRUE);
             g_pBaldurChitin->GetObjectCursor()->m_bVisible = TRUE;
         }
@@ -1082,11 +1082,11 @@ void CScreenConnection::DismissPopup()
         UpdateMainPanel();
     }
 
-    if (g_pBaldurChitin->field_1A0) {
+    if (g_pBaldurChitin->nm_field_1A0) {
         // FIXME: Unused.
         g_pChitin->GetWnd();
 
-        if (g_pBaldurChitin->cImm.field_128) {
+        if (g_pBaldurChitin->cImm.nm_field_128) {
             g_pBaldurChitin->cImm.sub_7C2E10(g_pChitin->GetWnd()->GetSafeHwnd());
         }
     }
@@ -1100,7 +1100,7 @@ void CScreenConnection::OnLoadGameButtonClick(BOOL bQuick)
     CString sPassword;
     CString sPlayerName;
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = m_cUIManager.GetPanel(6);
@@ -1209,7 +1209,7 @@ void CScreenConnection::OnLoadGameButtonClick(BOOL bQuick)
         if (pNetwork->HostNewSession()) {
             INT nErrorCode;
             if (pNetwork->CreatePlayer(nErrorCode)) {
-                CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+                CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
                 renderLock.Lock(INFINITE);
 
                 if (m_nProtocol != 0) {
@@ -1310,7 +1310,7 @@ void CScreenConnection::OnNewGameButtonClick()
     CString sSessionPassword;
     CString sPlayerName;
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = m_cUIManager.GetPanel(6);
@@ -1421,7 +1421,7 @@ void CScreenConnection::OnNewGameButtonClick()
         if (pNetwork->HostNewSession()) {
             INT nErrorCode;
             if (pNetwork->CreatePlayer(nErrorCode)) {
-                CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+                CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
                 renderLock.Lock(INFINITE);
 
                 if (m_nProtocol != 0) {
@@ -1453,12 +1453,12 @@ void CScreenConnection::OnNewGameButtonClick()
 
                 if (g_pChitin->cNetwork.m_nServiceProvider == CNetwork::SERV_PROV_NULL) {
                     CScreenSinglePlayer* pSinglePlayer = g_pBaldurChitin->m_pEngineSinglePlayer;
-                    pSinglePlayer->field_45C = 1;
+                    pSinglePlayer->nm_field_45C = 1;
                     pSinglePlayer->StartSinglePlayer(1);
                     SelectEngine(pSinglePlayer);
                 } else {
                     CScreenMultiPlayer* pMultiPlayer = g_pBaldurChitin->m_pEngineMultiPlayer;
-                    pMultiPlayer->field_45C = 1;
+                    pMultiPlayer->nm_field_45C = 1;
                     pMultiPlayer->StartMultiPlayer(1);
                     SelectEngine(pMultiPlayer);
                 }
@@ -1593,7 +1593,7 @@ void CScreenConnection::OnDoneButtonClick()
     CString sAddress;
     CString sPhoneNumber;
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
 
     CMultiplayerSettings* pSettings = g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings();
 
@@ -1871,12 +1871,12 @@ void CScreenConnection::OnDoneButtonClick()
 
             if (pNetwork->GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
                 CScreenSinglePlayer* pSinglePlayer = g_pBaldurChitin->m_pEngineSinglePlayer;
-                pSinglePlayer->field_45C = 1;
+                pSinglePlayer->nm_field_45C = 1;
                 pSinglePlayer->StartSinglePlayer(1);
                 SelectEngine(pSinglePlayer);
             } else {
                 CScreenMultiPlayer* pMultiPlayer = g_pBaldurChitin->m_pEngineMultiPlayer;
-                pMultiPlayer->field_45C = 1;
+                pMultiPlayer->nm_field_45C = 1;
                 pMultiPlayer->StartMultiPlayer(1);
                 SelectEngine(pMultiPlayer);
             }
@@ -1966,49 +1966,49 @@ void CScreenConnection::OnDoneButtonClick()
         CScreenConnection* pConnection = g_pBaldurChitin->m_pEngineConnection;
 
         if (pConnection->m_nProtocol == 0) {
-            switch (field_FB4) {
+            switch (nfield_FB4) {
             case 1:
-                pConnection->field_106 = 0;
+                pConnection->pm_m_field_106 = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
-                g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
+                g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
                 pConnection->OnNewGameButtonClick();
                 break;
             case 2:
-                pConnection->field_106 = 0;
+                pConnection->pm_m_field_106 = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = TRUE;
                 DismissPopup();
                 SummonPopup(25);
                 break;
             case 3:
-                pConnection->field_106 = 1;
+                pConnection->pm_m_field_106 = 1;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
-                g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
+                g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
                 OnLoadGameButtonClick(FALSE);
                 break;
             }
         } else {
-            CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
+            CSingleLock renderLock(&(pConnection->GetManager()->pm_field_36), FALSE);
             renderLock.Lock(INFINITE);
 
-            switch (field_FB4) {
+            switch (nfield_FB4) {
             case 1:
-                pConnection->field_106 = 0;
+                pConnection->pm_m_field_106 = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
-                g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
+                g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
                 DismissPopup();
                 SummonPopup(6);
                 break;
             case 2:
-                pConnection->field_106 = 0;
+                pConnection->pm_m_field_106 = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = TRUE;
-                g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
+                g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
                 DismissPopup();
                 SummonPopup(6);
                 break;
             case 3:
-                pConnection->field_106 = 1;
+                pConnection->pm_m_field_106 = 1;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
-                g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
+                g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
                 DismissPopup();
                 SummonPopup(6);
                 break;
@@ -2025,7 +2025,7 @@ void CScreenConnection::OnCancelButtonClick()
     if (GetTopPopup() != NULL) {
         CUIPanel* pPanel = m_lPopupStack.GetTail();
 
-        CSingleLock lock(&(GetManager()->field_36), 0);
+        CSingleLock lock(&(GetManager()->pm_field_36), 0);
         lock.Lock(INFINITE);
 
         switch (pPanel->m_nID) {
@@ -2056,7 +2056,7 @@ void CScreenConnection::OnCancelButtonClick()
 // 0x5FEA60
 void CScreenConnection::OnJoinGameButtonClick()
 {
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     CNetwork* pNetwork = &(g_pBaldurChitin->cNetwork);
@@ -2102,12 +2102,12 @@ void CScreenConnection::sub_5FEB70()
     pNetwork->GetServiceProviderType(nServiceProvider, nServiceProviderType);
 
     if (nServiceProviderType == CNetwork::SERV_PROV_IPX) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
         SummonPopup(11);
         renderLock.Unlock();
     } else if (nServiceProviderType == CNetwork::SERV_PROV_TCP_IP) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
         SummonPopup(5);
         renderLock.Unlock();
@@ -2125,7 +2125,7 @@ void CScreenConnection::sub_5FEB70()
             OnJoinGameButtonClick();
         }
     } else if (nServiceProviderType == CNetwork::SERV_PROV_MODEM) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
         SummonPopup(12);
         renderLock.Unlock();
@@ -2147,7 +2147,7 @@ void CScreenConnection::EnableMainPanel(BOOL bEnable)
 
     pPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -2175,13 +2175,13 @@ void CScreenConnection::UpdateMainPanel()
     CTime time = CTime::GetCurrentTime();
     if (time.GetHour() > 6 && time.GetHour() < 18) {
         if (pPanel->m_mosBackground.GetResRef() == "STARTN") {
-            pPanel->SetBackgroundResRef(CResRef("START"), g_pBaldurChitin->field_4A28);
+            pPanel->SetBackgroundResRef(CResRef("START"), g_pBaldurChitin->nm_field_4A28);
             m_bIsNight = FALSE;
             m_vcTorch.FrameSet(0);
         }
     } else {
         if (pPanel->m_mosBackground.GetResRef() == "START") {
-            pPanel->SetBackgroundResRef(CResRef("STARTN"), g_pBaldurChitin->field_4A28);
+            pPanel->SetBackgroundResRef(CResRef("STARTN"), g_pBaldurChitin->nm_field_4A28);
             m_bIsNight = TRUE;
             m_vcTorch.FrameSet(0);
         }
@@ -2232,7 +2232,7 @@ void CScreenConnection::UpdateMainPanel()
         pButton->SetEnabled(FALSE);
     }
 
-    if (g_pChitin->field_110) {
+    if (g_pChitin->nm_field_110) {
         pButton = static_cast<CUIControlButton*>(pPanel->GetControl(0));
         pButton->SetEnabled(FALSE);
 
@@ -2263,7 +2263,7 @@ void CScreenConnection::UpdateMainPanel()
 
     pButton->SetEnabled(g_pChitin->cNetwork.m_bServiceProviderEnumerated && !g_pChitin->m_bStartUpConnect);
 
-    if (nServiceProviderType != CNetwork::SERV_PROV_NULL && !g_pChitin->field_110) {
+    if (nServiceProviderType != CNetwork::SERV_PROV_NULL && !g_pChitin->nm_field_110) {
         pButton = static_cast<CUIControlButton*>(pPanel->GetControl(11));
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenConnection.cpp
@@ -2291,7 +2291,7 @@ void CScreenConnection::UpdateSessionList(CUIPanel* pPanel, DWORD nTextId)
     // __LINE__: 3973
     UTIL_ASSERT(pText != NULL);
 
-    int v1 = pText->field_5A;
+    int v1 = pText->bfield_5A;
 
     pText->RemoveAll();
     pText->m_rgbHighlightColor = CBaldurChitin::TEXTDISPLAY_COLOR_HIGHLIGHT;
@@ -2329,7 +2329,7 @@ void CScreenConnection::UpdateSessionList(CUIPanel* pPanel, DWORD nTextId)
             TRUE);
     }
 
-    INT nNewIndex = max(min(v1, pText->m_plstStrings->GetCount() - pText->field_A6A), 0);
+    INT nNewIndex = max(min(v1, pText->m_plstStrings->GetCount() - pText->wfield_A6C), 0);
     pText->SetTopString(pText->m_plstStrings->FindIndex(nNewIndex));
 }
 
@@ -2768,7 +2768,7 @@ void CScreenConnection::UpdateMissionPackPanel()
     pButton3->SetEnabled(TRUE);
 
     DWORD dwSelectedButtonID;
-    switch (field_FB4) {
+    switch (nfield_FB4) {
     case 1:
         UpdateHelp(pPanel->m_nID, 3, 24870);
         dwSelectedButtonID = 4;
@@ -3109,7 +3109,7 @@ void CScreenConnection::ResetMissionPackPanel()
     UTIL_ASSERT(pPanel != NULL);
 
     m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(7));
-    field_FB4 = 1;
+    nfield_FB4 = 1;
 }
 
 // 0x600600
@@ -3134,7 +3134,7 @@ void CScreenConnection::ResetImportPanel()
 
         hFindFile = FindFirstFileA(sPath, &findFileData);
         if (hFindFile != INVALID_HANDLE_VALUE) {
-            field_FB8 = 1;
+            nfield_FB8 = 1;
             UpdateHelp(pPanel->m_nID, 0, 26318);
 
             // FIXME: Leaking `hFindFile`.
@@ -3142,7 +3142,7 @@ void CScreenConnection::ResetImportPanel()
         }
     }
 
-    field_FB8 = 0;
+    nfield_FB8 = 0;
     UpdateHelp(pPanel->m_nID, 0, 26317);
 }
 
@@ -3178,7 +3178,7 @@ void CScreenConnection::OnErrorButtonClick(INT nButton)
     // __LINE__: 5414
     UTIL_ASSERT(0 <= nButton && nButton < CSCREENCONNECTION_ERROR_BUTTONS);
 
-    CSingleLock lock(&(GetManager()->field_36), FALSE);
+    CSingleLock lock(&(GetManager()->pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -3277,7 +3277,7 @@ void CScreenConnection::HandleEMEvent(BYTE nEvent, BYTE nEventStage)
     INT nErrorCode;
     INT nCharacterSlot;
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
 
     switch (nEvent) {
     case 0:
@@ -3406,12 +3406,12 @@ void CScreenConnection::HandleEMEvent(BYTE nEvent, BYTE nEventStage)
 
                     if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
                         CScreenSinglePlayer* pSinglePlayer = g_pBaldurChitin->m_pEngineSinglePlayer;
-                        pSinglePlayer->field_45C = 1;
+                        pSinglePlayer->nm_field_45C = 1;
                         pSinglePlayer->StartSinglePlayer(1);
                         SelectEngine(pSinglePlayer);
                     } else {
                         CScreenMultiPlayer* pMultiPlayer = g_pBaldurChitin->m_pEngineMultiPlayer;
-                        pMultiPlayer->field_45C = 1;
+                        pMultiPlayer->nm_field_45C = 1;
                         pMultiPlayer->StartMultiPlayer(1);
                         SelectEngine(pMultiPlayer);
                     }
@@ -3450,7 +3450,7 @@ void CScreenConnection::HandleEMEvent(BYTE nEvent, BYTE nEventStage)
                     m_bEnumeratingAsynchronous = FALSE;
                 }
 
-                if (g_pChitin->cGameSpy.field_0 == 1) {
+                if (g_pChitin->cGameSpy.bm_field_0 == 1) {
                     // TODO: Incomplete.
                 }
 
@@ -3509,7 +3509,7 @@ void CScreenConnection::HandleEMEvent(BYTE nEvent, BYTE nEventStage)
 // 0x6014A0
 void CScreenConnection::HandleJoinCompletion(BYTE nEvent)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
 
     if (nEvent == 8) {
         renderLock.Lock(INFINITE);
@@ -3622,7 +3622,7 @@ BOOL CScreenConnection::AutoStartInitialize()
         }
     }
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     m_nErrorState = 6;
@@ -3643,7 +3643,7 @@ void CScreenConnection::AutoStartConnect()
     if (AutoStartInitialize()) {
         g_pBaldurChitin->m_bIsAutoStarting = FALSE;
 
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         CString sStartUpAddress = g_pBaldurChitin->GetStartUpAddress();
@@ -3692,7 +3692,7 @@ void CScreenConnection::AutoStartConnect()
 void CScreenConnection::AutoStartDirectPlayLobby()
 {
     if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         SummonPopup(21);
@@ -3700,7 +3700,7 @@ void CScreenConnection::AutoStartDirectPlayLobby()
 
         renderLock.Unlock();
     } else {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         m_nErrorState = 4;
@@ -3724,7 +3724,7 @@ void CScreenConnection::AutoStartDirectPlayLobby()
 
         g_pBaldurChitin->GetObjectGame()->NewGame(TRUE, FALSE);
 
-        g_pBaldurChitin->m_pEngineMultiPlayer->field_45C = 1;
+        g_pBaldurChitin->m_pEngineMultiPlayer->nm_field_45C = 1;
         g_pBaldurChitin->m_pEngineMultiPlayer->StartMultiPlayer(1);
         SelectEngine(g_pBaldurChitin->m_pEngineMultiPlayer);
     }
@@ -3740,7 +3740,7 @@ void CScreenConnection::AutoSelectServiceProvider()
     CNetwork* pNetwork = &(g_pBaldurChitin->cNetwork);
     CString sLastProtocolUsed;
 
-    if (g_pChitin->field_110 || g_pChitin->m_bStartUpConnect) {
+    if (g_pChitin->nm_field_110 || g_pChitin->m_bStartUpConnect) {
         sLastProtocolUsed = "2";
     } else {
         GetPrivateProfileStringA("Multiplayer",
@@ -3886,7 +3886,7 @@ void CScreenConnection::OnLobbyNewGameButtonClick()
 {
     CMultiplayerSettings* pSettings = g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings();
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -3914,11 +3914,11 @@ void CScreenConnection::OnLobbyNewGameButtonClick()
     g_pBaldurChitin->GetObjectGame()->LoadMultiPlayerPermissions();
 
     if (g_pBaldurChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
-        g_pBaldurChitin->m_pEngineSinglePlayer->field_45C = 1;
+        g_pBaldurChitin->m_pEngineSinglePlayer->nm_field_45C = 1;
         g_pBaldurChitin->m_pEngineSinglePlayer->StartSinglePlayer(1);
         SelectEngine(g_pBaldurChitin->m_pEngineSinglePlayer);
     } else {
-        g_pBaldurChitin->m_pEngineMultiPlayer->field_45C = 1;
+        g_pBaldurChitin->m_pEngineMultiPlayer->nm_field_45C = 1;
         g_pBaldurChitin->m_pEngineMultiPlayer->StartMultiPlayer(1);
         SelectEngine(g_pBaldurChitin->m_pEngineMultiPlayer);
     }
@@ -3931,7 +3931,7 @@ void CScreenConnection::OnLobbyLoadGameButtonClick()
 {
     CMultiplayerSettings* pSettings = g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings();
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -3962,7 +3962,7 @@ void CScreenConnection::OnLobbyLoadGameButtonClick()
 // 0x6024A0
 void CScreenConnection::OnLobbyExitButtonClick()
 {
-    CSingleLock lock(&(m_cUIManager.field_36));
+    CSingleLock lock(&(m_cUIManager.pm_field_36));
     lock.Lock();
     DismissPopup();
     lock.Unlock();
@@ -4014,7 +4014,7 @@ void CUIControlButtonConnectionGameMode::OnLButtonClick(CPoint pt)
     UTIL_ASSERT(pConnection != NULL);
 
     CUIManager* pManager = pConnection->GetManager();
-    CSingleLock lock(&(pManager->field_36), TRUE);
+    CSingleLock lock(&(pManager->pm_field_36), TRUE);
     pConnection->SummonPopup(1);
     lock.Unlock();
 }
@@ -4042,7 +4042,7 @@ void CUIControlButtonConnectionQuitGame::OnLButtonClick(CPoint pt)
     // __LINE__: 7237
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock lock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pConnection->GetManager()->pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     g_pBaldurChitin->cNetwork.UnselectSession();
@@ -4051,7 +4051,7 @@ void CUIControlButtonConnectionQuitGame::OnLButtonClick(CPoint pt)
     pConnection->m_bEliminateInitialize = TRUE;
 
     // NOTE: Obtaining same lock twice, likely some inlining.
-    CSingleLock sameLock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock sameLock(&(pConnection->GetManager()->pm_field_36), FALSE);
     sameLock.Lock(INFINITE);
     pConnection->m_nErrorState = 9;
     pConnection->m_strErrorText = 19532;
@@ -4104,13 +4104,13 @@ void CUIControlButtonConnectionNewGame::OnLButtonClick(CPoint pt)
         // __LINE__: 7330
         UTIL_ASSERT(pButton != NULL);
 
-        pConnection->field_106 = 0;
+        pConnection->pm_m_field_106 = 0;
 
         g_pBaldurChitin->GetTlkTable().Fetch(13728, strRes);
         pButton->SetText(strRes.szText);
 
         if (pConnection->m_nProtocol != 0) {
-            CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
+            CSingleLock renderLock(&(pConnection->GetManager()->pm_field_36), FALSE);
             renderLock.Lock(INFINITE);
             pConnection->SummonPopup(6);
             renderLock.Unlock();
@@ -4194,15 +4194,15 @@ void CUIControlButtonConnectionLoadGame::OnLButtonClick(CPoint pt)
         // __LINE__: 7520
         UTIL_ASSERT(pButton != NULL);
 
-        pConnection->field_106 = 1;
+        pConnection->pm_m_field_106 = 1;
 
         g_pBaldurChitin->GetTlkTable().Fetch(13729, strRes);
         pButton->SetText(strRes.szText);
 
-        pConnection->field_106 = m_nID == 7;
+        pConnection->pm_m_field_106 = m_nID == 7;
 
         if (pConnection->m_nProtocol != 0) {
-            CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
+            CSingleLock renderLock(&(pConnection->GetManager()->pm_field_36), FALSE);
             renderLock.Lock(INFINITE);
             pConnection->SummonPopup(6);
             renderLock.Unlock();
@@ -4249,7 +4249,7 @@ void CUIControlButtonConnectionJoinGame::OnLButtonClick(CPoint pt)
         pConnection->m_strErrorButtonText[0] = 11973;
         pConnection->SummonPopup(20);
     } else {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_36), TRUE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pm_field_36), TRUE);
         pConnection->m_nErrorState = 7;
         pConnection->m_strErrorText = 20624;
         pConnection->m_strErrorButtonText[0] = 20625;
@@ -4404,7 +4404,7 @@ void CUIControlButtonConnectionProtocolProtocol::OnLButtonClick(CPoint pt)
     // __LINE__: 7986
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock lock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pConnection->GetManager()->pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     switch (m_nID) {
@@ -4505,7 +4505,7 @@ void CUIControlButtonConnectionSerialPort::OnLButtonClick(CPoint pt)
     // __LINE__: 8263
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock lock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pConnection->GetManager()->pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     INT nPort;
@@ -4593,7 +4593,7 @@ void CUIControlButtonConnectionSerialBaudRate::OnLButtonClick(CPoint pt)
     // __LINE__: 8399
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock lock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pConnection->GetManager()->pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     INT nBaudRate;
@@ -4794,7 +4794,7 @@ void CUIControlButtonConnectionCreateGameNewGame::OnLButtonClick(CPoint pt)
     // __LINE__: 8691
     UTIL_ASSERT(pConnection != NULL);
 
-    if (pConnection->field_106) {
+    if (pConnection->pm_m_field_106) {
         pConnection->OnLoadGameButtonClick(FALSE);
     } else {
         pConnection->OnNewGameButtonClick();
@@ -4992,18 +4992,18 @@ void CUIControlButtonConnection6052A0::OnLButtonClick(CPoint pt)
     // __LINE__: 9106
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pConnection->GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nID) {
     case 4:
-        pConnection->field_FB4 = 1;
+        pConnection->nfield_FB4 = 1;
         break;
     case 5:
-        pConnection->field_FB4 = 2;
+        pConnection->nfield_FB4 = 2;
         break;
     case 6:
-        pConnection->field_FB4 = 3;
+        pConnection->nfield_FB4 = 3;
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenConnection.cpp
@@ -5056,22 +5056,22 @@ void CUIControlButtonConnection605570::OnLButtonClick(CPoint pt)
     // __LINE__: 9208
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pConnection->GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nID) {
     case 1:
-        if (pConnection->field_FB8) {
-            g_pBaldurChitin->GetObjectGame()->field_4BD6 = TRUE;
+        if (pConnection->nfield_FB8) {
+            g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = TRUE;
             pConnection->OnNewGameButtonClick();
         } else {
-            g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
+            g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
             pConnection->OnNewGameButtonClick();
         }
         break;
     case 2:
-        if (pConnection->field_FB8) {
-            g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
+        if (pConnection->nfield_FB8) {
+            g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
             pConnection->OnNewGameButtonClick();
         } else {
             pConnection->OnCancelButtonClick();
@@ -5097,7 +5097,7 @@ void CScreenConnection::ReadyEndCredits()
 // 0x605850
 void CScreenConnection::ShowSessionTerminatedMessage()
 {
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     if (g_pBaldurChitin->m_cBaldurMessage.m_bVersionControlShutdown) {
@@ -5168,3 +5168,120 @@ BOOL CScreenConnection::IsValidAddress(const CString& sAddress)
         && nByte3 >= 0 && nByte3 <= 255
         && nByte4 >= 0 && nByte4 <= 255;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x5F99A0
+void FUN_005f99a0() {
+    // TODO: Incomplete.
+}
+
+// 0x5F9A80
+void FUN_005f9a80() {
+    // TODO: Incomplete.
+}
+
+// 0x5F9AA0
+void FUN_005f9aa0() {
+    // TODO: Incomplete.
+}
+
+// 0x5FA8F0
+void FUN_005fa8f0() {
+    // TODO: Incomplete.
+}
+
+// 0x602660
+void FUN_00602660() {
+    // TODO: Incomplete.
+}
+
+// 0x6028A0
+void FUN_006028a0() {
+    // TODO: Incomplete.
+}
+
+// 0x602B60
+void FUN_00602b60() {
+    // TODO: Incomplete.
+}
+
+// 0x602EE0
+void FUN_00602ee0() {
+    // TODO: Incomplete.
+}
+
+// 0x6030B0
+void FUN_006030b0() {
+    // TODO: Incomplete.
+}
+
+// 0x603450
+void FUN_00603450() {
+    // TODO: Incomplete.
+}
+
+// 0x603820
+void FUN_00603820() {
+    // TODO: Incomplete.
+}
+
+// 0x6039F0
+void FUN_006039f0() {
+    // TODO: Incomplete.
+}
+
+// 0x603C70
+void FUN_00603c70() {
+    // TODO: Incomplete.
+}
+
+// 0x604030
+void FUN_00604030() {
+    // TODO: Incomplete.
+}
+
+// 0x604350
+void FUN_00604350() {
+    // TODO: Incomplete.
+}
+
+// 0x6047B0
+void FUN_006047b0() {
+    // TODO: Incomplete.
+}
+
+// 0x604B20
+void FUN_00604b20() {
+    // TODO: Incomplete.
+}
+
+// 0x604D00
+void FUN_00604d00() {
+    // TODO: Incomplete.
+}
+
+// 0x604FB0
+void FUN_00604fb0() {
+    // TODO: Incomplete.
+}
+
+// 0x605180
+void FUN_00605180() {
+    // TODO: Incomplete.
+}
+
+// 0x6053B0
+void FUN_006053b0() {
+    // TODO: Incomplete.
+}
+
+// 0x605660
+void FUN_00605660() {
+    // TODO: Incomplete.
+}
+
+// 0x638DB0
+void FUN_00638db0() {
+    // TODO: Incomplete.
+}
+

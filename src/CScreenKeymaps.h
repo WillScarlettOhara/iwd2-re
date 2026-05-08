@@ -77,7 +77,7 @@ public:
     /* 03E6 */ BYTE m_pVirtualKeysFlags[CSCREENKEYMAPS_VIRTUAL_KEYS];
     /* 0442 */ BOOL m_bSystemKeyShift;
     /* 0446 */ BOOL m_bSystemKeyCapsLock;
-    /* 044A */ int field_44A;
+    /* 044A */ int nm_field_44A;
     /* 044E */ CTypedPtrList<CPtrList, CUIPanel*> m_lPopupStack;
     /* 046A */ STRREF m_dwErrorTextId;
     /* 046E */ STRREF m_strErrorButtonText[3];

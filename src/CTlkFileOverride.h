@@ -29,10 +29,10 @@ public:
 class CTlkFileOverrideHeaderFileHeader {
 public:
     DWORD nFileType;
-    int field_4;
-    int field_8;
+    int sm_field_4;
+    int nm_field_8;
     DWORD nEntryCount;
-    int field_10;
+    int wm_field_10;
 };
 
 class CTlkFileOverrideHeaderEntry {
@@ -80,8 +80,8 @@ public:
     DWORD Add(const CString& sString);
     void CloseFiles();
 
-    /* 0000 */ CString field_0;
-    /* 0004 */ CString field_4;
+    /* 0000 */ CString sm_field_0;
+    /* 0004 */ CString sm_field_4;
     /* 0008 */ CTlkFileOverrideHeader m_header;
     /* 0036 */ CTlkFileOverrideText m_text;
 };

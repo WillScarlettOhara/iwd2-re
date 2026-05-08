@@ -12,7 +12,7 @@ struct CDimmKeyTableEntry {
     CResRef resRef;
     CRes* pRes;
     RESID nID;
-    short field_10;
+    short wm_field_10;
     USHORT nResType;
     int bUpdated;
 };
@@ -28,8 +28,8 @@ public:
         m_nResFiles = 0;
         m_nEntries = 0;
         m_pEntries = NULL;
-        field_1C = 0;
-        field_20 = 0;
+        nm_field_1C = 0;
+        nm_field_20 = 0;
     }
 
     BOOL AddKey(CResRef cResRef, USHORT nResType, RESID nID);
@@ -49,8 +49,8 @@ public:
     /* 0010 */ CDimmKeyTableEntry* m_pEntries; // #guess
     /* 0014 */ int m_nNewEntries; // #guess
     /* 0018 */ CDimmKeyTableEntry* m_pNewEntries; // #guess
-    /* 001C */ int field_1C;
-    /* 0020 */ int field_20;
+    /* 001C */ int nm_field_1C;
+    /* 0020 */ int nm_field_20;
 };
 
 #endif /* CDIMMKEYTABLE_H_ */

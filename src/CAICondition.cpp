@@ -105,7 +105,7 @@ BOOL CAICondition::TriggerHolds(CAITrigger* pTrigger, CTypedPtrList<CPtrList, CA
             if (triggerID == CAITRIGGER_ATTACKEDBY
                 || triggerID == CAITRIGGER_HELP
                 || triggerID == CAITRIGGER_HELPEX) {
-                caller->field_342.Set(node->m_triggerCause);
+                caller->pm_field_342.Set(node->m_triggerCause);
             }
 
             return TRUE;

@@ -303,3 +303,30 @@ DWORD CMemINIRes::GetDataSize()
 
     return nSize;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x469FF0
+void FUN_00469ff0() {
+    // TODO: Incomplete.
+}
+
+// 0x6A0C20
+void FUN_006a0c20() {
+    // TODO: Incomplete.
+}
+
+// 0x6A0C40
+void FUN_006a0c40() {
+    // TODO: Incomplete.
+}
+
+// 0x6A0CC0
+void FUN_006a0cc0() {
+    // TODO: Incomplete.
+}
+
+// 0x6A0DA0
+void FUN_006a0da0() {
+    // TODO: Incomplete.
+}
+

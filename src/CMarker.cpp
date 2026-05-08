@@ -319,3 +319,15 @@ BYTE CMarker::SetType(BYTE nType)
 
     return m_type;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x767240
+void FUN_00767240() {
+    // TODO: Incomplete.
+}
+
+// 0x767260
+void FUN_00767260() {
+    // TODO: Incomplete.
+}
+

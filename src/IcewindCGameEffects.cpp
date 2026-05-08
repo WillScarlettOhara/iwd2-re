@@ -584,8 +584,8 @@ BOOL IcewindCGameEffectColorGlowDissipate::ApplyEffect(CGameSprite* pSprite)
 IcewindCGameEffectSummon::IcewindCGameEffectSummon(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target)
     : CGameEffect(effect, source, sourceID, target, FALSE)
 {
-    field_18C = 0;
-    field_190 = 0;
+    m_m_field_18C = 0;
+    m_m_field_190 = 0;
 }
 
 // 0x55F620
@@ -601,7 +601,7 @@ CGameEffect* IcewindCGameEffectSummon::Copy()
 // 0x49DB60
 void IcewindCGameEffectSummon::sub_49DB60(int a1)
 {
-    field_190 = a1;
+    m_m_field_190 = a1;
 }
 
 // -----------------------------------------------------------------------------
@@ -2499,7 +2499,7 @@ BOOL IcewindCGameEffectTortoiseShell::ApplyEffect(CGameSprite* pSprite)
         pSprite->field_9D15 = 1;
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_HELD] = true;
         pSprite->GetDerivedStats()->m_generalState |= STATE_HELPLESS;
-        pSprite->GetDerivedStats()->field_124 = m_effectAmount;
+        pSprite->GetDerivedStats()->m_field_124 = m_effectAmount;
     } else {
         m_done = TRUE;
     }
@@ -2767,9 +2767,9 @@ BOOL IcewindCGameEffectGlobeOfInvulnerability::ApplyEffect(CGameSprite* pSprite)
         AddPortraitIcon(pSprite, 96);
 
         pSprite->GetDerivedStats()->m_visualEffects.set(IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY);
-        pSprite->GetDerivedStats()->field_1E0 = 1;
-        pSprite->GetDerivedStats()->field_1E4 = 1;
-        pSprite->GetDerivedStats()->field_1E8 = 1;
+        pSprite->GetDerivedStats()->m_field_1E0 = 1;
+        pSprite->GetDerivedStats()->m_field_1E4 = 1;
+        pSprite->GetDerivedStats()->m_field_1E8 = 1;
         break;
     case 1:
         if (m_secondaryType) {
@@ -2782,10 +2782,10 @@ BOOL IcewindCGameEffectGlobeOfInvulnerability::ApplyEffect(CGameSprite* pSprite)
         AddPortraitIcon(pSprite, 97);
 
         pSprite->GetDerivedStats()->m_visualEffects.set(IWD_VFX_GLOBE_OF_INVULNERABILITY);
-        pSprite->GetDerivedStats()->field_1E0 = 1;
-        pSprite->GetDerivedStats()->field_1E4 = 1;
-        pSprite->GetDerivedStats()->field_1E8 = 1;
-        pSprite->GetDerivedStats()->field_1EC = 1;
+        pSprite->GetDerivedStats()->m_field_1E0 = 1;
+        pSprite->GetDerivedStats()->m_field_1E4 = 1;
+        pSprite->GetDerivedStats()->m_field_1E8 = 1;
+        pSprite->GetDerivedStats()->m_field_1EC = 1;
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\Baldur\IcewindCGameEffects.cpp
@@ -3236,3 +3236,145 @@ BOOL IcewindCGameEffectFeatRapidShot::ApplyEffect(CGameSprite* pSprite)
 
     return TRUE;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x55F6D0
+void FUN_0055f6d0() {
+    // TODO: Incomplete.
+}
+
+// 0x55F6F0
+void FUN_0055f6f0() {
+    // TODO: Incomplete.
+}
+
+// 0x55F930
+void FUN_0055f930() {
+    // TODO: Incomplete.
+}
+
+// 0x55FA10
+void FUN_0055fa10() {
+    // TODO: Incomplete.
+}
+
+// 0x55FF40
+void FUN_0055ff40() {
+    // TODO: Incomplete.
+}
+
+// 0x560140
+void FUN_00560140() {
+    // TODO: Incomplete.
+}
+
+// 0x5601E0
+void FUN_005601e0() {
+    // TODO: Incomplete.
+}
+
+// 0x560310
+void FUN_00560310() {
+    // TODO: Incomplete.
+}
+
+// 0x563A20
+void FUN_00563a20() {
+    // TODO: Incomplete.
+}
+
+// 0x564460
+void FUN_00564460() {
+    // TODO: Incomplete.
+}
+
+// 0x5644D0
+void FUN_005644d0() {
+    // TODO: Incomplete.
+}
+
+// 0x5645A0
+void FUN_005645a0() {
+    // TODO: Incomplete.
+}
+
+// 0x566080
+void FUN_00566080() {
+    // TODO: Incomplete.
+}
+
+// 0x566520
+void FUN_00566520() {
+    // TODO: Incomplete.
+}
+
+// 0x5667C0
+void FUN_005667c0() {
+    // TODO: Incomplete.
+}
+
+// 0x566E10
+void FUN_00566e10() {
+    // TODO: Incomplete.
+}
+
+// 0x567040
+void FUN_00567040() {
+    // TODO: Incomplete.
+}
+
+// 0x567230
+void FUN_00567230() {
+    // TODO: Incomplete.
+}
+
+// 0x569470
+void FUN_00569470() {
+    // TODO: Incomplete.
+}
+
+// 0x56A5A0
+void FUN_0056a5a0() {
+    // TODO: Incomplete.
+}
+
+// 0x56AC20
+void FUN_0056ac20() {
+    // TODO: Incomplete.
+}
+
+// 0x56AF80
+void FUN_0056af80() {
+    // TODO: Incomplete.
+}
+
+// 0x56B340
+void FUN_0056b340() {
+    // TODO: Incomplete.
+}
+
+// 0x56BDD0
+void FUN_0056bdd0() {
+    // TODO: Incomplete.
+}
+
+// 0x56BE50
+void FUN_0056be50() {
+    // TODO: Incomplete.
+}
+
+// 0x56BF30
+void FUN_0056bf30() {
+    // TODO: Incomplete.
+}
+
+// 0x56CEE0
+void FUN_0056cee0() {
+    // TODO: Incomplete.
+}
+
+// 0x56CF00
+void FUN_0056cf00() {
+    // TODO: Incomplete.
+}
+

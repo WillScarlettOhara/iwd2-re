@@ -55,9 +55,9 @@ bool Icewind586B70::sub_586CF0(CGameSprite* sprite1, CGameSprite* sprite2)
     }
 
     for (int index = 0; index < 6; index++) {
-        if (mEntries[index].field_0 != 0
-            && mEntries[index].field_4 != 0
-            && sprite2->GetId() == mEntries[index].field_0) {
+        if (mEntries[index].m_field_0 != 0
+            && mEntries[index].m_field_4 != 0
+            && sprite2->GetId() == mEntries[index].m_field_0) {
             return false;
         }
     }
@@ -73,12 +73,12 @@ void Icewind586B70::sub_586D60(CGameSprite* sprite1, CGameSprite* sprite2)
     }
 
     for (int index = 0; index < 6; index++) {
-        if (mEntries[index].field_0 == 0 || mEntries[index].field_4 == 0) {
+        if (mEntries[index].m_field_0 == 0 || mEntries[index].m_field_4 == 0) {
             // NOTE: Odd check, looks like inlining.
             if (index != -1) {
-                mEntries[index].field_0 = sprite2->GetId();
-                mEntries[index].field_4 = sprite1->GetId();
-                mEntries[index].field_8 = false;
+                mEntries[index].m_field_0 = sprite2->GetId();
+                mEntries[index].m_field_4 = sprite1->GetId();
+                mEntries[index].m_field_8 = false;
             }
         }
     }
@@ -92,12 +92,12 @@ void Icewind586B70::sub_586F20(CGameSprite* sprite1, CGameSprite* sprite2)
     }
 
     for (int index = 0; index < 6; index++) {
-        if (mEntries[index].field_0 == 0 || mEntries[index].field_4 == 0) {
+        if (mEntries[index].m_field_0 == 0 || mEntries[index].m_field_4 == 0) {
             // NOTE: Odd check, looks like inlining.
             if (index != -1) {
-                mEntries[index].field_0 = sprite2->GetId();
-                mEntries[index].field_4 = sprite1->GetId();
-                mEntries[index].field_8 = true;
+                mEntries[index].m_field_0 = sprite2->GetId();
+                mEntries[index].m_field_4 = sprite1->GetId();
+                mEntries[index].m_field_8 = true;
             }
         }
     }
@@ -107,10 +107,10 @@ void Icewind586B70::sub_586F20(CGameSprite* sprite1, CGameSprite* sprite2)
 void Icewind586B70::Remove(CGameSprite* sprite)
 {
     for (std::vector<Entry>::iterator it = mEntries.begin(); it < mEntries.end(); it++) {
-        if (sprite->GetId() == it->field_0) {
-            it->field_0 = 0;
-            it->field_4 = 0;
-            it->field_8 = false;
+        if (sprite->GetId() == it->m_field_0) {
+            it->m_field_0 = 0;
+            it->m_field_4 = 0;
+            it->m_field_8 = false;
         }
     }
 }
@@ -118,11 +118,11 @@ void Icewind586B70::Remove(CGameSprite* sprite)
 // 0x586FC0
 void Icewind586B70::sub_586FC0(CGameSprite* sprite)
 {
-    if (sprite->GetBaseStats()->field_2E9) {
-        mEntries[sprite->GetBaseStats()->field_2E9].field_0 = sprite->GetId();
-        mEntries[sprite->GetBaseStats()->field_2E9].field_8 = sprite->GetBaseStats()->field_2F7 != 0;
-        sprite->GetBaseStats()->field_2E9 = 0;
-        sprite->GetBaseStats()->field_2F7 = 0;
+    if (sprite->GetBaseStats()->m_field_2E9) {
+        mEntries[sprite->GetBaseStats()->m_field_2E9].m_field_0 = sprite->GetId();
+        mEntries[sprite->GetBaseStats()->m_field_2E9].m_field_8 = sprite->GetBaseStats()->m_field_2F7 != 0;
+        sprite->GetBaseStats()->m_field_2E9 = 0;
+        sprite->GetBaseStats()->m_field_2F7 = 0;
 
         CAIObjectType typeAI(sprite->GetAIType());
         CAIObjectType liveTypeAI(sprite->GetLiveAIType());
@@ -130,7 +130,7 @@ void Icewind586B70::sub_586FC0(CGameSprite* sprite)
 
         g_pBaldurChitin->GetObjectGame()->AddCharacterToAllies(sprite->GetId());
 
-        if (!mEntries[sprite->GetBaseStats()->field_2E9].field_8) {
+        if (!mEntries[sprite->GetBaseStats()->m_field_2E9].m_field_8) {
             startTypeAI.SetEnemyAlly(CAIObjectType::EA_ALL);
             sprite->m_startTypeAI.Set(startTypeAI);
         }
@@ -143,9 +143,9 @@ void Icewind586B70::sub_586FC0(CGameSprite* sprite)
     }
 
     for (int index = 0; index < 6; index++) {
-        if (sprite->GetBaseStats()->field_2EA[index]) {
-            mEntries[index].field_4 = sprite->GetId();
-            sprite->GetBaseStats()->field_2EA[index] = FALSE;
+        if (sprite->GetBaseStats()->m_field_2EA[index]) {
+            mEntries[index].m_field_4 = sprite->GetId();
+            sprite->GetBaseStats()->m_field_2EA[index] = FALSE;
         }
     }
 }
@@ -157,8 +157,8 @@ void Icewind586B70::sub_587190()
     BYTE rc;
 
     for (int index = 0; index < 6; index++) {
-        if (mEntries[index].field_0 != 0) {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(mEntries[index].field_0,
+        if (mEntries[index].m_field_0 != 0) {
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(mEntries[index].m_field_0,
                 CGameObjectArray::THREAD_ASYNCH,
                 reinterpret_cast<CGameObject**>(&sprite),
                 INFINITE);
@@ -166,16 +166,16 @@ void Icewind586B70::sub_587190()
                 return;
             }
 
-            sprite->GetBaseStats()->field_2E9 = index + 1;
-            sprite->GetBaseStats()->field_2F7 = mEntries[index].field_8;
+            sprite->GetBaseStats()->m_field_2E9 = index + 1;
+            sprite->GetBaseStats()->m_field_2F7 = mEntries[index].m_field_8;
 
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(mEntries[index].field_0,
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(mEntries[index].m_field_0,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
         }
 
-        if (mEntries[index].field_4 != 0) {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(mEntries[index].field_4,
+        if (mEntries[index].m_field_4 != 0) {
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(mEntries[index].m_field_4,
                 CGameObjectArray::THREAD_ASYNCH,
                 reinterpret_cast<CGameObject**>(&sprite),
                 INFINITE);
@@ -183,9 +183,9 @@ void Icewind586B70::sub_587190()
                 return;
             }
 
-            sprite->GetBaseStats()->field_2EA[index] = 1;
+            sprite->GetBaseStats()->m_field_2EA[index] = 1;
 
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(mEntries[index].field_4,
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(mEntries[index].m_field_4,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
         }
@@ -196,26 +196,26 @@ void Icewind586B70::sub_587190()
 void Icewind586B70::Clear()
 {
     for (int index = 0; index < 6; index++) {
-        mEntries[index].field_0 = 0;
-        mEntries[index].field_4 = 0;
-        mEntries[index].field_8 = false;
+        mEntries[index].m_field_0 = 0;
+        mEntries[index].m_field_4 = 0;
+        mEntries[index].m_field_8 = false;
     }
 }
 
 // NOTE: Inlined.
 Icewind586B70::Entry::Entry()
 {
-    field_0 = 0;
-    field_4 = 0;
-    field_8 = false;
+    m_field_0 = 0;
+    m_field_4 = 0;
+    m_field_8 = false;
 }
 
 // 0x587500
 void Icewind586B70::Entry::Clear()
 {
-    field_0 = 0;
-    field_4 = 0;
-    field_8 = false;
+    m_field_0 = 0;
+    m_field_4 = 0;
+    m_field_8 = false;
 }
 
 // 0x587610
@@ -223,7 +223,7 @@ int Icewind586B70::GetCount()
 {
     int count = 0;
     for (int index = 0; index < 6; index++) {
-        if (mEntries[index].field_0 != 0 && mEntries[index].field_4 != 0) {
+        if (mEntries[index].m_field_0 != 0 && mEntries[index].m_field_4 != 0) {
             count++;
         }
     }
@@ -233,7 +233,39 @@ int Icewind586B70::GetCount()
 // 0x587630
 Icewind586B70::Entry::Entry(int a1, int a2)
 {
-    field_0 = a1;
-    field_4 = a2;
-    field_8 = false;
+    m_field_0 = a1;
+    m_field_4 = a2;
+    m_field_8 = false;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x586DC0
+void FUN_00586dc0() {
+    // TODO: Incomplete.
+}
+
+// 0x5872C0
+void FUN_005872c0() {
+    // TODO: Incomplete.
+}
+
+// 0x587510
+void FUN_00587510() {
+    // TODO: Incomplete.
+}
+
+// 0x587650
+void FUN_00587650() {
+    // TODO: Incomplete.
+}
+
+// 0x587660
+void FUN_00587660() {
+    // TODO: Incomplete.
+}
+
+// 0x5876D0
+void FUN_005876d0() {
+    // TODO: Incomplete.
+}
+

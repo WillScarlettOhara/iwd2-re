@@ -31,3 +31,10 @@ void CAIConditionResponse::Read(CString sData)
     sResponseSetData = CAIUtil::ReadBetween(sData, CString("RS\n"));
     m_responseSet.Read(sResponseSetData);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x40F940
+void FUN_0040f940() {
+    // TODO: Incomplete.
+}
+

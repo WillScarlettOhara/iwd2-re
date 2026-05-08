@@ -32,7 +32,7 @@ PFNCHOOSEPIXELFORMATPROC CChitin3d::ChoosePixelFormat;
 void CChitin::InitVariables3D()
 {
     m_hOpenGL = 0;
-    field_2F4 = 0;
+    nm_field_2F4 = 0;
 }
 
 // 0x7C8990
@@ -125,3 +125,30 @@ void InitOpenGL(HMODULE hOpenGL)
     CVideo3d::glVertex3f = (PFNGLVERTEX3FPROC)GetProcAddress(hOpenGL, "glVertex3f");
     CVideo3d::glViewport = (PFNGLVIEWPORTPROC)GetProcAddress(hOpenGL, "glViewport");
 }
+
+// Phase 1-2: Scaffold functions
+// 0x7C88E0
+void FUN_007c88e0() {
+    // TODO: Incomplete.
+}
+
+// 0x7D8870
+void FUN_007d8870() {
+    // TODO: Incomplete.
+}
+
+// 0x7D88C0
+void FUN_007d88c0() {
+    // TODO: Incomplete.
+}
+
+// 0x7D8A30
+void FUN_007d8a30() {
+    // TODO: Incomplete.
+}
+
+// 0x7D8A50
+void FUN_007d8a50() {
+    // TODO: Incomplete.
+}
+

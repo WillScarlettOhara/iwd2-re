@@ -57,9 +57,9 @@ CUIControlScrollBar::CUIControlScrollBar(CUIPanel* panel, UI_CONTROL_SCROLLBAR* 
     m_pScrollUpButton = new CUIControlButtonScrollBar(m_pPanel, &buttonInfo, this, 1);
 
     if (m_pPanel->m_pManager->m_bDoubleSize) {
-        field_140 = 2 * (controlInfo->base.nHeight - buttonInfo.base.nHeight);
+        wm_field_140 = 2 * (controlInfo->base.nHeight - buttonInfo.base.nHeight);
     } else {
-        field_140 = controlInfo->base.nHeight - buttonInfo.base.nHeight;
+        wm_field_140 = controlInfo->base.nHeight - buttonInfo.base.nHeight;
     }
 
     CSize thumbSize;
@@ -95,21 +95,21 @@ CUIControlScrollBar::CUIControlScrollBar(CUIPanel* panel, UI_CONTROL_SCROLLBAR* 
     m_pScrollDownButton = new CUIControlButtonScrollBar(m_pPanel, &buttonInfo, this, 2);
 
     if (m_pPanel->m_pManager->m_bDoubleSize) {
-        field_140 -= 2 * buttonInfo.base.nHeight;
+        wm_field_140 -= 2 * buttonInfo.base.nHeight;
     } else {
-        field_140 -= buttonInfo.base.nHeight;
+        wm_field_140 -= buttonInfo.base.nHeight;
     }
 
     m_cVidCell.pRes->Release();
 
-    field_142 = static_cast<short>(max(field_140 - thumbSize.cy, 1));
+    wm_m_field_142 = static_cast<short>(max(wm_field_140 - thumbSize.cy, 1));
     m_nRenderCount = 0;
     m_nTextDisplayID = controlInfo->nTextDisplayID;
     m_nSequence = controlInfo->nSequence;
     m_nTrackFrame = controlInfo->nTrackFrame;
     m_nThumbFrame = controlInfo->nThumbFrame;
-    field_144 = 0;
-    field_146 = 0;
+    wm_field_144 = 0;
+    bm_field_146 = 0;
     SetNeedAsyncUpdate();
 }
 
@@ -128,16 +128,16 @@ CUIControlScrollBar::~CUIControlScrollBar()
 // 0x4E4C80
 void CUIControlScrollBar::AdjustScrollBar(SHORT a1, SHORT a2, SHORT a3)
 {
-    if (!field_146) {
+    if (!bm_field_146) {
         if (a2 - a3 > 0) {
-            field_144 = min(field_142 * a1 / (a2 - a3), field_142);
+            wm_field_144 = min(wm_m_field_142 * a1 / (a2 - a3), wm_m_field_142);
             InvalidateRect();
         } else {
             if (a2 != 0) {
-                field_144 = field_142 * a1 / a2;
+                wm_field_144 = wm_m_field_142 * a1 / a2;
                 InvalidateRect();
             } else {
-                field_144 = 0;
+                wm_field_144 = 0;
                 InvalidateRect();
             }
         }
@@ -151,7 +151,7 @@ void CUIControlScrollBar::InvalidateRect()
         m_pScrollUpButton->InvalidateRect();
         m_pScrollDownButton->InvalidateRect();
 
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount = CUIManager::RENDER_COUNT;
         lock.Unlock();
@@ -182,7 +182,7 @@ BOOL CUIControlScrollBar::OnLButtonDown(CPoint pt)
     m_pPanel->m_pManager->SetCapture(this, CUIManager::MOUSELBUTTON);
 
     if (OverThumb(pt)) {
-        field_146 = 1;
+        bm_field_146 = 1;
     }
 
     return TRUE;
@@ -191,12 +191,12 @@ BOOL CUIControlScrollBar::OnLButtonDown(CPoint pt)
 // 0x4E4EC0
 void CUIControlScrollBar::OnLButtonUp(CPoint pt)
 {
-    if (field_146) {
+    if (bm_field_146) {
         if (m_nTextDisplayID != -1) {
             CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(m_pPanel->GetControl(m_nTextDisplayID));
-            if (pText->m_plstStrings->GetCount() <= pText->field_A6A) {
-                if (field_144 != 0) {
-                    field_144 = 0;
+            if (pText->m_plstStrings->GetCount() <= pText->wfield_A6C) {
+                if (wm_field_144 != 0) {
+                    wm_field_144 = 0;
                     InvalidateRect();
                 }
             }
@@ -207,7 +207,7 @@ void CUIControlScrollBar::OnLButtonUp(CPoint pt)
         if (IsOver(pt)) {
             OnLButtonClick(pt);
         } else {
-            field_146 = 0;
+            bm_field_146 = 0;
         }
     }
 }
@@ -215,19 +215,19 @@ void CUIControlScrollBar::OnLButtonUp(CPoint pt)
 // 0x4E4F60
 void CUIControlScrollBar::OnMouseMove(CPoint pt)
 {
-    if (m_bActive && field_146) {
-        int v1 = pt.y - field_148;
+    if (m_bActive && bm_field_146) {
+        int v1 = pt.y - wm_field_148;
         int v2 = m_ptOrigin.y + m_pScrollUpButton->m_size.cy;
         if (v1 >= v2) {
-            if (v1 <= v2 + field_142) {
-                field_144 = v1 - v2;
+            if (v1 <= v2 + wm_m_field_142) {
+                wm_field_144 = v1 - v2;
                 OnScroll();
             } else {
-                field_144 = field_142;
+                wm_field_144 = wm_m_field_142;
                 OnScroll();
             }
         } else {
-            field_144 = 0;
+            wm_field_144 = 0;
             OnScroll();
         }
 
@@ -242,7 +242,7 @@ BOOLEAN CUIControlScrollBar::OverThumb(const CPoint& pt)
     m_cVidCell.GetFrameSize(m_nSequence, m_nThumbFrame, size, FALSE);
 
     CPoint origin(m_ptOrigin.x + m_size.cx / 2 - size.cx / 2,
-        m_ptOrigin.y + field_144 + m_pScrollUpButton->m_size.cy);
+        m_ptOrigin.y + wm_field_144 + m_pScrollUpButton->m_size.cy);
     CRect rect(origin, size);
 
     if (!rect.PtInRect(pt)) {
@@ -250,21 +250,21 @@ BOOLEAN CUIControlScrollBar::OverThumb(const CPoint& pt)
     }
 
     // TODO: Check cast.
-    field_148 = static_cast<short>(pt.y - origin.y);
+    wm_field_148 = static_cast<short>(pt.y - origin.y);
     return TRUE;
 }
 
 // 0x4E50B0
 void CUIControlScrollBar::OnLButtonClick(CPoint pt)
 {
-    if (!field_146) {
-        if (pt.y <= m_ptOrigin.y + field_144 + m_pScrollUpButton->m_size.cy) {
+    if (!bm_field_146) {
+        if (pt.y <= m_ptOrigin.y + wm_field_144 + m_pScrollUpButton->m_size.cy) {
             OnPageUp(-1);
         } else {
             OnPageDown(-1);
         }
     }
-    field_146 = 0;
+    bm_field_146 = 0;
 }
 
 // 0x4E5110
@@ -312,7 +312,7 @@ void CUIControlScrollBar::OnScroll()
 {
     if (m_nTextDisplayID != -1) {
         CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(m_pPanel->GetControl(m_nTextDisplayID));
-        pText->OnScroll(field_144, field_142);
+        pText->OnScroll(wm_field_144, wm_m_field_142);
     }
 }
 
@@ -323,13 +323,13 @@ void CUIControlScrollBar::OnScrollButtonUp(BYTE nDirection)
     case CUICONTROLBUTTONSCROLLBAR_DIRECTION_UP:
         if (m_nTextDisplayID != -1) {
             CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(m_pPanel->GetControl(m_nTextDisplayID));
-            pText->field_A66 = 0;
+            pText->bfield_A66 = 0;
         }
         break;
     case CUICONTROLBUTTONSCROLLBAR_DIRECTION_DOWN:
         if (m_nTextDisplayID != -1) {
             CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(m_pPanel->GetControl(m_nTextDisplayID));
-            pText->field_A67 = 0;
+            pText->bfield_A67 = 0;
         }
         break;
     }
@@ -358,7 +358,7 @@ BOOL CUIControlScrollBar::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -404,12 +404,12 @@ BOOL CUIControlScrollBar::Render(BOOL bForce)
     m_cVidCell.FrameSet(m_nTrackFrame);
 
     int y = 0;
-    while (y < field_140) {
+    while (y < wm_field_140) {
         CRect rTrack;
         rTrack.left = pt.x + (m_size.cx - trackSize.cx) / 2;
         rTrack.top = y + m_pScrollUpButton->m_size.cy + pt.y;
         rTrack.right = rTrack.left + trackSize.cx;
-        rTrack.bottom = min(rTrack.top + trackSize.cy, field_140);
+        rTrack.bottom = min(rTrack.top + trackSize.cy, wm_field_140);
 
         CRect rTrackClip;
         if (rTrackClip.IntersectRect(rTrack, rDirtyRect)) {
@@ -426,7 +426,7 @@ BOOL CUIControlScrollBar::Render(BOOL bForce)
 
     CRect rDown;
     rDown.left = pt.x + (m_size.cx - m_pScrollDownButton->m_size.cx) / 2;
-    rDown.top = pt.y + m_pScrollUpButton->m_size.cy + field_140;
+    rDown.top = pt.y + m_pScrollUpButton->m_size.cy + wm_field_140;
     rDown.right = rDown.left + m_pScrollDownButton->m_size.cx;
     rDown.bottom = rDown.top + m_pScrollDownButton->m_size.cy;
 
@@ -445,12 +445,12 @@ BOOL CUIControlScrollBar::Render(BOOL bForce)
     CSize thumbSize;
     m_cVidCell.GetFrameSize(m_nSequence, m_nThumbFrame, thumbSize, TRUE);
 
-    if (field_140 >= thumbSize.cy) {
+    if (wm_field_140 >= thumbSize.cy) {
         m_cVidCell.FrameSet(m_nThumbFrame);
 
         CRect rThumb;
         rThumb.left = pt.x + m_size.cx / 2 - thumbSize.cx / 2;
-        rThumb.top = pt.y + m_pScrollUpButton->m_size.cy + field_144;
+        rThumb.top = pt.y + m_pScrollUpButton->m_size.cy + wm_field_144;
         rThumb.right = rThumb.left + thumbSize.cx;
         rThumb.bottom = rThumb.top + thumbSize.cy;
 
@@ -509,12 +509,12 @@ CUIControlEditScrollBar::~CUIControlEditScrollBar()
 // 0x4E5950
 void CUIControlEditScrollBar::OnLButtonUp(CPoint pt)
 {
-    if (field_146) {
+    if (bm_field_146) {
         if (m_nTextDisplayID != -1) {
             CUIControlEditMultiLineScroller* pEdit = static_cast<CUIControlEditMultiLineScroller*>(m_pPanel->GetControl(m_nTextDisplayID));
-            if (pEdit->field_86E == 0) {
-                if (field_144 != 0) {
-                    field_144 = 0;
+            if (pEdit->nm_field_86E == 0) {
+                if (wm_field_144 != 0) {
+                    wm_field_144 = 0;
                     InvalidateRect();
                 }
             }
@@ -525,7 +525,7 @@ void CUIControlEditScrollBar::OnLButtonUp(CPoint pt)
         if (IsOver(pt)) {
             OnLButtonClick(pt);
         } else {
-            field_146 = 0;
+            bm_field_146 = 0;
         }
     }
 }
@@ -537,7 +537,7 @@ void CUIControlEditScrollBar::OnScroll()
         CUIControlEditMultiLineScroller* pEdit = static_cast<CUIControlEditMultiLineScroller*>(m_pPanel->GetControl(m_nTextDisplayID));
 
         // NOTE: Uninline.
-        pEdit->OnScroll(field_144, field_142);
+        pEdit->OnScroll(wm_field_144, wm_m_field_142);
     }
 }
 
@@ -570,13 +570,13 @@ void CUIControlEditScrollBar::OnScrollButtonUp(BYTE nDirection)
     case CUICONTROLBUTTONSCROLLBAR_DIRECTION_UP:
         if (m_nTextDisplayID != -1) {
             CUIControlEditMultiLineScroller* pEdit = static_cast<CUIControlEditMultiLineScroller*>(m_pPanel->GetControl(m_nTextDisplayID));
-            pEdit->field_898 = 0;
+            pEdit->bm_field_898 = 0;
         }
         break;
     case CUICONTROLBUTTONSCROLLBAR_DIRECTION_DOWN:
         if (m_nTextDisplayID != -1) {
             CUIControlEditMultiLineScroller* pEdit = static_cast<CUIControlEditMultiLineScroller*>(m_pPanel->GetControl(m_nTextDisplayID));
-            pEdit->field_899 = 0;
+            pEdit->bm_field_899 = 0;
         }
         break;
     }
@@ -672,7 +672,7 @@ void CUIControlButtonScrollBar::BKRender(CVidInf* pVidInf, INT x, INT y, const C
 {
     if (m_bActive || m_bInactiveRender) {
         if (m_nRenderCount != 0) {
-            CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+            CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
             lock.Lock(INFINITE);
             m_nRenderCount--;
             lock.Unlock();
@@ -718,3 +718,15 @@ BOOL CUIControlScrollBar::OnLButtonDblClk(CPoint pt)
 {
     return OnLButtonDown(pt);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4E4BE0
+void FUN_004e4be0() {
+    // TODO: Incomplete.
+}
+
+// 0x4E60A0
+void FUN_004e60a0() {
+    // TODO: Incomplete.
+}
+

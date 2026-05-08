@@ -645,7 +645,7 @@ void SearchThreadMain(void* userInfo)
     POINT startPt;
     CPoint tempPoint;
 
-    CSingleLock searchLock(&(g_pBaldurChitin->GetObjectGame()->field_1B58), FALSE);
+    CSingleLock searchLock(&(g_pBaldurChitin->GetObjectGame()->pm_field_1B58), FALSE);
     g_pBaldurChitin->RegisterThread();
 
     while (WaitForSingleObject(g_pBaldurChitin->GetObjectGame()->m_hSearchThread, INFINITE) == WAIT_OBJECT_0) {
@@ -714,7 +714,7 @@ void SearchThreadMain(void* userInfo)
                             bBump = searchRequest->m_bBump;
                             if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
                                 objectSpace = static_cast<CGameSprite*>(pObject)->GetAnimation()->GetPersonalSpace();
-                                bBumpable = static_cast<CGameSprite*>(pObject)->field_54A8;
+                                bBumpable = static_cast<CGameSprite*>(pObject)->nfield_54A8;
                                 if (static_cast<CGameSprite*>(pObject)->GetAIType().GetEnemyAlly() > CAIObjectType::EA_GOODCUTOFF) {
                                     bBump = FALSE;
                                 }
@@ -751,7 +751,7 @@ void SearchThreadMain(void* userInfo)
 
                                     if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
                                         goalObjectSpaces[cnt] = static_cast<CGameSprite*>(pObject)->GetAnimation()->GetPersonalSpace();
-                                        goalBumpable[cnt] = static_cast<CGameSprite*>(pObject)->field_54A8;
+                                        goalBumpable[cnt] = static_cast<CGameSprite*>(pObject)->nfield_54A8;
                                         goalRemoveObject[cnt].x = static_cast<CGameSprite*>(pObject)->GetPos().x / CPathSearch::GRID_SQUARE_SIZEX;
                                         goalRemoveObject[cnt].y = static_cast<CGameSprite*>(pObject)->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY;
                                         targetIdPresent = TRUE;
@@ -802,7 +802,7 @@ void SearchThreadMain(void* userInfo)
 
                                             if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
                                                 goalObjectSpaces[cnt + searchRequest->m_nTargetIds] = static_cast<CGameSprite*>(pObject)->GetAnimation()->GetPersonalSpace();
-                                                goalBumpable[cnt + searchRequest->m_nTargetIds] = static_cast<CGameSprite*>(pObject)->field_54A8;
+                                                goalBumpable[cnt + searchRequest->m_nTargetIds] = static_cast<CGameSprite*>(pObject)->nfield_54A8;
                                                 goalRemoveObject[cnt + searchRequest->m_nTargetIds].x = static_cast<CGameSprite*>(pObject)->GetPos().x / CPathSearch::GRID_SQUARE_SIZEX;
                                                 goalRemoveObject[cnt + searchRequest->m_nTargetIds].y = static_cast<CGameSprite*>(pObject)->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY;
                                                 isWalking[cnt] = static_cast<CGameSprite*>(pObject)->m_nSequence == CGameSprite::SEQ_WALK
@@ -1017,3 +1017,30 @@ void SearchThreadMain(void* userInfo)
     CloseHandle(g_pBaldurChitin->GetObjectGame()->m_hSearchThread);
     g_pBaldurChitin->GetObjectGame()->m_hSearchThread = NULL;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x547780
+void FUN_00547780() {
+    // TODO: Incomplete.
+}
+
+// 0x5477A0
+void FUN_005477a0() {
+    // TODO: Incomplete.
+}
+
+// 0x547800
+void FUN_00547800() {
+    // TODO: Incomplete.
+}
+
+// 0x547880
+void FUN_00547880() {
+    // TODO: Incomplete.
+}
+
+// 0x548B80
+void FUN_00548b80() {
+    // TODO: Incomplete.
+}
+

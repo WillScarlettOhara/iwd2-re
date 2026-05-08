@@ -102,26 +102,26 @@ public:
     /* 0434 */ BOOL m_bShiftKeyDown;
     /* 0438 */ BOOL m_bCapsLockKeyOn;
     /* 043C */ CTypedPtrList<CPtrList, CUIPanel*> m_lPopupStack;
-    /* 0458 */ int field_458;
-    /* 045C */ int field_45C;
-    /* 0460 */ int field_460;
-    /* 0460 */ int field_464;
+    /* 0458 */ int nm_field_458;
+    /* 045C */ int nm_field_45C;
+    /* 0460 */ int nm_field_460;
+    /* 0460 */ int nm_field_460;
     /* 0468 */ INT m_nErrorState;
     /* 046C */ STRREF m_dwErrorTextId;
     /* 0470 */ INT m_nNumErrorButtons;
     /* 0474 */ STRREF m_strErrorButtonText[CSCREENSINGLEPLAYER_ERROR_BUTTONS];
-    /* 0480 */ int field_480;
-    /* 0484 */ INT field_484;
+    /* 0480 */ int nm_field_480;
+    /* 0484 */ INT nm_field_484;
     /* 0488 */ BOOLEAN m_bSinglePlayerStartup;
     /* 048A */ BOOL m_bLastLockAllowInput;
     /* 048E */ CVidFont m_preLoadFontRealms;
     /* 098E */ CVidFont m_preLoadFontStnSml;
     /* 0E8E */ CVidFont m_preLoadFontTool;
-    /* 138E */ int field_138E;
+    /* 138E */ int nm_field_138E;
     /* 1392 */ int m_nPartyCount;
     /* 1396 */ INT m_nTopParty;
     /* 139A */ INT m_nParty;
-    /* 139E */ int field_139E;
+    /* 139E */ int nm_field_139E;
 };
 
 class CUIControlButtonSinglePlayerReady : public CUIControlButton3State {

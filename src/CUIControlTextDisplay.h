@@ -70,20 +70,20 @@ public:
 
     /* 0052 */ CTypedPtrList<CPtrList, CDisplayString*>* m_plstStrings;
     /* 0056 */ POSITION m_posTopString;
-    /* 005A */ short field_5A;
-    /* 005C */ short field_5C;
+    /* 005A */ short wfield_5A;
+    /* 005C */ short wfield_5C;
     /* 005E */ SHORT m_nRenderCount;
     /* 0060 */ CVidFont m_textFont;
     /* 0560 */ CVidFont m_labelFont;
     /* 0A60 */ SHORT m_nFontHeight;
-    /* 0A62 */ short field_A62;
-    /* 0A64 */ unsigned char field_A64;
-    /* 0A65 */ unsigned char field_A65;
-    /* 0A66 */ unsigned char field_A66;
-    /* 0A67 */ unsigned char field_A67;
-    /* 0A68 */ short field_A68;
-    /* 0A6C */ short field_A6A;
-    /* 0A6C */ short field_A6C;
+    /* 0A62 */ short wfield_A62;
+    /* 0A64 */ unsigned char bfield_A64;
+    /* 0A65 */ unsigned char bfield_A65;
+    /* 0A66 */ unsigned char bfield_A66;
+    /* 0A67 */ unsigned char bfield_A67;
+    /* 0A68 */ short wfield_A68;
+    /* 0A6C */ short wfield_A6C;
+    /* 0A6C */ short wfield_A6C;
     /* 0A6E */ DWORD m_nScrollBarID;
     /* 0A72 */ COLORREF m_rgbLabelColor;
     /* 0A76 */ COLORREF m_rgbBackgroundColor;
@@ -92,13 +92,13 @@ public:
     /* 0A82 */ POSITION m_posHighlightedItem;
     /* 0A86 */ COLORREF m_rgbTextColorBeforeHighlight;
     /* 0A8A */ COLORREF m_rgbLabelColorBeforeHighlight;
-    /* 0A8E */ CCriticalSection field_A8E;
-    /* 0AAE */ BOOLEAN field_AAE;
-    /* 0AAF */ BOOLEAN field_AAF;
+    /* 0A8E */ CCriticalSection pfield_A8E;
+    /* 0AAE */ BOOLEAN bfield_AAE;
+    /* 0AAF */ BOOLEAN bfield_AAF;
     /* 0AB0 */ CString m_sNameSeparator;
-    /* 0AB4 */ short field_AB4;
-    /* 0AB6 */ BOOLEAN field_AB6;
-    /* 0AB7 */ unsigned char field_AB7;
+    /* 0AB4 */ short wfield_AB4;
+    /* 0AB6 */ BOOLEAN bfield_AB6;
+    /* 0AB7 */ unsigned char bfield_AB7;
 };
 
 #endif /* CUICONTROLTEXTDISPLAY_H_ */

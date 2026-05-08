@@ -83,12 +83,12 @@ CVideo::CVideo()
     m_hDC = NULL;
     m_hGLRC = NULL;
     m_bIs3dAccelerated = FALSE;
-    field_136 = 6408;
-    field_13A = 0;
-    field_13E = 0;
-    field_114 = "";
-    field_11C = -1;
-    field_11E = 0;
+    nm_field_136 = 6408;
+    nm_field_13A = 0;
+    nm_field_13E = 0;
+    sm_field_114 = "";
+    wm_field_11C = -1;
+    nm_m_field_11E = 0;
     m_doubleSizeData = NULL;
     m_doubleSizeDataSize = 0;
 }
@@ -133,9 +133,9 @@ void CVideo::ResetDoubleSizeData()
         operator delete(m_doubleSizeData);
     }
 
-    field_114 = "";
-    field_11C = -1;
-    field_11E = 0;
+    sm_field_114 = "";
+    wm_field_11C = -1;
+    nm_m_field_11E = 0;
     m_doubleSizeData = NULL;
     m_doubleSizeDataSize = 0;
 }
@@ -273,7 +273,7 @@ BOOL CVideo::Initialize(HWND hWnd, BOOLEAN bFullscreen)
         m_pCurrentVidMode->ActivateVideoMode(NULL, hWnd, bFullscreen);
 
         cVidBlitter.Init();
-        cVidBlitter.field_E6 = 0;
+        cVidBlitter.bfield_E6 = 0;
     }
 
     return TRUE;
@@ -314,7 +314,7 @@ void CVideo::ChangeBppValue()
 {
     if (!m_bIs3dAccelerated) {
         if (g_pChitin->m_bFullscreen) {
-            g_pChitin->field_F8 = 1;
+            g_pChitin->nfield_F8 = 1;
             if (g_pChitin->pActiveEngine != NULL) {
                 g_pChitin->pActiveEngine->EngineDeactivated();
             }
@@ -344,7 +344,7 @@ void CVideo::ChangeBppValue()
 
             if (Initialize(g_pChitin->GetWnd()->GetSafeHwnd(), g_pChitin->m_bFullscreen)) {
                 g_pChitin->Resume();
-                g_pChitin->field_F8 = 0;
+                g_pChitin->nfield_F8 = 0;
 
                 if (g_pChitin->pActiveEngine != NULL) {
                     g_pChitin->pActiveEngine->EngineActivated();
@@ -415,3 +415,10 @@ void CVideo::SetBitsPerPixels(USHORT nNewBpp, BOOLEAN a3)
         }
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x794EF0
+void FUN_00794ef0() {
+    // TODO: Incomplete.
+}
+

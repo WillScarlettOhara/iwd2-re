@@ -223,3 +223,10 @@ CVidCell* CGameStatic::GetVidCell()
 {
     return &m_vidCell;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4CA7B0
+void FUN_004ca7b0() {
+    // TODO: Incomplete.
+}
+

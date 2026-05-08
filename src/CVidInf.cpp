@@ -22,15 +22,15 @@ CVidInf::CVidInf()
     m_nSurfaces = 0;
     pSurfaces = NULL;
     m_pVRamSurfaces = NULL;
-    field_E0 = 4;
+    nfield_E0 = 4;
     m_nVRamSurfaces = 0;
-    field_98 = 0;
-    field_94 = 0;
-    field_73A = "";
+    nfield_98 = 0;
+    nfield_94 = 0;
+    sfield_73A = "";
     memset(&m_SurfaceDesc, 0, sizeof(m_SurfaceDesc));
     SetRect(&m_rLockedRect, 0, 0, 0, 0);
-    field_170 = 0;
-    field_174 = 1;
+    nm_field_170 = 0;
+    nm_field_174 = 1;
 }
 
 // 0x7ABB90
@@ -206,7 +206,7 @@ BOOL CVidInf::CreateSurfaces(BOOLEAN bFullscreen)
     DDSURFACEDESC surfaceDesc = { 0 };
     HRESULT hr;
 
-    field_14 = FALSE;
+    nm_field_14 = FALSE;
     surfaceDesc.dwSize = sizeof(surfaceDesc);
 
     if (bFullscreen) {
@@ -221,7 +221,7 @@ BOOL CVidInf::CreateSurfaces(BOOLEAN bFullscreen)
     hr = g_pChitin->cVideo.m_pDirectDraw2->CreateSurface(&surfaceDesc, &(pSurfaces[CVIDINF_SURFACE_FRONT]), NULL);
     if (hr != DD_OK) {
         if (bFullscreen) {
-            field_14 = TRUE;
+            nm_field_14 = TRUE;
             surfaceDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
         } else {
             surfaceDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
@@ -239,7 +239,7 @@ BOOL CVidInf::CreateSurfaces(BOOLEAN bFullscreen)
     g_pChitin->m_nScreenWidth = surfaceDesc.dwWidth;
     g_pChitin->m_nScreenHeight = surfaceDesc.dwHeight;
 
-    if (!bFullscreen || field_14) {
+    if (!bFullscreen || nm_field_14) {
         g_pChitin->SetRenderCount(1);
     } else {
         g_pChitin->SetRenderCount(2);
@@ -312,7 +312,7 @@ BOOL CVidInf::CreateSurfaces(BOOLEAN bFullscreen)
 
     pSurfaces[CVIDINF_SURFACE_4]->SetColorKey(DDCKEY_SRCBLT, &colorKey);
 
-    if (!bFullscreen || field_14) {
+    if (!bFullscreen || nm_field_14) {
         pSurfaces[CVIDINF_SURFACE_5] = NULL;
     } else {
         if (g_pChitin->cVideo.m_nBpp == 16
@@ -667,7 +667,7 @@ BOOL CVidInf::FullScreenFlip(BOOL bRenderCursor)
         src.right = 256;
         src.bottom = 64;
 
-        if (!field_14) {
+        if (!nm_field_14) {
             do {
                 HRESULT hr = g_pChitin->cVideo.cVidBlitter.BltFast(pSurfaces[CVIDINF_SURFACE_5],
                     0,
@@ -679,7 +679,7 @@ BOOL CVidInf::FullScreenFlip(BOOL bRenderCursor)
                 if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
                     break;
                 }
-            } while (!g_pChitin->field_1932);
+            } while (!g_pChitin->nm_m_field_1932);
         }
 
         rOldPointerStorage = m_rPointerStorage;
@@ -700,10 +700,10 @@ BOOL CVidInf::FullScreenFlip(BOOL bRenderCursor)
         if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
             break;
         }
-    } while (!g_pChitin->field_1932);
+    } while (!g_pChitin->nm_m_field_1932);
 
     if (bRenderCursor) {
-        if (field_14) {
+        if (nm_field_14) {
             if (bPointerRendered
                 && rOldPointerStorage.Width() > 0
                 && rOldPointerStorage.Height() > 0) {
@@ -751,7 +751,7 @@ BOOL CVidInf::WindowedFlip(BOOL bRenderCursor)
         srcRect.right = CVideo::SCREENWIDTH;
         srcRect.bottom = CVideo::SCREENHEIGHT;
 
-        RECT destRect = g_pChitin->field_E8;
+        RECT destRect = g_pChitin->m_field_E8;
 
         HRESULT hr = g_pChitin->cVideo.cVidBlitter.Blt(pSurfaces[CVIDINF_SURFACE_FRONT],
             &destRect,
@@ -763,7 +763,7 @@ BOOL CVidInf::WindowedFlip(BOOL bRenderCursor)
         if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
             break;
         }
-    } while (!g_pChitin->field_1932);
+    } while (!g_pChitin->nm_m_field_1932);
 
     if (bRenderCursor && bPointerRendered) {
         if (m_rPointerStorage.Width() > 0 && m_rPointerStorage.Height() > 0) {
@@ -860,7 +860,7 @@ LPVOID CVidInf::GetLockedSurface()
 LONG CVidInf::GetSurfacePitch()
 {
     if (g_pChitin->cVideo.m_bIs3dAccelerated) {
-        if (g_pChitin->cVideo.field_13A) {
+        if (g_pChitin->cVideo.nm_field_13A) {
             return CVidTile::BYTES_PER_TEXEL << 9;
         } else {
             return CVidTile::BYTES_PER_TEXEL * m_rLockedRect.Width();
@@ -890,7 +890,7 @@ BOOL CVidInf::FXPrep(CRect& rFXRect, DWORD dwFlags, const CPoint& ptPos, const C
 
     DDBLTFX fx;
     fx.dwSize = sizeof(fx);
-    fx.dwFillColor = field_24;
+    fx.dwFillColor = nm_field_24;
 
     if (GetFXSurfacePtr(dwFlags) == NULL) {
         return FALSE;
@@ -927,7 +927,7 @@ BOOL CVidInf::FXPrep(CRect& rFXRect, DWORD dwFlags, const CPoint& ptPos, const C
         } while (1);
     }
 
-    if (field_170) {
+    if (nm_field_170) {
         INT nSurface;
         if (!GetFXSurface(nSurface, dwFlags)) {
             return FALSE;
@@ -1236,7 +1236,7 @@ BOOL CVidInf::FXRender(CParticle* pParticle, const CRect& rClip, USHORT nFlag, U
         CVideo3d::glEnable(GL_TEXTURE_2D);
         g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-        g_pChitin->cVideo.field_13E = 2;
+        g_pChitin->cVideo.nm_field_13E = 2;
 
         CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
         g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
@@ -1256,7 +1256,7 @@ BOOL CVidInf::FXRender(CParticle* pParticle, const CRect& rClip, USHORT nFlag, U
         CVideo3d::glColor4f(1.0, 1.0, 1.0, 1.0);
         g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-        if (g_pChitin->cVideo.field_13A) {
+        if (g_pChitin->cVideo.nm_field_13A) {
             pParticle->Render(CVideo3d::texImageData,
                 CVidTile::BYTES_PER_TEXEL * CVIDINF_FX_WIDTH,
                 rClip,
@@ -1287,7 +1287,7 @@ BOOL CVidInf::FXRender(CPoint* pPoints, INT nPoints, const CRect& rSurface, COLO
         CVideo3d::glEnable(GL_TEXTURE_2D);
         g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-        g_pChitin->cVideo.field_13E = 2;
+        g_pChitin->cVideo.nm_field_13E = 2;
 
         CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
         g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
@@ -1307,7 +1307,7 @@ BOOL CVidInf::FXRender(CPoint* pPoints, INT nPoints, const CRect& rSurface, COLO
         CVideo3d::glColor4f(1.0, 1.0, 1.0, 1.0);
         g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-        if (g_pChitin->cVideo.field_13A) {
+        if (g_pChitin->cVideo.nm_field_13A) {
             return DrawPoints(pPoints,
                 nPoints,
                 reinterpret_cast<WORD*>(CVideo3d::texImageData),
@@ -1367,7 +1367,7 @@ BOOL CVidInf::FXLock(CRect& rFXRect, DWORD dwFlags)
 BOOL CVidInf::FXTextOut(CVidFont* pFont, const CString& sString, INT x, INT y, const CRect& rClip, DWORD dwFlags, BOOL bDemanded)
 {
     if (g_pChitin->cVideo.Is3dAccelerated()) {
-        LONG lPitch = g_pChitin->cVideo.field_13A
+        LONG lPitch = g_pChitin->cVideo.nm_field_13A
             ? CVidTile::BYTES_PER_TEXEL * CVIDINF_FX_WIDTH
             : CVidTile::BYTES_PER_TEXEL * m_rLockedRect.Width();
         return pFont->TextOut3d(sString,
@@ -1437,18 +1437,18 @@ BOOL CVidInf::FXUnlock(DWORD dwFlags, const CRect* pFxRect, const CPoint& ptRef)
             vertices[7] = vertices[5];
             cVidPoly.SetPoly(vertices, 4);
 
-            if (g_pChitin->cVideo.field_13A) {
+            if (g_pChitin->cVideo.nm_field_13A) {
                 cVidPoly.FillPoly(reinterpret_cast<WORD*>(CVideo3d::texImageData),
                     CVidTile::BYTES_PER_TEXEL * CVIDINF_FX_WIDTH,
                     pFxRect,
-                    field_24,
+                    nm_field_24,
                     dwPolyFlags,
                     ptRef);
             } else {
                 cVidPoly.FillPoly(reinterpret_cast<WORD*>(CVideo3d::texImageData),
                     CVidTile::BYTES_PER_TEXEL * m_rLockedRect.Width(),
                     pFxRect,
-                    field_24,
+                    nm_field_24,
                     dwPolyFlags,
                     ptRef);
             }
@@ -1477,7 +1477,7 @@ BOOL CVidInf::FXUnlock(DWORD dwFlags, const CRect* pFxRect, const CPoint& ptRef)
         cVidPoly.FillPoly(reinterpret_cast<WORD*>(m_SurfaceDesc.lpSurface),
             m_SurfaceDesc.lPitch,
             pFxRect,
-            field_24,
+            nm_field_24,
             dwPolyFlags | 0x2,
             ptRef);
     }
@@ -1565,7 +1565,7 @@ BOOL CVidInf::BKRender(CVidCell* pVidCell, INT x, INT y, const CRect& rClip, BOO
 BOOL CVidInf::BKRender(CVidCell* pVidCell, INT x, INT y, DWORD dwFlags, INT nTransVal)
 {
     if (g_pChitin->cVideo.m_bIs3dAccelerated) {
-        if (g_pChitin->cVideo.field_13A) {
+        if (g_pChitin->cVideo.nm_field_13A) {
             memset(CVideo3d::texImageData, 0, sizeof(DWORD) * CVIDINF_FX_WIDTH * m_rLockedRect.Height());
         } else {
             memset(CVideo3d::texImageData, 0, sizeof(DWORD) * m_rLockedRect.Width() * m_rLockedRect.Height());
@@ -1750,17 +1750,17 @@ void CVidInf::LoadFogOWarSurfaces(const CString& a2)
     BOOL bSurfaceLocked;
 
     if (!g_pChitin->cVideo.m_bIs3dAccelerated) {
-        if (g_pChitin->field_F8 != 1) {
+        if (g_pChitin->nfield_F8 != 1) {
             if (!a2.IsEmpty()) {
-                field_73A = a2;
+                sfield_73A = a2;
             } else {
-                if (field_73A.IsEmpty()) {
+                if (sfield_73A.IsEmpty()) {
                     return;
                 }
             }
 
             // NOTE: Uninline.
-            tileVidCell.SetResRef(CResRef(field_73A), FALSE, TRUE, TRUE);
+            tileVidCell.SetResRef(CResRef(sfield_73A), FALSE, TRUE, TRUE);
 
             tileVidCell.SequenceSet(0);
             tileVidCell.pRes->Demand();
@@ -1774,9 +1774,9 @@ void CVidInf::LoadFogOWarSurfaces(const CString& a2)
 
                 surfaceDesc.dwSize = sizeof(surfaceDesc);
 
-                field_174 = FALSE;
+                nm_field_174 = FALSE;
                 bSurfaceLocked = LockSurface(6, &surfaceDesc, rTileRect);
-                field_174 = TRUE;
+                nm_field_174 = TRUE;
 
                 // __FILE__: C:\Projects\Icewind2\src\chitin\ChVideo.cpp
                 // __LINE__: 8995
@@ -1921,7 +1921,7 @@ BOOL CVidInf::RenderPointer()
 
     CSingleLock positionLock(&(g_pChitin->m_csPointerPosition));
     CSingleLock renderLock(&m_csRenderPointer);
-    rPointer.OffsetRect(g_pChitin->field_E8.left, g_pChitin->field_E8.top);
+    rPointer.OffsetRect(g_pChitin->m_field_E8.left, g_pChitin->m_field_E8.top);
 
     if (g_pChitin->m_bPointerUpdated) {
         return FALSE;
@@ -1932,7 +1932,7 @@ BOOL CVidInf::RenderPointer()
     renderLock.Unlock();
 
     if (!m_bPointerInside || pPointerVidCell == NULL || !m_bPointerEnabled) {
-        field_10 = FALSE;
+        wm_field_10 = FALSE;
         return FALSE;
     }
 
@@ -1942,13 +1942,13 @@ BOOL CVidInf::RenderPointer()
     CPoint pt = g_pChitin->m_ptPointer;
     positionLock.Unlock();
 
-    if (field_10 && rPointer.Width() > 0 && rPointer.Height() > 0) {
+    if (wm_field_10 && rPointer.Width() > 0 && rPointer.Height() > 0) {
         pPointerVidCell->RestoreBackground(CVIDINF_SURFACE_4,
             CVIDINF_SURFACE_FRONT,
             rPointer);
     }
 
-    field_10 = TRUE;
+    wm_field_10 = TRUE;
 
     g_pChitin->GetWnd()->ClientToScreen(&pt);
 
@@ -1957,7 +1957,7 @@ BOOL CVidInf::RenderPointer()
         CVIDINF_SURFACE_4,
         pt.x,
         pt.y,
-        g_pChitin->field_E8,
+        g_pChitin->m_field_E8,
         m_rPointerStorage,
         m_nPointerNumber > 0);
     g_pChitin->GetWnd()->ScreenToClient(&m_rPointerStorage);
@@ -1966,7 +1966,7 @@ BOOL CVidInf::RenderPointer()
         m_nPointerNumber,
         pt.x,
         pt.y,
-        g_pChitin->field_E8);
+        g_pChitin->m_field_E8);
     renderLock.Unlock();
 
     return TRUE;
@@ -2001,7 +2001,7 @@ void CVidInf::RenderFlash(UINT nSurface, COLORREF rgbColor, unsigned char a4, co
             if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
                 break;
             }
-        } while (!g_pChitin->field_1932);
+        } while (!g_pChitin->nm_m_field_1932);
     }
 }
 
@@ -2024,7 +2024,7 @@ BOOL CVidInf::RenderPointer(UINT nSurface)
     renderLock.Unlock();
 
     if (!m_bPointerInside || pPointerVidCell == NULL || !m_bPointerEnabled) {
-        field_10 = FALSE;
+        wm_field_10 = FALSE;
         return FALSE;
     }
 
@@ -2036,11 +2036,11 @@ BOOL CVidInf::RenderPointer(UINT nSurface)
 
     CRect rClip(0, 0, CVideo::SCREENWIDTH, CVideo::SCREENHEIGHT);
 
-    if (field_10 && m_rPointerStorage.Width() > 0 && m_rPointerStorage.Height() > 0) {
+    if (wm_field_10 && m_rPointerStorage.Width() > 0 && m_rPointerStorage.Height() > 0) {
         pPointerVidCell->RestoreBackground(CVIDINF_SURFACE_4, nSurface, m_rPointerStorage);
     }
 
-    field_10 = TRUE;
+    wm_field_10 = TRUE;
 
     renderLock.Lock(INFINITE);
     pPointerVidCell->StoreBackground(nSurface,
@@ -2126,7 +2126,7 @@ void CVidInf::RestoreSurfaces()
     BOOLEAN v1 = TRUE;
 
     if (!g_pChitin->cVideo.m_bIs3dAccelerated) {
-        if (!g_pChitin->field_1932) {
+        if (!g_pChitin->nm_m_field_1932) {
             if (pSurfaces[CVIDINF_SURFACE_FRONT] != NULL) {
                 hr = pSurfaces[CVIDINF_SURFACE_FRONT]->Restore();
                 CheckResults(hr);
@@ -2208,7 +2208,7 @@ void CVidInf::RestoreSurfaces()
                 CheckResults(hr);
             }
 
-            if (v1 == TRUE && field_174 == 1) {
+            if (v1 == TRUE && nm_field_174 == 1) {
                 LoadFogOWarSurfaces(CString(""));
             }
         }
@@ -2286,9 +2286,9 @@ void CVidInf::ParsePixelFormat(const DDPIXELFORMAT& ddpf)
 
         m_dwBBitShift = bit;
 
-        field_C2 = 8 - m_dwRBitCount;
-        field_C6 = 8 - m_dwGBitCount;
-        field_CA = 8 - m_dwBBitCount;
+        nfield_C2 = 8 - m_dwRBitCount;
+        nfield_C6 = 8 - m_dwGBitCount;
+        nfield_CA = 8 - m_dwBBitCount;
         break;
     case 24:
     case 32:
@@ -2327,9 +2327,9 @@ void CVidInf::ParsePixelFormat(const DDPIXELFORMAT& ddpf)
         m_dwRBitCount = 8;
         m_dwGBitCount = 8;
         m_dwBBitCount = 8;
-        field_C2 = 0;
-        field_C6 = 0;
-        field_CA = 0;
+        nfield_C2 = 0;
+        nfield_C6 = 0;
+        nfield_CA = 0;
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\chitin\ChVideo.cpp
@@ -2337,3 +2337,20 @@ void CVidInf::ParsePixelFormat(const DDPIXELFORMAT& ddpf)
         UTIL_ASSERT(FALSE);
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x79ADF0
+void FUN_0079adf0() {
+    // TODO: Incomplete.
+}
+
+// 0x79AFF0
+void FUN_0079aff0() {
+    // TODO: Incomplete.
+}
+
+// 0x79D680
+void FUN_0079d680() {
+    // TODO: Incomplete.
+}
+

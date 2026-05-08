@@ -15,10 +15,10 @@ public:
     CImm()
     {
         m_dwState = 0;
-        field_12C = FALSE;
-        field_128 = 0;
+        bm_field_12C = FALSE;
+        nm_field_128 = 0;
         m_hKeyboardLayout = NULL;
-        field_13C = 0;
+        pm_field_13C = 0;
     }
 
     ~CImm();
@@ -46,12 +46,12 @@ public:
     /* 0000 */ DWORD m_dwState;
     /* 0104 */ HKL m_hKeyboardLayout;
     /* 0108 */ CCriticalSection m_cCriticalSection;
-    /* 0128 */ int field_128;
-    /* 012C */ BOOL field_12C;
-    /* 0130 */ CString field_130;
-    /* 0134 */ CString field_134;
+    /* 0128 */ int nm_field_128;
+    /* 012C */ BOOL bm_field_12C;
+    /* 0130 */ CString sm_field_130;
+    /* 0134 */ CString sm_field_134;
     /* 0138 */ CString m_sCandidateList;
-    /* 013C */ CVidMosaic* field_13C;
+    /* 013C */ CVidMosaic* pm_field_13C;
 };
 
 #endif /* CIMM_H_ */

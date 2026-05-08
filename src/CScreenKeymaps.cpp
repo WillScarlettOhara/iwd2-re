@@ -247,7 +247,7 @@ CScreenKeymaps::CScreenKeymaps()
     m_bSystemKeyCtrl = FALSE;
     m_bSystemKeyShift = FALSE;
     m_bSystemKeyCapsLock = FALSE;
-    field_44A = -1;
+    nm_field_44A = -1;
     m_dwErrorTextId = -1;
     m_strErrorButtonText[0] = -1;
     m_strErrorButtonText[1] = -1;
@@ -429,10 +429,10 @@ void CScreenKeymaps::EngineDestroyed()
 // 0x638F40
 void CScreenKeymaps::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUIKEYS"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIKEYS"), g_pBaldurChitin->nm_field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -766,7 +766,7 @@ void CScreenKeymaps::StartKeymaps()
 // 0x639E70
 void CScreenKeymaps::sub_639E70()
 {
-    CSingleLock lock(&(GetManager()->field_36), FALSE);
+    CSingleLock lock(&(GetManager()->pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     CUIPanel* pPanel = GetTopPopup();
@@ -1066,7 +1066,7 @@ void CScreenKeymaps::OnErrorButtonClick(INT nButton)
 {
     int index;
 
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     switch (m_dwErrorTextId) {
@@ -1266,7 +1266,7 @@ void CUIControlButtonKeymap::OnLButtonClick(CPoint pt)
     // __LINE__: 2107
     UTIL_ASSERT(pKeymaps != NULL);
 
-    CSingleLock lock(&(pKeymaps->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pKeymaps->GetManager()->pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     switch (m_pPanel->m_nID) {
@@ -1300,3 +1300,10 @@ void CUIControlButtonKeymap::OnLButtonClick(CPoint pt)
 
     lock.Unlock();
 }
+
+// Phase 1-2: Scaffold functions
+// 0x63ABE0
+void FUN_0063abe0() {
+    // TODO: Incomplete.
+}
+

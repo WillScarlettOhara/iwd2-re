@@ -15,8 +15,8 @@ CGameAnimationTypeMonsterIcewind::CGameAnimationTypeMonsterIcewind(USHORT animat
     m_currentVidCellWeaponBase = NULL;
     m_bDetectedByInfravision = TRUE;
     m_nSndFreq = -1;
-    field_1CDA = 10;
-    field_1CDE = -1;
+    nm_field_1CDA = 10;
+    nm_field_1CDE = -1;
     m_bExtendDir = TRUE;
     SetNeckOffsets(0, 10, -10, 10, -10, 0, -10, -10, 0, -10, 10, -10, 10, 0, 10, 10);
 
@@ -157,7 +157,7 @@ CGameAnimationTypeMonsterIcewind::CGameAnimationTypeMonsterIcewind(USHORT animat
             m_colorBlood = 47;
             m_colorChunks = -1;
             m_nSndFreq = 10;
-            field_1CDA = 26;
+            nm_field_1CDA = 26;
             m_personalSpace = 5;
             m_pSndDeath = "FAL_03B";
             break;
@@ -392,7 +392,7 @@ CGameAnimationTypeMonsterIcewind::CGameAnimationTypeMonsterIcewind(USHORT animat
 
             m_colorBlood = 66;
             m_nSndFreq = 8;
-            field_1CDA = 11;
+            nm_field_1CDA = 11;
             m_pSndDeath = "FAL_03B";
             break;
         case 0x40:
@@ -427,7 +427,7 @@ CGameAnimationTypeMonsterIcewind::CGameAnimationTypeMonsterIcewind(USHORT animat
             m_resRef = "MGOC";
             m_colorBlood = 66;
             m_nSndFreq = 8;
-            field_1CDA = 11;
+            nm_field_1CDA = 11;
             m_pSndDeath = "FAL_03B";
             break;
         case 0x80:
@@ -651,7 +651,7 @@ CGameAnimationTypeMonsterIcewind::CGameAnimationTypeMonsterIcewind(USHORT animat
                 m_resRef += '7';
             }
             m_colorBlood = 47;
-            field_1CDA = 21;
+            nm_field_1CDA = 21;
             m_nSndFreq = 9;
             m_pSndDeath = "FAL_03B";
             break;
@@ -662,7 +662,7 @@ CGameAnimationTypeMonsterIcewind::CGameAnimationTypeMonsterIcewind(USHORT animat
         case 0x50:
             m_resRef = "MOR" + (((animationID >> 4) & 0xF) + '0');
             m_colorBlood = 47;
-            field_1CDA = 21;
+            nm_field_1CDA = 21;
             m_nSndFreq = 9;
             m_pSndDeath = "FAL_03B";
             break;
@@ -2485,3 +2485,10 @@ SHORT CGameAnimationTypeMonsterIcewind::SetSequence(SHORT nSequence)
 
     return nSequence;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x6E5020
+void FUN_006e5020() {
+    // TODO: Incomplete.
+}
+

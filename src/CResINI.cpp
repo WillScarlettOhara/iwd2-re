@@ -38,3 +38,20 @@ BOOL CResINI::Parse(void* pData)
 
     return m_bParsed;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x402980
+void FUN_00402980() {
+    // TODO: Incomplete.
+}
+
+// 0x4029F0
+void FUN_004029f0() {
+    // TODO: Incomplete.
+}
+
+// 0x402A50
+void FUN_00402a50() {
+    // TODO: Incomplete.
+}
+

@@ -24,9 +24,9 @@ public:
     /* 0002 */ BOOLEAN m_bSoftSrcKeyBlt; // #guess
     /* 0003 */ BOOLEAN m_bSoftBlt; // #guess
     /* 0004 */ BOOLEAN m_bSoftMirrorBlt; // #guess
-    /* 00DE */ int field_DE;
-    /* 00E2 */ int field_E2;
-    /* 00E6 */ unsigned char field_E6;
+    /* 00DE */ int nfield_DE;
+    /* 00E2 */ int nfield_E2;
+    /* 00E6 */ unsigned char bfield_E6;
     /* 00E8 */ BltFunc m_pfnBltNoFX; // #guess
     /* 00EC */ BltFunc m_pfnSrcKeyBltNoFX; // #guess
     /* 00F0 */ BltFunc m_pfnBltFX; // #guess

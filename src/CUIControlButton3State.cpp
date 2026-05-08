@@ -47,3 +47,10 @@ BOOL CUIControlButton3State::Render(BOOL bForce)
 
     return CUIControlButton::Render(bForce);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4D5A20
+void FUN_004d5a20() {
+    // TODO: Incomplete.
+}
+

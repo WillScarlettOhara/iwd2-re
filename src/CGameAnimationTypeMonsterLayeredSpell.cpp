@@ -1188,3 +1188,10 @@ void CGameAnimationTypeMonsterLayeredSpell::GetAnimationResRef(CString& resRef, 
         resRef = "";
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x6C00B0
+void FUN_006c00b0() {
+    // TODO: Incomplete.
+}
+

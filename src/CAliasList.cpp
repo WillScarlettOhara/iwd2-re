@@ -25,11 +25,11 @@ BOOL CAliasList::AddAlias(CAlias* pAlias)
         return FALSE;
     }
 
-    if (pAlias->field_4) {
+    if (pAlias->nm_field_4) {
         AddTail(pAlias);
     }
 
-    return pAlias->field_4;
+    return pAlias->nm_field_4;
 }
 
 // #not-binary-identical
@@ -44,11 +44,11 @@ BOOL CAliasList::ResolveFileName(const CString& a2, CString& a3)
     while (aliasPos != NULL) {
         CAlias* pAlias = static_cast<CAlias*>(GetNext(aliasPos));
         if (pAlias != NULL) {
-            if (a2.Find(pAlias->field_8) != -1) {
-                POSITION pos = pAlias->field_C.GetHeadPosition();
+            if (a2.Find(pAlias->nm_field_8) != -1) {
+                POSITION pos = pAlias->nfield_C.GetHeadPosition();
                 if (pos != NULL) {
                     while (pos != NULL) {
-                        temp = pAlias->field_C.GetNext(pos);
+                        temp = pAlias->nfield_C.GetNext(pos);
                         if (temp.GetAt(0) == '.' && temp.GetAt(1) != '.') {
                             if (getcwd(workingDirectory, sizeof(workingDirectory)) != NULL) {
                                 temp = workingDirectory;
@@ -62,7 +62,7 @@ BOOL CAliasList::ResolveFileName(const CString& a2, CString& a3)
                             }
                         }
 
-                        a3 = a2.Right(a2.GetLength() - pAlias->field_8.GetLength());
+                        a3 = a2.Right(a2.GetLength() - pAlias->nm_field_8.GetLength());
                         a3 = temp + a3;
 
                         if (fileFind.FindFile(a3)) {
@@ -97,3 +97,10 @@ BOOL CAliasList::ResolveFileName(const CString& a2, CString& a3)
 
     return FALSE;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x781A70
+void FUN_00781a70() {
+    // TODO: Incomplete.
+}
+

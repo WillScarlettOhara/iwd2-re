@@ -24,14 +24,14 @@ public:
     /* 0406 */ CVidCell m_g1VidCell;
     /* 04E0 */ CVidCell m_g1VidCellShadow;
     /* 05BA */ CVidPalette m_palette;
-    /* 05DE */ unsigned char field_5DE;
+    /* 05DE */ unsigned char bfield_5DE;
     /* 05DF */ BOOLEAN m_translucent;
     /* 05E0 */ BOOLEAN m_bRender;
-    /* 05E1 */ unsigned char field_5E1;
+    /* 05E1 */ unsigned char bfield_5E1;
     /* 05E2 */ SHORT m_currentBamSequence;
     /* 05E4 */ SHORT m_currentBamDirection;
     /* 05E6 */ BYTE m_extendDirectionTest;
-    /* 05E7 */ unsigned char field_5E7;
+    /* 05E7 */ unsigned char bfield_5E7;
 };
 
 #endif /* CGAMEANIMATIONTYPEEFFECT_H_ */

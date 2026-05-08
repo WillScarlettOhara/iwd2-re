@@ -211,10 +211,10 @@ void CScreenChapter::EngineDestroyed()
 // 0x5D3370
 void CScreenChapter::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUICHAP"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUICHAP"), g_pBaldurChitin->nm_field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -332,7 +332,7 @@ void CScreenChapter::TimerAsynchronousUpdate()
         }
 
         if (!m_bEnded) {
-            if (m_nLine >= m_pTextControl->m_plstStrings->GetCount() - m_pTextControl->field_A6A) {
+            if (m_nLine >= m_pTextControl->m_plstStrings->GetCount() - m_pTextControl->wfield_A6C) {
                 m_nEndTime = GetTickCount();
                 m_bEnded = TRUE;
             }
@@ -376,7 +376,7 @@ void CScreenChapter::TimerSynchronousUpdate()
 // 0x5D39A0
 void CScreenChapter::SwitchMainPanel(DWORD dwMainPanelId)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     if (m_pMainPanel != NULL) {
@@ -427,7 +427,7 @@ void CScreenChapter::ResetMainPanel()
 
     // Add leading empty lines so that the text gracefully slide in from the
     // bottom.
-    for (index = 0; index < m_pTextControl->field_A6A + 1; index++) {
+    for (index = 0; index < m_pTextControl->wfield_A6C + 1; index++) {
         UpdateText(m_pTextControl, "");
     }
 
@@ -438,7 +438,7 @@ void CScreenChapter::ResetMainPanel()
 
     SHORT nFontHeight = m_pTextControl->m_labelFont.GetFontHeight(FALSE);
 
-    m_pTextControl->field_AB4 = static_cast<SHORT>((nFontHeight + size.cy - 1) / nFontHeight);
+    m_pTextControl->wfield_AB4 = static_cast<SHORT>((nFontHeight + size.cy - 1) / nFontHeight);
 
     INT nLine = 0;
     INT nTextLength = 0;
@@ -508,11 +508,11 @@ void CScreenChapter::ResetMainPanel()
 
     // Add trailing empty lines so that the text gracefully slide out at the
     // top.
-    for (index = 0; index < m_pTextControl->field_A6A; index++) {
+    for (index = 0; index < m_pTextControl->wfield_A6C; index++) {
         UpdateText(m_pTextControl, "");
     }
 
-    m_nLineDelay = max(m_nTotalPlayTime / max(m_pTextControl->m_plstStrings->GetCount() - 7 * m_pTextControl->field_A6A / 4, 1), 833);
+    m_nLineDelay = max(m_nTotalPlayTime / max(m_pTextControl->m_plstStrings->GetCount() - 7 * m_pTextControl->wfield_A6C / 4, 1), 833);
 
     m_pTextControl->SetTopString(m_pTextControl->m_plstStrings->FindIndex(0));
 
@@ -603,7 +603,7 @@ void CScreenChapter::OnDoneButtonClick()
 // NOTE: Inlined.
 void CScreenChapter::OnReplayButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     m_cVoiceSound.Stop();
@@ -782,7 +782,7 @@ void CUIControlButtonChapterDone::OnLButtonClick(CPoint pt)
     // __LINE__: 1680
     UTIL_ASSERT(pChapter != NULL);
 
-    CSingleLock renderLock(&(pChapter->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pChapter->GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pChapter->OnDoneButtonClick();
@@ -813,7 +813,7 @@ void CUIControlButtonChapterReplay::OnLButtonClick(CPoint pt)
     // __LINE__: 1744
     UTIL_ASSERT(pChapter != NULL);
 
-    CSingleLock renderLock(&(pChapter->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pChapter->GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -841,9 +841,9 @@ void CUIControlTextDisplayChapter::TimerAsynchronousUpdate(BOOLEAN bInside)
     // calls one in inheritance chain.
     CUIControlBase::TimerAsynchronousUpdate(bInside);
 
-    if (field_A65 != 0) {
+    if (bfield_A65 != 0) {
         if (m_posTopString == m_plstStrings->GetTailPosition()) {
-            field_A65 = 0;
+            bfield_A65 = 0;
         } else {
             DWORD nEnd = pChapter->m_nStartTime + pChapter->m_nLineDelay * (pChapter->m_nLine - 1);
             DWORD nTickCount = GetTickCount();
@@ -854,14 +854,14 @@ void CUIControlTextDisplayChapter::TimerAsynchronousUpdate(BOOLEAN bInside)
                 nElapsed = nTickCount - nEnd;
             }
 
-            field_A62 = -static_cast<SHORT>((nElapsed * m_nFontHeight) / pChapter->m_nLineDelay);
+            wfield_A62 = -static_cast<SHORT>((nElapsed * m_nFontHeight) / pChapter->m_nLineDelay);
 
-            if (field_A62 <= -m_nFontHeight) {
-                field_A62 = 0;
+            if (wfield_A62 <= -m_nFontHeight) {
+                wfield_A62 = 0;
                 m_plstStrings->GetNext(m_posTopString);
-                field_5A++;
+                bfield_5A++;
                 AdjustScrollBar();
-                field_A65--;
+                bfield_A65--;
                 pChapter->m_nLine++;
             }
 
@@ -871,3 +871,20 @@ void CUIControlTextDisplayChapter::TimerAsynchronousUpdate(BOOLEAN bInside)
         }
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x5D30A0
+void FUN_005d30a0() {
+    // TODO: Incomplete.
+}
+
+// 0x5D4A00
+void FUN_005d4a00() {
+    // TODO: Incomplete.
+}
+
+// 0x5D4C30
+void FUN_005d4c30() {
+    // TODO: Incomplete.
+}
+

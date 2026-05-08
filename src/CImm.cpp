@@ -62,7 +62,7 @@ void CImm::sub_7C2680(HWND hWnd, LPARAM lParam)
             ImmGetCompositionStringA(hImc, GCS_COMPSTR, lpCompStr, nCompStrLength);
             lpCompStr[nCompStrLength] = '\0';
 
-            field_134 = lpCompStr;
+            nm_field_134 = lpCompStr;
 
             delete lpCompStr;
 
@@ -107,7 +107,7 @@ void CImm::sub_7C27D0(HWND hWnd, BOOL a3)
             ImmGetCompositionStringA(hImc, GCS_COMPSTR, lpResultStr, nResultStrLength);
             lpResultStr[nResultStrLength] = '\0';
 
-            field_130 = lpResultStr;
+            sm_field_130 = lpResultStr;
 
             delete lpResultStr;
 
@@ -123,11 +123,11 @@ void CImm::sub_7C27D0(HWND hWnd, BOOL a3)
                     ImmGetCompositionStringA(hImc, GCS_RESULTCLAUSE, lpResultCls, nResultClsLength);
                     lpResultCls[nResultClsLength] = '\0';
 
-                    field_130 += CString(lpResultCls);
+                    sm_field_130 += CString(lpResultCls);
 
                     delete lpResultCls;
 
-                    field_134 = "";
+                    nm_field_134 = "";
                     m_sCandidateList = "";
 
                     g_pChitin->pActiveEngine->OnKeyDown(1);
@@ -239,7 +239,7 @@ CString CImm::ParseCandidateList(LPCANDIDATELIST lpCandidateList)
 // 0x7C2CC0
 void CImm::sub_7C2CC0(HWND hWnd)
 {
-    field_12C = FALSE;
+    bm_field_12C = FALSE;
 
     HIMC hImc = ImmGetContext(hWnd);
     if (hImc != NULL) {
@@ -269,26 +269,26 @@ void CImm::sub_7C2CC0(HWND hWnd)
 
             ImmSetOpenStatus(hImc, TRUE);
 
-            if (field_12C) {
-                field_12C = FALSE;
+            if (bm_field_12C) {
+                bm_field_12C = FALSE;
                 fdwConversion &= ~IME_CMODE_KATAKANA;
                 fdwConversion |= IME_CMODE_FULLSHAPE;
             } else {
                 fdwConversion |= IME_CMODE_KATAKANA;
                 fdwConversion |= IME_CMODE_FULLSHAPE;
-                field_12C = TRUE;
+                bm_field_12C = TRUE;
             }
         }
 
         ImmSetConversionStatus(hImc, fdwConversion, fdwSentense);
 
-        field_128 = 1;
+        nm_field_128 = 1;
 
         ImmReleaseContext(hWnd, hImc);
 
         m_sCandidateList = "";
-        field_134 = "";
-        field_130 = "";
+        nm_field_134 = "";
+        sm_field_130 = "";
     }
 }
 
@@ -322,8 +322,8 @@ void CImm::sub_7C2E10(HWND hWnd)
         ImmReleaseContext(hWnd, hImc);
 
         m_sCandidateList = "";
-        field_134 = "";
-        field_130 = "";
+        nm_field_134 = "";
+        sm_field_130 = "";
     }
 }
 
@@ -394,17 +394,17 @@ CString CImm::sub_7C34A0()
 // 0x7C34D0
 CString CImm::sub_7C34D0()
 {
-    return field_134;
+    return nm_field_134;
 }
 
 // NOTE: Probably inlined in `CChitin::DestroyServices`.
 void CImm::CleanUp()
 {
-    if (field_13C != NULL) {
-        delete field_13C;
+    if (nm_field_13C != NULL) {
+        delete nm_field_13C;
     }
 
-    field_13C = NULL;
+    nm_field_13C = NULL;
 }
 
 // NOTE: Odd location.
@@ -412,7 +412,7 @@ void CImm::CleanUp()
 // 0x4D89E0
 CString CImm::sub_4D89E0()
 {
-    CString v1 = field_130;
-    field_130 = "";
+    CString v1 = sm_field_130;
+    sm_field_130 = "";
     return v1;
 }

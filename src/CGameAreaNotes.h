@@ -37,15 +37,15 @@ public:
     /* 0018 */ CPoint m_ptButtonSize;
     /* 0020 */ CTypedPtrList<CPtrList, CAreaUserNote*> m_areaNoteList;
     /* 003C */ CAreaUserNote m_cAreaNote;
-    /* 0070 */ int field_70;
-    /* 0074 */ int field_74;
+    /* 0070 */ int nfield_70;
+    /* 0074 */ int nfield_74;
     /* 0078 */ CUIControlButtonMapAreaMap* m_pMapControl;
     /* 007C */ UI_CONTROL_BUTTON* m_pControlInfo;
     /* 0080 */ CResRef m_rArea;
     /* 0088 */ CString m_szBuffer;
-    /* 008C */ unsigned char field_8C;
-    /* 008D */ unsigned char field_8D;
-    /* 008E */ unsigned char field_8E;
+    /* 008C */ unsigned char bm_field_8C;
+    /* 008D */ unsigned char bm_field_8D;
+    /* 008E */ unsigned char bm_field_8E;
 };
 
 #endif /* CGAMEAREANOTES_H_ */

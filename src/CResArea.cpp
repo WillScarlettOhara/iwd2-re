@@ -44,3 +44,10 @@ BOOL CResArea::Parse(void* pData)
 
     return m_bParsed;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x402500
+void FUN_00402500() {
+    // TODO: Incomplete.
+}
+

@@ -85,7 +85,7 @@ public:
     /* 0516 */ CVidCell m_vcAreas;
     /* 05F0 */ CVidCell m_vcMarker;
     /* 06CA */ CVidFont m_vfLabel;
-    /* 0FCA */ COLORREF field_FCA;
+    /* 0FCA */ COLORREF pfield_FCA;
     /* 0FCE */ DWORD m_nHighlightArea;
     /* 0FD2 */ DWORD m_nSelectedArea;
     /* 0FD6 */ BOOL m_bOverSelectedArea;
@@ -93,20 +93,20 @@ public:
     /* 0FE2 */ CPoint m_ptMapStartView;
     /* 0FEA */ BOOL m_bMapLeftDown;
     /* 0FEE */ BOOL m_bMapDragging;
-    /* 0FF2 */ int field_FF2;
-    /* 0FF6 */ int field_FF6;
+    /* 0FF2 */ int nfield_FF2;
+    /* 0FF6 */ int nfield_FF6;
     /* 0FFA */ CWorldMapList* m_pPath;
     /* 0FFE */ LONG m_nLeavingEdge;
     /* 1002 */ DWORD m_nCurrentLink;
     /* 1006 */ CResRef m_cResCurrentArea;
     /* 100E */ CArray<CRect> m_aAreaRect;
-    /* 1022 */ CCriticalSection field_1022;
+    /* 1022 */ CCriticalSection pm_field_1022;
     /* 1042 */ CUIPanel* m_pMainPanel;
     /* 1046 */ CUIControlTextDisplay* m_pChatDisplay;
     /* 104A */ INT m_nChatMessageCount;
     /* 104E */ BOOLEAN m_bInControl;
     /* 104F */ BOOLEAN m_bClickedArea;
-    /* 1050 */ int field_1050;
+    /* 1050 */ int nm_field_1050;
     /* 1054 */ DWORD m_nToolTip;
     /* 1058 */ CVidFont m_preLoadFontRealms;
     /* 1558 */ CVidFont m_preLoadFontTool;
@@ -135,8 +135,8 @@ public:
     void OnLButtonUp(CPoint pt) override;
     BOOL Render(BOOL bForce) override;
 
-    /* 0676 */ int field_676;
-    /* 067A */ int field_67A;
+    /* 0676 */ int nfield_676;
+    /* 067A */ int nfield_67A;
 };
 
 #endif /* CSCREENWORLDMAP_H_ */

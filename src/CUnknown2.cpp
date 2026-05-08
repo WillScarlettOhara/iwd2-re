@@ -3,12 +3,12 @@
 // 0x7C24C0
 CUnknown2::CUnknown2()
 {
-    field_0 = 0;
-    field_4 = 0;
-    field_8 = 0;
-    field_28 = 0;
-    field_2C = 0;
-    field_30 = 0;
+    bm_field_0 = 0;
+    nm_field_4 = 0;
+    nm_field_8 = 0;
+    nm_field_28 = 0;
+    m_m_field_2C = 0;
+    nm_field_30 = 0;
 }
 
 // 0x7C24F0

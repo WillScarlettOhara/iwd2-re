@@ -47,8 +47,8 @@ public:
     /* 07C6 */ SHORT m_currentShootSequence;
     /* 07C8 */ BOOL m_falseColor;
     /* 07CC */ BOOL m_translucent;
-    /* 07D0 */ BOOL field_7D0;
-    /* 07D4 */ CVidBitmap field_7D4;
+    /* 07D0 */ BOOL bfield_7D0;
+    /* 07D4 */ CVidBitmap pfield_7D4;
     /* 088E */ BOOL m_renderWeapons;
     /* 0892 */ BOOL m_bHideWeapons;
     /* 0896 */ BOOLEAN m_bDetectedByInfravision;

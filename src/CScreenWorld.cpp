@@ -26,25 +26,25 @@ int CScreenWorld::dword_8F85BC;
 // 0x685610
 CScreenWorld::CScreenWorld()
 {
-    field_11E = 0;
+    m_m_field_11E = 0;
     m_bHardPaused = FALSE;
-    field_14E = 0;
+    m_m_field_14E = 0;
     m_bPausedBeforePickParty = FALSE;
-    field_15C = 0;
-    field_15D = 0;
-    field_15E = 0;
-    field_160 = 0;
-    field_162 = 0;
-    field_164 = 0;
+    m_m_field_15C = 0;
+    m_m_field_15D = 0;
+    m_m_field_15E = 0;
+    m_m_field_160 = 0;
+    m_m_field_162 = 0;
+    m_m_field_164 = 0;
     m_nTopContainerRow = 0;
     m_nTopGroupRow = 0;
-    field_10CC = 0;
+    m_m_field_10CC = 0;
     m_ambianceForce = FALSE;
     m_bInControlOfDialog = FALSE;
     m_bInControlOfStore = FALSE;
-    field_110C = 0;
-    field_114C = 0;
-    field_1150 = 0;
+    m_m_field_110C = 0;
+    m_m_field_114C = 0;
+    m_m_field_1150 = 0;
     m_nPendingMapWorldDirection = 0;
     m_nLeaveAreaLuaPanicDirection = 0;
     m_comingOutOfDialog = 0;
@@ -155,37 +155,37 @@ CScreenWorld::CScreenWorld()
     m_bCapsLockKeyOn = FALSE;
     m_bMenuKeyDown = FALSE;
     m_bPaused = FALSE;
-    field_142 = 0;
-    field_14A = 0;
+    m_m_field_142 = 0;
+    m_m_field_14A = 0;
     m_pActiveDialogDisplay = NULL;
     m_pActiveChatDisplay = NULL;
-    field_156 = 0;
-    field_F37 = 0;
-    field_15A = 1;
+    m_m_field_156 = 0;
+    m_field_F37 = 0;
+    m_m_field_15A = 1;
     m_newViewSize.left = 0;
     m_newViewSize.top = 0;
     m_newViewSize.right = 1;
     m_newViewSize.bottom = 1;
     m_bForceViewSize = FALSE;
     m_waitingOnResize = 0;
-    field_F44 = 0;
+    m_field_F44 = 0;
     m_scrollLockId = CGameObjectArray::INVALID_INDEX;
-    field_EA4 = -1;
-    field_10B2 = -1;
-    field_10B4 = 0;
+    m_field_EA4 = -1;
+    m_m_field_10B2 = -1;
+    m_m_field_10B4 = 0;
     m_interactionIndex = CGameObjectArray::INVALID_INDEX;
     m_interactionTarget = CGameObjectArray::INVALID_INDEX;
-    field_10C0 = "";
-    field_10C4 = 0;
-    field_10C8 = 0;
-    field_10D0 = CGameObjectArray::INVALID_INDEX;
+    m_m_field_10C0 = "";
+    m_m_field_10C4 = 0;
+    m_m_field_10C8 = 0;
+    m_m_field_10D0 = CGameObjectArray::INVALID_INDEX;
     m_deltaTime = 0;
     m_nChatMessageCount = 0;
     m_movie = "";
-    field_1108 = 0;
+    m_m_field_1108 = 0;
     m_bGameOverPanel = 0;
-    field_10F0 = 0;
-    field_10F4 = -1;
+    m_m_field_10F0 = 0;
+    m_m_field_10F4 = -1;
     m_autoPauseId = CGameObjectArray::INVALID_INDEX;
     m_autoPauseRef = -1;
     m_nPickPartyNumCharacters = -1;
@@ -202,25 +202,25 @@ CScreenWorld::CScreenWorld()
     m_bRestMovie = FALSE;
     m_bPendingMapWorld = FALSE;
     m_bPendingReformParty = FALSE;
-    field_119D = 0;
-    InitializeCriticalSection(&field_106);
+    m_m_field_119D = 0;
+    InitializeCriticalSection(&m_m_field_106);
     m_nBattleCryTimeOut = 0;
     m_nPartySizeCheckStartDelay = 0;
     m_bLeaveAreaLuaPanicPending = FALSE;
     m_ulLeaveAreaLuaPanicTimer = -1;
     m_bPlayEndCredits = FALSE;
-    field_11B6 = -1;
-    field_11BA = -1;
-    field_11BE = 0;
+    m_m_field_11B6 = -1;
+    m_m_field_11BA = -1;
+    m_m_field_11BE = 0;
     m_lastAmbiance = CGameObjectArray::INVALID_INDEX;
     m_comingOutOfDialog = 0;
     m_nAutoHideInterface = 0;
     m_nAutoUnhideInterface = 0;
-    field_11F0 = 1;
-    field_11F4 = 1;
-    field_11D0 = CInfinity::stru_8E79B8;
+    m_m_field_11F0 = 1;
+    m_m_field_11F4 = 1;
+    m_m_field_11D0 = CInfinity::stru_8E79B8;
     m_nBlackOutCountDown = 0;
-    field_1204 = 0;
+    m_m_field_1204 = 0;
 }
 
 // 0x49FC40
@@ -322,7 +322,7 @@ void CScreenWorld::TimerAsynchronousUpdate()
 // 0x6866C0
 CScreenWorld::~CScreenWorld()
 {
-    DeleteCriticalSection(&field_106);
+    DeleteCriticalSection(&m_m_field_106);
 
     while (!m_deathSoundList.IsEmpty()) {
         CDeathSound* pDeathSound = m_deathSoundList.RemoveHead();
@@ -391,16 +391,16 @@ void CScreenWorld::EngineActivated()
         && g_pChitin->cNetwork.GetSessionOpen() == TRUE
         && g_pChitin->cNetwork.GetSessionHosting() == TRUE
         && g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL
-        && field_142) {
+        && m_m_field_142) {
         g_pBaldurChitin->m_pEngineWorld->TogglePauseGame(1, 1, 0);
-        field_142 = FALSE;
+        m_m_field_142 = FALSE;
     }
 
     if (m_cUIManager.m_bInitialized) {
         if (g_pBaldurChitin->GetObjectGame()->m_bGameLoaded == TRUE) {
             g_pBaldurChitin->field_F9 = TRUE;
             g_pBaldurChitin->GetObjectGame()->WorldEngineActivated(pVidMode);
-            field_119D = TRUE;
+            m_m_field_119D = TRUE;
 
             g_pBaldurChitin->GetObjectCursor()->SetCursor(0, TRUE);
             g_pBaldurChitin->GetObjectCursor()->m_bVisible = TRUE;
@@ -476,43 +476,43 @@ void CScreenWorld::EngineGameInit()
 
     m_cUIManager.fInit(this,
         CResRef(CString("GUIW") + CBaldurChitin::CHUI_GUIEXT),
-        g_pBaldurChitin->field_4A2C);
+        g_pBaldurChitin->m_field_4A2C);
 
     m_pCurrentScrollBar = NULL;
     m_bored = FALSE;
     m_boredCount = 0;
     m_playerShutdown = FALSE;
     m_bPaused = FALSE;
-    field_14A = 0;
+    m_m_field_14A = 0;
     m_pActiveDialogDisplay = NULL;
     m_pActiveChatDisplay = NULL;
-    field_156 = 0;
-    field_F37 = 0;
-    field_15A = 1;
+    m_m_field_156 = 0;
+    m_field_F37 = 0;
+    m_m_field_15A = 1;
     m_newViewSize.left = 0;
     m_newViewSize.top = 0;
     m_newViewSize.right = 1;
     m_newViewSize.bottom = 1;
     m_bForceViewSize = FALSE;
     m_waitingOnResize = 0;
-    field_F44 = 0;
+    m_field_F44 = 0;
     m_scrollLockId = CGameObjectArray::INVALID_INDEX;
-    field_EA4 = -1;
-    field_10B2 = -1;
-    field_10B4 = 0;
+    m_field_EA4 = -1;
+    m_m_field_10B2 = -1;
+    m_m_field_10B4 = 0;
     m_interactionIndex = CGameObjectArray::INVALID_INDEX;
     m_interactionTarget = CGameObjectArray::INVALID_INDEX;
-    field_10C0 = "";
-    field_10C4 = 0;
-    field_10C8 = 0;
-    field_10D8 = CGameObjectArray::INVALID_INDEX;
+    m_m_field_10C0 = "";
+    m_m_field_10C4 = 0;
+    m_m_field_10C8 = 0;
+    m_m_field_10D8 = CGameObjectArray::INVALID_INDEX;
     m_deltaTime = 0;
     m_nChatMessageCount = 0;
     m_movie = "";
-    field_1108 = 0;
+    m_m_field_1108 = 0;
     m_bGameOverPanel = FALSE;
-    field_10F0 = 0;
-    field_10F4 = -1;
+    m_m_field_10F0 = 0;
+    m_m_field_10F4 = -1;
     m_autoPauseId = CGameObjectArray::INVALID_INDEX;
     m_autoPauseRef = -1;
     m_nPickPartyNumCharacters = -1;
@@ -529,15 +529,15 @@ void CScreenWorld::EngineGameInit()
     m_bRestMovie = 0;
     m_bPendingMapWorld = 0;
     m_bPendingReformParty = 0;
-    field_119D = 0;
+    m_m_field_119D = 0;
     m_nBattleCryTimeOut = 0;
     m_nPartySizeCheckStartDelay = 0;
     m_bLeaveAreaLuaPanicPending = 0;
     m_ulLeaveAreaLuaPanicTimer = -1;
     m_bPlayEndCredits = FALSE;
-    field_11B6 = -1;
-    field_11BA = -1;
-    field_11BE = 0;
+    m_m_field_11B6 = -1;
+    m_m_field_11BA = -1;
+    m_m_field_11BE = 0;
 
     g_pBaldurChitin->m_pEngineWorld->GetManager()->GetPanel(19)->SetActive(FALSE);
     g_pBaldurChitin->m_pEngineWorld->GetManager()->GetPanel(21)->SetActive(FALSE);
@@ -554,14 +554,14 @@ void CScreenWorld::EngineGameInit()
     m_nAutoHideInterface = 0;
     m_nAutoUnhideInterface = 0;
 
-    if (!field_11F0) {
-        field_11F0 = TRUE;
-        CInfinity::stru_8E79B8.bottom = field_11F8;
+    if (!m_m_field_11F0) {
+        m_m_field_11F0 = TRUE;
+        CInfinity::stru_8E79B8.bottom = m_m_field_11F8;
     }
 
-    if (!field_11F4) {
-        field_11F4 = TRUE;
-        CInfinity::stru_8E79B8.bottom = field_11F8;
+    if (!m_m_field_11F4) {
+        m_m_field_11F4 = TRUE;
+        CInfinity::stru_8E79B8.bottom = m_m_field_11F8;
     }
 
     while (!m_deathSoundList.IsEmpty()) {
@@ -603,8 +603,8 @@ void CScreenWorld::OnLButtonDblClk(CPoint pt)
 // 0x68C080
 void CScreenWorld::OnLButtonDown(CPoint pt)
 {
-    m_cUIManager.field_20 = m_bShiftKeyDown;
-    m_cUIManager.field_24 = m_bCtrlKeyDown;
+    m_cUIManager.m_field_20 = m_bShiftKeyDown;
+    m_cUIManager.m_field_24 = m_bCtrlKeyDown;
     m_cUIManager.OnLButtonDown(pt);
 
     if ((g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_mode & 0x1) != 0) {
@@ -624,8 +624,8 @@ void CScreenWorld::OnLButtonUp(CPoint pt)
         // NOTE: Uninline.
         m_cUIManager.KillCapture();
     } else {
-        m_cUIManager.field_20 = m_bShiftKeyDown;
-        m_cUIManager.field_24 = m_bCtrlKeyDown;
+        m_cUIManager.m_field_20 = m_bShiftKeyDown;
+        m_cUIManager.m_field_24 = m_bCtrlKeyDown;
         m_cUIManager.OnLButtonUp(pt);
 
         CGameArea* pArea = g_pBaldurChitin->GetObjectGame()->GetVisibleArea();
@@ -732,8 +732,8 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
     UTIL_ASSERT(pGame != NULL);
 
     DWORD nTickCount = GetTickCount();
-    g_pBaldurChitin->field_1AB2[0] += nTickCount - g_pBaldurChitin->field_1AF2[0];
-    g_pBaldurChitin->field_1AF2[0] = nTickCount;
+    g_pBaldurChitin->m_field_1AB2[0] += nTickCount - g_pBaldurChitin->m_field_1AF2[0];
+    g_pBaldurChitin->m_field_1AF2[0] = nTickCount;
 
     if (m_bPlayEndCredits) {
         if (g_pBaldurChitin->GetBaldurMessage()->NonBlockingWaitForSignal(CBaldurMessage::SIGNAL_SERVER, CBaldurMessage::SIGNAL_END_GAME)) {
@@ -764,7 +764,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
 
     if (pGame->m_bGameLoaded) {
         if (pGame->GetWorldTimer()->m_active
-            && field_EA4 != 0
+            && m_field_EA4 != 0
             && m_nPartySizeCheckStartDelay <= 0
             && pGame->m_characterOverflow.GetCount() > 0) {
             if (!g_pChitin->cNetwork.GetSessionOpen()) {
@@ -982,7 +982,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
 
                 if (!bAreaCanBeDeleted) {
                     if (m_waitingOnResize > 0) {
-                        EnterCriticalSection(&(pArea->field_1FC));
+                        EnterCriticalSection(&(pArea->m_field_1FC));
 
                         if (!EqualRect(pArea->GetInfinity()->rViewPort, m_newViewSize)
                             || m_bForceViewSize) {
@@ -994,7 +994,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
                         }
                         m_cUIManager.InvalidateRect(NULL);
 
-                        LeaveCriticalSection(&(pArea->field_1FC));
+                        LeaveCriticalSection(&(pArea->m_field_1FC));
                     }
                 } else {
                     DeleteArea(pArea);
@@ -1174,7 +1174,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
             m_autoPauseId = CGameObjectArray::INVALID_INDEX;
         }
 
-        if (field_EA4 == 17) {
+        if (m_field_EA4 == 17) {
             CUIPanel* pPanel = m_cUIManager.GetPanel(17);
 
             if (m_bHardPaused) {
@@ -1334,7 +1334,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
         if (m_bGameOverPanel && m_movie == "") {
             m_bGameOverPanel = FALSE;
             StartDeath();
-            field_10F0 = 0;
+            m_m_field_10F0 = 0;
         }
 
         if (m_nBattleCryTimeOut > 0) {
@@ -1342,8 +1342,8 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
         }
 
         DWORD nOtherTickCount = GetTickCount();
-        g_pBaldurChitin->field_1A72[0] += nOtherTickCount - g_pBaldurChitin->field_1AF2[0];
-        g_pBaldurChitin->field_1AF2[0] = nOtherTickCount;
+        g_pBaldurChitin->m_field_1A72[0] += nOtherTickCount - g_pBaldurChitin->m_field_1AF2[0];
+        g_pBaldurChitin->m_field_1AF2[0] = nOtherTickCount;
 
         if (m_comingOutOfDialog > 0) {
             if (--m_comingOutOfDialog == 0) {
@@ -1408,9 +1408,9 @@ void CScreenWorld::TimerSynchronousUpdate()
         }
     }
 
-    if (field_119D) {
+    if (m_m_field_119D) {
         pVidMode->LoadFogOWarSurfaces(CInfGame::FOGOWAR_RESREF);
-        field_119D = FALSE;
+        m_m_field_119D = FALSE;
     }
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -1418,7 +1418,7 @@ void CScreenWorld::TimerSynchronousUpdate()
 
     CGameArea* pArea = pGame->GetVisibleArea();
     if (pArea == NULL || pArea->m_firstRender < 2) {
-        if (field_EA4 == 6) {
+        if (m_field_EA4 == 6) {
             SHORT nPortrait;
 
             for (nPortrait = 0; nPortrait <= 5; nPortrait++) {
@@ -1506,7 +1506,7 @@ BOOLEAN CScreenWorld::ReadyMovie(const CResRef& res, BOOLEAN bForcedFromServer)
     if (m_movie == CInfinity::DAWN_MOVIE
         || m_movie == CInfinity::DUSK_MOVIE
         || m_movie == "DEATH1") {
-        g_pBaldurChitin->m_pEngineProjector->field_145 = 1;
+        g_pBaldurChitin->m_pEngineProjector->m_field_145 = 1;
     }
 
     if (bForcedFromServer == TRUE) {
@@ -1687,29 +1687,29 @@ void CScreenWorld::StopContainer()
         HideInterface();
     }
 
-    field_EA4 = -1;
+    m_field_EA4 = -1;
 }
 
 // 0x691090
 void CScreenWorld::CancelPopup()
 {
-    switch (field_EA4) {
+    switch (m_field_EA4) {
     case -1:
     case 0:
     case 7:
         break;
     case 6:
         StopCommand();
-        field_EA4 = -1;
+        m_field_EA4 = -1;
         break;
     case 8:
         StopContainer();
-        field_EA4 = -1;
+        m_field_EA4 = -1;
         break;
     case 15:
     case 17:
         StopDeath();
-        field_EA4 = -1;
+        m_field_EA4 = -1;
         break;
     case 19:
     case 21:
@@ -1727,7 +1727,7 @@ void CScreenWorld::StartCommand()
     // NOTE: Uninline.
     CancelPopup();
 
-    field_EA4 = 6;
+    m_field_EA4 = 6;
     m_cUIManager.ClearTooltip();
 
     for (INT nId = 6; nId <= 17; nId++) {
@@ -1747,7 +1747,7 @@ void CScreenWorld::StartCommand()
 // 0x6912A0
 void CScreenWorld::StopCommand()
 {
-    field_F37 = 0;
+    m_field_F37 = 0;
 
     // NOTE: Uninline.
     m_cUIManager.KillCapture();
@@ -1763,18 +1763,18 @@ void CScreenWorld::StopCommand()
     }
 
     // FIXME: Global.
-    if (g_pBaldurChitin->m_pEngineWorld->field_11F0) {
+    if (g_pBaldurChitin->m_pEngineWorld->m_m_field_11F0) {
         m_cUIManager.GetPanel(1)->InvalidateRect(NULL);
     }
 
     // FIXME: Global.
-    if (g_pBaldurChitin->m_pEngineWorld->field_11F4) {
+    if (g_pBaldurChitin->m_pEngineWorld->m_m_field_11F4) {
         // FIXME: Repeats.
         m_cUIManager.GetPanel(GetPanel_22_0())->SetActive(TRUE);
         m_cUIManager.GetPanel(GetPanel_22_0())->InvalidateRect(NULL);
     }
 
-    field_EA4 = -1;
+    m_field_EA4 = -1;
 }
 
 // FIXME: `cResStore` should be reference.
@@ -2047,7 +2047,7 @@ void CScreenWorld::HideInterface()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
-    if (!g_pBaldurChitin->field_4A24) {
+    if (!g_pBaldurChitin->m_field_4A24) {
         return;
     }
 
@@ -2056,7 +2056,7 @@ void CScreenWorld::HideInterface()
     }
 
     // NOTE: Uninline.
-    field_11D0 = GetNewViewSize();
+    m_m_field_11D0 = GetNewViewSize();
 
     INT x;
     INT y;
@@ -2065,8 +2065,8 @@ void CScreenWorld::HideInterface()
     // NOTE: Uninline.
     SetNewViewSize(CInfinity::stru_8E7548, FALSE);
 
-    pGame->GetVisibleArea()->GetInfinity()->SetViewPosition(x + m_newViewSize.left - field_11D0.left,
-        y + m_newViewSize.top - field_11D0.top,
+    pGame->GetVisibleArea()->GetInfinity()->SetViewPosition(x + m_newViewSize.left - m_m_field_11D0.left,
+        y + m_newViewSize.top - m_m_field_11D0.top,
         TRUE);
 
     m_cUIManager.m_bHidden = TRUE;
@@ -2081,7 +2081,7 @@ void CScreenWorld::UnhideInterface()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
-    if (!g_pBaldurChitin->field_4A24) {
+    if (!g_pBaldurChitin->m_field_4A24) {
         return;
     }
 
@@ -2100,14 +2100,14 @@ void CScreenWorld::UnhideInterface()
         pGame->GetVisibleArea()->GetInfinity()->GetViewPosition(x, y);
 
         // NOTE: Uninline.
-        SetNewViewSize(field_11D0, FALSE);
+        SetNewViewSize(m_m_field_11D0, FALSE);
 
         pGame->GetVisibleArea()->GetInfinity()->SetViewPosition(x + m_newViewSize.left - oldViewSize.left,
             y + m_newViewSize.top - oldViewSize.top,
             TRUE);
     } else {
         // NOTE: Uninline.
-        SetNewViewSize(field_11D0, FALSE);
+        SetNewViewSize(m_m_field_11D0, FALSE);
     }
 
     m_cUIManager.InvalidateRect(NULL);
@@ -2138,7 +2138,7 @@ void CScreenWorld::StartDeath()
     // NOTE: Uninline.
     CancelPopup();
 
-    field_EA4 = 17;
+    m_field_EA4 = 17;
 
     m_cUIManager.ClearTooltip();
     pGame->GetWorldTimer()->StopTime();
@@ -2179,12 +2179,12 @@ void CScreenWorld::StartDeath()
     }
 
     STRREF strRef;
-    switch (field_10F0) {
+    switch (m_m_field_10F0) {
     case 1:
         strRef = 32848;
         break;
     case 3:
-        strRef = field_10F4;
+        strRef = m_m_field_10F4;
         break;
     default:
         if (g_pChitin->cNetwork.GetSessionOpen()) {
@@ -2240,7 +2240,7 @@ void CScreenWorld::StopDeath()
     m_cUIManager.GetPanel(1)->InvalidateRect(NULL);
     m_cUIManager.GetPanel(GetPanel_22_0())->InvalidateRect(NULL);
 
-    field_EA4 = -1;
+    m_field_EA4 = -1;
 
     if (m_cUIManager.m_pFocusedControl != NULL) {
         // NOTE: Uninline.
@@ -2377,7 +2377,7 @@ void CScreenWorld::StartMovieMultiplayerHost(BYTE* cMovieResRef)
     if (m_movie == CInfinity::DAWN_MOVIE
         || m_movie == CInfinity::DUSK_MOVIE
         || m_movie == "DEATH1") {
-        g_pBaldurChitin->m_pEngineProjector->field_145 = 1;
+        g_pBaldurChitin->m_pEngineProjector->m_field_145 = 1;
     }
 
     if (m_movie == CInfinity::DAWN_MOVIE) {
@@ -2557,23 +2557,23 @@ void CScreenWorld::CheckEndOfMultiplayerSynch()
 // 0x693860
 void CScreenWorld::CancelEngine()
 {
-    switch (field_EA4) {
+    switch (m_field_EA4) {
     case -1:
     case 0:
     case 7:
         break;
     case 6:
         StopCommand();
-        field_EA4 = -1;
+        m_field_EA4 = -1;
         break;
     case 8:
         StopContainer();
-        field_EA4 = -1;
+        m_field_EA4 = -1;
         break;
     case 15:
     case 17:
         StopDeath();
-        field_EA4 = -1;
+        m_field_EA4 = -1;
         break;
     case 19:
     case 21:
@@ -2719,11 +2719,11 @@ void CScreenWorld::UpdatePartyGoldStatus()
 {
     CUIPanel* pPanel;
 
-    switch (field_EA4) {
+    switch (m_field_EA4) {
     case 7:
     case 19:
     case 21:
-        pPanel = m_cUIManager.GetPanel(field_EA4);
+        pPanel = m_cUIManager.GetPanel(m_field_EA4);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenWorld.cpp
         // __LINE__: 9851
@@ -2735,7 +2735,7 @@ void CScreenWorld::UpdatePartyGoldStatus()
             g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_nPartyGold);
         break;
     case 8:
-        pPanel = m_cUIManager.GetPanel(field_EA4);
+        pPanel = m_cUIManager.GetPanel(m_field_EA4);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenWorld.cpp
         // __LINE__: 9841
@@ -2961,7 +2961,7 @@ void CScreenWorld::sub_695570(BOOL bActive, BOOL bInvalidate)
     // __LINE__: 10120
     UTIL_ASSERT(pCommandPanel != NULL);
 
-    if (field_11F0) {
+    if (m_m_field_11F0) {
         pActionPanel->SetActive(bActive);
 
         if (bInvalidate) {
@@ -2969,7 +2969,7 @@ void CScreenWorld::sub_695570(BOOL bActive, BOOL bInvalidate)
         }
     }
 
-    if (field_11F4) {
+    if (m_m_field_11F4) {
         pCommandPanel->SetActive(bActive);
 
         if (bInvalidate) {
@@ -3000,7 +3000,7 @@ void CScreenWorld::sub_695650(BOOL bEnable)
 // 0x6984F0
 void CScreenWorld::OnRestButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -3171,12 +3171,12 @@ void CUIControlButtonDialog::OnLButtonClick(CPoint pt)
     // __LINE__: 10842
     UTIL_ASSERT(pWorld != NULL);
 
-    if (GetTickCount() > pWorld->field_11BA + 600) {
-        pWorld->field_1150 = 1;
-        if (!pWorld->field_10B4) {
-            pWorld->m_internalLoadedDialog.m_responseMarker = pWorld->field_10B2;
+    if (GetTickCount() > pWorld->m_m_field_11BA + 600) {
+        pWorld->m_m_field_1150 = 1;
+        if (!pWorld->m_m_field_10B4) {
+            pWorld->m_internalLoadedDialog.m_responseMarker = pWorld->m_m_field_10B2;
         }
-        pWorld->field_11BA = GetTickCount();
+        pWorld->m_m_field_11BA = GetTickCount();
     }
 
     SetActive(FALSE);
@@ -3450,7 +3450,7 @@ void CUIControlScrollBarWorldContainer::OnScroll()
     switch (m_nID) {
     case 52:
         // NOTE: Uninline.
-        pWorld->m_nTopContainerRow = pWorld->GetNumContainerRows(nContainer) * field_144 / field_142;
+        pWorld->m_nTopContainerRow = pWorld->GetNumContainerRows(nContainer) * m_field_144 / m_m_field_142;
 
         // NOTE: Uninline.
         InvalidateSlots();
@@ -3459,7 +3459,7 @@ void CUIControlScrollBarWorldContainer::OnScroll()
         break;
     case 53:
         // NOTE: Uninline.
-        pWorld->m_nTopGroupRow = (pWorld->GetNumGroupRows() - 2) * field_144 / field_142;
+        pWorld->m_nTopGroupRow = (pWorld->GetNumGroupRows() - 2) * m_field_144 / m_m_field_142;
 
         // NOTE: Uninline.
         InvalidateSlots();
@@ -3624,7 +3624,7 @@ void CUIControlButtonWorldContainerClose::OnLButtonClick(CPoint pt)
     // __LINE__: 11471
     UTIL_ASSERT(pWorld != NULL);
 
-    CSingleLock renderLock(&(pWorld->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pWorld->GetManager()->m_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pWorld->StopContainer();
@@ -3639,7 +3639,7 @@ CUIControlButtonClock::CUIControlButtonClock(CUIPanel* panel, UI_CONTROL_BUTTON*
     : CUIControlButton3State(panel, controlInfo, LBUTTON, 0)
 {
     // NOTE: Uninline.
-    m_vcGear.SetResRef(CResRef("CGEAR"), g_pBaldurChitin->field_4A28, TRUE, TRUE);
+    m_vcGear.SetResRef(CResRef("CGEAR"), g_pBaldurChitin->m_field_4A28, TRUE, TRUE);
 
     SetNeedAsyncUpdate();
 
@@ -3657,7 +3657,7 @@ void CUIControlButtonClock::TimerAsynchronousUpdate(BOOLEAN bInside)
     if (m_bActive) {
         if (bInside
             && !m_bToolTipActive
-            && m_pPanel->m_pManager->field_1C >= g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips) {
+            && m_pPanel->m_pManager->m_field_1C >= g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips) {
             ActivateToolTip();
             m_bToolTipActive = TRUE;
         }
@@ -3837,3 +3837,75 @@ void CUIControlButtonWorldDeathQuit::OnLButtonClick(CPoint pt)
 
     pGame->DestroyGame(TRUE, FALSE);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x502EB0
+void FUN_00502eb0() {
+    // TODO: Incomplete.
+}
+
+// 0x6866A0
+void FUN_006866a0() {
+    // TODO: Incomplete.
+}
+
+// 0x6872D0
+void FUN_006872d0() {
+    // TODO: Incomplete.
+}
+
+// 0x68EA00
+void FUN_0068ea00() {
+    // TODO: Incomplete.
+}
+
+// 0x690820
+void FUN_00690820() {
+    // TODO: Incomplete.
+}
+
+// 0x691130
+void FUN_00691130() {
+    // TODO: Incomplete.
+}
+
+// 0x694510
+void FUN_00694510() {
+    // TODO: Incomplete.
+}
+
+// 0x695720
+void FUN_00695720() {
+    // TODO: Incomplete.
+}
+
+// 0x6967D0
+void FUN_006967d0() {
+    // TODO: Incomplete.
+}
+
+// 0x697520
+void FUN_00697520() {
+    // TODO: Incomplete.
+}
+
+// 0x697810
+void FUN_00697810() {
+    // TODO: Incomplete.
+}
+
+// 0x697C00
+void FUN_00697c00() {
+    // TODO: Incomplete.
+}
+
+// 0x698080
+void FUN_00698080() {
+    // TODO: Incomplete.
+}
+
+// 0x698350
+void FUN_00698350() {
+    // TODO: Incomplete.
+}
+

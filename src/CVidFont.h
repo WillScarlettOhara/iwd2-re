@@ -56,8 +56,8 @@ public:
     /* 00DA */ RGBQUAD m_palette[256];
     /* 04DA */ HFONT m_hFont;
     /* 04DE */ BOOL m_bFontSet;
-    /* 04E2 */ int field_4E2;
-    /* 04E6 */ short field_4E6;
+    /* 04E2 */ int nm_field_4E2;
+    /* 04E6 */ short wm_field_4E6;
     /* 04E8 */ SHORT m_nBaseLineHeight;
     /* 04EA */ SHORT m_nFontHeight;
     /* 04EC */ COLORREF m_rgbForegroundColor;

@@ -73,13 +73,13 @@ public:
     /* 047A */ BOOL m_bShiftKeyDown;
     /* 047E */ BOOL m_bCapsLockKeyOn;
     /* 0482 */ BOOLEAN m_bCtrlKeyDown;
-    /* 0483 */ unsigned char field_483;
-    /* 0484 */ CResRef field_484;
-    /* 048C */ CResRef field_48C;
+    /* 0483 */ unsigned char bm_field_483;
+    /* 0484 */ CResRef sm_field_484;
+    /* 048C */ CResRef sm_field_48C;
     /* 049C */ CVidFont m_preLoadFontRealms;
     /* 099C */ CVidFont m_preLoadFontTool;
-    /* 0E9C */ int field_E9C;
-    /* 0EA0 */ unsigned char field_EA0;
+    /* 0E9C */ int nfield_E9C;
+    /* 0EA0 */ unsigned char bfield_EA0;
 };
 
 class CUIControlButtonJournalScroll : public CUIControlButton {

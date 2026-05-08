@@ -34,14 +34,14 @@ CUIControlButton::CUIControlButton(CUIPanel* panel, UI_CONTROL_BUTTON* controlIn
     // __LINE__: 106
     UTIL_ASSERT(panel != NULL && controlInfo != NULL);
 
-    field_139 = 0;
+    bm_field_139 = 0;
     m_nTextFlags = controlInfo->nTextFlags;
     if (m_pPanel->m_pManager->m_bDoubleSize) {
-        field_658 = ((2 * controlInfo->xHigh) << 8) | (2 * controlInfo->xLow);
-        field_65C = ((2 * controlInfo->yHigh) << 8) | (2 * controlInfo->yLow);
+        nfield_658 = ((2 * controlInfo->xHigh) << 8) | (2 * controlInfo->xLow);
+        nfield_65C = ((2 * controlInfo->yHigh) << 8) | (2 * controlInfo->yLow);
     } else {
-        field_658 = (controlInfo->xHigh << 8) | controlInfo->xLow;
-        field_65C = (controlInfo->yHigh << 8) | controlInfo->yLow;
+        nfield_658 = (controlInfo->xHigh << 8) | controlInfo->xLow;
+        nfield_65C = (controlInfo->yHigh << 8) | controlInfo->yLow;
     }
 
     m_nNormalFrame = controlInfo->nNormalFrame;
@@ -50,8 +50,8 @@ CUIControlButton::CUIControlButton(CUIPanel* panel, UI_CONTROL_BUTTON* controlIn
     m_nRenderCount = 0;
     m_nDisabledFrame = controlInfo->nDisabledFrame;
     m_nMouseButtons = nMouseButtons;
-    field_660 = 0;
-    field_662 = 1;
+    bfield_660 = 0;
+    nfield_662 = 1;
 
     // NOTE: Uninline.
     m_cVidCell.SetResRef(CResRef(controlInfo->refBam), m_pPanel->m_pManager->m_bDoubleSize, FALSE, TRUE);
@@ -63,20 +63,20 @@ CUIControlButton::CUIControlButton(CUIPanel* panel, UI_CONTROL_BUTTON* controlIn
     m_cVidFont.SetResRef(CResRef("NORMAL"), m_pPanel->m_pManager->m_bDoubleSize, FALSE);
 
     if (m_pPanel->m_pManager->m_bDoubleSize) {
-        field_63E = 4;
-        field_642 = 4;
+        nfield_63E = 4;
+        nfield_642 = 4;
     } else {
-        field_63E = 1;
-        field_642 = 2;
+        nfield_63E = 1;
+        nfield_642 = 2;
     }
 
     m_cVidFont.SetColor(RGB(255, 255, 255), RGB(25, 25, 25), FALSE);
     m_bEnabled = TRUE;
     m_bValid = TRUE;
-    field_64C = 0;
-    field_654 = 0;
+    nfield_64C = 0;
+    wfield_654 = 0;
     if ((m_nTextFlags & 0x40) == 0) {
-        field_654 = 256;
+        wfield_654 = 256;
     }
 
     SHORT nFontHeight = m_cVidFont.GetFontHeight(FALSE);
@@ -140,7 +140,7 @@ void CUIControlButton::OnMouseMove(CPoint pt)
 
             InvalidateRect();
 
-            if (field_662 != 0) {
+            if (nfield_662 != 0) {
                 static_cast<CBaldurEngine*>(m_pPanel->m_pManager->m_pWarp)->PlayGUISound(CBaldurEngine::RESREF_SOUND_CLICKLEFT);
             }
         }
@@ -164,11 +164,11 @@ BOOL CUIControlButton::OnLButtonDown(CPoint pt)
 
     InvalidateRect();
 
-    m_pPanel->m_pManager->field_2D = 0;
-    m_pPanel->m_pManager->field_32 = m_nID;
-    m_pPanel->m_pManager->field_1C = 0;
+    m_pPanel->m_pManager->bm_field_2D = 0;
+    m_pPanel->m_pManager->nm_field_32 = m_nID;
+    m_pPanel->m_pManager->nm_field_1C = 0;
 
-    if (field_662 != 0) {
+    if (nfield_662 != 0) {
         static_cast<CBaldurEngine*>(m_pPanel->m_pManager->m_pWarp)->PlayGUISound(CBaldurEngine::RESREF_SOUND_CLICKLEFT);
     }
 
@@ -178,7 +178,7 @@ BOOL CUIControlButton::OnLButtonDown(CPoint pt)
 // 0x4D4E10
 void CUIControlButton::OnLButtonUp(CPoint pt)
 {
-    CSingleLock lock(&(m_pPanel->m_pManager->field_36), FALSE);
+    CSingleLock lock(&(m_pPanel->m_pManager->pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     m_cVidCell.FrameSet(m_nNormalFrame);
@@ -230,9 +230,9 @@ BOOL CUIControlButton::OnRButtonDown(CPoint pt)
 
     InvalidateRect();
 
-    m_pPanel->m_pManager->field_2D = 0;
-    m_pPanel->m_pManager->field_32 = m_nID;
-    m_pPanel->m_pManager->field_1C = 0;
+    m_pPanel->m_pManager->bm_field_2D = 0;
+    m_pPanel->m_pManager->nm_field_32 = m_nID;
+    m_pPanel->m_pManager->nm_field_1C = 0;
 
     static_cast<CBaldurEngine*>(m_pPanel->m_pManager->m_pWarp)->PlayGUISound(CBaldurEngine::RESREF_SOUND_CLICKRIGHT);
 
@@ -269,7 +269,7 @@ BOOL CUIControlButton::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -289,7 +289,7 @@ BOOL CUIControlButton::Render(BOOL bForce)
 
     m_cVidCell.pRes->Demand();
 
-    DWORD dwFlags = field_64C != 0 ? 0x80001 : 0x1;
+    DWORD dwFlags = nfield_64C != 0 ? 0x80001 : 0x1;
     m_cVidCell.RealizePalette(dwFlags);
     BOOL bResult = pVidInf->BKRender(&m_cVidCell, pt.x, pt.y, rDirtyRect, TRUE, dwFlags);
     m_cVidCell.pRes->Release();
@@ -300,19 +300,19 @@ BOOL CUIControlButton::Render(BOOL bForce)
 
     if (m_pText != NULL) {
         if (m_bPressed) {
-            pt.x += field_63E;
-            pt.y += field_642;
+            pt.x += nfield_63E;
+            pt.y += nfield_642;
         }
 
         DWORD dwFlags;
-        if (field_64C) {
+        if (nfield_64C) {
             dwFlags = 0x80000;
         } else if (m_bEnabled) {
             dwFlags = 0;
         } else {
             m_cVidFont.SetTintColor(RGB(180, 180, 180));
 
-            if (g_pChitin->field_1A0) {
+            if (g_pChitin->nm_field_1A0) {
                 m_cVidFont.SetTintColor(RGB(80, 80, 80));
             }
 
@@ -326,11 +326,11 @@ BOOL CUIControlButton::Render(BOOL bForce)
 
         if ((m_nTextFlags & 0x10) != 0) {
             if ((m_nTextFlags & 0x4) != 0) {
-                pt.y += field_65C;
+                pt.y += nfield_65C;
             } else if ((m_nTextFlags & 0x8) != 0) {
-                pt.y += field_65C - nFontHeight + m_nTextLines;
+                pt.y += nfield_65C - nFontHeight + m_nTextLines;
             } else {
-                pt.y += field_65C - nFontHeight * m_nTextLines / 2;
+                pt.y += nfield_65C - nFontHeight * m_nTextLines / 2;
             }
         } else {
             if ((m_nTextFlags & 0x4) != 0) {
@@ -348,12 +348,12 @@ BOOL CUIControlButton::Render(BOOL bForce)
             int x;
             if ((m_nTextFlags & 0x10) != 0) {
                 if ((m_nTextFlags & 0x1) != 0) {
-                    x = pt.x + field_658;
+                    x = pt.x + nfield_658;
                 } else if ((m_nTextFlags & 0x2) != 0) {
-                    x = pt.x + field_658
+                    x = pt.x + nfield_658
                         - m_cVidFont.GetStringLength(m_pText[nLine], TRUE);
                 } else {
-                    x = pt.x + field_658
+                    x = pt.x + nfield_658
                         - m_cVidFont.GetStringLength(m_pText[nLine], TRUE) / 2;
                 }
             } else {
@@ -388,7 +388,7 @@ BOOL CUIControlButton::Render(BOOL bForce)
 void CUIControlButton::InvalidateRect()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
 
         m_nRenderCount = CUIManager::RENDER_COUNT;
@@ -401,7 +401,7 @@ void CUIControlButton::InvalidateRect()
 void CUIControlButton::func_54()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
 
         m_nRenderCount = 0;
@@ -431,12 +431,12 @@ void CUIControlButton::SetEnabled(BOOL bEnabled)
 
         m_bEnabled = bEnabled;
 
-        if (g_pBaldurChitin->field_1A0 == 0) {
+        if (g_pBaldurChitin->nm_field_1A0 == 0) {
             InvalidateRect();
         } else {
             // NOTE: Result is unused.
             g_pChitin->GetWnd();
-            if (g_pChitin->cImm.field_128 == 0) {
+            if (g_pChitin->cImm.nm_field_128 == 0) {
                 InvalidateRect();
             }
         }
@@ -467,7 +467,7 @@ void CUIControlButton::SetText(const CString& sText)
     }
 
     BOOL bDoubleSize = m_pPanel->m_pManager->m_bDoubleSize;
-    if ((field_654 & 0x100) != 0) {
+    if ((wfield_654 & 0x100) != 0) {
         m_nTextLines = CUtil::SplitString(&m_cVidFont,
             sCopy,
             m_size.cx - 2 * dword_8AB9B4 * (bDoubleSize ? 2 : 1),
@@ -506,3 +506,10 @@ void CUIControlButton::OnLButtonDoubleClick(CPoint pt)
 void CUIControlButton::OnRButtonClick(CPoint pt)
 {
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4D4B60
+void FUN_004d4b60() {
+    // TODO: Incomplete.
+}
+

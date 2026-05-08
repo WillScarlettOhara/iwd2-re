@@ -50,17 +50,17 @@ public:
     /* 0108 */ DWORD m_dwMipMapCount16; // #guess
     /* 010C */ DWORD m_dwMipMapCount24; // #guess
     /* 0110 */ DWORD m_dwMipMapCount32; // #guess
-    /* 0114 */ CResRef field_114;
-    /* 011C */ short field_11C;
-    /* 011E */ int field_11E;
+    /* 0114 */ CResRef sm_field_114;
+    /* 011C */ short wm_field_11C;
+    /* 011E */ int nm_m_field_11E;
     /* 0122 */ void* m_doubleSizeData;
     /* 0126 */ size_t m_doubleSizeDataSize; // #guess
     /* 012A */ HDC m_hDC;
     /* 012E */ HGLRC m_hGLRC;
     /* 0132 */ BOOL m_bIs3dAccelerated;
-    /* 0136 */ int field_136;
-    /* 013A */ int field_13A;
-    /* 013E */ int field_13E;
+    /* 0136 */ int nm_field_136;
+    /* 013A */ int nm_field_13A;
+    /* 013E */ int nm_field_13E;
     /* 0142 */ IDirectDraw* m_pDirectDraw; // #guess
     /* 0146 */ IDirectDraw2* m_pDirectDraw2; // #guess
     /* 014A */ IDirectDrawClipper* m_pDirectDrawClipper; // #guess

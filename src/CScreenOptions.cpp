@@ -321,10 +321,10 @@ void CScreenOptions::EngineDestroyed()
 // 0x6541D0
 void CScreenOptions::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUIOPT"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIOPT"), g_pBaldurChitin->nm_field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -495,7 +495,7 @@ void CScreenOptions::OnDoneButtonClick()
         return;
     }
 
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     switch (pPanel->m_nID) {
@@ -545,7 +545,7 @@ void CScreenOptions::OnCancelButtonClick()
 {
     CGameOptions* pOptions = g_pBaldurChitin->GetObjectGame()->GetOptions();
 
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     CUIPanel* pPanel = m_lPopupStack.GetTailPosition() != NULL ? m_lPopupStack.GetTail() : NULL;
@@ -703,7 +703,7 @@ void CScreenOptions::EnableMainPanel(BOOL bEnable)
     pLeftPanel->SetEnabled(bEnable);
     pRightPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -1045,7 +1045,7 @@ void CScreenOptions::OnRestButtonClick()
     // __LINE__: 1887
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     STRREF dwErrorTextId;
@@ -1469,7 +1469,7 @@ void CScreenOptions::OnErrorButtonClick(INT nButton)
     // __LINE__: 2454
     UTIL_ASSERT(0 <= nButton && nButton < CSCREENOPTIONS_ERROR_BUTTONS);
 
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.pm_field_36), FALSE);
 
     // TODO: Unclear.
     CUIPanel* pPanel = m_lPopupStack.GetTailPosition() != NULL ? m_lPopupStack.GetTail() : NULL;
@@ -1526,14 +1526,14 @@ void CScreenOptions::OnErrorButtonClick(INT nButton)
                 lock.Unlock();
 
                 if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
-                    pGame->field_366E = 1;
-                    pGame->field_50DC = 0;
+                    pGame->nm_field_366E = 1;
+                    pGame->bfield_50DC = 0;
 
                     if (!g_pChitin->cVideo.m_bIs3dAccelerated) {
-                        if (!pGame->field_50D8) {
+                        if (!pGame->bfield_50D8) {
                             pGame->SynchronousUpdate();
                         }
-                        pGame->field_50D8;
+                        pGame->bfield_50D8;
                     }
                 }
 
@@ -2180,7 +2180,7 @@ void CUIControlSliderOptionsSlider::OnThumbFinalChange()
         switch (m_nID) {
         case 3:
             if (1) {
-                CSingleLock lock(&(m_pPanel->m_pManager->field_36), FALSE);
+                CSingleLock lock(&(m_pPanel->m_pManager->pm_field_36), FALSE);
                 dwStrId = 17203;
                 dwValue = 40 * m_nValue / (m_nKnobJumpCount - 1);
                 lock.Lock(INFINITE);
@@ -2199,7 +2199,7 @@ void CUIControlSliderOptionsSlider::OnThumbFinalChange()
             break;
         case 22:
             if (1) {
-                CSingleLock lock(&(m_pPanel->m_pManager->field_36), FALSE);
+                CSingleLock lock(&(m_pPanel->m_pManager->pm_field_36), FALSE);
                 dwStrId = 17204;
                 dwValue = 5 * m_nValue / (m_nKnobJumpCount - 1);
                 lock.Lock(INFINITE);
@@ -2482,7 +2482,7 @@ void CUIControlButtonOptionsGameCommand::OnLButtonClick(CPoint pt)
     // __LINE__: 3895
     UTIL_ASSERT(pEngine != NULL);
 
-    CSingleLock lock(&(pEngine->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pEngine->GetManager()->pm_field_36), FALSE);
     lock.Lock(INFINITE);
 
     CUIManager* pManager = pEngine->GetManager();
@@ -2505,14 +2505,14 @@ void CUIControlButtonOptionsGameCommand::OnLButtonClick(CPoint pt)
         case 6:
             if (pGame->CanSaveGame(dwStrId, FALSE, FALSE)) {
                 if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
-                    pGame->field_366E = 1;
-                    pGame->field_50DC = 0;
+                    pGame->nm_field_366E = 1;
+                    pGame->bfield_50DC = 0;
 
                     if (!g_pChitin->cVideo.m_bIs3dAccelerated) {
-                        if (!pGame->field_50D8) {
+                        if (!pGame->bfield_50D8) {
                             pGame->SynchronousUpdate();
                         }
-                        pGame->field_50D8 = TRUE;
+                        pGame->bfield_50D8 = TRUE;
                     }
                 }
 
@@ -2967,3 +2967,55 @@ void CUIControlButtonOptionsHotArea::OnHotAreaClick(CPoint pt)
 
     g_pBaldurChitin->m_pEngineOptions->UpdateHelp(m_pPanel->m_nID, dwTextId, dwStrId);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x653D50
+void FUN_00653d50() {
+    // TODO: Incomplete.
+}
+
+// 0x653D70
+void thunk_FUN_007fb298() {
+    // TODO: Incomplete.
+}
+
+// 0x6574E0
+void FUN_006574e0() {
+    // TODO: Incomplete.
+}
+
+// 0x657CC0
+void FUN_00657cc0() {
+    // TODO: Incomplete.
+}
+
+// 0x658010
+void FUN_00658010() {
+    // TODO: Incomplete.
+}
+
+// 0x658760
+void FUN_00658760() {
+    // TODO: Incomplete.
+}
+
+// 0x6589A0
+void FUN_006589a0() {
+    // TODO: Incomplete.
+}
+
+// 0x6591E0
+void FUN_006591e0() {
+    // TODO: Incomplete.
+}
+
+// 0x659370
+void FUN_00659370() {
+    // TODO: Incomplete.
+}
+
+// 0x6594A0
+void FUN_006594a0() {
+    // TODO: Incomplete.
+}
+

@@ -13,9 +13,9 @@ public:
         Entry(int a1, int a2);
         void Clear();
 
-        int field_0;
-        int field_4;
-        bool field_8;
+        int m_field_0;
+        int m_field_4;
+        bool m_field_8;
     };
 
     static Icewind586B70* Instance();

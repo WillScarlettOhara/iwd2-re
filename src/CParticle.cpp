@@ -373,3 +373,20 @@ void CParticle::RenderDot32(DWORD* pSurface, LONG lPitch, LONG lX, LONG lY, cons
         pSurface[pt.x + lPitch * (pt.y - rClipRect.top) - rClipRect.left] = color;
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x7C3CC0
+void FUN_007c3cc0() {
+    // TODO: Incomplete.
+}
+
+// 0x7C3E20
+void FUN_007c3e20() {
+    // TODO: Incomplete.
+}
+
+// 0x7CC130
+void FUN_007cc130() {
+    // TODO: Incomplete.
+}
+

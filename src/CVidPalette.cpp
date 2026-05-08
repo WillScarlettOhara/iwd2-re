@@ -1102,9 +1102,9 @@ void CVidPalette::RealizeResource(DWORD* pDestPalette, INT nBpp, DWORD dwFlags, 
     INT nReservedEntries = GetReservedEntries(dwFlags);
 
     BOOL bIs16 = nBpp == 16;
-    DWORD v1 = pVidMode->field_C2;
-    DWORD v2 = pVidMode->field_C6;
-    DWORD v3 = pVidMode->field_CA;
+    DWORD v1 = pVidMode->nfield_C2;
+    DWORD v2 = pVidMode->nfield_C6;
+    DWORD v3 = pVidMode->nfield_CA;
     DWORD dwRBitShift = pVidMode->m_dwRBitShift;
     DWORD dwGBitShift = pVidMode->m_dwGBitShift;
     DWORD dwBBitShift = pVidMode->m_dwBBitShift;
@@ -1301,9 +1301,9 @@ void CVidPalette::QuickRealizeResource(DWORD* pDestPalette, INT nBpp)
 
     CVidMode* pVidMode = g_pChitin->GetCurrentVideoMode();
     BOOL bIs16 = nBpp == 16;
-    DWORD v1 = pVidMode->field_C2;
-    DWORD v2 = pVidMode->field_C6;
-    DWORD v3 = pVidMode->field_CA;
+    DWORD v1 = pVidMode->nfield_C2;
+    DWORD v2 = pVidMode->nfield_C6;
+    DWORD v3 = pVidMode->nfield_CA;
     DWORD dwRBitShift = pVidMode->m_dwRBitShift;
     DWORD dwGBitShift = pVidMode->m_dwGBitShift;
     DWORD dwBBitShift = pVidMode->m_dwBBitShift;

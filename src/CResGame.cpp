@@ -46,3 +46,10 @@ BOOL CResGame::Parse(void* pData)
 
     return m_bParsed;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4025A0
+void FUN_004025a0() {
+    // TODO: Incomplete.
+}
+

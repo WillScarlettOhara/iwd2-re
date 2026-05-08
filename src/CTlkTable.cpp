@@ -30,8 +30,8 @@ CTlkFile::CTlkFile()
 // 0x793DB0
 CTlkTable::CTlkTable()
 {
-    field_A4 = 0;
-    field_58 = byte_8FB954;
+    nfield_A4 = 0;
+    nfield_58 = byte_8FB954;
 }
 
 // 0x793E90
@@ -92,7 +92,7 @@ BOOL CTlkTable::AddTlkFile(const CString& filePath, BYTE a3, BYTE a4, BOOLEAN bO
 // 0x7941D0
 BOOLEAN CTlkTable::Fetch(DWORD dwStrId, STR_RES& strRes)
 {
-    CSingleLock lock(&field_38, FALSE);
+    CSingleLock lock(&bm_field_38, FALSE);
     lock.Lock(INFINITE);
 
     CString sText;
@@ -113,7 +113,7 @@ BOOLEAN CTlkTable::Fetch(DWORD dwStrId, STR_RES& strRes)
     }
 
     CTlkFile* pFile;
-    USHORT key = (field_58 << 8) | ((dwStrId & dword_85DD64) >> byte_85DD68);
+    USHORT key = (nfield_58 << 8) | ((dwStrId & dword_85DD64) >> byte_85DD68);
     if (!m_mapTlkFiles.Lookup(key, pFile) || !pFile->m_bOpened) {
         strRes.szText = "";
         strRes.cSound.SetResRef(CResRef(""), FALSE, TRUE);
@@ -317,3 +317,40 @@ void CTlkTable::SetToken(const CString& sKey, const CString& sValue)
 {
     m_mapTokens.SetAt(sKey, sValue);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x793D80
+void FUN_00793d80() {
+    // TODO: Incomplete.
+}
+
+// 0x793D90
+void FUN_00793d90() {
+    // TODO: Incomplete.
+}
+
+// 0x793E70
+void thunk_FUN_007fd5df() {
+    // TODO: Incomplete.
+}
+
+// 0x793E80
+void thunk_FUN_007fc429() {
+    // TODO: Incomplete.
+}
+
+// 0x794050
+void FUN_00794050() {
+    // TODO: Incomplete.
+}
+
+// 0x79465F
+void Catch@0079465f() {
+    // TODO: Incomplete.
+}
+
+// 0x794756
+void Catch@00794756() {
+    // TODO: Incomplete.
+}
+

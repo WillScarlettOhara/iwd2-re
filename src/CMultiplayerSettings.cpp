@@ -95,7 +95,7 @@ void CMultiplayerSettings::InitializeSettings()
     for (INT nPlayerSlot = 0; nPlayerSlot < MAX_PLAYERS; nPlayerSlot++) {
         m_pbCharacterReady[nPlayerSlot] = FALSE;
         m_pnCharacterStatus[nPlayerSlot] = FALSE;
-        field_AC[nPlayerSlot] = -1;
+        bfield_AC[nPlayerSlot] = -1;
 
         if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
             m_pnCharacterControlledByPlayer[nPlayerSlot] = g_pChitin->cNetwork.m_idLocalPlayer;
@@ -607,7 +607,7 @@ int CMultiplayerSettings::sub_518560()
     int count = 0;
 
     for (int index = 0; index < 6; index++) {
-        if (field_AC[index] != -1) {
+        if (bfield_AC[index] != -1) {
             count++;
         }
     }
@@ -647,14 +647,14 @@ void CMultiplayerSettings::sub_518580(PLAYER_ID playerID, INT characterSlotBeing
     UTIL_ASSERT(characterSlotBeingViewed >= -1 && characterSlotBeingViewed < MAX_CHARACTERS);
 
     INT nPlayerSlot = g_pChitin->cNetwork.FindPlayerLocationByID(playerID, TRUE);
-    field_AC[nPlayerSlot] = characterSlotBeingViewed;
+    bfield_AC[nPlayerSlot] = characterSlotBeingViewed;
 }
 
 // 0x518650
 void CMultiplayerSettings::sub_518650()
 {
     for (int index = 0; index < 6; index++) {
-        field_AC[index] = -1;
+        bfield_AC[index] = -1;
     }
 }
 
@@ -662,14 +662,14 @@ void CMultiplayerSettings::sub_518650()
 void CMultiplayerSettings::sub_518660(PLAYER_ID playerID, BOOLEAN a2)
 {
     INT nPlayerSlot = g_pChitin->cNetwork.FindPlayerLocationByID(playerID, TRUE);
-    field_B2[nPlayerSlot] = a2;
+    bfield_B2[nPlayerSlot] = a2;
 }
 
 // 0x518690
 void CMultiplayerSettings::sub_518690()
 {
     for (int index = 0; index < 6; index++) {
-        field_B2[index] = FALSE;
+        bfield_B2[index] = FALSE;
     }
 }
 
@@ -679,7 +679,7 @@ int CMultiplayerSettings::sub_5186A0()
     int count = 0;
 
     for (int index = 0; index < 6; index++) {
-        if (field_B2[index]) {
+        if (bfield_B2[index]) {
             count++;
         }
     }
@@ -1050,3 +1050,15 @@ BOOLEAN CMultiplayerSettings::GetListenToJoinOption()
 {
     return m_bJoinRequests;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x452F50
+void FUN_00452f50() {
+    // TODO: Incomplete.
+}
+
+// 0x452F80
+void FUN_00452f80() {
+    // TODO: Incomplete.
+}
+

@@ -122,12 +122,12 @@ public:
 
     /* 0106 */ CGameAnimation m_animation;
     /* 0110 */ CItem* m_pTempItem;
-    /* 0114 */ int field_114;
-    /* 0118 */ int field_118;
-    /* 011C */ unsigned char field_11C;
-    /* 011D */ unsigned char field_11D;
-    /* 011E */ unsigned char field_11E;
-    /* 011F */ unsigned char field_11F;
+    /* 0114 */ int nm_field_114;
+    /* 0118 */ int nm_field_118;
+    /* 011C */ unsigned char bm_field_11C;
+    /* 011D */ unsigned char bm_field_11D;
+    /* 011E */ unsigned char bm_m_field_11E;
+    /* 011F */ unsigned char bm_field_11F;
     /* 0120 */ CKeyInfo m_pVirtualKeys[CSCREENINVENTORY_VIRTUAL_KEYS];
     /* 03F0 */ BYTE m_pVirtualKeysFlags[CSCREENINVENTORY_VIRTUAL_KEYS];
     /* 044A */ BOOLEAN m_bCtrlKeyDown;
@@ -146,13 +146,13 @@ public:
     /* 04FC */ STRREF m_strErrorButtonText[CSCREENINVENTORY_ERROR_BUTTONS];
     /* 0508 */ int m_nAbilitiesButtonMode;
     /* 050C */ int m_nUseButtonMode;
-    /* 0510 */ int field_510;
-    /* 0514 */ int field_514;
+    /* 0510 */ int nfield_510;
+    /* 0514 */ int nfield_514;
     /* 0518 */ BOOL m_bMultiPlayerViewable;
-    /* 051C */ int field_51C;
-    /* 0520 */ int field_520;
-    /* 0524 */ int field_524;
-    /* 0528 */ int field_528;
+    /* 051C */ int nfield_51C;
+    /* 0520 */ int nfield_520;
+    /* 0524 */ int nfield_524;
+    /* 0528 */ int nfield_528;
     /* 052C */ BOOLEAN m_bPauseWarningDisplayed;
     /* 052E */ CVidFont m_preLoadFontRealms;
     /* 0A2E */ CVidFont m_preLoadFontStnSml;
@@ -173,8 +173,8 @@ public:
     BOOL Render(BOOL bForce) override;
     void OnRButtonClick(CPoint pt) override;
 
-    /* 0666 */ BOOL field_666;
-    /* 066A */ BOOL field_66A;
+    /* 0666 */ BOOL bfield_666;
+    /* 066A */ BOOL bfield_66A;
 };
 
 class CUIControlButtonInventoryAppearance : public CUIControlButton {
@@ -335,7 +335,7 @@ public:
     void OnLButtonClick(CPoint pt) override;
     void OnLButtonDoubleClick(CPoint pt) override;
 
-    /* 0666 */ int field_666;
+    /* 0666 */ int bfield_666;
 };
 
 class CUIControlButtonInventoryError : public CUIControlButton {

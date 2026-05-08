@@ -45,9 +45,9 @@ CGameAnimationType::CGameAnimationType()
     m_rEllipse.right = 16;
     m_rEllipse.bottom = 12;
     m_animationID = 0;
-    field_3E8 = 0;
-    field_3FB = 0;
-    field_3FC = 0;
+    bm_field_3E8 = 0;
+    bm_field_3FB = 0;
+    bm_field_3FC = 0;
     m_moveScale = 0;
     m_moveScaleCurrent = 0;
     m_colorBlood = 47;
@@ -469,3 +469,135 @@ BOOLEAN CGameAnimationType::GetCurrentResRef(CString& resBody, CString& resWeapo
 {
     return FALSE;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4699F0
+void FUN_004699f0() {
+    // TODO: Incomplete.
+}
+
+// 0x55BAF0
+void FUN_0055baf0() {
+    // TODO: Incomplete.
+}
+
+// 0x55BB40
+void FUN_0055bb40() {
+    // TODO: Incomplete.
+}
+
+// 0x55BB90
+void FUN_0055bb90() {
+    // TODO: Incomplete.
+}
+
+// 0x55BBC0
+void FUN_0055bbc0() {
+    // TODO: Incomplete.
+}
+
+// 0x55BE00
+void FUN_0055be00() {
+    // TODO: Incomplete.
+}
+
+// 0x55C040
+void FUN_0055c040() {
+    // TODO: Incomplete.
+}
+
+// 0x55C440
+void FUN_0055c440() {
+    // TODO: Incomplete.
+}
+
+// 0x55C4D0
+void FUN_0055c4d0() {
+    // TODO: Incomplete.
+}
+
+// 0x55C510
+void FUN_0055c510() {
+    // TODO: Incomplete.
+}
+
+// 0x55C780
+void FUN_0055c780() {
+    // TODO: Incomplete.
+}
+
+// 0x55C7A0
+void FUN_0055c7a0() {
+    // TODO: Incomplete.
+}
+
+// 0x55C800
+void FUN_0055c800() {
+    // TODO: Incomplete.
+}
+
+// 0x55CA70
+void FUN_0055ca70() {
+    // TODO: Incomplete.
+}
+
+// 0x55CAD0
+void FUN_0055cad0() {
+    // TODO: Incomplete.
+}
+
+// 0x55CB30
+void FUN_0055cb30() {
+    // TODO: Incomplete.
+}
+
+// 0x55CB50
+void FUN_0055cb50() {
+    // TODO: Incomplete.
+}
+
+// 0x55CBB0
+void FUN_0055cbb0() {
+    // TODO: Incomplete.
+}
+
+// 0x55CC10
+void FUN_0055cc10() {
+    // TODO: Incomplete.
+}
+
+// 0x55CC70
+void FUN_0055cc70() {
+    // TODO: Incomplete.
+}
+
+// 0x55CCD0
+void FUN_0055ccd0() {
+    // TODO: Incomplete.
+}
+
+// 0x55CD70
+void FUN_0055cd70() {
+    // TODO: Incomplete.
+}
+
+// 0x55D240
+void FUN_0055d240() {
+    // TODO: Incomplete.
+}
+
+// 0x55D260
+void FUN_0055d260() {
+    // TODO: Incomplete.
+}
+
+// 0x6A1530
+void FUN_006a1530() {
+    // TODO: Incomplete.
+}
+
+// 0x7B5460
+void FUN_007b5460() {
+    // TODO: Incomplete.
+}
+

@@ -205,7 +205,7 @@ public:
     /* 0004 */ IDirectPlayLobby3A* m_lpDirectPlayLobby;
     /* 0008 */ GUID m_nApplicationGuid;
     /* 0018 */ BOOLEAN m_bApplicationGuidDefined;
-    /* 0019 */ unsigned char field_19;
+    /* 0019 */ unsigned char bm_field_19;
     /* 001A */ BOOLEAN m_bServiceProviderEnumerated;
     /* 001B */ BOOLEAN m_bServiceProviderSelected;
     /* 001C */ INT m_nServiceProvider;
@@ -214,8 +214,8 @@ public:
     /* 0038 */ CString m_serviceProviderNames[CNETWORK_MAX_SERVICE_PROVIDERS];
     /* 004C */ GUID m_serviceProviderGuids[CNETWORK_MAX_SERVICE_PROVIDERS];
     /* 009C */ BOOLEAN m_bConnectionInitialized;
-    /* 009D */ unsigned char field_9D;
-    /* 009E */ unsigned char field_9E;
+    /* 009D */ unsigned char bfield_9D;
+    /* 009E */ unsigned char bfield_9E;
     /* 009F */ BOOLEAN m_bModemEnumerated;
     /* 00A0 */ BOOLEAN m_bModemAddressSelected;
     /* 00A2 */ INT m_nModemAddress;
@@ -251,7 +251,7 @@ public:
     /* 06E1 */ BOOLEAN m_bIsHost;
     /* 06E2 */ int m_nMaxPlayers;
     /* 06E6 */ DWORD m_dwSessionFlags;
-    /* 06EA */ unsigned char field_6EA;
+    /* 06EA */ unsigned char bfield_6EA;
     /* 06EB */ BOOLEAN m_bSessionOptionsDefined;
     /* 06EC */ CString m_sJoinedGame;
     /* 06F0 */ CString m_sDroppedGame;
@@ -260,8 +260,8 @@ public:
     /* 06F9 */ BOOLEAN m_bPlayerCreated;
     /* 06FA */ PLAYER_ID m_idLocalPlayer;
     /* 06FE */ CString m_sLocalPlayerName;
-    /* 0702 */ CString field_702[CNETWORK_MAX_PLAYERS];
-    /* 071A */ BOOL field_71A[CNETWORK_MAX_PLAYERS];
+    /* 0702 */ CString sfield_702[CNETWORK_MAX_PLAYERS];
+    /* 071A */ BOOL bfield_71A[CNETWORK_MAX_PLAYERS];
     /* 0732 */ INT m_nTotalPlayers;
     /* 0736 */ CString m_psPlayerName[CNETWORK_MAX_PLAYERS];
     /* 074E */ PLAYER_ID m_pPlayerID[CNETWORK_MAX_PLAYERS];
@@ -270,13 +270,13 @@ public:
     /* 0772 */ PLAYER_ID field_772[CNETWORK_MAX_PLAYERS];
     /* 078A */ int m_nLocalPlayer;
     /* 078E */ int m_nHostPlayer;
-    /* 0792 */ CString field_792;
-    /* 0796 */ int field_796;
+    /* 0792 */ CString sfield_792;
+    /* 0796 */ int nfield_796;
     /* 079A */ CNetworkWindow m_pSlidingWindow[CNETWORK_MAX_PLAYERS];
     /* 0ACA */ CNetworkWindow m_SystemWindow;
     /* 0B52 */ DWORD m_dwCRC32[256];
-    /* 0F52 */ CRITICAL_SECTION field_F52;
-    /* 0F6A */ CRITICAL_SECTION field_F6A;
+    /* 0F52 */ CRITICAL_SECTION pfield_F52;
+    /* 0F6A */ CRITICAL_SECTION pfield_F6A;
 
 #if DPLAY_COMPAT
     typedef HRESULT(WINAPI DirectPlayCreateFunc)(LPGUID, LPDIRECTPLAY*, IUnknown*);

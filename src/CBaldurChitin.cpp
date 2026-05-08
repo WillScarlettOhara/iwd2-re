@@ -185,11 +185,11 @@ CBaldurChitin::CBaldurChitin()
         FILE_NAME);
     m_sFontName.ReleaseBuffer();
 
-    field_1A0 = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
+    nm_field_1A0 = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         DOUBLE_BYTE_CHARACTER_SUPPORT_KEY,
         0,
         FILE_NAME);
-    if (field_1A0 != 0) {
+    if (nm_field_1A0 != 0) {
         if (m_sFontName.Compare("") == 0) {
             switch (PRIMARYLANGID(GetSystemDefaultLangID())) {
             case LANG_CHINESE:
@@ -212,12 +212,12 @@ CBaldurChitin::CBaldurChitin()
         }
     }
 
-    field_1A4 = field_1A0;
+    nm_field_1A4 = nm_field_1A0;
 
     // NOTE: Result is unused. Probably empty condition.
     m_sFontName.Compare("");
 
-    field_2F4 = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
+    nm_field_2F4 = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SIXTEEN_BIT_TEXTURES_KEY,
         0,
         FILE_NAME);
@@ -229,7 +229,7 @@ CBaldurChitin::CBaldurChitin()
 
     if (CUtil::GetCurrentBitsPerPixels() < 16) {
         m_bFullscreen = TRUE;
-        field_E4 = 1;
+        nfield_E4 = 1;
     }
 
     m_nNextFullscreen = m_bFullscreen;
@@ -251,7 +251,7 @@ CBaldurChitin::CBaldurChitin()
         FILE_NAME);
 
     memset(m_aBorderPanels, 0, sizeof(m_aBorderPanels));
-    field_4A24 = 1;
+    nm_field_4A24 = 1;
 
     CVideo::SCREENWIDTH = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         RESOLUTION_KEY,
@@ -259,13 +259,13 @@ CBaldurChitin::CBaldurChitin()
         FILE_NAME);
 
     if (CVideo::SCREENWIDTH >= GetSystemMetrics(SM_CXFULLSCREEN)) {
-        field_E4 = 1;
+        nfield_E4 = 1;
         m_nNextFullscreen = TRUE;
         m_bFullscreen = TRUE;
     }
 
-    field_4A28 = 0;
-    field_4A2C = 0;
+    nm_field_4A28 = 0;
+    nm_field_4A2C = 0;
 
     INT nLogicalScreenWidth;
     INT nLogicalScreenHeight;
@@ -329,8 +329,8 @@ CBaldurChitin::CBaldurChitin()
         strncpy(reinterpret_cast<char*>(m_aBorderPanels[2].refMosaic), "STON10T", RESREF_SIZE);
         strncpy(reinterpret_cast<char*>(m_aBorderPanels[3].refMosaic), "STON10B", RESREF_SIZE);
 
-        field_4A2C = 1;
-        field_4A28 = 1;
+        nm_field_4A2C = 1;
+        nm_field_4A28 = 1;
 
         nLogicalScreenWidth = 1024;
         nLogicalScreenHeight = 768;
@@ -389,8 +389,8 @@ CBaldurChitin::CBaldurChitin()
         CVideo::SCREENHEIGHT = 1200;
         CHUI_GUIEXT = "08";
 
-        field_4A2C = 1;
-        field_4A28 = 1;
+        nm_field_4A2C = 1;
+        nm_field_4A28 = 1;
 
         nLogicalScreenWidth = 800;
         nLogicalScreenHeight = 600;
@@ -561,40 +561,40 @@ CBaldurChitin::CBaldurChitin()
 
     m_dwCloseConfirmationFlags = 0x124;
     m_dwCloseConfirmationStrId = 20186;
-    field_49AA = 0;
-    field_49AB = 0;
-    field_49B0 = 0;
-    field_49B1 = 0;
+    bm_field_49AA = 0;
+    bm_field_49AB = 0;
+    bm_field_49B0 = 0;
+    bm_field_49B1 = 0;
 
     cVideo.cVidBlitter.m_bSoftBlt = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_BLT_KEY,
         FALSE,
         FILE_NAME);
-    cVideo.cVidBlitter.field_E6 = 0;
+    cVideo.cVidBlitter.bfield_E6 = 0;
 
     cVideo.cVidBlitter.m_bSoftBltFast = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_BLT_FAST_KEY,
         FALSE,
         FILE_NAME);
-    cVideo.cVidBlitter.field_E6 = 0;
+    cVideo.cVidBlitter.bfield_E6 = 0;
 
     cVideo.cVidBlitter.m_bSoftMirrorBlt = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_MIRROR_BLT_KEY,
         FALSE,
         FILE_NAME);
-    cVideo.cVidBlitter.field_E6 = 0;
+    cVideo.cVidBlitter.bfield_E6 = 0;
 
     cVideo.cVidBlitter.m_bSoftSrcKeyBlt = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_SRC_KEY_BLT_KEY,
         FALSE,
         FILE_NAME);
-    cVideo.cVidBlitter.field_E6 = 0;
+    cVideo.cVidBlitter.bfield_E6 = 0;
 
     cVideo.cVidBlitter.m_bSoftSrcKeyBltFast = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_SRC_KEY_BLT_FAST_KEY,
         FALSE,
         FILE_NAME);
-    cVideo.cVidBlitter.field_E6 = 0;
+    cVideo.cVidBlitter.bfield_E6 = 0;
 
     m_bUseMirrorFX = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         USE_MIRROR_FX_KEY,
@@ -612,9 +612,9 @@ CBaldurChitin::CBaldurChitin()
     m_cCachingStatus.Init();
     m_cSwitchingCDStatus.Init();
 
-    g_pChitin->field_2EC = field_4A28;
-    field_4F38 = 0;
-    field_4F3C = 0;
+    g_pChitin->nm_field_2EC = nm_field_4A28;
+    nm_field_4F38 = 0;
+    nm_field_4F3C = 0;
 }
 
 // 0x422EB0
@@ -1021,8 +1021,8 @@ void CBaldurChitin::MainAIThread(void* userInfo)
 
     SetThreadPriority(GetCurrentThread(), nAIThreadPriority);
 
-    if (!g_pChitin->field_1A28) {
-        g_pChitin->field_1A28 = 1;
+    if (!g_pChitin->wm_field_1A28) {
+        g_pChitin->wm_field_1A28 = 1;
 
         if (g_pChitin->dwPlatformId == VER_PLATFORM_WIN32_NT) {
             if (GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY, NT_SMOOTH_SOUND_KEY, 1, g_pChitin->GetIniFileName()) != 0) {
@@ -1059,17 +1059,17 @@ void CBaldurChitin::MainAIThread(void* userInfo)
             }
 
             if (m_nRenderPerSec >= 15 || m_nAIPerSec <= 24) {
-                if (field_19C != 0) {
-                    field_19C = max(field_19C - 1, 0);
-                    if (field_19C != 0) {
-                        SleepEx(field_19C, FALSE);
+                if (nm_field_19C != 0) {
+                    nm_field_19C = max(nm_field_19C - 1, 0);
+                    if (nm_field_19C != 0) {
+                        SleepEx(nm_field_19C, FALSE);
                     }
                 }
             } else {
-                if (field_19C < 30) {
-                    field_19C += 5;
+                if (nm_field_19C < 30) {
+                    nm_field_19C += 5;
                 }
-                SleepEx(field_19C, FALSE);
+                SleepEx(nm_field_19C, FALSE);
             }
 
             ResetEvent(m_eventTimer);
@@ -1346,7 +1346,7 @@ BOOLEAN CBaldurChitin::FlipFullScreenMode(BOOLEAN bSave)
 void CBaldurChitin::SetSoftSrcKeyBltFast(BOOLEAN a2, BOOLEAN a3)
 {
     cVideo.cVidBlitter.m_bSoftSrcKeyBltFast = a2;
-    cVideo.cVidBlitter.field_E6 = a3;
+    cVideo.cVidBlitter.bfield_E6 = a3;
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_SRC_KEY_BLT_FAST_KEY,
@@ -1358,7 +1358,7 @@ void CBaldurChitin::SetSoftSrcKeyBltFast(BOOLEAN a2, BOOLEAN a3)
 void CBaldurChitin::SetSoftBltFast(BOOLEAN a2, BOOLEAN a3)
 {
     cVideo.cVidBlitter.m_bSoftBltFast = a2;
-    cVideo.cVidBlitter.field_E6 = a3;
+    cVideo.cVidBlitter.bfield_E6 = a3;
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_BLT_FAST_KEY,
@@ -1370,7 +1370,7 @@ void CBaldurChitin::SetSoftBltFast(BOOLEAN a2, BOOLEAN a3)
 void CBaldurChitin::SetSoftSrcKeyBlt(BOOLEAN a2, BOOLEAN a3)
 {
     cVideo.cVidBlitter.m_bSoftSrcKeyBlt = a2;
-    cVideo.cVidBlitter.field_E6 = a3;
+    cVideo.cVidBlitter.bfield_E6 = a3;
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_SRC_KEY_BLT_KEY,
@@ -1382,7 +1382,7 @@ void CBaldurChitin::SetSoftSrcKeyBlt(BOOLEAN a2, BOOLEAN a3)
 void CBaldurChitin::SetSoftBlt(BOOLEAN a2, BOOLEAN a3)
 {
     cVideo.cVidBlitter.m_bSoftBlt = a2;
-    cVideo.cVidBlitter.field_E6 = a3;
+    cVideo.cVidBlitter.bfield_E6 = a3;
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_BLT_KEY,
@@ -1394,7 +1394,7 @@ void CBaldurChitin::SetSoftBlt(BOOLEAN a2, BOOLEAN a3)
 void CBaldurChitin::SetSoftMirrorBlt(BOOLEAN a2, BOOLEAN a3)
 {
     cVideo.cVidBlitter.m_bSoftMirrorBlt = a2;
-    cVideo.cVidBlitter.field_E6 = a3;
+    cVideo.cVidBlitter.bfield_E6 = a3;
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_MIRROR_BLT_KEY,
@@ -1501,7 +1501,7 @@ LONG CBaldurChitin::GetMovieVolume()
 // 0x422E70
 void CBaldurChitin::UnloadFonts()
 {
-    field_4A34.Unload();
+    pm_field_4A34.Unload();
     CVidFont::UnloadAllFonts();
 }
 
@@ -1568,7 +1568,7 @@ void CBaldurChitin::LoadOptions()
 
     cVideo.m_pVidModes[0]->m_nBrightnessCorrection = nBrightnessCorrection;
 
-    cVideo.field_13A = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
+    cVideo.nm_field_13A = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         BACKWARDS_COMPATIBLE_3D_KEY,
         0,
         GetIniFileName());
@@ -1633,7 +1633,7 @@ void CBaldurChitin::LoadOptions()
         0,
         GetIniFileName());
 
-    g_pChitin->field_1C4C = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
+    g_pChitin->nm_field_1C4C = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SINGLE_MEDIA_KEY,
         0,
         GetIniFileName());
@@ -1642,9 +1642,9 @@ void CBaldurChitin::LoadOptions()
 // 0x424FF0
 void CBaldurChitin::PreLoadFonts()
 {
-    field_4A34.SetResRef(CResRef("NORMAL"), 0, 1);
-    field_4A34.SetColor(0xFFFFFF, 0, 0);
-    field_4A34.RegisterFont();
+    pm_field_4A34.SetResRef(CResRef("NORMAL"), 0, 1);
+    pm_field_4A34.SetColor(0xFFFFFF, 0, 0);
+    pm_field_4A34.RegisterFont();
 }
 
 // 0x425040
@@ -1682,7 +1682,7 @@ void CBaldurChitin::SaveOptions()
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         DOUBLE_BYTE_CHARACTER_SUPPORT_KEY,
-        field_1A0 ? "1" : "0",
+        nm_field_1A0 ? "1" : "0",
         GetIniFileName());
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
@@ -1692,7 +1692,7 @@ void CBaldurChitin::SaveOptions()
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SIXTEEN_BIT_TEXTURES_KEY,
-        field_2F4 ? "1" : "0",
+        nm_field_2F4 ? "1" : "0",
         GetIniFileName());
 
     sString.Format("%d", CVideo::FPS);
@@ -1753,7 +1753,7 @@ void CBaldurChitin::SaveOptions()
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         BACKWARDS_COMPATIBLE_3D_KEY,
-        cVideo.field_13A ? "1" : "0",
+        cVideo.nm_field_13A ? "1" : "0",
         GetIniFileName());
 
     sString.Format("%d", pOptions->m_nVolumeMovie);
@@ -2330,7 +2330,7 @@ CString CBaldurChitin::GetFirstCDRomDrive()
     DWORD nDrives = GetLogicalDrives();
 
     for (BYTE nDrive = 0; nDrive < 32; nDrive++) {
-        if (field_49B1) {
+        if (bm_field_49B1) {
             sDrive = "";
             break;
         }
@@ -2488,5 +2488,62 @@ CMessageHandler* CBaldurChitin::GetMessageHandler()
 // 0x58FEF0
 BOOL CBaldurChitin::GetDoubleSize()
 {
-    return field_4A2C;
+    return nm_field_4A2C;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x423740
+void FUN_00423740() {
+    // TODO: Incomplete.
+}
+
+// 0x423760
+void FUN_00423760() {
+    // TODO: Incomplete.
+}
+
+// 0x423770
+void FUN_00423770() {
+    // TODO: Incomplete.
+}
+
+// 0x423790
+void FUN_00423790() {
+    // TODO: Incomplete.
+}
+
+// 0x425B80
+void FUN_00425b80() {
+    // TODO: Incomplete.
+}
+
+// 0x426500
+void FUN_00426500() {
+    // TODO: Incomplete.
+}
+
+// 0x438560
+void FUN_00438560() {
+    // TODO: Incomplete.
+}
+
+// 0x438710
+void FUN_00438710() {
+    // TODO: Incomplete.
+}
+
+// 0x4537F0
+void FUN_004537f0() {
+    // TODO: Incomplete.
+}
+
+// 0x453840
+void CGameSprite::GetTypeFlags() {
+    // TODO: Incomplete.
+}
+
+// 0x58FF00
+void FUN_0058ff00() {
+    // TODO: Incomplete.
+}
+

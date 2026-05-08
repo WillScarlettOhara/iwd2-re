@@ -358,13 +358,13 @@ public:
     static int dword_8E52F0;
 
     /* 0000 */ CRuleTables m_ruleTables;
-    /* 1B58 */ CCriticalSection field_1B58;
+    /* 1B58 */ CCriticalSection pm_field_1B58;
     /* 1B78 */ CTimerWorld m_worldTime;
     /* 1B7E */ BOOL m_bGameLoaded;
     /* 1B82 */ BOOLEAN m_bInLoadGame;
     /* 1B83 */ BOOLEAN m_bInLoadArea;
-    /* 1B84 */ unsigned char field_1B84;
-    /* 1B86 */ CString field_1B86;
+    /* 1B84 */ unsigned char bm_field_1B84;
+    /* 1B86 */ CString sm_field_1B86;
     /* 1B8A */ DWORD m_nUniqueAreaID;
     /* 1B8E */ DWORD m_nAreaFirstObject;
     /* 1B92 */ BOOLEAN m_bFromNewGame;
@@ -381,7 +381,7 @@ public:
     /* 1BB2 */ CMultiplayerSettings m_multiplayerSettings;
     /* 1C78 */ CInfButtonArray m_cButtonArray;
     /* 3662 */ CVRamPool m_cVRamPool;
-    /* 366E */ int field_366E;
+    /* 366E */ int nm_field_366E;
     /* 3672 */ CVidBitmap m_rgbMasterBitmap;
     /* 372C */ CGameObjectArray m_cObjectArray;
     /* 375A */ CGameRemoteObjectArray m_cRemoteObjectArray;
@@ -399,12 +399,12 @@ public:
     /* 387C */ CPathSearch* m_pathSearch;
     /* 3880 */ CPathNode** m_listGrid;
     /* 3884 */ CAIGroup m_group;
-    /* 38A6 */ unsigned char field_38A6;
+    /* 38A6 */ unsigned char bm_field_38A6;
     /* 38A8 */ CTypedPtrList<CPtrList, int*> m_allies; // NOTE: Stores actual ints disguised as pointers.
     /* 38C4 */ CTypedPtrList<CPtrList, int*> m_familiars; // NOTES: Stores actual ints disguised as pointers.
     /* 38E0 */ RESREF m_defaultFamiliarResRefs[9];
     /* 3928 */ CTypedPtrList<CPtrList, CResRef*> m_familiarResRefs[9][9];
-    /* 4204 */ int field_4204;
+    /* 4204 */ int nm_field_4204;
     /* 4208 */ CString m_sTempDir;
     /* 420C */ CString m_sTempSaveDir;
     /* 4210 */ CString m_sScriptsDir;
@@ -423,8 +423,8 @@ public:
     /* 4688 */ BOOLEAN m_pKeymapFlags[CINFGAME_KEYMAP_SIZE];
     /* 47FC */ CVariableHash m_variables;
     /* 4808 */ CNamedCreatureVariableHash m_namedCreatures;
-    /* 4814 */ STR_RES field_4814;
-    /* 487C */ STR_RES field_487C;
+    /* 4814 */ STR_RES m_m_field_4814;
+    /* 487C */ STR_RES m_m_field_487C;
     /* 48E4 */ BOOLEAN m_bForceDither;
     /* 48E6 */ CVidCell m_vcLocator;
     /* 49C0 */ CTypedPtrList<CPtrList, CSearchRequest*> m_searchRequests;
@@ -435,9 +435,9 @@ public:
     /* 4A04 */ CCriticalSection m_disposableItemsCritSect;
     /* 4A24 */ CTypedPtrList<CPtrList, CItem*> m_lDisposableItems;
     /* 4A40 */ SHORT m_currArmor;
-    /* 4A42 */ short field_4A42;
-    /* 4A44 */ short field_4A44;
-    /* 4A46 */ short field_4A46;
+    /* 4A42 */ short wm_field_4A42;
+    /* 4A44 */ short wm_field_4A44;
+    /* 4A46 */ short wm_field_4A46;
     /* 4A48 */ SHORT m_currAnimation;
     /* 4A4A */ CAIIdList m_saveObjectList;
     /* 4A8A */ LONG m_nProtagonistId;
@@ -449,13 +449,13 @@ public:
     /* 4AA2 */ ULONG m_nLastSaveTime;
     /* 4AA6 */ CPoint m_lastClick;
     /* 4AAE */ LONG m_lastTarget;
-    /* 4AB2 */ unsigned char field_4AB2;
+    /* 4AB2 */ unsigned char bm_field_4AB2;
     /* 4AB4 */ CVidPalette m_entanglePalette;
     /* 4AD8 */ CVidPalette m_webHoldPalette;
     /* 4AFC */ LONG m_nCharacterTerminationSequenceDelay;
     /* 4B00 */ CMoveList m_cMoveList;
     /* 4B1C */ CMoveList m_cLimboList;
-    /* 4B38 */ int field_4B38;
+    /* 4B38 */ int nm_field_4B38;
     /* 4B3C */ LONG m_nAIIndex;
     /* 4B40 */ LONG m_nTimeStop;
     /* 4B44 */ LONG m_nTimeStopCaster;
@@ -470,19 +470,19 @@ public:
     /* 4BA2 */ BYTE m_appearanceColorsShield[7];
     /* 4BA9 */ BYTE m_appearanceColorsHelmet[7];
     /* 4BB0 */ CMemINI m_INISounds;
-    /* 4BD4 */ unsigned char field_4BD4;
+    /* 4BD4 */ unsigned char bm_field_4BD4;
     /* 4BD5 */ BOOLEAN m_bExpansion; // NOTE: Can also be BYTE indicating number of expansion pack.
-    /* 4BD6 */ BOOLEAN field_4BD6;
+    /* 4BD6 */ BOOLEAN bm_field_4BD6;
     /* 4BD8 */ DWORD m_nDifficultyLevel;
-    /* 4BDC */ CTypedPtrList<CPtrList, CString*> field_4BDC;
+    /* 4BDC */ CTypedPtrList<CPtrList, CString*> pm_field_4BDC;
     /* 4BF8 */ CSpellResRefList m_spells;
     /* 4C00 */ CSpellResRefList m_innateSpells;
     /* 4C08 */ CSpellResRefList m_songs;
     /* 4C10 */ CSpellResRefList m_shapeshifts;
     /* 4C18 */ CGroupedSpellList m_spellsByClass[7];
     /* 4E2C */ CGroupedSpellList m_spellsByDomain[9];
-    /* 50D8 */ BOOL field_50D8;
-    /* 50DC */ unsigned char field_50DC;
+    /* 50D8 */ BOOL bfield_50D8;
+    /* 50DC */ unsigned char bfield_50DC;
 };
 
 class CGameFile : public CResHelper<CResGame, 1013> {

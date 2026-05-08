@@ -73,7 +73,7 @@ int CResTile::Release()
 // 0x5CBD40
 CResRef CResTile::GetResRef()
 {
-    return field_58;
+    return nfield_58;
 }
 
 // 0x5CBD60
@@ -96,3 +96,20 @@ BOOL CResTile::Parse(void* pData)
 
     return m_bParsed;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x5CBD70
+void FUN_005cbd70() {
+    // TODO: Incomplete.
+}
+
+// 0x7806B0
+void FUN_007806b0() {
+    // TODO: Incomplete.
+}
+
+// 0x780770
+void FUN_00780770() {
+    // TODO: Incomplete.
+}
+

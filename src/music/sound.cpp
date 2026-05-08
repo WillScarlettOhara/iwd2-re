@@ -1832,3 +1832,10 @@ int addSoundData(Sound* sound, unsigned char* data, int size)
     soundErrorno = SOUND_NO_ERROR;
     return soundErrorno;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x7D1C06
+void FUN_007d1c06() {
+    // TODO: Incomplete.
+}
+

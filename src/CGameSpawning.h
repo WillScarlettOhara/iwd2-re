@@ -15,7 +15,7 @@ public:
     void Marshal(CAreaFileRandomMonsterSpawningPoint** pSpawningObject);
 
     /* 006E */ CAreaFileRandomMonsterSpawningPoint m_spawningObject;
-    /* 0136 */ unsigned char field_136;
+    /* 0136 */ unsigned char bm_field_136;
     /* 0137 */ BYTE m_terrainTable[16];
     /* 0147 */ BYTE m_visibleTerrainTable[16];
 };

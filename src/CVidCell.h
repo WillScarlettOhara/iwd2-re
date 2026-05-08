@@ -92,7 +92,7 @@ public:
     /* 00B4 */ CResHelper<CResCellHeader, 1100> m_header;
     /* 00C4 */ SHORT m_nCurrentFrame;
     /* 00C6 */ SHORT m_nCurrentSequence;
-    /* 00C8 */ int field_C8;
+    /* 00C8 */ int nfield_C8;
     /* 00CC */ BOOL m_bPaletteChanged;
     /* 00D0 */ FRAMEENTRY* m_pFrame;
     /* 00D4 */ BOOLEAN m_bShadowOn;

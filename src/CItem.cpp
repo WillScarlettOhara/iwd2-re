@@ -342,7 +342,7 @@ CGameEffect* CItem::GetAbilityEffect(LONG abilityNum, LONG effectNum, CGameObjec
             pEffect->m_school = ability->school;
             pEffect->m_sourceType = 2;
             // FIXME: Should it be `m_secondaryType`?
-            pEffect->field_48 = ability->secondaryType;
+            pEffect->wm_field_48 = ability->secondaryType;
             pEffect->m_sourceRes = cResRef;
             pEffect->m_sourceFlags = ability->abilityFlags;
             pEffect->m_casterLevel = 10;
@@ -886,3 +886,40 @@ bool CItem::operator==(const CItem& other)
         && m_flags == other.m_flags
         && cResRef == other.cResRef;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4E78E0
+void FUN_004e78e0() {
+    // TODO: Incomplete.
+}
+
+// 0x4E9250
+void FUN_004e9250() {
+    // TODO: Incomplete.
+}
+
+// 0x4E9840
+void FUN_004e9840() {
+    // TODO: Incomplete.
+}
+
+// 0x4EA3F0
+void FUN_004ea3f0() {
+    // TODO: Incomplete.
+}
+
+// 0x4EA4A0
+void FUN_004ea4a0() {
+    // TODO: Incomplete.
+}
+
+// 0x4EA750
+void FUN_004ea750() {
+    // TODO: Incomplete.
+}
+
+// 0x4EBF40
+void FUN_004ebf40() {
+    // TODO: Incomplete.
+}
+

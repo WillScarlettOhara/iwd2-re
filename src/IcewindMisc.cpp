@@ -961,7 +961,7 @@ CButtonData* IcewindMisc::CreateButtonData(BYTE* resRef)
     button->m_abilityId.m_itemType = 1;
     button->m_abilityId.m_res = resRef;
     button->m_abilityId.m_targetType = ability->actionType;
-    button->m_abilityId.field_10 = cSpell.GetGenericName();
+    button->m_abilityId.m_field_10 = cSpell.GetGenericName();
     button->m_bDisabled = FALSE;
     button->m_bDisplayCount = 0;
 
@@ -1017,3 +1017,245 @@ void IcewindMisc::sub_5860F0(CGameSprite* pSprite, CGameEffect* pEffect)
         }
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x5806C0
+void FUN_005806c0() {
+    // TODO: Incomplete.
+}
+
+// 0x580750
+void FUN_00580750() {
+    // TODO: Incomplete.
+}
+
+// 0x580770
+void FUN_00580770() {
+    // TODO: Incomplete.
+}
+
+// 0x580B30
+void FUN_00580b30() {
+    // TODO: Incomplete.
+}
+
+// 0x580C00
+void FUN_00580c00() {
+    // TODO: Incomplete.
+}
+
+// 0x580CC0
+void FUN_00580cc0() {
+    // TODO: Incomplete.
+}
+
+// 0x580CE0
+void FUN_00580ce0() {
+    // TODO: Incomplete.
+}
+
+// 0x581060
+void FUN_00581060() {
+    // TODO: Incomplete.
+}
+
+// 0x5819B0
+void FUN_005819b0() {
+    // TODO: Incomplete.
+}
+
+// 0x581CA0
+void FUN_00581ca0() {
+    // TODO: Incomplete.
+}
+
+// 0x581DB0
+void FUN_00581db0() {
+    // TODO: Incomplete.
+}
+
+// 0x581DD0
+void FUN_00581dd0() {
+    // TODO: Incomplete.
+}
+
+// 0x5820B0
+void FUN_005820b0() {
+    // TODO: Incomplete.
+}
+
+// 0x582210
+void FUN_00582210() {
+    // TODO: Incomplete.
+}
+
+// 0x582230
+void FUN_00582230() {
+    // TODO: Incomplete.
+}
+
+// 0x582270
+void FUN_00582270() {
+    // TODO: Incomplete.
+}
+
+// 0x582670
+void FUN_00582670() {
+    // TODO: Incomplete.
+}
+
+// 0x582780
+void FUN_00582780() {
+    // TODO: Incomplete.
+}
+
+// 0x582790
+void FUN_00582790() {
+    // TODO: Incomplete.
+}
+
+// 0x5828E0
+void FUN_005828e0() {
+    // TODO: Incomplete.
+}
+
+// 0x582910
+void FUN_00582910() {
+    // TODO: Incomplete.
+}
+
+// 0x582930
+void FUN_00582930() {
+    // TODO: Incomplete.
+}
+
+// 0x582970
+void FUN_00582970() {
+    // TODO: Incomplete.
+}
+
+// 0x582980
+void FUN_00582980() {
+    // TODO: Incomplete.
+}
+
+// 0x5829E0
+void FUN_005829e0() {
+    // TODO: Incomplete.
+}
+
+// 0x582B50
+void FUN_00582b50() {
+    // TODO: Incomplete.
+}
+
+// 0x582B70
+void FUN_00582b70() {
+    // TODO: Incomplete.
+}
+
+// 0x582BA0
+void FUN_00582ba0() {
+    // TODO: Incomplete.
+}
+
+// 0x583030
+void FUN_00583030() {
+    // TODO: Incomplete.
+}
+
+// 0x583440
+void FUN_00583440() {
+    // TODO: Incomplete.
+}
+
+// 0x5834C0
+void FUN_005834c0() {
+    // TODO: Incomplete.
+}
+
+// 0x5834E0
+void FUN_005834e0() {
+    // TODO: Incomplete.
+}
+
+// 0x583530
+void FUN_00583530() {
+    // TODO: Incomplete.
+}
+
+// 0x583550
+void FUN_00583550() {
+    // TODO: Incomplete.
+}
+
+// 0x5836B0
+void FUN_005836b0() {
+    // TODO: Incomplete.
+}
+
+// 0x5836F0
+void FUN_005836f0() {
+    // TODO: Incomplete.
+}
+
+// 0x5837D0
+void FUN_005837d0() {
+    // TODO: Incomplete.
+}
+
+// 0x583820
+void FUN_00583820() {
+    // TODO: Incomplete.
+}
+
+// 0x5838A0
+void FUN_005838a0() {
+    // TODO: Incomplete.
+}
+
+// 0x583E60
+void FUN_00583e60() {
+    // TODO: Incomplete.
+}
+
+// 0x5840E0
+void FUN_005840e0() {
+    // TODO: Incomplete.
+}
+
+// 0x5842C0
+void FUN_005842c0() {
+    // TODO: Incomplete.
+}
+
+// 0x584320
+void FUN_00584320() {
+    // TODO: Incomplete.
+}
+
+// 0x584400
+void FUN_00584400() {
+    // TODO: Incomplete.
+}
+
+// 0x584420
+void FUN_00584420() {
+    // TODO: Incomplete.
+}
+
+// 0x5844E0
+void FUN_005844e0() {
+    // TODO: Incomplete.
+}
+
+// 0x586220
+void FUN_00586220() {
+    // TODO: Incomplete.
+}
+
+// 0x5864F0
+void FUN_005864f0() {
+    // TODO: Incomplete.
+}
+

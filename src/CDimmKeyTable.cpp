@@ -95,7 +95,7 @@ BOOL CDimmKeyTable::BuildNewTable(int nLength)
             pEntry->resRef = "";
             pEntry->pRes = NULL;
             pEntry->nID = -1;
-            pEntry->field_10 = 0;
+            pEntry->wm_field_10 = 0;
             pEntry->nResType = -1;
             pEntry->bUpdated = FALSE;
         }
@@ -120,7 +120,7 @@ void CDimmKeyTable::DestroyTable(CDimm* dimm)
                 }
 
                 pEntry->nID = -1;
-                pEntry->field_10 = 0;
+                pEntry->wm_field_10 = 0;
                 pEntry->nResType = -1;
             }
         }

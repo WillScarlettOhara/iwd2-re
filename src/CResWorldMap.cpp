@@ -45,3 +45,10 @@ BOOL CResWorldMap::Parse(void* pData)
 
     return m_bParsed;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4027D0
+void FUN_004027d0() {
+    // TODO: Incomplete.
+}
+

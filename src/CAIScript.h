@@ -38,7 +38,7 @@ public:
     BOOL IsEmpty();
 
     /* 0000 */ CResRef m_cResRef;
-    /* 0008 */ int field_8;
+    /* 0008 */ int nm_field_8;
     /* 000C */ CTypedPtrList<CPtrList, CAIConditionResponse*> m_caList;
 };
 

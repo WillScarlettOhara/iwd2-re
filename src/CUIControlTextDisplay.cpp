@@ -20,15 +20,15 @@ CUIControlTextDisplay::CUIControlTextDisplay(CUIPanel* pPanel, UI_CONTROL_TEXTDI
 
     m_posTopString = NULL;
     m_nRenderCount = 0;
-    field_A68 = 256;
-    field_A6C = 0;
-    field_5A = 0;
+    wfield_A68 = 256;
+    wfield_A6C = 0;
+    bfield_5A = 0;
     m_nScrollBarID = pControlInfo->nScrollBarID;
     m_rgbHighlightColor = RGB(255, 255, 255);
     m_posHighlightedItem = NULL;
     m_sNameSeparator = NAME_SEPARATOR;
-    field_AB4 = 0;
-    field_5C = 0;
+    wfield_AB4 = 0;
+    nfield_5C = 0;
 
     if (a3) {
         m_plstStrings = new CTypedPtrList<CPtrList, CDisplayString*>();
@@ -36,7 +36,7 @@ CUIControlTextDisplay::CUIControlTextDisplay(CUIPanel* pPanel, UI_CONTROL_TEXTDI
         m_plstStrings = NULL;
     }
 
-    field_AB6 = a3;
+    bfield_AB6 = a3;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ChUIControls.cpp
     // __LINE__: 5391
@@ -49,36 +49,36 @@ CUIControlTextDisplay::CUIControlTextDisplay(CUIPanel* pPanel, UI_CONTROL_TEXTDI
     m_textFont.SetResRef(CResRef(pControlInfo->refTextFont), m_pPanel->m_pManager->m_bDoubleSize, TRUE);
 
     if (m_rgbTextColor == m_rgbBackgroundColor) {
-        field_AAF = TRUE;
+        bfield_AAF = TRUE;
     } else {
         m_textFont.SetColor(m_rgbTextColor, m_rgbBackgroundColor, FALSE);
-        field_AAF = FALSE;
+        bfield_AAF = FALSE;
     }
 
     if (pControlInfo->refLabelFont[0] != 0) {
         m_labelFont.SetResRef(CResRef(pControlInfo->refLabelFont), m_pPanel->m_pManager->m_bDoubleSize, TRUE);
 
         if (m_rgbLabelColor == m_rgbBackgroundColor) {
-            field_AAE = TRUE;
+            bfield_AAE = TRUE;
         } else {
             m_labelFont.SetColor(m_rgbLabelColor, m_rgbBackgroundColor, FALSE);
-            field_AAE = FALSE;
+            bfield_AAE = FALSE;
         }
     }
 
-    field_A62 = 0;
+    wfield_A62 = 0;
 
     CVidFont& font = m_textFont.GetFontHeight(FALSE) > m_labelFont.GetFontHeight(FALSE)
         ? m_textFont
         : m_labelFont;
     m_nFontHeight = font.GetFontHeight(FALSE);
-    field_A64 = 0;
-    field_A65 = 0;
-    field_A66 = 0;
-    field_A67 = 0;
+    bfield_A64 = 0;
+    bfield_A65 = 0;
+    bfield_A66 = 0;
+    bfield_A67 = 0;
     SetNeedAsyncUpdate();
-    field_AB7 = 1;
-    field_A6A = m_size.cy / m_nFontHeight;
+    bfield_AB7 = 1;
+    wfield_A6C = m_size.cy / m_nFontHeight;
 }
 
 // 0x4E1D50
@@ -92,7 +92,7 @@ BOOL CUIControlTextDisplay::NeedRender()
 // 0x4E1DA0
 CUIControlTextDisplay::~CUIControlTextDisplay()
 {
-    if (field_AB6) {
+    if (bfield_AB6) {
         POSITION pos = m_plstStrings->GetHeadPosition();
         while (pos != NULL) {
             CDisplayString* pDisplayString = m_plstStrings->GetNext(pos);
@@ -140,7 +140,7 @@ POSITION CUIControlTextDisplay::DisplayString(const CString& sLabel, const CStri
     // __LINE__: 5643
     UTIL_ASSERT(m_plstStrings != NULL);
 
-    if (field_A6C >= field_A68) {
+    if (wfield_A6C >= wfield_A68) {
         RemoveString(m_plstStrings->GetHeadPosition());
     }
 
@@ -158,32 +158,32 @@ POSITION CUIControlTextDisplay::DisplayString(const CString& sLabel, const CStri
 
     if (a6 || nOldCount == 0) {
         m_posTopString = posTopString;
-        field_5A = m_plstStrings->GetCount() - v1;
+        bfield_5A = m_plstStrings->GetCount() - v1;
 
         // NOTE: Uninline.
         AdjustScrollBar();
     } else {
         if (m_nScrollBarID == -1
-            || !static_cast<CUIControlScrollBar*>(m_pPanel->GetControl(m_nScrollBarID))->field_146) {
-            if (m_plstStrings->GetCount() - field_5A > field_A6A) {
-                field_5A = max(nOldCount - field_A6A, 0);
+            || !static_cast<CUIControlScrollBar*>(m_pPanel->GetControl(m_nScrollBarID))->bm_field_146) {
+            if (m_plstStrings->GetCount() - bfield_5A > wfield_A6C) {
+                bfield_5A = max(nOldCount - wfield_A6C, 0);
 
                 // NOTE: Uninline.
                 AdjustScrollBar();
 
-                m_posTopString = m_plstStrings->FindIndex(max(nOldCount - field_A6A, 0));
+                m_posTopString = m_plstStrings->FindIndex(max(nOldCount - wfield_A6C, 0));
                 if (m_posTopString == NULL) {
                     m_posTopString = m_plstStrings->GetTailPosition();
                 }
 
-                field_A65 = min(v1, field_A6A);
+                bfield_A65 = min(v1, wfield_A6C);
             }
         }
     }
 
-    field_A6C++;
-    field_A62 = 0;
-    field_A64 = 0;
+    wfield_A6C++;
+    wfield_A62 = 0;
+    bfield_A64 = 0;
 
     CRect rDirty(m_pPanel->m_ptOrigin + m_ptOrigin, m_size);
     m_pPanel->InvalidateRect(&rDirty);
@@ -199,7 +199,7 @@ void CUIControlTextDisplay::AdjustScrollBar()
         CUIControlScrollBar* pScrollBar = static_cast<CUIControlScrollBar*>(m_pPanel->GetControl(m_nScrollBarID));
 
         // NOTE: Uninline.
-        pScrollBar->AdjustScrollBar(field_5A, m_plstStrings->GetCount(), field_A6A);
+        pScrollBar->AdjustScrollBar(bfield_5A, m_plstStrings->GetCount(), wfield_A6C);
     }
 }
 
@@ -265,7 +265,7 @@ INT CUIControlTextDisplay::GetNumLines(POSITION posBossItem)
 void CUIControlTextDisplay::InvalidateRect()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount = CUIManager::RENDER_COUNT;
         lock.Unlock();
@@ -282,7 +282,7 @@ void CUIControlTextDisplay::OnButtonLClick(CPoint ptMouseClick)
     UTIL_ASSERT(ptMouseClick.y >= 0);
 
     if (m_plstStrings != NULL) {
-        INT nIndex = field_5A + (ptMouseClick.y + field_A62) / m_nFontHeight;
+        INT nIndex = bfield_5A + (ptMouseClick.y + wfield_A62) / m_nFontHeight;
         if (nIndex < m_plstStrings->GetCount()) {
             OnItemSelected(m_plstStrings->GetAt(m_plstStrings->FindIndex(nIndex))->GetMarker());
         }
@@ -331,7 +331,7 @@ void CUIControlTextDisplay::OnMouseMove(CPoint pt)
             UTIL_ASSERT(ptMouseClick.y >= 0);
 
             if (m_plstStrings != NULL) {
-                INT nIndex = field_5A + (ptMouseClick.y + field_A62) / m_nFontHeight;
+                INT nIndex = bfield_5A + (ptMouseClick.y + wfield_A62) / m_nFontHeight;
                 if (nIndex >= 0 && nIndex < m_plstStrings->GetCount()) {
                     CDisplayString* pDisplayString = m_plstStrings->GetAt(m_plstStrings->FindIndex(nIndex));
                     if (pDisplayString->m_lMarker != -1) {
@@ -354,11 +354,11 @@ void CUIControlTextDisplay::OnMouseMove(CPoint pt)
 // 0x4E2790
 void CUIControlTextDisplay::OnScroll(SHORT a1, SHORT a2)
 {
-    SHORT nOldIndex = field_5A;
+    SHORT nOldIndex = bfield_5A;
     // TODO: Odd code, check.
-    field_5A = max(m_plstStrings->GetCount() - field_A6A, 0) * a1 / a2;
-    if (nOldIndex != field_5A) {
-        m_posTopString = m_plstStrings->FindIndex(field_5A);
+    bfield_5A = max(m_plstStrings->GetCount() - wfield_A6C, 0) * a1 / a2;
+    if (nOldIndex != bfield_5A) {
+        m_posTopString = m_plstStrings->FindIndex(bfield_5A);
 
         CRect rDirty(m_pPanel->m_ptOrigin + m_ptOrigin, m_size);
         m_pPanel->InvalidateRect(&rDirty);
@@ -369,12 +369,12 @@ void CUIControlTextDisplay::OnScroll(SHORT a1, SHORT a2)
 // 0x4E2830
 void CUIControlTextDisplay::OnScrollDown()
 {
-    field_A64 = 0;
-    if (field_5A < m_plstStrings->GetCount() - field_A6A) {
-        if (field_A65) {
-            field_A67 = 1;
+    bfield_A64 = 0;
+    if (bfield_5A < m_plstStrings->GetCount() - wfield_A6C) {
+        if (bfield_A65) {
+            bfield_A67 = 1;
         } else {
-            field_A65 = 1;
+            bfield_A65 = 1;
         }
     }
 }
@@ -382,12 +382,12 @@ void CUIControlTextDisplay::OnScrollDown()
 // 0x4E2870
 void CUIControlTextDisplay::OnScrollUp()
 {
-    field_A65 = 0;
-    if (m_posTopString != m_plstStrings->GetHeadPosition() || field_A62) {
-        if (field_A64) {
-            field_A66 = 1;
+    bfield_A65 = 0;
+    if (m_posTopString != m_plstStrings->GetHeadPosition() || wfield_A62) {
+        if (bfield_A64) {
+            bfield_A66 = 1;
         } else {
-            field_A64 = 1;
+            bfield_A64 = 1;
         }
     }
 }
@@ -395,13 +395,13 @@ void CUIControlTextDisplay::OnScrollUp()
 // 0x4E28B0
 void CUIControlTextDisplay::OnPageDown(DWORD nLines)
 {
-    if (m_plstStrings->GetCount() > field_A6A) {
-        SHORT nOldIndex = field_5A;
+    if (m_plstStrings->GetCount() > wfield_A6C) {
+        SHORT nOldIndex = bfield_5A;
         // TODO: Check casts.
-        SHORT v1 = static_cast<SHORT> min(nLines, static_cast<DWORD>(field_A6A - 1));
-        field_5A = min(field_5A + v1, m_plstStrings->GetCount() - field_A6A);
-        if (nOldIndex != field_5A) {
-            m_posTopString = m_plstStrings->FindIndex(field_5A);
+        SHORT v1 = static_cast<SHORT> min(nLines, static_cast<DWORD>(wfield_A6C - 1));
+        bfield_5A = min(bfield_5A + v1, m_plstStrings->GetCount() - wfield_A6C);
+        if (nOldIndex != bfield_5A) {
+            m_posTopString = m_plstStrings->FindIndex(bfield_5A);
 
             CRect rDirty(m_pPanel->m_ptOrigin + m_ptOrigin, m_size);
             m_pPanel->InvalidateRect(&rDirty);
@@ -417,12 +417,12 @@ void CUIControlTextDisplay::OnPageDown(DWORD nLines)
 void CUIControlTextDisplay::OnPageUp(DWORD nLines)
 {
     if (!m_plstStrings->IsEmpty()) {
-        SHORT nOldIndex = field_5A;
+        SHORT nOldIndex = bfield_5A;
         // TODO: Check casts.
-        SHORT v1 = static_cast<SHORT> min(nLines, static_cast<DWORD>(field_A6A - 1));
-        field_5A = max(field_5A - v1, 0);
-        if (nOldIndex != field_5A) {
-            m_posTopString = m_plstStrings->FindIndex(field_5A);
+        SHORT v1 = static_cast<SHORT> min(nLines, static_cast<DWORD>(wfield_A6C - 1));
+        bfield_5A = max(bfield_5A - v1, 0);
+        if (nOldIndex != bfield_5A) {
+            m_posTopString = m_plstStrings->FindIndex(bfield_5A);
 
             CRect rDirty(m_pPanel->m_ptOrigin + m_ptOrigin, m_size);
             m_pPanel->InvalidateRect(&rDirty);
@@ -437,7 +437,7 @@ void CUIControlTextDisplay::OnPageUp(DWORD nLines)
 // 0x4E2B50
 void CUIControlTextDisplay::RemoveAll()
 {
-    CSingleLock lock(&field_A8E, FALSE);
+    CSingleLock lock(&pfield_A8E, FALSE);
     lock.Lock(INFINITE);
 
     POSITION pos = m_plstStrings->GetHeadPosition();
@@ -452,10 +452,10 @@ void CUIControlTextDisplay::RemoveAll()
     lock.Unlock();
 
     m_posTopString = NULL;
-    field_5A = 0;
-    field_5C = 0;
+    bfield_5A = 0;
+    nfield_5C = 0;
     m_posHighlightedItem = NULL;
-    field_A6C = 0;
+    wfield_A6C = 0;
 
     CRect rDirty(m_pPanel->m_ptOrigin + m_ptOrigin, m_size);
     m_pPanel->InvalidateRect(&rDirty);
@@ -465,7 +465,7 @@ void CUIControlTextDisplay::RemoveAll()
 // 0x4E2C60
 void CUIControlTextDisplay::RemoveString(POSITION posBoss)
 {
-    CSingleLock lock(&field_A8E, FALSE);
+    CSingleLock lock(&pfield_A8E, FALSE);
 
     if (posBoss == NULL) {
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ChUIControls.cpp
@@ -492,7 +492,7 @@ void CUIControlTextDisplay::RemoveString(POSITION posBoss)
         }
     }
 
-    field_A6C--;
+    wfield_A6C--;
 
     if (!m_plstStrings->IsEmpty()) {
         if (m_posTopString == NULL) {
@@ -510,14 +510,14 @@ void CUIControlTextDisplay::RemoveString(POSITION posBoss)
             nIndex++;
         }
 
-        field_5A = nIndex;
+        bfield_5A = nIndex;
 
         // NOTE: Uninline.
         AdjustScrollBar();
     } else {
         m_posTopString = NULL;
-        field_5A = 0;
-        field_5C = 0;
+        bfield_5A = 0;
+        nfield_5C = 0;
     }
 
     lock.Unlock();
@@ -554,7 +554,7 @@ SHORT CUIControlTextDisplay::ParseAndInsertStringAfter(POSITION posInsertAfter, 
     if (!sLabelCopy.IsEmpty()) {
         sLabelCopy += m_sNameSeparator;
 
-        if (field_AB7) {
+        if (bfield_AB7) {
             nOffset += m_labelFont.GetStringLength(sLabelCopy, TRUE);
         } else {
             sStringCopy = "\n" + sStringCopy;
@@ -579,7 +579,7 @@ SHORT CUIControlTextDisplay::ParseAndInsertStringAfter(POSITION posInsertAfter, 
     }
 
     while (!sStringCopy.IsEmpty()) {
-        if (field_AB4 != 0 && nNumLines >= field_AB4) {
+        if (wfield_AB4 != 0 && nNumLines >= wfield_AB4) {
             nOffset = 3 * (m_pPanel->m_pManager->m_bDoubleSize ? 2 : 1);
         }
 
@@ -642,7 +642,7 @@ BOOL CUIControlTextDisplay::Render(BOOL bForce)
 
     CVidInf* pVidInf = static_cast<CVidInf*>(g_pBaldurChitin->GetCurrentVideoMode());
 
-    CSingleLock renderLock(&field_A8E, FALSE);
+    CSingleLock renderLock(&pfield_A8E, FALSE);
 
     if (!m_bActive && !m_bInactiveRender) {
         return FALSE;
@@ -657,7 +657,7 @@ BOOL CUIControlTextDisplay::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -690,7 +690,7 @@ BOOL CUIControlTextDisplay::Render(BOOL bForce)
     CRect rClip = rDirtyFrame;
     rClip.OffsetRect(-rDirtyFrame.left, -rDirtyFrame.top);
 
-    pt.y += field_A62;
+    pt.y += wfield_A62;
 
     POSITION pos = m_posTopString;
     POSITION posBoss = m_plstStrings->GetAt(m_posTopString)->GetBossPos();
@@ -699,7 +699,7 @@ BOOL CUIControlTextDisplay::Render(BOOL bForce)
         CDisplayString* pDisplayString = m_plstStrings->GetAt(posBoss);
         if (!pDisplayString->m_sLabel.IsEmpty()) {
             if (rgbCurrentLabelColor != pDisplayString->m_rgbLabelColor) {
-                if (!field_AAE
+                if (!bfield_AAE
                     || (g_pChitin->m_sFontName.Compare("") != 0
                         && m_labelFont.GetResRef() != "STATES2")) {
                     rgbCurrentLabelColor = pDisplayString->m_rgbLabelColor;
@@ -726,7 +726,7 @@ BOOL CUIControlTextDisplay::Render(BOOL bForce)
 
         if (!pDisplayString->m_sLabel.IsEmpty()) {
             if (rgbCurrentLabelColor != pDisplayString->m_rgbLabelColor) {
-                if (!field_AAE
+                if (!bfield_AAE
                     || (g_pChitin->m_sFontName.Compare("") != 0
                         && m_labelFont.GetResRef() != "STATES2")) {
                     rgbCurrentLabelColor = pDisplayString->m_rgbLabelColor;
@@ -745,7 +745,7 @@ BOOL CUIControlTextDisplay::Render(BOOL bForce)
         }
 
         if (rgbCurrentTextColor != pDisplayString->m_rgbTextColor) {
-            if (!field_AAF
+            if (!bfield_AAF
                 || (g_pChitin->m_sFontName.Compare("") != 0
                     && m_textFont.GetResRef() != "STATES2")) {
                 rgbCurrentTextColor = pDisplayString->m_rgbTextColor;
@@ -799,7 +799,7 @@ void CUIControlTextDisplay::SetItemMarker(POSITION posBossItem, LONG lMarker)
 // 0x4E3770
 void CUIControlTextDisplay::SetItemTextColor(POSITION posBossItem, COLORREF rgbColor)
 {
-    if (field_AAF) {
+    if (bfield_AAF) {
         if (g_pChitin->m_sFontName.Compare("") == 0
             || m_labelFont.GetResRef() == "STATES2") {
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ChUIControls.cpp
@@ -843,32 +843,32 @@ void CUIControlTextDisplay::TimerAsynchronousUpdate(BOOLEAN bInside)
             UnHighlightItem();
         }
 
-        if (field_A65 != 0 || field_A67) {
-            if (field_5A < m_plstStrings->GetCount() - field_A6A) {
-                if (field_A62 > -m_nFontHeight) {
-                    field_A62 -= 3;
-                    if (field_A62 <= -m_nFontHeight) {
-                        if (field_A65 != 0) {
-                            field_A65--;
+        if (bfield_A65 != 0 || bfield_A67) {
+            if (bfield_5A < m_plstStrings->GetCount() - wfield_A6C) {
+                if (wfield_A62 > -m_nFontHeight) {
+                    wfield_A62 -= 3;
+                    if (wfield_A62 <= -m_nFontHeight) {
+                        if (bfield_A65 != 0) {
+                            bfield_A65--;
                             m_plstStrings->GetNext(m_posTopString);
-                            field_5A++;
+                            bfield_5A++;
 
                             // NOTE: Uninline.
                             AdjustScrollBar();
 
-                            if (field_A67 && field_5A < m_plstStrings->GetCount() - field_A6A) {
-                                field_A62 += m_nFontHeight;
+                            if (bfield_A67 && bfield_5A < m_plstStrings->GetCount() - wfield_A6C) {
+                                wfield_A62 += m_nFontHeight;
                             } else {
-                                field_A62 = 0;
+                                wfield_A62 = 0;
                             }
                         } else {
-                            field_A62 = -m_nFontHeight;
+                            wfield_A62 = -m_nFontHeight;
                         }
                     }
                 } else {
-                    field_A62 = 0;
+                    wfield_A62 = 0;
                     m_plstStrings->GetNext(m_posTopString);
-                    field_5A++;
+                    bfield_5A++;
 
                     // NOTE: Uninline.
                     AdjustScrollBar();
@@ -878,33 +878,33 @@ void CUIControlTextDisplay::TimerAsynchronousUpdate(BOOLEAN bInside)
                 m_pPanel->InvalidateRect(&rDirty);
                 InvalidateRect();
             } else {
-                field_A65 = 0;
-                field_A67 = 0;
+                bfield_A65 = 0;
+                bfield_A67 = 0;
             }
-        } else if (field_A64 != 0 || field_A66) {
+        } else if (bfield_A64 != 0 || bfield_A66) {
             if (m_posTopString != m_plstStrings->GetHeadPosition()) {
-                if (field_A62 < 0) {
-                    field_A62 += 3;
-                    if (field_A62 >= 0) {
-                        if (field_A64 != 0) {
-                            field_A64--;
+                if (wfield_A62 < 0) {
+                    wfield_A62 += 3;
+                    if (wfield_A62 >= 0) {
+                        if (bfield_A64 != 0) {
+                            bfield_A64--;
                         }
 
-                        if (field_A64 != 0 || field_A66) {
-                            field_A62 -= m_nFontHeight;
+                        if (bfield_A64 != 0 || bfield_A66) {
+                            wfield_A62 -= m_nFontHeight;
                             m_plstStrings->GetPrev(m_posTopString);
-                            field_5A--;
+                            bfield_5A--;
 
                             // NOTE: Uninline.
                             AdjustScrollBar();
                         } else {
-                            field_A62 = 0;
+                            wfield_A62 = 0;
                         }
                     }
                 } else {
-                    field_A62 = -m_nFontHeight;
+                    wfield_A62 = -m_nFontHeight;
                     m_plstStrings->GetPrev(m_posTopString);
-                    field_5A--;
+                    bfield_5A--;
 
                     // NOTE: Uninline.
                     AdjustScrollBar();
@@ -914,13 +914,13 @@ void CUIControlTextDisplay::TimerAsynchronousUpdate(BOOLEAN bInside)
                 m_pPanel->InvalidateRect(&rDirty);
                 InvalidateRect();
             } else {
-                if (field_A62 > 0) {
-                    field_A64 = 0;
-                    field_A66 = 0;
+                if (wfield_A62 > 0) {
+                    bfield_A64 = 0;
+                    bfield_A66 = 0;
                 } else {
-                    field_A62 += 3;
-                    if (field_A62 > 0) {
-                        field_A62 = 0;
+                    wfield_A62 += 3;
+                    if (wfield_A62 > 0) {
+                        wfield_A62 = 0;
                     }
 
                     CRect rDirty(m_pPanel->m_ptOrigin + m_ptOrigin, m_size);
@@ -950,7 +950,7 @@ void CUIControlTextDisplay::SetTopString(POSITION posTopString)
             nIndex++;
         }
 
-        field_5A = nIndex;
+        bfield_5A = nIndex;
 
         // NOTE: Uninline.
         AdjustScrollBar();
@@ -959,16 +959,16 @@ void CUIControlTextDisplay::SetTopString(POSITION posTopString)
         m_pPanel->InvalidateRect(&rDirty);
         InvalidateRect();
 
-        field_A65 = 0;
-        field_A64 = 0;
+        bfield_A65 = 0;
+        bfield_A64 = 0;
     }
 }
 
 // 0x4E3D60
 void CUIControlTextDisplay::ScrollToBottom()
 {
-    if (field_A6A < m_plstStrings->GetCount()) {
-        POSITION posTopString = m_plstStrings->FindIndex(m_plstStrings->GetCount() - field_A6A);
+    if (wfield_A6C < m_plstStrings->GetCount()) {
+        POSITION posTopString = m_plstStrings->FindIndex(m_plstStrings->GetCount() - wfield_A6C);
         // NOTE: Uninline.
         SetTopString(posTopString);
     }
@@ -1072,3 +1072,10 @@ POSITION CUIControlTextDisplay::DisplayString(const CString& sString, COLORREF r
         a4,
         TRUE);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4E1D80
+void FUN_004e1d80() {
+    // TODO: Incomplete.
+}
+

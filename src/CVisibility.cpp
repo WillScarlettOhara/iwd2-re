@@ -102,17 +102,17 @@ POLYCOLOR CVisibilityMap::CLEARSHADE;
 // 0x551770
 CVisibilityMap::CVisibilityMap()
 {
-    field_4 = 0;
+    nm_field_4 = 0;
     m_nWidth = 0;
     m_nHeight = 0;
-    field_1A = 0;
+    bm_field_1A = 0;
     memset(m_aCharacterIds, 0, sizeof(m_aCharacterIds));
     m_pMap = NULL;
     m_pSearchMap = NULL;
-    field_12 = 0;
-    field_16 = 0;
-    field_E = 14;
-    field_10 = 10;
+    pm_field_12 = 0;
+    pm_field_16 = 0;
+    wfield_E = 14;
+    wm_field_10 = 10;
     sub_5518A0();
     m_bOutDoor = FALSE;
 }
@@ -120,12 +120,12 @@ CVisibilityMap::CVisibilityMap()
 // 0x551800
 CVisibilityMap::~CVisibilityMap()
 {
-    if (field_12) {
-        delete field_12;
+    if (pm_field_12) {
+        delete pm_field_12;
     }
 
-    if (field_16) {
-        delete field_16;
+    if (pm_field_16) {
+        delete pm_field_16;
     }
 }
 
@@ -145,24 +145,24 @@ BOOL CVisibilityMap::AddCharacter(const CPoint& pos, LONG charId, const BYTE* pV
 // 0x5518A0
 void CVisibilityMap::sub_5518A0()
 {
-    if (field_12 != NULL) {
-        delete field_12;
+    if (pm_field_12 != NULL) {
+        delete pm_field_12;
     }
 
-    if (field_16 != NULL) {
-        delete field_16;
+    if (pm_field_16 != NULL) {
+        delete pm_field_16;
     }
 
-    field_12 = new BYTE[field_E];
-    field_16 = new BYTE[field_10];
+    pm_field_12 = new BYTE[wfield_E];
+    pm_field_16 = new BYTE[wm_field_10];
 
-    field_4 = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(field_E,
-        field_10,
-        field_12));
+    nm_field_4 = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(wfield_E,
+        wm_field_10,
+        pm_field_12));
 
-    field_1A = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(field_10,
-        field_E,
-        field_16));
+    bm_field_1A = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(wm_field_10,
+        wfield_E,
+        pm_field_16));
 }
 
 // 0x551950
@@ -780,3 +780,25 @@ void CVisibilityMap::SetTileVisible(LONG nIndex, BYTE charId)
 
     m_pMap[nIndex] |= charId | EXPLORED_FLAG;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x551670
+void FUN_00551670() {
+    // TODO: Incomplete.
+}
+
+// 0x5544C0
+void FUN_005544c0() {
+    // TODO: Incomplete.
+}
+
+// 0x5545E0
+void FUN_005545e0() {
+    // TODO: Incomplete.
+}
+
+// 0x554870
+void FUN_00554870() {
+    // TODO: Incomplete.
+}
+

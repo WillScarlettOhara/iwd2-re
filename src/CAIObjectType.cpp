@@ -1432,3 +1432,20 @@ void CAIObjectType::SetClass(BYTE nClass)
 {
     m_nClass = nClass;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x40AC60
+void FUN_0040ac60() {
+    // TODO: Incomplete.
+}
+
+// 0x45B300
+void FUN_0045b300() {
+    // TODO: Incomplete.
+}
+
+// 0x45B370
+void FUN_0045b370() {
+    // TODO: Incomplete.
+}
+

@@ -24,7 +24,7 @@ CVidCell::CVidCell()
     m_bPaletteChanged = FALSE;
     m_pFrame = NULL;
     m_bDoubleSize = FALSE;
-    field_C8 = 1;
+    nfield_C8 = 1;
     m_bShadowOn = TRUE;
 }
 
@@ -34,7 +34,7 @@ CVidCell::CVidCell(CResRef cNewResRef, BOOL bDoubleSize)
     // NOTE: Uninline.
     SetResRef(cNewResRef, bDoubleSize, TRUE, TRUE);
 
-    field_C8 = 1;
+    nfield_C8 = 1;
     m_nCurrentFrame = 0;
     m_nCurrentSequence = 0;
     m_bPaletteChanged = FALSE;
@@ -206,7 +206,7 @@ BOOL CVidCell::GetCurrentCenterPoint(CPoint& ptReference, BOOLEAN bDemanded)
     if (m_nCurrentFrame < GetResSequences()[nSequence].nFrames) {
         nFrame = m_nCurrentFrame;
     } else {
-        if (field_C8) {
+        if (nfield_C8) {
             // NOTE: Uninline.
             if (GetResSequences()[nSequence].nFrames > 0) {
                 // NOTE: Uninline.
@@ -221,7 +221,7 @@ BOOL CVidCell::GetCurrentCenterPoint(CPoint& ptReference, BOOLEAN bDemanded)
     }
 
     if (nFrame < 0) {
-        if (field_C8) {
+        if (nfield_C8) {
             // FIXME: Repeating calls.
             // NOTE: Lots of inlining.
             if (GetResSequences()[nSequence].nFrames > 0) {
@@ -283,7 +283,7 @@ BOOL CVidCell::GetCurrentFrameSize(CSize& frameSize, BOOLEAN bDemanded)
     if (m_nCurrentFrame < GetResSequences()[nSequence].nFrames) {
         nFrame = m_nCurrentFrame;
     } else {
-        if (field_C8) {
+        if (nfield_C8) {
             // NOTE: Uninline.
             if (GetResSequences()[nSequence].nFrames > 0) {
                 // NOTE: Uninline.
@@ -298,7 +298,7 @@ BOOL CVidCell::GetCurrentFrameSize(CSize& frameSize, BOOLEAN bDemanded)
     }
 
     if (nFrame < 0) {
-        if (field_C8) {
+        if (nfield_C8) {
             // FIXME: Repeating calls.
             // NOTE: Lots of inlining.
             if (GetResSequences()[nSequence].nFrames > 0) {
@@ -532,7 +532,7 @@ void CVidCell::RestoreBackground(INT nFrom, INT nTo, const CRect& rClip)
         if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
             break;
         }
-    } while (!g_pChitin->field_1932);
+    } while (!g_pChitin->nm_m_field_1932);
 }
 
 // 0x7AE210
@@ -657,7 +657,7 @@ void CVidCell::StoreBackground(INT nFrom, INT nTo, INT x, INT y, const CRect& rC
                 if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
                     break;
                 }
-            } while (!g_pChitin->field_1932);
+            } while (!g_pChitin->nm_m_field_1932);
         }
     }
 }
@@ -1191,7 +1191,7 @@ void CVidCell::BltBackGroundToFx(LPDIRECTDRAWSURFACE pSurface, CRect& rSrc, cons
             if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
                 break;
             }
-        } while (!g_pChitin->field_1932);
+        } while (!g_pChitin->nm_m_field_1932);
     }
 }
 
@@ -1270,7 +1270,7 @@ BOOL CVidCell::BltFromFX(LPDIRECTDRAWSURFACE pSurface, int x, int y, const CRect
                 if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
                     break;
                 }
-            } while (!g_pChitin->field_1932);
+            } while (!g_pChitin->nm_m_field_1932);
         }
     }
 
@@ -1298,7 +1298,7 @@ BOOL CVidCell::GetFrame(BOOLEAN bDemanded)
     }
 
     if (!(m_nCurrentFrame < pRes->m_pSequences[m_nCurrentSequence].nFrames)) {
-        if (field_C8) {
+        if (nfield_C8) {
             if (pRes->m_pSequences[m_nCurrentSequence].nFrames > 0) {
                 m_nCurrentFrame = m_nCurrentFrame % pRes->m_pSequences[m_nCurrentSequence].nFrames;
             } else {
@@ -1310,7 +1310,7 @@ BOOL CVidCell::GetFrame(BOOLEAN bDemanded)
     }
 
     if (m_nCurrentFrame < 0) {
-        if (field_C8) {
+        if (nfield_C8) {
             if (pRes->m_pSequences[m_nCurrentSequence].nFrames > 0) {
                 m_nCurrentFrame = pRes->m_pSequences[m_nCurrentSequence].nFrames + m_nCurrentFrame % pRes->m_pSequences[m_nCurrentSequence].nFrames;
                 if (m_nCurrentFrame == pRes->m_pSequences[m_nCurrentSequence].nFrames) {
@@ -1422,10 +1422,10 @@ BOOL CVidCell::Blt8To32(DWORD* pSurface, LONG lPitch, DWORD dwFlags, INT nTransV
     m_cPalette.Realize(CVidImage::rgbTempPal, 32, dwFlags, &m_paletteAffects, nTransVal);
 
     if (!m_bShadowOn) {
-        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->field_24;
+        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->nm_field_24;
     }
 
-    if (g_pChitin->field_174) {
+    if (g_pChitin->nm_field_174) {
         if (m_nCurrentFrame == 0) {
             for (int index = CVidPalette::SHADOW_ENTRY + 1; index < 256; index++) {
                 CVidImage::rgbTempPal[index] = g_pChitin->GetCurrentVideoMode()->ConvertToSurfaceRGB(255);
@@ -1817,7 +1817,7 @@ BOOL CVidCell::Blt8To32ClearShadow(DWORD* pSurface, LONG lPitch, DWORD dwFlags)
     m_cPalette.Realize(CVidImage::rgbTempPal, 32, dwFlags, &m_paletteAffects, 255);
 
     if (!m_bShadowOn) {
-        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->field_24;
+        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->nm_field_24;
     }
 
     BYTE* pFrameData = pRes->GetFrameData(m_pFrame, m_bDoubleSize);
@@ -1954,7 +1954,7 @@ BOOL CVidCell::Blt8To32Brightest(DWORD* pSurface, LONG lPitch, DWORD dwFlags)
     m_cPalette.Realize(CVidImage::rgbTempPal, 32, dwFlags, &m_paletteAffects, 255);
 
     if (!m_bShadowOn) {
-        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->field_24;
+        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->nm_field_24;
     }
 
     BAMHEADER* pBamHeader = pRes->m_bCacheHeader
@@ -2085,7 +2085,7 @@ void CVidCell::RenderTexture(INT x, INT y, const CRect& rFxRect, CSize dataPitch
     x2 = static_cast<float>(x + rFxRect.Width());
     y2 = static_cast<float>(y + rFxRect.Height());
 
-    if (g_pChitin->cVideo.field_13A) {
+    if (g_pChitin->cVideo.nm_field_13A) {
         CVideo3d::glTexImage2D(GL_TEXTURE_2D,
             0,
             GL_RGBA,
@@ -2269,7 +2269,7 @@ BOOL CVidCell::Render3d(INT nRefPtX, INT nRefPtY, DWORD dwFlags, INT nTransVal)
     m_cPalette.Realize(CVidImage::rgbTempPal, 32, dwFlags, &m_paletteAffects, nNewTransVal);
 
     if (!m_bShadowOn) {
-        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->field_24;
+        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->nm_field_24;
     }
 
     CRect rClip(0, 0, CVideo::SCREENWIDTH, CVideo::SCREENHEIGHT);
@@ -2311,7 +2311,7 @@ BOOL CVidCell::Render3d(INT nRefPtX, INT nRefPtY, const CRect& rClip, CVidPoly* 
     CVideo3d::glEnable(GL_TEXTURE_2D);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.field_13E = 2;
+    g_pChitin->cVideo.nm_field_13E = 2;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -2327,7 +2327,7 @@ BOOL CVidCell::Render3d(INT nRefPtX, INT nRefPtY, const CRect& rClip, CVidPoly* 
     CVideo3d::glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    LONG lPitch = g_pChitin->cVideo.field_13A
+    LONG lPitch = g_pChitin->cVideo.nm_field_13A
         ? CVidTile::BYTES_PER_TEXEL * CVIDINF_FX_WIDTH
         : CVidTile::BYTES_PER_TEXEL * m_pFrame->nWidth;
 
@@ -2402,7 +2402,7 @@ BOOL CVidCell::Render3d(INT nRefPtX, INT nRefPtY, const CRect& rClip, BOOLEAN bD
     CVideo3d::glEnable(GL_TEXTURE_2D);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.field_13E = 2;
+    g_pChitin->cVideo.nm_field_13E = 2;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -2428,7 +2428,7 @@ BOOL CVidCell::Render3d(INT nRefPtX, INT nRefPtY, const CRect& rClip, BOOLEAN bD
                 0,
                 min(m_pFrame->nWidth - xOffset, CVidInf::FX_WIDTH),
                 min(m_pFrame->nHeight - yOffset, CVidInf::FX_HEIGHT));
-            lPitch = g_pChitin->cVideo.field_13A
+            lPitch = g_pChitin->cVideo.nm_field_13A
                 ? CVidTile::BYTES_PER_TEXEL * CVIDINF_FX_WIDTH
                 : CVidTile::BYTES_PER_TEXEL * rFrameClip.Width();
             ptSource.x = xOffset;
@@ -2562,7 +2562,7 @@ BOOL CVidCell::FXRender3d(INT nRefPtX, INT nRefPtY, const CRect& rFXRect, const 
     CVideo3d::glEnable(GL_TEXTURE_2D);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.field_13E = 2;
+    g_pChitin->cVideo.nm_field_13E = 2;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -2578,7 +2578,7 @@ BOOL CVidCell::FXRender3d(INT nRefPtX, INT nRefPtY, const CRect& rFXRect, const 
     CVideo3d::glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    LONG lPitch = g_pChitin->cVideo.field_13A
+    LONG lPitch = g_pChitin->cVideo.nm_field_13A
         ? CVidTile::BYTES_PER_TEXEL * CVIDINF_FX_WIDTH
         : CVidTile::BYTES_PER_TEXEL * rFXRect.Width();
 
@@ -2691,3 +2691,65 @@ void CVidCell::UnsuppressTintAllRanges()
 {
     m_paletteAffects.suppressTints = 0;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x45B1E0
+void FUN_0045b1e0() {
+    // TODO: Incomplete.
+}
+
+// 0x45B200
+void FUN_0045b200() {
+    // TODO: Incomplete.
+}
+
+// 0x45B210
+void FUN_0045b210() {
+    // TODO: Incomplete.
+}
+
+// 0x45B220
+void FUN_0045b220() {
+    // TODO: Incomplete.
+}
+
+// 0x45B240
+void FUN_0045b240() {
+    // TODO: Incomplete.
+}
+
+// 0x45B250
+void FUN_0045b250() {
+    // TODO: Incomplete.
+}
+
+// 0x45B270
+void FUN_0045b270() {
+    // TODO: Incomplete.
+}
+
+// 0x45B290
+void FUN_0045b290() {
+    // TODO: Incomplete.
+}
+
+// 0x45B2D0
+void FUN_0045b2d0() {
+    // TODO: Incomplete.
+}
+
+// 0x7B4230
+void FUN_007b4230() {
+    // TODO: Incomplete.
+}
+
+// 0x7B4600
+void FUN_007b4600() {
+    // TODO: Incomplete.
+}
+
+// 0x7B4800
+void FUN_007b4800() {
+    // TODO: Incomplete.
+}
+

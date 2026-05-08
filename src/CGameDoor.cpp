@@ -245,32 +245,32 @@ CGameDoor::CGameDoor(CGameArea* pArea, CAreaFileDoorObject* pDoorObject, CAreaPo
         name.m_intValue = m_id;
         pArea->GetNamedCreatures()->AddKey(name);
 
-        sub_481890(&m_rClosedBounding, field_6DA);
-        sub_481890(&m_rOpenBounding, field_6F2);
+        sub_481890(&m_rClosedBounding, pfield_6DA);
+        sub_481890(&m_rOpenBounding, pfield_6F2);
 
-        field_6EE = NULL;
-        field_706 = NULL;
+        pfield_6EE = NULL;
+        pfield_706 = NULL;
 
         if (m_nClosedPolygon != 0) {
-            field_6EE = new CAreaPoint[m_nClosedPolygon];
+            pfield_6EE = new CAreaPoint[m_nClosedPolygon];
 
             for (WORD cnt = 0; cnt < m_nClosedPolygon; cnt++) {
-                field_6EE[cnt].m_xPos = static_cast<WORD>(m_pClosedPolygon[cnt].x);
-                field_6EE[cnt].m_yPos = static_cast<WORD>(m_pClosedPolygon[cnt].y);
+                pfield_6EE[cnt].m_xPos = static_cast<WORD>(m_pClosedPolygon[cnt].x);
+                pfield_6EE[cnt].m_yPos = static_cast<WORD>(m_pClosedPolygon[cnt].y);
             }
         } else {
-            field_6EE = NULL;
+            pfield_6EE = NULL;
         }
 
         if (m_nOpenPolygon != 0) {
-            field_706 = new CAreaPoint[m_nOpenPolygon];
+            pfield_706 = new CAreaPoint[m_nOpenPolygon];
 
             for (WORD cnt = 0; cnt < m_nOpenPolygon; cnt++) {
-                field_706[cnt].m_xPos = static_cast<WORD>(m_pOpenPolygon[cnt].x);
-                field_706[cnt].m_yPos = static_cast<WORD>(m_pOpenPolygon[cnt].y);
+                pfield_706[cnt].m_xPos = static_cast<WORD>(m_pOpenPolygon[cnt].x);
+                pfield_706[cnt].m_yPos = static_cast<WORD>(m_pOpenPolygon[cnt].y);
             }
         } else {
-            field_706 = NULL;
+            pfield_706 = NULL;
         }
 
         m_nAICounter = 0;
@@ -298,33 +298,33 @@ CGameDoor::~CGameDoor()
         delete m_pClosedSearch;
     }
 
-    if (field_6EE != NULL) {
-        delete field_6EE;
-        field_6EE = NULL;
+    if (pfield_6EE != NULL) {
+        delete pfield_6EE;
+        pfield_6EE = NULL;
     }
 
     // When there is only one element its an unowned pointer to
     // `m_rClosedBounding`.
-    if (field_6DA.GetCount() > 1) {
-        for (INT nIndex = 0; nIndex < field_6DA.GetCount(); nIndex++) {
-            delete field_6DA[nIndex];
+    if (pfield_6DA.GetCount() > 1) {
+        for (INT nIndex = 0; nIndex < pfield_6DA.GetCount(); nIndex++) {
+            delete pfield_6DA[nIndex];
         }
     }
-    field_6DA.SetSize(0);
+    pfield_6DA.SetSize(0);
 
-    if (field_706 != NULL) {
-        delete field_706;
-        field_706 = NULL;
+    if (pfield_706 != NULL) {
+        delete pfield_706;
+        pfield_706 = NULL;
     }
 
     // When there is only one element its an unowned pointer to
     // `m_rOpenBounding`.
-    if (field_6F2.GetCount() > 1) {
-        for (INT nIndex = 0; nIndex < field_6F2.GetCount(); nIndex++) {
-            delete field_6F2[nIndex];
+    if (pfield_6F2.GetCount() > 1) {
+        for (INT nIndex = 0; nIndex < pfield_6F2.GetCount(); nIndex++) {
+            delete pfield_6F2[nIndex];
         }
     }
-    field_6F2.SetSize(0);
+    pfield_6F2.SetSize(0);
 }
 
 // 0x487460
@@ -773,3 +773,35 @@ BOOL CGameDoor::sub_45B700()
 {
     return m_dwFlags & 0x1;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4866C0
+void FUN_004866c0() {
+    // TODO: Incomplete.
+}
+
+// 0x486860
+void FUN_00486860() {
+    // TODO: Incomplete.
+}
+
+// 0x4876E0
+void FUN_004876e0() {
+    // TODO: Incomplete.
+}
+
+// 0x487D10
+void FUN_00487d10() {
+    // TODO: Incomplete.
+}
+
+// 0x48B2C0
+void FUN_0048b2c0() {
+    // TODO: Incomplete.
+}
+
+// 0x48B8E0
+void FUN_0048b8e0() {
+    // TODO: Incomplete.
+}
+

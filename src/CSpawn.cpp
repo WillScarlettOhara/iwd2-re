@@ -393,9 +393,9 @@ BOOL CSpawnFile::GetINIKey(CMemINISection* pSection, const CString& sKey, CStrin
 CSpawnList::CSpawnList(CMemINI* pMemINI, const CString& sSection)
 {
     mInterval = INT_MAX;
-    field_20 = 0;
-    field_24 = 0;
-    field_28 = 0;
+    nm_field_20 = 0;
+    nm_field_24 = 0;
+    nm_field_28 = 0;
     CheckSpawnTimes = 0;
     SpawnTimeOfDay = 0;
     pControlVar = NULL;
@@ -478,9 +478,9 @@ CSpawnList::~CSpawnList()
     }
 
     pControlVar = NULL;
-    field_20 = 0;
-    field_24 = 0;
-    field_28 = 0;
+    nm_field_20 = 0;
+    nm_field_24 = 0;
+    nm_field_28 = 0;
 }
 
 // 0x768D50
@@ -555,12 +555,12 @@ CSpawn::CSpawn(CMemINISection* pSection)
     mDeathLadyModifier = 0;
     mDeathMurderModifier = 0;
     Facing = 0;
-    field_136 = 0;
-    field_13A = 0;
-    field_13E = 0;
-    field_13F = 0;
-    field_140 = 0;
-    field_141 = 0;
+    nm_field_136 = 0;
+    nm_field_13A = 0;
+    nm_field_13E = 0;
+    bm_field_13F = 0;
+    wm_field_140 = 0;
+    bm_field_141 = 0;
     mInterval = -1;
     SpawnFlags = 0;
     DataIsValid = FALSE;
@@ -692,7 +692,7 @@ void CSpawn::Read(CMemINISection* pSection)
     if (GetINIKey(pSection, SpecKey, sValue)) {
         // TODO: Incomplete.
     } else {
-        field_13E = FALSE;
+        nm_field_13E = FALSE;
     }
 
     pValue = pSection->Get(SpecVarKey);
@@ -702,53 +702,53 @@ void CSpawn::Read(CMemINISection* pSection)
 
         // NOTE: Uninline.
         if (GetINIKey(pSection, SpecVarIncKey, sValue)) {
-            field_136 = atoi(sValue);
+            nm_field_136 = atoi(sValue);
         } else {
-            field_136 = 0;
+            nm_field_136 = 0;
         }
 
         // NOTE: Uninline.
         if (GetINIKey(pSection, SpecVarOperationKey, sValue)) {
             if (_strnicmp(GreaterThanKey, sValue, GreaterThanKey.GetLength()) == 0) {
-                field_132 = 0;
+                nm_field_132 = 0;
             } else if (_strnicmp(LessThanKey, sValue, LessThanKey.GetLength()) == 0) {
-                field_132 = 1;
+                nm_field_132 = 1;
             } else if (_strnicmp(EqualToKey, sValue, EqualToKey.GetLength()) == 0) {
-                field_132 = 2;
+                nm_field_132 = 2;
             } else {
-                field_132 = 3;
+                nm_field_132 = 3;
             }
         } else {
-            field_132 = 3;
+            nm_field_132 = 3;
         }
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, SpecVarIncKey, sValue)) {
-        field_13A = atoi(sValue);
+        nm_field_13A = atoi(sValue);
     } else {
-        field_13A = 0;
+        nm_field_13A = 0;
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, AreaDiff1Key, sValue)) {
-        field_13F = atoi(sValue) > 0;
+        bm_field_13F = atoi(sValue) > 0;
     } else {
-        field_13F = TRUE;
+        bm_field_13F = TRUE;
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, AreaDiff2Key, sValue)) {
-        field_140 = atoi(sValue) > 0;
+        wm_field_140 = atoi(sValue) > 0;
     } else {
-        field_140 = TRUE;
+        wm_field_140 = TRUE;
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, AreaDiff3Key, sValue)) {
-        field_141 = atoi(sValue) > 0;
+        bm_field_141 = atoi(sValue) > 0;
     } else {
-        field_141 = TRUE;
+        bm_field_141 = TRUE;
     }
 
     // NOTE: Uninline.
@@ -1416,3 +1416,45 @@ void _SpawnReleasePointer(Thing*& rPointer)
         rPointer = NULL;
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x768680
+void FUN_00768680() {
+    // TODO: Incomplete.
+}
+
+// 0x768D30
+void FUN_00768d30() {
+    // TODO: Incomplete.
+}
+
+// 0x769670
+void FUN_00769670() {
+    // TODO: Incomplete.
+}
+
+// 0x769680
+void FUN_00769680() {
+    // TODO: Incomplete.
+}
+
+// 0x769730
+void FUN_00769730() {
+    // TODO: Incomplete.
+}
+
+// 0x769A80
+void FUN_00769a80() {
+    // TODO: Incomplete.
+}
+
+// 0x76C1E0
+void FUN_0076c1e0() {
+    // TODO: Incomplete.
+}
+
+// 0x76C200
+void FUN_0076c200() {
+    // TODO: Incomplete.
+}
+

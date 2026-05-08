@@ -89,8 +89,8 @@ const CString CScreenInventory::OPTION_PAUSE_WARNING("Inventory Pause Warning");
 CScreenInventory::CScreenInventory()
 {
     m_animation.m_animation = NULL;
-    field_11C = 0;
-    field_11D = 0;
+    wm_field_11C = 0;
+    bm_field_11D = 0;
     m_nTopGroundItem = 0;
     m_nErrorState = 0;
     m_nNumErrorButtons = 0;
@@ -196,21 +196,21 @@ CScreenInventory::CScreenInventory()
 
     m_bCtrlKeyDown = FALSE;
     m_pTempItem = NULL;
-    field_114 = 0;
-    field_118 = -1;
+    sm_field_114 = 0;
+    nm_field_118 = -1;
     m_nRequesterButtonId = -1;
     m_nRequesterAmount = -1;
-    field_11E = 0;
-    field_11F = 0;
+    nm_m_field_11E = 0;
+    bm_field_11F = 0;
     m_nCurrentAbility = 0;
     m_pAbilities = NULL;
     m_bPauseWarningDisplayed = FALSE;
-    field_510 = -1;
-    field_514 = -1;
-    field_524 = 0;
-    field_51C = 0;
-    field_520 = 10;
-    field_528 = 0;
+    nfield_510 = -1;
+    nfield_514 = -1;
+    nfield_524 = 0;
+    nfield_51C = 0;
+    nfield_520 = 10;
+    nfield_528 = 0;
 }
 
 // 0x49FC40
@@ -285,9 +285,9 @@ void CScreenInventory::EngineActivated()
             UpdateMainPanel(TRUE);
         }
 
-        if (field_528 != 0) {
+        if (nfield_528 != 0) {
             SetErrorString(11328, RGB(255, 255, 255));
-            field_528 = 0;
+            nfield_528 = 0;
         }
 
         UpdateCursorShape();
@@ -380,10 +380,10 @@ void CScreenInventory::EngineDeactivated()
 // 0x625490
 void CScreenInventory::EngineGameInit()
 {
-    m_cUIManager.fInit(this, CResRef("GUIINV"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIINV"), g_pBaldurChitin->nm_field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -405,21 +405,21 @@ void CScreenInventory::EngineGameInit()
     m_pCurrentScrollBar = NULL;
     m_nSelectedCharacter = 0;
     m_pTempItem = NULL;
-    field_114 = 0;
-    field_118 = -1;
+    sm_field_114 = 0;
+    nm_field_118 = -1;
     m_nRequesterButtonId = -1;
     m_nRequesterAmount = -1;
-    field_11E = 0;
-    field_11F = 0;
+    nm_m_field_11E = 0;
+    bm_field_11F = 0;
     m_nCurrentAbility = 0;
     m_pAbilities = NULL;
     m_bPauseWarningDisplayed = FALSE;
-    field_510 = -1;
-    field_514 = -1;
-    field_524 = 0;
-    field_51C = 0;
-    field_520 = 10;
-    field_528 = 0;
+    nfield_510 = -1;
+    nfield_514 = -1;
+    nfield_524 = 0;
+    nfield_51C = 0;
+    nfield_520 = 10;
+    nfield_528 = 0;
 
     m_cUIManager.GetPanel(3)->SetActive(FALSE);
     m_cUIManager.GetPanel(4)->SetActive(FALSE);
@@ -464,8 +464,8 @@ void CScreenInventory::EngineGameInit()
 
     m_nUseButtonMode = -1;
     m_nAbilitiesButtonMode = -1;
-    field_510 = -1;
-    field_514 = -1;
+    nfield_510 = -1;
+    nfield_514 = -1;
     m_bPauseWarningDisplayed = GetPrivateProfileIntA("Game Options",
         OPTION_PAUSE_WARNING,
         0,
@@ -498,7 +498,7 @@ void CScreenInventory::OnKeyDown(SHORT nKeysFlags)
             case VK_ESCAPE:
                 if (GetTopPopup() == NULL) {
                     if (m_animation.m_animation != NULL) {
-                        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+                        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
                         renderLock.Lock(INFINITE);
                         delete m_animation.m_animation;
                         m_animation.m_animation = NULL;
@@ -647,9 +647,9 @@ void CScreenInventory::TimerAsynchronousUpdate()
 {
     g_pBaldurChitin->m_pEngineWorld->AsynchronousUpdate(FALSE);
 
-    if (field_524 >= 0) {
-        if (field_524 == 0) {
-            CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    if (nfield_524 >= 0) {
+        if (nfield_524 == 0) {
+            CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
             renderLock.Lock(INFINITE);
 
             CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -671,11 +671,11 @@ void CScreenInventory::TimerAsynchronousUpdate()
             } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
             if (rc == CGameObjectArray::SUCCESS) {
-                if (field_520 <= CSPELLLIST_MAX_LEVELS) {
+                if (nfield_520 <= CSPELLLIST_MAX_LEVELS) {
                     m_nErrorState = 4;
 
                     UINT nIndex = 0;
-                    if (pSprite->GetSpellsAtLevel(5, field_520 - 1)->Find(field_51C, nIndex)) {
+                    if (pSprite->GetSpellsAtLevel(5, nfield_520 - 1)->Find(nfield_51C, nIndex)) {
                         m_strErrorText = 10830;
                         PlayGUISound(CResRef("GAM_44"));
                     } else {
@@ -694,7 +694,7 @@ void CScreenInventory::TimerAsynchronousUpdate()
 
             renderLock.Unlock();
         }
-        field_524--;
+        nfield_524--;
     }
 
     UpdateCursorShape();
@@ -774,7 +774,7 @@ void CScreenInventory::TimerSynchronousUpdate()
 
     pGame->SynchronousUpdate();
 
-    if (m_lPopupStack.GetCount() > 0 && m_cUIManager.field_2E == 1) {
+    if (m_lPopupStack.GetCount() > 0 && m_cUIManager.bm_field_2E == 1) {
         SHORT nPortrait;
 
         for (nPortrait = 0; nPortrait <= 5; nPortrait++) {
@@ -790,7 +790,7 @@ void CScreenInventory::TimerSynchronousUpdate()
     pVidMode->Flip(TRUE);
 
     if (g_pBaldurChitin->GetActiveEngine() == g_pBaldurChitin->m_pEngineInventory) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         if (g_pBaldurChitin->m_pEngineInventory->GetTopPopup() == NULL) {
@@ -841,7 +841,7 @@ void CScreenInventory::OnPortraitLClick(DWORD nPortrait)
 
         UpdateCursorShape();
 
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         UpdateMainPanel(TRUE);
@@ -1109,7 +1109,7 @@ void CScreenInventory::EnableMainPanel(BOOL bEnable)
     pLeftPanel->SetEnabled(bEnable);
     pRightPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -1309,7 +1309,7 @@ void CScreenInventory::ResetPopupPanel(DWORD dwPanelId)
             } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
             if (rc == CGameObjectArray::SUCCESS) {
-                field_11F = pSprite->GetBaseStats()->m_colors[field_11E];
+                bm_field_11F = pSprite->GetBaseStats()->m_colors[nm_m_field_11E];
 
                 pGame->GetObjectArray()->ReleaseDeny(nCharacterId,
                     CGameObjectArray::THREAD_ASYNCH,
@@ -1586,7 +1586,7 @@ void CScreenInventory::ResetHistoryPanel(CUIPanel* pPanel)
             pText->m_labelFont.GetFrameSize(64, 0, size, FALSE);
 
             SHORT nFontHeight = pText->m_labelFont.GetFontHeight(FALSE);
-            pText->field_AB4 = static_cast<SHORT>((nFontHeight + size.cy - 1) / nFontHeight);
+            pText->wfield_AB4 = static_cast<SHORT>((nFontHeight + size.cy - 1) / nFontHeight);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(nCharacterId,
@@ -1702,7 +1702,7 @@ void CScreenInventory::OnDoneButtonClick()
 // 0x628D20
 void CScreenInventory::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = GetTopPopup();
@@ -1814,7 +1814,7 @@ void CScreenInventory::OnRestButtonClick()
     // __LINE__: 3222
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     STRREF strError;
@@ -1919,7 +1919,7 @@ BOOL CScreenInventory::IsUseButtonActive()
 // 0x629B90
 void CScreenInventory::OnUseButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -1995,7 +1995,7 @@ void CScreenInventory::OnUseButtonClick()
 // 0x629DB0
 void CScreenInventory::OnAbilitiesButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -2115,7 +2115,7 @@ void CScreenInventory::OnErrorButtonClick(INT nButton)
     // __LINE__: 4199
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     if (IsErrorButtonClickable(nButton)) {
@@ -2744,7 +2744,7 @@ void CScreenInventory::CheckMultiPlayerViewable()
 // 0x62CAA0
 void CScreenInventory::UnPauseGame()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -2833,7 +2833,7 @@ BOOL CScreenInventory::IsCharacterInRange(INT nPortraitNum)
     // __LINE__: 5872
     UTIL_ASSERT(pGame != NULL);
 
-    nSprite = pGame->GetCharacterId(field_510);
+    nSprite = pGame->GetCharacterId(nfield_510);
 
     do {
         rc = pGame->GetObjectArray()->GetShare(nSprite,
@@ -3048,7 +3048,7 @@ void CScreenInventory::UpdateAbilitiesPanel()
 
                 UpdateLabel(pPanel, 0x10000003 + nIndex,
                     "%s",
-                    FetchString(pButtonData->m_abilityId.field_10));
+                    FetchString(pButtonData->m_abilityId.wm_field_10));
 
                 m_pAbilities->GetNext(pos);
             } else {
@@ -3603,7 +3603,7 @@ void CScreenInventory::UpdateAppearance()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if ((pSprite->m_derivedStats.m_generalState & STATE_DEAD) == 0) {
-            CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+            CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
             renderLock.Lock(INFINITE);
 
             // NOTE: Uninline.
@@ -3612,7 +3612,7 @@ void CScreenInventory::UpdateAppearance()
                 2);
 
             // NOTE: Probably unsafe cast.
-            static_cast<CGameAnimationTypeCharacter*>(m_animation.m_animation)->field_1444 = g_pBaldurChitin->field_4A28;
+            static_cast<CGameAnimationTypeCharacter*>(m_animation.m_animation)->nm_field_1444 = g_pBaldurChitin->nm_field_4A28;
 
             CGameAnimationType* animation = pSprite->m_animation.m_animation;
             pSprite->m_animation.m_animation = m_animation.m_animation;
@@ -3662,7 +3662,7 @@ void CScreenInventory::BeginSwap()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if ((pSprite->m_derivedStats.m_generalState & STATE_DEAD) == 0) {
-            CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+            CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
             renderLock.Lock(INFINITE);
 
             CGameAnimationType* animation = pSprite->m_animation.m_animation;
@@ -3700,7 +3700,7 @@ void CScreenInventory::EndSwap()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if ((pSprite->m_derivedStats.m_generalState & STATE_DEAD) == 0) {
-            CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+            CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
             renderLock.Lock(INFINITE);
 
             CGameAnimationType* animation = pSprite->m_animation.m_animation;
@@ -3869,8 +3869,8 @@ void CScreenInventory::OnRequesterPlusButtonClick()
 CUIControlButtonInventorySlot::CUIControlButtonInventorySlot(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlButton(panel, controlInfo, LBUTTON | RBUTTON, 1)
 {
-    field_666 = FALSE;
-    field_66A = FALSE;
+    wfield_666 = FALSE;
+    bfield_66A = FALSE;
     SetNeedAsyncUpdate();
 }
 
@@ -3882,9 +3882,9 @@ CUIControlButtonInventorySlot::~CUIControlButtonInventorySlot()
 // 0x62D760
 void CUIControlButtonInventorySlot::OnMouseMove(CPoint pt)
 {
-    if (field_666) {
+    if (wfield_666) {
         if (!IsOver(pt)) {
-            field_66A = TRUE;
+            bfield_66A = TRUE;
         }
     }
 }
@@ -3905,9 +3905,9 @@ BOOL CUIControlButtonInventorySlot::OnLButtonDown(CPoint pt)
 
     InvalidateRect();
 
-    m_pPanel->m_pManager->field_2D = 0;
-    m_pPanel->m_pManager->field_32 = m_nID;
-    m_pPanel->m_pManager->field_1C = 0;
+    m_pPanel->m_pManager->bm_field_2D = 0;
+    m_pPanel->m_pManager->nm_field_32 = m_nID;
+    m_pPanel->m_pManager->nm_field_1C = 0;
 
     CScreenInventory* pInventory = g_pBaldurChitin->m_pEngineInventory;
 
@@ -3923,8 +3923,8 @@ BOOL CUIControlButtonInventorySlot::OnLButtonDown(CPoint pt)
     pInventory->SwapWithSlot(m_nID, TRUE, -1, TRUE);
     pInventory->EndSwap();
 
-    field_666 = TRUE;
-    field_66A = FALSE;
+    wfield_666 = TRUE;
+    bfield_66A = FALSE;
 
     return TRUE;
 }
@@ -3938,9 +3938,9 @@ void CUIControlButtonInventorySlot::OnLButtonUp(CPoint pt)
     // __LINE__: 6585
     UTIL_ASSERT(pInventory != NULL);
 
-    if (pInventory->m_bMultiPlayerViewable && field_666) {
+    if (pInventory->m_bMultiPlayerViewable && wfield_666) {
         if (IsOver(pt)) {
-            if (field_66A) {
+            if (bfield_66A) {
                 pInventory->BeginSwap();
                 pInventory->SwapWithSlot(m_nID, TRUE, -1, TRUE);
                 pInventory->EndSwap();
@@ -3972,7 +3972,7 @@ void CUIControlButtonInventorySlot::OnLButtonUp(CPoint pt)
                 pInventory->EndSwap();
             }
         }
-        field_666 = FALSE;
+        wfield_666 = FALSE;
     }
 
     CUIControlButton::OnLButtonUp(pt);
@@ -4021,11 +4021,11 @@ BOOL CUIControlButtonInventorySlot::OnLButtonDblClk(CPoint pt)
     pInventory->SwapWithSlot(m_nID, TRUE, -1, FALSE);
     pInventory->EndSwap();
 
-    if (!field_66A && v4 && pInventory->m_pTempItem == NULL) {
+    if (!bfield_66A && v4 && pInventory->m_pTempItem == NULL) {
         pInventory->m_nRequesterButtonId = m_nID;
         pInventory->m_nRequesterAmount = 1;
 
-        CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(pInventory->GetManager()->pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
         pInventory->SummonPopup(4);
         renderLock.Unlock();
@@ -4050,7 +4050,7 @@ void CUIControlButtonInventorySlot::OnRButtonClick(CPoint pt)
     UTIL_ASSERT(pGame != NULL);
 
     if (pInventory->m_bMultiPlayerViewable == TRUE) {
-        CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(pInventory->GetManager()->pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         LONG nCharacterId = pInventory->GetSelectedCharacter();
@@ -4170,7 +4170,7 @@ BOOL CUIControlButtonInventoryAppearance::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock renderLock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         renderLock.Lock(INFINITE);
         m_nRenderCount--;
         renderLock.Unlock();
@@ -4199,7 +4199,7 @@ BOOL CUIControlButtonInventoryAppearance::Render(BOOL bForce)
     }
 
     if (pInventory->m_bMultiPlayerViewable == TRUE && pSprite->m_animation.m_animation != NULL) {
-        CSingleLock renderLock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         renderLock.Lock(INFINITE);
 
         CPoint ptPos(m_pPanel->m_ptOrigin.x + m_ptOrigin.x + m_size.cx / 2,
@@ -4352,16 +4352,16 @@ void CUIControlButtonInventoryColor::OnLButtonClick(CPoint pt)
     if (pInventory->m_bMultiPlayerViewable == TRUE) {
         switch (m_nID) {
         case 62:
-            pInventory->field_11E = 2;
+            pInventory->nm_m_field_11E = 2;
             break;
         case 63:
-            pInventory->field_11E = 1;
+            pInventory->nm_m_field_11E = 1;
             break;
         case 82:
-            pInventory->field_11E = 6;
+            pInventory->nm_m_field_11E = 6;
             break;
         case 83:
-            pInventory->field_11E = 3;
+            pInventory->nm_m_field_11E = 3;
             break;
         default:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenInventory.cpp
@@ -4369,7 +4369,7 @@ void CUIControlButtonInventoryColor::OnLButtonClick(CPoint pt)
             UTIL_ASSERT(FALSE);
         }
 
-        CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(pInventory->GetManager()->pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         pInventory->SummonPopup(3);
@@ -4521,11 +4521,11 @@ void CUIControlButtonInventoryColorChoice::OnLButtonClick(CPoint pt)
     if (pInventory->m_bMultiPlayerViewable) {
         BYTE colorRange;
         if (GetColorRange(colorRange)) {
-            pInventory->field_11F = colorRange;
+            pInventory->bm_field_11F = colorRange;
             pInventory->OnDoneButtonClick();
         } else if (m_nID == 35) {
-            pInventory->field_11F = pInventory->field_11E;
-            pInventory->field_11E = 7;
+            pInventory->bm_field_11F = pInventory->nm_m_field_11E;
+            pInventory->nm_m_field_11E = 7;
             pInventory->OnDoneButtonClick();
         }
     }
@@ -4594,7 +4594,7 @@ BOOL CUIControlButtonInventoryColorChoice::GetColorRange(BYTE& colorRange)
     // __LINE__: 9964
     UTIL_ASSERT(pInventory != NULL);
 
-    switch (pInventory->field_11E) {
+    switch (pInventory->nm_m_field_11E) {
     case 1:
     case 2:
         if (m_nID < 31) {
@@ -4771,7 +4771,7 @@ void CUIControlScrollBarInventoryGround::OnScroll()
     LONG nContainerId = pInventory->FetchGroundPile(pInventory->GetSelectedCharacter(), FALSE);
     if (nContainerId != CGameObjectArray::INVALID_INDEX) {
         INT nNumGroundSlots = pGame->GetNumGroundSlots(nContainerId);
-        pInventory->m_nTopGroundItem = max(nNumGroundSlots, 0) * field_144 / field_142;
+        pInventory->m_nTopGroundItem = max(nNumGroundSlots, 0) * wm_field_144 / wm_m_field_142;
 
         for (INT nButtonId = 68; nButtonId <= 81; nButtonId++) {
             m_pPanel->GetControl(nButtonId)->InvalidateRect();
@@ -4832,7 +4832,7 @@ BOOL CUIControlButtonInventoryRequesterItem::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -4998,7 +4998,7 @@ void CUIControlButtonInventoryRequesterPlusMinus::AdjustValue()
             UTIL_ASSERT(pInventory != NULL);
         }
     } else {
-        CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(pInventory->GetManager()->pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         CUIControlButtonPlusMinus::OnLButtonUp(CPoint(0, 0));
@@ -5062,7 +5062,7 @@ void CUIControlEditInventoryRequesterAmount::KillFocus()
 CUIControlButtonInventoryHistoryIcon::CUIControlButtonInventoryHistoryIcon(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlButton(panel, controlInfo, LBUTTON, 0)
 {
-    field_662 = 0;
+    nfield_662 = 0;
     m_pItem = NULL;
 }
 
@@ -5103,7 +5103,7 @@ BOOL CUIControlButtonInventoryHistoryIcon::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -5206,7 +5206,7 @@ BOOL CUIControlButtonInventoryAbilitiesAbility::Render(BOOL bForce)
         CRect rControlFrame(m_pPanel->m_ptOrigin + m_ptOrigin, m_size);
 
         if (m_bPressed) {
-            rControlFrame.OffsetRect(field_63E, field_642);
+            rControlFrame.OffsetRect(nfield_63E, nfield_642);
         }
 
         CPoint pos = rControlFrame.TopLeft();
@@ -5240,7 +5240,7 @@ void CUIControlButtonInventoryAbilitiesAbility::OnLButtonClick(CPoint pt)
     // __LINE__: 11120
     UTIL_ASSERT(pInventory != NULL);
 
-    CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pInventory->GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenInventory.cpp
@@ -5388,7 +5388,7 @@ void CUIControlButtonInventoryHistoryAbilities::OnLButtonClick(CPoint pt)
     // __LINE__: 11508
     UTIL_ASSERT(pInventory != NULL);
 
-    CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pInventory->GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pInventory->OnAbilitiesButtonClick();
@@ -5418,7 +5418,7 @@ void CUIControlButtonInventoryHistoryUse::OnLButtonClick(CPoint pt)
     // __LINE__: 11676
     UTIL_ASSERT(pInventory != NULL);
 
-    CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pInventory->GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pInventory->OnUseButtonClick();
@@ -5432,7 +5432,7 @@ void CUIControlButtonInventoryHistoryUse::OnLButtonClick(CPoint pt)
 CUIControlPortraitInventory::CUIControlPortraitInventory(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlPortraitGeneral(panel, controlInfo)
 {
-    field_666 = 0;
+    wfield_666 = 0;
 }
 
 // 0x6350E0
@@ -5449,17 +5449,17 @@ void CUIControlPortraitInventory::OnLButtonClick(CPoint pt)
         pInventory->BeginSwap();
         pInventory->SwapWithPortrait(m_nID, TRUE);
         pInventory->EndSwap();
-        field_666 = 1;
+        wfield_666 = 1;
     } else {
         CUIControlPortraitGeneral::OnLButtonClick(pt);
-        field_666 = 0;
+        wfield_666 = 0;
     }
 }
 
 // 0x635220
 void CUIControlPortraitInventory::OnLButtonDoubleClick(CPoint pt)
 {
-    if (field_666) {
+    if (wfield_666) {
         OnLButtonClick(pt);
     } else {
         // NOTE: Uninline.
@@ -5491,3 +5491,125 @@ void CUIControlButtonInventoryError::OnLButtonClick(CPoint pt)
 
     pInventory->OnErrorButtonClick(m_nID);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x624D30
+void FUN_00624d30() {
+    // TODO: Incomplete.
+}
+
+// 0x62CFF0
+void FUN_0062cff0() {
+    // TODO: Incomplete.
+}
+
+// 0x62D0B0
+void FUN_0062d0b0() {
+    // TODO: Incomplete.
+}
+
+// 0x62D1F0
+void FUN_0062d1f0() {
+    // TODO: Incomplete.
+}
+
+// 0x631520
+void FUN_00631520() {
+    // TODO: Incomplete.
+}
+
+// 0x632030
+void FUN_00632030() {
+    // TODO: Incomplete.
+}
+
+// 0x632720
+void FUN_00632720() {
+    // TODO: Incomplete.
+}
+
+// 0x633110
+void FUN_00633110() {
+    // TODO: Incomplete.
+}
+
+// 0x6335B0
+void FUN_006335b0() {
+    // TODO: Incomplete.
+}
+
+// 0x633780
+void FUN_00633780() {
+    // TODO: Incomplete.
+}
+
+// 0x6338A0
+void FUN_006338a0() {
+    // TODO: Incomplete.
+}
+
+// 0x633BB0
+void FUN_00633bb0() {
+    // TODO: Incomplete.
+}
+
+// 0x633DD0
+void FUN_00633dd0() {
+    // TODO: Incomplete.
+}
+
+// 0x633F10
+void FUN_00633f10() {
+    // TODO: Incomplete.
+}
+
+// 0x634370
+void FUN_00634370() {
+    // TODO: Incomplete.
+}
+
+// 0x634390
+void FUN_00634390() {
+    // TODO: Incomplete.
+}
+
+// 0x634890
+void FUN_00634890() {
+    // TODO: Incomplete.
+}
+
+// 0x634A60
+void FUN_00634a60() {
+    // TODO: Incomplete.
+}
+
+// 0x634BE0
+void FUN_00634be0() {
+    // TODO: Incomplete.
+}
+
+// 0x634D10
+void FUN_00634d10() {
+    // TODO: Incomplete.
+}
+
+// 0x634EA0
+void FUN_00634ea0() {
+    // TODO: Incomplete.
+}
+
+// 0x6350C0
+void FUN_006350c0() {
+    // TODO: Incomplete.
+}
+
+// 0x6352A0
+void FUN_006352a0() {
+    // TODO: Incomplete.
+}
+
+// 0x7797E0
+void FUN_007797e0() {
+    // TODO: Incomplete.
+}
+

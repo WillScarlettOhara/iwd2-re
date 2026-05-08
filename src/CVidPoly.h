@@ -47,11 +47,11 @@ public:
     void DrawHLineShaded32(void* pSurface, int xMin, int xMax, DWORD dwColor, const CRect& rSurface, const CPoint& ptRef);
     void DrawHLineShadedMirrored32(void* pSurface, int xMin, int xMax, DWORD dwColor, const CRect& rSurface, const CPoint& ptRef);
 
-    int field_0;
+    int bm_field_0;
     CVIDPOLY_VERTEX* m_pVertices;
     INT m_nVertices;
-    int field_C;
-    int field_10;
+    int nfield_C;
+    int wm_field_10;
     DrawHLineFunc m_pDrawHLineFunction;
 };
 

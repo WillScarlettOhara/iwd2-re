@@ -66,8 +66,8 @@ BOOL CGameDialogSprite::StartDialog(CGameSprite* pSprite)
                 pSprite->GetId());
             g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
 
-            field_54 = 1;
-            field_56 = "";
+            nfield_54 = 1;
+            pfield_56 = "";
 
             return TRUE;
         }
@@ -95,8 +95,8 @@ void CGameDialogSprite::EndDialog()
 
     m_waitingForResponse = FALSE;
     m_responseMarker = -1;
-    field_54 = 0;
-    field_56 = "";
+    nfield_54 = 0;
+    pfield_56 = "";
 
     CResRef cResRef("SilentDH");
 
@@ -217,3 +217,10 @@ void CGameDialogEntry::Handle(CGameSprite* pSprite, COLORREF playerColor, int a3
 {
     // TODO: Incomplete.
 }
+
+// Phase 1-2: Scaffold functions
+// 0x484660
+void FUN_00484660() {
+    // TODO: Incomplete.
+}
+

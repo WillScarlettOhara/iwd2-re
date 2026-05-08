@@ -165,12 +165,12 @@ public:
     /* 0004 */ INT m_nPrintFile;
     /* 0008 */ INT m_nPointerNumber;
     /* 000C */ DWORD m_dwCursorRenderFlags;
-    /* 0010 */ int field_10;
-    /* 0014 */ int field_14;
+    /* 0010 */ int nm_field_10;
+    /* 0014 */ int nm_field_14;
     /* 0018 */ DWORD m_dwRBitMask; // #guess
     /* 001C */ DWORD m_dwGBitMask; // #guess
     /* 0020 */ DWORD m_dwBBitMask; // #guess
-    /* 0024 */ int field_24;
+    /* 0024 */ int nm_field_24;
     /* 0028 */ CCriticalSection m_csRenderPointer;
     /* 0048 */ BOOLEAN m_bFadeTo;
     /* 0049 */ BYTE m_nFade;
@@ -181,8 +181,8 @@ public:
     /* 008E */ BOOLEAN m_bPointerAnimating; // #guess
     /* 008F */ BOOLEAN m_bPrintScreen; // #guess
     /* 0090 */ DWORD nTickCount;
-    /* 0094 */ int field_94;
-    /* 0098 */ int field_98;
+    /* 0094 */ int nfield_94;
+    /* 0098 */ int nfield_98;
     /* 009C */ UINT m_nSurfaces;
     /* 00A0 */ IDirectDrawSurface** pSurfaces;
     /* 00A4 */ COLORREF rgbGlobalTint;
@@ -194,14 +194,14 @@ public:
     /* 00B6 */ DWORD m_dwRBitCount; // #guess
     /* 00BA */ DWORD m_dwGBitCount; // #guess
     /* 00BE */ DWORD m_dwBBitCount; // #guess
-    /* 00C2 */ DWORD field_C2;
-    /* 00C6 */ DWORD field_C6;
-    /* 00CA */ DWORD field_CA;
-    /* 00D2 */ short field_D2;
+    /* 00C2 */ DWORD nfield_C2;
+    /* 00C6 */ DWORD nfield_C6;
+    /* 00CA */ DWORD nfield_CA;
+    /* 00D2 */ short wfield_D2;
     /* 00D4 */ BOOL m_bPointerEnabled;
     /* 00D8 */ BOOL m_bPointerInside;
-    /* 00DC */ int field_DC;
-    /* 00E0 */ int field_E0;
+    /* 00DC */ int nfield_DC;
+    /* 00E0 */ int nfield_E0;
     /* 00E4 */ CRect m_rPointerStorage;
 };
 

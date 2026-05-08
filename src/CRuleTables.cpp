@@ -3625,3 +3625,80 @@ DWORD CRuleTables::GetSpecializationMask(BYTE nClass, BYTE nIndex) const
 
     return 0;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x5402E0
+void FUN_005402e0() {
+    // TODO: Incomplete.
+}
+
+// 0x542A90
+void FUN_00542a90() {
+    // TODO: Incomplete.
+}
+
+// 0x542B40
+void FUN_00542b40() {
+    // TODO: Incomplete.
+}
+
+// 0x542CB0
+void FUN_00542cb0() {
+    // TODO: Incomplete.
+}
+
+// 0x542EC0
+void FUN_00542ec0() {
+    // TODO: Incomplete.
+}
+
+// 0x5456C0
+void FUN_005456c0() {
+    // TODO: Incomplete.
+}
+
+// 0x545EB0
+void FUN_00545eb0() {
+    // TODO: Incomplete.
+}
+
+// 0x5461E0
+void FUN_005461e0() {
+    // TODO: Incomplete.
+}
+
+// 0x5463E0
+void FUN_005463e0() {
+    // TODO: Incomplete.
+}
+
+// 0x5466F0
+void FUN_005466f0() {
+    // TODO: Incomplete.
+}
+
+// 0x5467E0
+void FUN_005467e0() {
+    // TODO: Incomplete.
+}
+
+// 0x5468B0
+void FUN_005468b0() {
+    // TODO: Incomplete.
+}
+
+// 0x547020
+void FUN_00547020() {
+    // TODO: Incomplete.
+}
+
+// 0x547040
+void FUN_00547040() {
+    // TODO: Incomplete.
+}
+
+// 0x547620
+void FUN_00547620() {
+    // TODO: Incomplete.
+}
+

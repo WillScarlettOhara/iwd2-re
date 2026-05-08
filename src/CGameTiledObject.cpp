@@ -198,3 +198,10 @@ void CGameTiledObject::ToggleState()
         }
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4CC7B0
+void FUN_004cc7b0() {
+    // TODO: Incomplete.
+}
+

@@ -67,7 +67,7 @@ CScreenMovies::CScreenMovies()
     m_nEngineState = 0;
     m_pMovies = NULL;
     m_nMovieIndex = -1;
-    field_7B0 = 0;
+    bfield_7B0 = 0;
 }
 
 // 0x49FC40
@@ -176,10 +176,10 @@ void CScreenMovies::EngineActivated()
 // 0x647300
 void CScreenMovies::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUIMOVIE"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIMOVIE"), g_pBaldurChitin->nm_field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -208,7 +208,7 @@ void CScreenMovies::EngineDeactivated()
 // 0x647540
 void CScreenMovies::OnLButtonDown(CPoint pt)
 {
-    g_pBaldurChitin->field_1A2E = FALSE;
+    g_pBaldurChitin->nm_field_1A2E = FALSE;
     g_pBaldurChitin->GetObjectCursor()->m_nState = 1;
     m_cUIManager.OnLButtonDown(pt);
 }
@@ -341,8 +341,8 @@ void CScreenMovies::OnPlayButtonClick()
 
         m_nMovieIndex = -1;
 
-        g_pBaldurChitin->field_4F38 = g_pBaldurChitin->cSoundMixer.GetSectionPlaying();
-        g_pBaldurChitin->field_4F3C = g_pBaldurChitin->cSoundMixer.GetMusicPosition();
+        g_pBaldurChitin->nm_field_4F38 = g_pBaldurChitin->cSoundMixer.GetSectionPlaying();
+        g_pBaldurChitin->nm_field_4F3C = g_pBaldurChitin->cSoundMixer.GetMusicPosition();
     }
 }
 
@@ -350,8 +350,8 @@ void CScreenMovies::OnPlayButtonClick()
 void CScreenMovies::OnCreditsButtonClick()
 {
     g_pBaldurChitin->m_pEngineProjector->PlayMovie(CResRef("CREDITS"));
-    g_pBaldurChitin->field_4F38 = g_pBaldurChitin->cSoundMixer.GetSectionPlaying();
-    g_pBaldurChitin->field_4F3C = g_pBaldurChitin->cSoundMixer.GetMusicPosition();
+    g_pBaldurChitin->nm_field_4F38 = g_pBaldurChitin->cSoundMixer.GetSectionPlaying();
+    g_pBaldurChitin->nm_field_4F3C = g_pBaldurChitin->cSoundMixer.GetMusicPosition();
 }
 
 // NOTE: Inlined.
@@ -554,3 +554,30 @@ void CUIControlButtonMoviesDone::OnLButtonClick(CPoint pt)
     // NOTE: Uninline.
     pMovies->OnDoneButtonClick();
 }
+
+// Phase 1-2: Scaffold functions
+// 0x6469A0
+void FUN_006469a0() {
+    // TODO: Incomplete.
+}
+
+// 0x6470B0
+void FUN_006470b0() {
+    // TODO: Incomplete.
+}
+
+// 0x647BC0
+void FUN_00647bc0() {
+    // TODO: Incomplete.
+}
+
+// 0x647D90
+void FUN_00647d90() {
+    // TODO: Incomplete.
+}
+
+// 0x647FA0
+void FUN_00647fa0() {
+    // TODO: Incomplete.
+}
+

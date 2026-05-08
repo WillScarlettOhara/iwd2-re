@@ -76,7 +76,7 @@ public:
     /* 0458 */ CVidFont m_vidFont;
     /* 0958 */ CVidFont m_initialsFont;
     /* 0E58 */ CVidFont m_parchmentFont;
-    /* 1358 */ CVidMosaic field_1358;
+    /* 1358 */ CVidMosaic pm_field_1358;
     /* 140C */ CVidMosaic m_mosProgressBarSkull;
     /* 14C0 */ CVidMosaic m_mosProgressBarSkullHighlighted;
     /* 1574 */ CVidCell m_skullAnimating;

@@ -1010,3 +1010,10 @@ BOOLEAN CGameAnimationTypeMonsterQuadrant::GetCurrentSequenceAndFrame(SHORT nSeq
     nFrame = m_currentVidCell->m_nCurrentFrame;
     return TRUE;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x6BAEE0
+void FUN_006baee0() {
+    // TODO: Incomplete.
+}
+

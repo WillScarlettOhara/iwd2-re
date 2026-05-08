@@ -28,7 +28,7 @@ CGameSpawning::CGameSpawning(CGameArea* pArea, CAreaFileRandomMonsterSpawningPoi
         m_spawningObject.m_probNight = 100;
     }
 
-    field_136 = 0;
+    nm_field_136 = 0;
 
     // NOTE: This assignment is slightly incorrect. Original code refers to
     // other offsets (0x8A8168 and 0x8A8154 respectively). It can mean two
@@ -103,3 +103,10 @@ void CGameSpawning::Marshal(CAreaFileRandomMonsterSpawningPoint** pSpawningObjec
 
     memcpy(*pSpawningObject, &m_spawningObject, sizeof(CAreaFileRandomMonsterSpawningPoint));
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4C9970
+void FUN_004c9970() {
+    // TODO: Incomplete.
+}
+

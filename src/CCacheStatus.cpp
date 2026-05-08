@@ -167,7 +167,7 @@ CCacheStatus::~CCacheStatus()
 // 0x440400
 void CCacheStatus::Init()
 {
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         PARCHMENT_TEXT_START_X *= 2;
         PARCHMENT_TEXT_START_Y *= 2;
         dword_8A7BB0 *= 2;
@@ -260,75 +260,75 @@ void CCacheStatus::Update(BOOLEAN bEnabled, LONG nProgressBarCaption, INT nBytes
     }
 
     if (nBytesCopied == 0 && nTotalBytes == 0) {
-        while (g_pBaldurChitin->field_F8 == TRUE) {
+        while (g_pBaldurChitin->nfield_F8 == TRUE) {
             SleepEx(50, FALSE);
         }
 
         if (bEnabled == TRUE) {
             for (int side = 0; side < 4; side++) {
                 m_mosBorders[side].SetResRef(g_pBaldurChitin->m_aBorderPanels[side].refMosaic, FALSE, TRUE);
-                m_mosBorders[side].m_bDoubleSize = g_pBaldurChitin->field_4A28;
+                m_mosBorders[side].m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
             }
 
             if (bTravel) {
                 m_mosBackground.SetResRef(CResRef("GTRSCRN"), FALSE, TRUE);
-                m_mosBackground.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+                m_mosBackground.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
                 CPoint ptLocation;
-                if (g_pBaldurChitin->GetObjectGame()->GetRuleTables().m_tAreaLoad.Find(g_pBaldurChitin->GetObjectGame()->field_1B86, ptLocation, TRUE)) {
+                if (g_pBaldurChitin->GetObjectGame()->GetRuleTables().m_tAreaLoad.Find(g_pBaldurChitin->GetObjectGame()->sm_field_1B86, ptLocation, TRUE)) {
                     CString sBackground = g_pBaldurChitin->GetObjectGame()->GetRuleTables().m_tAreaLoad.GetAt(ptLocation);
                     if (sBackground != "*") {
                         m_mosTravelArea.SetResRef(CResRef(sBackground), FALSE, TRUE);
-                        m_mosTravelArea.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+                        m_mosTravelArea.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
                     }
                 }
             } else {
                 m_mosBackground.SetResRef(CResRef("GPROGBAR"), FALSE, TRUE);
-                m_mosBackground.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+                m_mosBackground.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
             }
 
             m_mosProgressBarSkull.SetResRef(CResRef("GTRBPSK"), FALSE, TRUE);
-            m_mosProgressBarSkull.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+            m_mosProgressBarSkull.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
             m_mosProgressBarSkullHighlighted.SetResRef(CResRef("GTRBPSK2"), FALSE, TRUE);
-            m_mosProgressBarSkullHighlighted.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+            m_mosProgressBarSkullHighlighted.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
             m_mosProgressBarBackground.SetResRef(CResRef("GTRBPBG"), FALSE, TRUE);
-            m_mosProgressBarBackground.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+            m_mosProgressBarBackground.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
             m_mosProgressBarForeground.SetResRef(CResRef("GTRBPBAR"), FALSE, TRUE);
-            m_mosProgressBarForeground.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+            m_mosProgressBarForeground.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
             m_mosProgressBarCap.SetResRef(CResRef("GTRBPCAP"), FALSE, TRUE);
-            m_mosProgressBarCap.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+            m_mosProgressBarCap.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
-            m_vidFont.SetResRef(CResRef("NORMAL"), g_pBaldurChitin->field_4A28, FALSE);
+            m_vidFont.SetResRef(CResRef("NORMAL"), g_pBaldurChitin->nm_field_4A28, FALSE);
             m_vidFont.RegisterFont();
             m_vidFont.SetColor(RGB(255, 255, 255), RGB(0, 0, 0), FALSE);
 
-            m_initialsFont.SetResRef(CResRef("INITIALS"), g_pBaldurChitin->field_4A28, FALSE);
+            m_initialsFont.SetResRef(CResRef("INITIALS"), g_pBaldurChitin->nm_field_4A28, FALSE);
             m_initialsFont.RegisterFont();
 
-            m_parchmentFont.SetResRef(CResRef("INFOFONT"), g_pBaldurChitin->field_4A28, FALSE);
+            m_parchmentFont.SetResRef(CResRef("INFOFONT"), g_pBaldurChitin->nm_field_4A28, FALSE);
             m_parchmentFont.RegisterFont();
             m_parchmentFont.SetColor(RGB(255, 255, 255), RGB(10, 10, 10), FALSE);
 
-            m_skullAnimating.SetResRef(CResRef("SKULANIM"), g_pBaldurChitin->field_4A28, FALSE, TRUE);
+            m_skullAnimating.SetResRef(CResRef("SKULANIM"), g_pBaldurChitin->nm_field_4A28, FALSE, TRUE);
 
             m_mosMinibarSkull.SetResRef(CResRef("GTRSPSK"), FALSE, TRUE);
-            m_mosMinibarSkull.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+            m_mosMinibarSkull.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
             m_mosMinibarSkullHighlighted.SetResRef(CResRef("GTRSPSK2"), FALSE, TRUE);
-            m_mosMinibarSkullHighlighted.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+            m_mosMinibarSkullHighlighted.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
             m_mosMinibarBackground.SetResRef(CResRef("GTRSPBG"), FALSE, TRUE);
-            m_mosMinibarBackground.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+            m_mosMinibarBackground.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
             m_mosMinibarForeground.SetResRef(CResRef("GTRSPBAR"), FALSE, TRUE);
-            m_mosMinibarForeground.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+            m_mosMinibarForeground.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
             m_mosMinibarForegroundCap.SetResRef(CResRef("GTRSPCAP"), FALSE, TRUE);
-            m_mosMinibarForegroundCap.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+            m_mosMinibarForegroundCap.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
             for (int side = 0; side < 4; side++) {
                 if (m_mosBorders[side].GetRes() != NULL) {
@@ -485,7 +485,7 @@ void CCacheStatus::Update(BOOLEAN bEnabled, LONG nProgressBarCaption, INT nBytes
             m_nScreensDrawn = 0;
         }
 
-        if (g_pBaldurChitin->field_4A28) {
+        if (g_pBaldurChitin->nm_field_4A28) {
             x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
             y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
             nScreenWidth = CBaldurChitin::DEFAULT_SCREEN_WIDTH * 2;
@@ -509,7 +509,7 @@ void CCacheStatus::Update(BOOLEAN bEnabled, LONG nProgressBarCaption, INT nBytes
                     ? &(g_pBaldurChitin->m_aBorderPanels[side])
                     : NULL;
 
-                if (g_pBaldurChitin->field_4A28) {
+                if (g_pBaldurChitin->nm_field_4A28) {
                     mosaicRect.left = 0;
                     mosaicRect.top = 0;
                     mosaicRect.right = 2 * panelInfo->nWidth;
@@ -621,7 +621,7 @@ void CCacheStatus::Update(BOOLEAN bEnabled, LONG nProgressBarCaption, INT nBytes
                 v1 = PROGRESSBAR_FOREGROUND_START_X + PROGRESSBAR_FOREGROUND_X_OFFSET;
             }
 
-            if (!g_pBaldurChitin->field_F8) {
+            if (!g_pBaldurChitin->nfield_F8) {
                 if (bDisplayMinibars == TRUE) {
                     if (bTimeoutCounter == TRUE) {
                         clipRect.left = x;

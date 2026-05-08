@@ -43,7 +43,7 @@ CUIPanel::CUIPanel(CUIManager* manager, UI_PANELHEADER* panelInfo)
     m_bNeedAsyncUpdate = FALSE;
     m_bNeedMouseMove = FALSE;
     m_bInactiveRender = FALSE;
-    field_112 = 0;
+    nm_field_112 = 0;
 
     SetRectEmpty(&m_rImeSuggestionsFrame);
 
@@ -81,7 +81,7 @@ void CUIPanel::SetEnabled(BOOL bEnabled)
     }
 
     if (bEnabled) {
-        m_pManager->field_2E = (m_wFlags & 0x1) == 0;
+        m_pManager->bm_field_2E = (m_wFlags & 0x1) == 0;
     }
 }
 
@@ -154,7 +154,7 @@ DWORD CUIPanel::TimerAsynchronousUpdate()
         while (pos != NULL) {
             CUIControlBase* pControl = m_lControls.GetNext(pos);
             if (pControl->m_bActive
-                && (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips != INT_MAX || m_pManager->field_76)
+                && (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips != INT_MAX || m_pManager->nfield_76)
                 && pControl->IsOver(pt)) {
                 pControl->TimerAsynchronousUpdate(TRUE);
                 nID = pControl->m_nID;
@@ -201,19 +201,19 @@ BOOL CUIPanel::sub_4D2D20()
     }
 
     m_wFlags &= ~0x1;
-    field_112 = TRUE;
+    nm_field_112 = TRUE;
     return TRUE;
 }
 
 // 0x4D2D50
 BOOL CUIPanel::sub_4D2D50()
 {
-    if (!field_112) {
+    if (!nm_field_112) {
         return FALSE;
     }
 
     m_wFlags |= 0x1;
-    field_112 = FALSE;
+    nm_field_112 = FALSE;
 
     return TRUE;
 }
@@ -318,7 +318,7 @@ void CUIPanel::Render()
         return;
     }
 
-    CRect v2 = m_pManager->field_9A;
+    CRect v2 = m_pManager->pfield_9A;
     v2.OffsetRect(-m_ptOrigin);
 
     CRect v3;
@@ -362,7 +362,7 @@ void CUIPanel::Render()
         rMosaic.OffsetRect(-m_ptOrigin);
 
         if (m_nRenderCount != 0) {
-            CSingleLock lock(&(m_pManager->field_56), FALSE);
+            CSingleLock lock(&(m_pManager->pfield_56), FALSE);
             lock.Lock(INFINITE);
             m_nRenderCount--;
             lock.Unlock();
@@ -405,7 +405,7 @@ void CUIPanel::Render()
 // 0x4D3610
 void CUIPanel::RenderDither(const CRect& rClip)
 {
-    if (m_pManager->field_2E) {
+    if (m_pManager->bm_field_2E) {
         if (g_pBaldurChitin->cVideo.Is3dAccelerated()) {
             VERTEX_DESC verts[4];
             verts[0].fX = static_cast<float>(rClip.left);
@@ -475,7 +475,7 @@ void CUIPanel::InvalidateRect(const CRect* pRect)
             m_rDirty.SetRect(0, 0, 0, 0);
         }
 
-        CSingleLock lock(&(m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount = CUIManager::RENDER_COUNT;
         lock.Unlock();
@@ -511,3 +511,10 @@ void CUIPanel::SetBackgroundResRef(CResRef cNewResRef, BOOL bDoubleSize)
     m_mosBackground.SetResRef(cNewResRef, TRUE, TRUE);
     m_mosBackground.m_bDoubleSize = bDoubleSize;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4D35D0
+void FUN_004d35d0() {
+    // TODO: Incomplete.
+}
+

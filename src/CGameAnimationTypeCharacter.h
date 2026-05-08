@@ -89,20 +89,20 @@ public:
     /* 1428 */ BOOLEAN m_renderWeapons;
     /* 142C */ BOOLEAN m_renderHelmet;
     /* 1430 */ BOOL m_bEquipHelmet;
-    /* 1434 */ unsigned char field_1434;
+    /* 1434 */ unsigned char bm_field_1434;
     /* 1438 */ BOOL m_falseColor;
     /* 143C */ BYTE m_weaponCode;
     /* 143D */ BYTE m_extendDirectionTest;
     /* 143E */ BOOLEAN m_bDetectedByInfravision;
     /* 143F */ BOOLEAN m_bInvulnerable;
     /* 1440 */ BOOLEAN m_bCanLieDown;
-    /* 1441 */ unsigned char field_1441;
-    /* 1442 */ unsigned char field_1442;
-    /* 1443 */ unsigned char field_1443;
-    /* 1444 */ int field_1444;
-    /* 1448 */ unsigned char field_1448;
-    /* 144C */ CHAR field_144C;
-    /* 144D */ unsigned char field_144D;
+    /* 1441 */ unsigned char bm_field_1441;
+    /* 1442 */ unsigned char bm_field_1442;
+    /* 1443 */ unsigned char bm_field_1443;
+    /* 1444 */ int nm_field_1444;
+    /* 1448 */ unsigned char bm_field_1448;
+    /* 144C */ CHAR bm_field_144C;
+    /* 144D */ unsigned char bm_field_144D;
 };
 
 #endif /* CGAMEANIMATIONTYPECHARACTER_H_ */

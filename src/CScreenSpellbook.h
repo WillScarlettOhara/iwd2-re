@@ -93,19 +93,19 @@ public:
     /* 056E */ INT m_nNumErrorButtons;
     /* 0572 */ STRREF m_strErrorButtonText[CSCREENSPELLBOOK_ERROR_BUTTONS];
     /* 057E */ BOOL m_bMultiPlayerViewable;
-    /* 0582 */ int field_582;
+    /* 0582 */ int nfield_582;
     /* 0586 */ BOOLEAN m_bCtrlKeyDown;
     /* 0588 */ CVidFont m_preLoadFontRealms;
     /* 0A88 */ CVidFont m_preLoadFontStnSml;
     /* 0F88 */ CVidFont m_preLoadFontTool;
-    /* 1488 */ int field_1488;
-    /* 148C */ CResRef field_148C[24];
-    /* 15C4 */ int field_154C[24];
-    /* 15AC */ int field_15AC[24];
-    /* 160C */ CResRef field_160C[8];
+    /* 1488 */ int nm_field_1488;
+    /* 148C */ CResRef sm_field_148C[24];
+    /* 15C4 */ int nm_m_field_15C4[24];
+    /* 15AC */ int nm_m_field_15AC[24];
+    /* 160C */ CResRef sm_m_field_160C[8];
     /* 1650 */ DWORD m_nNumberOfSpellClasses;
-    /* 1654 */ int field_1654[CSPELLLIST_NUM_CLASSES];
-    /* 1670 */ int field_1670;
+    /* 1654 */ int nm_field_1654[CSPELLLIST_NUM_CLASSES];
+    /* 1670 */ int nm_field_1670;
 };
 
 class CUIControlButtonSpellbookSpell : public CUIControlButton {
@@ -121,8 +121,8 @@ public:
 
     /* 0666 */ CResRef m_spellResRef;
     /* 066E */ CResRef m_iconResRef;
-    /* 0676 */ int field_676;
-    /* 067A */ int field_67A;
+    /* 0676 */ int nfield_676;
+    /* 067A */ int nfield_67A;
 };
 
 class CUIControlScrollBarSpellbookKnownSpells : public CUIControlScrollBar {

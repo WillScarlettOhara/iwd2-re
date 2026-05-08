@@ -34,7 +34,7 @@ CScreenSaveGameSlot::CScreenSaveGameSlot()
     m_nTime = 0;
     m_nChapter = 0;
     m_sChapter = "";
-    field_314 = "";
+    sm_field_314 = "";
 }
 
 // 0x65BC00
@@ -342,10 +342,10 @@ void CScreenSave::EngineDestroyed()
 // 0x65AA50
 void CScreenSave::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUISAVE"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUISAVE"), g_pBaldurChitin->nm_field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -390,7 +390,7 @@ void CScreenSave::OnKeyDown(SHORT nKeysFlags)
             if (m_pVirtualKeysFlags[nKeyFlag] == VK_RETURN) {
                 // NOTE: Unused.
                 g_pChitin->GetWnd();
-                if (g_pChitin->cImm.field_128 == 0
+                if (g_pChitin->cImm.nm_field_128 == 0
                     || PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_KOREAN) {
                     if (GetTopPopup() != NULL) {
                         OnDoneButtonClick();
@@ -562,7 +562,7 @@ void CScreenSave::UpdateMainPanel()
                 UpdateLabel(pPanel,
                     0x1000000F + nSlot,
                     "%s",
-                    (LPCSTR)m_aGameSlots[nGameSlot]->field_314);
+                    (LPCSTR)m_aGameSlots[nGameSlot]->sm_field_314);
             } else {
                 UpdateLabel(pPanel,
                     0x10000005 + nSlot,
@@ -586,7 +586,7 @@ void CScreenSave::OnSaveButtonClick(INT nSlot)
     // __LINE__: 920
     UTIL_ASSERT(0 <= nSlot && nSlot < GAME_SLOTS);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
 
     INT nGameSlot = m_nTopGameSlot + nSlot;
     if (nGameSlot < m_nNumGameSlots) {
@@ -608,7 +608,7 @@ void CScreenSave::OnSaveButtonClick(INT nSlot)
 // 0x65B430
 void CScreenSave::OnDeleteButtonClick(INT nSlot)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenSave.cpp
     // __LINE__: 991
@@ -651,7 +651,7 @@ void CScreenSave::OnMainCancelButtonClick()
         UTIL_ASSERT(FALSE);
     }
 
-    g_pBaldurChitin->GetObjectGame()->field_50D8 = FALSE;
+    g_pBaldurChitin->GetObjectGame()->bfield_50D8 = FALSE;
 
     // NOTE: Uninline.
     StopSave();
@@ -697,7 +697,7 @@ BOOL CScreenSave::IsDoneButtonClickable()
 // 0x65B6A0
 void CScreenSave::OnDoneButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
 
     CUIPanel* pPanel = GetTopPopup();
 
@@ -758,14 +758,14 @@ void CScreenSave::OnDoneButtonClick()
                 if (bSave) {
                     if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
                         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
-                        pGame->field_366E = 1;
-                        pGame->field_50DC = 0;
+                        pGame->nm_field_366E = 1;
+                        pGame->bfield_50DC = 0;
 
                         if (!g_pChitin->cVideo.Is3dAccelerated()) {
-                            if (!pGame->field_50D8) {
+                            if (!pGame->bfield_50D8) {
                                 pGame->SynchronousUpdate();
                             }
-                            pGame->field_50D8 = TRUE;
+                            pGame->bfield_50D8 = TRUE;
                         }
                     }
 
@@ -784,7 +784,7 @@ void CScreenSave::OnDoneButtonClick()
 // 0x65B920
 void CScreenSave::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = GetTopPopup();
@@ -885,7 +885,7 @@ void CScreenSave::RefreshGameSlots()
 // 0x65C850
 BOOL CScreenSave::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rClip)
 {
-    CVidBitmap vbScreenShot(CResRef(""), g_pBaldurChitin->field_4A28);
+    CVidBitmap vbScreenShot(CResRef(""), g_pBaldurChitin->nm_field_4A28);
 
     if (nSlot >= m_nNumGameSlots - 1) {
         return FALSE;
@@ -898,7 +898,7 @@ BOOL CScreenSave::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rCl
         vbScreenShot.pRes->ReleaseLoadedBitmap();
     } else {
         vbScreenShot.SetResRef(CResRef("ICEWIND2"), TRUE, TRUE);
-        vbScreenShot.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+        vbScreenShot.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
         vbScreenShot.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
     }
 
@@ -908,7 +908,7 @@ BOOL CScreenSave::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rCl
 // 0x65CAB0
 BOOL CScreenSave::DrawPortrait(USHORT nPortrait, INT nSlot, const CRect& rArea, const CRect& rClip)
 {
-    CVidBitmap vbPortrait(CResRef(""), g_pBaldurChitin->field_4A28);
+    CVidBitmap vbPortrait(CResRef(""), g_pBaldurChitin->nm_field_4A28);
 
     if (nSlot >= m_nNumGameSlots) {
         return FALSE;
@@ -1022,7 +1022,7 @@ void CScreenSave::EnableMainPanel(BOOL bEnable)
 
     pPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -1357,7 +1357,7 @@ void CScreenSave::ResetErrorPanel(CUIPanel* pPanel)
 // 0x65D970
 void CScreenSave::OnErrorButtonClick(INT nButton)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_dwErrorTextId) {
@@ -1647,7 +1647,7 @@ BOOL CUIControlButtonSaveScreenShot::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1718,7 +1718,7 @@ BOOL CUIControlButtonSavePortrait::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1876,7 +1876,7 @@ void CUIControlScrollBarSaveGames::OnScroll()
     // __LINE__: 3420
     UTIL_ASSERT(pSave != NULL);
 
-    pSave->m_nTopGameSlot = max(pSave->m_nNumGameSlots - GAME_SLOTS, 0) * field_144 / field_142;
+    pSave->m_nTopGameSlot = max(pSave->m_nNumGameSlots - GAME_SLOTS, 0) * wm_field_144 / wm_m_field_142;
 
     // NOTE: Uninline.
     UpdateMainPanel();
@@ -1976,8 +1976,70 @@ void CUIControlButtonSaveError::OnLButtonClick(CPoint pt)
     // __LINE__: 3617
     UTIL_ASSERT(pSave != NULL);
 
-    CSingleLock renderLock(&(pSave->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pSave->GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
     pSave->OnErrorButtonClick(m_nID - 1);
     renderLock.Unlock();
 }
+
+// Phase 1-2: Scaffold functions
+// 0x65A830
+void FUN_0065a830() {
+    // TODO: Incomplete.
+}
+
+// 0x65ABCB
+void FUN_0065abcb() {
+    // TODO: Incomplete.
+}
+
+// 0x65E110
+void FUN_0065e110() {
+    // TODO: Incomplete.
+}
+
+// 0x65E390
+void FUN_0065e390() {
+    // TODO: Incomplete.
+}
+
+// 0x65E560
+void FUN_0065e560() {
+    // TODO: Incomplete.
+}
+
+// 0x65E730
+void FUN_0065e730() {
+    // TODO: Incomplete.
+}
+
+// 0x65E8F0
+void FUN_0065e8f0() {
+    // TODO: Incomplete.
+}
+
+// 0x65EBD0
+void FUN_0065ebd0() {
+    // TODO: Incomplete.
+}
+
+// 0x65F420
+void FUN_0065f420() {
+    // TODO: Incomplete.
+}
+
+// 0x65F5F0
+void FUN_0065f5f0() {
+    // TODO: Incomplete.
+}
+
+// 0x65F780
+void FUN_0065f780() {
+    // TODO: Incomplete.
+}
+
+// 0x65F8F0
+void FUN_0065f8f0() {
+    // TODO: Incomplete.
+}
+

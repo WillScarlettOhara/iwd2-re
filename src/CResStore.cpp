@@ -43,3 +43,10 @@ BOOL CResStore::Parse(void* pData)
 
     return m_bParsed;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x402680
+void FUN_00402680() {
+    // TODO: Incomplete.
+}
+

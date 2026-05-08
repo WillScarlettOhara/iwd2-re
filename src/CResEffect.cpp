@@ -43,3 +43,10 @@ BOOL CResEffect::Parse(void* pData)
 
     return m_bParsed;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x402870
+void FUN_00402870() {
+    // TODO: Incomplete.
+}
+

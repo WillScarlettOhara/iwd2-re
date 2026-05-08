@@ -81,9 +81,9 @@ public:
     CString GetCDSwitchDriveLetter();
     void SetCDSwitchDriveLetter(CString sDrive);
 
-    /* 0000 */ int field_0;
-    /* 0004 */ int field_4;
-    /* 0008 */ short field_8;
+    /* 0000 */ int nm_field_0;
+    /* 0004 */ int nm_field_4;
+    /* 0008 */ short wm_field_8;
     /* 000A */ CObList m_lServicedLow; // #guess
     /* 0026 */ CObList m_lServicedMedium; // #guess
     /* 0042 */ CObList m_lServicedHigh; // #guess
@@ -91,28 +91,28 @@ public:
     /* 007A */ CObList m_lRequestedMedium; // #guess
     /* 0096 */ CObList m_lRequestedHigh; // #guess
     /* 00B2 */ CObList m_lFreed; // #guess
-    /* 00CE */ CRes* field_CE;
-    /* 00D2 */ int field_D2;
-    /* 00D6 */ unsigned int field_D6;
-    /* 00DA */ unsigned int field_DA;
+    /* 00CE */ CRes* pfield_CE;
+    /* 00D2 */ int nfield_D2;
+    /* 00D6 */ unsigned int nfield_D6;
+    /* 00DA */ unsigned int nfield_DA;
     /* 00DE */ DWORD dwTotalPhysicalMemory; // #guess
     /* 00E2 */ unsigned int m_nResFiles;
-    /* 00E6 */ int field_E6;
-    /* 00EA */ short field_EA;
+    /* 00E6 */ int nfield_E6;
+    /* 00EA */ short wfield_EA;
     /* 00EC */ CResFile** m_ppResFiles;
     /* 00F0 */ CResCache cResCache; // #guess
     /* 024C */ CDimmKeyTable m_cKeyTable; // #guess
-    /* 0270 */ CRes* field_270;
-    /* 0274 */ CRes* field_274;
+    /* 0270 */ CRes* pm_field_270;
+    /* 0274 */ CRes* pm_field_274;
     /* 0278 */ CList<CString, CString> m_lDirectories; // #guess
     /* 0294 */ BOOLEAN m_bCDSwitchActivated;
-    /* 0295 */ BOOLEAN field_295;
-    /* 0296 */ BOOLEAN field_296;
-    /* 0297 */ BOOLEAN field_297;
+    /* 0295 */ BOOLEAN bm_field_295;
+    /* 0296 */ BOOLEAN bm_field_296;
+    /* 0297 */ BOOLEAN bm_field_297;
     /* 0298 */ CString m_sCDSwitchDriveLetter;
-    /* 029C */ int field_29C;
-    /* 02A0 */ int field_2A0;
-    /* 02A4 */ BOOLEAN field_2A4;
+    /* 029C */ int nm_field_29C;
+    /* 02A0 */ int nm_field_2A0;
+    /* 02A4 */ BOOLEAN bm_field_2A4;
     /* 02A5 */ BOOLEAN m_bTemporaryKeyAdd;
     /* 02A6 */ BOOLEAN m_bTemporaryDirAdd; // #guess
 };

@@ -29,7 +29,7 @@ void CBounceList::Process(CGameSprite* pSprite)
                 pSprite->GetTimedEffectList()->ModifyAllOfType(static_cast<WORD>(node->m_effectId),
                     -node->m_levelDecrement,
                     TRUE);
-                pSprite->field_562C = 1;
+                pSprite->nfield_562C = 1;
             }
 
             if (!node->m_decrementOnly) {
@@ -61,3 +61,10 @@ void CBounceList::Process(CGameSprite* pSprite)
     }
     RemoveAll();
 }
+
+// Phase 1-2: Scaffold functions
+// 0x43F9B0
+void FUN_0043f9b0() {
+    // TODO: Incomplete.
+}
+

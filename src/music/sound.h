@@ -109,19 +109,19 @@ typedef struct tag_sound {
     /* 0048 */ int pausePos;
     /* 004C */ int volume;
     /* 0050 */ int loops;
-    /* 0054 */ int field_54;
-    /* 0058 */ int field_58;
-    /* 005C */ int field_5C;
+    /* 0054 */ int nfield_54;
+    /* 0058 */ int nfield_58;
+    /* 005C */ int nfield_5C;
     /* 0060 */ int fileSize;
     /* 0064 */ int numBytesRead;
-    /* 0068 */ int field_68;
-    /* 006C */ int field_6C;
+    /* 0068 */ int nfield_68;
+    /* 006C */ int nfield_6C;
     /* 0070 */ int readLimit;
-    /* 0074 */ int field_74;
+    /* 0074 */ int nfield_74;
     /* 0078 */ int lastPosition;
     /* 007C */ int numBuffers;
     /* 0080 */ int dataSize;
-    /* 0084 */ int field_84;
+    /* 0084 */ int nm_field_84;
     /* 0088 */ void* callbackUserData;
     /* 008C */ SoundCallback* callback;
     /* 0090 */ void* deleteUserData;
@@ -129,7 +129,7 @@ typedef struct tag_sound {
     /* 0098 */ struct tag_sound* next;
     /* 009C */ struct tag_sound* prev;
     /* 00A0 */ void* sectionsizes;
-    /* 00A4 */ int field_A4;
+    /* 00A4 */ int nfield_A4;
     /* 00A8 */ int deleted;
 } Sound;
 

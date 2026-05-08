@@ -59,10 +59,10 @@ public:
     /* 0664 */ SHORT m_drawPoly;
     /* 0666 */ CPoint m_ptOpenDest;
     /* 066E */ CPoint m_ptClosedDest;
-    /* 06DA */ CArray<CRect*> field_6DA;
-    /* 06EE */ CAreaPoint* field_6EE;
-    /* 06F2 */ CArray<CRect*> field_6F2;
-    /* 0706 */ CAreaPoint* field_706;
+    /* 06DA */ CArray<CRect*> pfield_6DA;
+    /* 06EE */ CAreaPoint* pfield_6EE;
+    /* 06F2 */ CArray<CRect*> pfield_6F2;
+    /* 0706 */ CAreaPoint* pfield_706;
     /* 070A */ int m_nAICounter;
 };
 

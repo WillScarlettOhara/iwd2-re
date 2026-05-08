@@ -17,7 +17,7 @@ CScreenJournal::CScreenJournal()
     m_nChapter = 0;
     m_dwErrorState = 0;
     m_nNumErrorButtons = 0;
-    field_E9C = 0;
+    nfield_E9C = 0;
 
     SetVideoMode(0);
 
@@ -114,10 +114,10 @@ CScreenJournal::CScreenJournal()
     m_pVirtualKeys[90] = CKeyInfo(VK_PRIOR, -1, 0);
     m_pVirtualKeys[91] = CKeyInfo(VK_NEXT, -1, 0);
 
-    field_483 = 0;
-    field_48C = "";
-    field_484 = "";
-    field_EA0 = 0;
+    bm_field_483 = 0;
+    sm_field_48C = "";
+    nm_field_484 = "";
+    bfield_EA0 = 0;
     m_bShiftKeyDown = FALSE;
     m_bCtrlKeyDown = FALSE;
     m_bCapsLockKeyOn = FALSE;
@@ -307,10 +307,10 @@ void CScreenJournal::EngineDeactivated()
 // 0x636360
 void CScreenJournal::EngineGameInit()
 {
-    m_cUIManager.fInit(this, CResRef("GUIJRNL"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIJRNL"), g_pBaldurChitin->nm_field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -326,9 +326,9 @@ void CScreenJournal::EngineGameInit()
 
     m_nSelectedCharacter = 0;
     m_pCurrentScrollBar = NULL;
-    field_483 = 0;
-    field_48C = "";
-    field_484 = "";
+    bm_field_483 = 0;
+    sm_field_48C = "";
+    nm_field_484 = "";
 
     // NOTE: Calls `GetCurrentChapter` four times.
     m_nChapter = min(max(g_pBaldurChitin->GetObjectGame()->GetCurrentChapter(), 0), CGameJournal::NUM_CHAPTERS - 1);
@@ -514,7 +514,7 @@ void CScreenJournal::UpdateMainPanel()
     pText->m_labelFont.GetFrameSize(64, 0, size, FALSE);
 
     SHORT nFontHeight = pText->m_labelFont.GetFontHeight(FALSE);
-    pText->field_AB4 = static_cast<short>((nFontHeight - size.cy - 1) / nFontHeight);
+    pText->wfield_AB4 = static_cast<short>((nFontHeight - size.cy - 1) / nFontHeight);
 
     pText->DisplayString(CString(""),
         s2.Right(s2.GetLength()),
@@ -590,7 +590,7 @@ void CScreenJournal::EnableMainPanel(BOOL bEnable)
     pLeftPanel->SetEnabled(bEnable);
     pRightPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -819,10 +819,10 @@ void CScreenJournal::ResetAnnotatePanel()
     CUIPanel* pPanel = m_cUIManager.GetPanel(9);
 
     CUIControlEditMultiLineJournalAnnotation* pEdit = static_cast<CUIControlEditMultiLineJournalAnnotation*>(pPanel->GetControl(0));
-    if (field_EA0) {
+    if (bfield_EA0) {
         pEdit->SetText(CString("New Entry"));
     } else {
-        pEdit->SetText(g_pBaldurChitin->GetObjectGame()->GetJournal()->GetEntryText(field_E9C));
+        pEdit->SetText(g_pBaldurChitin->GetObjectGame()->GetJournal()->GetEntryText(nfield_E9C));
     }
 
     CUIControlButton* pBtDone = static_cast<CUIControlButton*>(pPanel->GetControl(1));
@@ -856,8 +856,8 @@ void CScreenJournal::ResetAnnotatePanel()
     pBtDelete->SetEnabled(TRUE);
     pBtRevert->SetEnabled(TRUE);
 
-    if (!field_EA0) {
-        switch (g_pBaldurChitin->GetObjectGame()->GetJournal()->GetEntryType(field_E9C)) {
+    if (!bfield_EA0) {
+        switch (g_pBaldurChitin->GetObjectGame()->GetJournal()->GetEntryType(nfield_E9C)) {
         case 0:
             pBtRevert->SetEnabled(FALSE);
             break;
@@ -866,7 +866,7 @@ void CScreenJournal::ResetAnnotatePanel()
             // FALLTHROUGH
         case 2:
         case 4:
-            if (!g_pBaldurChitin->GetObjectGame()->GetJournal()->IsEntryChanged(field_E9C)) {
+            if (!g_pBaldurChitin->GetObjectGame()->GetJournal()->IsEntryChanged(nfield_E9C)) {
                 pBtRevert->SetEnabled(FALSE);
             }
             break;
@@ -890,7 +890,7 @@ void CScreenJournal::OnRestButtonClick()
     // __LINE__: 1667
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     STRREF strError;
@@ -924,7 +924,7 @@ void CScreenJournal::OnErrorButtonClick(INT nButton)
     // __LINE__: 1731
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_dwErrorState) {
@@ -975,7 +975,7 @@ void CScreenJournal::OnErrorButtonClick(INT nButton)
 // 0x637B50
 void CScreenJournal::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -1083,27 +1083,54 @@ void CUIControlButtonJournalAnnotate::OnLButtonClick(CPoint pt)
         switch (m_nID) {
         case 1:
             sText = static_cast<CUIControlEditMultiLineJournalAnnotation*>(m_pPanel->GetControl(0))->GetText();
-            if (!pScreen->field_EA0) {
-                pJournal->ChangeEntry(pScreen->field_E9C, sText);
+            if (!pScreen->bfield_EA0) {
+                pJournal->ChangeEntry(pScreen->nfield_E9C, sText);
             } else {
-                pJournal->InsertEntryAfter(sText, pScreen->field_E9C, 0);
+                pJournal->InsertEntryAfter(sText, pScreen->nfield_E9C, 0);
             }
             break;
         case 3:
-            if (!pScreen->field_EA0) {
-                pJournal->RevertEntry(pScreen->field_E9C);
+            if (!pScreen->bfield_EA0) {
+                pJournal->RevertEntry(pScreen->nfield_E9C);
             }
             break;
         case 4:
-            if (!pScreen->field_EA0) {
-                pJournal->ChangeEntry(pScreen->field_E9C, CString(""));
+            if (!pScreen->bfield_EA0) {
+                pJournal->ChangeEntry(pScreen->nfield_E9C, CString(""));
             }
             break;
         }
 
-        CSingleLock renderLock(&(pScreen->GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(pScreen->GetManager()->pm_field_36), FALSE);
         renderLock.Lock(INFINITE);
         pScreen->DismissPopup();
         renderLock.Unlock();
     }
 }
+
+// Phase 1-2: Scaffold functions
+// 0x636120
+void FUN_00636120() {
+    // TODO: Incomplete.
+}
+
+// 0x637C10
+void FUN_00637c10() {
+    // TODO: Incomplete.
+}
+
+// 0x637DA0
+void FUN_00637da0() {
+    // TODO: Incomplete.
+}
+
+// 0x668C40
+void FUN_00668c40() {
+    // TODO: Incomplete.
+}
+
+// 0x66EE40
+void FUN_0066ee40() {
+    // TODO: Incomplete.
+}
+

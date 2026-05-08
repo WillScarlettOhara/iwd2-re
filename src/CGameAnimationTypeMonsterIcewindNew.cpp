@@ -8,15 +8,15 @@
 // 0x6E8180
 CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT animationID, BYTE* colorRangeValues, WORD facing)
 {
-    field_34E6 = 0;
+    bm_field_34E6 = 0;
     m_renderWeapons = TRUE;
-    field_34E2 = 0;
-    field_3416 = 0;
-    field_341E = 0;
-    field_341A = 0;
-    field_34DC = 1;
-    field_34F4 = 23;
-    field_34F8 = -1;
+    nm_field_34E2 = 0;
+    nm_field_3416 = 0;
+    nm_field_341E = 0;
+    nm_field_341A = 0;
+    bm_field_34DC = 1;
+    nm_field_34F4 = 23;
+    nm_field_34F8 = -1;
 
     switch (animationID & 0xF00) {
     case 0x000:
@@ -24,7 +24,7 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
         m_moveScaleCurrent = 5;
         m_colorChunks = -1;
         m_colorBlood = 63;
-        field_34DC = 0;
+        bm_field_34DC = 0;
         m_pSndDeath = "FAL_03B";
         SetNeckOffsets(0, 10, -10, 10, -10, 0, -10, -10, 0, -10, 10, -10, 10, 0, 10, 10);
 
@@ -32,15 +32,15 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
         case 0x00:
             m_nSndFreq = 10;
             m_resRef = "MSKA";
-            field_34E8[0] = "AX";
-            field_34E8[1] = "MS";
-            field_34E8[2] = "S1";
+            sm_field_34E8[0] = "AX";
+            sm_field_34E8[1] = "MS";
+            sm_field_34E8[2] = "S1";
             break;
         case 0x10:
             m_nSndFreq = 8;
             m_resRef = "MSKT";
-            field_34E8[0] = "AX";
-            field_34E8[1] = "S1";
+            sm_field_34E8[0] = "AX";
+            sm_field_34E8[1] = "S1";
             break;
         case 0x20:
             m_moveScale = 15;
@@ -52,9 +52,9 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
             m_rEllipse.right = 16;
             m_rEllipse.bottom = 12;
             m_colorBlood = 63;
-            field_34E8[0] = "AX";
-            field_34E8[1] = "MC";
-            field_34E8[2] = "S1";
+            sm_field_34E8[0] = "AX";
+            sm_field_34E8[1] = "MC";
+            sm_field_34E8[2] = "S1";
             break;
         }
         break;
@@ -66,7 +66,7 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
         switch (animationID & 0xF0) {
         case 0x00:
             m_resRef = "MYU1";
-            field_34F4 = 23;
+            nm_field_34F4 = 23;
             break;
         case 0x10:
             m_rEllipse.left = -24;
@@ -74,12 +74,12 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
             m_rEllipse.right = 24;
             m_rEllipse.bottom = 18;
             m_resRef = "MYU2";
-            field_34F4 = 23;
+            nm_field_34F4 = 23;
             break;
         }
-        field_34E8[0] = "AX";
-        field_34E8[1] = "CL";
-        field_34E8[2] = "S1";
+        sm_field_34E8[0] = "AX";
+        sm_field_34E8[1] = "CL";
+        sm_field_34E8[2] = "S1";
         SetNeckOffsets(0, 10, -10, 10, -10, 0, -10, -10, 0, -10, 10, -10, 10, 0, 10, 10);
         break;
     case 0x200:
@@ -91,15 +91,15 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
         switch (animationID & 0xF0) {
         case 0x00:
             m_resRef = "MLIZ";
-            field_34E8[0] = "QS";
-            field_34E8[1] = "HB";
-            field_34E8[2] = "CL";
+            sm_field_34E8[0] = "QS";
+            sm_field_34E8[1] = "HB";
+            sm_field_34E8[2] = "CL";
             break;
         case 0x10:
             m_resRef = "MLI2";
-            field_34E8[0] = "AX";
-            field_34E8[1] = "MS";
-            field_34E8[2] = "HB";
+            sm_field_34E8[0] = "AX";
+            sm_field_34E8[1] = "MS";
+            sm_field_34E8[2] = "HB";
             break;
         }
         SetNeckOffsets(0, 10, -10, 10, -10, 0, -10, -10, 0, -10, 10, -10, 10, 0, 10, 10);
@@ -115,8 +115,8 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
         m_moveScaleCurrent = 5;
         m_nSndFreq = 10;
         m_resRef = "MGFI";
-        field_34E8[0] = "SS";
-        field_34E8[1] = "WH";
+        sm_field_34E8[0] = "SS";
+        sm_field_34E8[1] = "WH";
         SetNeckOffsets(0, 10, -10, 10, -10, 0, -10, -10, 0, -10, 10, -10, 10, 0, 10, 10);
         m_rEllipse.left = -48;
         m_rEllipse.top = -36;
@@ -147,8 +147,8 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
             break;
         }
 
-        field_34E8[0] = "CB";
-        field_34E8[1] = "SP";
+        sm_field_34E8[0] = "CB";
+        sm_field_34E8[1] = "SP";
         break;
     case 0x500:
         m_rEllipse.left = -48;
@@ -165,14 +165,14 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
         switch (animationID & 0xF0) {
         case 0x00:
             m_resRef = "MDRM";
-            field_34E8[0] = "MC";
-            field_34E8[1] = "S1";
+            sm_field_34E8[0] = "MC";
+            sm_field_34E8[1] = "S1";
             break;
         case 0x10:
             m_resRef = "MDRF";
-            field_34E8[0] = "AX";
-            field_34E8[1] = "S1";
-            field_34E8[2] = "MC";
+            sm_field_34E8[0] = "AX";
+            sm_field_34E8[1] = "S1";
+            sm_field_34E8[2] = "MC";
             break;
         }
         break;
@@ -192,21 +192,21 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
 
         switch (animationID & 0xF0) {
         case 0x70:
-            field_34E8[0] = "AX";
-            field_34E8[1] = "MC";
-            field_34E8[2] = "S1";
+            sm_field_34E8[0] = "AX";
+            sm_field_34E8[1] = "MC";
+            sm_field_34E8[2] = "S1";
             m_resRef += "1";
             break;
         case 0x80:
-            field_34E8[0] = "AX";
-            field_34E8[1] = "WH";
-            field_34E8[2] = "S1";
+            sm_field_34E8[0] = "AX";
+            sm_field_34E8[1] = "WH";
+            sm_field_34E8[2] = "S1";
             m_resRef += "2";
             break;
         case 0x90:
-            field_34E8[0] = "AX";
-            field_34E8[1] = "MC";
-            field_34E8[2] = "S1";
+            sm_field_34E8[0] = "AX";
+            sm_field_34E8[1] = "MC";
+            sm_field_34E8[2] = "S1";
             m_resRef += "3";
             break;
         default:
@@ -263,7 +263,7 @@ CGameAnimationTypeMonsterIcewindNew::CGameAnimationTypeMonsterIcewindNew(USHORT 
     m_currentVidCellExtend = &m_wkVidCellExtend;
     m_currentVidCell = m_currentVidCellBase;
 
-    if (field_3416) {
+    if (nm_field_3416) {
         for (BYTE colorRange = 0; colorRange < CVidPalette::NUM_RANGES; colorRange++) {
             m_charPalette.SetRange(colorRange, colorRangeValues[colorRange], *g_pBaldurChitin->GetObjectGame()->GetMasterBitmap());
         }
@@ -504,7 +504,7 @@ void CGameAnimationTypeMonsterIcewindNew::EquipWeapon(const CString& resRef, BYT
     // __LINE__: 27860
     UTIL_ASSERT(pAttackProb != NULL);
 
-    field_34E2 = 0;
+    nm_field_34E2 = 0;
     ClearColorEffects(21);
     ClearColorEffects(20);
     ClearColorEffects(16);
@@ -512,7 +512,7 @@ void CGameAnimationTypeMonsterIcewindNew::EquipWeapon(const CString& resRef, BYT
     if (!resRef.IsEmpty()) {
         BYTE cnt = 0;
         while (cnt < 3) {
-            if (field_34E8[cnt] == resRef) {
+            if (sm_field_34E8[cnt] == resRef) {
                 // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
                 // __LINE__: 27911
                 UTIL_ASSERT(colorRangeValues != NULL);
@@ -561,10 +561,10 @@ void CGameAnimationTypeMonsterIcewindNew::EquipWeapon(const CString& resRef, BYT
                     m_currentVidCellWeaponExtend = &m_wkVidCellWeaponExtend;
                 }
 
-                field_34E6 = cnt;
+                bm_field_34E6 = cnt;
 
                 if ((itemFlags & 0x80) != 0) {
-                    field_34E2 = 1;
+                    nm_field_34E2 = 1;
                 }
 
                 m_a1VidCellWeaponBase.SetResRef(CResRef(m_resRef + resRef[0] + "A1"), FALSE, TRUE, TRUE);
@@ -637,7 +637,7 @@ void CGameAnimationTypeMonsterIcewindNew::EquipWeapon(const CString& resRef, BYT
             }
             m_currentVidCellWeapon->FrameSet(m_currentVidCell->GetCurrentFrameId());
         } else {
-            field_34E6 = 0;
+            bm_field_34E6 = 0;
             m_currentVidCellWeaponBase = NULL;
 
             m_a1VidCellWeaponBase.CancelRequest();
@@ -675,7 +675,7 @@ void CGameAnimationTypeMonsterIcewindNew::EquipWeapon(const CString& resRef, BYT
             m_currentVidCellWeapon = NULL;
         }
     } else {
-        field_34E6 = 0;
+        bm_field_34E6 = 0;
         m_currentVidCellWeaponBase = NULL;
 
         m_a1VidCellWeaponBase.CancelRequest();
@@ -1485,3 +1485,10 @@ SHORT CGameAnimationTypeMonsterIcewindNew::SetSequence(SHORT nSequence)
 
     return nSequence;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x6EB3F0
+void FUN_006eb3f0() {
+    // TODO: Incomplete.
+}
+

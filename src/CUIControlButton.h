@@ -45,22 +45,22 @@ public:
     /* 0132 */ SHORT m_nRenderCount; // #guess
     /* 0134 */ BOOL m_bPressed; // #guess
     /* 0138 */ BYTE m_nMouseButtons; // #guess
-    /* 0139 */ unsigned char field_139;
+    /* 0139 */ unsigned char bm_field_139;
     /* 013A */ CString* m_pText;
     /* 013E */ CVidFont m_cVidFont; // #guess
-    /* 063E */ int field_63E;
-    /* 0642 */ int field_642;
+    /* 063E */ int nfield_63E;
+    /* 0642 */ int nfield_642;
     /* 0646 */ BOOL m_bEnabled; // #guess
     /* 064A */ int m_nTextLines;
-    /* 064C */ int field_64C;
+    /* 064C */ int nfield_64C;
     /* 0650 */ BOOL m_bValid; // #guess
-    /* 0654 */ short field_654;
+    /* 0654 */ short wfield_654;
     /* 0656 */ BYTE m_nMaxLines;
     /* 0657 */ BYTE m_nTextFlags;
-    /* 0658 */ int field_658;
-    /* 065C */ int field_65C;
-    /* 0660 */ unsigned char field_660;
-    /* 0662 */ int field_662;
+    /* 0658 */ int nfield_658;
+    /* 065C */ int nfield_65C;
+    /* 0660 */ unsigned char bfield_660;
+    /* 0662 */ int nfield_662;
 };
 
 #endif /* CUICONTROLBUTTON_H_ */

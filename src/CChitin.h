@@ -148,77 +148,77 @@ public:
     /* 003C */ UINT m_mouseDblClickTime;
     /* 0040 */ CSize m_mouseDblClickSize;
     /* 0048 */ BOOL m_bEngineActive;
-    /* 004C */ int field_4C;
-    /* 0050 */ int field_50;
+    /* 004C */ int nm_field_4C;
+    /* 0050 */ int nfield_50;
     /* 0054 */ CObList lEngines;
-    /* 0070 */ int field_70;
+    /* 0070 */ int nfield_70;
     /* 0074 */ CWarp* m_pStartingEngine;
     /* 0078 */ CWnd cWnd; // #guess
-    /* 00B4 */ HANDLE field_B4;
+    /* 00B4 */ HANDLE nfield_B4;
     /* 00B8 */ HINSTANCE m_hInstance; // #guess
-    /* 00BC */ int field_BC;
-    /* 00C0 */ int field_C0;
-    /* 00C4 */ CRITICAL_SECTION field_C4;
+    /* 00BC */ int nfield_BC;
+    /* 00C0 */ int nfield_C0;
+    /* 00C4 */ CRITICAL_SECTION pfield_C4;
     /* 00DC */ CString m_sCommandLine;
     /* 00E0 */ BOOLEAN m_bReInitializing;
     /* 00E1 */ BOOLEAN m_bFullscreen;
     /* 00E2 */ BOOLEAN m_nNextFullscreen;
-    /* 00E4 */ int field_E4;
-    /* 00E8 */ RECT field_E8;
-    /* 00F8 */ unsigned char field_F8;
-    /* 00F9 */ unsigned char field_F9;
+    /* 00E4 */ int nfield_E4;
+    /* 00E8 */ RECT m_field_E8;
+    /* 00F8 */ unsigned char bfield_F8;
+    /* 00F9 */ unsigned char bfield_F9;
     /* 00FA */ DWORD dwPlatformId; // #guess
-    /* 00FE */ short field_FE;
+    /* 00FE */ short wfield_FE;
     /* 0100 */ int m_nScreenWidth; // #guess
     /* 0104 */ int m_nScreenHeight; // #guess
     /* 0108 */ CPoint m_ptScreen;
-    /* 0110 */ int field_110;
+    /* 0110 */ int nm_field_110;
     /* 0114 */ BOOL m_bStartUpConnect;
     /* 0118 */ CString m_sStartUpAddress;
-    /* 011C */ CString field_11C;
+    /* 011C */ CString sm_field_11C;
     /* 0120 */ CString m_sStartUpPlayer;
-    /* 0124 */ int field_124;
-    /* 0128 */ int field_128;
+    /* 0124 */ int nm_field_124;
+    /* 0128 */ int nm_field_128;
     /* 012C */ CString m_sStartUpSession;
-    /* 0130 */ unsigned char field_130;
-    /* 0131 */ unsigned char field_131;
+    /* 0130 */ unsigned char bm_field_130;
+    /* 0131 */ unsigned char bm_field_131;
     /* 0132 */ CString m_sStartUpGameSpyLocation;
-    /* 0136 */ int field_136;
-    /* 013A */ int field_13A;
-    /* 01E3 */ int field_13E;
-    /* 0142 */ int field_142;
+    /* 0136 */ int nm_field_136;
+    /* 013A */ int nm_field_13A;
+    /* 01E3 */ int nm_field_1E3;
+    /* 0142 */ int nm_m_field_142;
     /* 0148 */ int m_bInMouseWheelQueue;
     // FIXME: Looks like this list stores `wParam` values of `WM_MOUSEWHEEL`
     // disguised as pointers. There are more specialized collections for such
     // case.
     /* 014C */ CPtrList m_lMouseWheel;
     /* 0168 */ int m_nWheelScrollLines; // #guess
-    /* 016C */ int field_16C;
-    /* 0170 */ int field_170;
-    /* 0174 */ int field_174;
+    /* 016C */ int nm_field_16C;
+    /* 0170 */ int nm_field_170;
+    /* 0174 */ int nm_field_174;
     /* 0178 */ BOOL m_bUseMirrorFX; // #guess
     /* 017C */ UINT m_nQueryCancelAutoPlayMsgID; // #guess
-    /* 0180 */ HANDLE field_180;
+    /* 0180 */ HANDLE pm_field_180;
     /* 0184 */ DWORD m_nTickCount;
     /* 0188 */ int m_nAIPerSec;
     /* 018C */ int m_nAIElasped;
     /* 0190 */ int m_nRenderTickCount;
     /* 0194 */ int m_nRenderPerSec;
     /* 0198 */ int m_nRenderElasped;
-    /* 019C */ int field_19C;
-    /* 01A0 */ int field_1A0;
-    /* 01A4 */ int field_1A4;
+    /* 019C */ int nm_field_19C;
+    /* 01A0 */ int nm_field_1A0;
+    /* 01A4 */ int nm_field_1A4;
     /* 01A8 */ CImm cImm; // #guess
     /* 02E8 */ CString m_sFontName;
-    /* 02EC */ int field_2EC;
+    /* 02EC */ int nm_field_2EC;
     /* 02F0 */ HMODULE m_hOpenGL;
-    /* 02F4 */ int field_2F4;
+    /* 02F4 */ int nm_field_2F4;
     /* 02F8 */ HANDLE m_eventTimer;
-    /* 02FC */ CRITICAL_SECTION field_2FC;
-    /* 0314 */ CRITICAL_SECTION field_314;
-    /* 032C */ CRITICAL_SECTION field_32C;
-    /* 0344 */ CRITICAL_SECTION field_344;
-    /* 035C */ CRITICAL_SECTION field_35C;
+    /* 02FC */ CRITICAL_SECTION pm_field_2FC;
+    /* 0314 */ CRITICAL_SECTION pm_field_314;
+    /* 032C */ CRITICAL_SECTION pm_field_32C;
+    /* 0344 */ CRITICAL_SECTION pm_field_344;
+    /* 035C */ CRITICAL_SECTION pm_field_35C;
     /* 0374 */ BOOL m_bExitRSThread;
     /* 0378 */ HANDLE m_hRSThread;
     /* 037C */ BOOL m_bExitMessageThread;
@@ -227,21 +227,21 @@ public:
     /* 0388 */ BOOL m_bExitMainAIThread;
     /* 038C */ HANDLE m_hMusicThread;
     /* 0390 */ BOOL m_bExitMusicThread;
-    /* 0394 */ CRITICAL_SECTION field_394;
-    /* 03AC */ CRITICAL_SECTION field_3AC;
+    /* 0394 */ CRITICAL_SECTION pm_field_394;
+    /* 03AC */ CRITICAL_SECTION pm_field_3AC;
     /* 03C4 */ CWarp* pActiveEngine;
     /* 03C8 */ CSoundMixer cSoundMixer; // #guess
     /* 0542 */ CDimm cDimm; // #guess
     /* 07EA */ CVideo cVideo;
     /* 0952 */ CNetwork cNetwork;
     /* 18D4 */ CGameSpy cGameSpy; // #guess
-    /* 1900 */ CUnknown1 field_1900;
+    /* 1900 */ CUnknown1 pm_m_field_1900;
     /* 1902 */ BOOL m_bPointerUpdated;
     /* 1906 */ CPoint m_ptPointer;
     /* 190E */ LONG nAUCounter;
     /* 1912 */ BOOL m_bInAsynchronousUpdate;
     /* 1916 */ CAliasList lAliases; // #guess
-    /* 1932 */ int field_1932;
+    /* 1932 */ int nm_m_field_1932;
     /* 1936 */ BOOL m_bAIStale;
     /* 193A */ BOOL m_bDisplayStale;
     /* 193E */ BOOL m_bInSynchronousUpdate;
@@ -252,17 +252,17 @@ public:
     /* 19D6 */ DWORD m_dwThreadIds[CHITIN_MAX_THREADS]; // #guess
     /* 19FE */ HANDLE m_hThreadHandles[CHITIN_MAX_THREADS]; // #guess
     /* 1A26 */ USHORT m_nThreads;
-    /* 1A28 */ short field_1A28;
-    /* 1A2A */ int field_1A2A;
-    /* 1A2E */ int field_1A2E;
-    /* 1A32 */ int field_1A32[16];
-    /* 1A72 */ DWORD field_1A72[16];
-    /* 1AB2 */ DWORD field_1AB2[16];
-    /* 1AF2 */ DWORD field_1AF2[16];
-    /* 1B32 */ unsigned char field_1B32[64];
-    /* 1C32 */ CRITICAL_SECTION field_1C32;
-    /* 1C4A */ unsigned char field_1C4A;
-    /* 1C4C */ int field_1C4C;
+    /* 1A28 */ short wm_field_1A28;
+    /* 1A2A */ int nm_field_1A2A;
+    /* 1A2E */ int nm_field_1A2E;
+    /* 1A32 */ int nm_field_1A32[16];
+    /* 1A72 */ DWORD nm_field_1A72[16];
+    /* 1AB2 */ DWORD nm_field_1AB2[16];
+    /* 1AF2 */ DWORD nm_field_1AF2[16];
+    /* 1B32 */ unsigned char bm_field_1B32[64];
+    /* 1C32 */ CRITICAL_SECTION pm_field_1C32;
+    /* 1C4A */ unsigned char bm_field_1C4A;
+    /* 1C4C */ int nm_field_1C4C;
 };
 
 extern CChitin* g_pChitin;

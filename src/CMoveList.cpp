@@ -74,3 +74,50 @@ void CMoveList::AIUpdate()
 {
     // TODO: Incomplete.
 }
+
+// Phase 1-2: Scaffold functions
+// 0x516CD0
+void FUN_00516cd0() {
+    // TODO: Incomplete.
+}
+
+// 0x516D50
+void FUN_00516d50() {
+    // TODO: Incomplete.
+}
+
+// 0x516E90
+void FUN_00516e90() {
+    // TODO: Incomplete.
+}
+
+// 0x516F10
+void FUN_00516f10() {
+    // TODO: Incomplete.
+}
+
+// 0x516FC0
+void FUN_00516fc0() {
+    // TODO: Incomplete.
+}
+
+// 0x516FD0
+void FUN_00516fd0() {
+    // TODO: Incomplete.
+}
+
+// 0x517000
+void FUN_00517000() {
+    // TODO: Incomplete.
+}
+
+// 0x5170F0
+void FUN_005170f0() {
+    // TODO: Incomplete.
+}
+
+// 0x59E980
+void FUN_0059e980() {
+    // TODO: Incomplete.
+}
+

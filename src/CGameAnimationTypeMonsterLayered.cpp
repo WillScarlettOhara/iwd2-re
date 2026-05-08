@@ -1052,3 +1052,10 @@ SHORT CGameAnimationTypeMonsterLayered::SetSequence(SHORT nSequence)
 
     return nSequence;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x6BD810
+void FUN_006bd810() {
+    // TODO: Incomplete.
+}
+

@@ -23,13 +23,13 @@ CScreenWorldMap::CScreenWorldMap()
 {
     m_nEngineState = 0;
     m_pMapControl = NULL;
-    field_FF2 = 0;
-    field_FF6 = 0;
+    nfield_FF2 = 0;
+    nfield_FF6 = 0;
     m_nLeavingEdge = 0;
     m_nCurrentLink = 0;
     m_bInControl = FALSE;
     m_bClickedArea = FALSE;
-    field_1050 = 0;
+    nm_field_1050 = 0;
 
     SetVideoMode(0);
 
@@ -128,8 +128,8 @@ CScreenWorldMap::CScreenWorldMap()
     m_bShiftKeyDown = FALSE;
     m_ptMapView.x = 0;
     m_ptMapView.y = 0;
-    field_FCA = RGB(224, 180, 15);
-    m_vfLabel.SetColor(field_FCA, 0, FALSE);
+    pfield_FCA = RGB(224, 180, 15);
+    m_vfLabel.SetColor(pfield_FCA, 0, FALSE);
     m_nHighlightArea = -1;
     m_nSelectedArea = -1;
     m_bOverSelectedArea = FALSE;
@@ -362,8 +362,8 @@ void CScreenWorldMap::EngineDeactivated()
     m_preLoadFontRealms.Unload();
     m_preLoadFontTool.Unload();
 
-    field_FE = 0;
-    field_102 = 0;
+    wfield_FE = 0;
+    nm_field_102 = 0;
 
     // NOTE: Uninline.
     m_cUIManager.KillCapture();
@@ -380,10 +380,10 @@ void CScreenWorldMap::EngineDeactivated()
 // 0x699F10
 void CScreenWorldMap::EngineGameInit()
 {
-    m_cUIManager.fInit(this, CResRef("GUIWMAP"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIWMAP"), g_pBaldurChitin->nm_field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->nm_field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -401,8 +401,8 @@ void CScreenWorldMap::EngineGameInit()
     m_ptMapView.y = 0;
     m_nSelectedCharacter = 0;
     m_pCurrentScrollBar = NULL;
-    field_FCA = RGB(224, 180, 15);
-    m_vfLabel.SetColor(field_FCA, field_FCA, FALSE);
+    pfield_FCA = RGB(224, 180, 15);
+    m_vfLabel.SetColor(pfield_FCA, pfield_FCA, FALSE);
     m_nHighlightArea = 0;
     m_nSelectedArea = -1;
     m_ptMapStartMousePos.x = 0;
@@ -754,7 +754,7 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
 {
     BOOL bResult;
 
-    CSingleLock renderLock(&field_1022, FALSE);
+    CSingleLock renderLock(&pm_field_1022, FALSE);
     renderLock.Lock(INFINITE);
 
     if (m_aAreaRect.GetCount() != 0) {
@@ -818,9 +818,9 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
             m_vcAreas.pRes->Demand();
             m_vfLabel.pRes->Demand();
 
-            if (field_FCA != RGB(250, 250, 250)) {
-                field_FCA = RGB(250, 250, 250);
-                m_vfLabel.SetColor(field_FCA, RGB(0, 0, 0), FALSE);
+            if (pfield_FCA != RGB(250, 250, 250)) {
+                pfield_FCA = RGB(250, 250, 250);
+                m_vfLabel.SetColor(pfield_FCA, RGB(0, 0, 0), FALSE);
             }
 
             for (DWORD nArea = 0; nArea < pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0()); nArea++) {
@@ -869,9 +869,9 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
                         // __LINE__: 2358
                         UTIL_ASSERT(bResult);
 
-                        if (field_FCA != rgbColor) {
-                            field_FCA = rgbColor;
-                            m_vfLabel.SetColor(field_FCA, RGB(0, 0, 0), FALSE);
+                        if (pfield_FCA != rgbColor) {
+                            pfield_FCA = rgbColor;
+                            m_vfLabel.SetColor(pfield_FCA, RGB(0, 0, 0), FALSE);
                         }
 
                         if (pArea->m_strLabel != -1) {
@@ -880,7 +880,7 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
                             bResult = pVidInf->BKTextOut(&m_vfLabel,
                                 sLabel,
                                 v1 + rArea.left + (rArea.Width() - m_vfLabel.GetStringLength(sLabel, FALSE)) / 2 - m_ptMapView.x,
-                                v2 + rArea.bottom - m_vfLabel.GetFontHeight(FALSE) / (g_pBaldurChitin->field_4A28 ? 2 : 1) - m_ptMapView.y,
+                                v2 + rArea.bottom - m_vfLabel.GetFontHeight(FALSE) / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) - m_ptMapView.y,
                                 rClip,
                                 0,
                                 TRUE);
@@ -989,18 +989,18 @@ void CScreenWorldMap::StartWorldMap(INT nEngineState, LONG nLeavingEdge, BOOLEAN
     m_cUIManager.GetPanel(0)->GetControl(10)->SetActive(TRUE);
 
     m_vmMap.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->sub_55A3A0())->m_resMosaic), FALSE, TRUE);
-    m_vmMap.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+    m_vmMap.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
     // NOTE: Uninline.
     m_vcAreas.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->sub_55A3A0())->m_resAreaIcons),
-        g_pBaldurChitin->field_4A28,
+        g_pBaldurChitin->nm_field_4A28,
         FALSE,
         TRUE);
 
     // NOTE: Uninline.
-    m_vcMarker.SetResRef(CResRef("WMDAG"), g_pBaldurChitin->field_4A28, TRUE, TRUE);
+    m_vcMarker.SetResRef(CResRef("WMDAG"), g_pBaldurChitin->nm_field_4A28, TRUE, TRUE);
 
-    m_vfLabel.SetResRef(CResRef("INFOFONT"), g_pBaldurChitin->field_4A28, TRUE);
+    m_vfLabel.SetResRef(CResRef("INFOFONT"), g_pBaldurChitin->nm_field_4A28, TRUE);
 
     // NOTE: Uninline.
     m_aAreaRect.SetSize(pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0()));
@@ -1100,7 +1100,7 @@ void CScreenWorldMap::StopWorldMap(BOOLEAN bAreaClicked)
         pGame->GetGroup()->ClearActions();
     }
 
-    CSingleLock lock(&field_1022, FALSE);
+    CSingleLock lock(&pm_field_1022, FALSE);
     lock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -1390,7 +1390,7 @@ void CUIControlButtonWorldMapDone::OnLButtonClick(CPoint pt)
     // __LINE__: 4609
     UTIL_ASSERT(pWorldMap != NULL);
 
-    CSingleLock renderLock(&(pWorldMap->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pWorldMap->GetManager()->pm_field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -1405,8 +1405,8 @@ void CUIControlButtonWorldMapDone::OnLButtonClick(CPoint pt)
 CUIControlButtonWorldMapWorldMap::CUIControlButtonWorldMapWorldMap(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlButton(panel, controlInfo, LBUTTON, 0)
 {
-    field_676 = 0;
-    field_67A = 0;
+    nfield_676 = 0;
+    nfield_67A = 0;
 }
 
 // 0x6A0710
@@ -1426,7 +1426,7 @@ BOOL CUIControlButtonWorldMapWorldMap::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1476,9 +1476,9 @@ BOOL CUIControlButtonWorldMapWorldMap::OnLButtonDown(CPoint pt)
     }
 
     m_pPanel->m_pManager->SetCapture(this, CUIManager::MOUSELBUTTON);
-    m_pPanel->m_pManager->field_2D = 0;
-    m_pPanel->m_pManager->field_32 = m_nID;
-    m_pPanel->m_pManager->field_1C = 0;
+    m_pPanel->m_pManager->bm_field_2D = 0;
+    m_pPanel->m_pManager->nm_field_32 = m_nID;
+    m_pPanel->m_pManager->nm_field_1C = 0;
 
     CScreenWorldMap* pWorldMap = g_pBaldurChitin->m_pEngineWorldMap;
 
@@ -1502,3 +1502,45 @@ void CUIControlButtonWorldMapWorldMap::OnMouseMove(CPoint pt)
 
     pWorldMap->OnMapMouseMove(pt);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x699E4A
+void FUN_00699e4a() {
+    // TODO: Incomplete.
+}
+
+// 0x69B7F0
+void FUN_0069b7f0() {
+    // TODO: Incomplete.
+}
+
+// 0x69D0F0
+void FUN_0069d0f0() {
+    // TODO: Incomplete.
+}
+
+// 0x6A0330
+void FUN_006a0330() {
+    // TODO: Incomplete.
+}
+
+// 0x6A0350
+void FUN_006a0350() {
+    // TODO: Incomplete.
+}
+
+// 0x6A04E0
+void FUN_006a04e0() {
+    // TODO: Incomplete.
+}
+
+// 0x6A06F0
+void FUN_006a06f0() {
+    // TODO: Incomplete.
+}
+
+// 0x6A0A80
+void FUN_006a0a80() {
+    // TODO: Incomplete.
+}
+

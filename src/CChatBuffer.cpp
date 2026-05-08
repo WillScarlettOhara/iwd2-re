@@ -79,3 +79,20 @@ int CChatBuffer::UpdateTextDisplay(CUIControlTextDisplay* pText, INT nCount)
 
     return m_nMessageCount;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x4428A0
+void FUN_004428a0() {
+    // TODO: Incomplete.
+}
+
+// 0x442990
+void FUN_00442990() {
+    // TODO: Incomplete.
+}
+
+// 0x442A80
+void FUN_00442a80() {
+    // TODO: Incomplete.
+}
+

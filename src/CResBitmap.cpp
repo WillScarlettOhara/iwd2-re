@@ -76,18 +76,18 @@ BYTE* CResBitmap::GetImageData(BOOL bDoubleSize)
     }
 
     if (m_pDimmKeyTableEntry != NULL) {
-        if (m_pDimmKeyTableEntry->resRef == g_pChitin->cVideo.field_114
-            && m_pDimmKeyTableEntry->nResType == g_pChitin->cVideo.field_11C) {
+        if (m_pDimmKeyTableEntry->resRef == g_pChitin->cVideo.sm_field_114
+            && m_pDimmKeyTableEntry->nResType == g_pChitin->cVideo.wm_field_11C) {
             return reinterpret_cast<BYTE*>(g_pChitin->cVideo.m_doubleSizeData);
         }
-        g_pChitin->cVideo.field_114 = m_pDimmKeyTableEntry->resRef;
-        g_pChitin->cVideo.field_11C = m_pDimmKeyTableEntry->nResType;
+        g_pChitin->cVideo.sm_field_114 = m_pDimmKeyTableEntry->resRef;
+        g_pChitin->cVideo.wm_field_11C = m_pDimmKeyTableEntry->nResType;
     } else {
-        g_pChitin->cVideo.field_114 = CResRef("");
-        g_pChitin->cVideo.field_11C = -1;
+        g_pChitin->cVideo.sm_field_114 = CResRef("");
+        g_pChitin->cVideo.wm_field_11C = -1;
     }
 
-    g_pChitin->cVideo.field_11E = 0;
+    g_pChitin->cVideo.nm_m_field_11E = 0;
     g_pChitin->cVideo.SetDoubleSizeData(2 * pBitmapInfoHeader->biHeight * ((2 * pBitmapInfoHeader->biWidth * pBitmapInfoHeader->biBitCount / 8 + 3) & ~3));
 
     BYTE* pSrc = pBitmapData;
@@ -325,3 +325,15 @@ void CResBitmap::ReleaseLoadedBitmap()
     pBitmapFileHeader = NULL;
     pBitmapInfoHeader = NULL;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x77EBC0
+void FUN_0077ebc0() {
+    // TODO: Incomplete.
+}
+
+// 0x77F190
+void FUN_0077f190() {
+    // TODO: Incomplete.
+}
+

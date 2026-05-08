@@ -9,12 +9,12 @@ CResFile::CResFile()
     m_pHeader = NULL;
     m_pVarEntries = NULL;
     m_pFixedEntries = NULL;
-    field_20 = NULL;
+    nm_field_20 = NULL;
     m_bOpen = FALSE;
-    field_4 = 0;
+    nm_field_4 = 0;
     m_nCacheCount = 0;
     m_nRefCount = 0;
-    field_38 = 0;
+    bm_field_38 = 0;
 }
 
 // 0x7898F0
@@ -28,18 +28,18 @@ CResFile::~CResFile()
 // 0x789950
 BOOL CResFile::AddCacheCount()
 {
-    EnterCriticalSection(&(g_pChitin->field_35C));
+    EnterCriticalSection(&(g_pChitin->pm_field_35C));
 
-    while (g_pChitin->cDimm.cResCache.field_110 == 1) {
-        LeaveCriticalSection(&(g_pChitin->field_35C));
-        while (g_pChitin->cDimm.cResCache.field_110 == 1) {
+    while (g_pChitin->cDimm.cResCache.nm_field_110 == 1) {
+        LeaveCriticalSection(&(g_pChitin->pm_field_35C));
+        while (g_pChitin->cDimm.cResCache.nm_field_110 == 1) {
             SleepEx(50, FALSE);
         }
-        EnterCriticalSection(&(g_pChitin->field_35C));
+        EnterCriticalSection(&(g_pChitin->pm_field_35C));
     }
 
     if (m_nRefCount != 0) {
-        LeaveCriticalSection(&(g_pChitin->field_35C));
+        LeaveCriticalSection(&(g_pChitin->pm_field_35C));
         return FALSE;
     }
 
@@ -48,8 +48,8 @@ BOOL CResFile::AddCacheCount()
     }
     m_nCacheCount++;
 
-    g_pChitin->cDimm.cResCache.field_110 = 1;
-    LeaveCriticalSection(&(g_pChitin->field_35C));
+    g_pChitin->cDimm.cResCache.nm_field_110 = 1;
+    LeaveCriticalSection(&(g_pChitin->pm_field_35C));
 
     return TRUE;
 }
@@ -73,14 +73,14 @@ BOOL CResFile::CloseFile()
             m_pFixedEntries = NULL;
         }
 
-        if (field_20 != NULL) {
-            delete field_20;
-            field_20 = NULL;
+        if (nm_field_20 != NULL) {
+            delete nm_field_20;
+            nm_field_20 = NULL;
         }
 
         m_cFile.Close();
         m_bOpen = FALSE;
-        field_38 = 0;
+        bm_field_38 = 0;
     }
 
     return TRUE;
@@ -108,9 +108,9 @@ DWORD CResFile::GetFileSize(RESID resID)
         }
     }
 
-    if (field_20 != NULL) {
+    if (nm_field_20 != NULL) {
         // TODO: Object/structure?
-        return reinterpret_cast<DWORD>(reinterpret_cast<unsigned char*>(field_20) + 2);
+        return reinterpret_cast<DWORD>(reinterpret_cast<unsigned char*>(nm_field_20) + 2);
     }
 
     return 0;
@@ -265,7 +265,7 @@ BOOL CResFile::OpenFile()
     m_bOpen = TRUE;
 
     if (sResFileName.Left(2).Compare("cd") == 0) {
-        field_38 = TRUE;
+        bm_field_38 = TRUE;
     }
 
     return TRUE;
@@ -316,7 +316,7 @@ UINT CResFile::ReadResource(RESID resID, LPVOID lpBuf, UINT nCount, UINT nOffset
         }
     }
 
-    if (field_20 != NULL) {
+    if (nm_field_20 != NULL) {
         m_cFile.Seek(0, CFile::SeekPosition::begin);
         return m_cFile.Read(static_cast<unsigned char*>(lpBuf) + nOffset, nCount);
     }
@@ -327,7 +327,7 @@ UINT CResFile::ReadResource(RESID resID, LPVOID lpBuf, UINT nCount, UINT nOffset
 // 0x78A900
 void CResFile::UnCache()
 {
-    EnterCriticalSection(&(g_pChitin->field_35C));
+    EnterCriticalSection(&(g_pChitin->pm_field_35C));
 
     if (m_nCacheCount > 1) {
         m_nCacheCount -= 1;
@@ -335,7 +335,29 @@ void CResFile::UnCache()
         m_nCacheCount = 0;
     }
 
-    LeaveCriticalSection(&(g_pChitin->field_35C));
+    LeaveCriticalSection(&(g_pChitin->pm_field_35C));
 
     g_pChitin->cDimm.cResCache.AccessFileInCache(m_nIndex);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x7898D0
+void FUN_007898d0() {
+    // TODO: Incomplete.
+}
+
+// 0x789A20
+void FUN_00789a20() {
+    // TODO: Incomplete.
+}
+
+// 0x789CE0
+void FUN_00789ce0() {
+    // TODO: Incomplete.
+}
+
+// 0x78A0F0
+void FUN_0078a0f0() {
+    // TODO: Incomplete.
+}
+

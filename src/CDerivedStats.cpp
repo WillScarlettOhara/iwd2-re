@@ -32,10 +32,10 @@ void CDerivedStats::Reload(CGameSprite* pSprite, CCreatureFileHeader* pCreature,
 
     m_generalState = pCreature->m_generalState;
     m_nMaxHitPoints = pCreature->m_maxHitPointsBase;
-    field_6 = 0;
-    field_8 = 0;
-    field_A = 0;
-    field_C = pCreature->field_3E;
+    wfield_6 = 0;
+    nm_field_8 = 0;
+    wfield_A = 0;
+    nfield_C = pCreature->wm_field_3E;
     m_nACCrushingMod = pCreature->m_armorClassCrushingAdjustment;
     m_nACMissileMod = pCreature->m_armorClassMissileAdjustment;
     m_nACPiercingMod = pCreature->m_armorClassPiercingAdjustment;
@@ -144,13 +144,13 @@ void CDerivedStats::Reload(CGameSprite* pSprite, CCreatureFileHeader* pCreature,
     m_nDamageModPiercing = 0;
     m_nDamageModCrushing = 0;
     m_nDamageModMissile = 0;
-    field_124 = 0;
-    field_128 = 0;
-    field_12C = 0;
-    field_130 = 0;
-    field_134 = 0;
-    field_138 = 0;
-    field_13C = 0;
+    nm_field_124 = 0;
+    nm_field_128 = 0;
+    bm_field_12C = 0;
+    sm_field_130 = 0;
+    nm_field_134 = 0;
+    nm_field_138 = 0;
+    nm_field_13C = 0;
     m_nMirrorImages = 0;
     m_bPreventAISlowDown = FALSE;
 
@@ -215,10 +215,10 @@ CDerivedStats& CDerivedStats::operator=(const CDerivedStats& other)
 {
     m_generalState = other.m_generalState;
     m_nMaxHitPoints = other.m_nMaxHitPoints;
-    field_6 = other.field_6;
-    field_8 = other.field_8;
-    field_A = other.field_A;
-    field_C = other.field_C;
+    wfield_6 = other.wfield_6;
+    nm_field_8 = other.nm_field_8;
+    wfield_A = other.wfield_A;
+    nfield_C = other.nfield_C;
     m_nACCrushingMod = other.m_nACCrushingMod;
     m_nACMissileMod = other.m_nACMissileMod;
     m_nACPiercingMod = other.m_nACPiercingMod;
@@ -309,8 +309,8 @@ CDerivedStats& CDerivedStats::operator=(const CDerivedStats& other)
     m_cDamageBonusList = other.m_cDamageBonusList;
     m_cImmunitiesItemEquip = other.m_cImmunitiesItemEquip;
     m_cImmunitiesItemTypeEquip = other.m_cImmunitiesItemTypeEquip;
-    field_290 = other.field_290;
-    field_2AC = other.field_2AC;
+    pm_field_290 = other.pm_field_290;
+    pm_field_2AC = other.pm_field_2AC;
     m_appliedColorRanges = other.m_appliedColorRanges;
     m_appliedColorEffects = other.m_appliedColorEffects;
     m_cBounceProjectile = other.m_cBounceProjectile;
@@ -318,10 +318,10 @@ CDerivedStats& CDerivedStats::operator=(const CDerivedStats& other)
     // m_cBounceSpellLevel = other.m_cBounceSpellLevel;
     // m_cBounceProjectileLevelDec = other.m_cBounceProjectileLevelDec;
     // m_cImmunitiesProjectileLevelDec = other.m_cImmunitiesProjectileLevelDec;
-    field_3C8 = other.field_3C8;
-    field_3E4 = other.field_3E4;
-    field_400 = other.field_400;
-    field_41C = other.field_41C;
+    pm_field_3C8 = other.pm_field_3C8;
+    pm_field_3E4 = other.pm_field_3E4;
+    pm_field_400 = other.pm_field_400;
+    pm_field_41C = other.pm_field_41C;
     m_cImmunitiesItemUse = other.m_cImmunitiesItemUse;
     m_cImmunitiesItemTypeUse = other.m_cImmunitiesItemTypeUse;
 
@@ -331,19 +331,19 @@ CDerivedStats& CDerivedStats::operator=(const CDerivedStats& other)
 
     // TODO: Incomplete (copying unknown STL container).
 
-    // field_4AC = other.field_4AC;
-    // field_4C8 = other.field_4C8;
-    // field_4E4 = other.field_4E4;
-    // field_500 = other.field_500;
-    // field_51C = other.field_51C;
-    // field_538 = other.field_538;
+    // pm_field_4AC = other.pm_field_4AC;
+    // pm_field_4C8 = other.pm_field_4C8;
+    // pm_field_4E4 = other.pm_field_4E4;
+    // pfield_500 = other.pfield_500;
+    // nfield_51C = other.nfield_51C;
+    // pfield_538 = other.pfield_538;
 
-    field_128 = other.field_128;
-    field_12C = other.field_12C;
-    field_130 = other.field_130;
-    field_134 = other.field_134;
-    field_138 = other.field_138;
-    field_13C = other.field_13C;
+    nm_field_128 = other.nm_field_128;
+    bm_field_12C = other.bm_field_12C;
+    sm_field_130 = other.sm_field_130;
+    nm_field_134 = other.nm_field_134;
+    nm_field_138 = other.nm_field_138;
+    nm_field_13C = other.nm_field_13C;
     m_nMirrorImages = other.m_nMirrorImages;
 
     memcpy(m_nSkills, other.m_nSkills, sizeof(m_nSkills));
@@ -367,10 +367,10 @@ void CDerivedStats::BonusInit()
 
     m_generalState = 0;
     m_nMaxHitPoints = 0;
-    field_6 = 0;
-    field_8 = 0;
-    field_A = 0;
-    field_C = 0;
+    wfield_6 = 0;
+    nm_field_8 = 0;
+    wfield_A = 0;
+    nfield_C = 0;
     m_nACCrushingMod = 0;
     m_nACMissileMod = 0;
     m_nACPiercingMod = 0;
@@ -466,19 +466,19 @@ void CDerivedStats::BonusInit()
     m_nDamageModPiercing = 0;
     m_nDamageModCrushing = 0;
     m_nDamageModMissile = 0;
-    field_124 = 0;
-    field_128 = 0;
-    field_12C = 0;
-    field_130 = 0;
-    field_134 = 0;
-    field_138 = 0;
-    field_13C = 0;
+    nm_field_124 = 0;
+    nm_field_128 = 0;
+    bm_field_12C = 0;
+    sm_field_130 = 0;
+    nm_field_134 = 0;
+    nm_field_138 = 0;
+    nm_field_13C = 0;
     m_nMirrorImages = 0;
     m_bPreventAISlowDown = FALSE;
 
     // TODO: Incomplete.
 
-    field_DA8 = 0;
+    nfield_DA8 = 0;
 
     m_barbarianLevel = 0;
     m_bardLevel = 0;
@@ -500,10 +500,10 @@ CDerivedStats& CDerivedStats::operator+=(const CDerivedStats& other)
     int index;
 
     m_nMaxHitPoints += other.m_nMaxHitPoints;
-    field_6 += other.field_6;
-    field_8 += other.field_8;
-    field_A += other.field_A;
-    field_C += other.field_C;
+    wfield_6 += other.wfield_6;
+    nm_field_8 += other.nm_field_8;
+    wfield_A += other.wfield_A;
+    nfield_C += other.nfield_C;
     m_nACCrushingMod += other.m_nACCrushingMod;
     m_nACMissileMod += other.m_nACMissileMod;
     m_nACPiercingMod += other.m_nACPiercingMod;
@@ -572,13 +572,13 @@ CDerivedStats& CDerivedStats::operator+=(const CDerivedStats& other)
     m_nDamageModPiercing += other.m_nDamageModPiercing;
     m_nDamageModCrushing += other.m_nDamageModCrushing;
     m_nDamageModMissile += other.m_nDamageModMissile;
-    field_124 += other.field_124;
-    field_128 += other.field_128;
-    field_12C += other.field_12C;
-    field_130 += other.field_130;
-    field_134 += other.field_134;
-    field_138 += other.field_138;
-    field_13C += other.field_13C;
+    nm_field_124 += other.nm_field_124;
+    nm_field_128 += other.nm_field_128;
+    bm_field_12C += other.bm_field_12C;
+    sm_field_130 += other.sm_field_130;
+    nm_field_134 += other.nm_field_134;
+    nm_field_138 += other.nm_field_138;
+    nm_field_13C += other.nm_field_13C;
     m_nMirrorImages += other.m_nMirrorImages;
 
     for (index = 0; index < 64; index++) {
@@ -895,10 +895,10 @@ void CDerivedStats::Unmarshal(BYTE* pStats, LONG nStats)
 
     m_generalState = pTemplate->m_generalState;
     m_nMaxHitPoints = pTemplate->m_nMaxHitPoints;
-    field_6 = pTemplate->field_6;
-    field_8 = pTemplate->field_8;
-    field_A = pTemplate->field_A;
-    field_C = pTemplate->field_C;
+    wfield_6 = pTemplate->wfield_6;
+    nm_field_8 = pTemplate->nm_field_8;
+    wfield_A = pTemplate->wfield_A;
+    nfield_C = pTemplate->nfield_C;
     m_nACCrushingMod = pTemplate->m_nACCrushingMod;
     m_nACMissileMod = pTemplate->m_nACMissileMod;
     m_nACPiercingMod = pTemplate->m_nACPiercingMod;
@@ -985,13 +985,13 @@ void CDerivedStats::Unmarshal(BYTE* pStats, LONG nStats)
     m_nDamageModPiercing = pTemplate->m_nDamageModPiercing;
     m_nDamageModCrushing = pTemplate->m_nDamageModCrushing;
     m_nDamageModMissile = pTemplate->m_nDamageModMissile;
-    field_124 = pTemplate->field_124;
-    field_128 = pTemplate->field_128;
-    field_12C = pTemplate->field_12C;
-    field_130 = pTemplate->field_130;
-    field_134 = pTemplate->field_134;
-    field_138 = pTemplate->field_138;
-    field_13C = pTemplate->field_13C;
+    nm_field_124 = pTemplate->nm_field_124;
+    nm_field_128 = pTemplate->nm_field_128;
+    bm_field_12C = pTemplate->bm_field_12C;
+    sm_field_130 = pTemplate->sm_field_130;
+    nm_field_134 = pTemplate->nm_field_134;
+    nm_field_138 = pTemplate->nm_field_138;
+    nm_field_13C = pTemplate->nm_field_13C;
     m_nMirrorImages = pTemplate->m_nMirrorImages;
     m_bPreventAISlowDown = pTemplate->m_bPreventAISlowDown;
 }
@@ -1106,3 +1106,80 @@ CGameSpriteGroupedSpellList* CDerivedStats::sub_447B00(const BYTE& nClass)
 
     return &(m_spells.m_spellsByClass[nClassIndex]);
 }
+
+// Phase 1-2: Scaffold functions
+// 0x443970
+void FUN_00443970() {
+    // TODO: Incomplete.
+}
+
+// 0x443A60
+void FUN_00443a60() {
+    // TODO: Incomplete.
+}
+
+// 0x444D10
+void FUN_00444d10() {
+    // TODO: Incomplete.
+}
+
+// 0x444EA0
+void FUN_00444ea0() {
+    // TODO: Incomplete.
+}
+
+// 0x4450A0
+void FUN_004450a0() {
+    // TODO: Incomplete.
+}
+
+// 0x445240
+void FUN_00445240() {
+    // TODO: Incomplete.
+}
+
+// 0x4464A0
+void FUN_004464a0() {
+    // TODO: Incomplete.
+}
+
+// 0x4478C0
+void FUN_004478c0() {
+    // TODO: Incomplete.
+}
+
+// 0x447B60
+void FUN_00447b60() {
+    // TODO: Incomplete.
+}
+
+// 0x447C20
+void FUN_00447c20() {
+    // TODO: Incomplete.
+}
+
+// 0x447CD0
+void FUN_00447cd0() {
+    // TODO: Incomplete.
+}
+
+// 0x447E30
+void FUN_00447e30() {
+    // TODO: Incomplete.
+}
+
+// 0x447E50
+void FUN_00447e50() {
+    // TODO: Incomplete.
+}
+
+// 0x447F10
+void FUN_00447f10() {
+    // TODO: Incomplete.
+}
+
+// 0x447F30
+void FUN_00447f30() {
+    // TODO: Incomplete.
+}
+

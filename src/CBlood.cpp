@@ -134,3 +134,10 @@ void CBlood::GenerateParticles()
 {
     // TODO: Incomplete.
 }
+
+// Phase 1-2: Scaffold functions
+// 0x51AE40
+void FUN_0051ae40() {
+    // TODO: Incomplete.
+}
+

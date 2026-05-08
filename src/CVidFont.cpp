@@ -16,13 +16,13 @@ CCriticalSection CVidFont::REGISTRY_CRITICAL_SECTION;
 // 0x792CA0
 CVidFont::CVidFont()
 {
-    field_4E2 = 0;
+    nm_field_4E2 = 0;
     m_posRegistryList = NULL;
     m_rgbPaletteForegroundColor = 0;
     m_rgbPaletteBackgroundColor = 0;
     m_bFontSet = FALSE;
     m_hFont = NULL;
-    field_4E6 = -1;
+    wm_field_4E6 = -1;
     m_nBaseLineHeight = -1;
     m_nFontHeight = -1;
     m_rgbForegroundColor = RGB(255, 255, 255);
@@ -59,7 +59,7 @@ LONG CVidFont::GetStringLength(const CString& sString, BOOLEAN bDemanded)
         SHORT nSequence = ch < 0 ? ch + 256 : ch;
         SequenceSet(nSequence - 1);
 
-        if (g_pChitin->field_1A0 & IsDBCSLeadByte(sString.GetAt(index))) {
+        if (g_pChitin->nm_field_1A0 & IsDBCSLeadByte(sString.GetAt(index))) {
             index++;
             FrameSet(sString.GetAt(index) - 1);
         } else {
@@ -219,7 +219,7 @@ BOOL CVidFont::SetTextFontEx(INT nSurface, HDC hDC)
     UTIL_ASSERT(!g_pChitin->cVideo.Is3dAccelerated());
 
     LONG nHeight;
-    if (field_4E6 == -1) {
+    if (wm_field_4E6 == -1) {
         CSize size;
         GetFrameSize(0, 0, size, FALSE);
         nHeight = size.cy;
@@ -333,7 +333,7 @@ BOOL CVidFont::TextOut(const CString& sString, int x, int y, const CRect& rClip,
         SHORT nSequence = ch < 0 ? ch + 256 : ch;
         SequenceSet(nSequence - 1);
 
-        if (g_pChitin->field_1A0 && IsDBCSLeadByte(sString.GetAt(index))) {
+        if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(sString.GetAt(index))) {
             FrameSet(sString.GetAt(index) - 1);
         } else {
             FrameSet(0);
@@ -401,7 +401,7 @@ BOOL CVidFont::TextOut(const CString& sString, WORD* pSurface, LONG lPitch, int 
         SHORT nSequence = ch < 0 ? ch + 256 : ch;
         SequenceSet(nSequence - 1);
 
-        if (g_pChitin->field_1A0 && IsDBCSLeadByte(sString.GetAt(index))) {
+        if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(sString.GetAt(index))) {
             index++;
             FrameSet(sString.GetAt(index) - 1);
         } else {
@@ -521,7 +521,7 @@ BOOL CVidFont::Load(BOOL bDemanded)
         return TRUE;
     }
 
-    if (g_pChitin->field_1A0) {
+    if (g_pChitin->nm_field_1A0) {
         return TRUE;
     }
 
@@ -550,7 +550,7 @@ int CVidFont::RegisterFont()
 {
     CSingleLock renderLock(&REGISTRY_CRITICAL_SECTION, FALSE);
 
-    if (g_pChitin->cVideo.Is3dAccelerated() && !g_pChitin->field_1A0) {
+    if (g_pChitin->cVideo.Is3dAccelerated() && !g_pChitin->nm_field_1A0) {
         // __FILE__: C:\Projects\Icewind2\src\chitin\ChVidFont3d.cpp
         // __LINE__: 141
         UTIL_ASSERT(renderLock.Lock(INFINITE) != 0);
@@ -627,7 +627,7 @@ void CVidFont::Unload()
 {
     CSingleLock renderLock(&REGISTRY_CRITICAL_SECTION, FALSE);
 
-    if (g_pChitin->cVideo.Is3dAccelerated() && !g_pChitin->field_1A0) {
+    if (g_pChitin->cVideo.Is3dAccelerated() && !g_pChitin->nm_field_1A0) {
         // __FILE__: C:\Projects\Icewind2\src\chitin\ChVidFont3d.cpp
         // __LINE__: 284
         UTIL_ASSERT(renderLock.Lock(INFINITE) != 0);
@@ -688,7 +688,7 @@ void CVidFont::Unload()
 // 0x7A0A40
 void CVidFont::UnloadAllFonts()
 {
-    if (g_pChitin->cVideo.Is3dAccelerated() && !g_pChitin->field_1A0) {
+    if (g_pChitin->cVideo.Is3dAccelerated() && !g_pChitin->nm_field_1A0) {
         while (!REGISTRY.IsEmpty()) {
             CVidFontRegistryEntry* node = REGISTRY.RemoveHead();
             if (node->m_bLoaded) {
@@ -876,7 +876,7 @@ void CVidFont::CreateTexture(DWORD* pData, INT nTextureId, const CSize& size)
     CVideo3d::glEnable(GL_TEXTURE_2D);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.field_13E = nTextureId;
+    g_pChitin->cVideo.nm_field_13E = nTextureId;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, nTextureId);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -891,7 +891,7 @@ void CVidFont::CreateTexture(DWORD* pData, INT nTextureId, const CSize& size)
 
     CVideo3d::glTexImage2D(GL_TEXTURE_2D,
         0,
-        g_pChitin->cVideo.field_136,
+        g_pChitin->cVideo.nm_field_136,
         size.cx,
         size.cy,
         0,
@@ -909,7 +909,7 @@ BOOL CVidFont::TextOut3d(const CString& sText, WORD* pSurface, LONG lPitch, INT 
     CVideo3d::glEnable(GL_TEXTURE_2D);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.field_13E = 2;
+    g_pChitin->cVideo.nm_field_13E = 2;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -1105,7 +1105,7 @@ void CVidFont::RenderCharacters(const CString& sString, INT x, INT y, CVidFontRe
 
             if (node->m_aTextureIds[nTextureIndex] != nTextureId) {
                 nTextureId = node->m_aTextureIds[nTextureIndex];
-                g_pChitin->cVideo.field_13E = nTextureId;
+                g_pChitin->cVideo.nm_field_13E = nTextureId;
                 CVideo3d::glBindTexture(GL_TEXTURE_2D, nTextureId);
                 g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
             }
@@ -1172,7 +1172,7 @@ BOOL CVidFont::TextOutEx3d(const CString& sString, int x, int y, const CRect& rC
         SHORT nSequence = ch < 0 ? ch + 256 : ch;
         SequenceSet(nSequence - 1);
 
-        if (g_pChitin->field_1A0 && IsDBCSLeadByte(sString[index])) {
+        if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(sString[index])) {
             FrameSet(sString[index] - 1);
         } else {
             FrameSet(0);
@@ -1188,7 +1188,7 @@ BOOL CVidFont::TextOutEx3d(const CString& sString, int x, int y, const CRect& rC
 
         CRect rClampedChar;
         if (rClampedChar.IntersectRect(rChar, rClip)) {
-            if (g_pChitin->cVideo.field_13A) {
+            if (g_pChitin->cVideo.nm_field_13A) {
                 CVidInf::FXClear(CVideo3d::texImageData, size.cy * CVidInf::FX_WIDTH);
             } else {
                 CVidInf::FXClear(CVideo3d::texImageData, size.cx * size.cy);

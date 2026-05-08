@@ -379,7 +379,7 @@ public:
     /* 0078 */ DWORD m_dwDeleteAreaTimeout;
     /* 007C */ BYTE m_pnDeleteAreaVotes[6];
     /* 0082 */ PLAYER_ID m_pnDeleteAreaVoters[6];
-    /* 009A */ CCriticalSection field_9A;
+    /* 009A */ CCriticalSection pfield_9A;
     /* 00BA */ PLAYER_ID m_pRemovedPlayerID[6];
     /* 00D2 */ BOOLEAN m_bRemovedPlayerID;
     /* 00D3 */ BOOLEAN m_bDialogRequestPending;
@@ -700,7 +700,7 @@ public:
     void Run() override;
 
     /* 000C */ DWORD m_entryNum;
-    /* 0010 */ BOOLEAN field_10;
+    /* 0010 */ BOOLEAN bm_field_10;
 };
 
 class CMessageDropPath : public CMessage {
@@ -1117,51 +1117,51 @@ public:
     /* 002A */ SHORT m_nFacing;
     /* 002C */ DWORD m_dwState;
     /* 0030 */ std::bitset<256> m_spellStates;
-    /* 0038 */ short field_38;
-    /* 003A */ short field_3A;
-    /* 003C */ short field_3C;
-    /* 003E */ short field_3E;
-    /* 0040 */ short field_40;
-    /* 0042 */ short field_42;
-    /* 0044 */ short field_44;
-    /* 0046 */ short field_46;
-    /* 0048 */ short field_48;
-    /* 004A */ short field_4A;
-    /* 004C */ short field_4C;
-    /* 004E */ short field_4E;
+    /* 0038 */ short wm_field_38;
+    /* 003A */ short wm_field_3A;
+    /* 003C */ short wm_field_3C;
+    /* 003E */ short wm_field_3E;
+    /* 0040 */ short wm_field_40;
+    /* 0042 */ short wm_field_42;
+    /* 0044 */ short wm_field_44;
+    /* 0046 */ short wm_field_46;
+    /* 0048 */ short wm_field_48;
+    /* 004A */ short wm_field_4A;
+    /* 004C */ short wm_field_4C;
+    /* 004E */ short wm_field_4E;
     /* 0050 */ std::bitset<32> m_visualEffects;
     /* 0054 */ BYTE m_nFadeSpeed;
-    /* 0055 */ unsigned char field_55;
-    /* 0056 */ int field_56;
+    /* 0055 */ unsigned char bfield_55;
+    /* 0056 */ int nfield_56;
     /* 005A */ BYTE m_nTranslucent;
-    /* 005B */ unsigned char field_5B;
+    /* 005B */ unsigned char bfield_5B;
     /* 005C */ SHORT m_nHitPoints;
     /* 005E */ SHORT m_nMaxHitPoints;
-    /* 0060 */ int field_60;
-    /* 0064 */ short field_64;
-    /* 0066 */ short field_66;
-    /* 0068 */ short field_68;
-    /* 006A */ short field_6A;
+    /* 0060 */ int nfield_60;
+    /* 0064 */ short wfield_64;
+    /* 0066 */ short wfield_66;
+    /* 0068 */ short wfield_68;
+    /* 006A */ short wfield_6A;
     /* 006C */ SHORT m_nACCrushingMod;
     /* 006E */ SHORT m_nACMissileMod;
     /* 0070 */ SHORT m_nACPiercingMod;
     /* 0072 */ SHORT m_nACSlashingMod;
-    /* 0074 */ short field_74;
-    /* 0076 */ void* field_76;
+    /* 0074 */ short wfield_74;
+    /* 0076 */ void* pfield_76;
     /* 007A */ BYTE m_nEnemyAlly;
     /* 007B */ BYTE m_nEnemyAllyLive;
     /* 007C */ BYTE m_nEnemyAllyStart;
     /* 007D */ BOOLEAN m_bMoralFailure;
     /* 007E */ BYTE m_nMoveScale;
-    /* 007F */ unsigned char field_7F;
+    /* 007F */ unsigned char bfield_7F;
     /* 0080 */ LONG m_nHPCONBonusTotalOld;
     /* 0084 */ BOOLEAN m_bLevelUp;
-    /* 0085 */ unsigned char field_85;
+    /* 0085 */ unsigned char bm_field_85;
     /* 0086 */ BYTE m_baseSkills[64];
     /* 00C6 */ BYTE m_skills[64];
-    /* 0106 */ unsigned char field_106;
-    /* 0107 */ unsigned char field_107;
-    /* 0108 */ int field_108;
+    /* 0106 */ unsigned char bm_m_field_106;
+    /* 0107 */ unsigned char bm_field_107;
+    /* 0108 */ int nm_field_108;
 };
 
 class CMessageStartFollow : public CMessage {
@@ -1387,7 +1387,7 @@ public:
     BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;
 
-    /* 000C */ int field_C;
+    /* 000C */ int nfield_C;
 };
 
 class CMessageFloatText : public CMessage {
@@ -1414,7 +1414,7 @@ public:
     BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;
 
-    /* 000C */ int field_C;
+    /* 000C */ int nfield_C;
 };
 
 class CMessageMoveGlobal : public CMessage {
@@ -1496,9 +1496,9 @@ public:
 
     /* 000C */ CResRef m_store;
     /* 0014 */ CResRef m_itemId;
-    /* 001C */ int field_1C;
-    /* 0020 */ int field_20;
-    /* 0024 */ int field_24;
+    /* 001C */ int nm_field_1C;
+    /* 0020 */ int nm_field_20;
+    /* 0024 */ int nm_field_24;
 };
 
 class CMessageFamiliarAdd : public CMessage {
@@ -1540,8 +1540,8 @@ public:
     /* 000E */ LONG m_projectileTargetId;
     /* 0012 */ CPoint m_projectileTarget;
     /* 001A */ LONG m_height;
-    /* 001E */ unsigned char field_1E;
-    /* 0020 */ int field_20;
+    /* 001E */ unsigned char bm_field_1E;
+    /* 0020 */ int nm_field_20;
 };
 
 class CMessageStopEscapeArea : public CMessage {
@@ -1630,8 +1630,8 @@ public:
     BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;
 
-    /* 000C */ BOOLEAN field_C;
-    /* 000D */ BOOLEAN field_D;
+    /* 000C */ BOOLEAN nfield_C;
+    /* 000D */ BOOLEAN bfield_D;
 };
 
 class CMessageWeaponImmumityUpdate : public CMessage {
@@ -1658,7 +1658,7 @@ public:
     BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;
 
-    /* 000C */ BOOLEAN field_C;
+    /* 000C */ BOOLEAN nfield_C;
     /* 000E */ PLAYER_ID m_idPlayer;
     /* 0012 */ INT m_nCharacterPortraitSlotNumber;
 };
@@ -1674,7 +1674,7 @@ public:
     void Run() override;
 
     /* 000C */ PLAYER_ID m_idPlayer;
-    /* 0010 */ BOOLEAN field_10;
+    /* 0010 */ BOOLEAN bm_field_10;
 };
 
 class CMessageSetAreaType : public CMessage {
@@ -1740,7 +1740,7 @@ public:
     BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;
 
-    /* 000C */ unsigned char field_C;
+    /* 000C */ unsigned char nfield_C;
 };
 
 class CMessageEndGame : public CMessage {
@@ -1754,8 +1754,8 @@ public:
     BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;
 
-    /* 000C */ int field_C;
-    /* 0010 */ int field_10;
+    /* 000C */ int nfield_C;
+    /* 0010 */ int bm_field_10;
     /* 0014 */ CAIAction m_action;
 };
 

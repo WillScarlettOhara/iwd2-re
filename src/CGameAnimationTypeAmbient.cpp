@@ -861,3 +861,10 @@ SHORT CGameAnimationTypeAmbient::SetSequence(SHORT nSequence)
 
     return nSequence;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x6A7870
+void FUN_006a7870() {
+    // TODO: Incomplete.
+}
+

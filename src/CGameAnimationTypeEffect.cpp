@@ -14,9 +14,9 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
     SHORT nFrame;
 
     m_animationID = animationID;
-    field_5E7 = 0;
+    bfield_5E7 = 0;
     m_translucent = 0;
-    field_5E1 = 0;
+    bfield_5E1 = 0;
     m_colorChunks = -1;
     m_bRender = TRUE;
     m_pSndDeath = "";
@@ -27,8 +27,8 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SequenceSet(0);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        field_5DE = 1;
-        field_5E1 = 1;
+        wfield_5DE = 1;
+        bfield_5E1 = 1;
         break;
     case 0x100:
         m_g1VidCell.SetResRef(CResRef("SPCHUNKS"), FALSE, TRUE, TRUE);
@@ -56,7 +56,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.FrameSet(nFrame);
         m_g1VidCellShadow.FrameSet(nFrame);
         m_currentVidCellShadow = &m_g1VidCellShadow;
-        field_5DE = 0;
+        wfield_5DE = 0;
         break;
     case 0x200:
         m_g1VidCell.SetResRef(CResRef("SPBLOOD"), FALSE, TRUE, TRUE);
@@ -93,7 +93,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.FrameSet(nFrame);
         m_g1VidCellShadow.FrameSet(nFrame);
         m_currentVidCellShadow = &m_g1VidCellShadow;
-        field_5DE = 0;
+        wfield_5DE = 0;
         break;
     case 0x300:
         m_g1VidCell.SetResRef(CResRef("SPSMPUFF"), FALSE, TRUE, TRUE);
@@ -106,7 +106,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SequenceSet(m_currentBamSequence);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        field_5DE = 0;
+        wfield_5DE = 0;
         m_translucent = 1;
         break;
     case 0x400:
@@ -117,7 +117,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
             break;
         case 0x10:
             m_g1VidCell.SetResRef(CResRef("GLPHWRDH"), FALSE, TRUE, TRUE);
-            field_5E7 = 1;
+            bfield_5E7 = 1;
             break;
         default:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
@@ -142,7 +142,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.FrameSet(nFrame);
         m_g1VidCellShadow.FrameSet(nFrame);
         m_currentVidCellShadow = &m_g1VidCellShadow;
-        field_5DE = 0;
+        wfield_5DE = 0;
         break;
     case 0x500:
         switch (m_animationID & 0xF0) {
@@ -168,7 +168,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SetPalette(m_palette);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        field_5DE = 1;
+        wfield_5DE = 1;
         break;
     case 0x600:
         switch (m_animationID & 0xF0) {
@@ -194,7 +194,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SetPalette(m_palette);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        field_5DE = 1;
+        wfield_5DE = 1;
         break;
     case 0x700:
         switch (m_animationID & 0xF0) {
@@ -213,7 +213,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SequenceSet(0);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        field_5DE = 0;
+        wfield_5DE = 0;
         break;
     case 0x800:
         switch (m_animationID & 0xF0) {
@@ -238,7 +238,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SetPalette(m_palette);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        field_5DE = 0;
+        wfield_5DE = 0;
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
@@ -448,11 +448,11 @@ void CGameAnimationTypeEffect::Render(CInfinity* pInfinity, CVidMode* pVidMode, 
         dwRenderFlags |= CInfinity::MIRROR_FX;
     }
 
-    if (field_5E7 == 1) {
+    if (bfield_5E7 == 1) {
         dwRenderFlags |= 0x200;
     }
 
-    if (field_5E1) {
+    if (bfield_5E1) {
         dwRenderFlags |= 0x8;
     }
 
@@ -485,7 +485,7 @@ void CGameAnimationTypeEffect::Render(CInfinity* pInfinity, CVidMode* pVidMode, 
     pInfinity->FXPrep(rFXRect, dwRenderFlags, nSurface, ptPos, ptReference);
 
     if (pInfinity->FXLock(rFXRect, dwRenderFlags)) {
-        if (!field_5DE) {
+        if (!wfield_5DE) {
             m_currentVidCell->SetTintColor(rgbTintColor);
         }
 
@@ -556,3 +556,40 @@ SHORT CGameAnimationTypeEffect::SetSequence(SHORT nSequence)
 {
     return CGameSprite::SEQ_READY;
 }
+
+// Phase 1-2: Scaffold functions
+// 0x55D2C0
+void FUN_0055d2c0() {
+    // TODO: Incomplete.
+}
+
+// 0x55D2E0
+void FUN_0055d2e0() {
+    // TODO: Incomplete.
+}
+
+// 0x55D3A0
+void FUN_0055d3a0() {
+    // TODO: Incomplete.
+}
+
+// 0x55D810
+void FUN_0055d810() {
+    // TODO: Incomplete.
+}
+
+// 0x55DBD0
+void FUN_0055dbd0() {
+    // TODO: Incomplete.
+}
+
+// 0x55E130
+void FUN_0055e130() {
+    // TODO: Incomplete.
+}
+
+// 0x6A31D0
+void FUN_006a31d0() {
+    // TODO: Incomplete.
+}
+

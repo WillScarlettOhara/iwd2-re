@@ -211,8 +211,8 @@ public:
 
     void sub_49DB60(int a1);
 
-    /* 018C */ int field_18C;
-    /* 0190 */ int field_190;
+    /* 018C */ int nm_m_field_18C;
+    /* 0190 */ int nm_m_field_190;
 };
 
 class IcewindCGameEffectVisualSpellHit : public CGameEffect {
