@@ -90,9 +90,9 @@ void CProjectile::OnArrival()
     // NOTE: Uninline.
     PlaySound(m_arrivalSoundRef, m_loopArrivalSound, TRUE);
 
-    if (nm_field_182 != CGameObjectArray::INVALID_INDEX) {
+    if (m_secondaryProjectileId != CGameObjectArray::INVALID_INDEX) {
         do {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(nm_field_182,
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_secondaryProjectileId,
                 CGameObjectArray::THREAD_ASYNCH,
                 reinterpret_cast<CGameObject**>(&pProjectile),
                 INFINITE);
@@ -101,7 +101,7 @@ void CProjectile::OnArrival()
         if (rc == CGameObjectArray::SUCCESS) {
             pProjectile->RemoveSelf();
 
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(nm_field_182,
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_secondaryProjectileId,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
         }

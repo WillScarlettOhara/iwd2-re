@@ -24,7 +24,7 @@ CVidCell::CVidCell()
     m_bPaletteChanged = FALSE;
     m_pFrame = NULL;
     m_bDoubleSize = FALSE;
-    nfield_C8 = 1;
+    m_bCyclic = 1;
     m_bShadowOn = TRUE;
 }
 
@@ -34,7 +34,7 @@ CVidCell::CVidCell(CResRef cNewResRef, BOOL bDoubleSize)
     // NOTE: Uninline.
     SetResRef(cNewResRef, bDoubleSize, TRUE, TRUE);
 
-    nfield_C8 = 1;
+    m_bCyclic = 1;
     m_nCurrentFrame = 0;
     m_nCurrentSequence = 0;
     m_bPaletteChanged = FALSE;
@@ -206,7 +206,7 @@ BOOL CVidCell::GetCurrentCenterPoint(CPoint& ptReference, BOOLEAN bDemanded)
     if (m_nCurrentFrame < GetResSequences()[nSequence].nFrames) {
         nFrame = m_nCurrentFrame;
     } else {
-        if (nfield_C8) {
+        if (m_bCyclic) {
             // NOTE: Uninline.
             if (GetResSequences()[nSequence].nFrames > 0) {
                 // NOTE: Uninline.
@@ -221,7 +221,7 @@ BOOL CVidCell::GetCurrentCenterPoint(CPoint& ptReference, BOOLEAN bDemanded)
     }
 
     if (nFrame < 0) {
-        if (nfield_C8) {
+        if (m_bCyclic) {
             // FIXME: Repeating calls.
             // NOTE: Lots of inlining.
             if (GetResSequences()[nSequence].nFrames > 0) {
@@ -283,7 +283,7 @@ BOOL CVidCell::GetCurrentFrameSize(CSize& frameSize, BOOLEAN bDemanded)
     if (m_nCurrentFrame < GetResSequences()[nSequence].nFrames) {
         nFrame = m_nCurrentFrame;
     } else {
-        if (nfield_C8) {
+        if (m_bCyclic) {
             // NOTE: Uninline.
             if (GetResSequences()[nSequence].nFrames > 0) {
                 // NOTE: Uninline.
@@ -298,7 +298,7 @@ BOOL CVidCell::GetCurrentFrameSize(CSize& frameSize, BOOLEAN bDemanded)
     }
 
     if (nFrame < 0) {
-        if (nfield_C8) {
+        if (m_bCyclic) {
             // FIXME: Repeating calls.
             // NOTE: Lots of inlining.
             if (GetResSequences()[nSequence].nFrames > 0) {
@@ -1298,7 +1298,7 @@ BOOL CVidCell::GetFrame(BOOLEAN bDemanded)
     }
 
     if (!(m_nCurrentFrame < pRes->m_pSequences[m_nCurrentSequence].nFrames)) {
-        if (nfield_C8) {
+        if (m_bCyclic) {
             if (pRes->m_pSequences[m_nCurrentSequence].nFrames > 0) {
                 m_nCurrentFrame = m_nCurrentFrame % pRes->m_pSequences[m_nCurrentSequence].nFrames;
             } else {
@@ -1310,7 +1310,7 @@ BOOL CVidCell::GetFrame(BOOLEAN bDemanded)
     }
 
     if (m_nCurrentFrame < 0) {
-        if (nfield_C8) {
+        if (m_bCyclic) {
             if (pRes->m_pSequences[m_nCurrentSequence].nFrames > 0) {
                 m_nCurrentFrame = pRes->m_pSequences[m_nCurrentSequence].nFrames + m_nCurrentFrame % pRes->m_pSequences[m_nCurrentSequence].nFrames;
                 if (m_nCurrentFrame == pRes->m_pSequences[m_nCurrentSequence].nFrames) {

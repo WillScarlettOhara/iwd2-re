@@ -25,7 +25,7 @@ CSound::CSound()
     m_nXCoordinate = 0;
     m_nYCoordinate = 0;
     m_nZCoordinate = 0;
-    nm_field_3C = 0;
+    m_bFrequencyInitialized = 0;
     pSoundBuffer = NULL;
     m_nPitchVariance = 0;
     m_nVolumeVariance = 0;
@@ -60,7 +60,7 @@ CSound::CSound(CResRef cResRef, int nRange, int nChannel, int nLooping, int nPri
         m_nRange = 1;
     }
     m_bPositionedSound = FALSE;
-    nm_field_3C = 0;
+    m_bFrequencyInitialized = 0;
     pSoundBuffer = NULL;
     m_nPitchVariance = 0;
     m_nVolumeVariance = 0;
@@ -314,9 +314,9 @@ BOOL CSound::ExclusivePlay(BOOL bReplay)
 
             LPWAVEFORMATEX pWaveFormat = GetRes()->GetWaveFormatPtr();
 
-            if (!nm_field_3C) {
+            if (!m_bFrequencyInitialized) {
                 m_dwFrequency = pWaveFormat->nSamplesPerSec / 500;
-                nm_field_3C = TRUE;
+                m_bFrequencyInitialized = TRUE;
             }
 
             BOOL bCreated;

@@ -498,7 +498,7 @@ BOOL CInfToolTip::GetFrame()
 
     SHORT nFrames = pRes->m_pSequences[m_nCurrentSequence].nFrames;
     if (m_nCurrentFrame >= nFrames) {
-        if (nfield_C8 != 0) {
+        if (m_bCyclic != 0) {
             m_nCurrentFrame = 0;
         } else {
             m_nCurrentFrame--;
@@ -506,7 +506,7 @@ BOOL CInfToolTip::GetFrame()
     }
 
     if (m_nCurrentFrame < 0) {
-        if (nfield_C8 != 0) {
+        if (m_bCyclic != 0) {
             m_nCurrentFrame = nFrames - 1;
         } else {
             m_nCurrentFrame = 0;
