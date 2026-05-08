@@ -32,7 +32,7 @@ void CDerivedStats::Reload(CGameSprite* pSprite, CCreatureFileHeader* pCreature,
 
     m_generalState = pCreature->m_generalState;
     m_nMaxHitPoints = pCreature->m_maxHitPointsBase;
-    wfield_6 = 0;
+    m_nArmorClass = 0;
     wm_field_8 = 0;
     wfield_A = 0;
     nfield_C = pCreature->wm_field_3E;
@@ -215,7 +215,7 @@ CDerivedStats& CDerivedStats::operator=(const CDerivedStats& other)
 {
     m_generalState = other.m_generalState;
     m_nMaxHitPoints = other.m_nMaxHitPoints;
-    wfield_6 = other.wfield_6;
+    m_nArmorClass = other.m_nArmorClass;
     wm_field_8 = other.wm_field_8;
     wfield_A = other.wfield_A;
     nfield_C = other.nfield_C;
@@ -367,7 +367,7 @@ void CDerivedStats::BonusInit()
 
     m_generalState = 0;
     m_nMaxHitPoints = 0;
-    wfield_6 = 0;
+    m_nArmorClass = 0;
     wm_field_8 = 0;
     wfield_A = 0;
     nfield_C = 0;
@@ -500,7 +500,7 @@ CDerivedStats& CDerivedStats::operator+=(const CDerivedStats& other)
     int index;
 
     m_nMaxHitPoints += other.m_nMaxHitPoints;
-    wfield_6 += other.wfield_6;
+    m_nArmorClass += other.m_nArmorClass;
     wm_field_8 += other.wm_field_8;
     wfield_A += other.wfield_A;
     nfield_C += other.nfield_C;
@@ -895,7 +895,7 @@ void CDerivedStats::Unmarshal(BYTE* pStats, LONG nStats)
 
     m_generalState = pTemplate->m_generalState;
     m_nMaxHitPoints = pTemplate->m_nMaxHitPoints;
-    wfield_6 = pTemplate->wfield_6;
+    m_nArmorClass = pTemplate->m_nArmorClass;
     wm_field_8 = pTemplate->wm_field_8;
     wfield_A = pTemplate->wfield_A;
     nfield_C = pTemplate->nfield_C;

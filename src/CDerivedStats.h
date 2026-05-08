@@ -400,7 +400,7 @@ class CDerivedStatsTemplate {
 public:
     /* 0000 */ DWORD m_generalState;
     /* 0004 */ SHORT m_nMaxHitPoints;
-    /* 0006 */ short wfield_6;
+    /* 0006 */ short m_nArmorClass;
     /* 0008 */ short wm_field_8;
     /* 000A */ short wfield_A;
     /* 000C */ short wfield_C;

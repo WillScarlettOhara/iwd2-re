@@ -18,7 +18,7 @@ public:
     BOOL AddButton(CPoint pt);
     BOOL AddANote(const CAreaUserNote& cNote);
     void Add();
-    BYTE GetMField8D();
+    BYTE GetNoteIconIndex();
     BOOL sub_47B150(WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef);
     void Add(CString area, WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef);
     STRREF GetNoteButtonText(DWORD id);
@@ -44,8 +44,8 @@ public:
     /* 0080 */ CResRef m_rArea;
     /* 0088 */ CString m_szBuffer;
     /* 008C */ unsigned char bm_field_8C;
-    /* 008D */ unsigned char bm_field_8D;
-    /* 008E */ unsigned char bm_field_8E;
+    /* 008D */ unsigned char m_nCurrentIcon;
+    /* 008E */ unsigned char m_bAddingNote;
 };
 
 #endif /* CGAMEAREANOTES_H_ */
