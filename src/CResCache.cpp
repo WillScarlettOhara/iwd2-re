@@ -23,11 +23,11 @@ CResCache::CResCache()
 {
     getcwd(workingDirectory, sizeof(workingDirectory));
     m_sDirName = DEFAULT_CACHE_DIRECTORY;
-    nm_field_110 = 0;
+    m_bCacheLocked = 0;
     m_nCacheSize = 175000000;
     m_nAvailableCacheSize = 175000000;
     sm_field_114 = 0;
-    nm_field_118 = 0;
+    m_bCopyError = 0;
     m_nEntries = 0;
     m_bInitialized = FALSE;
     InitializeCriticalSection(&m_criticalSection);
@@ -215,7 +215,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
 
     INT nTotalBytesRead = 0;
 
-    nm_field_118 = 0;
+    m_bCopyError = 0;
 
     if (GetUnusedSize() < nSize) {
         FlushCache(nSize);
@@ -298,7 +298,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
 
                 nBytesRead = input.Read(pCompressedBuffer, nCompressedChunkSize);
                 if (nBytesRead != nCompressedChunkSize) {
-                    nm_field_118 = 1;
+                    m_bCopyError = 1;
 
                     delete pCompressedBuffer;
                     delete pBuffer;
@@ -314,14 +314,14 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
 
                 output.Write(pBuffer, nUncompressedChunkSize);
             } else {
-                nm_field_118 = 1;
+                m_bCopyError = 1;
             }
         } else {
             nBytesRead = input.Read(pBuffer, nBufferSize);
             output.Write(pBuffer, nBytesRead);
         }
 
-        if (nm_field_118 == 1) {
+        if (m_bCopyError == 1) {
             nTotalBytesRead = nTotalBytesToRead;
             g_pChitin->cProgressBar.m_nActionProgress = nTotalBytesRead;
         } else {
@@ -352,7 +352,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
 
     delete pBuffer;
 
-    if (nm_field_118 == 1) {
+    if (m_bCopyError == 1) {
         CFile::Remove(sDstFileName);
         return FALSE;
     }

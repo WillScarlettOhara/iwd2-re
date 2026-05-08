@@ -34,10 +34,10 @@ public:
     /* 0000 */ BOOL m_bInitialized;
     /* 0004 */ char workingDirectory[260]; // #guess
     /* 0108 */ CString m_sDirName;
-    /* 010C */ CString sm_field_10C;
-    /* 0110 */ int nm_field_110;
+    /* 010C */ CString m_sTempFileName;
+    /* 0110 */ int m_bCacheLocked;
     /* 0114 */ int nm_field_114;
-    /* 0118 */ int nm_field_118;
+    /* 0118 */ int m_bCopyError;
     /* 011C */ int m_nCacheSize;
     /* 0120 */ int m_nAvailableCacheSize;
     /* 0124 */ int m_nEntries;

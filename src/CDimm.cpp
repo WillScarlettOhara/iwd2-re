@@ -478,9 +478,9 @@ void* CDimm::InternalDemand(CRes* pRes)
     if ((nResID >> 20) < m_nResFiles && (nResID & 0xFFF00000) < 0xFC000000) {
         CResFile* pResFile = m_ppResFiles[nResID >> 20];
         EnterCriticalSection(&(g_pChitin->pm_field_35C));
-        while (g_pChitin->cDimm.cResCache.nm_field_110 == 1) {
+        while (g_pChitin->cDimm.cResCache.m_bCacheLocked == 1) {
             LeaveCriticalSection(&(g_pChitin->pm_field_35C));
-            while (g_pChitin->cDimm.cResCache.nm_field_110 == 1) {
+            while (g_pChitin->cDimm.cResCache.m_bCacheLocked == 1) {
                 SleepEx(50, 0);
             }
             EnterCriticalSection(&(g_pChitin->pm_field_35C));
@@ -1392,10 +1392,10 @@ INT CDimm::GetResNumber(RESID nResID, CResRef resRef, USHORT nResType)
 
             CResCache* pResCache = &(g_pChitin->cDimm.cResCache);
             EnterCriticalSection(&(g_pChitin->pm_field_35C));
-            while (pResCache->nm_field_110 == 1) {
+            while (pResCache->m_bCacheLocked == 1) {
                 LeaveCriticalSection(&(g_pChitin->pm_field_35C));
 
-                while (pResCache->nm_field_110 == 1) {
+                while (pResCache->m_bCacheLocked == 1) {
                     SleepEx(50, FALSE);
                 }
 
@@ -1950,10 +1950,10 @@ int CDimm::Request(CRes* pRes)
 
         CResCache* pResCache = &(g_pChitin->cDimm.cResCache);
         EnterCriticalSection(&(g_pChitin->pm_field_35C));
-        while (pResCache->nm_field_110 == 1) {
+        while (pResCache->m_bCacheLocked == 1) {
             LeaveCriticalSection(&(g_pChitin->pm_field_35C));
 
-            while (pResCache->nm_field_110 == 1) {
+            while (pResCache->m_bCacheLocked == 1) {
                 SleepEx(50, FALSE);
             }
 
