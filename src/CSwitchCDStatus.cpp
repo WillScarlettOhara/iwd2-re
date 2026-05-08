@@ -3,7 +3,7 @@
 // 0x54D280
 CSwitchCDStatus::CSwitchCDStatus()
 {
-    bm_field_0 = 0;
+    nm_field_0 = 0;
     nm_field_4 = 0;
     m_bActivateEngine = FALSE;
 }

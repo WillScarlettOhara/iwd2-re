@@ -26,7 +26,7 @@ CResCache::CResCache()
     m_bCacheLocked = 0;
     m_nCacheSize = 175000000;
     m_nAvailableCacheSize = 175000000;
-    sm_field_114 = 0;
+    m_bCopyInProgress = 0;
     m_bCopyError = 0;
     m_nEntries = 0;
     m_bInitialized = FALSE;
@@ -254,7 +254,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
     DWORD nLastDisplayRefreshTime = GetTickCount();
     DWORD nLastBroadcastTime = GetTickCount();
 
-    sm_field_114 = 1;
+    m_bCopyInProgress = 1;
 
     if (bCompressed) {
         nTotalBytesToRead = static_cast<INT>(input.GetLength()) - sizeof(header);
@@ -341,7 +341,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
         }
     }
 
-    sm_field_114 = 0;
+    m_bCopyInProgress = 0;
 
     input.Close();
     output.Close();

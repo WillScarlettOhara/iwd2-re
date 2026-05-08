@@ -239,7 +239,7 @@ CGameAnimationTypeMonsterMulti::CGameAnimationTypeMonsterMulti(USHORT animationI
     m_currentVidCellBase = m_g2VidCellBase;
     m_currentVidCell = m_g2VidCellBase;
 
-    nm_field_44A = &pfield_508;
+    pm_field_44A = &pfield_508;
 
     if (m_falseColor) {
         for (BYTE colorRange = 0; colorRange < CVidPalette::NUM_RANGES; colorRange++) {

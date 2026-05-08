@@ -7353,7 +7353,7 @@ CMessageEnterDialog::CMessageEnterDialog(DWORD entryNum, BOOLEAN a2, LONG caller
     : CMessage(caller, target)
 {
     m_entryNum = entryNum;
-    wm_field_10 = a2;
+    bm_field_10 = a2;
 }
 
 // 0x453510
@@ -7419,7 +7419,7 @@ void CMessageEnterDialog::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<DWORD*>(*pData + cnt) = m_entryNum;
         cnt += sizeof(DWORD);
 
-        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = wm_field_10;
+        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = bm_field_10;
         cnt += sizeof(BOOLEAN);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -7455,7 +7455,7 @@ BOOL CMessageEnterDialog::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     m_entryNum = *reinterpret_cast<DWORD*>(pData + cnt);
     cnt += sizeof(DWORD);
 
-    wm_field_10 = *reinterpret_cast<BOOLEAN*>(pData + cnt);
+    bm_field_10 = *reinterpret_cast<BOOLEAN*>(pData + cnt);
     cnt += sizeof(BOOLEAN);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -7482,7 +7482,7 @@ void CMessageEnterDialog::Run()
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
             g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.EnterDialog(m_entryNum,
                 static_cast<CGameSprite*>(pObject),
-                wm_field_10);
+                bm_field_10);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
@@ -15900,7 +15900,7 @@ CMessage120::CMessage120(PLAYER_ID idPlayer, BOOLEAN a2, LONG caller, LONG targe
     : CMessage(caller, target)
 {
     m_idPlayer = idPlayer;
-    wm_field_10 = a2;
+    bm_field_10 = a2;
 }
 
 // 0x43E170
@@ -15966,7 +15966,7 @@ void CMessage120::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<PLAYER_ID*>(*pData + cnt) = m_idPlayer;
         cnt += sizeof(PLAYER_ID);
 
-        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = wm_field_10;
+        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = bm_field_10;
         cnt += sizeof(BOOLEAN);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -16002,7 +16002,7 @@ BOOL CMessage120::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     m_idPlayer = *reinterpret_cast<PLAYER_ID*>(pData + cnt);
     cnt += sizeof(PLAYER_ID);
 
-    wm_field_10 = *reinterpret_cast<BOOLEAN*>(pData + cnt);
+    bm_field_10 = *reinterpret_cast<BOOLEAN*>(pData + cnt);
     cnt += sizeof(BOOLEAN);
 
     // NOTE: Missing trailing guard.
@@ -16020,7 +16020,7 @@ void CMessage120::Run()
         // __LINE__: 30686
         UTIL_ASSERT(pGame != NULL);
 
-        pGame->GetMultiplayerSettings()->sub_518660(m_idPlayer, wm_field_10);
+        pGame->GetMultiplayerSettings()->sub_518660(m_idPlayer, bm_field_10);
     }
 }
 
@@ -16574,7 +16574,7 @@ CMessageEndGame::CMessageEndGame(int a1, int a2, LONG caller, LONG target)
     : CMessage(caller, target)
 {
     nfield_C = a1;
-    wm_field_10 = a2;
+    bm_field_10 = a2;
 }
 
 // 0x453330
@@ -16618,7 +16618,7 @@ void CMessageEndGame::MarshalMessage(BYTE** pData, DWORD* dwSize)
     *reinterpret_cast<int*>(*pData + cnt) = nfield_C;
     cnt += sizeof(int);
 
-    *reinterpret_cast<int*>(*pData + cnt) = wm_field_10;
+    *reinterpret_cast<int*>(*pData + cnt) = bm_field_10;
     cnt += sizeof(int);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -16638,7 +16638,7 @@ BOOL CMessageEndGame::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     nfield_C = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
-    wm_field_10 = *reinterpret_cast<int*>(pData + cnt);
+    bm_field_10 = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -16651,7 +16651,7 @@ BOOL CMessageEndGame::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 // 0x516650
 void CMessageEndGame::Run()
 {
-    g_pBaldurChitin->GetObjectGame()->ReadyCharacterTerminationSequence(nfield_C, wm_field_10);
+    g_pBaldurChitin->GetObjectGame()->ReadyCharacterTerminationSequence(nfield_C, bm_field_10);
 }
 
 // -----------------------------------------------------------------------------

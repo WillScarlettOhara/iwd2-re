@@ -89,7 +89,7 @@ const CString CScreenInventory::OPTION_PAUSE_WARNING("Inventory Pause Warning");
 CScreenInventory::CScreenInventory()
 {
     m_animation.m_animation = NULL;
-    wm_field_11C = 0;
+    bm_field_11C = 0;
     bm_field_11D = 0;
     m_nTopGroundItem = 0;
     m_nErrorState = 0;
@@ -196,7 +196,7 @@ CScreenInventory::CScreenInventory()
 
     m_bCtrlKeyDown = FALSE;
     m_pTempItem = NULL;
-    sm_field_114 = 0;
+    nm_field_114 = 0;
     nm_field_118 = -1;
     m_nRequesterButtonId = -1;
     m_nRequesterAmount = -1;
@@ -405,7 +405,7 @@ void CScreenInventory::EngineGameInit()
     m_pCurrentScrollBar = NULL;
     m_nSelectedCharacter = 0;
     m_pTempItem = NULL;
-    sm_field_114 = 0;
+    nm_field_114 = 0;
     nm_field_118 = -1;
     m_nRequesterButtonId = -1;
     m_nRequesterAmount = -1;

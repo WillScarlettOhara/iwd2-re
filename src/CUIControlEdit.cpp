@@ -15,30 +15,30 @@ CUIControlEdit::CUIControlEdit(CUIPanel* panel, UI_CONTROL_EDIT* controlInfo, in
     // __LINE__: 1375
     UTIL_ASSERT(panel != NULL && controlInfo != NULL);
 
-    bm_field_8A1 = 0;
+    m_bFontNeedsLoading = 0;
 
     if (m_pPanel->m_pManager->m_bDoubleSize) {
         m_ptText.x = 2 * controlInfo->x;
         m_ptText.y = 2 * controlInfo->y;
-        nm_field_350 = 2 * controlInfo->pm_field_36;
-        nm_field_354 = 2 * controlInfo->bm_field_38;
+        m_nTextOffsetX = 2 * controlInfo->pm_field_36;
+        m_nTextOffsetY = 2 * controlInfo->bm_field_38;
     } else {
         m_ptText.x = controlInfo->x;
         m_ptText.y = controlInfo->y;
-        nm_field_350 = controlInfo->pm_field_36;
-        nm_field_354 = controlInfo->bm_field_38;
+        m_nTextOffsetX = controlInfo->pm_field_36;
+        m_nTextOffsetY = controlInfo->bm_field_38;
     }
 
     m_nMaxLength = controlInfo->nMaxLength;
     m_nTextCapitalization = controlInfo->nTextCapitalization;
     m_nRenderCount = 0;
     m_bFocused = 0;
-    wm_field_85C = controlInfo->nfield_68;
+    m_nEditMode = controlInfo->nfield_68;
     m_sText = controlInfo->initialText;
     m_nCursorIndex = -1;
     m_nVisibleIndex = 0;
-    nm_field_872 = 1;
-    bm_field_873 = 1;
+    m_nCommandHistoryIndex = 1;
+    m_nCommandHistorySize = 1;
 
     m_mosBackground.SetResRef(CResRef(controlInfo->refMosaic), FALSE, TRUE);
     m_mosTextFocusedBackground.SetResRef(CResRef(controlInfo->refMosaicTextFocused), FALSE, TRUE);
@@ -52,9 +52,9 @@ CUIControlEdit::CUIControlEdit(CUIPanel* panel, UI_CONTROL_EDIT* controlInfo, in
 
     m_cVidFont.SetResRef(CResRef(controlInfo->refFont), m_pPanel->m_pManager->m_bDoubleSize, FALSE);
     m_cVidFont.SetColor(RGB(200, 200, 200), RGB(60, 60, 60), 0);
-    nm_field_89C = a3;
+    m_bConfirmOnExit = a3;
     pm_field_36 = 1;
-    bm_field_8A0 = 1;
+    m_bDefocusOnReturn = 1;
 }
 
 // 0x4D6B80
@@ -108,14 +108,14 @@ void CUIControlEdit::KillFocus()
 void CUIControlEdit::SetFocus()
 {
     m_bFocused = TRUE;
-    sm_field_868 = m_sText;
+    m_sTextOriginal = m_sText;
     m_nCursorIndex = m_sText.GetLength();
     m_nVisibleIndex = 0;
     AdjustVisibleIndex();
 
     InvalidateRect();
 
-    static_cast<CBaldurEngine*>(m_pPanel->m_pManager->m_pWarp)->EnableEditKeys(wm_field_85C);
+    static_cast<CBaldurEngine*>(m_pPanel->m_pManager->m_pWarp)->EnableEditKeys(m_nEditMode);
 }
 
 // 0x4D6E20
@@ -137,8 +137,8 @@ BOOL CUIControlEdit::OnLButtonDown(CPoint pt)
 
     if (x < 0 || x >= size.cx || y < 0 || y >= size.cy) {
         if (m_bFocused == TRUE) {
-            if (nm_field_89C) {
-                m_sText = sm_field_868;
+            if (m_bConfirmOnExit) {
+                m_sText = m_sTextOriginal;
             }
 
             // NOTE: Uninline.
@@ -200,8 +200,8 @@ BOOL CUIControlEdit::OnRButtonDown(CPoint pt)
 
     if (x < 0 || x >= size.cx || y < 0 || y >= size.cy) {
         if (m_bFocused == TRUE) {
-            if (nm_field_89C) {
-                m_sText = sm_field_868;
+            if (m_bConfirmOnExit) {
+                m_sText = m_sTextOriginal;
             }
 
             // NOTE: Uninline.
@@ -296,7 +296,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         }
         break;
     case VK_RETURN:
-        nm_field_872 = 1;
+        m_nCommandHistoryIndex = 1;
         if (m_sText != sm_field_874[0]) {
             // TODO: Incomplete.
             sm_field_874[0] = m_sText;
@@ -304,7 +304,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
 
         OnEditReturn(m_sText);
 
-        if (bm_field_8A0) {
+        if (m_bDefocusOnReturn) {
             // NOTE: Uninline.
             m_pPanel->m_pManager->KillCapture();
         }
@@ -312,7 +312,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         InvalidateRect();
         break;
     case VK_SPACE:
-        if (wm_field_85C != 2) {
+        if (m_nEditMode != 2) {
             if (m_sText.GetLength() != m_nMaxLength) {
                 m_sText = m_sText.Left(m_nCursorIndex)
                     + ' '
@@ -352,8 +352,8 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         }
         break;
     case VK_UP:
-        if (nm_field_872 != bm_field_873 && sm_field_874[nm_field_872].GetLength() != 0) {
-            m_sText = sm_field_874[nm_field_872++];
+        if (m_nCommandHistoryIndex != m_nCommandHistorySize && sm_field_874[m_nCommandHistoryIndex].GetLength() != 0) {
+            m_sText = sm_field_874[m_nCommandHistoryIndex++];
             m_nCursorIndex = m_sText.GetLength();
 
             AdjustVisibleIndex();
@@ -375,8 +375,8 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         }
         break;
     case VK_DOWN:
-        if (nm_field_872 > 1 && sm_field_874[nm_field_872].GetLength() != 0) {
-            m_sText = sm_field_874[nm_field_872--];
+        if (m_nCommandHistoryIndex > 1 && sm_field_874[m_nCommandHistoryIndex].GetLength() != 0) {
+            m_sText = sm_field_874[m_nCommandHistoryIndex--];
             m_nCursorIndex = m_sText.GetLength();
 
             AdjustVisibleIndex();
@@ -452,7 +452,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
     default:
         if (nKey >= 'A' && nKey <= 'Z') {
             if (m_sText.GetLength() < m_nMaxLength) {
-                if (wm_field_85C != 2) {
+                if (m_nEditMode != 2) {
                     switch (m_nTextCapitalization) {
                     case 0:
                         if (m_pPanel->m_pManager->m_pWarp->GetCapsLockKey() == m_pPanel->m_pManager->m_pWarp->GetShiftKey()) {
@@ -595,9 +595,9 @@ BOOL CUIControlEdit::Render(BOOL bForce)
         return FALSE;
     }
 
-    if (bm_field_8A1) {
+    if (m_bFontNeedsLoading) {
         m_cVidFont.Load(FALSE);
-        bm_field_8A1 = 0;
+        m_bFontNeedsLoading = 0;
     }
 
     if (m_nRenderCount != 0) {
@@ -776,7 +776,7 @@ void CUIControlEdit::AdjustVisibleIndex()
 // 0x4D9360
 void CUIControlEdit::SetText(CString sText)
 {
-    sm_field_868 = sText;
+    m_sTextOriginal = sText;
     if (sText != m_sText) {
         m_sText = sText;
         if (m_bFocused) {

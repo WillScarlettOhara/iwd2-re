@@ -70,7 +70,7 @@ void* CRes::Demand()
 
     if (nm_field_18) {
         if (pData != NULL) {
-            CSingleLock lock(&nm_field_20, FALSE);
+            CSingleLock lock(&pm_field_20, FALSE);
             lock.Lock(INFINITE);
 
             unsigned char* pBytes = reinterpret_cast<unsigned char*>(m_pData);

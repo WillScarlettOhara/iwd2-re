@@ -1343,7 +1343,7 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
         m_baseStats.bm_field_2E2 = TRUE;
     }
 
-    Icewind586B70::Instance()->sub_586FC0(this);
+    Icewind586B70::Instance()->Reinstate(this);
 }
 
 // 0x6F47F0
@@ -13436,8 +13436,8 @@ SHORT CGameSprite::sub_7615F0(int a1)
         a1 = CVisibilityMap::EXPLORED_RANGE_3;
     }
 
-    m_pArea->m_visibility.wfield_E = static_cast<short>(a1);
-    m_pArea->m_visibility.wm_field_10 = static_cast<short>(3 * a1 / 4);
+    m_pArea->m_visibility.m_nEllipseArcWidth = static_cast<short>(a1);
+    m_pArea->m_visibility.m_nEllipseArcHeight = static_cast<short>(3 * a1 / 4);
     m_pArea->m_visibility.sub_5518A0();
 
     return ACTION_DONE;

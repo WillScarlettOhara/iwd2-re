@@ -116,7 +116,7 @@ CScreenJournal::CScreenJournal()
 
     bm_field_483 = 0;
     sm_field_48C = "";
-    nm_field_484 = "";
+    sm_field_484 = "";
     bfield_EA0 = 0;
     m_bShiftKeyDown = FALSE;
     m_bCtrlKeyDown = FALSE;
@@ -328,7 +328,7 @@ void CScreenJournal::EngineGameInit()
     m_pCurrentScrollBar = NULL;
     bm_field_483 = 0;
     sm_field_48C = "";
-    nm_field_484 = "";
+    sm_field_484 = "";
 
     // NOTE: Calls `GetCurrentChapter` four times.
     m_nChapter = min(max(g_pBaldurChitin->GetObjectGame()->GetCurrentChapter(), 0), CGameJournal::NUM_CHAPTERS - 1);

@@ -5,7 +5,7 @@
 // 0x443350
 CGameSpriteSpellList::CGameSpriteSpellList()
 {
-    wm_field_10 = 0;
+    nm_field_10 = 0;
     nm_field_14 = 0;
     nm_field_18 = 0;
 }
@@ -48,7 +48,7 @@ BOOLEAN CGameSpriteSpellList::Add(const UINT& nID, const unsigned int& a2, const
     }
 
     if (a3 != 0) {
-        wm_field_10 += a3;
+        nm_field_10 += a3;
     }
 
     return TRUE;
@@ -92,7 +92,7 @@ BOOLEAN CGameSpriteSpellList::Remove(const UINT& nID, BOOLEAN a2, const unsigned
             }
 
             if (v2 != 0) {
-                wm_field_10 -= v2;
+                nm_field_10 -= v2;
             }
 
             return TRUE;
@@ -127,9 +127,9 @@ BOOLEAN CGameSpriteSpellList::sub_725C50(const UINT& nID, const unsigned int& a2
         v2 = entry.nm_field_4;
     }
 
-    wm_field_10 -= v1;
+    nm_field_10 -= v1;
     entry.nm_field_8 = v2;
-    wm_field_10 += v2;
+    nm_field_10 += v2;
 
     return TRUE;
 }
@@ -155,9 +155,9 @@ BOOLEAN CGameSpriteSpellList::sub_725CC0(const UINT& nID, const unsigned int& a2
         v2 = 0;
     }
 
-    wm_field_10 -= v1;
+    nm_field_10 -= v1;
     entry.nm_field_8 = v2;
-    wm_field_10 += v2;
+    nm_field_10 += v2;
 
     return TRUE;
 }
@@ -296,7 +296,7 @@ UINT CGameSpriteGroupedSpellList::sub_725F00()
     UINT nCount = 0;
 
     for (UINT nIndex = 0; nIndex < m_nHighestLevel; nIndex++) {
-        nCount += m_lists[nIndex].wm_field_10;
+        nCount += m_lists[nIndex].nm_field_10;
     }
 
     return nCount;

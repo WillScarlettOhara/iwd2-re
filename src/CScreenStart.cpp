@@ -24,7 +24,7 @@ CScreenStart::CScreenStart()
 {
     m_nErrorState = 0;
     m_nNumErrorButtons = 0;
-    wm_field_144 = 1;
+    nm_field_144 = 1;
     bm_field_13F = 0;
     pm_m_field_106 = 1;
     m_bExitProgram = FALSE;

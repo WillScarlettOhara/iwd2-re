@@ -62,7 +62,7 @@ void CImm::sub_7C2680(HWND hWnd, LPARAM lParam)
             ImmGetCompositionStringA(hImc, GCS_COMPSTR, lpCompStr, nCompStrLength);
             lpCompStr[nCompStrLength] = '\0';
 
-            nm_field_134 = lpCompStr;
+            sm_field_134 = lpCompStr;
 
             delete lpCompStr;
 
@@ -127,7 +127,7 @@ void CImm::sub_7C27D0(HWND hWnd, BOOL a3)
 
                     delete lpResultCls;
 
-                    nm_field_134 = "";
+                    sm_field_134 = "";
                     m_sCandidateList = "";
 
                     g_pChitin->pActiveEngine->OnKeyDown(1);
@@ -287,7 +287,7 @@ void CImm::sub_7C2CC0(HWND hWnd)
         ImmReleaseContext(hWnd, hImc);
 
         m_sCandidateList = "";
-        nm_field_134 = "";
+        sm_field_134 = "";
         sm_field_130 = "";
     }
 }
@@ -322,7 +322,7 @@ void CImm::sub_7C2E10(HWND hWnd)
         ImmReleaseContext(hWnd, hImc);
 
         m_sCandidateList = "";
-        nm_field_134 = "";
+        sm_field_134 = "";
         sm_field_130 = "";
     }
 }
@@ -394,17 +394,17 @@ CString CImm::sub_7C34A0()
 // 0x7C34D0
 CString CImm::sub_7C34D0()
 {
-    return nm_field_134;
+    return sm_field_134;
 }
 
 // NOTE: Probably inlined in `CChitin::DestroyServices`.
 void CImm::CleanUp()
 {
-    if (nm_field_13C != NULL) {
-        delete nm_field_13C;
+    if (pm_field_13C != NULL) {
+        delete pm_field_13C;
     }
 
-    nm_field_13C = NULL;
+    pm_field_13C = NULL;
 }
 
 // NOTE: Odd location.

@@ -6,15 +6,15 @@
 // 0x4D0930
 CGameSpy::CGameSpy()
 {
-    bm_field_2 = 0;
-    pm_field_12 = 0;
-    pm_field_16 = 0;
-    wm_field_22 = 0;
-    bm_field_1 = 0;
-    bm_field_1E = 0;
-    bm_field_1A = 0;
+    nm_field_2 = 0;
+    nm_field_12 = 0;
+    nm_field_16 = 0;
+    nm_field_22 = 0;
+    m_bConnected = 0;
+    nm_field_1E = 0;
+    nm_field_1A = 0;
     nm_field_28 = 0;
-    bm_field_0 = 0;
+    m_bWinsockInitialized = 0;
     bm_field_26 = 0;
 }
 
@@ -22,11 +22,11 @@ CGameSpy::CGameSpy()
 // 0x4D0960
 CGameSpy::~CGameSpy()
 {
-    if (bm_field_0 == 1) {
+    if (m_bWinsockInitialized == 1) {
         WSACleanup();
     }
-    bm_field_0 = 0;
-    bm_field_1 = 0;
+    m_bWinsockInitialized = 0;
+    m_bConnected = 0;
 }
 
 // 0x4D1EC0

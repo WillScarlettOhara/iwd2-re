@@ -257,7 +257,7 @@ CScreenCharacter::CScreenCharacter()
     m_spells.m_nHighestLevel = 0;
 
     nm_field_2B6 = 0;
-    sm_field_866 = 0;
+    nm_field_866 = 0;
     nm_field_1776 = 0;
     nm_field_86A = 0;
     m_hatedRaces[0] = CAIObjectType::R_BUGBEAR;
@@ -517,7 +517,7 @@ void CScreenCharacter::EngineGameInit()
     m_pTempDerivedStats = NULL;
     m_pBeforeLevelUpDerivedStats = NULL;
 
-    sm_field_866 = 0;
+    nm_field_866 = 0;
     nm_field_86A = 0;
 
     m_cUIManager.GetPanel(4)->SetActive(FALSE);

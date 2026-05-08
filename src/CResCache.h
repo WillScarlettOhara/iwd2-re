@@ -36,7 +36,7 @@ public:
     /* 0108 */ CString m_sDirName;
     /* 010C */ CString m_sTempFileName;
     /* 0110 */ int m_bCacheLocked;
-    /* 0114 */ int nm_field_114;
+    /* 0114 */ int m_bCopyInProgress;
     /* 0118 */ int m_bCopyError;
     /* 011C */ int m_nCacheSize;
     /* 0120 */ int m_nAvailableCacheSize;

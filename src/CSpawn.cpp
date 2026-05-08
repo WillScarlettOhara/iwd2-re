@@ -557,9 +557,9 @@ CSpawn::CSpawn(CMemINISection* pSection)
     Facing = 0;
     nm_field_136 = 0;
     nm_field_13A = 0;
-    nm_field_13E = 0;
+    bm_field_13E = 0;
     bm_field_13F = 0;
-    wm_field_140 = 0;
+    bm_field_140 = 0;
     bm_field_141 = 0;
     mInterval = -1;
     SpawnFlags = 0;
@@ -692,7 +692,7 @@ void CSpawn::Read(CMemINISection* pSection)
     if (GetINIKey(pSection, SpecKey, sValue)) {
         // TODO: Incomplete.
     } else {
-        nm_field_13E = FALSE;
+        bm_field_13E = FALSE;
     }
 
     pValue = pSection->Get(SpecVarKey);
@@ -739,9 +739,9 @@ void CSpawn::Read(CMemINISection* pSection)
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, AreaDiff2Key, sValue)) {
-        wm_field_140 = atoi(sValue) > 0;
+        bm_field_140 = atoi(sValue) > 0;
     } else {
-        wm_field_140 = TRUE;
+        bm_field_140 = TRUE;
     }
 
     // NOTE: Uninline.

@@ -237,7 +237,7 @@ BOOL CGameArea::CheckLOS(const CPoint& start, const CPoint& goal, const BYTE* te
         return TRUE;
     }
 
-    if ((start.x - goal.x) * (start.x - goal.x) + 16 * (start.y - goal.y) * (start.y - goal.y) / 9 > m_visibility.wfield_E * m_visibility.wfield_E * CVisibilityMap::SQUARE_SIZEX * CVisibilityMap::SQUARE_SIZEX) {
+    if ((start.x - goal.x) * (start.x - goal.x) + 16 * (start.y - goal.y) * (start.y - goal.y) / 9 > m_visibility.m_nEllipseArcWidth * m_visibility.m_nEllipseArcWidth * CVisibilityMap::SQUARE_SIZEX * CVisibilityMap::SQUARE_SIZEX) {
         return FALSE;
     }
 
@@ -332,7 +332,7 @@ BOOL CGameArea::CheckWalkable(const CPoint& start, const CPoint& goal, const BYT
         return TRUE;
     }
 
-    if ((start.x - goal.x) * (start.x - goal.x) + 16 * (start.y - goal.y) * (start.y - goal.y) / 9 > m_visibility.wfield_E * m_visibility.wfield_E * CVisibilityMap::SQUARE_SIZEX * CVisibilityMap::SQUARE_SIZEX) {
+    if ((start.x - goal.x) * (start.x - goal.x) + 16 * (start.y - goal.y) * (start.y - goal.y) / 9 > m_visibility.m_nEllipseArcWidth * m_visibility.m_nEllipseArcWidth * CVisibilityMap::SQUARE_SIZEX * CVisibilityMap::SQUARE_SIZEX) {
         return FALSE;
     }
 

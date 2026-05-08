@@ -13,8 +13,8 @@ public:
     BOOLEAN sub_4D2210();
     BOOLEAN sub_4D2310();
 
-    /* 0000 */ unsigned char bm_field_0;
-    /* 0001 */ unsigned char bm_field_1;
+    /* 0000 */ unsigned char m_bWinsockInitialized;
+    /* 0001 */ unsigned char m_bConnected;
     /* 0002 */ int nm_field_2;
     /* 0012 */ int nm_field_12;
     /* 0016 */ int nm_field_16;

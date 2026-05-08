@@ -14,13 +14,13 @@ CInfButtonSettings::CInfButtonSettings()
     nm_field_1C8 = 0;
     nm_field_1CC = 0;
     nm_field_1D8 = 0;
-    bm_field_0 = 0;
+    nm_field_0 = 0;
     nm_field_4 = 0;
     nm_field_8 = 0;
     nm_field_1D0 = 0;
     m_bGreyOut = FALSE;
     nfield_C = -1;
-    wm_field_10 = -1;
+    nm_field_10 = -1;
 }
 
 // 0x587B80

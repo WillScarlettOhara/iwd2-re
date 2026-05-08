@@ -79,7 +79,7 @@ CBaldurProjector::CBaldurProjector()
     m_pVirtualKeys[1] = CKeyInfo(VK_ESCAPE, 0, 0);
 
     nm_field_10A = 0;
-    wm_field_144 = 1;
+    bm_field_144 = 1;
     bm_field_145 = 0;
     m_bSelectEngine = FALSE;
     bm_field_147 = 0;
@@ -185,13 +185,13 @@ void CBaldurProjector::OnKeyDown(SHORT a2)
 // 0x43EA30
 void CBaldurProjector::EngineGameInit()
 {
-    wm_field_144 = 0;
+    bm_field_144 = 0;
 }
 
 // 0x43EA40
 void CBaldurProjector::EngineGameUninit()
 {
-    wm_field_144 = 1;
+    bm_field_144 = 1;
 }
 
 // 0x43EA70
@@ -404,7 +404,7 @@ void CBaldurProjector::PlayMovieInternal(const CResRef& cResRef, BOOL bAsynchThr
             m_sCurrentMovieFileName = "";
         }
 
-        wm_field_144 = 1;
+        bm_field_144 = 1;
         bm_field_145 = 0;
 
         CString sMovieFileName("");
@@ -419,7 +419,7 @@ void CBaldurProjector::PlayMovieInternal(const CResRef& cResRef, BOOL bAsynchThr
                 g_pBaldurChitin->AddPlayedMovie(cResRef);
                 g_pBaldurChitin->AddPlayedMovie(CResRef("WOTC"));
             } else if (cResRef == "INTRO" || cResRef == "MIDDLE" || cResRef == "END") {
-                wm_field_144 = 0;
+                bm_field_144 = 0;
 
                 CString sMovie;
                 cResRef.CopyToString(sMovie);
@@ -486,7 +486,7 @@ void CBaldurProjector::TimerAsynchronousUpdate()
         BOOLEAN v1 = byte_8CFF2C && m_bDeactivateEngine;
         BOOLEAN v2 = (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL
                          || g_pChitin->cNetwork.GetServiceProvider() == -1)
-            && (wm_field_144 || bm_field_145) && m_bDeactivateEngine;
+            && (bm_field_144 || bm_field_145) && m_bDeactivateEngine;
 
         if (m_hBink != NULL) {
             if (v1 || v2 || m_hBink->frame_num == m_hBink->frames) {

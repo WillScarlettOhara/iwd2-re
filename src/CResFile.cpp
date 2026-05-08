@@ -9,7 +9,7 @@ CResFile::CResFile()
     m_pHeader = NULL;
     m_pVarEntries = NULL;
     m_pFixedEntries = NULL;
-    nm_field_20 = NULL;
+    pm_field_20 = NULL;
     m_bOpen = FALSE;
     nm_field_4 = 0;
     m_nCacheCount = 0;
@@ -73,9 +73,9 @@ BOOL CResFile::CloseFile()
             m_pFixedEntries = NULL;
         }
 
-        if (nm_field_20 != NULL) {
-            delete nm_field_20;
-            nm_field_20 = NULL;
+        if (pm_field_20 != NULL) {
+            delete pm_field_20;
+            pm_field_20 = NULL;
         }
 
         m_cFile.Close();
@@ -108,9 +108,9 @@ DWORD CResFile::GetFileSize(RESID resID)
         }
     }
 
-    if (nm_field_20 != NULL) {
+    if (pm_field_20 != NULL) {
         // TODO: Object/structure?
-        return reinterpret_cast<DWORD>(reinterpret_cast<unsigned char*>(nm_field_20) + 2);
+        return reinterpret_cast<DWORD>(reinterpret_cast<unsigned char*>(pm_field_20) + 2);
     }
 
     return 0;
@@ -316,7 +316,7 @@ UINT CResFile::ReadResource(RESID resID, LPVOID lpBuf, UINT nCount, UINT nOffset
         }
     }
 
-    if (nm_field_20 != NULL) {
+    if (pm_field_20 != NULL) {
         m_cFile.Seek(0, CFile::SeekPosition::begin);
         return m_cFile.Read(static_cast<unsigned char*>(lpBuf) + nOffset, nCount);
     }

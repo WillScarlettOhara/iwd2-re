@@ -11,7 +11,7 @@ CGameAreaNotes::CGameAreaNotes()
     nfield_70 = 0;
     nfield_74 = 0;
     m_pMapControl = NULL;
-    nm_field_8C = 0;
+    bm_field_8C = 0;
     bm_field_8D = 0;
     bm_field_8E = 0;
     m_bInitialized = FALSE;

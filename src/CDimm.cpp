@@ -19,9 +19,9 @@ CDimm::CDimm()
     MEMORYSTATUS memoryStatus;
     memoryStatus.dwLength = sizeof(MEMORYSTATUS);
 
-    bm_field_0 = 0;
+    nm_field_0 = 0;
     nm_field_4 = 0;
-    nm_field_8 = 0;
+    wm_field_8 = 0;
     nfield_DA = 0;
     pfield_CE = NULL;
     pm_field_274 = NULL;
@@ -471,7 +471,7 @@ void* CDimm::Demand(CRes* pRes)
 void* CDimm::InternalDemand(CRes* pRes)
 {
     pRes->nm_field_40++;
-    nm_field_8++;
+    wm_field_8++;
     nm_field_4 = 1;
 
     RESID nResID = pRes->GetID();
@@ -514,14 +514,14 @@ void* CDimm::InternalDemand(CRes* pRes)
     EnterCriticalSection(&(g_pChitin->sm_field_314));
 
     if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x10) != 0) {
-        bm_field_0 = 1;
+        nm_field_0 = 1;
         if (pRes == pfield_CE) {
             pm_field_270 = pfield_CE;
             PartialServiceRequest(pfield_CE, pfield_CE->nSize);
         }
 
-        nm_field_8--;
-        bm_field_0 = 0;
+        wm_field_8--;
+        nm_field_0 = 0;
         nm_field_4 = 0;
         LeaveCriticalSection(&(g_pChitin->sm_field_314));
 
@@ -543,7 +543,7 @@ void* CDimm::InternalDemand(CRes* pRes)
         }
         return pRes->m_pData;
     } else if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0) {
-        nm_field_8--;
+        wm_field_8--;
         nm_field_4 = 0;
         LeaveCriticalSection(&(g_pChitin->sm_field_314));
 
@@ -566,7 +566,7 @@ void* CDimm::InternalDemand(CRes* pRes)
         pm_field_270 = pRes;
         ServiceRequest(pRes);
 
-        nm_field_8--;
+        wm_field_8--;
         nm_field_4 = 0;
         LeaveCriticalSection(&(g_pChitin->sm_field_314));
 
@@ -2057,7 +2057,7 @@ BOOL CDimm::Resume()
         if (bfield_E6 <= 0) {
             bfield_E6 = 0;
             nm_field_4 = 0;
-            nm_field_8 = 0;
+            wm_field_8 = 0;
             return TRUE;
         }
     }
@@ -2489,7 +2489,7 @@ BOOL CDimm::Suspend()
 {
     bfield_E6++;
     if (bfield_E6 > 0) {
-        nm_field_8++;
+        wm_field_8++;
         nm_field_4 = 1;
     }
     return TRUE;
@@ -2503,10 +2503,10 @@ void CDimm::Update()
     BOOL bStop = FALSE;
 
     if (!nm_field_4) {
-        nm_field_8++;
+        wm_field_8++;
         nm_field_4 = 1;
 
-        while (bContinue && !g_pChitin->m_bExitRSThread && !bm_field_0 && !bStop) {
+        while (bContinue && !g_pChitin->m_bExitRSThread && !nm_field_0 && !bStop) {
             EnterCriticalSection(&(g_pChitin->sm_field_314));
 
             DWORD nBytesRead = 0;
@@ -2532,7 +2532,7 @@ void CDimm::Update()
                 }
             }
 
-            while (nBytesRead < 30000 && !g_pChitin->m_bExitRSThread && !bm_field_0 && nfield_DA < nfield_D6) {
+            while (nBytesRead < 30000 && !g_pChitin->m_bExitRSThread && !nm_field_0 && nfield_DA < nfield_D6) {
                 if (!m_lRequestedHigh.IsEmpty()) {
                     pRes = static_cast<CRes*>(m_lRequestedHigh.GetHead());
                     pm_field_274 = pRes;
@@ -2615,7 +2615,7 @@ void CDimm::Update()
             }
         }
 
-        nm_field_8--;
+        wm_field_8--;
         nm_field_4 = 0;
     }
 }

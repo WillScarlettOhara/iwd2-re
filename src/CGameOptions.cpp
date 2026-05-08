@@ -21,7 +21,7 @@ CGameOptions::CGameOptions()
     m_bFootStepsSounds = TRUE;
     nm_field_30 = 1;
     m_bTranslucentShadows = TRUE;
-    bm_field_38 = 0;
+    nm_field_38 = 0;
     nm_field_3C = 0;
     m_nTooltips = 30;
     m_nBoredTime = CScreenWorld::BORED_TIME;

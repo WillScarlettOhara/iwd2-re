@@ -76,7 +76,7 @@ CVidMode::CVidMode()
     m_nGammaCorrection = 0;
     m_nPointerNumber = 0;
     m_dwCursorRenderFlags = 0;
-    wm_field_10 = 1;
+    nm_field_10 = 1;
     nm_field_14 = 0;
     m_bFadeTo = 0;
     m_nFade = NUM_FADE_FRAMES;

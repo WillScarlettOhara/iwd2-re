@@ -38,7 +38,7 @@ CSoundMixer::CSoundMixer()
     nfield_F4 = 0;
     nfield_F8 = 0;
     nfield_FC = 0;
-    pm_field_178 = 0;
+    nm_field_178 = 0;
     nfield_C0 |= 0x03;
     m_bMixerInitialized = FALSE;
     nm_field_40 = 0;
@@ -65,7 +65,7 @@ CSoundMixer::CSoundMixer()
 
     m_bMixerInitialized = FALSE;
     nm_field_40 = 0;
-    bm_field_0 = 0;
+    nm_field_0 = 0;
 }
 
 // #binary-identical
@@ -155,7 +155,7 @@ void CSoundMixer::CleanUp()
 
     m_bMixerInitialized = FALSE;
     nm_field_40 = 0;
-    bm_field_0 = 0;
+    nm_field_0 = 0;
 
     Unlock();
 }
@@ -220,7 +220,7 @@ void CSoundMixer::Initialize(CWnd* pWnd, int nNewMaxVoices, int nNewMaxChannels)
     m_bInPositionUpdate = FALSE;
     m_bInReleaseAll = FALSE;
     m_bInQueueUpdate = FALSE;
-    bm_field_0 = 0;
+    nm_field_0 = 0;
     m_nActiveArea = 0;
     InitializeChannels(nNewMaxChannels);
 
@@ -310,14 +310,14 @@ void CSoundMixer::Initialize(CWnd* pWnd, int nNewMaxVoices, int nNewMaxChannels)
         }
     }
 
-    if (pm_field_178) {
+    if (nm_field_178) {
         m_dwEAXProperties |= CSOUNDPROPERTIES_EAX_SUPPORTS_ENVIRONMENT;
     } else {
-        if (wm_field_144.sub_799C90()) {
-            wm_field_144.sub_7C25B0();
-            pm_field_178 = FALSE;
+        if (pm_field_144.sub_799C90()) {
+            pm_field_144.sub_7C25B0();
+            nm_field_178 = FALSE;
         } else {
-            pm_field_178 = TRUE;
+            nm_field_178 = TRUE;
             m_dwEAXProperties |= CSOUNDPROPERTIES_EAX_SUPPORTS_ENVIRONMENT;
         }
     }

@@ -21,15 +21,15 @@ BOOL CAlias::ParseRawData(CString& a2)
 {
     CString temp;
 
-    nm_field_4 = FALSE;
+    m_bParsed = FALSE;
 
     int pos = a2.FindOneOf(":=");
     if (pos > 0) {
-        nm_field_8 = a2.Left(pos + 1);
+        m_sAliasPrefix = a2.Left(pos + 1);
 
-        nm_field_8 += '\\';
-        if (nm_field_8.GetLength() > 2 && a2.GetLength() > pos + 2) {
-            nm_field_4 = TRUE;
+        m_sAliasPrefix += '\\';
+        if (m_sAliasPrefix.GetLength() > 2 && a2.GetLength() > pos + 2) {
+            m_bParsed = TRUE;
 
             a2 = a2.Right(a2.GetLength() - pos - 2);
 
@@ -40,7 +40,7 @@ BOOL CAlias::ParseRawData(CString& a2)
                     if (temp.GetAt(temp.GetLength() - 1) != '\\') {
                         temp += ";";
                     }
-                    nfield_C.AddTail(temp);
+                    m_lReplacementPaths.AddTail(temp);
                     a2 = "";
                 } else {
                     temp = a2.Left(semicolonPos);
@@ -49,7 +49,7 @@ BOOL CAlias::ParseRawData(CString& a2)
                         temp += ";";
                     }
 
-                    nfield_C.AddTail(temp);
+                    m_lReplacementPaths.AddTail(temp);
 
                     a2 = a2.Right(a2.GetLength() - semicolonPos - 1);
                 }
@@ -57,7 +57,7 @@ BOOL CAlias::ParseRawData(CString& a2)
         }
     }
 
-    return nm_field_4;
+    return m_bParsed;
 }
 
 // Phase 1-2: Scaffold functions

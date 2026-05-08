@@ -102,17 +102,17 @@ POLYCOLOR CVisibilityMap::CLEARSHADE;
 // 0x551770
 CVisibilityMap::CVisibilityMap()
 {
-    nm_field_4 = 0;
+    m_nEllipseArcCountPrimary = 0;
     m_nWidth = 0;
     m_nHeight = 0;
-    bm_field_1A = 0;
+    m_nEllipseArcCountSecondary = 0;
     memset(m_aCharacterIds, 0, sizeof(m_aCharacterIds));
     m_pMap = NULL;
     m_pSearchMap = NULL;
-    pm_field_12 = 0;
-    pm_field_16 = 0;
-    wfield_E = 14;
-    wm_field_10 = 10;
+    m_pEllipseArcPixelsPrimary = 0;
+    m_pEllipseArcPixelsSecondary = 0;
+    m_nEllipseArcWidth = 14;
+    m_nEllipseArcHeight = 10;
     sub_5518A0();
     m_bOutDoor = FALSE;
 }
@@ -120,12 +120,12 @@ CVisibilityMap::CVisibilityMap()
 // 0x551800
 CVisibilityMap::~CVisibilityMap()
 {
-    if (pm_field_12) {
-        delete pm_field_12;
+    if (m_pEllipseArcPixelsPrimary) {
+        delete m_pEllipseArcPixelsPrimary;
     }
 
-    if (pm_field_16) {
-        delete pm_field_16;
+    if (m_pEllipseArcPixelsSecondary) {
+        delete m_pEllipseArcPixelsSecondary;
     }
 }
 
@@ -145,24 +145,24 @@ BOOL CVisibilityMap::AddCharacter(const CPoint& pos, LONG charId, const BYTE* pV
 // 0x5518A0
 void CVisibilityMap::sub_5518A0()
 {
-    if (pm_field_12 != NULL) {
-        delete pm_field_12;
+    if (m_pEllipseArcPixelsPrimary != NULL) {
+        delete m_pEllipseArcPixelsPrimary;
     }
 
-    if (pm_field_16 != NULL) {
-        delete pm_field_16;
+    if (m_pEllipseArcPixelsSecondary != NULL) {
+        delete m_pEllipseArcPixelsSecondary;
     }
 
-    pm_field_12 = new BYTE[wfield_E];
-    pm_field_16 = new BYTE[wm_field_10];
+    m_pEllipseArcPixelsPrimary = new BYTE[m_nEllipseArcWidth];
+    m_pEllipseArcPixelsSecondary = new BYTE[m_nEllipseArcHeight];
 
-    nm_field_4 = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(wfield_E,
-        wm_field_10,
-        pm_field_12));
+    m_nEllipseArcCountPrimary = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(m_nEllipseArcWidth,
+        m_nEllipseArcHeight,
+        m_pEllipseArcPixelsPrimary));
 
-    bm_field_1A = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(wm_field_10,
-        wfield_E,
-        pm_field_16));
+    m_nEllipseArcCountSecondary = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(m_nEllipseArcHeight,
+        m_nEllipseArcWidth,
+        m_pEllipseArcPixelsSecondary));
 }
 
 // 0x551950

@@ -8,12 +8,12 @@ CAbilityId::CAbilityId()
     m_abilityNum = -1;
     m_res = "";
     m_targetType = 0;
-    wm_field_10 = -1;
+    nm_field_10 = -1;
     nm_field_14 = -1;
     nm_field_18 = -1;
     m_nClass = 0;
     bm_field_1D = 0;
-    bm_field_1E = 0;
+    wm_field_1E = 0;
 }
 
 // 0x4B9270
@@ -24,12 +24,12 @@ CAbilityId& CAbilityId::operator=(const CAbilityId& other)
     m_abilityNum = other.m_abilityNum;
     m_res = other.m_res;
     m_targetType = other.m_targetType;
-    wm_field_10 = other.wm_field_10;
+    nm_field_10 = other.nm_field_10;
     nm_field_14 = other.nm_field_14;
     nm_field_18 = other.nm_field_18;
     m_nClass = other.m_nClass;
     bm_field_1D = other.bm_field_1D;
-    bm_field_1E = other.bm_field_1E;
+    wm_field_1E = other.wm_field_1E;
     return *this;
 }
 

@@ -231,9 +231,9 @@ CChitin::CChitin()
         m_nThreads++;
     }
 
-    InitializeCriticalSection(&bm_field_2FC);
+    InitializeCriticalSection(&pm_field_2FC);
     InitializeCriticalSection(&pm_field_32C);
-    InitializeCriticalSection(&sm_field_314);
+    InitializeCriticalSection(&pm_field_314);
     InitializeCriticalSection(&pm_field_344);
     InitializeCriticalSection(&nfield_C4);
     InitializeCriticalSection(&pm_field_35C);
@@ -277,13 +277,13 @@ CChitin::CChitin()
     m_bStartUpConnect = FALSE;
     m_sStartUpAddress = "";
     m_sStartUpPlayer = "";
-    wm_field_11C = "";
+    sm_field_11C = "";
     nm_field_124 = 0;
     nm_field_128 = 0;
     m_sStartUpSession = "";
     bm_field_131 = 0;
     m_sStartUpGameSpyLocation = "";
-    sm_field_130 = 0;
+    bm_field_130 = 0;
     nm_field_136 = 6;
     memset(CVidFont::byte_8FB974, 0, sizeof(CVidFont::byte_8FB974));
     pm_field_180 = 0;
@@ -306,9 +306,9 @@ CChitin::~CChitin()
     cDimm.DestroyKeyTable();
     cDimm.DumpAll();
 
-    DeleteCriticalSection(&bm_field_2FC);
+    DeleteCriticalSection(&pm_field_2FC);
     DeleteCriticalSection(&pm_field_32C);
-    DeleteCriticalSection(&sm_field_314);
+    DeleteCriticalSection(&pm_field_314);
     DeleteCriticalSection(&nfield_C4);
     DeleteCriticalSection(&pm_field_35C);
 
@@ -401,7 +401,7 @@ BOOL CChitin::InitInstance()
     }
 
     m_hRSThread = reinterpret_cast<HANDLE>(_beginthread(::RSThreadMain, 0, NULL));
-    wm_field_4C = 1;
+    nm_field_4C = 1;
     m_hMessageThread = reinterpret_cast<HANDLE>(_beginthread(::MessageThreadMain, 0, NULL));
     m_hMusicThread = reinterpret_cast<HANDLE>(_beginthread(::MusicThreadMain, 0, NULL));
 
@@ -706,7 +706,7 @@ void CChitin::InitializeVariables()
     m_bPointerUpdated = FALSE;
     m_bEngineActive = FALSE;
     m_bInAsynchronousUpdate = FALSE;
-    wm_field_4C = 0;
+    nm_field_4C = 0;
     m_bExitRSThread = FALSE;
     m_bExitMainAIThread = FALSE;
     nfield_50 = 0;
@@ -1272,7 +1272,7 @@ void CChitin::AsynchronousUpdate(UINT nTimerID, UINT uMsg, DWORD dwUser, DWORD d
     if (!m_bReInitializing) {
         nAUCounter++;
 
-        if (wm_field_4C && !m_bExitRSThread) {
+        if (nm_field_4C && !m_bExitRSThread) {
             cDimm.ResumeServicing();
         }
 
@@ -1655,7 +1655,7 @@ void CChitin::ReadIniFiles()
     CString temp;
     char buffer[256];
 
-    if (wm_field_4C == 0) {
+    if (nm_field_4C == 0) {
         GetPrivateProfileStringA("Alias", "HD0:", "", buffer, sizeof(buffer), GetIniFileName());
         if (strlen(buffer) == 0) {
             temp = "path:=.\\";

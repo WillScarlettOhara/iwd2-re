@@ -212,7 +212,7 @@ CGameEffectBase::CGameEffectBase()
     m_saveMod = 0;
     m_special = 0;
     m_school = 0;
-    wm_field_48 = 0;
+    nm_field_48 = 0;
     m_minLevel = 0;
     m_maxLevel = 0;
     m_flags = 0;
@@ -1345,7 +1345,7 @@ void CGameEffect::CopyFromBase(CGameEffectBase* pBase)
     m_saveMod = pBase->m_saveMod;
     m_special = pBase->m_special;
     m_school = pBase->m_school;
-    wm_field_48 = pBase->wm_field_48;
+    nm_field_48 = pBase->nm_field_48;
     m_minLevel = pBase->m_minLevel;
     m_maxLevel = pBase->m_maxLevel;
     m_flags = pBase->m_flags;
@@ -11528,7 +11528,7 @@ CPersistantEffect84C4A4::CPersistantEffect84C4A4(int a1, int a2, int a3)
     nm_field_18 = a2;
     nm_field_1C = a3;
     nm_field_24 = a1;
-    nm_field_28 = 1;
+    bm_field_28 = 1;
 
     ULONG delta = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime - a2;
     if (delta == 0 || delta == 1) {
@@ -11546,10 +11546,10 @@ CPersistantEffect84C4A4::CPersistantEffect84C4A4(const CPersistantEffect84C4A4& 
     nm_field_1C = other.nm_field_1C;
     nm_field_20 = other.nm_field_20;
     nm_field_24 = other.nm_field_24;
-    nm_field_28 = other.nm_field_28;
+    bm_field_28 = other.bm_field_28;
     memcpy(sm_field_29, other.sm_field_29, sizeof(sm_field_29));
     bm_field_31 = other.bm_field_31;
-    nm_field_32 = other.nm_field_32;
+    bm_field_32 = other.bm_field_32;
     bm_field_33 = other.bm_field_33;
 }
 
@@ -11648,7 +11648,7 @@ CPersistantEffect84C420::CPersistantEffect84C420(int a1, int a2, int a3, int a4,
     : CPersistantEffect84C4A4(a3, a4, a5)
 {
     nm_field_34 = a1;
-    bm_field_38 = a2;
+    nm_field_38 = a2;
 }
 
 // NOTE: Inlined.
@@ -11656,7 +11656,7 @@ CPersistantEffect84C420::CPersistantEffect84C420(const CPersistantEffect84C420& 
     : CPersistantEffect84C4A4(other)
 {
     nm_field_34 = other.nm_field_34;
-    bm_field_38 = other.bm_field_38;
+    nm_field_38 = other.nm_field_38;
 }
 
 // 0x4C25B0
@@ -11665,7 +11665,7 @@ void CPersistantEffect84C420::ApplyEffect(CGameSprite* pSprite, int index)
     CGameEffect* pEffect = new CGameEffectDamage();
     pEffect->m_dwFlags = nm_field_34;
     pEffect->m_sourceID = m_sourceID;
-    pEffect->m_effectAmount = index * bm_field_38;
+    pEffect->m_effectAmount = index * nm_field_38;
     pSprite->AddEffect(pEffect,
         CGameAIBase::EFFECT_LIST_TIMED,
         TRUE,
