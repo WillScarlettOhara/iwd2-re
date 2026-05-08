@@ -1,6 +1,11 @@
 #ifndef CSCREENSPELLBOOK_H_
 #define CSCREENSPELLBOOK_H_
 
+// ============================================================================
+// CScreenSpellbook - Spell memorization and casting
+//
+// Address: varies by method
+// ============================================================================
 #include "CBaldurEngine.h"
 #include "CKeyInfo.h"
 #include "CUIControlButton.h"

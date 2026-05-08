@@ -1,6 +1,11 @@
 #ifndef CGAMEOBJECT_H_
 #define CGAMEOBJECT_H_
 
+// ============================================================================
+// CGameObject - Base class for all game world objects
+//
+// Address: varies by method
+// ============================================================================
 #include "BalDataTypes.h"
 #include "CAIObjectType.h"
 

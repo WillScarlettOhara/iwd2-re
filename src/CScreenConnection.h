@@ -1,6 +1,11 @@
 #ifndef CSCREENCONNECTION_H_
 #define CSCREENCONNECTION_H_
 
+// ============================================================================
+// CScreenConnection - Multiplayer connection screen
+//
+// Address: varies by method
+// ============================================================================
 #include "CBaldurEngine.h"
 #include "CKeyInfo.h"
 #include "CUIControlButton.h"

@@ -1,6 +1,11 @@
 #ifndef CMESSAGE_H_
 #define CMESSAGE_H_
 
+// ============================================================================
+// CMessage - Inter-object message system - effects, damage, movement
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #include <bitset>

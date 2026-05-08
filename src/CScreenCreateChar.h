@@ -1,6 +1,11 @@
 #ifndef CSCREENCREATECHAR_H_
 #define CSCREENCREATECHAR_H_
 
+// ============================================================================
+// CScreenCreateChar - Character creation - race, class, abilities
+//
+// Address: varies by method
+// ============================================================================
 #include "C2DArray.h"
 #include "CBaldurEngine.h"
 #include "CGameAnimation.h"

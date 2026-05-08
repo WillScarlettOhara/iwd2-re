@@ -1,6 +1,11 @@
 #ifndef CGAMECONTAINER_H_
 #define CGAMECONTAINER_H_
 
+// ============================================================================
+// CGameContainer - Lootable chests, barrels, corpses
+//
+// Address: varies by method
+// ============================================================================
 #include "CGameAIBase.h"
 #include "CResRef.h"
 #include "CVidCell.h"

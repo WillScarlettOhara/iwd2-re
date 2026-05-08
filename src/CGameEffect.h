@@ -1,6 +1,11 @@
 #ifndef CGAMEEFFECT_H_
 #define CGAMEEFFECT_H_
 
+// ============================================================================
+// CGameEffect - Magical/physical effects - buffs, debuffs, damage over time
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #include <set>

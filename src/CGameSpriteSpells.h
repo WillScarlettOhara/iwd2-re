@@ -1,6 +1,11 @@
 #ifndef CGAMESPRITESPELLS_H_
 #define CGAMESPRITESPELLS_H_
 
+// ============================================================================
+// CGameSpriteSpells - Spell lists - memorized, innate, bard songs, shapesifts
+//
+// Address: varies by method
+// ============================================================================
 #include <vector>
 
 #include "FileFormat.h"

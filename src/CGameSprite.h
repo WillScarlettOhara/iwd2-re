@@ -13,11 +13,24 @@
 #include "CGameStatsSprite.h"
 #include "CMarker.h"
 #include "CResRef.h"
-#include "CSound.h"
-#include "CStrRes.h"
-#include "CVidBitmap.h"
-#include "CVidCell.h"
-#include "FileFormat.h"
+
+// ============================================================================
+// CGameSprite - Player and creature class
+//
+// Represents all living entities in the game: player characters, NPCs,
+// monsters, animals. This is the most complex class in the engine.
+//
+// Key subsystems:
+// - Animation: CGameAnimation (BAM sprite rendering)
+// - Derived stats: CDerivedStats (calculated from base stats + effects)
+// - Equipment: CGameSpriteEquipment (worn items)
+// - Spells: CGameSpriteSpells (memorized, innate, bard songs)
+// - Effects: CGameEffectList (ongoing magical effects)
+// - Actions: CGameAIBase action queue
+// - Modal abilities: stealth, detect traps, bard song, etc.
+//
+// Address: varies by method
+// ============================================================================
 
 // SEQUENCE.IDS
 

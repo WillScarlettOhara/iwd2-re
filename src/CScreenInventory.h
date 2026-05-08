@@ -1,6 +1,11 @@
 #ifndef CSCREENINVENTORY_H_
 #define CSCREENINVENTORY_H_
 
+// ============================================================================
+// CScreenInventory - Inventory management screen
+//
+// Address: varies by method
+// ============================================================================
 #include "C2DArray.h"
 #include "CBaldurEngine.h"
 #include "CButtonData.h"

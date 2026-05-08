@@ -1,6 +1,11 @@
 #ifndef CBALDURCHITIN_H_
 #define CBALDURCHITIN_H_
 
+// ============================================================================
+// CBaldurChitin - Baldur's Gate / Icewind Dale specific application singleton
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #include "BalDataTypes.h"

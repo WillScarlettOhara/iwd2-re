@@ -1,6 +1,11 @@
 #ifndef CGAMEAREA_H_
 #define CGAMEAREA_H_
 
+// ============================================================================
+// CGameArea - Area/level controller - objects, animations, sounds
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #include "CGameAreaNotes.h"

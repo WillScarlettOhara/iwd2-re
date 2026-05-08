@@ -1,6 +1,11 @@
 #ifndef CSCREENCHARACTER_H_
 #define CSCREENCHARACTER_H_
 
+// ============================================================================
+// CScreenCharacter - Character sheet - stats, inventory, spells
+//
+// Address: varies by method
+// ============================================================================
 #include "CAIObjectType.h"
 #include "CBaldurEngine.h"
 #include "CGameSpriteSpells.h"

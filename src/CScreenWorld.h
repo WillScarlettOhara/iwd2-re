@@ -1,6 +1,11 @@
 #ifndef CSCREENWORLD_H_
 #define CSCREENWORLD_H_
 
+// ============================================================================
+// CScreenWorld - Main gameplay screen - world exploration and combat
+//
+// Address: varies by method
+// ============================================================================
 #include "CBaldurEngine.h"
 
 #include "CGameDialog.h"

@@ -1,6 +1,11 @@
 #ifndef CAIACTION_H_
 #define CAIACTION_H_
 
+// ============================================================================
+// CAIAction - Script action definition ( MoveToObject, Attack, etc.)
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #include "CAIObjectType.h"

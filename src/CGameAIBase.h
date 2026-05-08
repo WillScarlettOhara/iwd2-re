@@ -1,6 +1,31 @@
 #ifndef CGAMEAIBASE_H_
 #define CGAMEAIBASE_H_
 
+// ============================================================================
+// CGameAIBase - Base class for AI-controlled game objects
+//
+// This is the foundation of the Infinity Engine AI system. All interactive
+// game objects (creatures, doors, triggers, areas) inherit from this class.
+// It manages action queues, script execution, triggers, and tick updates.
+//
+// Key systems:
+// - Action queue: pending actions scheduled for execution
+// - Script execution: CAIScript attached to each object
+// - Triggers: pending CAITrigger events (OnCreation, OnDeath, etc.)
+// - Timers: world timers for delayed actions
+//
+// Derived classes:
+// - CGameSprite (creatures/characters)
+// - CGameDoor (interactive doors)
+// - CGameTrigger (area triggers)
+// - CGameArea (AI area controller)
+// - CGameStatic (static objects)
+// - CGameTiledObject (tiled objects)
+// - CGameSpawning (spawning controller)
+//
+// Address: 0x44C8B0
+// ============================================================================
+
 #include "CAIAction.h"
 #include "CAIObjectType.h"
 #include "CGameObject.h"

@@ -1,6 +1,11 @@
 #ifndef CRES_H_
 #define CRES_H_
 
+// ============================================================================
+// CRes - Base resource class - .ARE, .CRE, .ITM files
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #include "CChitin.h"

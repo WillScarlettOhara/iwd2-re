@@ -1,6 +1,25 @@
 #ifndef CINFGAME_H_
 #define CINFGAME_H_
 
+// ============================================================================
+// CInfGame - Game state singleton
+//
+// The central hub that holds all game state. Accessed globally via
+// g_pBaldurChitin->GetObjectGame(). This class persists across areas
+// and manages the party, journal, world map, multiplayer, and save game data.
+//
+// Key subsystems:
+// - Party: up to 6 characters (CGameSprite)
+// - Areas: current area + area list
+// - Journal: quest entries and user notes (CGameJournal)
+// - World map: discovered locations (CWorldMap)
+// - Multiplayer: CMultiplayerSettings for co-op
+// - Rules: CRuleTables for game mechanics
+// - Saves: CGameSave for serialization
+//
+// Address: varies by method
+// ============================================================================
+
 #include "mfc.h"
 
 #include <vector>

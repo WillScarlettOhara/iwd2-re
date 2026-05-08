@@ -1,6 +1,11 @@
 #ifndef CDIMM_H_
 #define CDIMM_H_
 
+// ============================================================================
+// CDimm - Resource manager - loads and caches game assets
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #include "CDimmKeyTable.h"

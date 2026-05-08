@@ -1,6 +1,11 @@
 #ifndef CCHITIN_H_
 #define CCHITIN_H_
 
+// ============================================================================
+// CChitin - Main application framework - message loop, window management, core timer
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #include "CAliasList.h"

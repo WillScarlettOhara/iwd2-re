@@ -1,6 +1,11 @@
 #ifndef CSCREENJOURNAL_H_
 #define CSCREENJOURNAL_H_
 
+// ============================================================================
+// CScreenJournal - Quest log and player notes
+//
+// Address: varies by method
+// ============================================================================
 #include "CBaldurEngine.h"
 #include "CKeyInfo.h"
 #include "CUIControlButton.h"

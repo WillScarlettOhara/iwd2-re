@@ -1,6 +1,11 @@
 #ifndef CAISCRIPT_H_
 #define CAISCRIPT_H_
 
+// ============================================================================
+// CAIScript - Script file - condition=action pairs
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #include "CResRef.h"

@@ -1,6 +1,11 @@
 #ifndef CINFINITY_H_
 #define CINFINITY_H_
 
+// ============================================================================
+// CInfinity - 2D world rendering engine - tile maps, sprites, lighting
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #include <ddraw.h>

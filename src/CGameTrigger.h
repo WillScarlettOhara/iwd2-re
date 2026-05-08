@@ -1,6 +1,11 @@
 #ifndef CGAMETRIGGER_H_
 #define CGAMETRIGGER_H_
 
+// ============================================================================
+// CGameTrigger - Script trigger regions - OnEnter, OnExit events
+//
+// Address: varies by method
+// ============================================================================
 #include "CGameAIBase.h"
 #include "CResRef.h"
 #include "FileFormat.h"

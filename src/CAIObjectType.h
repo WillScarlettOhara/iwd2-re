@@ -1,6 +1,11 @@
 #ifndef CAIOBJECTTYPE_H_
 #define CAIOBJECTTYPE_H_
 
+// ============================================================================
+// CAIObjectType - Object filter/matcher for script targeting
+//
+// Address: varies by method
+// ============================================================================
 #include "mfc.h"
 
 #define CLASSMASK_BARBARIAN 0x00000001

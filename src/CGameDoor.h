@@ -1,6 +1,11 @@
 #ifndef CGAMEDOOR_H_
 #define CGAMEDOOR_H_
 
+// ============================================================================
+// CGameDoor - Interactive door with open/close animations
+//
+// Address: varies by method
+// ============================================================================
 #include "CGameAIBase.h"
 #include "CResRef.h"
 #include "CTiledObject.h"

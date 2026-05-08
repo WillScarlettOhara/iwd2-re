@@ -1,6 +1,11 @@
 #ifndef CDERIVEDSTATS_H_
 #define CDERIVEDSTATS_H_
 
+// ============================================================================
+// CDerivedStats - Calculated stats - AC, THAC0, saves with modifiers
+//
+// Address: varies by method
+// ============================================================================
 #include "CAIObjectType.h"
 #include "CColorEffects.h"
 #include "CGameSpriteSpells.h"

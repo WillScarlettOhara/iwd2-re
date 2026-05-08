@@ -1,6 +1,11 @@
 #ifndef CAITRIGGER_H_
 #define CAITRIGGER_H_
 
+// ============================================================================
+// CAITrigger - Script trigger events (OnCreation, OnDeath, etc.)
+//
+// Address: varies by method
+// ============================================================================
 #include "CAIObjectType.h"
 
 // TRIGGER.IDS:

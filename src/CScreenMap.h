@@ -1,6 +1,11 @@
 #ifndef CSCREENMAP_H_
 #define CSCREENMAP_H_
 
+// ============================================================================
+// CScreenMap - Auto-map and world travel
+//
+// Address: varies by method
+// ============================================================================
 #include "CBaldurEngine.h"
 #include "CKeyInfo.h"
 #include "CUIControlButton.h"
