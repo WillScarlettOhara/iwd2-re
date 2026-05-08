@@ -217,13 +217,13 @@ public:
     /* 0126 */ CString* pSpawnFacingStorageLabel;
     /* 012A */ int mSequentialStartValue;
     /* 012E */ DWORD mTimeOfDay;
-    /* 0132 */ int nm_field_132;
-    /* 0136 */ int nm_field_136;
-    /* 013A */ int nm_field_13A;
-    /* 013E */ BOOLEAN bm_field_13E;
-    /* 013F */ BOOLEAN bm_field_13F;
-    /* 0140 */ BOOLEAN bm_field_140;
-    /* 0141 */ BOOLEAN bm_field_141;
+    /* 0132 */ int m_specVarOperation;
+    /* 0136 */ int m_specVarValue;
+    /* 013A */ int m_specVarInc;
+    /* 013E */ BOOLEAN m_bSpecKeyControlled;
+    /* 013F */ BOOLEAN m_bAreaDiff1;
+    /* 0140 */ BOOLEAN m_bAreaDiff2;
+    /* 0141 */ BOOLEAN m_bAreaDiff3;
 };
 
 class CSpawnList : public CTypedPtrList<CPtrList, CSpawn*> {

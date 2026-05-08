@@ -48,9 +48,9 @@ public:
     /* 0616 */ CPoint m_posTrapOrigin;
     /* 061E */ CResRef m_keyType;
     /* 0626 */ SHORT m_drawPoly;
-    /* 0628 */ CPoint pfield_628;
-    /* 0630 */ CArray<CRect*> pfield_630;
-    /* 0644 */ CAreaPoint* pfield_644;
+    /* 0628 */ CPoint m_usePoint;
+    /* 0630 */ CArray<CRect*> m_pBoundingRects;
+    /* 0644 */ CAreaPoint* m_pAreaPoints;
 };
 
 #endif /* CGAMETRIGGER_H_ */

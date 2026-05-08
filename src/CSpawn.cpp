@@ -555,12 +555,12 @@ CSpawn::CSpawn(CMemINISection* pSection)
     mDeathLadyModifier = 0;
     mDeathMurderModifier = 0;
     Facing = 0;
-    nm_field_136 = 0;
-    nm_field_13A = 0;
-    bm_field_13E = 0;
-    bm_field_13F = 0;
-    bm_field_140 = 0;
-    bm_field_141 = 0;
+    m_specVarValue = 0;
+    m_specVarInc = 0;
+    m_bSpecKeyControlled = 0;
+    m_bAreaDiff1 = 0;
+    m_bAreaDiff2 = 0;
+    m_bAreaDiff3 = 0;
     mInterval = -1;
     SpawnFlags = 0;
     DataIsValid = FALSE;
@@ -692,7 +692,7 @@ void CSpawn::Read(CMemINISection* pSection)
     if (GetINIKey(pSection, SpecKey, sValue)) {
         // TODO: Incomplete.
     } else {
-        bm_field_13E = FALSE;
+        m_bSpecKeyControlled = FALSE;
     }
 
     pValue = pSection->Get(SpecVarKey);
@@ -702,53 +702,53 @@ void CSpawn::Read(CMemINISection* pSection)
 
         // NOTE: Uninline.
         if (GetINIKey(pSection, SpecVarIncKey, sValue)) {
-            nm_field_136 = atoi(sValue);
+            m_specVarValue = atoi(sValue);
         } else {
-            nm_field_136 = 0;
+            m_specVarValue = 0;
         }
 
         // NOTE: Uninline.
         if (GetINIKey(pSection, SpecVarOperationKey, sValue)) {
             if (_strnicmp(GreaterThanKey, sValue, GreaterThanKey.GetLength()) == 0) {
-                nm_field_132 = 0;
+                m_specVarOperation = 0;
             } else if (_strnicmp(LessThanKey, sValue, LessThanKey.GetLength()) == 0) {
-                nm_field_132 = 1;
+                m_specVarOperation = 1;
             } else if (_strnicmp(EqualToKey, sValue, EqualToKey.GetLength()) == 0) {
-                nm_field_132 = 2;
+                m_specVarOperation = 2;
             } else {
-                nm_field_132 = 3;
+                m_specVarOperation = 3;
             }
         } else {
-            nm_field_132 = 3;
+            m_specVarOperation = 3;
         }
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, SpecVarIncKey, sValue)) {
-        nm_field_13A = atoi(sValue);
+        m_specVarInc = atoi(sValue);
     } else {
-        nm_field_13A = 0;
+        m_specVarInc = 0;
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, AreaDiff1Key, sValue)) {
-        bm_field_13F = atoi(sValue) > 0;
+        m_bAreaDiff1 = atoi(sValue) > 0;
     } else {
-        bm_field_13F = TRUE;
+        m_bAreaDiff1 = TRUE;
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, AreaDiff2Key, sValue)) {
-        bm_field_140 = atoi(sValue) > 0;
+        m_bAreaDiff2 = atoi(sValue) > 0;
     } else {
-        bm_field_140 = TRUE;
+        m_bAreaDiff2 = TRUE;
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, AreaDiff3Key, sValue)) {
-        bm_field_141 = atoi(sValue) > 0;
+        m_bAreaDiff3 = atoi(sValue) > 0;
     } else {
-        bm_field_141 = TRUE;
+        m_bAreaDiff3 = TRUE;
     }
 
     // NOTE: Uninline.
