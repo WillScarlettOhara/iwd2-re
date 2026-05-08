@@ -212,7 +212,7 @@ CGameEffectBase::CGameEffectBase()
     m_saveMod = 0;
     m_special = 0;
     m_school = 0;
-    nm_field_48 = 0;
+    m_JeremyIsAnIdiot = 0;
     m_minLevel = 0;
     m_maxLevel = 0;
     m_flags = 0;
@@ -1345,7 +1345,7 @@ void CGameEffect::CopyFromBase(CGameEffectBase* pBase)
     m_saveMod = pBase->m_saveMod;
     m_special = pBase->m_special;
     m_school = pBase->m_school;
-    nm_field_48 = pBase->nm_field_48;
+    m_JeremyIsAnIdiot = pBase->m_JeremyIsAnIdiot;
     m_minLevel = pBase->m_minLevel;
     m_maxLevel = pBase->m_maxLevel;
     m_flags = pBase->m_flags;

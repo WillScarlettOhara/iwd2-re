@@ -263,7 +263,7 @@ public:
     /* 003C */ LONG m_saveMod;
     /* 0040 */ DWORD m_special;
     /* 0044 */ DWORD m_school;
-    /* 0048 */ int nm_field_48;
+    /* 0048 */ int m_JeremyIsAnIdiot;
     /* 004C */ DWORD m_minLevel;
     /* 0050 */ DWORD m_maxLevel;
     /* 0054 */ DWORD m_flags;
