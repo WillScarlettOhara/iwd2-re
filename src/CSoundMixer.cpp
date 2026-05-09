@@ -23,7 +23,7 @@ CSoundMixer::CSoundMixer()
     m_bInPositionUpdate = FALSE;
     m_bInReleaseAll = FALSE;
     m_bInQueueUpdate = FALSE;
-    nfield_C4 = 0;
+    m_bDirectSoundInit = 0;
     nfield_C8 = 0;
     nfield_CC = 0;
     nfield_D0 = 0;
@@ -38,10 +38,10 @@ CSoundMixer::CSoundMixer()
     nfield_F4 = 0;
     nfield_F8 = 0;
     nfield_FC = 0;
-    nm_field_178 = 0;
-    nfield_C0 |= 0x03;
+    m_bEAXSupported = 0;
+    m_nSoundFlags |= 0x03;
     m_bMixerInitialized = FALSE;
-    nm_field_40 = 0;
+    m_bStreamPlaying = 0;
     m_dwEAXProperties = 0;
     m_cSoundProperties.m_nPreset = 0;
     m_pDirectSound3DListener = NULL;
@@ -64,7 +64,7 @@ CSoundMixer::CSoundMixer()
     ReleaseAll();
 
     m_bMixerInitialized = FALSE;
-    nm_field_40 = 0;
+    m_bStreamPlaying = 0;
     nm_field_0 = 0;
 }
 
@@ -154,7 +154,7 @@ void CSoundMixer::CleanUp()
     ReleaseAll();
 
     m_bMixerInitialized = FALSE;
-    nm_field_40 = 0;
+    m_bStreamPlaying = 0;
     nm_field_0 = 0;
 
     Unlock();
@@ -210,7 +210,7 @@ void CSoundMixer::Initialize(CWnd* pWnd, int nNewMaxVoices, int nNewMaxChannels)
 {
     HRESULT hr;
 
-    nfield_C4 = 1;
+    m_bDirectSoundInit = 1;
     nfield_C8 = 0;
     nfield_CC = 0;
     nfield_D0 = 0;
@@ -310,14 +310,14 @@ void CSoundMixer::Initialize(CWnd* pWnd, int nNewMaxVoices, int nNewMaxChannels)
         }
     }
 
-    if (nm_field_178) {
+    if (m_bEAXSupported) {
         m_dwEAXProperties |= CSOUNDPROPERTIES_EAX_SUPPORTS_ENVIRONMENT;
     } else {
         if (pm_field_144.sub_799C90()) {
             pm_field_144.sub_7C25B0();
-            nm_field_178 = FALSE;
+            m_bEAXSupported = FALSE;
         } else {
-            nm_field_178 = TRUE;
+            m_bEAXSupported = TRUE;
             m_dwEAXProperties |= CSOUNDPROPERTIES_EAX_SUPPORTS_ENVIRONMENT;
         }
     }
@@ -476,7 +476,7 @@ void CSoundMixer::SetPanRange(int nNewPanRange)
 // 0x7ABBA0
 void CSoundMixer::UpdateSoundList()
 {
-    if ((nfield_C0 & 0x1) != 0) {
+    if ((m_nSoundFlags & 0x1) != 0) {
         if (!m_bInReleaseAll) {
             m_bInReleaseAll = TRUE;
             Lock();
@@ -562,7 +562,7 @@ void CSoundMixer::UpdateSoundList()
 // 0x7ABE30
 BOOL CSoundMixer::UpdateSoundList(INT nPriority)
 {
-    if ((nfield_C0 & 0x1) == 0) {
+    if ((m_nSoundFlags & 0x1) == 0) {
         return FALSE;
     }
 
@@ -630,7 +630,7 @@ BOOL CSoundMixer::UpdateSoundList(INT nPriority)
 // 0x7AC030
 void CSoundMixer::UpdateSoundPositions()
 {
-    if ((nfield_C0 & 1) != 0) {
+    if ((m_nSoundFlags & 1) != 0) {
         if (!m_bInPositionUpdate) {
             m_bInPositionUpdate = TRUE;
             Lock();
@@ -664,7 +664,7 @@ void CSoundMixer::UpdateSoundPositions()
 // 0x7AC150
 void CSoundMixer::UpdateQueue()
 {
-    if ((nfield_C0 & 1) != 0) {
+    if ((m_nSoundFlags & 1) != 0) {
         if (!m_bInQueueUpdate) {
             m_bInQueueUpdate = TRUE;
             Lock();
@@ -770,7 +770,7 @@ void CSoundMixer::StartSong(INT nSong, DWORD dwFlags)
 // 0x7AC510
 void CSoundMixer::StartSong(INT nSong, INT nSection, INT nPosition, DWORD dwFlags)
 {
-    if ((nfield_C0 & 0x2) != 0) {
+    if ((m_nSoundFlags & 0x2) != 0) {
         BOOL bFadeIn = TRUE;
 
         if (m_bMusicInitialized) {
@@ -909,7 +909,7 @@ void CSoundMixer::Unlock()
 // 0x7AC9B0
 void CSoundMixer::UpdateMusic()
 {
-    if ((nfield_C0 & 2) != 0) {
+    if ((m_nSoundFlags & 2) != 0) {
         if (m_bMusicInitialized) {
             Lock();
 
@@ -959,7 +959,7 @@ int CSoundMixer::GetSongPlaying()
 // 0x7ACA30
 int CSoundMixer::sub_7ACA30()
 {
-    return (nfield_C0 << 30) >> 31;
+    return (m_nSoundFlags << 30) >> 31;
 }
 
 // NOTE: Inlined in `CInfGame::ApplyVolumeSliders` and probably other places.

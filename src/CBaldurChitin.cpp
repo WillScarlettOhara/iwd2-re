@@ -1024,7 +1024,7 @@ void CBaldurChitin::MainAIThread(void* userInfo)
     if (!g_pChitin->wm_field_1A28) {
         g_pChitin->wm_field_1A28 = 1;
 
-        if (g_pChitin->dwPlatformId == VER_PLATFORM_WIN32_NT) {
+        if (g_pChitin->m_opSystemPlatformId == VER_PLATFORM_WIN32_NT) {
             if (GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY, NT_SMOOTH_SOUND_KEY, 1, g_pChitin->GetIniFileName()) != 0) {
                 SetThreadPriority(GetCurrentThread(), 2);
             }

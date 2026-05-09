@@ -922,7 +922,7 @@ CInfinity::CInfinity()
 {
     pVidMode = NULL;
     m_areaType = 0;
-    nm_field_20 = 0;
+    m_bUseDestSrc = 0;
     bWEDDemanded = FALSE;
     bInitialized = FALSE;
     bRefreshVRamRect = FALSE;
@@ -939,14 +939,14 @@ CInfinity::CInfinity()
     nOffsetY = 0;
     nNewX = 0;
     nNewY = 0;
-    nfield_98 = 0;
-    nfield_9C = 0;
-    nfield_A0 = 0;
-    nfield_A4 = 0;
-    nfield_A8 = 0;
-    bfield_AC = 0;
-    nfield_B0 = 0;
-    nfield_B4 = 0;
+    m_nSub1XOffset = 0;
+    m_nSub1YOffset = 0;
+    m_nSub2XOffset = 0;
+    m_nSub2YOffset = 0;
+    m_nSub3XOffset = 0;
+    m_nSub3YOffset = 0;
+    m_nSub4XOffset = 0;
+    m_nSub4YOffset = 0;
     nTilesX = 0;
     nTilesY = 0;
     rViewPort.left = 0;
@@ -976,13 +976,13 @@ CInfinity::CInfinity()
     nThunderLength = 0;
     nCurrentLightningFrequency = 0;
     nNextLightningFrequency = 0;
-    nm_field_124 = 0;
+    m_nNewLightningFrequency = 0;
     nCurrentRainLevel = 0;
     nNextRainLevel = 0;
     nCurrentSnowLevel = 0;
-    nm_field_134 = 0;
-    nm_field_138 = 0;
-    nm_field_13C = 0;
+    m_nCurrentWindLevel = 0;
+    m_nCurrentFogLevel = 0;
+    m_nNextWindLevel = 0;
     nTimeToNextThunder = -1;
     m_bStartLightning = FALSE;
     m_bStopLightning = FALSE;
@@ -997,7 +997,7 @@ CInfinity::CInfinity()
     m_rgbTimeOfDayRainColor = RGB(110, 110, 110);
     m_rgbRainColor = RGB(110, 110, 110);
     m_requestDayNightCode = 1;
-    wm_m_field_15E = 0;
+    m_oldRequestDualTileCode = 0;
     m_renderDayNightCode = 1;
     m_oldRenderDayNightCode = 1;
     m_dayLightIntensity = -1;
@@ -1032,7 +1032,7 @@ CInfinity::~CInfinity()
     rViewPort.left = 0;
     rViewPort.right = 0;
     rViewPort.bottom = 0;
-    nm_field_20 = 0;
+    m_bUseDestSrc = 0;
     nAreaX = 0;
     nAreaY = 0;
     nOffsetX = 0;
@@ -1612,7 +1612,7 @@ BOOL CInfinity::FreeWED()
     }
 
     bInitialized = FALSE;
-    CancelRequestRect(wm_m_field_15E);
+    CancelRequestRect(m_oldRequestDualTileCode);
     DetachVRamRect();
     pResWED->Release();
     pResWED->CancelRequest();
@@ -2113,7 +2113,7 @@ DWORD CInfinity::Render(CVidMode* pNewVidMode, INT nSurface, INT nScrollState, C
         || m_bResizedViewPort) {
         if (bRefreshVRamRect) {
             bRefreshVRamRect = FALSE;
-            CancelRequestRect(wm_m_field_15E);
+            CancelRequestRect(m_oldRequestDualTileCode);
             DetachVRamRect();
         }
 
@@ -2415,7 +2415,7 @@ BOOL CInfinity::RequestRect(int x1, int y1, int x2, int y2)
 {
     CRect r(0, 0, nTilesX, nTilesY);
 
-    CancelRequestRect(wm_m_field_15E);
+    CancelRequestRect(m_oldRequestDualTileCode);
 
     BYTE flags;
     if ((m_areaType & 0x40) != 0) {
@@ -2428,7 +2428,7 @@ BOOL CInfinity::RequestRect(int x1, int y1, int x2, int y2)
         flags |= 0x4;
     }
 
-    wm_m_field_15E = flags;
+    m_oldRequestDualTileCode = flags;
 
     int nMinX = max(x1 + 3, 0);
     int nMaxX = min(x2 - 3, nTilesX - 1);
@@ -2844,7 +2844,7 @@ BOOL CInfinity::InitViewPort(const CRect& rRect)
     m_ptCurrentPosExact.x = 0;
     m_ptCurrentPosExact.y = 0;
 
-    CancelRequestRect(wm_m_field_15E);
+    CancelRequestRect(m_oldRequestDualTileCode);
     DetachVRamRect();
 
     nCurrentTileX = nCurrentX / 64;

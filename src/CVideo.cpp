@@ -314,7 +314,7 @@ void CVideo::ChangeBppValue()
 {
     if (!m_bIs3dAccelerated) {
         if (g_pChitin->m_bFullscreen) {
-            g_pChitin->nfield_F8 = 1;
+            g_pChitin->m_bSwitchingDisplayMode = 1;
             if (g_pChitin->pActiveEngine != NULL) {
                 g_pChitin->pActiveEngine->EngineDeactivated();
             }
@@ -344,7 +344,7 @@ void CVideo::ChangeBppValue()
 
             if (Initialize(g_pChitin->GetWnd()->GetSafeHwnd(), g_pChitin->m_bFullscreen)) {
                 g_pChitin->Resume();
-                g_pChitin->nfield_F8 = 0;
+                g_pChitin->m_bSwitchingDisplayMode = 0;
 
                 if (g_pChitin->pActiveEngine != NULL) {
                     g_pChitin->pActiveEngine->EngineActivated();

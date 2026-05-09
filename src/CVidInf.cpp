@@ -1750,7 +1750,7 @@ void CVidInf::LoadFogOWarSurfaces(const CString& a2)
     BOOL bSurfaceLocked;
 
     if (!g_pChitin->cVideo.m_bIs3dAccelerated) {
-        if (g_pChitin->nfield_F8 != 1) {
+        if (g_pChitin->m_bSwitchingDisplayMode != 1) {
             if (!a2.IsEmpty()) {
                 sfield_73A = a2;
             } else {

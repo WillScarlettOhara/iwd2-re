@@ -260,7 +260,7 @@ void CCacheStatus::Update(BOOLEAN bEnabled, LONG nProgressBarCaption, INT nBytes
     }
 
     if (nBytesCopied == 0 && nTotalBytes == 0) {
-        while (g_pBaldurChitin->nfield_F8 == TRUE) {
+        while (g_pBaldurChitin->m_bSwitchingDisplayMode == TRUE) {
             SleepEx(50, FALSE);
         }
 
@@ -621,7 +621,7 @@ void CCacheStatus::Update(BOOLEAN bEnabled, LONG nProgressBarCaption, INT nBytes
                 v1 = PROGRESSBAR_FOREGROUND_START_X + PROGRESSBAR_FOREGROUND_X_OFFSET;
             }
 
-            if (!g_pBaldurChitin->nfield_F8) {
+            if (!g_pBaldurChitin->m_bSwitchingDisplayMode) {
                 if (bDisplayMinibars == TRUE) {
                     if (bTimeoutCounter == TRUE) {
                         clipRect.left = x;

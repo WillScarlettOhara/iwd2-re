@@ -799,8 +799,8 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
     m_userCommandPause = 0;
     m_recoilFrame = 0;
     wfield_561E = 0;
-    nm_field_44A = 0;
-    nfield_54C = 0;
+    m_PAICallCounter = 0;
+    m_bJustAttacked = 0;
     wfield_560C = 0;
     wfield_5616 = 0;
     wfield_5612 = 0;

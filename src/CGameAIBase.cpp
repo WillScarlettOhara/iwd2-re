@@ -60,29 +60,29 @@ CGameAIBase::CGameAIBase()
     m_objectType = CGameObject::TYPE_AIBASE;
     m_lAttacker.Set(CAIObjectType::NOONE);
     m_lOrderedBy.Set(CAIObjectType::NOONE);
-    pfield_EA.Set(CAIObjectType::NOONE);
-    pm_field_126.Set(CAIObjectType::NOONE);
-    wm_m_field_162.Set(CAIObjectType::NOONE);
+    m_lProtecting.Set(CAIObjectType::NOONE);
+    m_lProtector.Set(CAIObjectType::NOONE);
+    m_lTargeted.Set(CAIObjectType::NOONE);
     m_lHitter.Set(CAIObjectType::NOONE);
     m_lHelp.Set(CAIObjectType::NOONE);
     m_lTrigger.Set(CAIObjectType::NOONE);
     m_lSeen.Set(CAIObjectType::NOONE);
     m_lTalkedTo.Set(CAIObjectType::NOONE);
     m_lHeard.Set(CAIObjectType::NOONE);
-    pm_field_306.Set(CAIObjectType::NOONE);
-    pm_field_342.Set(CAIObjectType::NOONE);
-    pm_field_37E.Set(CAIObjectType::NOONE);
-    pm_field_3BA.Set(CAIObjectType::NOONE);
+    m_lSummonedBy.Set(CAIObjectType::NOONE);
+    m_lMarked.Set(CAIObjectType::NOONE);
+    m_lFollowed.Set(CAIObjectType::NOONE);
+    m_lMyTarget.Set(CAIObjectType::NOONE);
     m_curResponseNum = -1;
     m_curResponseSetNum = -1;
     m_curScriptNum = -1;
     m_curAction = CAIAction::NULL_ACTION;
     m_interrupt = FALSE;
     m_actionCount = 0;
-    nfield_54C = 0;
-    wfield_550 = 0;
-    wfield_552 = 0;
-    nm_field_44A = 0;
+    m_bJustAttacked = 0;
+    m_nReactionSeed = 0;
+    m_nAlertnessPeriod = 0;
+    m_PAICallCounter = 0;
     m_overrideScript = NULL;
     m_special1Script = NULL;
     m_teamScript = NULL;
@@ -92,7 +92,7 @@ CGameAIBase::CGameAIBase()
     m_movementScript = NULL;
     m_inCutScene = FALSE;
     m_reactionRoll = 10;
-    wfield_550 = rand() % 120;
+    m_nReactionSeed = rand() % 120;
 
     CAITrigger trigger(CAITrigger::ONCREATION, 0);
     m_pendingTriggers.AddTail(new CAITrigger(trigger));
@@ -103,9 +103,9 @@ CGameAIBase::CGameAIBase()
     m_nLastActionReturn = -1;
     nfield_588 = 0;
     nfield_58C = 0;
-    bfield_594 = 0;
-    bfield_595 = 1;
-    nfield_596 = 0;
+    m_bScrolling = 0;
+    m_nVisualRange = 1;
+    bfield_596 = 0;
     m_randValue = rand() & 0x7FFF;
 }
 
@@ -731,7 +731,7 @@ SHORT CGameAIBase::MoveView(CPoint dest, int speed)
     }
 
     if (m_curAction.m_actionID == CAIACTION_MOVEVIEWPOINTUNTILDONE) {
-        if (!bfield_594) {
+        if (!m_bScrolling) {
             CMessageStartScroll* pMessage = new CMessageStartScroll(pVisibleArea,
                 CPoint(x, y),
                 dest,
@@ -741,14 +741,14 @@ SHORT CGameAIBase::MoveView(CPoint dest, int speed)
 
             g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
 
-            bfield_594 = TRUE;
+            m_bScrolling = TRUE;
         }
 
         if (x != dest.x && y != dest.y) {
             return ACTION_NORMAL;
         }
 
-        bfield_594 = FALSE;
+        m_bScrolling = FALSE;
     } else {
         CMessageStartScroll* pMessage = new CMessageStartScroll(pVisibleArea,
             CPoint(x, y),
@@ -1866,15 +1866,15 @@ CVariable* CGameAIBase::GetGlobalVariable(const CString& sScope, const CString& 
 }
 
 // 0x4530F0
-void CGameAIBase::sub_4530F0(const CAIObjectType& type)
+void CGameAIBase::SetMarked(const CAIObjectType& type)
 {
-    pm_field_342.Set(type);
+    m_lMarked.Set(type);
 }
 
 // 0x453110
-void CGameAIBase::sub_453110(const CAIObjectType& type)
+void CGameAIBase::SetFollowed(const CAIObjectType& type)
 {
-    pm_field_37E.Set(type);
+    m_lFollowed.Set(type);
 }
 
 // 0x453130
@@ -1890,9 +1890,9 @@ int CGameAIBase::GetField58C()
 }
 
 // 0x45B6E0
-void CGameAIBase::sub_45B6E0(const CAIObjectType& type)
+void CGameAIBase::SetMyTargetObj(const CAIObjectType& type)
 {
-    pm_field_3BA.Set(type);
+    m_lMyTarget.Set(type);
 }
 
 // -----------------------------------------------------------------------------

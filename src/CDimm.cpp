@@ -1195,7 +1195,7 @@ BOOL CDimm::GetElementInDirectoryList(int nIndex, CString& sDirName)
 // 0x786390
 int CDimm::GetMemoryAmount()
 {
-    if (g_pChitin->dwPlatformId == VER_PLATFORM_WIN32_NT) {
+    if (g_pChitin->m_opSystemPlatformId == VER_PLATFORM_WIN32_NT) {
         if (dwTotalPhysicalMemory < 23 * 1024 * 1024) {
             return 2;
         }

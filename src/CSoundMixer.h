@@ -65,7 +65,7 @@ public:
     /* 0004 */ IDirectSound* m_pDirectSound; // #guess
     /* 0008 */ IDirectSoundBuffer* m_pPrimarySoundBuffer; // #guess
     /* 003C */ BOOL m_bMixerInitialized;
-    /* 0040 */ int nm_field_40;
+    /* 0040 */ int m_bStreamPlaying;
     /* 0044 */ BOOL m_bInLoopingUpdate;
     /* 0048 */ BOOL m_bInPositionUpdate;
     /* 004C */ BOOL m_bInReleaseAll; // #guess
@@ -75,8 +75,8 @@ public:
     /* 0084 */ CObList m_lVoices;
     /* 00A0 */ CObList m_lWaiting; // #guess
     /* 00BC */ HWND m_hWnd;
-    /* 00C0 */ int nfield_C0;
-    /* 00C4 */ int nfield_C4;
+    /* 00C0 */ int m_nSoundFlags;
+    /* 00C4 */ int m_bDirectSoundInit;
     /* 00C8 */ int nfield_C8;
     /* 00CC */ int nfield_CC;
     /* 00D0 */ int nfield_D0;
@@ -101,7 +101,7 @@ public:
     /* 013C */ IDirectSound3DListener* m_pDirectSound3DListener; // #guess
     /* 0140 */ DWORD m_dwEAXProperties;
     /* 0144 */ CUnknown2 pm_field_144;
-    /* 0178 */ int nm_field_178;
+    /* 0178 */ int m_bEAXSupported;
 };
 
 #endif /* CSOUNDMIXER_H_ */

@@ -11,7 +11,7 @@ Reverse engineering of Icewind Dale 2 — recover the lost source code.
 - Code: 53% (~2M / ~3.8M lines)
 - Game: NOT playable (only UI screens work)
 - sub_ remaining: ~781 references (~243 unique functions)
-- field_ remaining: ~550 unique unnamed fields
+- field_ remaining: ~648 unique unnamed fields
 - TODO: ~2199 | FIXME: ~427
 
 ## Reference Sources
@@ -95,7 +95,7 @@ For each unnamed field:
 Priority order: small classes first (few fields, high confidence) → CGameSprite last (101 fields, complex)
 
 ## Completed Renames
-### Fields (36 total)
+### Fields (98 total)
 - CProjectile::nm_field_182 → m_secondaryProjectileId
 - CResTile::sfield_58 → m_cResRef (also fixed cpp bug nfield_58)
 - CSound::nm_field_3C → m_bFrequencyInitialized
@@ -108,6 +108,11 @@ Priority order: small classes first (few fields, high confidence) → CGameSprit
 - CVisibilityMap: bm_field_4 → m_nEllipseArcCountPrimary, wfield_E → m_nEllipseArcWidth, wm_field_10 → m_nEllipseArcHeight, pm_field_12 → m_pEllipseArcPixelsPrimary, pm_field_16 → m_pEllipseArcPixelsSecondary, bm_field_1A → m_nEllipseArcCountSecondary
 - CDerivedStatsTemplate: wfield_6 → m_nArmorClass
 - CGameAreaNotes: bm_field_8D → m_nCurrentIcon, bm_field_8E → m_bAddingNote
+- CInfinity: nm_field_20 → m_bUseDestSrc, nfield_98 → m_nSub1XOffset, nfield_9C → m_nSub1YOffset, nfield_A0 → m_nSub2XOffset, nfield_A4 → m_nSub2YOffset, nfield_A8 → m_nSub3XOffset, nfield_AC → m_nSub3YOffset (fixed bfield_AC→nfield prefix mismatch), nfield_B0 → m_nSub4XOffset, nfield_B4 → m_nSub4YOffset, nm_field_124 → m_nNewLightningFrequency, nm_field_134 → m_nCurrentWindLevel, nm_field_138 → m_nCurrentFogLevel, nm_field_13C → m_nNextWindLevel, bm_m_field_15E → m_oldRequestDualTileCode
+- CChitin: nm_field_4C → m_bServicingEnabled, nfield_50 → m_bMessagesEnabled, nfield_70 → m_nIterations, nfield_B4 → m_hCopyData, nfield_BC → m_nTimerID, nfield_C0 → m_nTimerResolution, m_field_E8 → m_rClient, bfield_F8/nfield_F8 → m_bSwitchingDisplayMode (fixed type unsigned char→BOOL + offset 0xF8→0xF8→0xFC restructure), bfield_F9 → m_bEdgeScrollActive, dwPlatformId → m_opSystemPlatformId, wfield_FE → m_nCapsLockState, nm_field_110 → m_bStartUpHost, sm_field_11C → m_sStartUpPort, nm_field_124 → m_bStartUpNewGame, nm_field_128 → m_bStartUpLoadGame, bm_field_130 → m_bStartUpDirectPlayLobby, bm_field_131 → m_bStartUpGameSpyLocation, nm_field_16C → m_bMouseWheelSupport, nm_field_170 → m_nMouseWheelMessage, nm_field_1A4 → m_bIMEEnabled, nm_field_136 → m_nMaxPlayers, nm_field_19C → m_nAISleeper
+- CSoundMixer: nm_field_40 → m_bStreamPlaying, nfield_C0 → m_nSoundFlags, nfield_C4 → m_bDirectSoundInit, nm_field_178 → m_bEAXSupported
+- CMessage: pfield_9A → m_csPlayerRemoval; CMessageSpriteUpdate: wfield_64 → m_nArmorClass, wfield_66 → m_nACDexBonus, nfield_68 → m_nACDodgeBonus, wfield_6A → m_nACDeflectionBonus, wfield_74 → m_nPortraitIcons, pfield_76 → m_pPortraitIcons
+- CDerivedStats: wm_field_8 → m_nACDexBonus, wfield_A → m_nACDodgeBonus, wfield_C → m_nACDeflectionBonus; pm_field_290 → m_cImmunitiesItemEquipAlt, pm_field_2AC → m_cImmunitiesItemTypeEquipAlt; pm_field_3C8 → m_cImmunitiesProjectile, pm_field_3E4 → m_cBounceProjectileAlt, pm_field_400 → m_cImmunitiesProjectileAlt, pm_field_41C → m_cBounceProjectileLevelDec; pm_field_4AC → m_cImmunitiesSpell, pm_field_4C8 → m_cBounceSpell, pm_field_4E4 → m_cImmunitiesSchool, pfield_500 → m_cImmunitiesSecondaryType, pfield_51C → m_cBounceSchool, pfield_538 → m_cBounceSecondaryType
 
 ### Functions (6 total)
 - Icewind586B70: sub_586CA0 → IsPartyNotFull, sub_586CF0 → CanAddSprite, sub_586D60 → AddTemporary, sub_586F20 → AddPermanently, sub_586FC0 → Reinstate, sub_587190 → SyncToSprites

@@ -1943,7 +1943,7 @@ BOOL CBaldurMessage::OnKickPlayerHoofedOut(INT nMsgFrom)
 // 0x42D6E0
 BOOL CBaldurMessage::AddDroppedPlayer(PLAYER_ID playerID)
 {
-    CSingleLock lock(&pfield_9A, FALSE);
+    CSingleLock lock(&m_csPlayerRemoval, FALSE);
     lock.Lock(INFINITE);
 
     // NOTE: Original code is slightly different but does the same thing.
@@ -1963,7 +1963,7 @@ BOOL CBaldurMessage::AddDroppedPlayer(PLAYER_ID playerID)
 // 0x42D7A0
 BOOL CBaldurMessage::PurgeDroppedPlayers()
 {
-    CSingleLock lock(&pfield_9A, FALSE);
+    CSingleLock lock(&m_csPlayerRemoval, FALSE);
 
     if (m_bRemovedPlayerID == TRUE) {
         lock.Lock(INFINITE);
@@ -10977,10 +10977,10 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
 {
     m_nTranslucent = 0;
     m_nFadeSpeed = 0;
-    wfield_64 = 0;
-    wfield_66 = 0;
-    nfield_68 = 0;
-    wfield_6A = 0;
+    m_nArmorClass = 0;
+    m_nACDexBonus = 0;
+    m_nACDodgeBonus = 0;
+    m_nACDeflectionBonus = 0;
     m_nACCrushingMod = 0;
     m_nACMissileMod = 0;
     m_nACPiercingMod = 0;
@@ -11015,10 +11015,10 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
         m_nHitPoints = pSprite->GetBaseStats()->m_hitPoints;
         m_nMaxHitPoints = pSprite->GetDerivedStats()->m_nMaxHitPoints;
         bfield_61 = pSprite->GetBaseStats()->m_flags;
-        wfield_64 = pSprite->GetDerivedStats()->wfield_6;
-        wfield_66 = pSprite->GetDerivedStats()->nm_field_8;
-        nfield_68 = pSprite->GetDerivedStats()->wfield_A;
-        wfield_6A = pSprite->GetDerivedStats()->nfield_C;
+        m_nArmorClass = pSprite->GetDerivedStats()->m_nArmorClass;
+        m_nACDexBonus = pSprite->GetDerivedStats()->m_nACDexBonus;
+        m_nACDodgeBonus = pSprite->GetDerivedStats()->m_nACDodgeBonus;
+        m_nACDeflectionBonus = pSprite->GetDerivedStats()->m_nACDeflectionBonus;
         m_nACCrushingMod = pSprite->GetDerivedStats()->m_nACCrushingMod;
         m_nACMissileMod = pSprite->GetDerivedStats()->m_nACMissileMod;
         m_nACPiercingMod = pSprite->GetDerivedStats()->m_nACPiercingMod;

@@ -1692,7 +1692,7 @@ BOOLEAN CNetwork::HasModems()
         return FALSE;
     }
 
-    if (g_pChitin->dwPlatformId == VER_PLATFORM_WIN32_NT) {
+    if (g_pChitin->m_opSystemPlatformId == VER_PLATFORM_WIN32_NT) {
         if (RegOpenKeyExA(hServices, "Modem", 0, KEY_READ, &hModem) != ERROR_SUCCESS) {
             RegCloseKey(hServices);
             RegCloseKey(hCurrentControlSet);

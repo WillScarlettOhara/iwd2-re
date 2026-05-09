@@ -153,42 +153,43 @@ public:
     /* 003C */ UINT m_mouseDblClickTime;
     /* 0040 */ CSize m_mouseDblClickSize;
     /* 0048 */ BOOL m_bEngineActive;
-    /* 004C */ int nm_field_4C;
-    /* 0050 */ int nfield_50;
+    /* 004C */ int m_bServicingEnabled;
+    /* 0050 */ int m_bMessagesEnabled;
     /* 0054 */ CObList lEngines;
-    /* 0070 */ int nfield_70;
+    /* 0070 */ int m_nIterations;
     /* 0074 */ CWarp* m_pStartingEngine;
     /* 0078 */ CWnd cWnd; // #guess
-    /* 00B4 */ HANDLE nfield_B4;
+    /* 00B4 */ HANDLE m_hCopyData;
     /* 00B8 */ HINSTANCE m_hInstance; // #guess
-    /* 00BC */ int nfield_BC;
-    /* 00C0 */ int nfield_C0;
+    /* 00BC */ int m_nTimerID;
+    /* 00C0 */ int m_nTimerResolution;
     /* 00C4 */ CRITICAL_SECTION pfield_C4;
     /* 00DC */ CString m_sCommandLine;
     /* 00E0 */ BOOLEAN m_bReInitializing;
     /* 00E1 */ BOOLEAN m_bFullscreen;
     /* 00E2 */ BOOLEAN m_nNextFullscreen;
     /* 00E4 */ int nfield_E4;
-    /* 00E8 */ RECT m_field_E8;
-    /* 00F8 */ unsigned char bfield_F8;
-    /* 00F9 */ unsigned char bfield_F9;
-    /* 00FA */ DWORD dwPlatformId; // #guess
-    /* 00FE */ short wfield_FE;
-    /* 0100 */ int m_nScreenWidth; // #guess
-    /* 0104 */ int m_nScreenHeight; // #guess
-    /* 0108 */ CPoint m_ptScreen;
-    /* 0110 */ int nm_field_110;
+    /* 00E8 */ RECT m_rClient;
+    /* 00F8 */ BOOL m_bSwitchingDisplayMode;
+    /* 00FC */ BYTE m_bScreenEdgeScroll;
+    /* 00FD */ BYTE m_bEdgeScrollActive;
+    /* 00FE */ DWORD m_opSystemPlatformId;
+    /* 0102 */ short m_nCapsLockState;
+    /* 0104 */ int m_nScreenWidth; // #guess
+    /* 0108 */ int m_nScreenHeight; // #guess
+    /* 010C */ CPoint m_ptScreen;
+    /* 0110 */ int m_bStartUpHost;
     /* 0114 */ BOOL m_bStartUpConnect;
     /* 0118 */ CString m_sStartUpAddress;
-    /* 011C */ CString sm_field_11C;
+    /* 011C */ CString m_sStartUpPort;
     /* 0120 */ CString m_sStartUpPlayer;
-    /* 0124 */ int nm_field_124;
-    /* 0128 */ int nm_field_128;
+    /* 0124 */ int m_bStartUpNewGame;
+    /* 0128 */ int m_bStartUpLoadGame;
     /* 012C */ CString m_sStartUpSession;
-    /* 0130 */ unsigned char bm_field_130;
-    /* 0131 */ unsigned char bm_field_131;
+    /* 0130 */ unsigned char m_bStartUpDirectPlayLobby;
+    /* 0131 */ unsigned char m_bStartUpGameSpyLocation;
     /* 0132 */ CString m_sStartUpGameSpyLocation;
-    /* 0136 */ int nm_field_136;
+    /* 0136 */ int m_nMaxPlayers;
     /* 013A */ int nm_field_13A;
     /* 01E3 */ int nm_field_1E3;
     /* 0142 */ int nm_m_field_142;
@@ -198,8 +199,8 @@ public:
     // case.
     /* 014C */ CPtrList m_lMouseWheel;
     /* 0168 */ int m_nWheelScrollLines; // #guess
-    /* 016C */ int nm_field_16C;
-    /* 0170 */ int nm_field_170;
+    /* 016C */ int m_bMouseWheelSupport;
+    /* 0170 */ int m_nMouseWheelMessage;
     /* 0174 */ int nm_field_174;
     /* 0178 */ BOOL m_bUseMirrorFX; // #guess
     /* 017C */ UINT m_nQueryCancelAutoPlayMsgID; // #guess
@@ -210,9 +211,9 @@ public:
     /* 0190 */ int m_nRenderTickCount;
     /* 0194 */ int m_nRenderPerSec;
     /* 0198 */ int m_nRenderElasped;
-    /* 019C */ int nm_field_19C;
+    /* 019C */ int m_nAISleeper;
     /* 01A0 */ int nm_field_1A0;
-    /* 01A4 */ int nm_field_1A4;
+    /* 01A4 */ int m_bIMEEnabled;
     /* 01A8 */ CImm cImm; // #guess
     /* 02E8 */ CString m_sFontName;
     /* 02EC */ int nm_field_2EC;
