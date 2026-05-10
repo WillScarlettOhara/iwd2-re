@@ -1081,7 +1081,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         m_nBounceCounter = 0;
         nfield_7106 = 0;
 
-        sub_7204C0();
+        LoadAnimationSounds();
 
         nfield_70EE = 0;
         bfield_7430 = 0;
@@ -1339,7 +1339,7 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
     }
 
     if (!m_baseStats.bm_field_2E2) {
-        sub_75F240();
+        SavePositionToBaseStats();
         m_baseStats.bm_field_2E2 = TRUE;
     }
 
@@ -1358,7 +1358,7 @@ void CGameSprite::RemoveReplacementFromArea()
         }
 
         if (g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id) != -1) {
-            if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->nm_field_1AC || InControl()) {
+            if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode || InControl()) {
                 if (Animate()) {
                     m_pArea->m_visibility.RemoveCharacter(m_pos,
                         m_id,
@@ -1488,7 +1488,7 @@ void CGameSprite::RemoveFromArea()
         }
 
         if (g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id) != -1) {
-            if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->nm_field_1AC || InControl()) {
+            if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode || InControl()) {
                 if (Animate()) {
                     m_pArea->m_visibility.RemoveCharacter(m_pos,
                         m_id,
@@ -1962,7 +1962,7 @@ void CGameSprite::AIUpdate()
         return;
     }
 
-    BOOL v1 = sub_6FB440();
+    BOOL v1 = IsValidActionState();
     if (v1 != nfield_54A8
         && Animate()
         && !m_baseStats.bm_field_294) {
@@ -2980,7 +2980,7 @@ void CGameSprite::AIUpdateWalk()
     if ((m_posLastVisMapEntry.x / CVisibilityMap::SQUARE_SIZEX != m_pos.x / CVisibilityMap::SQUARE_SIZEX
             || m_posLastVisMapEntry.y / CVisibilityMap::SQUARE_SIZEY != m_pos.y / CVisibilityMap::SQUARE_SIZEY)
         && g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id) != -1
-        && (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->nm_field_1AC || InControl())) {
+        && (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode || InControl())) {
         SHORT nTableIndex;
         if (m_pArea->m_search.GetLOSCost(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX, m_pos.y / CPathSearch::GRID_SQUARE_SIZEY), m_terrainTable, nTableIndex, FALSE) != CPathSearch::COST_IMPASSABLE) {
             m_pArea->m_visibility.UpDate(m_posLastVisMapEntry,
@@ -3038,7 +3038,7 @@ BOOL CGameSprite::ClearBumpPath(const CPoint& start, const CPoint& goal)
 }
 
 // 0x6FB440
-BOOL CGameSprite::sub_6FB440()
+BOOL CGameSprite::IsValidActionState()
 {
     if (!InControl()) {
         return FALSE;
@@ -3445,7 +3445,7 @@ void CGameSprite::OnActionButton(const CPoint& pt)
             if (pGame->GetCharacterPortraitNum(m_id) != -1
                 || pGame->IsAlly(m_id)
                 || pGame->IsFamiliar(m_id)) {
-                if (!pGame->GetGameSave()->nm_field_1AC || InControl()) {
+                if (!pGame->GetGameSave()->m_bArenaMode || InControl()) {
                     if (InControl()) {
                         // NOTE: Uninline.
                         pGame->SetLastTarget(CGameObjectArray::INVALID_INDEX);
@@ -4265,7 +4265,7 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
             }
 
             IcewindCVisualEffect vfx;
-            vfx.sub_586A90(TRUE);
+            vfx.SetGlowing(TRUE);
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_GREASE]) {
                 RenderSpriteCover(pVidMode,
@@ -4572,8 +4572,8 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_DEATH_ARMOR]) {
-                vfx.sub_586A90(FALSE);
-                vfx.sub_586AC0(TRUE, 192);
+                vfx.SetGlowing(FALSE);
+                vfx.SetTransparent(TRUE, 192);
                 RenderSpriteCover(pVidMode,
                     nSurface,
                     &(pfield_7548[IWD_VFX_DEATH_ARMOR]),
@@ -4756,7 +4756,7 @@ void CGameSprite::RenderPortrait(const CPoint& cpRenderPosition, const CSize& sz
 {
     BOOL bDead = FALSE;
 
-    if (g_pBaldurChitin->GetObjectGame()->GetGameSave()->nm_field_1AC
+    if (g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode
         && !InControl()) {
         return;
     }
@@ -5070,7 +5070,7 @@ void CGameSprite::RenderToMapScreen(const CRect& rClipBase, const CPoint& ptChar
 {
     CRect rClip(rClipBase);
     INT nScale = g_pBaldurChitin->nm_field_4A28 ? 2 : 1;
-    if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->nm_field_1AC
+    if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode
         || InControl()) {
         if (!IcewindMisc::IsDead(this)) {
             CPoint center;
@@ -5256,7 +5256,7 @@ void CGameSprite::SetCursor(LONG nToolTip)
                             || pGame->IsAlly(m_id)
                             || pGame->IsFamiliar(m_id)
                             || m_typeAI.GetEnemyAlly() <= CAIObjectType::EA_CONTROLCUTOFF)
-                        && (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->nm_field_1AC || InControl())) {
+                        && (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode || InControl())) {
                         if (InControl()) {
                             g_pBaldurChitin->GetObjectCursor()->SetCursor(0, FALSE);
                         } else {
@@ -6710,7 +6710,7 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
         nm_field_4C54[nIndex] = pCreature->nm_field_28A[nIndex];
     }
 
-    sub_726570();
+    ApplyFeatEffects();
 
     for (nIndex = 0; nIndex < CGAMESAVECHARACTER_NUM_QUICK_WEAPONS22; nIndex++) {
         InitQuickItemData(pCreature->m_quickWeaponsItemNum[nIndex],
@@ -6888,13 +6888,13 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
         }
     }
 
-    sub_726810(pCreature->m_nWeaponSet);
+    SetWeaponSet(pCreature->m_nWeaponSet);
 
     INT nDruidLevel = m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_DRUID);
     if (nDruidLevel > 0) {
         INT nMaxShapeshifts = pGame->GetRuleTables().GetMaxDruidShapeshifts(m_baseStats, nDruidLevel) - m_shapeshifts.nm_field_14;
         if (nMaxShapeshifts) {
-            sub_724C40(nMaxShapeshifts);
+            AdjustShapeshiftLevel(nMaxShapeshifts);
             m_shapeshifts.sub_725D30(nMaxShapeshifts, FALSE);
         }
     }
@@ -7067,7 +7067,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
         if (m_equipment.m_selectedWeapon >= 43) {
             m_nWeaponSet = (m_equipment.m_selectedWeapon - 43) / 2;
         }
-        sub_726810(m_nWeaponSet);
+        SetWeaponSet(m_nWeaponSet);
     }
 
     for (INT buttonNum = 0; buttonNum < g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetNumQuickWeaponSlots(m_typeAI.m_nClass); buttonNum++) {
@@ -7810,21 +7810,21 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
                 cButtonData.m_bDisplayCount = FALSE;
                 cButtonData.m_count = 0;
 
-                if (!sub_763150(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
+                if (!HasFeat(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
                     cButtonData.m_bDisabled = TRUE;
                 }
             } else if (resRef == CGameSprite::SPIN278) {
                 cButtonData.m_bDisplayCount = FALSE;
                 cButtonData.m_count = 0;
 
-                if (!sub_763150(CGAMESPRITE_FEAT_HAMSTRING)) {
+                if (!HasFeat(CGAMESPRITE_FEAT_HAMSTRING)) {
                     cButtonData.m_bDisabled = TRUE;
                 }
             } else if (resRef == CGameSprite::SPIN279) {
                 cButtonData.m_bDisplayCount = FALSE;
                 cButtonData.m_count = 0;
 
-                if (!sub_763150(CGAMESPRITE_FEAT_RAPID_SHOT)) {
+                if (!HasFeat(CGAMESPRITE_FEAT_RAPID_SHOT)) {
                     cButtonData.m_bDisabled = TRUE;
                 }
             }
@@ -8459,7 +8459,7 @@ void CGameSprite::ReadyOffInternalList(CButtonData buttonData, BOOLEAN firstCall
 // FIXME: `buttonData` should be reference.
 //
 // 0x71A0E0
-void CGameSprite::sub_71A0E0(CButtonData buttonData, BOOLEAN firstCall)
+void CGameSprite::UseSpellFromButton(CButtonData buttonData, BOOLEAN firstCall)
 {
     m_currentUseButton = buttonData;
 
@@ -8502,7 +8502,7 @@ void CGameSprite::sub_71A0E0(CButtonData buttonData, BOOLEAN firstCall)
 // FIXME: `buttonData` should be reference.
 //
 // 0x71A550
-void CGameSprite::sub_71A550(CButtonData buttonData, BOOLEAN firstCall)
+void CGameSprite::UseItemFromButton(CButtonData buttonData, BOOLEAN firstCall)
 {
     m_currentUseButton = buttonData;
 
@@ -9401,7 +9401,7 @@ void CGameSprite::CheckSequence(BYTE& sequence)
 }
 
 // 0x7204C0
-void CGameSprite::sub_7204C0()
+void CGameSprite::LoadAnimationSounds()
 {
     CString animationResRef;
     CMemINI* pINI = &(g_pBaldurChitin->GetObjectGame()->m_INISounds);
@@ -9421,63 +9421,63 @@ void CGameSprite::sub_7204C0()
     pValue = pINI->GetFast(animationResRef, CString("att1"));
     if (pValue != NULL && pValue->GetValue() != "") {
         bfield_70FB = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att1frame")));
+        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att1frame")));
 
         pValue = pINI->GetFast(animationResRef, CString("att2"));
         if (pValue != NULL && pValue->GetValue() != "") {
-            sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att2frame")));
+            LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att2frame")));
         }
 
         pValue = pINI->GetFast(animationResRef, CString("att3"));
         if (pValue != NULL && pValue->GetValue() != "") {
-            sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att3frame")));
+            LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att3frame")));
         }
 
         pValue = pINI->GetFast(animationResRef, CString("att4"));
         if (pValue != NULL && pValue->GetValue() != "") {
-            sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att4frame")));
+            LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att4frame")));
         }
     }
 
     pValue = pINI->GetFast(animationResRef, CString("btlcry"));
     if (pValue != NULL && pValue->GetValue() != "") {
         bfield_70FC = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("btlcryframe")));
+        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("btlcryframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("damage"));
     if (pValue != NULL && pValue->GetValue() != "") {
         bfield_70FD = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("damageframe")));
+        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("damageframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("death"));
     if (pValue != NULL && pValue->GetValue() != "") {
         bfield_70FE = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("deathframe")));
+        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("deathframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("fidget"));
     if (pValue != NULL && pValue->GetValue() != "") {
         bfield_70FF = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("fidgetframe")));
+        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("fidgetframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("selected"));
     if (pValue != NULL && pValue->GetValue() != "") {
         bfield_7100 = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("selectedframe")));
+        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("selectedframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("fall"));
     if (pValue != NULL && pValue->GetValue() != "") {
         bfield_7101 = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("fallframe")));
+        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("fallframe")));
     }
 }
 
 // 0x720B50
-void CGameSprite::sub_720B50(CMemINIValue* a1, CMemINIValue* a2)
+void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
 {
     CString v1;
     CString v2;
@@ -11266,7 +11266,7 @@ void CGameSprite::FeedBack(WORD nFeedBackId, LONG a3, LONG a4, LONG a5, LONG a6,
             CString sText;
             g_pBaldurChitin->GetTlkTable().Fetch(a6, strRes);
             sText.Format(strRes.szText, a3);
-            if (sub_763150(CGAMESPRITE_FEAT_CRIPPLING_STRIKE)) {
+            if (HasFeat(CGAMESPRITE_FEAT_CRIPPLING_STRIKE)) {
                 g_pBaldurChitin->GetTlkTable().Fetch(25070, strRes); // " with Crippling Strike (-1 Str)"
                 sText.Format(strRes.szText, a3);
             }
@@ -11718,7 +11718,7 @@ void CGameSprite::FeedBack(WORD nFeedBackId, LONG a3, LONG a4, LONG a5, LONG a6,
 }
 
 // 0x737910
-BOOLEAN CGameSprite::sub_737910(BOOL a1)
+BOOLEAN CGameSprite::CheckWeaponAmmunition(BOOL a1)
 {
     if (!a1
         && m_equipment.m_items[m_equipment.m_selectedWeapon] != NULL
@@ -11744,14 +11744,14 @@ BOOLEAN CGameSprite::sub_737910(BOOL a1)
 SHORT CGameSprite::GetCriticalHitBonus()
 {
     SHORT nCriticalHitBonus = m_derivedStats.m_nCriticalHitBonus;
-    if (sub_763150(CGAMESPRITE_FEAT_IMPROVED_CRITICAL)) {
+    if (HasFeat(CGAMESPRITE_FEAT_IMPROVED_CRITICAL)) {
         nCriticalHitBonus++;
     }
     return nCriticalHitBonus;
 }
 
 // 0x73C6A0
-SHORT CGameSprite::sub_73C6A0(CGameSprite* target, CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::GetTargetACModForDamageType(CGameSprite* target, CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 9840
@@ -11803,7 +11803,7 @@ SHORT CGameSprite::sub_73C6A0(CGameSprite* target, CItem* curWeapon, const ITEM_
 }
 
 // 0x73C7E0
-SHORT CGameSprite::sub_73C7E0()
+SHORT CGameSprite::GetRacialLightTHAC0Mod()
 {
     SHORT mod = 0;
 
@@ -11833,7 +11833,7 @@ SHORT CGameSprite::sub_73C7E0()
 }
 
 // 0x73C8C0
-SHORT CGameSprite::sub_73C8C0(CGameSprite* target)
+SHORT CGameSprite::GetRacialTHAC0ModVsTarget(CGameSprite* target)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 9925
@@ -11881,7 +11881,7 @@ SHORT CGameSprite::sub_73C8C0(CGameSprite* target)
 }
 
 // 0x73CA20
-SHORT CGameSprite::sub_73CA20(CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::GetRacialWeaponTHAC0Mod(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 9988
@@ -11927,7 +11927,7 @@ SHORT CGameSprite::sub_73CAE0(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 }
 
 // 0x73CB10
-SHORT CGameSprite::sub_73CB10(CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::GetAbilityAttackMod(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 10083
@@ -11946,7 +11946,7 @@ SHORT CGameSprite::sub_73CB10(CItem* curWeapon, const ITEM_ABILITY* curAttack)
     WORD itemType = curWeapon->GetItemType();
     INT mod = cRule.GetAbilityScoreModifier(m_derivedStats.m_nSTR);
 
-    if (sub_763150(CGAMESPRITE_FEAT_WEAPON_FINESSE)
+    if (HasFeat(CGAMESPRITE_FEAT_WEAPON_FINESSE)
         && (itemType == 19 || itemType == 16)) {
         INT nDEXMod = cRule.GetAbilityScoreModifier(m_derivedStats.m_nDEX);
         if (mod < nDEXMod) {
@@ -11954,21 +11954,21 @@ SHORT CGameSprite::sub_73CB10(CItem* curWeapon, const ITEM_ABILITY* curAttack)
         }
     }
 
-    if (sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)
-        && sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
-        mod -= sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK);
+    if (HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)
+        && GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
+        mod -= GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK);
     }
 
-    if (sub_763150(CGAMESPRITE_FEAT_EXPERTISE)
-        && sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
-        mod -= sub_726270(CGAMESPRITE_FEAT_EXPERTISE);
+    if (HasFeat(CGAMESPRITE_FEAT_EXPERTISE)
+        && GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
+        mod -= GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE);
     }
 
     return static_cast<SHORT>(mod);
 }
 
 // 0x73CC40
-SHORT CGameSprite::sub_73CC40(CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::GetWeaponTHAC0Bonus(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 10144
@@ -12003,7 +12003,7 @@ SHORT CGameSprite::sub_73CC40(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 }
 
 // 0x73D420
-SHORT CGameSprite::sub_73D420()
+SHORT CGameSprite::GetBaseTHAC0()
 {
     SHORT mod = 0;
 
@@ -12017,7 +12017,7 @@ SHORT CGameSprite::sub_73D420()
 }
 
 // 0x73D440
-SHORT CGameSprite::sub_73D440(CItem* curWeapon)
+SHORT CGameSprite::GetWeaponProficiencyTHAC0Mod(CItem* curWeapon)
 {
     SHORT mod = 0;
     switch (curWeapon->GetItemType()) {
@@ -12670,7 +12670,7 @@ SHORT CGameSprite::GetCasterLevel(CSpell* pSpell, BYTE nClass, DWORD nSpecializa
 }
 
 // 0x75F240
-SHORT CGameSprite::sub_75F240()
+SHORT CGameSprite::SavePositionToBaseStats()
 {
     m_baseStats.wm_field_2E4 = static_cast<SHORT>(m_pos.x);
     m_baseStats.wm_field_2E6 = static_cast<SHORT>(m_pos.y);
@@ -13429,7 +13429,7 @@ SHORT CGameSprite::ForceHide(CGameSprite* pSprite)
 }
 
 // 0x7615F0
-SHORT CGameSprite::sub_7615F0(int a1)
+SHORT CGameSprite::SetVisibilityRange(int a1)
 {
     if (a1 == 0) {
         m_pArea->m_visibility.SetAreaVisible(FALSE);
@@ -13438,7 +13438,7 @@ SHORT CGameSprite::sub_7615F0(int a1)
 
     m_pArea->m_visibility.m_nEllipseArcWidth = static_cast<short>(a1);
     m_pArea->m_visibility.m_nEllipseArcHeight = static_cast<short>(3 * a1 / 4);
-    m_pArea->m_visibility.sub_5518A0();
+    m_pArea->m_visibility.InitializeEllipseArcs();
 
     return ACTION_DONE;
 }
@@ -13484,7 +13484,7 @@ SHORT CGameSprite::DropItem(CItem* pItem)
 }
 
 // 0x761990
-void CGameSprite::sub_761990()
+void CGameSprite::RefreshEffects()
 {
     m_timedEffectList.RemoveAllEffectsIgnoreMoreThenPermanent(NULL, FALSE, FALSE, 0, 0);
     UnequipAll(FALSE);
@@ -13904,7 +13904,7 @@ INT CGameSprite::GetMaxFeatValue(UINT nFeatNumber)
 }
 
 // 0x763150
-BOOL CGameSprite::sub_763150(UINT nFeatNumber)
+BOOL CGameSprite::HasFeat(UINT nFeatNumber)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 29278
@@ -13916,7 +13916,7 @@ BOOL CGameSprite::sub_763150(UINT nFeatNumber)
 
     if (nFeatNumber == CGAMESPRITE_FEAT_CLEAVE) {
         if (m_derivedStats.m_nSTR >= 13) {
-            if (sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)) {
+            if (HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)) {
                 INT nValue = GetFeatValue(CGAMESPRITE_FEAT_CLEAVE);
                 if (nValue == 1 || nValue == 2) {
                     if (m_baseStats.m_attackBase >= 4) {
@@ -13928,11 +13928,11 @@ BOOL CGameSprite::sub_763150(UINT nFeatNumber)
         return FALSE;
     }
 
-    return sub_763200(nFeatNumber, 0);
+    return MeetFeatRequirements(nFeatNumber, 0);
 }
 
 // 0x763200
-BOOL CGameSprite::sub_763200(UINT nFeatNumber, INT a2)
+BOOL CGameSprite::MeetFeatRequirements(UINT nFeatNumber, INT a2)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 29333
@@ -13994,7 +13994,7 @@ BOOL CGameSprite::sub_763200(UINT nFeatNumber, INT a2)
         return m_typeAI.m_nRace == CAIOBJECTTYPE_R_HUMAN
             || m_typeAI.m_nRace == CAIOBJECTTYPE_R_DWARF;
     case CGAMESPRITE_FEAT_CLEAVE:
-        if (!(nSTR >= 13 && sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK))) {
+        if (!(nSTR >= 13 && HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK))) {
             return FALSE;
         }
 
@@ -14120,7 +14120,7 @@ BOOL CGameSprite::sub_763200(UINT nFeatNumber, INT a2)
 }
 
 // 0x763A40
-BOOL CGameSprite::sub_763A40(UINT nFeatNumber, INT a2)
+BOOL CGameSprite::CanUpgradeFeat(UINT nFeatNumber, INT a2)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 29873
@@ -14129,106 +14129,106 @@ BOOL CGameSprite::sub_763A40(UINT nFeatNumber, INT a2)
     switch (nFeatNumber) {
     case CGAMESPRITE_FEAT_ARMOR_PROF:
         return m_baseStats.m_featArmorProficiency < CGAMESPRITE_FEAT_MAX_ARMOR_PROFICIENCY_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_ARMORED_ARCANA:
         return m_baseStats.m_featArmoredArcana < CGAMESPRITE_FEAT_MAX_ARMORED_ARCANA_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_CLEAVE:
         return m_baseStats.m_featCleave < CGAMESPRITE_FEAT_MAX_CLEAVE_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXOTIC_BASTARD:
         return m_baseStats.m_featBastardSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_RAGE:
         return m_baseStats.m_featExtraRage < CGAMESPRITE_FEAT_MAX_EXTRA_RAGE_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_SHAPESHIFTING:
         return m_baseStats.m_featExtraShapeshifting < CGAMESPRITE_FEAT_MAX_EXTRA_SHAPESHIFTING_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_SMITING:
         return m_baseStats.m_featExtraSmiting < CGAMESPRITE_FEAT_MAX_EXTRA_SMITING_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_TURNING:
         return m_baseStats.m_featExtraTurning < CGAMESPRITE_FEAT_MAX_EXTRA_TURNING_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_AXE:
         return (m_baseStats.m_featAxe != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featAxe < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_BOW:
         return (m_baseStats.m_featBow != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featBow < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_FLAIL:
         return (m_baseStats.m_featFlail != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featFlail < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_GREATSWORD:
         return (m_baseStats.m_featGreatSword != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featGreatSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_HAMMER:
         return (m_baseStats.m_featHammer != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featHammer < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_LARGESWORD:
         return (m_baseStats.m_featLargeSword != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featLargeSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_POLEARM:
         return (m_baseStats.m_featPolearm != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featPolearm < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_CROSSBOW:
         return (m_baseStats.m_featCrossbow != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featCrossbow < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_MACE:
         return (m_baseStats.m_featMace != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featMace < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_MISSILE:
         return (m_baseStats.m_featMissile != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featMissile < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_QUARTERSTAFF:
         return (m_baseStats.m_featQuarterStaff != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featQuarterStaff < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_SMALLBLADE:
         return (m_baseStats.m_featSmallBlade != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featSmallBlade < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_ENCHANTMENT:
         return m_baseStats.m_featFocusEnchantment < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_ENCHANTMENT_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_EVOCATION:
         return m_baseStats.m_featFocusEvocation < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_EVOCATION_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_NECROMANCY:
         return m_baseStats.m_featFocusNecromancy < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_NECROMANCY_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_TRANSMUTE:
         return m_baseStats.m_featFocusTransmutation < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_TRANSMUTATION_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_PENETRATION:
         return m_baseStats.m_featSpellPenetration < CGAMESPRITE_FEAT_MAX_SPELL_PENETRATION_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_TOUGHNESS:
         return m_baseStats.m_featToughness < CGAMESPRITE_FEAT_TOUGHNESS_MAX_LEVEL
-            && sub_763200(nFeatNumber, 1);
+            && MeetFeatRequirements(nFeatNumber, 1);
     }
 
     if ((m_baseStats.m_feats[nFeatNumber >> 5] & (1 << (nFeatNumber & 0x1F))) != 0) {
@@ -14236,7 +14236,7 @@ BOOL CGameSprite::sub_763A40(UINT nFeatNumber, INT a2)
     }
 
     if (a2) {
-        return sub_763200(nFeatNumber, 1);
+        return MeetFeatRequirements(nFeatNumber, 1);
     }
 
     return TRUE;
@@ -14811,7 +14811,7 @@ DWORD CGameSprite::GetField_80C()
 }
 
 // 0x5940E0
-INT CGameSprite::sub_5940E0(BYTE buttonNum)
+INT CGameSprite::GetCustomButtonValue(BYTE buttonNum)
 {
     // __FILE__: .\Include\ObjCreature.h
     // __LINE__: 2028
@@ -14821,7 +14821,7 @@ INT CGameSprite::sub_5940E0(BYTE buttonNum)
 }
 
 // 0x594120
-void CGameSprite::sub_594120(BYTE buttonNum, int a2)
+void CGameSprite::SetCustomButtonValue(BYTE buttonNum, int a2)
 {
     // __FILE__: .\Include\ObjCreature.h
     // __LINE__: 2036
@@ -14968,7 +14968,7 @@ CVariableHash* CGameSprite::GetLocalVariables()
 }
 
 // 0x724010
-INT CGameSprite::sub_724010(INT a1)
+INT CGameSprite::GetMaxDexBonusForArmor(INT a1)
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -14997,7 +14997,7 @@ INT CGameSprite::sub_724010(INT a1)
 }
 
 // 0x7240A0
-INT CGameSprite::sub_7240A0()
+INT CGameSprite::GetArmorCheckPenalty()
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -15063,7 +15063,7 @@ INT CGameSprite::sub_7240A0()
 }
 
 // 0x724170
-INT CGameSprite::sub_724170()
+INT CGameSprite::GetShieldCheckPenalty()
 {
     INT nSlot = 2 * (m_nWeaponSet + 22);
     CItem* pItem = m_equipment.m_items[nSlot];
@@ -15105,7 +15105,7 @@ INT CGameSprite::sub_724170()
 }
 
 // 0x724270
-INT CGameSprite::sub_724270()
+INT CGameSprite::GetShieldArcaneFailure()
 {
     INT nSlot = 2 * (m_nWeaponSet + 22);
     CItem* pItem = m_equipment.m_items[nSlot];
@@ -15132,7 +15132,7 @@ INT CGameSprite::sub_724270()
 }
 
 // 0x724360
-INT CGameSprite::sub_724360()
+INT CGameSprite::GetArmorArcaneFailure()
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -15163,7 +15163,7 @@ INT CGameSprite::sub_724360()
 // 0x7243F0
 BOOL CGameSprite::CheckAranceFailure(INT nRoll)
 {
-    INT nFailureChance = sub_724430();
+    INT nFailureChance = GetArcaneSpellFailure();
 
     if (nRoll >= nFailureChance) {
         return FALSE;
@@ -15176,7 +15176,7 @@ BOOL CGameSprite::CheckAranceFailure(INT nRoll)
 }
 
 // 0x724430
-int CGameSprite::sub_724430()
+int CGameSprite::GetArcaneSpellFailure()
 {
     INT nMod = 0;
 
@@ -15194,10 +15194,10 @@ int CGameSprite::sub_724430()
 
     INT nFailureChance = m_derivedStats.m_nSpellFailureArcane
         + nMod
-        + sub_724360()
-        + sub_724270();
+        + GetArmorArcaneFailure()
+        + GetShieldArcaneFailure();
 
-    if (sub_763150(CGAMESPRITE_FEAT_ARMORED_ARCANA)) {
+    if (HasFeat(CGAMESPRITE_FEAT_ARMORED_ARCANA)) {
         nFailureChance -= 5 * GetFeatValue(CGAMESPRITE_FEAT_ARMORED_ARCANA);
     }
 
@@ -15280,7 +15280,7 @@ void CGameSprite::ResetQuickSlots()
 }
 
 // 0x724690
-BOOL CGameSprite::sub_724690(SHORT a1)
+BOOL CGameSprite::IsArmorType(SHORT a1)
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -15377,7 +15377,7 @@ UINT CGameSprite::GetNumSpells()
 }
 
 // 0x724900
-BOOLEAN CGameSprite::sub_724900()
+BOOLEAN CGameSprite::IsSpellcaster()
 {
     DWORD dwClassMask = GetAIType().m_nClassMask;
 
@@ -15386,7 +15386,7 @@ BOOLEAN CGameSprite::sub_724900()
 }
 
 // 0x724920
-BOOLEAN CGameSprite::sub_724920()
+BOOLEAN CGameSprite::IsBard()
 {
     return (GetAIType().m_nClassMask & CLASSMASK_BARD) != 0;
 }
@@ -15472,7 +15472,7 @@ BOOLEAN CGameSprite::AddShapeshift(const CResRef& resRef, const unsigned int& a2
 }
 
 // 0x724C40
-BOOLEAN CGameSprite::sub_724C40(const unsigned int& a1)
+BOOLEAN CGameSprite::AdjustShapeshiftLevel(const unsigned int& a1)
 {
     m_shapeshifts.nm_field_14 += a1;
 
@@ -15561,7 +15561,7 @@ BOOLEAN CGameSprite::RemoveShapeshift(const CResRef& resRef)
 }
 
 // 0x724FD0
-BOOLEAN CGameSprite::sub_724FD0(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
+BOOLEAN CGameSprite::AddClassSpell(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26177
@@ -15582,7 +15582,7 @@ BOOLEAN CGameSprite::sub_724FD0(const BYTE& nClass, const UINT& nSpellLevel, con
 }
 
 // 0x725110
-BOOLEAN CGameSprite::sub_725110(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
+BOOLEAN CGameSprite::AddDomainSpell(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26211
@@ -15601,7 +15601,7 @@ BOOLEAN CGameSprite::sub_725110(const UINT& nSpellLevel, const CResRef& resRef, 
 }
 
 // 0x725210
-BOOLEAN CGameSprite::sub_725210(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
+BOOLEAN CGameSprite::AddInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
 {
     UINT nID;
     if (g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Find(resRef, nID) != TRUE) {
@@ -15612,7 +15612,7 @@ BOOLEAN CGameSprite::sub_725210(const CResRef& resRef, const unsigned int& a2, c
 }
 
 // 0x725270
-BOOLEAN CGameSprite::sub_725270(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
+BOOLEAN CGameSprite::RemoveInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
 {
     UINT nID;
     if (g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Find(resRef, nID) != TRUE) {
@@ -15626,7 +15626,7 @@ BOOLEAN CGameSprite::sub_725270(const CResRef& resRef, const unsigned int& a2, c
 // FIXME: `dwClassMask` should not be reference.
 //
 // 0x725330
-BOOLEAN CGameSprite::sub_725330(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4)
+BOOLEAN CGameSprite::HasSpell(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4)
 {
     BOOLEAN v1 = FALSE;
     UINT nStartLevel = 0;
@@ -15698,7 +15698,7 @@ BOOLEAN CGameSprite::sub_725330(const CResRef& resRef, const DWORD& dwClassMask,
 }
 
 // 0x7256B0
-BOOLEAN CGameSprite::sub_7256B0(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3)
+BOOLEAN CGameSprite::HasDomainSpell(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3)
 {
     BOOLEAN v1 = FALSE;
     UINT nStartLevel = 0;
@@ -15737,7 +15737,7 @@ BOOLEAN CGameSprite::sub_7256B0(const CResRef& resRef, const UINT& nLevel, BOOLE
 }
 
 // 0x725840
-BOOLEAN CGameSprite::sub_725840(const CResRef& resRef, BOOLEAN a2)
+BOOLEAN CGameSprite::HasInnateSpell(const CResRef& resRef, BOOLEAN a2)
 {
     UINT nID;
     if (!g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Find(resRef, nID)) {
@@ -15757,10 +15757,10 @@ BOOLEAN CGameSprite::sub_725840(const CResRef& resRef, BOOLEAN a2)
 }
 
 // 0x726270
-INT CGameSprite::sub_726270(UINT nFeatNumber)
+INT CGameSprite::GetFeatMode(UINT nFeatNumber)
 {
     INT v1 = 0;
-    if (sub_763150(nFeatNumber)) {
+    if (HasFeat(nFeatNumber)) {
         switch (nFeatNumber) {
         case CGAMESPRITE_FEAT_ARTERIAL_STRIKE:
             v1 = nm_field_4C54[2];
@@ -15783,9 +15783,9 @@ INT CGameSprite::sub_726270(UINT nFeatNumber)
 }
 
 // 0x726330
-void CGameSprite::sub_726330(UINT nFeatNumber, INT nValue)
+void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
 {
-    if (sub_763150(nFeatNumber)) {
+    if (HasFeat(nFeatNumber)) {
         switch (nFeatNumber) {
         case CGAMESPRITE_FEAT_ARTERIAL_STRIKE:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15851,7 +15851,7 @@ void CGameSprite::sub_726330(UINT nFeatNumber, INT nValue)
 }
 
 // 0x726570
-void CGameSprite::sub_726570()
+void CGameSprite::ApplyFeatEffects()
 {
     ITEM_EFFECT effect;
     CGameEffect* pEffect;
@@ -15894,13 +15894,13 @@ void CGameSprite::sub_726570()
 }
 
 // 0x726800
-INT CGameSprite::sub_726800()
+INT CGameSprite::GetWeaponSlot()
 {
     return 2 * m_nWeaponSet + 44;
 }
 
 // 0x726810
-void CGameSprite::sub_726810(BYTE nWeaponSet)
+void CGameSprite::SetWeaponSet(BYTE nWeaponSet)
 {
     // TODO: Incomplete.
 }

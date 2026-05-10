@@ -13633,7 +13633,7 @@ void CMessage92::Run()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
-            static_cast<CGameSprite*>(pObject)->sub_7615F0(nfield_C);
+            static_cast<CGameSprite*>(pObject)->SetVisibilityRange(nfield_C);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
@@ -16020,7 +16020,7 @@ void CMessage120::Run()
         // __LINE__: 30686
         UTIL_ASSERT(pGame != NULL);
 
-        pGame->GetMultiplayerSettings()->sub_518660(m_idPlayer, bm_field_10);
+        pGame->GetMultiplayerSettings()->SetPlayerReady(m_idPlayer, bm_field_10);
     }
 }
 

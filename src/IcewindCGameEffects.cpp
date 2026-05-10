@@ -296,13 +296,13 @@ BOOL IcewindCGameEffectSavingThrowChange::ApplyEffect(CGameSprite* pSprite)
 {
     switch (m_dwFlags) {
     case 0:
-        sub_55ED90(pSprite);
+        IncrementSavingThrows(pSprite);
         break;
     case 1:
-        sub_55EE70(pSprite);
+        SetSavingThrowsBase(pSprite);
         break;
     case 2:
-        sub_55EFB0(pSprite);
+        ScaleSavingThrowsBase(pSprite);
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\Baldur\IcewindCGameEffects.cpp
@@ -314,7 +314,7 @@ BOOL IcewindCGameEffectSavingThrowChange::ApplyEffect(CGameSprite* pSprite)
 }
 
 // 0x55ED90
-void IcewindCGameEffectSavingThrowChange::sub_55ED90(CGameSprite* pSprite)
+void IcewindCGameEffectSavingThrowChange::IncrementSavingThrows(CGameSprite* pSprite)
 {
     if (m_durationType == 1) {
         CCreatureFileHeader* pBStats = pSprite->GetBaseStats();
@@ -352,7 +352,7 @@ void IcewindCGameEffectSavingThrowChange::sub_55ED90(CGameSprite* pSprite)
 }
 
 // 0x55EE70
-void IcewindCGameEffectSavingThrowChange::sub_55EE70(CGameSprite* pSprite)
+void IcewindCGameEffectSavingThrowChange::SetSavingThrowsBase(CGameSprite* pSprite)
 {
     if (m_durationType == 1) {
         CCreatureFileHeader* pBStats = pSprite->GetBaseStats();
@@ -411,7 +411,7 @@ void IcewindCGameEffectSavingThrowChange::sub_55EE70(CGameSprite* pSprite)
 }
 
 // 0x55EFB0
-void IcewindCGameEffectSavingThrowChange::sub_55EFB0(CGameSprite* pSprite)
+void IcewindCGameEffectSavingThrowChange::ScaleSavingThrowsBase(CGameSprite* pSprite)
 {
     if (m_durationType == 1) {
         CCreatureFileHeader* pBStats = pSprite->GetBaseStats();
@@ -584,8 +584,8 @@ BOOL IcewindCGameEffectColorGlowDissipate::ApplyEffect(CGameSprite* pSprite)
 IcewindCGameEffectSummon::IcewindCGameEffectSummon(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target)
     : CGameEffect(effect, source, sourceID, target, FALSE)
 {
-    m_m_field_18C = 0;
-    m_m_field_190 = 0;
+    m_nSummonState = 0;
+    m_nSummonSide = 0;
 }
 
 // 0x55F620
@@ -599,9 +599,9 @@ CGameEffect* IcewindCGameEffectSummon::Copy()
 }
 
 // 0x49DB60
-void IcewindCGameEffectSummon::sub_49DB60(int a1)
+void IcewindCGameEffectSummon::SetSummonSide(int nSide)
 {
-    m_m_field_190 = a1;
+    m_nSummonSide = nSide;
 }
 
 // -----------------------------------------------------------------------------
@@ -1539,7 +1539,7 @@ BOOL IcewindCGameEffectProtectionFromEvil::ApplyEffect(CGameSprite* pSprite)
         AddPortraitIcon(pSprite, 9);
 
         pSprite->GetDerivedStats()->m_naturalImmunities.insert(ICEWIND_CGAMEEFFECT_CHARM);
-        sub_4C3F30(pSprite, 2);
+        ClampACDexBonusMinimum(pSprite, 2);
         pSprite->GetDerivedStats()->m_nSaveVSFortitude += 2;
         pSprite->GetDerivedStats()->m_nSaveVSReflex += 2;
         pSprite->GetDerivedStats()->m_nSaveVSWill += 2;
@@ -2145,7 +2145,7 @@ BOOL IcewindCGameEffectEntropyShield::ApplyEffect(CGameSprite* pSprite)
 
         pSprite->GetDerivedStats()->m_visualEffects.set(IWD_VFX_ENTROPY_SHIELD, true);
         AddColorEffect(pSprite, 64, 192, 64, 30);
-        sub_4C3F30(pSprite, 6);
+        ClampACDexBonusMinimum(pSprite, 6);
 
         pSprite->m_bonusStats.m_nResistFire += 10;
         pSprite->m_bonusStats.m_nResistCold += 10;
@@ -2499,7 +2499,7 @@ BOOL IcewindCGameEffectTortoiseShell::ApplyEffect(CGameSprite* pSprite)
         pSprite->field_9D15 = 1;
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_HELD] = true;
         pSprite->GetDerivedStats()->m_generalState |= STATE_HELPLESS;
-        pSprite->GetDerivedStats()->m_field_124 = m_effectAmount;
+        pSprite->GetDerivedStats()->m_nNaturalArmorBonus = m_effectAmount;
     } else {
         m_done = TRUE;
     }
@@ -2904,11 +2904,11 @@ CGameEffect* IcewindCGameEffectFeatPowerAttack::Copy()
 // 0x56B790
 BOOL IcewindCGameEffectFeatPowerAttack::ApplyEffect(CGameSprite* pSprite)
 {
-    if (!pSprite->sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)) {
+    if (!pSprite->HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)) {
         return FALSE;
     }
 
-    INT nRank = pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK);
+    INT nRank = pSprite->GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK);
 
     // NOTE: Using `set` (with bounds check).
     pSprite->GetDerivedStats()->m_spellStates.set(SPLSTATE_FEAT_POWER_ATTACK_1, nRank == 1);
@@ -2990,11 +2990,11 @@ CGameEffect* IcewindCGameEffectFeatExpertise::Copy()
 // 0x56B960
 BOOL IcewindCGameEffectFeatExpertise::ApplyEffect(CGameSprite* pSprite)
 {
-    if (!pSprite->sub_763150(CGAMESPRITE_FEAT_EXPERTISE)) {
+    if (!pSprite->HasFeat(CGAMESPRITE_FEAT_EXPERTISE)) {
         return FALSE;
     }
 
-    INT nRank = pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE);
+    INT nRank = pSprite->GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE);
 
     // NOTE: Using `set` (with bounds check).
     pSprite->GetDerivedStats()->m_spellStates.set(SPLSTATE_FEAT_EXPERTISE_1, nRank == 1);
@@ -3076,11 +3076,11 @@ CGameEffect* IcewindCGameEffectFeatArterialStrike::Copy()
 // 0x56BB30
 BOOL IcewindCGameEffectFeatArterialStrike::ApplyEffect(CGameSprite* pSprite)
 {
-    if (!pSprite->sub_763150(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
+    if (!pSprite->HasFeat(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
         return FALSE;
     }
 
-    INT nRank = pSprite->sub_726270(CGAMESPRITE_FEAT_ARTERIAL_STRIKE);
+    INT nRank = pSprite->GetFeatMode(CGAMESPRITE_FEAT_ARTERIAL_STRIKE);
     if (nRank > 0) {
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_FEAT_ARTERIAL_STRIKE] = true;
         if (m_secondaryType != 0) {
@@ -3140,11 +3140,11 @@ CGameEffect* IcewindCGameEffectFeatHamstring::Copy()
 // 0x56BC20
 BOOL IcewindCGameEffectFeatHamstring::ApplyEffect(CGameSprite* pSprite)
 {
-    if (!pSprite->sub_763150(CGAMESPRITE_FEAT_HAMSTRING)) {
+    if (!pSprite->HasFeat(CGAMESPRITE_FEAT_HAMSTRING)) {
         return FALSE;
     }
 
-    INT nRank = pSprite->sub_726270(CGAMESPRITE_FEAT_HAMSTRING);
+    INT nRank = pSprite->GetFeatMode(CGAMESPRITE_FEAT_HAMSTRING);
     if (nRank > 0) {
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_FEAT_HAMSTRING] = true;
         if (m_secondaryType != 0) {
@@ -3204,11 +3204,11 @@ CGameEffect* IcewindCGameEffectFeatRapidShot::Copy()
 // 0x56BD10
 BOOL IcewindCGameEffectFeatRapidShot::ApplyEffect(CGameSprite* pSprite)
 {
-    if (!pSprite->sub_763150(CGAMESPRITE_FEAT_RAPID_SHOT)) {
+    if (!pSprite->HasFeat(CGAMESPRITE_FEAT_RAPID_SHOT)) {
         return FALSE;
     }
 
-    INT nRank = pSprite->sub_726270(CGAMESPRITE_FEAT_RAPID_SHOT);
+    INT nRank = pSprite->GetFeatMode(CGAMESPRITE_FEAT_RAPID_SHOT);
     if (nRank > 0) {
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_FEAT_RAPID_SHOT] = true;
         if (m_secondaryType != 0) {

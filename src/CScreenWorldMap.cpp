@@ -286,13 +286,13 @@ void CScreenWorldMap::EngineActivated()
             pGame->GetVisibleArea()->m_resRef.CopyToString(sResArea);
 
             CWorldMap* pWorldMap = pGame->GetWorldMap(sResArea);
-            DWORD nMap = pWorldMap->sub_55A3A0();
+            DWORD nMap = pWorldMap->GetCurrentAreaIndex();
 
             for (INT y = 0; y < tWorldE.GetHeight(); y++) {
                 CString sOtherResArea;
                 sOtherResArea = tWorldE.GetAt(CPoint(1, y));
                 if (sOtherResArea.GetLength() > 0) {
-                    DWORD nMap = pWorldMap->sub_55A450(sOtherResArea);
+                    DWORD nMap = pWorldMap->GetAreaIndex(sOtherResArea);
 
                     pWorldMap->SetExplorable(nMap,
                         CResRef(sOtherResArea),
@@ -326,7 +326,7 @@ void CScreenWorldMap::EngineActivated()
                 // FIXME: Unused.
                 pWorldMap->GetArea(nMap, nArea);
 
-                DWORD nMap = pWorldMap->sub_55A3A0();
+                DWORD nMap = pWorldMap->GetCurrentAreaIndex();
                 CWorldMapList* pLinks = pWorldMap->GetAllLinks(nMap, nArea);
 
                 POSITION pos = pLinks->GetHeadPosition();
@@ -629,7 +629,7 @@ void CScreenWorldMap::SetMapView(const CPoint& ptMapView)
         cViewSize.cx += 1;
         cViewSize.cy += 1;
 
-        CSize cMapSize = pWorldMap->GetMapSize(pWorldMap->sub_55A3A0());
+        CSize cMapSize = pWorldMap->GetMapSize(pWorldMap->GetCurrentAreaIndex());
 
         CPoint ptNewView;
         ptNewView.x = max(min(ptMapView.x, cMapSize.cx - cViewSize.cx), 0);
@@ -673,7 +673,7 @@ void CScreenWorldMap::OnMapMouseDown(const CPoint& ptMousePos)
         }
 
         if (m_nSelectedArea != -1) {
-            CWorldMapArea* pArea = pWorldMap->GetArea(pWorldMap->sub_55A3A0(), m_nSelectedArea);
+            CWorldMapArea* pArea = pWorldMap->GetArea(pWorldMap->GetCurrentAreaIndex(), m_nSelectedArea);
 
             // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenWorldMap.cpp
             // __LINE__: 1513
@@ -782,7 +782,7 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
         CRect rClip;
         rClip.IntersectRect(rControl, rMap1);
 
-        CSize mapSize = pWorldMap->GetMapSize(pWorldMap->sub_55A3A0());
+        CSize mapSize = pWorldMap->GetMapSize(pWorldMap->GetCurrentAreaIndex());
 
         if (mapSize.cx >= m_pMapControl->m_size.cx) {
             mapSize.cx = m_pMapControl->m_size.cx;
@@ -823,8 +823,8 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
                 m_vfLabel.SetColor(pfield_FCA, RGB(0, 0, 0), FALSE);
             }
 
-            for (DWORD nArea = 0; nArea < pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0()); nArea++) {
-                CWorldMapArea* pArea = pWorldMap->GetArea(pWorldMap->sub_55A3A0(), nArea);
+            for (DWORD nArea = 0; nArea < pWorldMap->GetNumAreas(pWorldMap->GetCurrentAreaIndex()); nArea++) {
+                CWorldMapArea* pArea = pWorldMap->GetArea(pWorldMap->GetCurrentAreaIndex(), nArea);
                 if ((pArea->m_dwFlags & 0x1) != 0) {
                     CRect rArea = m_aAreaRect[nArea];
 
@@ -988,11 +988,11 @@ void CScreenWorldMap::StartWorldMap(INT nEngineState, LONG nLeavingEdge, BOOLEAN
 
     m_cUIManager.GetPanel(0)->GetControl(10)->SetActive(TRUE);
 
-    m_vmMap.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->sub_55A3A0())->m_resMosaic), FALSE, TRUE);
+    m_vmMap.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->GetCurrentAreaIndex())->m_resMosaic), FALSE, TRUE);
     m_vmMap.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
 
     // NOTE: Uninline.
-    m_vcAreas.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->sub_55A3A0())->m_resAreaIcons),
+    m_vcAreas.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->GetCurrentAreaIndex())->m_resAreaIcons),
         g_pBaldurChitin->nm_field_4A28,
         FALSE,
         TRUE);
@@ -1003,10 +1003,10 @@ void CScreenWorldMap::StartWorldMap(INT nEngineState, LONG nLeavingEdge, BOOLEAN
     m_vfLabel.SetResRef(CResRef("INFOFONT"), g_pBaldurChitin->nm_field_4A28, TRUE);
 
     // NOTE: Uninline.
-    m_aAreaRect.SetSize(pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0()));
+    m_aAreaRect.SetSize(pWorldMap->GetNumAreas(pWorldMap->GetCurrentAreaIndex()));
 
-    for (DWORD nArea = 0; nArea < pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0()); nArea++) {
-        m_aAreaRect[nArea] = GetAreaRect(pWorldMap->sub_55A3A0(), nArea);
+    for (DWORD nArea = 0; nArea < pWorldMap->GetNumAreas(pWorldMap->GetCurrentAreaIndex()); nArea++) {
+        m_aAreaRect[nArea] = GetAreaRect(pWorldMap->GetCurrentAreaIndex(), nArea);
     }
 
     m_nSelectedArea = -1;
@@ -1190,11 +1190,11 @@ DWORD CScreenWorldMap::FindAreaHit(const CPoint& pt)
     CPoint ptMapPos = m_ptMapView + pt;
     DWORD nFoundArea = -1;
 
-    DWORD nNumAreas = pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0());
+    DWORD nNumAreas = pWorldMap->GetNumAreas(pWorldMap->GetCurrentAreaIndex());
     for (DWORD nArea = 0; nArea < nNumAreas; nArea++) {
         CRect rArea = m_aAreaRect[nArea];
         if (rArea.PtInRect(ptMapPos)
-            && (pWorldMap->GetArea(pWorldMap->sub_55A3A0(), nArea)->m_dwFlags & 0x4) != 0) {
+            && (pWorldMap->GetArea(pWorldMap->GetCurrentAreaIndex(), nArea)->m_dwFlags & 0x4) != 0) {
             nFoundArea = nArea;
             break;
         }
@@ -1238,10 +1238,10 @@ void CScreenWorldMap::GetMarkerPosition(CPoint& ptMarker)
     CWorldMap* pWorldMap = pGame->GetWorldMap(sResArea);
 
     if (m_nCurrentLink != -1) {
-        DWORD nSrcArea = pWorldMap->FindSourceAreaIndex(pWorldMap->sub_55A3A0(), m_nCurrentLink);
-        DWORD nDstArea = pWorldMap->GetLink(pWorldMap->sub_55A3A0(), m_nCurrentLink)->m_nArea;
-        CWorldMapArea* pSrcArea = pWorldMap->GetArea(pWorldMap->sub_55A3A0(), nSrcArea);
-        CWorldMapArea* pDstArea = pWorldMap->GetArea(pWorldMap->sub_55A3A0(), nDstArea);
+        DWORD nSrcArea = pWorldMap->FindSourceAreaIndex(pWorldMap->GetCurrentAreaIndex(), m_nCurrentLink);
+        DWORD nDstArea = pWorldMap->GetLink(pWorldMap->GetCurrentAreaIndex(), m_nCurrentLink)->m_nArea;
+        CWorldMapArea* pSrcArea = pWorldMap->GetArea(pWorldMap->GetCurrentAreaIndex(), nSrcArea);
+        CWorldMapArea* pDstArea = pWorldMap->GetArea(pWorldMap->GetCurrentAreaIndex(), nDstArea);
         ptMarker.y = (pSrcArea->m_mapLocationY + pDstArea->m_mapLocationY) / 2;
         ptMarker.x = (pWorldMap->GetAreaPosition(pSrcArea).cx + pWorldMap->GetAreaPosition(pDstArea).cx) / 2;
     } else {
@@ -1252,8 +1252,8 @@ void CScreenWorldMap::GetMarkerPosition(CPoint& ptMarker)
         }
 
         DWORD nArea;
-        if (pWorldMap->GetAreaIndex(pWorldMap->sub_55A3A0(), m_cResCurrentArea, nArea)
-            || pWorldMap->GetAreaIndex(pWorldMap->sub_55A3A0(), CResRef("AR2626"), nArea)) {
+        if (pWorldMap->GetAreaIndex(pWorldMap->GetCurrentAreaIndex(), m_cResCurrentArea, nArea)
+            || pWorldMap->GetAreaIndex(pWorldMap->GetCurrentAreaIndex(), CResRef("AR2626"), nArea)) {
             CRect rArea = m_aAreaRect[nArea];
             ptMarker.x = (rArea.left + rArea.right) / 2;
             ptMarker.y = rArea.top;

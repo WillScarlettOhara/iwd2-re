@@ -194,7 +194,7 @@ BOOL CUIPanel::IsOver(const CPoint& pt)
 }
 
 // 0x4D2D20
-BOOL CUIPanel::sub_4D2D20()
+BOOL CUIPanel::Activate()
 {
     if ((m_wFlags & 0x1) == 0) {
         return FALSE;
@@ -206,7 +206,7 @@ BOOL CUIPanel::sub_4D2D20()
 }
 
 // 0x4D2D50
-BOOL CUIPanel::sub_4D2D50()
+BOOL CUIPanel::Deactivate()
 {
     if (!m_bPendingActivation) {
         return FALSE;

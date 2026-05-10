@@ -48,9 +48,9 @@ public:
     void UpdateMusic();
     int GetSectionPlaying();
     int GetMusicPosition();
-    BOOL sub_7ACA10();
-    int GetSongPlaying();
-    int sub_7ACA30();
+    BOOL IsMusicPlaying();
+
+    int GetSoundChannelState();
 
     void SetChannelVolumeFast(int nChannelNumber, int nNewVolume);
     int GetChannelVolumeFast(int nChannelNumber);

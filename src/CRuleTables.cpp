@@ -1815,7 +1815,7 @@ INT CRuleTables::GetAbilityScoreModifier(INT nScore) const
 }
 
 // 0x542560
-int CRuleTables::sub_542560(unsigned short a1, unsigned short a2) const
+int CRuleTables::GetMonsterEncounterRate(unsigned short a1, unsigned short a2) const
 {
     if (a1 == 0) {
         return 0;
@@ -3403,7 +3403,7 @@ INT CRuleTables::GetEncumbranceMod(CGameSprite* pSprite) const
 
     INT nEncMod = atol(m_tEncMod.GetAt(ENCUMBRANCE_MOD_PERCENT, sClass)) + 100;
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_STRONG_BACK)) {
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_STRONG_BACK)) {
         nEncMod += 50;
     }
 

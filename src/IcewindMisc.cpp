@@ -81,7 +81,7 @@ CPoint IcewindMisc::sub_5847B0(const CPoint& pt, int x, int y, int radius)
 }
 
 // 0x584880
-void IcewindMisc::sub_584880(CGameSprite* pSprite, STRREF strRef, INT nNumber)
+void IcewindMisc::DisplayEffectText(CGameSprite* pSprite, STRREF strRef, INT nNumber)
 {
     if (strRef != -1 && (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nEffectTextLevel & 0x8) != 0) {
         if (nNumber != 0) {
@@ -500,7 +500,7 @@ BOOLEAN IcewindMisc::sub_585210(CGameSprite* pSprite)
 }
 
 // 0x585230
-BOOLEAN IcewindMisc::sub_585230(CGameSprite* pSprite1, CGameSprite* pSprite2)
+BOOLEAN IcewindMisc::AreAllies(CGameSprite* pSprite1, CGameSprite* pSprite2)
 {
     if (pSprite1->GetAIType().m_nEnemyAlly <= CAIObjectType::EA_CONTROLCUTOFF
         && pSprite2->GetAIType().m_nEnemyAlly <= CAIObjectType::EA_CONTROLCUTOFF) {
@@ -516,7 +516,7 @@ BOOLEAN IcewindMisc::sub_585230(CGameSprite* pSprite1, CGameSprite* pSprite2)
 }
 
 // 0x5852A0
-BOOLEAN IcewindMisc::sub_5852A0(CGameSprite* pSprite1, CGameSprite* pSprite2)
+BOOLEAN IcewindMisc::AreEnemies(CGameSprite* pSprite1, CGameSprite* pSprite2)
 {
     if (pSprite1->GetAIType().m_nEnemyAlly <= CAIObjectType::EA_GOODCUTOFF
         && pSprite2->GetAIType().m_nEnemyAlly >= CAIObjectType::EA_EVILCUTOFF) {
@@ -940,8 +940,8 @@ BOOLEAN IcewindMisc::sub_585DA0(CGameSprite* pSprite)
                || pSprite->HasClassLevel(CAIOBJECTTYPE_C_MONK))
         && (pSprite->GetDerivedStats()->m_generalState & (STATE_DEAD | STATE_HELPLESS | STATE_STUNNED | STATE_SLEEPING)) == 0
         && pSprite->m_nSequence != 5
-        && !pSprite->sub_724690(2)
-        && !pSprite->sub_724690(3);
+        && !pSprite->IsArmorType(2)
+        && !pSprite->IsArmorType(3);
 }
 
 // 0x585E00

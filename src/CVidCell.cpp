@@ -1422,7 +1422,7 @@ BOOL CVidCell::Blt8To32(DWORD* pSurface, LONG lPitch, DWORD dwFlags, INT nTransV
     m_cPalette.Realize(CVidImage::rgbTempPal, 32, dwFlags, &m_paletteAffects, nTransVal);
 
     if (!m_bShadowOn) {
-        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->nm_field_24;
+        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->m_dwShadowColor;
     }
 
     if (g_pChitin->nm_field_174) {
@@ -1817,7 +1817,7 @@ BOOL CVidCell::Blt8To32ClearShadow(DWORD* pSurface, LONG lPitch, DWORD dwFlags)
     m_cPalette.Realize(CVidImage::rgbTempPal, 32, dwFlags, &m_paletteAffects, 255);
 
     if (!m_bShadowOn) {
-        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->nm_field_24;
+        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->m_dwShadowColor;
     }
 
     BYTE* pFrameData = pRes->GetFrameData(m_pFrame, m_bDoubleSize);
@@ -1954,7 +1954,7 @@ BOOL CVidCell::Blt8To32Brightest(DWORD* pSurface, LONG lPitch, DWORD dwFlags)
     m_cPalette.Realize(CVidImage::rgbTempPal, 32, dwFlags, &m_paletteAffects, 255);
 
     if (!m_bShadowOn) {
-        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->nm_field_24;
+        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->m_dwShadowColor;
     }
 
     BAMHEADER* pBamHeader = pRes->m_bCacheHeader
@@ -2269,7 +2269,7 @@ BOOL CVidCell::Render3d(INT nRefPtX, INT nRefPtY, DWORD dwFlags, INT nTransVal)
     m_cPalette.Realize(CVidImage::rgbTempPal, 32, dwFlags, &m_paletteAffects, nNewTransVal);
 
     if (!m_bShadowOn) {
-        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->nm_field_24;
+        CVidImage::rgbTempPal[CVidPalette::SHADOW_ENTRY] = g_pChitin->GetCurrentVideoMode()->m_dwShadowColor;
     }
 
     CRect rClip(0, 0, CVideo::SCREENWIDTH, CVideo::SCREENHEIGHT);

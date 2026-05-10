@@ -613,7 +613,7 @@ void CGameJournal::DeleteEntry(STRREF strRef)
 }
 
 // 0x4C7600
-void CGameJournal::sub_4C7600(FILE* stream, const CString& sString)
+void CGameJournal::WriteWrappedText(FILE* stream, const CString& sString)
 {
     CString sMutableString(sString);
     int length = sString.GetLength();
@@ -694,7 +694,7 @@ void CGameJournal::Save(INT iChapter)
 
                 sTime += strRes.szText;
 
-                sub_4C7600(stream, sTime);
+                WriteWrappedText(stream, sTime);
                 fputs("\n\n", stream);
             }
         }

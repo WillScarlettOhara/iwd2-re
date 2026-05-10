@@ -131,7 +131,7 @@ public:
     SHORT DetectSecretDoor(CGameDoor* target);
     SHORT FadeToColor();
     SHORT FadeFromColor();
-    SHORT sub_467970();
+    SHORT ActionFadeColor();
     SHORT SpawnPtActivate(CGameSpawning* target);
     SHORT SpawnPtDeactivate(CGameSpawning* target);
     SHORT SpawnPtSpawn(CGameSpawning* target);

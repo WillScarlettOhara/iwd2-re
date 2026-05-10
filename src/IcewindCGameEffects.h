@@ -179,9 +179,9 @@ public:
     CGameEffect* Copy() override;
     BOOL ApplyEffect(CGameSprite* pSprite) override;
 
-    void sub_55ED90(CGameSprite* pSprite);
-    void sub_55EE70(CGameSprite* pSprite);
-    void sub_55EFB0(CGameSprite* pSprite);
+    void IncrementSavingThrows(CGameSprite* pSprite);
+    void SetSavingThrowsBase(CGameSprite* pSprite);
+    void ScaleSavingThrowsBase(CGameSprite* pSprite);
 };
 
 class IcewindCGameEffectSlowPoison : public CGameEffect {
@@ -209,10 +209,10 @@ public:
     IcewindCGameEffectSummon(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target);
     CGameEffect* Copy() override;
 
-    void sub_49DB60(int a1);
+    void SetSummonSide(int nSide);
 
-    /* 018C */ int nm_m_field_18C;
-    /* 0190 */ int nm_m_field_190;
+    /* 018C */ int m_nSummonState;
+    /* 0190 */ int m_nSummonSide;
 };
 
 class IcewindCGameEffectVisualSpellHit : public CGameEffect {

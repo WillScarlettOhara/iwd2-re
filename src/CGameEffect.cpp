@@ -919,7 +919,7 @@ CGameEffect* CGameEffect::DecodeEffect(ITEM_EFFECT* effect, const CPoint& source
     case ICEWIND_CGAMEEFFECT_APPLYEFFECTSLIST:
         if (1) {
             IcewindCGameEffectApplyEffectsList* pEffect = new IcewindCGameEffectApplyEffectsList(effect, source, sourceID, target);
-            pEffect->sub_493400(TRUE);
+            pEffect->SetSelfApply(TRUE);
             return pEffect;
         }
     case ICEWIND_CGAMEEFFECT_ARMOROFFAITH:
@@ -939,13 +939,13 @@ CGameEffect* CGameEffect::DecodeEffect(ITEM_EFFECT* effect, const CPoint& source
     case ICEWIND_CGAMEEFFECT_SUMMONALLY:
         if (1) {
             IcewindCGameEffectSummon* pEffect = new IcewindCGameEffectSummon(effect, source, sourceID, target);
-            pEffect->sub_49DB60(1);
+            pEffect->SetSummonSide(1);
             return pEffect;
         }
     case ICEWIND_CGAMEEFFECT_SUMMONENEMY:
         if (1) {
             IcewindCGameEffectSummon* pEffect = new IcewindCGameEffectSummon(effect, source, sourceID, target);
-            pEffect->sub_49DB60(2);
+            pEffect->SetSummonSide(2);
             return pEffect;
         }
     case ICEWIND_CGAMEEFFECT_CHARM:
@@ -1078,11 +1078,11 @@ CGameEffect::CGameEffect()
     m_sourceID = -1;
     m_done = FALSE;
     m_forceRepass = FALSE;
-    nm_field_118 = 0;
+    m_durationTemp = 0;
     m_compareIdOnly = FALSE;
     m_compareIdAndFlagsOnly = FALSE;
     m_secondaryType = 1;
-    nm_field_188 = 0;
+    m_sourceTarget = 0;
 }
 
 // 0x48C310
@@ -1381,9 +1381,9 @@ void CGameEffect::SetDWFlags(DWORD dwFlags)
 }
 
 // 0x493400
-void CGameEffect::sub_493400(BOOL a1)
+void CGameEffect::SetSelfApply(BOOL bEnable)
 {
-    if (a1) {
+    if (bEnable) {
         m_flags |= 0x2;
     } else {
         m_flags &= ~0x2;
@@ -1391,7 +1391,7 @@ void CGameEffect::sub_493400(BOOL a1)
 }
 
 // 0x594020
-void CGameEffect::sub_594020(BOOL bEnabled)
+void CGameEffect::SetTimingModeFlag(BOOL bEnabled)
 {
     if (bEnabled) {
         m_flags |= 0x1;
@@ -1413,9 +1413,9 @@ void CGameEffect::SetSourceId(LONG sourceID)
 }
 
 // 0x4C3F30
-void CGameEffect::sub_4C3F30(CGameSprite* pSprite, INT nValue)
+void CGameEffect::ClampACDexBonusMinimum(CGameSprite* pSprite, INT nValue)
 {
-    pSprite->GetDerivedStats()->nm_field_8 = max(pSprite->GetDerivedStats()->nm_field_8, nValue);
+    pSprite->GetDerivedStats()->m_nACDexBonus = max(pSprite->GetDerivedStats()->m_nACDexBonus, nValue);
 }
 
 // 0x4C3F60
@@ -1438,50 +1438,50 @@ void CGameEffect::AdjustTHAC0(CGameSprite* pSprite, SHORT nValue)
 // NOTE: Convenience.
 void CGameEffect::AdjustSTR(CGameSprite* pSprite, INT nValue)
 {
-    if ((nValue > 0 && nValue > pSprite->GetDerivedStats()->nm_field_128)
-        || (nValue < 0 && nValue < pSprite->GetDerivedStats()->nm_field_128)) {
-        pSprite->m_bonusStats.m_nSTR += static_cast<SHORT>(nValue) - static_cast<SHORT>(pSprite->GetDerivedStats()->nm_field_128);
-        pSprite->GetDerivedStats()->nm_field_128 = nValue;
+    if ((nValue > 0 && nValue > pSprite->GetDerivedStats()->m_nSTRBonus)
+        || (nValue < 0 && nValue < pSprite->GetDerivedStats()->m_nSTRBonus)) {
+        pSprite->m_bonusStats.m_nSTR += static_cast<SHORT>(nValue) - static_cast<SHORT>(pSprite->GetDerivedStats()->m_nSTRBonus);
+        pSprite->GetDerivedStats()->m_nSTRBonus = nValue;
     }
 }
 
 // 0x4C3FC0
 void CGameEffect::AdjustDEX(CGameSprite* pSprite, INT nValue)
 {
-    if ((nValue > 0 && nValue > pSprite->GetDerivedStats()->bm_field_12C)
-        || (nValue < 0 && nValue < pSprite->GetDerivedStats()->bm_field_12C)) {
-        pSprite->m_bonusStats.m_nDEX += static_cast<SHORT>(nValue) - static_cast<SHORT>(pSprite->GetDerivedStats()->bm_field_12C);
-        pSprite->GetDerivedStats()->bm_field_12C = nValue;
+    if ((nValue > 0 && nValue > pSprite->GetDerivedStats()->m_nDEXBonus)
+        || (nValue < 0 && nValue < pSprite->GetDerivedStats()->m_nDEXBonus)) {
+        pSprite->m_bonusStats.m_nDEX += static_cast<SHORT>(nValue) - static_cast<SHORT>(pSprite->GetDerivedStats()->m_nDEXBonus);
+        pSprite->GetDerivedStats()->m_nDEXBonus = nValue;
     }
 }
 
 // NOTE: Convenience.
 void CGameEffect::AdjustINT(CGameSprite* pSprite, INT nValue)
 {
-    if ((nValue > 0 && nValue > pSprite->GetDerivedStats()->nm_field_134)
-        || (nValue < 0 && nValue < pSprite->GetDerivedStats()->nm_field_134)) {
-        pSprite->m_bonusStats.m_nINT += static_cast<SHORT>(nValue) - static_cast<SHORT>(pSprite->GetDerivedStats()->nm_field_134);
-        pSprite->GetDerivedStats()->nm_field_134 = nValue;
+    if ((nValue > 0 && nValue > pSprite->GetDerivedStats()->m_nINTBonus)
+        || (nValue < 0 && nValue < pSprite->GetDerivedStats()->m_nINTBonus)) {
+        pSprite->m_bonusStats.m_nINT += static_cast<SHORT>(nValue) - static_cast<SHORT>(pSprite->GetDerivedStats()->m_nINTBonus);
+        pSprite->GetDerivedStats()->m_nINTBonus = nValue;
     }
 }
 
 // NOTE: Convenience.
 void CGameEffect::AdjustWIS(CGameSprite* pSprite, INT nValue)
 {
-    if ((nValue > 0 && nValue > pSprite->GetDerivedStats()->nm_field_138)
-        || (nValue < 0 && nValue < pSprite->GetDerivedStats()->nm_field_138)) {
-        pSprite->m_bonusStats.m_nWIS += static_cast<SHORT>(nValue) - static_cast<SHORT>(pSprite->GetDerivedStats()->nm_field_138);
-        pSprite->GetDerivedStats()->nm_field_138 = nValue;
+    if ((nValue > 0 && nValue > pSprite->GetDerivedStats()->m_nWISBonus)
+        || (nValue < 0 && nValue < pSprite->GetDerivedStats()->m_nWISBonus)) {
+        pSprite->m_bonusStats.m_nWIS += static_cast<SHORT>(nValue) - static_cast<SHORT>(pSprite->GetDerivedStats()->m_nWISBonus);
+        pSprite->GetDerivedStats()->m_nWISBonus = nValue;
     }
 }
 
 // NOTE: Convenience.
 void CGameEffect::AdjustCON(CGameSprite* pSprite, INT nValue)
 {
-    if ((nValue > 0 && nValue > pSprite->GetDerivedStats()->sm_field_130)
-        || (nValue < 0 && nValue < pSprite->GetDerivedStats()->sm_field_130)) {
-        pSprite->m_bonusStats.m_nCON += static_cast<SHORT>(nValue) - static_cast<SHORT>(pSprite->GetDerivedStats()->sm_field_130);
-        pSprite->GetDerivedStats()->sm_field_130 = nValue;
+    if ((nValue > 0 && nValue > pSprite->GetDerivedStats()->m_nCONBonus)
+        || (nValue < 0 && nValue < pSprite->GetDerivedStats()->m_nCONBonus)) {
+        pSprite->m_bonusStats.m_nCON += static_cast<SHORT>(nValue) - static_cast<SHORT>(pSprite->GetDerivedStats()->m_nCONBonus);
+        pSprite->GetDerivedStats()->m_nCONBonus = nValue;
     }
 }
 
@@ -1619,7 +1619,7 @@ void CGameEffect::ClearItemEffect(ITEM_EFFECT* itemEffect, WORD newEffectId)
 }
 
 // 0x4B8730
-void CGameEffect::sub_4B8730(CGameSprite* pSprite, INT slotNum)
+void CGameEffect::DestroyItemInSlot(CGameSprite* pSprite, INT slotNum)
 {
     CItem* pItem = pSprite->GetEquipment()->m_items[slotNum];
     if (pItem != NULL) {
@@ -1670,7 +1670,7 @@ BOOL CGameEffectAC::ApplyEffect(CGameSprite* pSprite)
         pSprite->GetDerivedStats()->wfield_6 = max(pSprite->GetDerivedStats()->wfield_6, static_cast<SHORT>(m_effectAmount));
         break;
     case 2:
-        pSprite->GetDerivedStats()->nm_field_8 = max(pSprite->GetDerivedStats()->nm_field_8, static_cast<SHORT>(m_effectAmount));
+        pSprite->GetDerivedStats()->m_nACDexBonus = max(pSprite->GetDerivedStats()->m_nACDexBonus, static_cast<SHORT>(m_effectAmount));
         break;
     case 3:
         pSprite->GetDerivedStats()->wfield_A = max(pSprite->GetDerivedStats()->wfield_A, static_cast<SHORT>(m_effectAmount));
@@ -1941,7 +1941,7 @@ BOOL CGameEffectColorChange::ApplyEffect(CGameSprite* pSprite)
 {
     pSprite->m_hasColorRangeEffects = TRUE;
 
-    if (m_slotNum == pSprite->sub_726800()
+    if (m_slotNum == pSprite->GetWeaponSlot()
         && (m_dwFlags & 0xF0) == CGameAnimationType::RANGE_WEAPON) {
         m_dwFlags &= 0xF;
         m_dwFlags |= CGameAnimationType::RANGE_SHIELD;
@@ -1990,7 +1990,7 @@ CGameEffect* CGameEffectColorGlowSolid::Copy()
 // 0x4A6D30
 BOOL CGameEffectColorGlowSolid::ApplyEffect(CGameSprite* pSprite)
 {
-    if (m_slotNum == pSprite->sub_726800()
+    if (m_slotNum == pSprite->GetWeaponSlot()
         && (m_dwFlags & 0xF0) == CGameAnimationType::RANGE_WEAPON) {
         m_dwFlags &= 0xF;
         m_dwFlags |= CGameAnimationType::RANGE_SHIELD;
@@ -2052,7 +2052,7 @@ BOOL CGameEffectColorGlowPulse::ApplyEffect(CGameSprite* pSprite)
     WORD range = m_dwFlags & 0xFFFF;
     WORD period = (m_dwFlags >> 16) & 0xFFFF;
 
-    if (m_slotNum == pSprite->sub_726800()
+    if (m_slotNum == pSprite->GetWeaponSlot()
         && (range & 0xF0) == CGameAnimationType::RANGE_WEAPON) {
         range &= 0xF;
         range |= CGameAnimationType::RANGE_SHIELD;
@@ -2221,7 +2221,7 @@ CGameEffect* CGameEffectDamage::Copy()
 }
 
 // 0x4A7750
-void CGameEffectDamage::sub_4A7750(CGameSprite* pSprite)
+void CGameEffectDamage::RemoveStatusOnDamage(CGameSprite* pSprite)
 {
     if ((pSprite->GetBaseStats()->m_generalState & STATE_DEAD) == 0) {
         if ((pSprite->GetBaseStats()->m_generalState & STATE_SLEEPING) != 0
@@ -2265,20 +2265,20 @@ void CGameEffectDamage::sub_4A7750(CGameSprite* pSprite)
 CGameEffectDeath::CGameEffectDeath()
 {
     m_effectID = CGAMEEFFECT_DEATH;
-    nm_m_field_18C = 1;
+    m_nDeathFlags = 1;
 }
 
 // NOTE: Inlined.
 CGameEffectDeath::CGameEffectDeath(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target)
     : CGameEffect(effect, source, sourceID, target, FALSE)
 {
-    nm_m_field_18C = 0;
+    m_nDeathFlags = 0;
 }
 
 // 0x494150
 CGameEffectDeath::CGameEffectDeath(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target, int a5)
 {
-    nm_m_field_18C = a5;
+    m_nDeathFlags = a5;
 }
 
 // 0x452E70
@@ -2286,7 +2286,7 @@ CGameEffect* CGameEffectDeath::Copy()
 {
     ITEM_EFFECT* effect = GetItemEffect();
     CGameEffectDeath* copy = new CGameEffectDeath(effect, m_source, m_sourceID, m_target);
-    copy->nm_m_field_18C = nm_m_field_18C;
+    copy->m_nDeathFlags = m_nDeathFlags;
     delete effect;
     copy->CopyFromBase(this);
     return copy;
@@ -3833,7 +3833,7 @@ CGameEffect* CGameEffectStun::Copy()
 BOOL CGameEffectStun::ApplyEffect(CGameSprite* pSprite)
 {
     if (m_dwFlags == 2) {
-        return sub_4B2680(pSprite);
+        return ResolveStunDuration(pSprite);
     }
 
     if (m_dwFlags == 1) {
@@ -3862,7 +3862,7 @@ BOOL CGameEffectStun::ApplyEffect(CGameSprite* pSprite)
 }
 
 // 0x4B2680
-BOOL CGameEffectStun::sub_4B2680(CGameSprite* pSprite)
+BOOL CGameEffectStun::ResolveStunDuration(CGameSprite* pSprite)
 {
     INT nHealth = pSprite->GetBaseStats()->m_hitPoints;
     int v1 = 0;
@@ -4156,7 +4156,7 @@ CGameEffect* CGameEffectColorTintSolid::Copy()
 // 0x4A7000
 BOOL CGameEffectColorTintSolid::ApplyEffect(CGameSprite* pSprite)
 {
-    if (m_slotNum == pSprite->sub_726800()
+    if (m_slotNum == pSprite->GetWeaponSlot()
         && (m_dwFlags & 0xF0) == CGameAnimationType::RANGE_WEAPON) {
         m_dwFlags &= 0xF;
         m_dwFlags |= CGameAnimationType::RANGE_SHIELD;
@@ -4239,7 +4239,7 @@ CGameEffect* CGameEffectColorLightSolid::Copy()
 // 0x4A71B0
 BOOL CGameEffectColorLightSolid::ApplyEffect(CGameSprite* pSprite)
 {
-    if (m_slotNum == pSprite->sub_726800()
+    if (m_slotNum == pSprite->GetWeaponSlot()
         && (m_dwFlags & 0xF0) == CGameAnimationType::RANGE_WEAPON) {
         m_dwFlags &= 0xF;
         m_dwFlags |= CGameAnimationType::RANGE_SHIELD;
@@ -4531,7 +4531,7 @@ BOOL CGameEffectDispelEffects::ApplyEffect(CGameSprite* pSprite)
     }
 
     pSprite->UnequipAll(TRUE);
-    sub_4B8730(pSprite, 42);
+    DestroyItemInSlot(pSprite, 42);
     pSprite->EquipAll(TRUE);
     pSprite->m_hasColorEffects = TRUE;
     pSprite->m_hasColorRangeEffects = TRUE;
@@ -5182,7 +5182,7 @@ BOOL CGameEffectBlindness::ApplyEffect(CGameSprite* pSprite)
         AddPortraitIcon(pSprite, 8);
 
         int v1 = -2;
-        if (pSprite->sub_763150(CGAMESPRITE_FEAT_BLIND_FIGHT)) {
+        if (pSprite->HasFeat(CGAMESPRITE_FEAT_BLIND_FIGHT)) {
             v1 = 0;
         }
 
@@ -5436,10 +5436,10 @@ BOOL CGameEffectDisease::ApplyEffect(CGameSprite* pSprite)
         AddSlowEffect(pSprite);
         return TRUE;
     case 11:
-        sub_4B5E50(pSprite);
+        ApplyDiseaseMoldTouch(pSprite);
         return TRUE;
     case 12:
-        sub_4B5FF0(pSprite);
+        ScheduleDiseaseRecurrence(pSprite);
         return TRUE;
     case 13:
         pSprite->m_bonusStats.m_nSTR -= 2;
@@ -5448,10 +5448,10 @@ BOOL CGameEffectDisease::ApplyEffect(CGameSprite* pSprite)
         AddSlowEffect(pSprite);
         return TRUE;
     case 14:
-        sub_4B5BF0(pSprite);
+        ApplyDiseaseBlindingFever(pSprite);
         return TRUE;
     case 15:
-        sub_4B5D90(pSprite);
+        ApplyDiseaseFeverSlow(pSprite);
         return TRUE;
     }
 
@@ -5498,7 +5498,7 @@ BOOL CGameEffectDisease::ApplyEffect(CGameSprite* pSprite)
 }
 
 // 0x4B5BF0
-void CGameEffectDisease::sub_4B5BF0(CGameSprite* pSprite)
+void CGameEffectDisease::ApplyDiseaseBlindingFever(CGameSprite* pSprite)
 {
     pSprite->m_bonusStats.m_nSTR -= 3;
     pSprite->m_bonusStats.m_nDEX -= 3;
@@ -5542,7 +5542,7 @@ void CGameEffectDisease::sub_4B5BF0(CGameSprite* pSprite)
 }
 
 // 0x4B5D90
-void CGameEffectDisease::sub_4B5D90(CGameSprite* pSprite)
+void CGameEffectDisease::ApplyDiseaseFeverSlow(CGameSprite* pSprite)
 {
     AddSlowEffect(pSprite);
 
@@ -5561,7 +5561,7 @@ void CGameEffectDisease::sub_4B5D90(CGameSprite* pSprite)
 }
 
 // 0x4B5E50
-void CGameEffectDisease::sub_4B5E50(CGameSprite* pSprite)
+void CGameEffectDisease::ApplyDiseaseMoldTouch(CGameSprite* pSprite)
 {
     if (IcewindMisc::IsDead(pSprite) != TRUE
         && !pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_MOLD_TOUCH]) {
@@ -5589,7 +5589,7 @@ void CGameEffectDisease::sub_4B5E50(CGameSprite* pSprite)
 }
 
 // 0x4B5FF0
-void CGameEffectDisease::sub_4B5FF0(CGameSprite* pSprite)
+void CGameEffectDisease::ScheduleDiseaseRecurrence(CGameSprite* pSprite)
 {
     if (IcewindMisc::IsDead(pSprite) != TRUE) {
         for (int index = 0; index < m_effectAmount; index += 7) {
@@ -8058,19 +8058,19 @@ BOOL CGameEffectNon_CumulativeDrawUponHolyMight::ApplyEffect(CGameSprite* pSprit
         // NOTE: Uninline.
         AddPortraitIcon(pSprite, 59);
 
-        if (m_effectAmount > pSprite->GetDerivedStats()->nm_field_128) {
-            pSprite->m_bonusStats.m_nSTR += static_cast<SHORT>(m_effectAmount) - static_cast<SHORT>(pSprite->GetDerivedStats()->nm_field_128);
-            pSprite->GetDerivedStats()->nm_field_128 = m_effectAmount;
+        if (m_effectAmount > pSprite->GetDerivedStats()->m_nSTRBonus) {
+            pSprite->m_bonusStats.m_nSTR += static_cast<SHORT>(m_effectAmount) - static_cast<SHORT>(pSprite->GetDerivedStats()->m_nSTRBonus);
+            pSprite->GetDerivedStats()->m_nSTRBonus = m_effectAmount;
         }
 
-        if (m_effectAmount > pSprite->GetDerivedStats()->sm_field_130) {
-            pSprite->m_bonusStats.m_nCON += static_cast<SHORT>(m_effectAmount) - static_cast<SHORT>(pSprite->GetDerivedStats()->sm_field_130);
-            pSprite->GetDerivedStats()->sm_field_130 = m_effectAmount;
+        if (m_effectAmount > pSprite->GetDerivedStats()->m_nCONBonus) {
+            pSprite->m_bonusStats.m_nCON += static_cast<SHORT>(m_effectAmount) - static_cast<SHORT>(pSprite->GetDerivedStats()->m_nCONBonus);
+            pSprite->GetDerivedStats()->m_nCONBonus = m_effectAmount;
         }
 
-        if (m_effectAmount > pSprite->GetDerivedStats()->bm_field_12C) {
-            pSprite->m_bonusStats.m_nDEX += static_cast<SHORT>(m_effectAmount) - static_cast<SHORT>(pSprite->GetDerivedStats()->bm_field_12C);
-            pSprite->GetDerivedStats()->bm_field_12C = m_effectAmount;
+        if (m_effectAmount > pSprite->GetDerivedStats()->m_nDEXBonus) {
+            pSprite->m_bonusStats.m_nDEX += static_cast<SHORT>(m_effectAmount) - static_cast<SHORT>(pSprite->GetDerivedStats()->m_nDEXBonus);
+            pSprite->GetDerivedStats()->m_nDEXBonus = m_effectAmount;
         }
 
         AddColorEffect(pSprite, 128, 128, 128, 30);
@@ -10457,7 +10457,7 @@ BOOL CGameEffectImmunitySpell::Evaluate(CGameSprite* pSprite)
             &pObject,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
-            bResult = !IcewindMisc::sub_585230(pSprite, static_cast<CGameSprite*>(pObject));
+            bResult = !IcewindMisc::AreAllies(pSprite, static_cast<CGameSprite*>(pObject));
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceID,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
@@ -10471,7 +10471,7 @@ BOOL CGameEffectImmunitySpell::Evaluate(CGameSprite* pSprite)
             &pObject,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
-            bResult = IcewindMisc::sub_585230(pSprite, static_cast<CGameSprite*>(pObject));
+            bResult = IcewindMisc::AreAllies(pSprite, static_cast<CGameSprite*>(pObject));
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceID,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
@@ -10485,7 +10485,7 @@ BOOL CGameEffectImmunitySpell::Evaluate(CGameSprite* pSprite)
             &pObject,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
-            bResult = !IcewindMisc::sub_5852A0(pSprite, static_cast<CGameSprite*>(pObject));
+            bResult = !IcewindMisc::AreEnemies(pSprite, static_cast<CGameSprite*>(pObject));
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceID,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
@@ -10499,7 +10499,7 @@ BOOL CGameEffectImmunitySpell::Evaluate(CGameSprite* pSprite)
             &pObject,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
-            bResult = IcewindMisc::sub_5852A0(pSprite, static_cast<CGameSprite*>(pObject));
+            bResult = IcewindMisc::AreEnemies(pSprite, static_cast<CGameSprite*>(pObject));
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceID,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
@@ -11187,7 +11187,7 @@ BOOL CGameEffectTimeStop::ApplyEffect(CGameSprite* pSprite)
 CGameEffectDisguise::CGameEffectDisguise(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target)
     : CGameEffect(effect, source, sourceID, target, FALSE)
 {
-    nm_m_field_18C = -1;
+    m_nDisguiseValue = -1;
 }
 
 // 0x49D8A0

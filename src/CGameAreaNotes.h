@@ -19,7 +19,7 @@ public:
     BOOL AddANote(const CAreaUserNote& cNote);
     void Add();
     BYTE GetNoteIconIndex();
-    BOOL sub_47B150(WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef);
+    BOOL UpdateNote(WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef);
     void Add(CString area, WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef);
     STRREF GetNoteButtonText(DWORD id);
     CAreaUserNote* GetNoteAt(const CPoint& pt);

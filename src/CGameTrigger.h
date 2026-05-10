@@ -27,7 +27,7 @@ public:
     /* 00B8 */ virtual BOOL IsOverActivate(const CPoint& pt);
 
     void SetDrawPoly(SHORT time);
-    BOOL sub_45B950();
+    BOOL CanActivateTrap();
 
     /* 0598 */ WORD m_triggerType;
     /* 059A */ CRect m_rBounding;

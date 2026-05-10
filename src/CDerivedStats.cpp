@@ -144,13 +144,13 @@ void CDerivedStats::Reload(CGameSprite* pSprite, CCreatureFileHeader* pCreature,
     m_nDamageModPiercing = 0;
     m_nDamageModCrushing = 0;
     m_nDamageModMissile = 0;
-    nm_field_124 = 0;
-    nm_field_128 = 0;
-    nm_field_12C = 0;
-    nm_field_130 = 0;
-    nm_field_134 = 0;
-    nm_field_138 = 0;
-    nm_field_13C = 0;
+    m_nNaturalArmorBonus = 0;
+    m_nSTRBonus = 0;
+    m_nDEXBonus = 0;
+    m_nCONBonus = 0;
+    m_nINTBonus = 0;
+    m_nWISBonus = 0;
+    m_nCHRBonus = 0;
     m_nMirrorImages = 0;
     m_bPreventAISlowDown = FALSE;
 
@@ -338,12 +338,12 @@ CDerivedStats& CDerivedStats::operator=(const CDerivedStats& other)
     // nfield_51C = other.nfield_51C;
     // m_cBounceSecondaryType = other.m_cBounceSecondaryType;
 
-    nm_field_128 = other.nm_field_128;
-    nm_field_12C = other.nm_field_12C;
-    nm_field_130 = other.nm_field_130;
-    nm_field_134 = other.nm_field_134;
-    nm_field_138 = other.nm_field_138;
-    nm_field_13C = other.nm_field_13C;
+    m_nSTRBonus = other.m_nSTRBonus;
+    m_nDEXBonus = other.m_nDEXBonus;
+    m_nCONBonus = other.m_nCONBonus;
+    m_nINTBonus = other.m_nINTBonus;
+    m_nWISBonus = other.m_nWISBonus;
+    m_nCHRBonus = other.m_nCHRBonus;
     m_nMirrorImages = other.m_nMirrorImages;
 
     memcpy(m_nSkills, other.m_nSkills, sizeof(m_nSkills));
@@ -466,13 +466,13 @@ void CDerivedStats::BonusInit()
     m_nDamageModPiercing = 0;
     m_nDamageModCrushing = 0;
     m_nDamageModMissile = 0;
-    nm_field_124 = 0;
-    nm_field_128 = 0;
-    nm_field_12C = 0;
-    nm_field_130 = 0;
-    nm_field_134 = 0;
-    nm_field_138 = 0;
-    nm_field_13C = 0;
+    m_nNaturalArmorBonus = 0;
+    m_nSTRBonus = 0;
+    m_nDEXBonus = 0;
+    m_nCONBonus = 0;
+    m_nINTBonus = 0;
+    m_nWISBonus = 0;
+    m_nCHRBonus = 0;
     m_nMirrorImages = 0;
     m_bPreventAISlowDown = FALSE;
 
@@ -572,13 +572,13 @@ CDerivedStats& CDerivedStats::operator+=(const CDerivedStats& other)
     m_nDamageModPiercing += other.m_nDamageModPiercing;
     m_nDamageModCrushing += other.m_nDamageModCrushing;
     m_nDamageModMissile += other.m_nDamageModMissile;
-    nm_field_124 += other.nm_field_124;
-    nm_field_128 += other.nm_field_128;
-    nm_field_12C += other.nm_field_12C;
-    nm_field_130 += other.nm_field_130;
-    nm_field_134 += other.nm_field_134;
-    nm_field_138 += other.nm_field_138;
-    nm_field_13C += other.nm_field_13C;
+    m_nNaturalArmorBonus += other.m_nNaturalArmorBonus;
+    m_nSTRBonus += other.m_nSTRBonus;
+    m_nDEXBonus += other.m_nDEXBonus;
+    m_nCONBonus += other.m_nCONBonus;
+    m_nINTBonus += other.m_nINTBonus;
+    m_nWISBonus += other.m_nWISBonus;
+    m_nCHRBonus += other.m_nCHRBonus;
     m_nMirrorImages += other.m_nMirrorImages;
 
     for (index = 0; index < 64; index++) {
@@ -985,13 +985,13 @@ void CDerivedStats::Unmarshal(BYTE* pStats, LONG nStats)
     m_nDamageModPiercing = pTemplate->m_nDamageModPiercing;
     m_nDamageModCrushing = pTemplate->m_nDamageModCrushing;
     m_nDamageModMissile = pTemplate->m_nDamageModMissile;
-    nm_field_124 = pTemplate->nm_field_124;
-    nm_field_128 = pTemplate->nm_field_128;
-    nm_field_12C = pTemplate->nm_field_12C;
-    nm_field_130 = pTemplate->nm_field_130;
-    nm_field_134 = pTemplate->nm_field_134;
-    nm_field_138 = pTemplate->nm_field_138;
-    nm_field_13C = pTemplate->nm_field_13C;
+    m_nNaturalArmorBonus = pTemplate->m_nNaturalArmorBonus;
+    m_nSTRBonus = pTemplate->m_nSTRBonus;
+    m_nDEXBonus = pTemplate->m_nDEXBonus;
+    m_nCONBonus = pTemplate->m_nCONBonus;
+    m_nINTBonus = pTemplate->m_nINTBonus;
+    m_nWISBonus = pTemplate->m_nWISBonus;
+    m_nCHRBonus = pTemplate->m_nCHRBonus;
     m_nMirrorImages = pTemplate->m_nMirrorImages;
     m_bPreventAISlowDown = pTemplate->m_bPreventAISlowDown;
 }
@@ -1096,7 +1096,7 @@ INT CDerivedStats::GetBestClass()
 // FIXME: `nClass` should not be reference.
 //
 // 0x447B00
-CGameSpriteGroupedSpellList* CDerivedStats::sub_447B00(const BYTE& nClass)
+CGameSpriteGroupedSpellList* CDerivedStats::GetSpellListByClass(const BYTE& nClass)
 {
     BYTE nClassIndex = g_pBaldurChitin->GetObjectGame()->GetSpellcasterIndex(nClass);
 

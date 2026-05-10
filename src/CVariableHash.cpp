@@ -368,10 +368,10 @@ CNamedCreatureVariableHashEntry::CNamedCreatureVariableHashEntry(const CVariable
 }
 
 // 0x550B30
-void CNamedCreatureVariableHashEntry::sub_550B30()
+void CNamedCreatureVariableHashEntry::DestroyChain()
 {
     if (m_pNext != NULL) {
-        m_pNext->sub_550B30();
+        m_pNext->DestroyChain();
 
         delete m_pNext;
         m_pNext = NULL;
@@ -379,7 +379,7 @@ void CNamedCreatureVariableHashEntry::sub_550B30()
 }
 
 // 0x550CF0
-CNamedCreatureVariableHashEntry* CNamedCreatureVariableHashEntry::sub_550CF0()
+CNamedCreatureVariableHashEntry* CNamedCreatureVariableHashEntry::GetTail()
 {
     CNamedCreatureVariableHashEntry* var = this;
 
@@ -420,7 +420,7 @@ void CNamedCreatureVariableHash::ClearAll()
         for (int index = 0; index < m_nTableEntries; index++) {
             if (m_hashEntries[index] != NULL) {
                 // NOTE: Uninline.
-                m_hashEntries[index]->sub_550B30();
+                m_hashEntries[index]->DestroyChain();
 
                 delete m_hashEntries[index];
                 m_hashEntries[index] = NULL;
@@ -438,7 +438,7 @@ void CNamedCreatureVariableHash::Resize(LONG nSize)
         for (index = nSize; index < m_nTableEntries; index++) {
             if (m_hashEntries[index] != NULL) {
                 // NOTE: Uninline.
-                m_hashEntries[index]->sub_550B30();
+                m_hashEntries[index]->DestroyChain();
 
                 delete m_hashEntries[index];
                 m_hashEntries[index] = NULL;
@@ -464,7 +464,7 @@ void CNamedCreatureVariableHash::Resize(LONG nSize)
 
                 int hash = Hash(pCurr->m_variable.GetName());
                 if (m_hashEntries[hash] != NULL) {
-                    m_hashEntries[hash]->sub_550CF0()->m_pNext = pCurr;
+                    m_hashEntries[hash]->GetTail()->m_pNext = pCurr;
                 } else {
                     m_hashEntries[hash] = pCurr;
                 }
@@ -509,7 +509,7 @@ BOOL CNamedCreatureVariableHash::AddKey(CVariable& var)
 
     CNamedCreatureVariableHashEntry* pVar = new CNamedCreatureVariableHashEntry(var);
     if (m_hashEntries[hash] != NULL) {
-        m_hashEntries[hash]->sub_550CF0()->m_pNext = pVar;
+        m_hashEntries[hash]->GetTail()->m_pNext = pVar;
     } else {
         m_hashEntries[hash] = pVar;
     }

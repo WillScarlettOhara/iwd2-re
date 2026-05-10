@@ -2601,7 +2601,7 @@ void CGameArea::OnActivation()
         }
 
         if (m_nCurrentSong != -1) {
-            if (!g_pBaldurChitin->cSoundMixer.sub_7ACA30()) {
+            if (!g_pBaldurChitin->cSoundMixer.GetSoundChannelState()) {
                 PlaySong(m_nCurrentSong, 5);
             }
         }
@@ -3610,7 +3610,7 @@ void CGameArea::Render(CVidMode* pVidMode, INT nSurface)
         m_cInfinity.PostRender(pVidMode, nSurface, &m_search);
 
         if (g_pChitin->cVideo.Is3dAccelerated()) {
-            CInfTileSet::sub_5D2DE0();
+            CInfTileSet::RenderFogOfWar();
         }
 
         switch (m_pGame->GetState()) {
@@ -4386,7 +4386,7 @@ BYTE CGameArea::GetId()
 }
 
 // 0x47A060
-void CGameArea::sub_47A060()
+void CGameArea::LoadLocalVariables()
 {
     CMemINISection* pSection = INIFile.GetSection(CString("locals"));
     if (pSection != NULL && pSection->GetCount() > 0) {
@@ -4426,7 +4426,7 @@ int CGameArea::EnterSpawn()
 }
 
 // 0x47A190
-void CGameArea::sub_47A190()
+void CGameArea::SaveMusicPosition()
 {
     g_pBaldurChitin->AddMusicPosition(m_resRef, g_pBaldurChitin->cSoundMixer.m_nCurrentSong);
 }

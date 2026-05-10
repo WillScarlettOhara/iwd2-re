@@ -405,13 +405,13 @@ public:
     void Set(const CAIObjectType& type);
     void Decode(CGameAIBase* caller);
     CString GetName() const;
-    CGameObject* sub_40CB20(CGameAIBase* caller, BYTE type, BOOL checkBackList) const;
-    BOOL Equal(const CAIObjectType& type) const;
-    CGameObject* sub_40CCA0(CGameAIBase* caller, BOOL checkBackList) const;
-    BOOL GetCenterPoint(CGameAIBase* caller, CPoint& pt, INT& nRadius) const;
-    LONG sub_40CED0(CGameAIBase* caller, BOOL checkBackList) const;
-    CGameObject* sub_40D050(CGameAIBase* caller, BYTE type, BOOL checkBackList) const;
-    CGameObject* sub_40D0F0(CGameAIBase* caller, BOOL checkBackList) const;
+    CGameObject* GetObjectByType(CGameAIBase* caller, BYTE type, BOOL checkBackList) const;
+
+    CGameObject* GetObject(CGameAIBase* caller, BOOL checkBackList) const;
+
+    LONG ResolveObjectId(CGameAIBase* caller, BOOL checkBackList) const;
+    CGameObject* GetObjectByTypeChecked(CGameAIBase* caller, BYTE type, BOOL checkBackList) const;
+    CGameObject* GetObjectChecked(CGameAIBase* caller, BOOL checkBackList) const;
     void SetSpecialCase(const BYTE* SpecialCase);
     void Read(CString sData);
     BOOL IsEnemyOf(const CAIObjectType& type) const;

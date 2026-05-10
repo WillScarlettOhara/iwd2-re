@@ -820,7 +820,7 @@ void CScreenStore::TimerAsynchronousUpdate()
             m_nChatMessageCount);
     }
 
-    CGameSprite* pCustomer = static_cast<CGameSprite*>(m_cAICustomer.sub_40CB20(NULL, CGameObject::TYPE_SPRITE, FALSE));
+    CGameSprite* pCustomer = static_cast<CGameSprite*>(m_cAICustomer.GetObjectByType(NULL, CGameObject::TYPE_SPRITE, FALSE));
     if (m_pMainPanel != NULL && m_pMainPanel->m_nID != 5) {
         if (pCustomer != NULL
             && (pCustomer->GetBaseStats()->m_generalState & STATE_DEAD) == 0
@@ -873,7 +873,7 @@ void CScreenStore::TimerAsynchronousUpdate()
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
 
-            CGameSprite* pProprietor = static_cast<CGameSprite*>(m_cAIProprietor.sub_40CB20(NULL, CGameObject::TYPE_SPRITE, FALSE));
+            CGameSprite* pProprietor = static_cast<CGameSprite*>(m_cAIProprietor.GetObjectByType(NULL, CGameObject::TYPE_SPRITE, FALSE));
             if (pProprietor != NULL
                 && pProprietor->GetAIType().GetEnemyAlly() != CAIObjectType::EA_ENEMY
                 && (pProprietor->GetBaseStats()->m_generalState & STATE_DEAD) == 0
@@ -3103,7 +3103,7 @@ void CScreenStore::StartStore(const CAIObjectType& proprietor, const CAIObjectTy
 
                 if (rc == CGameObjectArray::SUCCESS) {
                     bfield_5D8 = static_cast<BYTE>(pSprite->GetDerivedStats()->m_nCHR);
-                    bfield_5D9 = pSprite->sub_763150(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
+                    bfield_5D9 = pSprite->HasFeat(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
 
                     pGame->GetObjectArray()->ReleaseShare(nCharacterId,
                         CGameObjectArray::THREAD_ASYNCH,
@@ -3128,7 +3128,7 @@ void CScreenStore::StartStore(const CAIObjectType& proprietor, const CAIObjectTy
 
                 if (rc == CGameObjectArray::SUCCESS) {
                     bfield_5D8 = static_cast<BYTE>(pSprite->GetDerivedStats()->m_nCHR);
-                    bfield_5D9 = pSprite->sub_763150(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
+                    bfield_5D9 = pSprite->HasFeat(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
 
                     pGame->GetObjectArray()->ReleaseShare(nCharacterId,
                         CGameObjectArray::THREAD_ASYNCH,

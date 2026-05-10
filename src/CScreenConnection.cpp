@@ -171,7 +171,7 @@ CScreenConnection::CScreenConnection()
     m_strErrorText = -1;
     m_strErrorButtonText[0] = -1;
     m_strErrorButtonText[1] = -1;
-    bm_field_496 = 0;
+    m_bFirstRender = 0;
     m_bEliminateInitialize = FALSE;
     m_nEnumServiceProvidersCountDown = -1;
     m_bDirectPlayLobby = FALSE;
@@ -2088,7 +2088,7 @@ void CScreenConnection::OnJoinGameButtonClick()
 }
 
 // 0x5FEB70
-void CScreenConnection::sub_5FEB70()
+void CScreenConnection::OnSelectServiceProvider()
 {
     CNetwork* pNetwork = &(g_pBaldurChitin->cNetwork);
 
@@ -3195,7 +3195,7 @@ void CScreenConnection::OnErrorButtonClick(INT nButton)
         switch (nButton) {
         case 0:
             DismissPopup();
-            sub_5FEB70();
+            OnSelectServiceProvider();
             break;
         case 1:
             DismissPopup();

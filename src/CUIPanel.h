@@ -20,8 +20,8 @@ public:
     DWORD TimerAsynchronousUpdate();
     CUIControlBase* GetControl(DWORD nID);
     BOOL IsOver(const CPoint& pt);
-    BOOL sub_4D2D20();
-    BOOL sub_4D2D50();
+    BOOL Activate();
+    BOOL Deactivate();
     BOOL OnLButtonDown(const CPoint& pt);
     BOOL OnLButtonDblClk(const CPoint& pt);
     void OnMouseMove(const CPoint& pt);

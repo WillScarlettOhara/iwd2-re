@@ -2299,9 +2299,9 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
 
     BOOL bHasActiveFeats = FALSE;
     if (pDStats->m_spellStates[SPLSTATE_FEAT_ARTERIAL_STRIKE]
-        || pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0
+        || pSprite->GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE) > 0
         || pDStats->m_spellStates[SPLSTATE_FEAT_HAMSTRING]
-        || pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0
+        || pSprite->GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK) > 0
         || pDStats->m_spellStates[SPLSTATE_FEAT_RAPID_SHOT]) {
         UpdateTextForceColor(pText,
             RGB(200, 200, 0),
@@ -2310,33 +2310,33 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
         bHasActiveFeats = TRUE;
     }
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)
         && pDStats->m_spellStates[SPLSTATE_FEAT_ARTERIAL_STRIKE]) {
         UpdateText(pText, "%s", (LPCSTR)FetchString(35774)); // "Arterial Strike"
     }
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_EXPERTISE)
-        && pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_EXPERTISE)
+        && pSprite->GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
         UpdateText(pText,
             "%s %d",
             (LPCSTR)FetchString(35785), // "Expertise"
-            pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE));
+            pSprite->GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE));
     }
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_HAMSTRING)
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_HAMSTRING)
         && pDStats->m_spellStates[SPLSTATE_FEAT_HAMSTRING]) {
         UpdateText(pText, "%s", (LPCSTR)FetchString(35787)); // "Hamstring"
     }
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)
-        && pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)
+        && pSprite->GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
         UpdateText(pText,
             "%s %d",
             (LPCSTR)FetchString(35794), // "Power Attack"
-            pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK));
+            pSprite->GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK));
     }
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_RAPID_SHOT)
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_RAPID_SHOT)
         && pDStats->m_spellStates[SPLSTATE_FEAT_RAPID_SHOT]) {
         UpdateText(pText, "%s", (LPCSTR)FetchString(35796)); // "Rapid Shot"
     }
@@ -4717,7 +4717,7 @@ void CScreenCharacter::sub_5F89B0(CGameSprite* pSprite)
     for (INT nFeat = 0; nFeat < ruleTables.m_tFeats.GetHeight(); nFeat++) {
         if (m_storedFeats[nFeat] < pSprite->GetFeatValue(nFeat)) {
             while (pSprite->GetFeatValue(nFeat) > 0) {
-                if (pSprite->sub_763200(nFeat, 1)) {
+                if (pSprite->MeetFeatRequirements(nFeat, 1)) {
                     break;
                 }
 
@@ -6896,7 +6896,7 @@ void CUIControlButtonCharacterFeatsPlusMinus::AdjustValue()
         INT nValue = pSprite->GetFeatValue(id);
 
         if (bInc) {
-            if (pSprite->sub_763A40(id, 1) && pCharacter->m_nExtraFeats > 0) {
+            if (pSprite->CanUpgradeFeat(id, 1) && pCharacter->m_nExtraFeats > 0) {
                 pSprite->SetFeatValue(id, nValue + 1);
                 pCharacter->m_nExtraFeats--;
             }
@@ -7054,7 +7054,7 @@ BOOL CUIControlButtonCharacterFeatsCircle::Render(BOOL bForce)
     INT nMaxValue = pSprite->GetMaxFeatValue(nFeatNumber);
     INT nKnobValue = nFirstID - m_nID + 4;
 
-    if ((nValue > 0 || pSprite->sub_763A40(nFeatNumber, 1))
+    if ((nValue > 0 || pSprite->CanUpgradeFeat(nFeatNumber, 1))
         && nKnobValue < nMaxValue) {
         CRect rControlRect(m_pPanel->m_ptOrigin + m_ptOrigin,
             m_size);

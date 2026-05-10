@@ -728,7 +728,7 @@ void CInfTileSet::RenderTexture(INT nTextureId, const CRect& rDest, INT x, INT y
 }
 
 // 0x5D2DE0
-void CInfTileSet::sub_5D2DE0()
+void CInfTileSet::RenderFogOfWar()
 {
     INT x;
     INT y;
@@ -2289,7 +2289,7 @@ DWORD CInfinity::Render(CVidMode* pNewVidMode, INT nSurface, INT nScrollState, C
                                 y,
                                 tileCode,
                                 dwRenderFlag,
-                                pVidMode->nm_field_24,
+                                pVidMode->m_dwShadowColor,
                                 0,
                                 0);
                         } else {

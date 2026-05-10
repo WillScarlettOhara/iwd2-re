@@ -90,7 +90,7 @@ public:
     /* 0062 */ DWORD m_remotePlayerID;
     /* 0066 */ LONG m_remoteObjectID;
     /* 006A */ BYTE m_AISpeed;
-    /* 006B */ unsigned char bfield_6B;
+    /* 006B */ unsigned char m_bLocalControl;
     /* 006C */ BYTE m_AIInhibitor;
 };
 

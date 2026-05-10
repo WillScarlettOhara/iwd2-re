@@ -3757,9 +3757,9 @@ void CScreenInventory::SwapWithWeaponSet(UINT nIndex)
     if (rc == CGameObjectArray::SUCCESS) {
         BOOLEAN bInControl = pSprite->InControl();
         if (bInControl == TRUE) {
-            if (pSprite->sub_737910(FALSE) == TRUE) {
+            if (pSprite->CheckWeaponAmmunition(FALSE) == TRUE) {
                 if (pSprite->GetEquipment()->m_items[42] == NULL) {
-                    pSprite->sub_726810(nIndex);
+                    pSprite->SetWeaponSet(nIndex);
                 } else {
                     // "Magical weapon in use"
                     SetErrorString(10141, RGB(255, 255, 255));

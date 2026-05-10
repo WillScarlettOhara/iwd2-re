@@ -783,7 +783,7 @@ CInfGame::CInfGame()
     g_pChitin->cDimm.AddToDirectoryList(m_sCharactersDir, TRUE);
 
     m_gameSave.m_curFormation = TRUE;
-    m_gameSave.nm_field_1AC = FALSE;
+    m_gameSave.m_bArenaMode = FALSE;
 
     wm_field_4A42 = 48;
     wm_field_4A44 = 48;
@@ -1021,7 +1021,7 @@ void CInfGame::InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
         EnablePortrait(nIndex, FALSE);
     }
 
-    m_gameSave.wm_field_1B0 = 0;
+    m_gameSave.m_nGroupInventoryNumber = 0;
     memset(m_gameSave.m_groupInventory, 0, sizeof(m_gameSave.m_groupInventory));
     m_gameSave.m_mode = -1;
     m_gameSave.m_cutScene = FALSE;
@@ -1894,7 +1894,7 @@ void CInfGame::ProgressBarCallback(DWORD dwSize, BOOLEAN bInitialize)
 }
 
 // 0x5A9780
-char CInfGame::sub_5A9780(BYTE nKey)
+char CInfGame::VirtualKeyToChar(BYTE nKey)
 {
     if (nKey >= 'A' && nKey <= 'Z') {
         return static_cast<char>(nKey);
@@ -1914,7 +1914,7 @@ char CInfGame::sub_5A9780(BYTE nKey)
 }
 
 // 0x5A97D0
-BYTE CInfGame::sub_5A97D0(char ch)
+BYTE CInfGame::CharToVirtualKey(char ch)
 {
     if (ch >= 'a' && ch <= 'z') {
         return static_cast<BYTE>(ch - 32);
@@ -1938,7 +1938,7 @@ BYTE CInfGame::sub_5A97D0(char ch)
 }
 
 // 0x5A9830
-BYTE CInfGame::sub_5A9830(int index)
+BYTE CInfGame::GetVirtualKeyByIndex(int index)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
     // __LINE__: 7779
@@ -1949,7 +1949,7 @@ BYTE CInfGame::sub_5A9830(int index)
     }
 
     // NOTE: Uninline.
-    return sub_5A97D0(off_8AFD24[index][0]);
+    return CharToVirtualKey(off_8AFD24[index][0]);
 }
 
 // 0x5A98F0
@@ -5916,7 +5916,7 @@ void CInfGame::StartCharacterTerminationSequence()
 // 0x5C2570
 void CInfGame::ReadyCharacterTerminationSequence(int a1, int a2)
 {
-    if (!m_gameSave.nm_field_1AC) {
+    if (!m_gameSave.m_bArenaMode) {
         // FIXME: What for (this function is not static as
         // `StartCharacterTerminationSequence`).
         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();

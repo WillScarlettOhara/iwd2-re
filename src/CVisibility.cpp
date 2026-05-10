@@ -113,7 +113,7 @@ CVisibilityMap::CVisibilityMap()
     m_pEllipseArcPixelsSecondary = 0;
     m_nEllipseArcWidth = 14;
     m_nEllipseArcHeight = 10;
-    sub_5518A0();
+    InitializeEllipseArcs();
     m_bOutDoor = FALSE;
 }
 
@@ -143,7 +143,7 @@ BOOL CVisibilityMap::AddCharacter(const CPoint& pos, LONG charId, const BYTE* pV
 }
 
 // 0x5518A0
-void CVisibilityMap::sub_5518A0()
+void CVisibilityMap::InitializeEllipseArcs()
 {
     if (m_pEllipseArcPixelsPrimary != NULL) {
         delete m_pEllipseArcPixelsPrimary;

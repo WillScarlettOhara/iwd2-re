@@ -314,12 +314,12 @@ public:
     void CopyFromBase(CGameEffectBase* pBase);
     void SetEffectID(WORD effectID);
     void SetDWFlags(DWORD dwFlags);
-    void sub_493400(BOOL a1);
-    void sub_594020(BOOL bEnabled);
+    void SetSelfApply(BOOL bEnable);
+    void SetTimingModeFlag(BOOL bEnabled);
     void SetSource(const CPoint& pt);
     void SetSourceId(LONG sourceID);
 
-    void sub_4C3F30(CGameSprite* pSprite, INT nValue);
+    void ClampACDexBonusMinimum(CGameSprite* pSprite, INT nValue);
     void AdjustResistMagic(CGameSprite* pSprite, SHORT nValue);
     void AdjustTHAC0(CGameSprite* pSprite, SHORT nValue);
     void AdjustSTR(CGameSprite* pSprite, INT nValue);
@@ -335,16 +335,16 @@ public:
     void SetSpellState(CGameSprite* pSprite, DWORD dwSpellState);
     static void FeedBackImmuneToResource(CGameSprite* pSprite, const CResRef& res);
     static void ClearItemEffect(ITEM_EFFECT* itemEffect, WORD newEffectId);
-    static void sub_4B8730(CGameSprite* pSprite, INT slotNum);
+    static void DestroyItemInSlot(CGameSprite* pSprite, INT slotNum);
 
     /* 010C */ LONG m_sourceID;
     /* 0110 */ BOOL m_done;
     /* 0114 */ BOOL m_forceRepass;
-    /* 0118 */ int nm_field_118;
+    /* 0118 */ DWORD m_durationTemp;
     /* 011C */ BOOL m_compareIdOnly;
     /* 0120 */ BOOL m_compareIdAndFlagsOnly;
     /* 0124 */ CSound m_sound;
-    /* 0188 */ int nm_field_188;
+    /* 0188 */ LONG m_sourceTarget;
 };
 
 class CGameEffectAC : public CGameEffect {
@@ -447,7 +447,7 @@ public:
     CGameEffectDamage(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target);
     CGameEffect* Copy() override;
 
-    void sub_4A7750(CGameSprite* pSprite);
+    void RemoveStatusOnDamage(CGameSprite* pSprite);
 };
 
 class CGameEffectDeath : public CGameEffect {
@@ -458,7 +458,7 @@ public:
     CGameEffect* Copy() override;
     void DisplayString(CGameSprite* pSprite) override;
 
-    /* 018C */ int nm_m_field_18C;
+    /* 018C */ int m_nDeathFlags;
 };
 
 class CGameEffectDefrost : public CGameEffect {
@@ -664,7 +664,7 @@ public:
     CGameEffect* Copy() override;
     BOOL ApplyEffect(CGameSprite* pSprite) override;
 
-    BOOL sub_4B2680(CGameSprite* pSprite);
+    BOOL ResolveStunDuration(CGameSprite* pSprite);
 };
 
 class CGameEffectUnstun : public CGameEffect {
@@ -822,8 +822,8 @@ public:
     CGameEffectSummon(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target);
     CGameEffect* Copy() override;
 
-    /* 018C */ int nm_m_field_18C;
-    /* 0190 */ int nm_m_field_190;
+    /* 018C */ int m_nSummonState;
+    /* 0190 */ int m_nSummonSide;
 };
 
 class CGameEffectSkillUnsummon : public CGameEffect {
@@ -910,10 +910,10 @@ public:
     CGameEffect* Copy() override;
     BOOL ApplyEffect(CGameSprite* pSprite) override;
 
-    void sub_4B5BF0(CGameSprite* pSprite);
-    void sub_4B5D90(CGameSprite* pSprite);
-    void sub_4B5E50(CGameSprite* pSprite);
-    void sub_4B5FF0(CGameSprite* pSprite);
+    void ApplyDiseaseBlindingFever(CGameSprite* pSprite);
+    void ApplyDiseaseFeverSlow(CGameSprite* pSprite);
+    void ApplyDiseaseMoldTouch(CGameSprite* pSprite);
+    void ScheduleDiseaseRecurrence(CGameSprite* pSprite);
 };
 
 class CGameEffectCureDisease : public CGameEffect {
@@ -1914,7 +1914,7 @@ public:
     CGameEffectDisguise(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target);
     CGameEffect* Copy() override;
 
-    /* 018C */ int nm_m_field_18C;
+    /* 018C */ int m_nDisguiseValue;
 };
 
 class CGameEffectHeroicInspiration : public CGameEffect {

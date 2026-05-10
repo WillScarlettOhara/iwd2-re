@@ -48,7 +48,7 @@ public:
     CVisibilityMap();
     ~CVisibilityMap();
     BOOL AddCharacter(const CPoint& pos, LONG charId, const BYTE* pVisibleTerrainTable);
-    void sub_5518A0();
+    void InitializeEllipseArcs();
     void ClimbWall(const CPoint& ptStart, const CPoint& ptEnd, BYTE charId, const BYTE* pVisibileTerrainTable, SHORT nHighest);
     static void BltDitherPattern(LPDIRECTDRAWSURFACE pSurface, const TILE_CODE& tileCode);
     static void BltFogOWar(LPDIRECTDRAWSURFACE pSurface, const TILE_CODE& tileCode);

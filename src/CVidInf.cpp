@@ -890,7 +890,7 @@ BOOL CVidInf::FXPrep(CRect& rFXRect, DWORD dwFlags, const CPoint& ptPos, const C
 
     DDBLTFX fx;
     fx.dwSize = sizeof(fx);
-    fx.dwFillColor = nm_field_24;
+    fx.dwFillColor = m_dwShadowColor;
 
     if (GetFXSurfacePtr(dwFlags) == NULL) {
         return FALSE;
@@ -1441,14 +1441,14 @@ BOOL CVidInf::FXUnlock(DWORD dwFlags, const CRect* pFxRect, const CPoint& ptRef)
                 cVidPoly.FillPoly(reinterpret_cast<WORD*>(CVideo3d::texImageData),
                     CVidTile::BYTES_PER_TEXEL * CVIDINF_FX_WIDTH,
                     pFxRect,
-                    nm_field_24,
+                    m_dwShadowColor,
                     dwPolyFlags,
                     ptRef);
             } else {
                 cVidPoly.FillPoly(reinterpret_cast<WORD*>(CVideo3d::texImageData),
                     CVidTile::BYTES_PER_TEXEL * m_rLockedRect.Width(),
                     pFxRect,
-                    nm_field_24,
+                    m_dwShadowColor,
                     dwPolyFlags,
                     ptRef);
             }
@@ -1477,7 +1477,7 @@ BOOL CVidInf::FXUnlock(DWORD dwFlags, const CRect* pFxRect, const CPoint& ptRef)
         cVidPoly.FillPoly(reinterpret_cast<WORD*>(m_SurfaceDesc.lpSurface),
             m_SurfaceDesc.lPitch,
             pFxRect,
-            nm_field_24,
+            m_dwShadowColor,
             dwPolyFlags | 0x2,
             ptRef);
     }
@@ -2286,9 +2286,9 @@ void CVidInf::ParsePixelFormat(const DDPIXELFORMAT& ddpf)
 
         m_dwBBitShift = bit;
 
-        nfield_C2 = 8 - m_dwRBitCount;
-        nfield_C6 = 8 - m_dwGBitCount;
-        nfield_CA = 8 - m_dwBBitCount;
+        m_nRBitLoss = 8 - m_dwRBitCount;
+        m_nGBitLoss = 8 - m_dwGBitCount;
+        m_nBBitLoss = 8 - m_dwBBitCount;
         break;
     case 24:
     case 32:
@@ -2327,9 +2327,9 @@ void CVidInf::ParsePixelFormat(const DDPIXELFORMAT& ddpf)
         m_dwRBitCount = 8;
         m_dwGBitCount = 8;
         m_dwBBitCount = 8;
-        nfield_C2 = 0;
-        nfield_C6 = 0;
-        nfield_CA = 0;
+        m_nRBitLoss = 0;
+        m_nGBitLoss = 0;
+        m_nBBitLoss = 0;
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\chitin\ChVideo.cpp

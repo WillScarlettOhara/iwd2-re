@@ -48,13 +48,13 @@ CVidMode::CVidMode()
     m_dwRBitMask = 0;
     m_dwGBitMask = 0;
     m_dwBBitMask = 0;
-    nm_field_24 = 0;
+    m_dwShadowColor = 0;
     nfield_98 = 0;
-    nfield_C2 = 0;
-    nfield_C6 = 0;
-    nfield_CA = 0;
+    m_nRBitLoss = 0;
+    m_nGBitLoss = 0;
+    m_nBBitLoss = 0;
     wfield_D2 = 0;
-    nfield_DC = 0;
+    m_bRedrawEntireScreen = 0;
     m_bPointerEnabled = FALSE;
     m_bPointerInside = TRUE;
     m_nColorDepth = 0;
@@ -273,7 +273,7 @@ void CVidMode::DisplayFrameRate(UINT nSurface)
 DWORD CVidMode::ConvertToSurfaceRGB(COLORREF rgb)
 {
     if (g_pChitin->cVideo.m_nBpp == 16) {
-        return ((GetRValue(rgb) >> nfield_C2) << m_dwRBitShift) | ((GetGValue(rgb) >> nfield_C6) << m_dwGBitShift) | ((GetBValue(rgb) >> nfield_CA) << m_dwBBitShift);
+        return ((GetRValue(rgb) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgb) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgb) >> m_nBBitLoss) << m_dwBBitShift);
     } else {
         return (GetRValue(rgb) << m_dwRBitShift) | (GetGValue(rgb) << m_dwGBitShift) | (GetBValue(rgb) << m_dwBBitShift);
     }
@@ -524,7 +524,7 @@ BOOL CVidMode::DrawLine(INT nXFrom, INT nYFrom, INT nXTo, INT nYTo, const DDSURF
             reinterpret_cast<WORD*>(ddsd.lpSurface),
             ddsd.lPitch >> 1,
             rSurface,
-            ((GetRValue(rgbColor) >> nfield_C2) << m_dwRBitShift) | ((GetGValue(rgbColor) >> nfield_C6) << m_dwGBitShift) | ((GetBValue(rgbColor) >> nfield_CA) << m_dwBBitShift),
+            ((GetRValue(rgbColor) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgbColor) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgbColor) >> m_nBBitLoss) << m_dwBBitShift),
             bClipped);
     case 24:
         return DrawLine24(nXFrom,
@@ -589,7 +589,7 @@ BOOL CVidMode::DrawRect(const CRect& r, UINT nSurface, const CRect& rClip, COLOR
 
     switch (g_pChitin->cVideo.GetBitsPerPixels()) {
     case 16:
-        color16 = ((GetRValue(rgbColor) >> nfield_C2) << m_dwRBitShift) | ((GetGValue(rgbColor) >> nfield_C6) << m_dwGBitShift) | ((GetBValue(rgbColor) >> nfield_CA) << m_dwBBitShift);
+        color16 = ((GetRValue(rgbColor) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgbColor) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgbColor) >> m_nBBitLoss) << m_dwBBitShift);
         DrawLine16(x1,
             y1,
             x2,
@@ -835,7 +835,7 @@ BOOL CVidMode::DrawThickLine(INT nXFrom, INT nYFrom, INT nXTo, INT nYTo, const D
             ddsd.lPitch >> 1,
             rSurface,
             a8,
-            ((GetRValue(rgbColor) >> nfield_C2) << m_dwRBitShift) | ((GetGValue(rgbColor) >> nfield_C6) << m_dwGBitShift) | ((GetBValue(rgbColor) >> nfield_CA) << m_dwBBitShift),
+            ((GetRValue(rgbColor) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgbColor) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgbColor) >> m_nBBitLoss) << m_dwBBitShift),
             bClipped);
     case 24:
         return DrawThickLine24(nXFrom,
@@ -895,7 +895,7 @@ BOOL CVidMode::EraseScreen(UINT nSurface, COLORREF rgbColor)
 
     DDBLTFX fx;
     fx.dwSize = sizeof(fx);
-    fx.dwFillColor = ((GetRValue(rgbColor) >> nfield_C2) << m_dwRBitShift) | ((GetGValue(rgbColor) >> nfield_C6) << m_dwGBitShift) | ((GetBValue(rgbColor) >> nfield_CA) << m_dwBBitShift);
+    fx.dwFillColor = ((GetRValue(rgbColor) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgbColor) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgbColor) >> m_nBBitLoss) << m_dwBBitShift);
 
     HRESULT hr;
     do {
@@ -1214,7 +1214,7 @@ DWORD CVidMode::ReduceColor(COLORREF rgbColor)
     }
 
     if (g_pChitin->cVideo.m_nBpp == 16) {
-        return ((GetRValue(rgbColor) >> nfield_C2) << m_dwRBitShift) | ((GetGValue(rgbColor) >> nfield_C6) << m_dwGBitShift) | ((GetBValue(rgbColor) >> nfield_CA) << m_dwBBitShift);
+        return ((GetRValue(rgbColor) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgbColor) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgbColor) >> m_nBBitLoss) << m_dwBBitShift);
     } else {
         return (GetBValue(rgbColor) << m_dwBBitShift) | (GetGValue(rgbColor) << m_dwGBitShift) | (GetRValue(rgbColor) << m_dwRBitShift);
     }

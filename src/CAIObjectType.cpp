@@ -879,7 +879,7 @@ CString CAIObjectType::GetName() const
 }
 
 // 0x40CB20
-CGameObject* CAIObjectType::sub_40CB20(CGameAIBase* caller, BYTE type, BOOL checkBackList) const
+CGameObject* CAIObjectType::GetObjectByType(CGameAIBase* caller, BYTE type, BOOL checkBackList) const
 {
     CGameObject* pObject = NULL;
 
@@ -889,7 +889,7 @@ CGameObject* CAIObjectType::sub_40CB20(CGameAIBase* caller, BYTE type, BOOL chec
 
     LONG nId = m_nInstance;
     if (nId < 0) {
-        nId = sub_40CED0(caller, checkBackList);
+        nId = ResolveObjectId(caller, checkBackList);
     }
 
     BYTE rc;
@@ -933,7 +933,7 @@ BOOL CAIObjectType::Equal(const CAIObjectType& type) const
 }
 
 // 0x40CCA0
-CGameObject* CAIObjectType::sub_40CCA0(CGameAIBase* caller, BOOL checkBackList) const
+CGameObject* CAIObjectType::GetObject(CGameAIBase* caller, BOOL checkBackList) const
 {
     if (Equal(NOONE)) {
         return NULL;
@@ -941,7 +941,7 @@ CGameObject* CAIObjectType::sub_40CCA0(CGameAIBase* caller, BOOL checkBackList) 
 
     LONG nId = m_nInstance;
     if (nId < 0) {
-        nId = sub_40CED0(caller, checkBackList);
+        nId = ResolveObjectId(caller, checkBackList);
     }
 
     CGameObject* pObject;
@@ -991,7 +991,7 @@ BOOL CAIObjectType::GetCenterPoint(CGameAIBase* caller, CPoint& pt, INT& nRadius
 }
 
 // 0x40CED0
-LONG CAIObjectType::sub_40CED0(CGameAIBase* caller, BOOL checkBackList) const
+LONG CAIObjectType::ResolveObjectId(CGameAIBase* caller, BOOL checkBackList) const
 {
     LONG nId;
     if (caller->GetArea() != NULL) {
@@ -1047,9 +1047,9 @@ LONG CAIObjectType::sub_40CED0(CGameAIBase* caller, BOOL checkBackList) const
 }
 
 // 0x40D050
-CGameObject* CAIObjectType::sub_40D050(CGameAIBase* caller, BYTE type, BOOL checkBackList) const
+CGameObject* CAIObjectType::GetObjectByTypeChecked(CGameAIBase* caller, BYTE type, BOOL checkBackList) const
 {
-    CGameObject* pObject = sub_40D0F0(caller, checkBackList);
+    CGameObject* pObject = GetObjectChecked(caller, checkBackList);
 
     if ((pObject->GetObjectType() != type
             && type != CGameObject::TYPE_AIBASE
@@ -1066,7 +1066,7 @@ CGameObject* CAIObjectType::sub_40D050(CGameAIBase* caller, BYTE type, BOOL chec
 }
 
 // 0x40D0F0
-CGameObject* CAIObjectType::sub_40D0F0(CGameAIBase* caller, BOOL checkBackList) const
+CGameObject* CAIObjectType::GetObjectChecked(CGameAIBase* caller, BOOL checkBackList) const
 {
     if (Equal(NOONE)) {
         return NULL;
@@ -1075,7 +1075,7 @@ CGameObject* CAIObjectType::sub_40D0F0(CGameAIBase* caller, BOOL checkBackList) 
     LONG nId = m_nInstance;
     if (nId < 0) {
         // NOTE: Uninline.
-        nId = sub_40CED0(caller, checkBackList);
+        nId = ResolveObjectId(caller, checkBackList);
     }
 
     CGameObject* pObject;

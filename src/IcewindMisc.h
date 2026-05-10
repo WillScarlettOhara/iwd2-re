@@ -17,7 +17,7 @@ public:
     static INT Roll(INT nRolls, INT nSides);
     static CPoint sub_584610(INT nDirection);
     static CPoint sub_5847B0(const CPoint& pt, int x, int y, int radius);
-    static void sub_584880(CGameSprite* pSprite, STRREF strRef, INT nNumber);
+    static void DisplayEffectText(CGameSprite* pSprite, STRREF strRef, INT nNumber);
     static BOOLEAN IsUndead(CGameSprite* pSprite);
     static BOOLEAN IsImmuneToFire(CGameSprite* pSprite);
     static BOOLEAN IsImmuneToCold(CGameSprite* pSprite);
@@ -48,8 +48,8 @@ public:
     static BOOLEAN IsDead(CGameSprite* pSprite);
     static BOOLEAN IsPC(CGameSprite* pSprite);
     static BOOLEAN sub_585210(CGameSprite* pSprite);
-    static BOOLEAN sub_585230(CGameSprite* pSprite1, CGameSprite* pSprite2);
-    static BOOLEAN sub_5852A0(CGameSprite* pSprite1, CGameSprite* pSprite2);
+    static BOOLEAN AreAllies(CGameSprite* pSprite1, CGameSprite* pSprite2);
+    static BOOLEAN AreEnemies(CGameSprite* pSprite1, CGameSprite* pSprite2);
     static BOOLEAN sub_585310(CGameSprite* pSprite);
     static BOOLEAN IsAlignmentSame(CGameSprite* pSprite1, CGameSprite* pSprite2);
     static BOOLEAN IsGoodEvilSame(CGameSprite* pSprite1, CGameSprite* pSprite2);

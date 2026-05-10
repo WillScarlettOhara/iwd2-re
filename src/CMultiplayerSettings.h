@@ -38,9 +38,9 @@ public:
     BOOLEAN GetPlayerReady(PLAYER_ID playerID);
     void SetPlayerReady(PLAYER_ID playerID, BOOLEAN bValue, BOOLEAN bFlush);
     int GetCharacterViewingCount();
-    void sub_518580(PLAYER_ID playerID, INT characterSlotBeingViewed);
+    void SetViewedCharacter(PLAYER_ID playerID, INT characterSlotBeingViewed);
     void ClearCharacterViewing();
-    void sub_518660(PLAYER_ID playerID, BOOLEAN a2);
+    void SetPlayerReady(PLAYER_ID playerID, BOOLEAN a2);
     void ClearReadyState();
     int GetReadyCount();
     INT GetCharacterControlledByPlayer(INT nCharacterSlot);
@@ -82,8 +82,8 @@ public:
     /* 00A6 */ BOOLEAN m_bHostPermittedDialog;
     /* 00A7 */ BOOLEAN m_bHostPermittedStore;
     /* 00A8 */ PLAYER_ID m_idHostPermittedStore;
-    /* 00AC */ unsigned char bfield_AC[6];
-    /* 00B2 */ BOOLEAN bfield_B2[6];
+    /* 00AC */ INT m_nViewedCharacter[6];
+    /* 00B2 */ BOOLEAN m_bPlayerReady[6];
     /* 00B8 */ BOOLEAN m_bFirstConnected;
     /* 00BA */ DWORD m_nDifficultyLevel;
     /* 00BE */ LONG m_nDifficultyMultiplier;

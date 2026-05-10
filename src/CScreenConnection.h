@@ -83,7 +83,7 @@ public:
     void OnDoneButtonClick();
     void OnCancelButtonClick();
     void OnJoinGameButtonClick();
-    void sub_5FEB70();
+    void OnSelectServiceProvider();
     void EnableMainPanel(BOOL bEnable);
     void UpdateMainPanel();
     void UpdateSessionList(CUIPanel* pPanel, DWORD nTextId);
@@ -148,7 +148,7 @@ public:
     /* 0492 */ BOOL m_bStartedCountDown;
     /* 0497 */ BOOLEAN m_bEliminateInitialize;
     /* 04B2 */ BOOL m_bAllowInput;
-    /* 0496 */ unsigned char bm_field_496;
+    /* 0496 */ unsigned char m_bFirstRender;
     /* 0498 */ BOOLEAN m_bEMSwapped;
     /* 0499 */ BOOLEAN m_bEMValue;
     /* 049A */ BOOLEAN m_bEMWaiting;

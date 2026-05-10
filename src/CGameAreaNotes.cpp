@@ -256,7 +256,7 @@ BYTE CGameAreaNotes::GetNoteIconIndex()
 }
 
 // 0x47B150
-BOOL CGameAreaNotes::sub_47B150(WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef)
+BOOL CGameAreaNotes::UpdateNote(WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef)
 {
     STR_RES strRes;
 

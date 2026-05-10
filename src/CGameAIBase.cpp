@@ -662,7 +662,7 @@ void CGameAIBase::ApplyEffectToParty(CGameEffect* pEffect)
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     for (SHORT nPortrait = 0; nPortrait < pGame->GetNumCharacters(); nPortrait++) {
         LONG nCharacterId = pGame->GetCharacterId(nPortrait);
-        if (pGame->GetGameSave()->nm_field_1AC) {
+        if (pGame->GetGameSave()->m_bArenaMode) {
             CGameSprite* pSprite;
             BYTE rc = pGame->GetObjectArray()->GetShare(nCharacterId,
                 CGameObjectArray::THREAD_ASYNCH,
@@ -1306,7 +1306,7 @@ SHORT CGameAIBase::RevealAreaOnMap()
     CString sArea = m_curAction.GetString1();
 
     CWorldMap* pWorldMap = g_pBaldurChitin->GetObjectGame()->GetWorldMap(sArea);
-    pWorldMap->EnableArea(pWorldMap->sub_55A3A0(),
+    pWorldMap->EnableArea(pWorldMap->GetCurrentAreaIndex(),
         CResRef(sArea),
         TRUE);
 
@@ -1660,7 +1660,7 @@ SHORT CGameAIBase::FadeFromColor()
 }
 
 // 0x467970
-SHORT CGameAIBase::sub_467970()
+SHORT CGameAIBase::ActionFadeColor()
 {
     CMessageFadeColor* pFadeColor = new CMessageFadeColor(255,
         static_cast<BYTE>(m_curAction.m_dest.x),
@@ -1819,7 +1819,7 @@ CAIAction& CGameAIBase::GetNextAction(CAIAction& action)
             }
 
             actorType.Decode(this);
-            CGameAIBase* actor = static_cast<CGameAIBase*>(actorType.sub_40CB20(this, CGameObject::TYPE_AIBASE, FALSE));
+            CGameAIBase* actor = static_cast<CGameAIBase*>(actorType.GetObjectByType(this, CGameObject::TYPE_AIBASE, FALSE));
             if (actor != NULL) {
                 action.m_actorID = CAIObjectType::ANYONE;
                 action.m_internalFlags |= 0x1;

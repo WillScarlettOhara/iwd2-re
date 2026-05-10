@@ -945,7 +945,7 @@ int CSoundMixer::GetMusicPosition()
 }
 
 // 0x7ACA10
-BOOL CSoundMixer::sub_7ACA10()
+BOOL CSoundMixer::IsMusicPlaying()
 {
     return musicGetSong() < 0;
 }
@@ -957,7 +957,7 @@ int CSoundMixer::GetSongPlaying()
 }
 
 // 0x7ACA30
-int CSoundMixer::sub_7ACA30()
+int CSoundMixer::GetSoundChannelState()
 {
     return (m_nSoundFlags << 30) >> 31;
 }

@@ -525,7 +525,7 @@ CPoint& CGameTrigger::GetPos()
 }
 
 // 0x45B950
-BOOL CGameTrigger::sub_45B950()
+BOOL CGameTrigger::CanActivateTrap()
 {
     return m_trapActivated && (m_dwFlags & 0x100) == 0;
 }

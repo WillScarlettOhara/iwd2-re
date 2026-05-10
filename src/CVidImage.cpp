@@ -403,7 +403,7 @@ BOOL CVidTile::BltStencilTile8To24(DWORD* pSurface, LONG lPitch, BYTE* pData, BY
 BOOL CVidTile::BltTile8To32(DWORD* pSurface, LONG lPitch, BYTE* pData, const CSize& blitSize, LONG nDataJump, DWORD dwFlags)
 {
     INT nSurfaceJump = lPitch - 4 * blitSize.cx;
-    DWORD color = g_pChitin->GetCurrentVideoMode()->nm_field_24;
+    DWORD color = g_pChitin->GetCurrentVideoMode()->m_dwShadowColor;
 
     if ((blitSize.cx & 1) != 0) {
         return FALSE;
@@ -467,7 +467,7 @@ BOOL CVidTile::BltStencilTile8To32(DWORD* pSurface, LONG lPitch, BYTE* pData, BY
 {
     INT nDataIndex = 0;
     INT nSurfaceJump = lPitch - 4 * blitSize.cx;
-    DWORD color = g_pChitin->GetCurrentVideoMode()->nm_field_24;
+    DWORD color = g_pChitin->GetCurrentVideoMode()->m_dwShadowColor;
 
     if ((blitSize.cx & 1) != 0) {
         return FALSE;

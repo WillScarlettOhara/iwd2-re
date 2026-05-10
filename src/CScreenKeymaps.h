@@ -51,22 +51,10 @@ public:
     void EnableMainPanel(BOOL bEnable);
     void UpdateMainPanel();
     void StartKeymaps();
-    void sub_639E70();
-    CUIPanel* GetTopPopup();
-    void ShowPopupPanel(DWORD dwPanelId, BOOL bShow);
-    void EnablePopupPanel(DWORD dwPanelId, BOOL bEnable);
-    void ResetPopupPanel(DWORD dwPanelId);
-    void UpdatePopupPanel(DWORD dwPanelId);
-    void SummonPopup(DWORD dwPopupId);
-    void DismissPopup();
-    void ResetErrorPanel(CUIPanel* pPanel);
-    void OnPageButtonClick(INT nButton);
-    void OnDefaultButtonClick();
     void OnDoneButtonClick();
-    void OnCancelButtonClick();
-    void OnErrorButtonClick(INT nButton);
-    void sub_63A660(CPoint pt);
-    void sub_63A7A0(CPoint pt);
+
+    void OnKeymapMouseMove(CPoint pt);
+    void OnKeymapMouseClick(CPoint pt);
     void SetKeymap(INT nMode, INT nIndex, BYTE nKey, BYTE nKeyFlag);
     void SelectKeymap(INT nIndex);
 
