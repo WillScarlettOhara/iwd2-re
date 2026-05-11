@@ -6790,7 +6790,7 @@ INT CInfGame::CountDualClassedCharacters()
         } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
         if (rc == CGameObjectArray::SUCCESS) {
-            if (pSprite->nfield_70F2 == 1) {
+            if (pSprite->m_nDualClassFlag == 1) {
                 nCount++;
             }
 
@@ -7240,7 +7240,7 @@ void CInfGame::WakeAllCharacters()
         if (rc == CGameObjectArray::SUCCESS) {
             if ((pSprite->m_baseStats.m_generalState & STATE_DEAD) == 0
                 && (pSprite->m_derivedStats.m_generalState & STATE_DEAD) == 0) {
-                pSprite->bfield_9D15 = 1;
+                pSprite->m_field_9D15 = 1;
             }
 
             pGame->GetObjectArray()->ReleaseShare(nCharacterId,

@@ -2717,7 +2717,7 @@ BOOL CGameEffectPanic::ApplyEffect(CGameSprite* pSprite)
 
     if (m_dwFlags == 1) {
         pSprite->GetDerivedStats()->m_generalState |= STATE_HELPLESS | STATE_STUNNED;
-        pSprite->bfield_9D15 = 1;
+        pSprite->m_field_9D15 = 1;
     }
 
     pSprite->sub_761650();
@@ -3649,7 +3649,7 @@ BOOL CGameEffectSleep::ApplyEffect(CGameSprite* pSprite)
         pSprite->SetSequence(CGameSprite::SEQ_SLEEP);
     }
 
-    pSprite->bfield_9D15 = 1;
+    pSprite->m_field_9D15 = 1;
 
     return TRUE;
 }
@@ -3856,7 +3856,7 @@ BOOL CGameEffectStun::ApplyEffect(CGameSprite* pSprite)
 
     pSprite->GetDerivedStats()->m_generalState |= STATE_STUNNED;
     pSprite->GetDerivedStats()->m_generalState |= STATE_HELPLESS;
-    pSprite->bfield_9D15 = 1;
+    pSprite->m_field_9D15 = 1;
 
     return TRUE;
 }
@@ -7236,7 +7236,7 @@ BOOL CGameEffectHoldCreature::ApplyEffect(CGameSprite* pSprite)
         DisplayStringRef(pSprite, 14102); // "Held"
     }
 
-    pSprite->bfield_9D15 = 1;
+    pSprite->m_field_9D15 = 1;
 
     // NOTE: Uninline.
     AddPortraitIcon(pSprite, 13);

@@ -813,8 +813,8 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
     nfield_72AA = 0;
     m_bForceVisualEffects = FALSE;
     nfield_5582 = 0;
-    bfield_9D14 = 0;
-    bfield_9D15 = 0;
+    m_field_9D14 = 0;
+    m_field_9D15 = 0;
     m_hasColorEffects = FALSE;
     m_hasColorRangeEffects = FALSE;
     nfield_5640 = 0;
@@ -1085,7 +1085,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
 
         nfield_70EE = 0;
         bfield_7430 = 0;
-        nfield_70F2 = 0;
+        m_nDualClassFlag = 0;
         if (IcewindMisc::IsLarge(this) == TRUE) {
             pfield_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheB"), FALSE, TRUE, TRUE);
         }
@@ -2202,7 +2202,7 @@ void CGameSprite::AIUpdate()
                             SetIdleSequence();
                         }
                     } else {
-                        if (bfield_70FD
+                        if (m_bHasDamageSound
                             && m_animation.GetCurrentFrame() == nfield_7414) {
                             CSound cSound;
                             cSound.SetResRef(CResRef(sfield_7410), TRUE, TRUE);
@@ -2227,7 +2227,7 @@ void CGameSprite::AIUpdate()
                         }
                     }
                     if (m_animation.IsBeginningOfSequence()
-                        && bfield_70FE
+                        && m_bHasDeathSound
                         && !pfield_7398.IsEmpty()) {
                         INT nIndex = rand() % pfield_7398.GetCount();
                         POSITION pos = pfield_7398.GetHeadPosition();
@@ -2240,7 +2240,7 @@ void CGameSprite::AIUpdate()
                         nfield_741C = pEntry.nm_field_4;
                     }
                     if (m_animation.IsBeginningOfSequence()
-                        && bfield_7101
+                        && m_bHasFallSound
                         && !pfield_73EC.IsEmpty()) {
                         INT nIndex = rand() % pfield_73EC.GetCount();
                         POSITION pos = pfield_73EC.GetHeadPosition();
@@ -2270,7 +2270,7 @@ void CGameSprite::AIUpdate()
                         m_nTwitches = rand() % 4 + rand() % 4;
                         SetSequence(CGAMESPRITE_SEQ_TWITCH);
                     } else {
-                        if (bfield_70FE
+                        if (m_bHasDeathSound
                             && m_animation.GetCurrentFrame() == nfield_741C) {
                             CSound cSound;
                             cSound.SetResRef(CResRef(sfield_7418), TRUE, TRUE);
@@ -2282,7 +2282,7 @@ void CGameSprite::AIUpdate()
                             }
                             cSound.Play(m_pos.x, m_pos.y, 0, FALSE);
                         }
-                        if (bfield_7101
+                        if (m_bHasFallSound
                             && m_animation.GetCurrentFrame() == nfield_742C) {
                             CSound cSound;
                             cSound.SetResRef(CResRef(sfield_7428), TRUE, TRUE);
@@ -2310,7 +2310,7 @@ void CGameSprite::AIUpdate()
                     SetIdleSequence();
 
                     if (m_animation.IsBeginningOfSequence()
-                        && bfield_70FF
+                        && m_bHasFidgetSound
                         && m_nSequence == CGAMESPRITE_SEQ_HEAD_TURN
                         && !pfield_73B4.IsEmpty()) {
                         INT nIndex = rand() % pfield_73B4.GetCount();
@@ -2324,7 +2324,7 @@ void CGameSprite::AIUpdate()
                         nfield_7424 = pEntry.nm_field_4;
                     }
                     if (pGame->GetVisibleArea() == m_pArea
-                        && bfield_70FF
+                        && m_bHasFidgetSound
                         && m_animation.GetCurrentFrame() == nfield_7424
                         && m_nSequence == CGAMESPRITE_SEQ_HEAD_TURN
                         && !m_baseStats.bm_field_294) {
@@ -9410,17 +9410,17 @@ void CGameSprite::LoadAnimationSounds()
     // NOTE: Uninline.
     m_animation.GetAnimationResRef(animationResRef, CGameAnimationType::RANGE_BODY);
 
-    bfield_70FB = FALSE;
-    bfield_70FC = FALSE;
-    bfield_70FD = FALSE;
-    bfield_70FE = FALSE;
-    bfield_70FF = FALSE;
-    bfield_7100 = FALSE;
-    bfield_7101 = FALSE;
+    m_bHasAttackSound = FALSE;
+    m_bHasBattleCrySound = FALSE;
+    m_bHasDamageSound = FALSE;
+    m_bHasDeathSound = FALSE;
+    m_bHasFidgetSound = FALSE;
+    m_bHasSelectedSound = FALSE;
+    m_bHasFallSound = FALSE;
 
     pValue = pINI->GetFast(animationResRef, CString("att1"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        bfield_70FB = TRUE;
+        m_bHasAttackSound = TRUE;
         LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att1frame")));
 
         pValue = pINI->GetFast(animationResRef, CString("att2"));
@@ -9441,37 +9441,37 @@ void CGameSprite::LoadAnimationSounds()
 
     pValue = pINI->GetFast(animationResRef, CString("btlcry"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        bfield_70FC = TRUE;
+        m_bHasBattleCrySound = TRUE;
         LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("btlcryframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("damage"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        bfield_70FD = TRUE;
+        m_bHasDamageSound = TRUE;
         LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("damageframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("death"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        bfield_70FE = TRUE;
+        m_bHasDeathSound = TRUE;
         LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("deathframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("fidget"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        bfield_70FF = TRUE;
+        m_bHasFidgetSound = TRUE;
         LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("fidgetframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("selected"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        bfield_7100 = TRUE;
+        m_bHasSelectedSound = TRUE;
         LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("selectedframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("fall"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        bfield_7101 = TRUE;
+        m_bHasFallSound = TRUE;
         LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("fallframe")));
     }
 }
@@ -10403,8 +10403,8 @@ void CGameSprite::ResolveInstants(BOOL dropNonInstants)
         }
 
         nfield_5582 = 0;
-        bfield_9D14 = 0;
-        bfield_9D15 = 0;
+        m_field_9D14 = 0;
+        m_field_9D15 = 0;
     }
 }
 
@@ -14839,7 +14839,7 @@ BYTE CGameSprite::GetModalState()
 // 0x45B710
 int CGameSprite::GetField70F2()
 {
-    return nfield_70F2;
+    return m_nDualClassFlag;
 }
 
 // 0x706D50
