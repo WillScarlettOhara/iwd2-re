@@ -117,6 +117,24 @@ ghidrasql --ghidra "$GHIDRA_INSTALL_DIR" \
 - Upstream convention: `field_XXX` (NO type prefix like `nm_`, `bm_`)
 
 ## Rename Strategy
+
+**CRITICAL: Ghidra DB is the source of truth.** Always rename in Ghidra FIRST, save, then sync to C++. If the C++ source ever needs to be reset (build break, upstream rebase), the Ghidra DB preserves all renames.
+
+### Rename workflow (DO NOT SKIP STEPS)
+
+```
+# 1. Rename in Ghidra DB (SOURCE OF TRUTH)
+ghidrasql ... -q "UPDATE funcs SET name = 'NewName' WHERE address = 0xNNNNNN;"
+
+# 2. SAVE immediately
+ghidrasql ... -q "SELECT save_database();"
+
+# 3. THEN sync to C++ source
+rg "sub_NNNNNN" src/              # find all occurrences
+# Update .h declaration + .cpp definition + all callsites
+```
+
+### Research
 1. **GhidraSQL** — Decompile function, trace dataflow via xrefs
 2. **BG2EE PDB** — Check `/tmp/bg2_pdb_members.txt` for original name
 3. **GemRB** — Check for semantic equivalent
@@ -124,20 +142,20 @@ ghidrasql --ghidra "$GHIDRA_INSTALL_DIR" \
 5. **Source context** — Usage patterns in .cpp files
 6. **CRITICAL: After name is chosen, find ALL references** with `rg "oldName" src/` before renaming
 7. **CRITICAL: Rename ALL occurrences atomically** — declaration + definition + all callsites in one commit
-8. **CRITICAL: For field renames, update the Ghidra DB AND the C++ source together.** The Ghidra DB is the source of truth; C++ source must stay in sync.
 
 Priority: small classes first → CGameSprite last (most complex, most fields)
 
 ### Safe rename checklist
 ```
 [ ] Researched proper name via IESDP/PDB/GemRB
-[ ] Found ALL occurrences with: rg "oldName" src/
+[ ] Renamed in Ghidra DB: UPDATE funcs SET name = ...
+[ ] Saved Ghidra DB: SELECT save_database();
+[ ] Found ALL src/ occurrences with: rg "oldName" src/
 [ ] Updated .h declaration
-[ ] Updated .cpp definition (if applicable)
-[ ] Updated ALL call sites in ALL .cpp files
+[ ] Updated .cpp definition + all callsites
 [ ] Built on Windows: cmake --build build --config Debug
 [ ] Zero NEW errors (only pre-existing warnings)
-[ ] Commit with message: "rename: ClassName::methodName" or "rename: ClassName::fieldName"
+[ ] Commit with message: "rename: ClassName::methodName"
 ```
 
 ## Key Commands
