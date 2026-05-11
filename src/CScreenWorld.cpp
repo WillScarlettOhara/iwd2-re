@@ -968,7 +968,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
                         // pArea->ForceChaseCode();
 
                         pArea->ExitSpawn();
-                        pArea->sub_47A060();
+                        pArea->LoadLocalVariables();
 
                         if (g_pChitin->cNetwork.GetSessionOpen()) {
                             bAreaCanBeDeleted = FALSE;
@@ -1643,7 +1643,7 @@ void CScreenWorld::StopContainer()
     // NOTE: Uninline.
     SetNewViewSize(CInfinity::stru_8E79B8, FALSE);
 
-    sub_695570(TRUE, FALSE);
+    SetActionPanelsActive(TRUE, FALSE);
 
     m_cUIManager.GetPanel(8)->SetActive(FALSE);
 
@@ -2147,7 +2147,7 @@ void CScreenWorld::StartDeath()
     m_nAutoHideInterface = 0;
 
     pGame->GetGameSave()->m_mode = 4096;
-    sub_695570(FALSE, TRUE);
+    SetActionPanelsActive(FALSE, TRUE);
 
     m_cUIManager.GetPanel(GetPanel_21_7())->SetActive(FALSE);
     m_cUIManager.GetPanel(GetPanel_21_7())->SetInactiveRender(FALSE);
@@ -2498,7 +2498,7 @@ void CScreenWorld::CheckEndOfHardPause()
 }
 
 // 0x693710
-void CScreenWorld::sub_693710()
+void CScreenWorld::SetKeyboardFocus()
 {
     CUIPanel* pPanel;
     CUIControlBase* pControl;
@@ -2947,7 +2947,7 @@ void CScreenWorld::SetDialogTokens(CGameSprite* pCharacter)
 }
 
 // 0x695570
-void CScreenWorld::sub_695570(BOOL bActive, BOOL bInvalidate)
+void CScreenWorld::SetActionPanelsActive(BOOL bActive, BOOL bInvalidate)
 {
     CUIPanel* pActionPanel = m_cUIManager.GetPanel(1);
 
@@ -2979,7 +2979,7 @@ void CScreenWorld::sub_695570(BOOL bActive, BOOL bInvalidate)
 }
 
 // 0x695650
-void CScreenWorld::sub_695650(BOOL bEnable)
+void CScreenWorld::SetBottomBarEnabled(BOOL bEnable)
 {
     CUIPanel* pActionPanel = m_cUIManager.GetPanel(1);
 

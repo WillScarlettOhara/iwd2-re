@@ -15889,7 +15889,7 @@ void CMessage103::Run()
         // __LINE__: 30572
         UTIL_ASSERT(m_nCharacterPortraitSlotNumber >= -1 && m_nCharacterPortraitSlotNumber < CMultiplayerSettings::MAX_CHARACTERS);
 
-        pGame->GetMultiplayerSettings()->sub_518580(m_idPlayer, m_nCharacterPortraitSlotNumber);
+        pGame->GetMultiplayerSettings()->SetViewedCharacter(m_idPlayer, m_nCharacterPortraitSlotNumber);
     }
 }
 

@@ -34,8 +34,8 @@ public:
     void ActivateNativeIME(HWND hWnd);
     void DeactivateNativeIME(HWND hWnd);
     CString GetIMEStatusText(HWND hWnd);
-    CRect GetIMECandidateWindowRect(const CPoint& ptPanel, const CSize& panelSize, const CPoint& ptEdit, const CSize& editSize, SHORT nFontHeight);
-    void DrawIMECandidateWindow(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL bDemanded);
+    CRect sub_7C3020(const CPoint& ptPanel, const CSize& panelSize, const CPoint& ptEdit, const CSize& editSize, SHORT nFontHeight);
+    void sub_7C3140(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL bDemanded);
     CString GetCandidateList();
     CString GetCompositionString();
     void CleanUp();

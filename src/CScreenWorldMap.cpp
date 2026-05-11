@@ -851,7 +851,7 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
                             if (nArea == m_nSelectedArea && m_bOverSelectedArea) {
                                 rgbColor = RGB(255, 255, 255);
                             } else if (nArea == m_nHighlightArea && m_nSelectedArea == -1) {
-                                rgbColor = sub_69CB40(rgbColor);
+                                rgbColor = PulseColor(rgbColor);
                             }
                         }
 
@@ -1113,7 +1113,7 @@ void CScreenWorldMap::StopWorldMap(BOOLEAN bAreaClicked)
 }
 
 // 0x69CB40
-COLORREF CScreenWorldMap::sub_69CB40(COLORREF rgb)
+COLORREF CScreenWorldMap::PulseColor(COLORREF rgb)
 {
     int v1 = (g_pBaldurChitin->nAUCounter / 2) & 7;
     short v2 = v1 < 4 ? 3 - v1 : v1 - 4;

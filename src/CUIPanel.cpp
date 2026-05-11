@@ -397,7 +397,7 @@ void CUIPanel::Render()
         if (!m_rImeSuggestionsFrame.IsRectNull()) {
             CRect r;
             r.IntersectRect(m_rImeSuggestionsFrame, CRect(m_ptOrigin, m_size));
-            g_pChitin->cImm.DrawIMECandidateWindow(m_rImeSuggestionsFrame, r, m_pImeSuggestionsFont, FALSE);
+            g_pChitin->cImm.sub_7C3140(m_rImeSuggestionsFrame, r, m_pImeSuggestionsFont, FALSE);
         }
     }
 }

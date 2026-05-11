@@ -372,7 +372,7 @@ CString CImm::GetIMEStatusText(HWND hWnd)
 }
 
 // 0x7C3020
-CRect CImm::GetIMECandidateWindowRect(const CPoint& ptPanel, const CSize& panelSize, const CPoint& ptEdit, const CSize& editSize, SHORT nFontHeight)
+CRect CImm::sub_7C3020(const CPoint& ptPanel, const CSize& panelSize, const CPoint& ptEdit, const CSize& editSize, SHORT nFontHeight)
 {
     // TODO: Incomplete.
 
@@ -380,7 +380,7 @@ CRect CImm::GetIMECandidateWindowRect(const CPoint& ptPanel, const CSize& panelS
 }
 
 // 0x7C3140
-void CImm::DrawIMECandidateWindow(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL bDemanded)
+void CImm::sub_7C3140(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL bDemanded)
 {
     // TODO: Incomplete.
 }

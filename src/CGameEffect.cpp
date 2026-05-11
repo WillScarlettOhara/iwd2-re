@@ -5524,7 +5524,7 @@ void CGameEffectDisease::ApplyDiseaseBlindingFever(CGameSprite* pSprite)
             &pSource,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
-            CGameEffect* pEffect = IcewindMisc::sub_585380(pSource,
+            CGameEffect* pEffect = IcewindMisc::CreateDamageEffectMagic(pSource,
                 0,
                 0,
                 3,

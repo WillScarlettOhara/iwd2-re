@@ -425,7 +425,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
             // FIXME: Unused.
             g_pChitin->GetWnd();
             if (g_pChitin->cImm.nm_field_128) {
-                CRect r = g_pChitin->cImm.GetIMECandidateWindowRect(
+                CRect r = g_pChitin->cImm.sub_7C3020(
                     m_pPanel->m_ptOrigin,
                     m_pPanel->m_size,
                     m_ptOrigin,

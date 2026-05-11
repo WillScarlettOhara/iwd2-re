@@ -59,7 +59,7 @@ public:
     BYTE GetMinWISRequired();
     BYTE GetMinCONRequired();
     BYTE GetMinCHRRequired();
-    void DisplayItemTooltip(CUIControlTextDisplay* pText, COLORREF rgbColor);
+    void sub_4EA580(CUIControlTextDisplay* pText, COLORREF rgbColor);
 
     CItem& operator=(const CItem& other);
     bool operator==(const CItem& other);
