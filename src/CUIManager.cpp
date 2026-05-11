@@ -33,7 +33,7 @@ CUIManager::CUIManager()
     m_bInitialized = FALSE;
     m_pFocusedControl = NULL;
     nm_field_1C = 0;
-    m_nField20 = 0;
+    nm_field_20 = 0;
     nm_field_24 = 0;
     nm_field_28 = 0;
     nm_field_32 = -1;
@@ -60,7 +60,7 @@ void CUIManager::fInit(CWarp* pWarp, CResRef cResRef, BOOL bDoubleSize)
         m_pFocusedControl = NULL;
         nm_field_18 = 1;
         nm_field_1C = 0;
-        m_nField20 = 0;
+        nm_field_20 = 0;
         nm_field_24 = 0;
         nm_field_28 = 0;
         bm_field_2E = 1;

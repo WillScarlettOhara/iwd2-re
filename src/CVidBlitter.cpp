@@ -12,7 +12,7 @@ CVidBlitter::CVidBlitter()
     m_bSoftSrcKeyBlt = FALSE;
     m_bSoftBlt = FALSE;
     m_bSoftMirrorBlt = FALSE;
-    m_bFieldE6 = 0;
+    bfield_E6 = 0;
     nfield_DE = 0;
     nfield_E2 = 0;
     m_pfnBltFast = &CVidBlitter::DxBltFast;
@@ -113,7 +113,7 @@ void CVidBlitter::Reset()
         g_pChitin->pActiveEngine->EngineActivated();
     }
 
-    m_bFieldE6 = 0;
+    bfield_E6 = 0;
 }
 
 // 0x7B6840

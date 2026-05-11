@@ -859,7 +859,7 @@ void CUIControlTextDisplayChapter::TimerAsynchronousUpdate(BOOLEAN bInside)
             if (wfield_A62 <= -m_nFontHeight) {
                 wfield_A62 = 0;
                 m_plstStrings->GetNext(m_posTopString);
-                m_bField5A++;
+                bfield_5A++;
                 AdjustScrollBar();
                 bfield_A65--;
                 pChapter->m_nLine++;

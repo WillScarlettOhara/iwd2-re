@@ -3,7 +3,7 @@
 // 0x7C24C0
 CUnknown2::CUnknown2()
 {
-    m_bWinsockInitialized = 0;
+    bm_field_0 = 0;
     nm_field_4 = 0;
     nm_field_8 = 0;
     nm_field_28 = 0;

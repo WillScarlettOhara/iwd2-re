@@ -43,7 +43,7 @@ BOOLEAN CGameSpriteSpellList::Add(const UINT& nID, const unsigned int& a2, const
         entry.m_nID = nID;
         entry.nm_field_4 = a2;
         entry.nm_field_8 = a3;
-        entry.m_nACDeflectionBonus = a4;
+        entry.nfield_C = a4;
         m_List.push_back(entry);
     }
 

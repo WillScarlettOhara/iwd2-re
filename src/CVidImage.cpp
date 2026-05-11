@@ -573,7 +573,7 @@ BOOL CVidTile::ReadyTexture(INT nTextureId, DWORD dwFlags, DWORD dwAlpha)
 
     BltTile8To32(reinterpret_cast<DWORD*>(m_pPixels), 256, pTileData, blitSize, 0, dwFlags);
 
-    g_pChitin->cVideo.m_nField13E = nTextureId;
+    g_pChitin->cVideo.nm_field_13E = nTextureId;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, nTextureId);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -654,7 +654,7 @@ BOOL CVidTile::ReadyTexture(INT nTextureId, CResTile* pResStencil, DWORD dwFlags
         dwAlpha,
         dwFlags);
 
-    g_pChitin->cVideo.m_nField13E = nTextureId;
+    g_pChitin->cVideo.nm_field_13E = nTextureId;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, nTextureId);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -704,7 +704,7 @@ void CVidTile::RenderTexture(INT nTextureId, const CRect& rDest, INT x, INT y, D
     CVideo3d::glEnable(GL_TEXTURE_2D);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.m_nField13E = nTextureId;
+    g_pChitin->cVideo.nm_field_13E = nTextureId;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, nTextureId);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 

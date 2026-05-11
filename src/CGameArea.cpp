@@ -36,7 +36,7 @@ BOOLEAN CGameArea::byte_8D2138;
 // 0x469B60
 CGameArea::CGameArea(BYTE id)
 {
-    m_nFieldB0E = 0;
+    nfield_B0E = 0;
     m_bPicked = FALSE;
     m_pObjectMarker = NULL;
     m_firstRender = 0;
@@ -44,7 +44,7 @@ CGameArea::CGameArea(BYTE id)
     m_dwLastProgressMsgTickCount = 0;
     m_sndAmbientDayVolume = 0;
     m_sndAmbientNightVolume = 0;
-    m_nField3EC = 0;
+    wm_field_3EC = 0;
     m_nAIIndex = 0;
     m_nCurrentSong = 0;
     m_id = id;
@@ -52,8 +52,8 @@ CGameArea::CGameArea(BYTE id)
     m_nInfravision = 0;
     m_pResWED = NULL;
     m_bAreaLoaded = 0;
-    InitializeCriticalSection(&m_critSect1FC);
-    InitializeCriticalSection(&m_critSect214);
+    InitializeCriticalSection(&pm_field_1FC);
+    InitializeCriticalSection(&pm_field_214);
     m_nListManipulationThreadCounter = 0;
     m_ListManipulationThreadId = 0;
 
@@ -91,15 +91,15 @@ CGameArea::CGameArea(BYTE id)
     m_moveDest.x = -1;
     m_moveDest.y = -1;
     m_nFirstObject = -1;
-    m_bScrollTimer = 0;
+    bm_field_241 = 0;
     m_iPickedOnDown = CGameObjectArray::INVALID_INDEX;
     m_sndAmbientVolume = 100;
     m_cInfinity.m_pArea = this;
     m_nCurrentSong = -1;
-    m_nField438 = 0;
-    m_bField436 = 0;
+    nm_field_438 = 0;
+    bm_field_436 = 0;
     m_startedMusic = FALSE;
-    m_bFieldAE6 = 1;
+    bfield_AE6 = 1;
     m_startedMusicCounter = 10;
 
     // NOTE: This assignment is slightly incorrect. Original code refers to
@@ -119,13 +119,13 @@ CGameArea::CGameArea(BYTE id)
     dword_8D212C = 0;
     byte_8D2138 = 0;
 
-    m_bFieldB16 = 0;
+    bfield_B16 = 0;
 }
 
 // 0x46A070
 CGameArea::~CGameArea()
 {
-    EnterCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+    EnterCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
 
     if (mpSpawner != NULL) {
         delete mpSpawner;
@@ -136,7 +136,7 @@ CGameArea::~CGameArea()
         ClearMarshal();
     }
 
-    DeleteCriticalSection(&m_critSect1FC);
+    DeleteCriticalSection(&pm_field_1FC);
 
     if (m_nListManipulationThreadCounter > 0) {
         m_nListManipulationThreadCounter--;
@@ -146,9 +146,9 @@ CGameArea::~CGameArea()
         m_ListManipulationThreadId = 0;
     }
 
-    DeleteCriticalSection(&m_critSect214);
+    DeleteCriticalSection(&pm_field_214);
 
-    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
 }
 
 // 0x46A2E0
@@ -846,8 +846,8 @@ void CGameArea::AIUpdate()
         m_firstRender--;
     }
 
-    if (m_bScrollTimer > 0) {
-        m_bScrollTimer--;
+    if (bm_field_241 > 0) {
+        bm_field_241--;
     } else {
         m_iPickedOnDown = CGameObjectArray::INVALID_INDEX;
     }
@@ -1573,9 +1573,9 @@ void CGameArea::ClearMarshal()
     CGameObject* pObject;
     BYTE rc;
 
-    EnterCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+    EnterCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
     g_pBaldurChitin->GetObjectGame()->BeginListManipulation(this);
-    EnterCriticalSection(&m_critSect1FC);
+    EnterCriticalSection(&pm_field_1FC);
 
     if (m_pResWED != NULL) {
         m_nCharacters = -1;
@@ -1691,9 +1691,9 @@ void CGameArea::ClearMarshal()
 
     m_bAreaLoaded = FALSE;
 
-    LeaveCriticalSection(&m_critSect1FC);
+    LeaveCriticalSection(&pm_field_1FC);
     g_pBaldurChitin->GetObjectGame()->EndListManipulation(this);
-    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
 }
 
 // 0x470D20
@@ -2506,7 +2506,7 @@ void CGameArea::ProgressBarCallback(DWORD dwSize, BOOLEAN bInitialize)
         m_dwLastProgressRenderTickCount = GetTickCount();
 
         g_pChitin->m_bDisplayStale = TRUE;
-        g_pChitin->cDimm.m_bWinsockInitialized = 1;
+        g_pChitin->cDimm.bm_field_0 = 1;
         g_pChitin->cDimm.nm_field_4 = 1;
         SleepEx(25, TRUE);
     }
@@ -2673,7 +2673,7 @@ void CGameArea::OnActionButtonDown(const CPoint& pt)
         m_selectSquare.bottom = ptWorld.y;
         m_iPickedOnDown = m_iPicked;
         m_moveDest = ptWorld;
-        m_bScrollTimer = CTimerWorld::TIMESCALE_MSEC_PER_SEC;
+        bm_field_241 = CTimerWorld::TIMESCALE_MSEC_PER_SEC;
 
         if (g_pBaldurChitin->GetObjectCursor()->m_nCurrentCursor == 4) {
             m_pGame->GetGroup()->GroupDrawMove(ptWorld,
@@ -3344,7 +3344,7 @@ void CGameArea::RemoveObject(POSITION posVertList, BYTE listType, LONG id)
 {
     POSITION pos;
 
-    EnterCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+    EnterCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
 
     if (g_pBaldurChitin->cNetwork.GetSessionOpen()) {
         switch (listType) {
@@ -3353,7 +3353,7 @@ void CGameArea::RemoveObject(POSITION posVertList, BYTE listType, LONG id)
             while (pos != NULL) {
                 if (reinterpret_cast<LONG>(m_lVertSortAdd.GetAt(pos)) == id) {
                     m_lVertSortAdd.RemoveAt(pos);
-                    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+                    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
                     return;
                 }
 
@@ -3365,7 +3365,7 @@ void CGameArea::RemoveObject(POSITION posVertList, BYTE listType, LONG id)
             while (pos != NULL) {
                 if (reinterpret_cast<LONG>(m_lVertSortBackAdd.GetAt(pos)) == id) {
                     m_lVertSortBackAdd.RemoveAt(pos);
-                    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+                    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
                     return;
                 }
 
@@ -3377,7 +3377,7 @@ void CGameArea::RemoveObject(POSITION posVertList, BYTE listType, LONG id)
             while (pos != NULL) {
                 if (reinterpret_cast<LONG>(m_lVertSortFlightAdd.GetAt(pos)) == id) {
                     m_lVertSortFlightAdd.RemoveAt(pos);
-                    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+                    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
                     return;
                 }
 
@@ -3414,7 +3414,7 @@ void CGameArea::RemoveObject(POSITION posVertList, BYTE listType, LONG id)
         UTIL_ASSERT(FALSE);
     }
 
-    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
 }
 
 // 0x4774B0
@@ -3459,7 +3459,7 @@ void CGameArea::Render(CVidMode* pVidMode, INT nSurface)
     }
 
     g_pBaldurChitin->GetObjectGame()->BeginListManipulation(this);
-    EnterCriticalSection(&m_critSect1FC);
+    EnterCriticalSection(&pm_field_1FC);
 
     if (CCacheStatus::dword_8D0BA8) {
         CCacheStatus::dword_8D0BA8 = FALSE;
@@ -3664,7 +3664,7 @@ void CGameArea::Render(CVidMode* pVidMode, INT nSurface)
         m_firstRender = 0;
     }
 
-    LeaveCriticalSection(&m_critSect1FC);
+    LeaveCriticalSection(&pm_field_1FC);
     g_pBaldurChitin->GetObjectGame()->EndListManipulation(this);
 }
 
@@ -3978,7 +3978,7 @@ void CGameArea::SortLists()
     INT cnt;
     INT cnt2;
 
-    EnterCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+    EnterCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
 
     if (AfxIsValidAddress(&m_header, sizeof(m_header), 1)) {
         g_pBaldurChitin->GetObjectGame()->BeginListManipulation(this);
@@ -3994,13 +3994,13 @@ void CGameArea::SortLists()
             bSort = TRUE;
 
             if (nFront + nFrontAdd == 0) {
-                LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+                LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
                 return;
             }
 
             pObjects = new CGameObject*[nFront + nFrontAdd];
             if (pObjects == NULL) {
-                LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+                LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
                 return;
             }
         } else {
@@ -4189,7 +4189,7 @@ void CGameArea::SortLists()
         g_pBaldurChitin->GetObjectGame()->EndListManipulation(this);
     }
 
-    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->m_m_field_106));
+    LeaveCriticalSection(&(g_pBaldurChitin->m_pEngineWorld->pm_m_field_106));
 
     if (pObjects != NULL) {
         delete pObjects;

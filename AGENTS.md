@@ -89,41 +89,6 @@ ghidrasql --ghidra "$GHIDRA_INSTALL_DIR" \
 | `phase5_auto_name_fields.py` | Auto-inference from getter/setter patterns |
 | `cross_ref.py` | Cross-reference analysis |
 
-## Build Safety — CRITICAL RULES
-
-Every rename/edit MUST pass these checks. Breaking any of them causes cascading MSVC build failures that take hours to fix.
-
-### 1. No Duplicate Field Names
-Before renaming a field, verify the new name does NOT already exist in the same class:
-```bash
-grep "m_cMyNewName" src/<Class>.h
-```
-**Root cause of CDerivedStats.h crash**: `pm_field_3C8` renamed to `m_cImmunitiesProjectile` which already existed at offset 0x0188. MSVC treats identical field names as redefinition → 50+ compilation units fail.
-
-### 2. No Value Members Without #include
-If a class contains `CSound m_sndFoo`, `CVidCell m_vidBar`, or `CVidBitmap m_vbBaz` as **value members** (not pointers), the header must include the full class definition:
-```cpp
-#include "CSound.h"
-#include "CVidCell.h"
-#include "CVidBitmap.h"
-```
-Forward declarations (`class CVidCell;`) suffice for pointers/references, but value members need the complete type. Without the include, MSVC fails with `C2079: uses undefined class`.
-
-### 3. Header/cpp Field Name Consistency
-When renaming fields in `.h`, also rename them in **every** `.cpp` that uses them. The `fix_mismatches.py` script catches prefix mismatches (e.g., `.cpp` uses `nfield_54A8` while `.h` declares `m_field_54A8`), but it does NOT catch:
-- Completely renamed fields (e.g., `field_10` in .h → `m_nSomething` but .cpp still uses `field_10`)
-- Fields accessed via `->` or `::` notation
-**Always check**: after any field rename, search all `.cpp` for the old name and verify zero matches remain.
-
-### 4. Post-Rename Verification
-```bash
-# Check for any remaining references to old field names in .cpp
-grep -rn "old_field_name" src/ --include="*.cpp"
-
-# Check for duplicate field declarations in headers
-grep -n "m_yourNewName" src/Class.h  # must appear exactly once
-```
-
 ## Naming Conventions
 - Address comments: `// 0x7D14F0` above every function/variable
 - Class offsets: `/* 0044 */ RESREF groundIcon;`

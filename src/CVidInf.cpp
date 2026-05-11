@@ -751,7 +751,7 @@ BOOL CVidInf::WindowedFlip(BOOL bRenderCursor)
         srcRect.right = CVideo::SCREENWIDTH;
         srcRect.bottom = CVideo::SCREENHEIGHT;
 
-        RECT destRect = g_pChitin->m_rClient;
+        RECT destRect = g_pChitin->m_field_E8;
 
         HRESULT hr = g_pChitin->cVideo.cVidBlitter.Blt(pSurfaces[CVIDINF_SURFACE_FRONT],
             &destRect,
@@ -1236,7 +1236,7 @@ BOOL CVidInf::FXRender(CParticle* pParticle, const CRect& rClip, USHORT nFlag, U
         CVideo3d::glEnable(GL_TEXTURE_2D);
         g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-        g_pChitin->cVideo.m_nField13E = 2;
+        g_pChitin->cVideo.nm_field_13E = 2;
 
         CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
         g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
@@ -1287,7 +1287,7 @@ BOOL CVidInf::FXRender(CPoint* pPoints, INT nPoints, const CRect& rSurface, COLO
         CVideo3d::glEnable(GL_TEXTURE_2D);
         g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-        g_pChitin->cVideo.m_nField13E = 2;
+        g_pChitin->cVideo.nm_field_13E = 2;
 
         CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
         g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
@@ -1921,7 +1921,7 @@ BOOL CVidInf::RenderPointer()
 
     CSingleLock positionLock(&(g_pChitin->m_csPointerPosition));
     CSingleLock renderLock(&m_csRenderPointer);
-    rPointer.OffsetRect(g_pChitin->m_rClient.left, g_pChitin->m_rClient.top);
+    rPointer.OffsetRect(g_pChitin->m_field_E8.left, g_pChitin->m_field_E8.top);
 
     if (g_pChitin->m_bPointerUpdated) {
         return FALSE;
@@ -1957,7 +1957,7 @@ BOOL CVidInf::RenderPointer()
         CVIDINF_SURFACE_4,
         pt.x,
         pt.y,
-        g_pChitin->m_rClient,
+        g_pChitin->m_field_E8,
         m_rPointerStorage,
         m_nPointerNumber > 0);
     g_pChitin->GetWnd()->ScreenToClient(&m_rPointerStorage);
@@ -1966,7 +1966,7 @@ BOOL CVidInf::RenderPointer()
         m_nPointerNumber,
         pt.x,
         pt.y,
-        g_pChitin->m_rClient);
+        g_pChitin->m_field_E8);
     renderLock.Unlock();
 
     return TRUE;

@@ -484,8 +484,8 @@ void CAIGroup::RemoveFromSearch(CSearchBitmap* search)
             search->RemoveObject(pos,
                 nEnemyAlly,
                 nPersonalSpace,
-                pSprite->m_field_54A8,
-                pSprite->m_field_7430);
+                pSprite->nfield_54A8,
+                pSprite->bfield_7430);
 
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(memberId,
                 CGameObjectArray::THREAD_ASYNCH,
@@ -521,8 +521,8 @@ void CAIGroup::AddToSearch(CSearchBitmap* search)
             search->AddObject(pos,
                 nEnemyAlly,
                 nPersonalSpace,
-                pSprite->m_field_54A8,
-                pSprite->m_field_7430);
+                pSprite->nfield_54A8,
+                pSprite->bfield_7430);
 
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(memberId,
                 CGameObjectArray::THREAD_ASYNCH,

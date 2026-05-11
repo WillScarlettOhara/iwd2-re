@@ -13,9 +13,6 @@
 #include "CGameStatsSprite.h"
 #include "CMarker.h"
 #include "CResRef.h"
-#include "CSound.h"
-#include "CVidBitmap.h"
-#include "CVidCell.h"
 
 // ============================================================================
 // CGameSprite - Player and creature class

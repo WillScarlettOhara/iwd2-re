@@ -85,7 +85,7 @@ CVideo::CVideo()
     m_bIs3dAccelerated = FALSE;
     nm_field_136 = 6408;
     nm_field_13A = 0;
-    m_nField13E = 0;
+    nm_field_13E = 0;
     sm_field_114 = "";
     wm_field_11C = -1;
     nm_m_field_11E = 0;
@@ -273,7 +273,7 @@ BOOL CVideo::Initialize(HWND hWnd, BOOLEAN bFullscreen)
         m_pCurrentVidMode->ActivateVideoMode(NULL, hWnd, bFullscreen);
 
         cVidBlitter.Init();
-        cVidBlitter.m_bFieldE6 = 0;
+        cVidBlitter.bfield_E6 = 0;
     }
 
     return TRUE;

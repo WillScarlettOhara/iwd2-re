@@ -641,7 +641,7 @@ BOOL CInfTileSet::Render3d(INT nTile, INT nStencilTile, const CRect& rDest, INT 
         RenderTexture(nTextureId, rDest, x, y, tileCode, dwFlags);
 
         if (!g_pChitin->cVideo.nm_field_13A) {
-            g_pChitin->cVideo.m_nField13E = nTextureId;
+            g_pChitin->cVideo.nm_field_13E = nTextureId;
             CVideo3d::glBindTexture(GL_TEXTURE_2D, nTextureId);
             g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -2812,9 +2812,9 @@ BOOL CInfinity::InitViewPort(const CRect& rRect)
     rViewPort.right = rRect.right;
     rViewPort.bottom = rRect.bottom;
 
-    EnterCriticalSection(&(m_pArea->m_critSect1FC));
+    EnterCriticalSection(&(m_pArea->pm_field_1FC));
     m_bResizedViewPort = TRUE;
-    LeaveCriticalSection(&(m_pArea->m_critSect1FC));
+    LeaveCriticalSection(&(m_pArea->pm_field_1FC));
 
     nVisibleTilesX = rRect.Width() / 64 + 1;
     nVisibleTilesY = rRect.Height() / 64 + 1;
@@ -2871,7 +2871,7 @@ BOOL CInfinity::InitViewPort(const CRect& rRect)
 // 0x5D1040
 void CInfinity::SetScreenShake(BOOL bScreenShake, WORD duration, const CPoint& screenShakeDelta)
 {
-    EnterCriticalSection(&(m_pArea->m_critSect1FC));
+    EnterCriticalSection(&(m_pArea->pm_field_1FC));
     m_bScreenShake = bScreenShake;
     m_screenShakeDelta.x = screenShakeDelta.x * CGameSprite::EXACT_SCALE;
     m_screenShakeDelta.y = screenShakeDelta.y * CGameSprite::EXACT_SCALE;
@@ -2885,7 +2885,7 @@ void CInfinity::SetScreenShake(BOOL bScreenShake, WORD duration, const CPoint& s
     } else {
         m_screenShakeDecrease.y = 0;
     }
-    LeaveCriticalSection(&(m_pArea->m_critSect1FC));
+    LeaveCriticalSection(&(m_pArea->pm_field_1FC));
 }
 
 // 0x5D11F0

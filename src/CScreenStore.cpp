@@ -2880,8 +2880,8 @@ void CScreenStore::OnBuyDrinkButtonClick(INT nButton)
                 if (pSprite->GetBaseStats()->m_intoxication < nIntoxicationCap) {
                     PlayGUISound(CResRef("GAM_07"));
                     pSprite->GetBaseStats()->m_intoxication += nIntoxicationRate;
-                    pSprite->m_field_562C = 1;
-                    pSprite->m_field_562C = 1;
+                    pSprite->nfield_562C = 1;
+                    pSprite->nfield_562C = 1;
                     pSprite->ProcessEffectList();
 
                     // NOTE: Unsigned compare.

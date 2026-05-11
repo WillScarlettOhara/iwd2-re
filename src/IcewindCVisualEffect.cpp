@@ -3,10 +3,10 @@
 // 0x586A40
 IcewindCVisualEffect::IcewindCVisualEffect()
 {
-    bm_field_0 = FALSE;
-    bm_field_1 = TRUE;
-    bm_field_2 = FALSE;
-    bm_field_3 = FALSE;
+    m_field_0 = FALSE;
+    m_field_1 = TRUE;
+    m_field_2 = FALSE;
+    m_field_3 = FALSE;
     m_nTransValue = 0;
     m_dwFlags = 0x20000;
 }
@@ -15,10 +15,10 @@ IcewindCVisualEffect::IcewindCVisualEffect()
 void IcewindCVisualEffect::SetActive(BOOLEAN a1)
 {
     if (a1 == TRUE) {
-        bm_field_0 = TRUE;
+        m_field_0 = TRUE;
         m_dwFlags |= 0x10000;
     } else {
-        bm_field_0 = FALSE;
+        m_field_0 = FALSE;
         m_dwFlags &= ~0x10000;
     }
 }
@@ -27,10 +27,10 @@ void IcewindCVisualEffect::SetActive(BOOLEAN a1)
 void IcewindCVisualEffect::SetGlowing(BOOLEAN a1)
 {
     if (a1 == TRUE) {
-        bm_field_1 = TRUE;
+        m_field_1 = TRUE;
         m_dwFlags |= 0x200;
     } else {
-        bm_field_1 = FALSE;
+        m_field_1 = FALSE;
         m_dwFlags &= ~0x200;
     }
 }
@@ -39,11 +39,11 @@ void IcewindCVisualEffect::SetGlowing(BOOLEAN a1)
 void IcewindCVisualEffect::SetTransparent(BOOLEAN a1, INT nTransValue)
 {
     if (a1 == TRUE) {
-        bm_field_3 = TRUE;
+        m_field_3 = TRUE;
         m_nTransValue = nTransValue;
         m_dwFlags |= 0x2;
     } else {
-        bm_field_3 = FALSE;
+        m_field_3 = FALSE;
         m_nTransValue = 0;
         m_dwFlags &= ~0x2;
     }

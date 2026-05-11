@@ -1655,7 +1655,7 @@ void CScreenCreateChar::ResetMemorizeArcaneSpellsPanel(CUIPanel* pPanel, CGameSp
         }
     }
 
-    pSprite->m_field_562C = 1;
+    pSprite->nfield_562C = 1;
     pSprite->ProcessEffectList();
 
     nMaxKnownSpellsBase = ruleTables.GetMaxKnownSpells(typeAI.m_nClass,
@@ -1736,7 +1736,7 @@ void CScreenCreateChar::ResetMemorizeDivineSpellsPanel(CUIPanel* pPanel, CGameSp
         pSprite->m_domainSpells.m_lists[nLevel].nm_field_18 = 0;
     }
 
-    pSprite->m_field_562C = 1;
+    pSprite->nfield_562C = 1;
     pSprite->ProcessEffectList();
 
     UpdateLabel(pPanel,
@@ -2214,7 +2214,7 @@ void CScreenCreateChar::ResetSkillsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
         pSprite->SetSkillValue(ruleTables.GetSkillId(iSkillNumber), 0);
     }
 
-    pSprite->m_field_562C = 1;
+    pSprite->nfield_562C = 1;
     pSprite->ProcessEffectList();
 
     INT nExtraSkillPoints = pSprite->GetExtraSkillPoints(pSprite->m_startTypeAI.m_nClass);
@@ -2284,7 +2284,7 @@ void CScreenCreateChar::ResetFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
         pSprite->SetFeatValue(ruleTables.GetSkillId(index), 0);
     }
 
-    pSprite->m_field_562C = 1;
+    pSprite->nfield_562C = 1;
     pSprite->ProcessEffectList();
 
     INT nExtraFeats = pSprite->GetExtraFeats(pSprite->m_startTypeAI.m_nClass);
@@ -2878,7 +2878,7 @@ void CScreenCreateChar::UpdateFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
         "%d",
         m_nExtraFeats);
 
-    pSprite->m_field_562C = 1;
+    pSprite->nfield_562C = 1;
     pSprite->sub_72DE60();
 
     m_nTopFeat = min(m_nTopFeat, FEAT_COUNT - FEAT_SLOTS);
@@ -3087,7 +3087,7 @@ void CScreenCreateChar::UpdateSkillsPanel(CUIPanel* pPanel, CGameSprite* pSprite
 
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
-    pSprite->m_field_562C = 1;
+    pSprite->nfield_562C = 1;
     pSprite->ProcessEffectList();
 
     HighlightLabel(pPanel,
@@ -3714,7 +3714,7 @@ void CScreenCreateChar::StartCreateChar(INT nCharacterSlot, INT nEngineState)
     pSprite->m_dialog = "MULTIG";
     pSprite->GetBaseStats()->m_reputation = 100;
 
-    pSprite->m_field_562C = 1;
+    pSprite->nfield_562C = 1;
     pSprite->ProcessEffectList();
 
     STRREF strTitle = 28210; // "Finish"
@@ -4125,7 +4125,7 @@ void CScreenCreateChar::UpdateCharacterStats(CGameSprite* pSprite)
     pSprite->GetBaseStats()->m_wizardLevel = pSprite->GetDerivedStats()->m_wizardLevel;
     pSprite->GetBaseStats()->m_characterLevel = pSprite->GetDerivedStats()->m_nLevel;
 
-    pSprite->m_field_562C = 1;
+    pSprite->nfield_562C = 1;
     pSprite->ProcessEffectList();
 
     int v1;
@@ -4300,7 +4300,7 @@ void CScreenCreateChar::CompleteCharacterAbilities(CGameSprite* pSprite)
     DStats.m_sorcererLevel = 0;
     DStats.m_wizardLevel = 0;
 
-    pSprite->m_field_562C = 1;
+    pSprite->nfield_562C = 1;
     pSprite->ProcessEffectList();
 
     INT nHitPoints = ruleTables.GetStartingHitPoints(typeAI,
@@ -4331,7 +4331,7 @@ void CScreenCreateChar::CompleteCharacterAbilities(CGameSprite* pSprite)
 
     pSprite->GetBaseStats()->m_xp = ruleTables.GetStartingExperiencePoints(pSprite);
 
-    pSprite->m_field_562C = 1;
+    pSprite->nfield_562C = 1;
     pSprite->ProcessEffectList();
 }
 
@@ -4499,7 +4499,7 @@ void CScreenCreateChar::ImportCharacter(const CString& sCharacter)
                     pSprite->m_dialog = CResRef("MULTIG");
                     pBStats->m_reputation = 100;
 
-                    pSprite->m_field_562C = 1;
+                    pSprite->nfield_562C = 1;
                     pSprite->ProcessEffectList();
 
                     UpdateCharacterStats(pSprite);
@@ -5129,10 +5129,10 @@ void CScreenCreateChar::OnDoneButtonClick()
                         }
                     }
 
-                    memcpy(pSprite->m_field_725A, sSound.GetBuffer(sSound.GetLength()), min(sSound.GetLength(), 32));
+                    memcpy(pSprite->bfield_725A, sSound.GetBuffer(sSound.GetLength()), min(sSound.GetLength(), 32));
 
                     if (sSound.GetLength() < 32) {
-                        pSprite->m_field_725A[sSound.GetLength()] = '\0';
+                        pSprite->bfield_725A[sSound.GetLength()] = '\0';
                     }
 
                     sSoundSetDir = g_pBaldurChitin->GetObjectGame()->GetDirSounds() + sSound + '\\';
@@ -6049,7 +6049,7 @@ void CUIControlButtonCharGenAccept::OnLButtonClick(CPoint pt)
 
         pCreateChar->CompleteCharacterWrapup(pSprite);
 
-        pSprite->m_field_562C = 1;
+        pSprite->nfield_562C = 1;
         pSprite->ProcessEffectList();
 
         CGameEffectHeal* pHeal = new CGameEffectHeal();

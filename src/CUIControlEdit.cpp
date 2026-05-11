@@ -419,7 +419,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         break;
     case VK_F3:
     case VK_PROCESSKEY:
-        if (g_pChitin->m_bIMEEnabled) {
+        if (g_pChitin->nm_field_1A4) {
             g_pChitin->cImm.ActivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
 
             // FIXME: Unused.

@@ -714,7 +714,7 @@ void SearchThreadMain(void* userInfo)
                             bBump = searchRequest->m_bBump;
                             if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
                                 objectSpace = static_cast<CGameSprite*>(pObject)->GetAnimation()->GetPersonalSpace();
-                                bBumpable = static_cast<CGameSprite*>(pObject)->m_field_54A8;
+                                bBumpable = static_cast<CGameSprite*>(pObject)->nfield_54A8;
                                 if (static_cast<CGameSprite*>(pObject)->GetAIType().GetEnemyAlly() > CAIObjectType::EA_GOODCUTOFF) {
                                     bBump = FALSE;
                                 }
@@ -751,7 +751,7 @@ void SearchThreadMain(void* userInfo)
 
                                     if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
                                         goalObjectSpaces[cnt] = static_cast<CGameSprite*>(pObject)->GetAnimation()->GetPersonalSpace();
-                                        goalBumpable[cnt] = static_cast<CGameSprite*>(pObject)->m_field_54A8;
+                                        goalBumpable[cnt] = static_cast<CGameSprite*>(pObject)->nfield_54A8;
                                         goalRemoveObject[cnt].x = static_cast<CGameSprite*>(pObject)->GetPos().x / CPathSearch::GRID_SQUARE_SIZEX;
                                         goalRemoveObject[cnt].y = static_cast<CGameSprite*>(pObject)->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY;
                                         targetIdPresent = TRUE;
@@ -802,7 +802,7 @@ void SearchThreadMain(void* userInfo)
 
                                             if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
                                                 goalObjectSpaces[cnt + searchRequest->m_nTargetIds] = static_cast<CGameSprite*>(pObject)->GetAnimation()->GetPersonalSpace();
-                                                goalBumpable[cnt + searchRequest->m_nTargetIds] = static_cast<CGameSprite*>(pObject)->m_field_54A8;
+                                                goalBumpable[cnt + searchRequest->m_nTargetIds] = static_cast<CGameSprite*>(pObject)->nfield_54A8;
                                                 goalRemoveObject[cnt + searchRequest->m_nTargetIds].x = static_cast<CGameSprite*>(pObject)->GetPos().x / CPathSearch::GRID_SQUARE_SIZEX;
                                                 goalRemoveObject[cnt + searchRequest->m_nTargetIds].y = static_cast<CGameSprite*>(pObject)->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY;
                                                 isWalking[cnt] = static_cast<CGameSprite*>(pObject)->m_nSequence == CGameSprite::SEQ_WALK

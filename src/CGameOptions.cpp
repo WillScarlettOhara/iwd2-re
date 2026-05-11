@@ -50,7 +50,7 @@ CGameOptions::CGameOptions()
     m_bMaxHP = FALSE;
     m_bAutoPauseOnTrap = FALSE;
     m_bShowQuestXP = FALSE;
-    m_bFieldAC = 0;
+    bfield_AC = 0;
     m_bCriticalHitScreenShake = TRUE;
     m_bSuppressExtraDifficultyDamage = FALSE;
     m_nTilesPrecachePercent = 100;

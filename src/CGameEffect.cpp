@@ -1513,7 +1513,7 @@ void CGameEffect::AddSlowEffect(CGameSprite* pSprite)
     }
 
     pSprite->GetDerivedStats()->m_generalState |= STATE_SLOWED;
-    pSprite->GetDerivedStats()->m_nACDeflectionBonus -= 2;
+    pSprite->GetDerivedStats()->nfield_C -= 2;
     pSprite->GetDerivedStats()->m_nTHAC0 -= 2;
     pSprite->GetDerivedStats()->m_nSaveVSReflex -= 2;
     pSprite->m_bonusStats.m_nDamageBonus -= 2;
@@ -1664,16 +1664,16 @@ BOOL CGameEffectAC::ApplyEffect(CGameSprite* pSprite)
 {
     switch (m_dwFlags) {
     case 0:
-        pSprite->GetDerivedStats()->m_nACDeflectionBonus += static_cast<SHORT>(m_effectAmount);
+        pSprite->GetDerivedStats()->nfield_C += static_cast<SHORT>(m_effectAmount);
         break;
     case 1:
-        pSprite->GetDerivedStats()->m_nArmorClass = max(pSprite->GetDerivedStats()->m_nArmorClass, static_cast<SHORT>(m_effectAmount));
+        pSprite->GetDerivedStats()->wfield_6 = max(pSprite->GetDerivedStats()->wfield_6, static_cast<SHORT>(m_effectAmount));
         break;
     case 2:
         pSprite->GetDerivedStats()->m_nACDexBonus = max(pSprite->GetDerivedStats()->m_nACDexBonus, static_cast<SHORT>(m_effectAmount));
         break;
     case 3:
-        pSprite->GetDerivedStats()->m_nACDodgeBonus = max(pSprite->GetDerivedStats()->m_nACDodgeBonus, static_cast<SHORT>(m_effectAmount));
+        pSprite->GetDerivedStats()->wfield_A = max(pSprite->GetDerivedStats()->wfield_A, static_cast<SHORT>(m_effectAmount));
         break;
     case 4:
         pSprite->GetDerivedStats()->m_nACCrushingMod += static_cast<SHORT>(m_effectAmount);
@@ -2466,7 +2466,7 @@ BOOL CGameEffectHaste::ApplyEffect(CGameSprite* pSprite)
             pSprite->GetDerivedStats()->m_nNumberOfAttacks += 1;
         }
 
-        pSprite->m_derivedStats.m_nACDeflectionBonus += 4;
+        pSprite->m_derivedStats.nfield_C += 4;
 
         if (pSprite->GetAnimation()->GetMoveScale() != 0) {
             pSprite->GetAnimation()->SetMoveScale(pSprite->GetAnimation()->GetMoveScaleDefault() * 2);
@@ -4535,7 +4535,7 @@ BOOL CGameEffectDispelEffects::ApplyEffect(CGameSprite* pSprite)
     pSprite->EquipAll(TRUE);
     pSprite->m_hasColorEffects = TRUE;
     pSprite->m_hasColorRangeEffects = TRUE;
-    pSprite->m_field_5640 = 1;
+    pSprite->nfield_5640 = 1;
 
     m_forceRepass = TRUE;
     m_done = TRUE;
@@ -5186,7 +5186,7 @@ BOOL CGameEffectBlindness::ApplyEffect(CGameSprite* pSprite)
             v1 = 0;
         }
 
-        pSprite->GetDerivedStats()->m_nACDeflectionBonus += v1;
+        pSprite->GetDerivedStats()->nfield_C += v1;
     }
 
     return TRUE;
@@ -5513,7 +5513,7 @@ void CGameEffectDisease::ApplyDiseaseBlindingFever(CGameSprite* pSprite)
     // NOTE: Uninline.
     AddPortraitIcon(pSprite, 8);
 
-    pSprite->GetDerivedStats()->m_nACDeflectionBonus -= 4;
+    pSprite->GetDerivedStats()->nfield_C -= 4;
     pSprite->GetDerivedStats()->m_nTHAC0 -= 4;
 
     if (m_secondaryType != 0) {
@@ -11514,7 +11514,7 @@ void CPersistantEffectColorEffect::AIUpdate(CGameSprite* pSprite, LONG deltaT)
 
             if (m_undo) {
                 pSprite->GetAnimation()->ClearColorEffectsAll();
-                pSprite->m_field_562C = 1;
+                pSprite->nfield_562C = 1;
             }
         }
     }
@@ -11532,9 +11532,9 @@ CPersistantEffect84C4A4::CPersistantEffect84C4A4(int a1, int a2, int a3)
 
     ULONG delta = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime - a2;
     if (delta == 0 || delta == 1) {
-        m_nField20 = a2;
+        nm_field_20 = a2;
     } else {
-        m_nField20 = a2 + a1 * (delta / a1 + 1);
+        nm_field_20 = a2 + a1 * (delta / a1 + 1);
     }
 }
 
@@ -11544,7 +11544,7 @@ CPersistantEffect84C4A4::CPersistantEffect84C4A4(const CPersistantEffect84C4A4& 
 {
     nm_field_18 = other.nm_field_18;
     nm_field_1C = other.nm_field_1C;
-    m_nField20 = other.m_nField20;
+    nm_field_20 = other.nm_field_20;
     nm_field_24 = other.nm_field_24;
     bm_field_28 = other.bm_field_28;
     memcpy(sm_field_29, other.sm_field_29, sizeof(sm_field_29));
@@ -11557,7 +11557,7 @@ CPersistantEffect84C4A4::CPersistantEffect84C4A4(const CPersistantEffect84C4A4& 
 void CPersistantEffect84C4A4::AIUpdate(CGameSprite* pSprite, LONG deltaT)
 {
     int gameTime = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
-    if (gameTime > m_nField20
+    if (gameTime > nm_field_20
         && (nm_field_1C == 0 || gameTime <= nm_field_1C)) {
         int time = gameTime - deltaT;
         int index = 0;
@@ -11565,7 +11565,7 @@ void CPersistantEffect84C4A4::AIUpdate(CGameSprite* pSprite, LONG deltaT)
             time += nm_field_24;
             index++;
         }
-        m_nField20 += index * nm_field_24;
+        nm_field_20 += index * nm_field_24;
         ApplyEffect(pSprite, index);
     }
 }

@@ -206,7 +206,7 @@ int CResCell::Release()
 void CResCell::ResRefChange()
 {
     if (m_bCacheHeader) {
-        CSingleLock lock(&m_nField20, FALSE);
+        CSingleLock lock(&nm_field_20, FALSE);
         lock.Lock(INFINITE);
 
         // __FILE__: C:\Projects\Icewind2\src\chitin\ChDataTypes.cpp
@@ -261,7 +261,7 @@ BOOL CResCell::Parse(void* pData)
         return m_bParsed;
     }
 
-    CSingleLock lock(&m_nField20, FALSE);
+    CSingleLock lock(&nm_field_20, FALSE);
     lock.Lock(INFINITE);
 
     // __FILE__: C:\Projects\Icewind2\src\chitin\ChDataTypes.cpp

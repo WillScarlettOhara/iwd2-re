@@ -393,7 +393,7 @@ BOOL CSpawnFile::GetINIKey(CMemINISection* pSection, const CString& sKey, CStrin
 CSpawnList::CSpawnList(CMemINI* pMemINI, const CString& sSection)
 {
     mInterval = INT_MAX;
-    m_nField20 = 0;
+    nm_field_20 = 0;
     nm_field_24 = 0;
     nm_field_28 = 0;
     CheckSpawnTimes = 0;
@@ -478,7 +478,7 @@ CSpawnList::~CSpawnList()
     }
 
     pControlVar = NULL;
-    m_nField20 = 0;
+    nm_field_20 = 0;
     nm_field_24 = 0;
     nm_field_28 = 0;
 }

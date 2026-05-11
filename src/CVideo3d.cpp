@@ -2214,7 +2214,7 @@ BOOL CVidInf::CreateSurfaces3d()
 
     m_nVRamSurfaces = 780;
 
-    g_pChitin->cVideo.m_nField13E = 0;
+    g_pChitin->cVideo.nm_field_13E = 0;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 0);
 
     CVideo3d::glEnable(GL_TEXTURE_2D);
@@ -2225,7 +2225,7 @@ BOOL CVidInf::CreateSurfaces3d()
         static_cast<GLfloat>(GL_DECAL));
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.m_nField13E = 2;
+    g_pChitin->cVideo.nm_field_13E = 2;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
 
     CVideo3d::glTexParameterf(GL_TEXTURE_2D,

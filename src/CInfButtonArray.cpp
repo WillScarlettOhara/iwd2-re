@@ -19,7 +19,7 @@ CInfButtonSettings::CInfButtonSettings()
     nm_field_8 = 0;
     nm_field_1D0 = 0;
     m_bGreyOut = FALSE;
-    m_nACDeflectionBonus = -1;
+    nfield_C = -1;
     nm_field_10 = -1;
 }
 

@@ -5310,8 +5310,8 @@ void CMessageAnimationChange::Run()
                                                                   pSprite->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY),
                         pSprite->GetAIType().m_nEnemyAlly,
                         pSprite->GetAnimation()->GetPersonalSpace(),
-                        pSprite->m_field_54A8,
-                        pSprite->m_field_7430);
+                        pSprite->nfield_54A8,
+                        pSprite->bfield_7430);
                 }
             }
             pSprite->GetAnimation()->SetAnimationType(m_animationId,
@@ -5323,8 +5323,8 @@ void CMessageAnimationChange::Run()
                                                                pSprite->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY),
                         pSprite->GetAIType().m_nEnemyAlly,
                         pSprite->GetAnimation()->GetPersonalSpace(),
-                        pSprite->m_field_54A8,
-                        pSprite->m_field_7430);
+                        pSprite->nfield_54A8,
+                        pSprite->bfield_7430);
                 }
             }
             pSprite->EquipAll(TRUE);
@@ -11007,7 +11007,7 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
         m_spellStates = pSprite->GetDerivedStats()->m_spellStates;
         memcpy(m_baseSkills, pSprite->GetBaseStats()->m_skills, sizeof(m_baseSkills));
         memcpy(m_skills, pSprite->GetDerivedStats()->m_nSkills, sizeof(m_skills));
-        m_m_field_106 = pSprite->GetBaseStats()->bm_field_2FF;
+        pm_m_field_106 = pSprite->GetBaseStats()->bm_field_2FF;
         m_nSequence = pSprite->m_nSequence;
         m_ptPosition = pSprite->GetPos();
         m_nFacing = pSprite->m_nDirection;
@@ -13232,7 +13232,7 @@ void CMessageStartTextScreen::Run()
 CMessage90::CMessage90(LONG caller, LONG target, int a3)
     : CMessage(caller, target)
 {
-    m_nACDeflectionBonus = a3;
+    nfield_C = a3;
 }
 
 // 0x66F250
@@ -13295,7 +13295,7 @@ void CMessage90::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
         cnt += sizeof(LONG);
 
-        *reinterpret_cast<int*>(*pData + cnt) = m_nACDeflectionBonus;
+        *reinterpret_cast<int*>(*pData + cnt) = nfield_C;
         cnt += sizeof(int);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -13328,7 +13328,7 @@ BOOL CMessage90::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 
     m_targetId = localObjectID;
 
-    m_nACDeflectionBonus = *reinterpret_cast<int*>(pData + cnt);
+    nfield_C = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     // NOTE: Missing trailing guard.
@@ -13351,7 +13351,7 @@ void CMessage90::Run()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
-            static_cast<CGameSprite*>(pObject)->sub_75F3D0(m_nACDeflectionBonus);
+            static_cast<CGameSprite*>(pObject)->sub_75F3D0(nfield_C);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
@@ -13515,7 +13515,7 @@ void CMessageFloatText::Run()
 CMessage92::CMessage92(LONG caller, LONG target, int a3)
     : CMessage(caller, target)
 {
-    m_nACDeflectionBonus = a3;
+    nfield_C = a3;
 }
 
 // 0x453510
@@ -13577,7 +13577,7 @@ void CMessage92::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
         cnt += sizeof(LONG);
 
-        *reinterpret_cast<int*>(*pData + cnt) = m_nACDeflectionBonus;
+        *reinterpret_cast<int*>(*pData + cnt) = nfield_C;
         cnt += sizeof(int);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -13610,7 +13610,7 @@ BOOL CMessage92::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 
     m_targetId = localObjectID;
 
-    m_nACDeflectionBonus = *reinterpret_cast<int*>(pData + cnt);
+    nfield_C = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     // NOTE: Missing trailing guard.
@@ -13633,7 +13633,7 @@ void CMessage92::Run()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
-            static_cast<CGameSprite*>(pObject)->SetVisibilityRange(m_nACDeflectionBonus);
+            static_cast<CGameSprite*>(pObject)->SetVisibilityRange(nfield_C);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
@@ -14376,7 +14376,7 @@ CMessageStoreRemoveItem::CMessageStoreRemoveItem(const CResRef& store, const CRe
     m_store = store;
     m_itemId = itemId;
     nm_field_1C = a3;
-    m_nField20 = a4;
+    nm_field_20 = a4;
     nm_field_24 = a5;
 }
 
@@ -14426,7 +14426,7 @@ void CMessageStoreRemoveItem::MarshalMessage(BYTE** pData, DWORD* dwSize)
     *reinterpret_cast<int*>(*pData + cnt) = nm_field_1C;
     cnt += sizeof(int);
 
-    *reinterpret_cast<int*>(*pData + cnt) = m_nField20;
+    *reinterpret_cast<int*>(*pData + cnt) = nm_field_20;
     cnt += sizeof(int);
 
     *reinterpret_cast<int*>(*pData + cnt) = nm_field_24;
@@ -14455,7 +14455,7 @@ BOOL CMessageStoreRemoveItem::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     nm_field_1C = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
-    m_nField20 = *reinterpret_cast<int*>(pData + cnt);
+    nm_field_20 = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     nm_field_24 = *reinterpret_cast<int*>(pData + cnt);
@@ -14481,7 +14481,7 @@ void CMessageStoreRemoveItem::Run()
         if (pStore->GetItemIndex(m_itemId) != INT_MAX) {
             pStore->RemoveItemExt(m_itemId,
                 nm_field_1C,
-                m_nField20,
+                nm_field_20,
                 nm_field_24,
                 NULL);
         }
@@ -14495,7 +14495,7 @@ void CMessageStoreRemoveItem::Run()
             if (pStore->GetItemIndex(m_itemId) != INT_MAX) {
                 pStore->RemoveItemExt(m_itemId,
                     nm_field_1C,
-                    m_nField20,
+                    nm_field_20,
                     nm_field_24,
                     NULL);
 
@@ -14509,7 +14509,7 @@ void CMessageStoreRemoveItem::Run()
                 if (pStore->GetItemIndex(m_itemId) != INT_MAX) {
                     pStore->RemoveItemExt(m_itemId,
                         nm_field_1C,
-                        m_nField20,
+                        nm_field_20,
                         nm_field_24,
                         NULL);
 
@@ -14771,7 +14771,7 @@ CMessageFireProjectile::CMessageFireProjectile(WORD projectileType, LONG project
     m_projectileTarget = projectileTarget;
     m_height = height;
     bm_field_1E = a7;
-    m_nField20 = 0;
+    nm_field_20 = 0;
 }
 
 // 0x453510
@@ -15459,7 +15459,7 @@ void CMessageStoreDemand::Run()
 CMessage101::CMessage101(BOOLEAN a1, LONG caller, LONG target, BOOLEAN a4)
     : CMessage(caller, target)
 {
-    m_nACDeflectionBonus = a1;
+    nfield_C = a1;
     bfield_D = a4;
 }
 
@@ -15523,7 +15523,7 @@ void CMessage101::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
         cnt += sizeof(LONG);
 
-        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = m_nACDeflectionBonus;
+        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = nfield_C;
         cnt += sizeof(BOOLEAN);
 
         *reinterpret_cast<BOOLEAN*>(*pData + cnt) = bfield_D;
@@ -15559,7 +15559,7 @@ BOOL CMessage101::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 
     m_targetId = localObjectID;
 
-    m_nACDeflectionBonus = *reinterpret_cast<BOOLEAN*>(pData + cnt);
+    nfield_C = *reinterpret_cast<BOOLEAN*>(pData + cnt);
     cnt += sizeof(BOOLEAN);
 
     bfield_D = *reinterpret_cast<BOOLEAN*>(pData + cnt);
@@ -15586,7 +15586,7 @@ void CMessage101::Run()
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
             CGameSprite* pSprite = static_cast<CGameSprite*>(pObject);
-            pSprite->sub_723BF0(m_nACDeflectionBonus, bfield_D);
+            pSprite->sub_723BF0(nfield_C, bfield_D);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
@@ -15756,7 +15756,7 @@ void CMessageWeaponImmumityUpdate::Run()
 CMessage103::CMessage103(BOOLEAN a1, PLAYER_ID idPlayer, INT nPortrait, LONG caller, LONG target)
     : CMessage(caller, target)
 {
-    m_nACDeflectionBonus = a1;
+    nfield_C = a1;
     m_idPlayer = idPlayer;
     m_nCharacterPortraitSlotNumber = nPortrait;
 }
@@ -15822,7 +15822,7 @@ void CMessage103::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
         cnt += sizeof(LONG);
 
-        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = m_nACDeflectionBonus;
+        *reinterpret_cast<BOOLEAN*>(*pData + cnt) = nfield_C;
         cnt += sizeof(BOOLEAN);
 
         *reinterpret_cast<PLAYER_ID*>(*pData + cnt) = m_idPlayer;
@@ -15861,7 +15861,7 @@ BOOL CMessage103::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 
     m_targetId = localObjectID;
 
-    m_nACDeflectionBonus = *reinterpret_cast<BOOLEAN*>(pData + cnt);
+    nfield_C = *reinterpret_cast<BOOLEAN*>(pData + cnt);
     cnt += sizeof(BOOLEAN);
 
     m_idPlayer = *reinterpret_cast<PLAYER_ID*>(pData + cnt);
@@ -16357,7 +16357,7 @@ void CMessageToggleInterface::Run()
 CMessage107::CMessage107(unsigned char a1, LONG caller, LONG target)
     : CMessage(caller, target)
 {
-    m_nACDeflectionBonus = a1;
+    nfield_C = a1;
 }
 
 // 0x43E170
@@ -16420,7 +16420,7 @@ void CMessage107::MarshalMessage(BYTE** pData, DWORD* dwSize)
         *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
         cnt += sizeof(LONG);
 
-        *reinterpret_cast<unsigned char*>(*pData + cnt) = m_nACDeflectionBonus;
+        *reinterpret_cast<unsigned char*>(*pData + cnt) = nfield_C;
         cnt += sizeof(unsigned char);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -16446,7 +16446,7 @@ BOOL CMessage107::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     LONG remoteObjectID = *reinterpret_cast<LONG*>(pData + cnt);
     cnt += sizeof(LONG);
 
-    m_nACDeflectionBonus = *reinterpret_cast<unsigned char*>(pData + cnt);
+    nfield_C = *reinterpret_cast<unsigned char*>(pData + cnt);
     cnt += sizeof(unsigned char);
 
     LONG localObjectID;
@@ -16476,7 +16476,7 @@ void CMessage107::Run()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
-            static_cast<CGameSprite*>(pObject)->nfield_580 = m_nACDeflectionBonus;
+            static_cast<CGameSprite*>(pObject)->nfield_580 = nfield_C;
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
@@ -16573,7 +16573,7 @@ void CMessageSetAreaExplored::Run()
 CMessageEndGame::CMessageEndGame(int a1, int a2, LONG caller, LONG target)
     : CMessage(caller, target)
 {
-    m_nACDeflectionBonus = a1;
+    nfield_C = a1;
     bm_field_10 = a2;
 }
 
@@ -16615,7 +16615,7 @@ void CMessageEndGame::MarshalMessage(BYTE** pData, DWORD* dwSize)
 
     DWORD cnt = 0;
 
-    *reinterpret_cast<int*>(*pData + cnt) = m_nACDeflectionBonus;
+    *reinterpret_cast<int*>(*pData + cnt) = nfield_C;
     cnt += sizeof(int);
 
     *reinterpret_cast<int*>(*pData + cnt) = bm_field_10;
@@ -16635,7 +16635,7 @@ BOOL CMessageEndGame::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 
     DWORD cnt = CNetwork::SPEC_MSG_HEADER_LENGTH;
 
-    m_nACDeflectionBonus = *reinterpret_cast<int*>(pData + cnt);
+    nfield_C = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     bm_field_10 = *reinterpret_cast<int*>(pData + cnt);
@@ -16651,7 +16651,7 @@ BOOL CMessageEndGame::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 // 0x516650
 void CMessageEndGame::Run()
 {
-    g_pBaldurChitin->GetObjectGame()->ReadyCharacterTerminationSequence(m_nACDeflectionBonus, bm_field_10);
+    g_pBaldurChitin->GetObjectGame()->ReadyCharacterTerminationSequence(nfield_C, bm_field_10);
 }
 
 // -----------------------------------------------------------------------------

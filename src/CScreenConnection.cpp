@@ -55,7 +55,7 @@ BOOLEAN CScreenConnection::byte_8F376C;
 // 0x5F9BB0
 CScreenConnection::CScreenConnection()
 {
-    m_m_field_106 = 0;
+    pm_m_field_106 = 0;
     m_nSerialPort = 0;
     m_nSerialBaudRate = 0;
     m_dwLastSessionRefresh = 0;
@@ -691,8 +691,8 @@ void CScreenConnection::TimerAsynchronousUpdate()
             AutoSelectServiceProvider();
             UpdateMainPanel();
         } else {
-            if (g_pBaldurChitin->m_bStartUpHost) {
-                if (g_pChitin->m_bStartUpGameSpyLocation) {
+            if (g_pBaldurChitin->nm_field_110) {
+                if (g_pChitin->bm_field_131) {
                     WritePrivateProfileStringA("GameSpy",
                         "Location",
                         g_pChitin->GetStartUpGameSpyLocation(),
@@ -706,7 +706,7 @@ void CScreenConnection::TimerAsynchronousUpdate()
                 g_pBaldurChitin->m_bIsAutoStarting = FALSE;
                 m_bAllowInput = TRUE;
             } else {
-                if (g_pBaldurChitin->m_bStartUpConnect || g_pBaldurChitin->m_sField130) {
+                if (g_pBaldurChitin->m_bStartUpConnect || g_pBaldurChitin->sm_field_130) {
                     if (g_pBaldurChitin->m_bStartUpConnect) {
                         AutoStartConnect();
                     }
@@ -1968,19 +1968,19 @@ void CScreenConnection::OnDoneButtonClick()
         if (pConnection->m_nProtocol == 0) {
             switch (nfield_FB4) {
             case 1:
-                pConnection->m_m_field_106 = 0;
+                pConnection->pm_m_field_106 = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
                 g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
                 pConnection->OnNewGameButtonClick();
                 break;
             case 2:
-                pConnection->m_m_field_106 = 0;
+                pConnection->pm_m_field_106 = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = TRUE;
                 DismissPopup();
                 SummonPopup(25);
                 break;
             case 3:
-                pConnection->m_m_field_106 = 1;
+                pConnection->pm_m_field_106 = 1;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
                 g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
                 OnLoadGameButtonClick(FALSE);
@@ -1992,21 +1992,21 @@ void CScreenConnection::OnDoneButtonClick()
 
             switch (nfield_FB4) {
             case 1:
-                pConnection->m_m_field_106 = 0;
+                pConnection->pm_m_field_106 = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
                 g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
                 DismissPopup();
                 SummonPopup(6);
                 break;
             case 2:
-                pConnection->m_m_field_106 = 0;
+                pConnection->pm_m_field_106 = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = TRUE;
                 g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
                 DismissPopup();
                 SummonPopup(6);
                 break;
             case 3:
-                pConnection->m_m_field_106 = 1;
+                pConnection->pm_m_field_106 = 1;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
                 g_pBaldurChitin->GetObjectGame()->bm_field_4BD6 = FALSE;
                 DismissPopup();
@@ -2232,7 +2232,7 @@ void CScreenConnection::UpdateMainPanel()
         pButton->SetEnabled(FALSE);
     }
 
-    if (g_pChitin->m_bStartUpHost) {
+    if (g_pChitin->nm_field_110) {
         pButton = static_cast<CUIControlButton*>(pPanel->GetControl(0));
         pButton->SetEnabled(FALSE);
 
@@ -2263,7 +2263,7 @@ void CScreenConnection::UpdateMainPanel()
 
     pButton->SetEnabled(g_pChitin->cNetwork.m_bServiceProviderEnumerated && !g_pChitin->m_bStartUpConnect);
 
-    if (nServiceProviderType != CNetwork::SERV_PROV_NULL && !g_pChitin->m_bStartUpHost) {
+    if (nServiceProviderType != CNetwork::SERV_PROV_NULL && !g_pChitin->nm_field_110) {
         pButton = static_cast<CUIControlButton*>(pPanel->GetControl(11));
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenConnection.cpp
@@ -2291,7 +2291,7 @@ void CScreenConnection::UpdateSessionList(CUIPanel* pPanel, DWORD nTextId)
     // __LINE__: 3973
     UTIL_ASSERT(pText != NULL);
 
-    int v1 = pText->m_bField5A;
+    int v1 = pText->bfield_5A;
 
     pText->RemoveAll();
     pText->m_rgbHighlightColor = CBaldurChitin::TEXTDISPLAY_COLOR_HIGHLIGHT;
@@ -3450,7 +3450,7 @@ void CScreenConnection::HandleEMEvent(BYTE nEvent, BYTE nEventStage)
                     m_bEnumeratingAsynchronous = FALSE;
                 }
 
-                if (g_pChitin->cGameSpy.m_bWinsockInitialized == 1) {
+                if (g_pChitin->cGameSpy.bm_field_0 == 1) {
                     // TODO: Incomplete.
                 }
 
@@ -3740,7 +3740,7 @@ void CScreenConnection::AutoSelectServiceProvider()
     CNetwork* pNetwork = &(g_pBaldurChitin->cNetwork);
     CString sLastProtocolUsed;
 
-    if (g_pChitin->m_bStartUpHost || g_pChitin->m_bStartUpConnect) {
+    if (g_pChitin->nm_field_110 || g_pChitin->m_bStartUpConnect) {
         sLastProtocolUsed = "2";
     } else {
         GetPrivateProfileStringA("Multiplayer",
@@ -4104,7 +4104,7 @@ void CUIControlButtonConnectionNewGame::OnLButtonClick(CPoint pt)
         // __LINE__: 7330
         UTIL_ASSERT(pButton != NULL);
 
-        pConnection->m_m_field_106 = 0;
+        pConnection->pm_m_field_106 = 0;
 
         g_pBaldurChitin->GetTlkTable().Fetch(13728, strRes);
         pButton->SetText(strRes.szText);
@@ -4194,12 +4194,12 @@ void CUIControlButtonConnectionLoadGame::OnLButtonClick(CPoint pt)
         // __LINE__: 7520
         UTIL_ASSERT(pButton != NULL);
 
-        pConnection->m_m_field_106 = 1;
+        pConnection->pm_m_field_106 = 1;
 
         g_pBaldurChitin->GetTlkTable().Fetch(13729, strRes);
         pButton->SetText(strRes.szText);
 
-        pConnection->m_m_field_106 = m_nID == 7;
+        pConnection->pm_m_field_106 = m_nID == 7;
 
         if (pConnection->m_nProtocol != 0) {
             CSingleLock renderLock(&(pConnection->GetManager()->pm_field_36), FALSE);
@@ -4794,7 +4794,7 @@ void CUIControlButtonConnectionCreateGameNewGame::OnLButtonClick(CPoint pt)
     // __LINE__: 8691
     UTIL_ASSERT(pConnection != NULL);
 
-    if (pConnection->m_m_field_106) {
+    if (pConnection->pm_m_field_106) {
         pConnection->OnLoadGameButtonClick(FALSE);
     } else {
         pConnection->OnNewGameButtonClick();

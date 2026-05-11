@@ -342,7 +342,7 @@ CGameEffect* CItem::GetAbilityEffect(LONG abilityNum, LONG effectNum, CGameObjec
             pEffect->m_school = ability->school;
             pEffect->m_sourceType = 2;
             // FIXME: Should it be `m_secondaryType`?
-            pEffect->m_nDurationMod = ability->secondaryType;
+            pEffect->wm_field_48 = ability->secondaryType;
             pEffect->m_sourceRes = cResRef;
             pEffect->m_sourceFlags = ability->abilityFlags;
             pEffect->m_casterLevel = 10;

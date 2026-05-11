@@ -53,7 +53,7 @@ CVidMode::CVidMode()
     m_nRBitLoss = 0;
     m_nGBitLoss = 0;
     m_nBBitLoss = 0;
-    m_wFieldD2 = 0;
+    wfield_D2 = 0;
     m_bRedrawEntireScreen = 0;
     m_bPointerEnabled = FALSE;
     m_bPointerInside = TRUE;

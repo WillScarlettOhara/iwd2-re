@@ -66,7 +66,7 @@ void CBaldurProjector::RenderBinkFrame(HBINK bnk)
 // 0x43E640
 CBaldurProjector::CBaldurProjector()
 {
-    m_m_field_106 = 0;
+    pm_m_field_106 = 0;
 
     m_pVirtualKeysFlags[0] = 0;
     m_pVirtualKeysFlags[1] = 0;

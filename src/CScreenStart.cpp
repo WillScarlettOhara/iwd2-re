@@ -26,7 +26,7 @@ CScreenStart::CScreenStart()
     m_nNumErrorButtons = 0;
     nm_field_144 = 1;
     bm_field_13F = 0;
-    m_m_field_106 = 1;
+    pm_m_field_106 = 1;
     m_bExitProgram = FALSE;
     SetVideoMode(0);
     m_bCtrlKeyDown = FALSE;
@@ -262,7 +262,7 @@ void CScreenStart::StartMultiplayer()
     // __LINE__: 1208
     UTIL_ASSERT(pConnection != NULL);
 
-    if (g_pBaldurChitin->m_bIsAutoStarting && g_pBaldurChitin->m_sField130) {
+    if (g_pBaldurChitin->m_bIsAutoStarting && g_pBaldurChitin->sm_field_130) {
         if (g_pBaldurChitin->cDimm.cResCache.m_nCacheSize >= 140000000) {
             pConnection->StartConnection(TRUE);
             SelectEngine(pConnection);
