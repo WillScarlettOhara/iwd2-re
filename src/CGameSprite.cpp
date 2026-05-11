@@ -904,11 +904,11 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         nfield_5304 = 0;
         m_doBounce = 3;
         m_nModalState = 0;
-        nm_field_4C54[0] = 0;
-        nm_field_4C54[1] = 0;
-        nm_field_4C54[2] = 0;
-        nm_field_4C54[3] = 0;
-        nm_field_4C54[4] = 0;
+        m_nFeatSlots[0] = 0;
+        m_nFeatSlots[1] = 0;
+        m_nFeatSlots[2] = 0;
+        m_nFeatSlots[3] = 0;
+        m_nFeatSlots[4] = 0;
         m_nWeaponSet = 0;
 
         pfield_7548[IWD_VFX_SANCTUARY].SetResRef(CResRef("SanctuC"), FALSE, TRUE, TRUE);
@@ -981,7 +981,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
             m_portraitIconVidCell.pRes->Request();
         }
 
-        m_field_722A = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
+        m_dwLastUpdateTime = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
         m_interactingWith.Set(CAIObjectType::NOONE);
         m_nHPCONBonusTotalOld = 0;
         m_bHPCONBonusTotalUpdate = TRUE;
@@ -6546,7 +6546,7 @@ void CGameSprite::Marshal(CSavedGamePartyCreature& partyCreature, BOOLEAN bNetwo
     partyCreature.m_nModalState = m_nModalState;
 
     for (nIndex = 0; nIndex < 5; nIndex++) {
-        partyCreature.nm_field_28A[nIndex] = nm_field_4C54[nIndex];
+        partyCreature.nm_field_28A[nIndex] = m_nFeatSlots[nIndex];
     }
 
     partyCreature.m_nWeaponSet = m_nWeaponSet;
@@ -6554,7 +6554,7 @@ void CGameSprite::Marshal(CSavedGamePartyCreature& partyCreature, BOOLEAN bNetwo
     for (nIndex = 0; nIndex < 8; nIndex++) {
         partyCreature.m_quickWeaponsItemNum[nIndex] = m_quickWeapons[nIndex].m_abilityId.m_itemNum;
         partyCreature.m_quickWeaponsAbilityNum[nIndex] = m_quickWeapons[nIndex].m_abilityId.m_abilityNum;
-        partyCreature.bm_field_2A7[nIndex] = bm_field_3D3A[nIndex];
+        partyCreature.bm_field_2A7[nIndex] = m_nAbilityIndices[nIndex];
     }
 
     for (nIndex = 0; nIndex < 9; nIndex++) {
@@ -6578,7 +6578,7 @@ void CGameSprite::Marshal(CSavedGamePartyCreature& partyCreature, BOOLEAN bNetwo
     }
 
     for (nIndex = 0; nIndex < 9; nIndex++) {
-        partyCreature.nm_field_19A[nIndex] = nm_field_3D14[nIndex];
+        partyCreature.nm_field_19A[nIndex] = m_nFeatModes[nIndex];
     }
 
     partyCreature.m_nLastSpellbookClassIndex = m_nLastSpellbookClassIndex;
@@ -6707,7 +6707,7 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
     m_nModalState = static_cast<BYTE>(pCreature->m_nModalState);
 
     for (nIndex = 0; nIndex < 5; nIndex++) {
-        nm_field_4C54[nIndex] = pCreature->nm_field_28A[nIndex];
+        m_nFeatSlots[nIndex] = pCreature->nm_field_28A[nIndex];
     }
 
     ApplyFeatEffects();
@@ -6759,7 +6759,7 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
     }
 
     for (nIndex = 0; nIndex < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22; nIndex++) {
-        nm_field_3D14[nIndex] = pCreature->nm_field_19A[nIndex];
+        m_nFeatModes[nIndex] = pCreature->nm_field_19A[nIndex];
     }
 
     m_nLastSpellbookClassIndex = pCreature->m_nLastSpellbookClassIndex;
@@ -7612,21 +7612,21 @@ void CGameSprite::GetWeaponButton(BYTE nButtonNum, CButtonData& cButtonData)
     CItem* pItem = m_equipment.m_items[nButtonNum + 43];
     if (pItem != NULL) {
         pItem->Demand();
-        ITEM_ABILITY* pAbility = pItem->GetAbility(bm_field_3D3A[nButtonNum]);
+        ITEM_ABILITY* pAbility = pItem->GetAbility(m_nAbilityIndices[nButtonNum]);
         if (pAbility != NULL) {
             cButtonData.m_icon = CString(pAbility->quickSlotIcon);
             cButtonData.m_abilityId.m_itemType = 2;
             cButtonData.m_abilityId.m_itemNum = nButtonNum + 43;
-            cButtonData.m_abilityId.m_abilityNum = bm_field_3D3A[nButtonNum];
+            cButtonData.m_abilityId.m_abilityNum = m_nAbilityIndices[nButtonNum];
             cButtonData.m_abilityId.wm_field_10 = rule.GetItemAbilityDescription(pItem->cResRef,
-                bm_field_3D3A[nButtonNum]);
+                m_nAbilityIndices[nButtonNum]);
             if (cButtonData.m_abilityId.wm_field_10 == -1) {
                 cButtonData.m_abilityId.wm_field_10 = pItem->GetGenericName();
             }
 
             cButtonData.m_count = 0;
             if (pItem->GetMaxStackable() > 1) {
-                cButtonData.m_count = pItem->GetUsageCount(bm_field_3D3A[nButtonNum]);
+                cButtonData.m_count = pItem->GetUsageCount(m_nAbilityIndices[nButtonNum]);
             }
         }
         pItem->Release();
@@ -14817,7 +14817,7 @@ INT CGameSprite::GetCustomButtonValue(BYTE buttonNum)
     // __LINE__: 2028
     UTIL_ASSERT(buttonNum < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22);
 
-    return nm_field_3D14[buttonNum];
+    return m_nFeatModes[buttonNum];
 }
 
 // 0x594120
@@ -14827,7 +14827,7 @@ void CGameSprite::SetCustomButtonValue(BYTE buttonNum, int a2)
     // __LINE__: 2036
     UTIL_ASSERT(buttonNum < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22);
 
-    nm_field_3D14[buttonNum] = a2;
+    m_nFeatModes[buttonNum] = a2;
 }
 
 // 0x594160
@@ -15273,8 +15273,8 @@ void CGameSprite::ResetQuickSlots()
     INT nClass = m_derivedStats.GetBestClass() - 1;
 
     for (int nSlot = 0; nSlot < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22; nSlot++) {
-        if (nm_field_3D14[nSlot] == 0) {
-            nm_field_3D14[nSlot] = atol(ruleTables.m_tQuickSlots.GetAt(CPoint(nSlot, nClass)));
+        if (m_nFeatModes[nSlot] == 0) {
+            m_nFeatModes[nSlot] = atol(ruleTables.m_tQuickSlots.GetAt(CPoint(nSlot, nClass)));
         }
     }
 }
@@ -15763,19 +15763,19 @@ INT CGameSprite::GetFeatMode(UINT nFeatNumber)
     if (HasFeat(nFeatNumber)) {
         switch (nFeatNumber) {
         case CGAMESPRITE_FEAT_ARTERIAL_STRIKE:
-            v1 = nm_field_4C54[2];
+            v1 = m_nFeatSlots[2];
             break;
         case CGAMESPRITE_FEAT_EXPERTISE:
-            v1 = nm_field_4C54[0];
+            v1 = m_nFeatSlots[0];
             break;
         case CGAMESPRITE_FEAT_HAMSTRING:
-            v1 = nm_field_4C54[3];
+            v1 = m_nFeatSlots[3];
             break;
         case CGAMESPRITE_FEAT_POWER_ATTACK:
-            v1 = nm_field_4C54[1];
+            v1 = m_nFeatSlots[1];
             break;
         case CGAMESPRITE_FEAT_RAPID_SHOT:
-            v1 = nm_field_4C54[4];
+            v1 = m_nFeatSlots[4];
             break;
         }
     }
@@ -15796,8 +15796,8 @@ void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
             // __LINE__: 26977
             UTIL_ASSERT_MSG(nValue <= 1, "Invalid feat level.");
 
-            nm_field_4C54[2] = nValue;
-            nm_field_4C54[3] = 0;
+            m_nFeatSlots[2] = nValue;
+            m_nFeatSlots[3] = 0;
             break;
         case CGAMESPRITE_FEAT_EXPERTISE:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15808,8 +15808,8 @@ void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
             // __LINE__: 26963
             UTIL_ASSERT_MSG(nValue <= MAX_SELECTABLE_FEAT_USE_LEVELS, "Invalid feat level.");
 
-            nm_field_4C54[0] = nValue;
-            nm_field_4C54[1] = 0;
+            m_nFeatSlots[0] = nValue;
+            m_nFeatSlots[1] = 0;
             break;
         case CGAMESPRITE_FEAT_HAMSTRING:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15820,8 +15820,8 @@ void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
             // __LINE__: 26984
             UTIL_ASSERT_MSG(nValue <= 1, "Invalid feat level.");
 
-            nm_field_4C54[3] = nValue;
-            nm_field_4C54[2] = 0;
+            m_nFeatSlots[3] = nValue;
+            m_nFeatSlots[2] = 0;
             break;
         case CGAMESPRITE_FEAT_POWER_ATTACK:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15832,8 +15832,8 @@ void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
             // __LINE__: 26970
             UTIL_ASSERT_MSG(nValue <= MAX_SELECTABLE_FEAT_USE_LEVELS, "Invalid feat level.");
 
-            nm_field_4C54[1] = nValue;
-            nm_field_4C54[0] = 0;
+            m_nFeatSlots[1] = nValue;
+            m_nFeatSlots[0] = 0;
             break;
         case CGAMESPRITE_FEAT_RAPID_SHOT:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15844,7 +15844,7 @@ void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
             // __LINE__: 269991
             UTIL_ASSERT_MSG(nValue <= 1, "Invalid feat level.");
 
-            nm_field_4C54[4] = nValue;
+            m_nFeatSlots[4] = nValue;
             break;
         }
     }
@@ -15857,35 +15857,35 @@ void CGameSprite::ApplyFeatEffects()
     CGameEffect* pEffect;
     CMessageAddEffect* pMessage;
 
-    if (nm_field_4C54[1] > 0) {
+    if (m_nFeatSlots[1] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATPOWERATTACK);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (nm_field_4C54[0] > 0) {
+    if (m_nFeatSlots[0] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATEXPERTISE);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (nm_field_4C54[2] > 0) {
+    if (m_nFeatSlots[2] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATARTERIALSTRIKE);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (nm_field_4C54[3] > 0) {
+    if (m_nFeatSlots[3] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATHAMSTRING);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (nm_field_4C54[4] > 0) {
+    if (m_nFeatSlots[4] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATRAPIDSHOT);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
@@ -15972,7 +15972,7 @@ void CGameSprite::SetQuickWeapon(BYTE buttonNum, BYTE index)
     // __LINE__: 2031
     UTIL_ASSERT(buttonNum < CGAMESAVECHARACTER_NUM_QUICK_WEAPONS22);
 
-    bm_field_3D3A[buttonNum] = index;
+    m_nAbilityIndices[buttonNum] = index;
 }
 
 // FIXME: `buttonData` should be reference.

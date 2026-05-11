@@ -740,10 +740,10 @@ public:
     /* 3828 */ CButtonData m_quickItems[3];
     /* 38DC */ CButtonData m_quickInnates[9];
     /* 3AF8 */ CButtonData m_quickSongs[9];
-    /* 3D14 */ int m_m_field_3D14[9];
+    /* 3D14 */ int m_nFeatModes[9];
     /* 3D38 */ BYTE m_nLastSpellbookClassIndex;
     /* 3D39 */ BYTE m_nLastSpellbookSpellLevel;
-    /* 3D3A */ unsigned char m_m_field_3D3A[8];
+    /* 3D3A */ unsigned char m_nAbilityIndices[8];
     /* 3D42 */ BYTE m_nLastSong;
     /* 3DFA */ CAIObjectType m_liveTypeAI;
     /* 3E36 */ CAIObjectType m_startTypeAI;
@@ -766,7 +766,7 @@ public:
     /* 4C4A */ CResRef m_currentArea;
     /* 4C52 */ BOOLEAN m_bGlobal;
     /* 4C53 */ BYTE m_nModalState;
-    /* 4C54 */ int m_m_field_4C54[5];
+    /* 4C54 */ int m_nFeatSlots[5];
     /* 4C68 */ BYTE m_nWeaponSet;
     /* 4C6A */ CSound m_sndWalk[2];
     /* 4D32 */ int m_nSndWalk;
@@ -955,7 +955,7 @@ public:
     /* 7130 */ CTypedPtrList<CPtrList, int*> m_portraitIcons; // NOTE: Stores actual ints disguised as pointers.
     /* 714C */ CVidCell m_portraitIconVidCell;
     /* 7226 */ BOOL m_firstActionSound;
-    /* 722A */ ULONG m_m_field_722A;
+    /* 722A */ ULONG m_dwLastUpdateTime;
     /* 722E */ BOOL m_berserkActive;
     /* 7232 */ SHORT m_attackSoundDeadzone;
     /* 7234 */ LONG m_nHPCONBonusTotalOld;
