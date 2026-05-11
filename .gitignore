@@ -392,3 +392,11 @@ FodyWeavers.xsd
 /out
 /build
 decomp_ref/
+
+# External dependencies and tools at workspace root
+/IWD2EE/
+/ghidra-mcp/
+/ghidrasql/
+/libghidra/
+/build.log
+/OG_build.log
