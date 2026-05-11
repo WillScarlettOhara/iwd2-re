@@ -1995,15 +1995,15 @@ public:
     /* 0004 */ void AIUpdate(CGameSprite* pSprite, LONG deltaT) override;
     /* 000C */ virtual void ApplyEffect(CGameSprite* pSprite, int index) = 0;
 
-    /* 0018 */ int nm_field_18;
-    /* 001C */ int nm_field_1C;
-    /* 0020 */ int nm_field_20;
-    /* 0024 */ int nm_field_24;
-    /* 0028 */ unsigned char bm_field_28;
-    /* 0029 */ RESREF sm_field_29;
-    /* 0031 */ unsigned char bm_field_31;
-    /* 0032 */ unsigned char bm_field_32;
-    /* 0033 */ unsigned char bm_field_33;
+    /* 0018 */ int m_nStartTime;
+    /* 001C */ int m_nDeadline;
+    /* 0020 */ int m_nField20;
+    /* 0024 */ int m_nTickInterval;
+    /* 0028 */ unsigned char m_bEnabled;
+    /* 0029 */ RESREF m_resName;
+    /* 0031 */ unsigned char m_bField31;
+    /* 0032 */ unsigned char m_bField32;
+    /* 0033 */ unsigned char m_bField33;
 };
 
 class CPersistantEffect84C4B4 : public CPersistantEffect84C4A4 {
@@ -2014,10 +2014,10 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0034 */ std::string nm_field_34;
-    /* 0044 */ std::string nm_field_44;
-    /* 0054 */ int nfield_54;
-    /* 0058 */ std::set<void*> nfield_58;
+    /* 0034 */ std::string m_sField34;
+    /* 0044 */ std::string m_sField44;
+    /* 0054 */ int m_nField54;
+    /* 0058 */ std::set<void*> m_setField58;
 };
 
 class CPersistantEffect84C4C4 : public CPersistantEffect84C4A4 {
@@ -2028,8 +2028,8 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0034 */ std::string nm_field_34;
-    /* 0044 */ std::string nm_field_44;
+    /* 0034 */ std::string m_sField34;
+    /* 0044 */ std::string m_sField44;
 };
 
 class CPersistantEffect84C420 : public CPersistantEffect84C4A4 {
@@ -2039,8 +2039,8 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0034 */ int nm_field_34;
-    /* 0038 */ int nm_field_38;
+    /* 0034 */ int m_sField34;
+    /* 0038 */ int m_nField38;
 };
 
 class CPersistantEffect84C494 : public CPersistantEffect84C4A4 {
@@ -2050,7 +2050,7 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0034 */ int nm_field_34;
+    /* 0034 */ int m_sField34;
 };
 
 class CPersistantEffect84C4D4 : public CPersistantEffect84C4A4 {
@@ -2061,10 +2061,10 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0034 */ std::string nm_field_34;
-    /* 0044 */ std::string nm_field_44;
-    /* 0054 */ int nfield_54;
-    /* 0058 */ std::set<void*> nfield_58;
+    /* 0034 */ std::string m_sField34;
+    /* 0044 */ std::string m_sField44;
+    /* 0054 */ int m_nField54;
+    /* 0058 */ std::set<void*> m_setField58;
 };
 
 class CPersistantEffect84C484 : public CPersistantEffect84C4B4 {
@@ -2075,7 +2075,7 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0068 */ int nfield_68;
+    /* 0068 */ int m_nField68;
 };
 
 #endif /* CGAMEEFFECT_H_ */
