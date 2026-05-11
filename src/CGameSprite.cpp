@@ -5537,7 +5537,7 @@ SHORT CGameSprite::GetIdleSequence()
 {
     if (m_pArea != NULL
         && m_pArea->m_bAreaLoaded
-        && g_pBaldurChitin->GetObjectGame()->sub_5AC0A0(m_pArea)) {
+        && g_pBaldurChitin->GetObjectGame()->IsAreaSaveDisabled(m_pArea)) {
         return 7; // SEQ_READY
     } else {
         return 6; // SEQ_HEAD_TURN

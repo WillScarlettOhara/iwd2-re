@@ -39,7 +39,7 @@ public:
     CString GetCandidateList();
     CString GetCompositionString();
     void CleanUp();
-    CString sub_4D89E0();
+    CString PopResultString();
 
     static const CSize PADDING;
 

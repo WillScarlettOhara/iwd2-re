@@ -178,7 +178,7 @@ public:
     PLAYER_ID FindPlayerIDByName(const CString& sPlayerName, BOOLEAN bInvisible);
     INT FindPlayerLocationByID(PLAYER_ID playerID, BOOLEAN bInvisible);
     INT FindPlayerLocationByName(const CString& sPlayerName, BOOLEAN bInvisible);
-    void sub_7A73D0(CString& a1);
+    void GetLocalAddress(CString& a1);
     INT ThreadLoop();
     void SlidingWindowReceive();
     void SlidingWindowTimeouts();

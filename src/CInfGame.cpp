@@ -1790,7 +1790,7 @@ BOOLEAN CInfGame::CanSaveGame(STRREF& strError, BOOLEAN bInRestGame, BOOLEAN bIn
 
     if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL
         && !bInRestGame
-        && sub_5C93E0() > 0) {
+        && CountDualClassedCharacters() > 0) {
         // "Cannot save while someone is in the Store Screen."
         strError = 10841;
         return FALSE;
@@ -2936,7 +2936,7 @@ void CInfGame::NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace
 }
 
 // 0x5AC0A0
-BOOLEAN CInfGame::sub_5AC0A0(CGameArea* pArea)
+BOOLEAN CInfGame::IsAreaSaveDisabled(CGameArea* pArea)
 {
     if (!m_bInLoadGame
         && pArea != NULL
@@ -2948,7 +2948,7 @@ BOOLEAN CInfGame::sub_5AC0A0(CGameArea* pArea)
 }
 
 // 0x5AC0D0
-void CInfGame::sub_5AC0D0()
+void CInfGame::UpdateAreaSaveStatus()
 {
     STRREF strError;
 
@@ -5755,7 +5755,7 @@ CString CInfGame::GetDirSave()
 // TODO: Somehow its different from function above. Figure out.
 //
 // 0x5C0B30
-CString CInfGame::sub_5C0B30()
+CString CInfGame::GetSaveGameDir()
 {
     return m_sMultiplayerSaveDir + m_sSaveGame + "\\";
 }
@@ -6563,7 +6563,7 @@ CWorldMap* CInfGame::GetWorldMap(CString sArea)
 }
 
 // 0x5C79C0
-BOOL CInfGame::sub_5C79C0(CString sArea)
+BOOL CInfGame::IsExpansionArea(CString sArea)
 {
     CString v1;
 
@@ -6772,7 +6772,7 @@ SHORT CInfGame::TakeItemFromStore(const CResRef& cResStore, const CResRef& cResI
 }
 
 // 0x5C93E0
-INT CInfGame::sub_5C93E0()
+INT CInfGame::CountDualClassedCharacters()
 {
     INT nCount = 0;
 
@@ -7219,7 +7219,7 @@ INT CInfGame::GetSpellLevel(const CResRef& resRef, BYTE nClass, DWORD nSpecializ
 }
 
 // 0x5CADF0
-void CInfGame::sub_5CADF0()
+void CInfGame::WakeAllCharacters()
 {
     // FIXME: What for?
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();

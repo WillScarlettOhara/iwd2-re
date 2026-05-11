@@ -3221,7 +3221,7 @@ static BOOL CALLBACK CNetworkLobbyEnumAddressCallback(REFGUID guidDataType, DWOR
 }
 
 // 0x7A73D0
-void CNetwork::sub_7A73D0(CString& a1)
+void CNetwork::GetLocalAddress(CString& a1)
 {
     HRESULT hr;
     DWORD dwSize;

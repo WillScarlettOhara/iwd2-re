@@ -902,7 +902,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
                 INFINITE);
         }
 
-        pGame->sub_5AC0D0();
+        pGame->UpdateAreaSaveStatus();
 
         for (INT nArea = 0; nArea < CINFGAME_MAX_AREAS; nArea++) {
             CGameArea* pArea = pGame->GetArea(nArea);

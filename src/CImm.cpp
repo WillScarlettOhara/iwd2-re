@@ -410,7 +410,7 @@ void CImm::CleanUp()
 // NOTE: Odd location.
 //
 // 0x4D89E0
-CString CImm::sub_4D89E0()
+CString CImm::PopResultString()
 {
     CString v1 = sm_field_130;
     sm_field_130 = "";

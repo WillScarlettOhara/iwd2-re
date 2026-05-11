@@ -174,8 +174,8 @@ public:
     void SaveMultiPlayerPermissions();
     void LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
     void NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
-    BOOLEAN sub_5AC0A0(CGameArea* pArea);
-    void sub_5AC0D0();
+    BOOLEAN IsAreaSaveDisabled(CGameArea* pArea);
+    void UpdateAreaSaveStatus();
     void SelectAll(BOOLEAN bPlaySound);
     void UnselectAll();
     BOOL SelectCharacter(LONG characterId, BOOLEAN bPlaySelectSound);
@@ -244,7 +244,7 @@ public:
     CStringList* GetSaveGames();
     CString GetDirSaveRoot();
     CString GetDirSave();
-    CString sub_5C0B30();
+    CString GetSaveGameDir();
     BOOL CanEnterStore(STRREF& strError);
     BOOL AddCharacterToOverflow(LONG id);
     CStringList* GetScripts();
@@ -267,10 +267,10 @@ public:
     void MultiplayerSetCharacterCreationLocation();
     BOOL IsItemExclusive(CGameSprite* pSprite, INT slotNum, CItem* pItem, STRREF& strError);
     CWorldMap* GetWorldMap(CString sArea);
-    BOOL sub_5C79C0(CString sArea);
+    BOOL IsExpansionArea(CString sArea);
     DWORD FindItemInStore(const CResRef& cResStore, const CResRef& cResItem, BOOL checkForIdentified);
     SHORT TakeItemFromStore(const CResRef& cResStore, const CResRef& cResItem, LONG number);
-    INT sub_5C93E0();
+    INT CountDualClassedCharacters();
     void ResetMultiPlayerPermissions();
     INT GetNumberOfItemsInBag(const CResRef& storeResRef, CString a2);
     LONG GetAveragePartyLevel();
@@ -282,7 +282,7 @@ public:
     DWORD GetClassMask(const BYTE& nClass);
     BYTE GetSpellType(const CResRef& resRef);
     INT GetSpellLevel(const CResRef& resRef, BYTE nClass, DWORD nSpecialization);
-    void sub_5CADF0();
+    void WakeAllCharacters();
 
     INT GetCurrentChapter();
     void SetCurrentChapter(INT nChapter);
