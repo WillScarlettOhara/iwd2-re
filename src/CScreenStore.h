@@ -116,8 +116,8 @@ public:
     void SummonPopup(DWORD dwPopupId);
     void DismissPopup();
     void ResetErrorPanel(CUIPanel* pPanel);
-    void sub_6734F0(CUIPanel* pPanel);
-    void sub_673740(CUIPanel* pPanel);
+    void UpdateItemDescription(CUIPanel* pPanel);
+    void UpdateSpellDescription(CUIPanel* pPanel);
     BOOL IsCharacterAlive(SHORT nPortraitNum);
     void CheckEnableButtonBar();
     void SwitchMainPanel(DWORD dwMainPanelId);

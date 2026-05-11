@@ -291,7 +291,7 @@ void CScreenLoad::OnKeyDown(SHORT nKeysFlags)
                         OnErrorButtonClick(0);
                         break;
                     case 2:
-                        sub_63E440(0);
+                        DismissLoadError(0);
                         break;
                     }
                 }
@@ -1155,7 +1155,7 @@ void CScreenLoad::ResetPopupPanel(DWORD dwPanelId)
         ResetErrorPanel(pPanel);
         break;
     case 2:
-        sub_63E150(pPanel);
+        ShowLoadError(pPanel);
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
@@ -1303,7 +1303,7 @@ void CScreenLoad::ResetErrorPanel(CUIPanel* pPanel)
 }
 
 // 0x63E150
-void CScreenLoad::sub_63E150(CUIPanel* pPanel)
+void CScreenLoad::ShowLoadError(CUIPanel* pPanel)
 {
     m_nNumErrorButtons = 1;
 
@@ -1366,7 +1366,7 @@ void CScreenLoad::OnErrorButtonClick(INT nButton)
 }
 
 // 0x63E440
-void CScreenLoad::sub_63E440(INT nButton)
+void CScreenLoad::DismissLoadError(INT nButton)
 {
     CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
     renderLock.Lock(INFINITE);

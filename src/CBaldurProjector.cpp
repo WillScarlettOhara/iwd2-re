@@ -13,7 +13,7 @@ BOOLEAN CBaldurProjector::byte_8CFF2C;
 // `this` vs. instance obtained from global `g_pBaldurChitin`.
 //
 // 0x43E300
-void CBaldurProjector::sub_43E300(HBINK bnk)
+void CBaldurProjector::RenderBinkFrame(HBINK bnk)
 {
     LPDIRECTDRAWSURFACE pSurface = g_pChitin->pActiveEngine->pVidMode->pSurfaces[CVIDINF_SURFACE_BACK];
 
@@ -518,7 +518,7 @@ void CBaldurProjector::TimerAsynchronousUpdate()
                 }
             } else {
                 if (m_pfnBinkWait(m_hBink) == 0) {
-                    sub_43E300(m_hBink);
+                    RenderBinkFrame(m_hBink);
                 }
             }
         }

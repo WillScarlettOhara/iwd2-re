@@ -1015,10 +1015,10 @@ void CScreenStore::ResetPopupPanel(DWORD dwPanelId)
         ResetErrorPanel(pPanel);
         break;
     case 12:
-        sub_6734F0(pPanel);
+        UpdateItemDescription(pPanel);
         break;
     case 14:
-        sub_673740(pPanel);
+        UpdateSpellDescription(pPanel);
         break;
     case 20:
         break;
@@ -1172,7 +1172,7 @@ void CScreenStore::ResetErrorPanel(CUIPanel* pPanel)
 }
 
 // 0x6734F0
-void CScreenStore::sub_6734F0(CUIPanel* pPanel)
+void CScreenStore::UpdateItemDescription(CUIPanel* pPanel)
 {
     // FIXME: Unused.
     CString v1;
@@ -1236,7 +1236,7 @@ void CScreenStore::sub_6734F0(CUIPanel* pPanel)
 }
 
 // 0x673740
-void CScreenStore::sub_673740(CUIPanel* pPanel)
+void CScreenStore::UpdateSpellDescription(CUIPanel* pPanel)
 {
     m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(4));
 
