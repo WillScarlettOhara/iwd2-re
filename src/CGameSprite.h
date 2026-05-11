@@ -184,8 +184,8 @@ class CVisibilityMap;
 class IcewindCVisualEffect;
 
 typedef struct {
-    CString bm_field_0;
-    INT nm_field_4;
+    CString m_sSoundRes;
+    INT m_nFrame;
 } CGameSpriteSoundEntry;
 
 class CGameSpriteLastUpdate {

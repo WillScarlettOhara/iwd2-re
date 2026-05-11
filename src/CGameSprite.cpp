@@ -2236,8 +2236,8 @@ void CGameSprite::AIUpdate()
                             pfield_7398.GetNext(pos);
                         }
                         CGameSpriteSoundEntry& pEntry = pfield_7398.GetAt(pos);
-                        sfield_7418 = pEntry.bm_field_0;
-                        nfield_741C = pEntry.nm_field_4;
+                        sfield_7418 = pEntry.m_sSoundRes;
+                        nfield_741C = pEntry.m_nFrame;
                     }
                     if (m_animation.IsBeginningOfSequence()
                         && m_bHasFallSound
@@ -2249,8 +2249,8 @@ void CGameSprite::AIUpdate()
                             pfield_73EC.GetNext(pos);
                         }
                         CGameSpriteSoundEntry& pEntry = pfield_73EC.GetAt(pos);
-                        sfield_7428 = pEntry.bm_field_0;
-                        nfield_742C = pEntry.nm_field_4;
+                        sfield_7428 = pEntry.m_sSoundRes;
+                        nfield_742C = pEntry.m_nFrame;
                     }
                     if (nm_field_1C != 0) {
                         pGame->GetObjectArray()->Delete(nm_field_1C,
@@ -2320,8 +2320,8 @@ void CGameSprite::AIUpdate()
                             pfield_73B4.GetNext(pos);
                         }
                         CGameSpriteSoundEntry& pEntry = pfield_73B4.GetAt(pos);
-                        sfield_7420 = pEntry.bm_field_0;
-                        nfield_7424 = pEntry.nm_field_4;
+                        sfield_7420 = pEntry.m_sSoundRes;
+                        nfield_7424 = pEntry.m_nFrame;
                     }
                     if (pGame->GetVisibleArea() == m_pArea
                         && m_bHasFidgetSound
@@ -9502,8 +9502,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.bm_field_0 = "";
-            entry.nm_field_4 = 0;
+            entry.m_sSoundRes = "";
+            entry.m_nFrame = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9533,11 +9533,11 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.bm_field_0 = v1;
+                entry.m_sSoundRes = v1;
                 if (!v2.IsEmpty()) {
-                    entry.nm_field_4 = atoi(v2);
+                    entry.m_nFrame = atoi(v2);
                 } else {
-                    entry.nm_field_4 = 0;
+                    entry.m_nFrame = 0;
                 }
                 pfield_72F0.AddTail(entry);
             }
@@ -9548,8 +9548,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.bm_field_0 = "";
-            entry.nm_field_4 = 0;
+            entry.m_sSoundRes = "";
+            entry.m_nFrame = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9579,11 +9579,11 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.bm_field_0 = v1;
+                entry.m_sSoundRes = v1;
                 if (!v2.IsEmpty()) {
-                    entry.nm_field_4 = atoi(v2);
+                    entry.m_nFrame = atoi(v2);
                 } else {
-                    entry.nm_field_4 = 0;
+                    entry.m_nFrame = 0;
                 }
                 pfield_730C.AddTail(entry);
             }
@@ -9594,8 +9594,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.bm_field_0 = "";
-            entry.nm_field_4 = 0;
+            entry.m_sSoundRes = "";
+            entry.m_nFrame = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9625,11 +9625,11 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.bm_field_0 = v1;
+                entry.m_sSoundRes = v1;
                 if (!v2.IsEmpty()) {
-                    entry.nm_field_4 = atoi(v2);
+                    entry.m_nFrame = atoi(v2);
                 } else {
-                    entry.nm_field_4 = 0;
+                    entry.m_nFrame = 0;
                 }
                 pfield_7328.AddTail(entry);
             }
@@ -9640,8 +9640,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.bm_field_0 = "";
-            entry.nm_field_4 = 0;
+            entry.m_sSoundRes = "";
+            entry.m_nFrame = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9671,11 +9671,11 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.bm_field_0 = v1;
+                entry.m_sSoundRes = v1;
                 if (!v2.IsEmpty()) {
-                    entry.nm_field_4 = atoi(v2);
+                    entry.m_nFrame = atoi(v2);
                 } else {
-                    entry.nm_field_4 = 0;
+                    entry.m_nFrame = 0;
                 }
                 pfield_7344.AddTail(entry);
             }
@@ -9686,8 +9686,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.bm_field_0 = "";
-            entry.nm_field_4 = 0;
+            entry.m_sSoundRes = "";
+            entry.m_nFrame = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9717,11 +9717,11 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.bm_field_0 = v1;
+                entry.m_sSoundRes = v1;
                 if (!v2.IsEmpty()) {
-                    entry.nm_field_4 = atoi(v2);
+                    entry.m_nFrame = atoi(v2);
                 } else {
-                    entry.nm_field_4 = 0;
+                    entry.m_nFrame = 0;
                 }
                 pfield_7360.AddTail(entry);
             }
@@ -9732,8 +9732,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.bm_field_0 = "";
-            entry.nm_field_4 = 0;
+            entry.m_sSoundRes = "";
+            entry.m_nFrame = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9763,11 +9763,11 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.bm_field_0 = v1;
+                entry.m_sSoundRes = v1;
                 if (!v2.IsEmpty()) {
-                    entry.nm_field_4 = atoi(v2);
+                    entry.m_nFrame = atoi(v2);
                 } else {
-                    entry.nm_field_4 = 0;
+                    entry.m_nFrame = 0;
                 }
                 pfield_737C.AddTail(entry);
             }
@@ -9778,8 +9778,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.bm_field_0 = "";
-            entry.nm_field_4 = 0;
+            entry.m_sSoundRes = "";
+            entry.m_nFrame = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9809,11 +9809,11 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.bm_field_0 = v1;
+                entry.m_sSoundRes = v1;
                 if (!v2.IsEmpty()) {
-                    entry.nm_field_4 = atoi(v2);
+                    entry.m_nFrame = atoi(v2);
                 } else {
-                    entry.nm_field_4 = 0;
+                    entry.m_nFrame = 0;
                 }
                 pfield_7398.AddTail(entry);
             }
@@ -9824,8 +9824,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.bm_field_0 = "";
-            entry.nm_field_4 = 0;
+            entry.m_sSoundRes = "";
+            entry.m_nFrame = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9855,11 +9855,11 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.bm_field_0 = v1;
+                entry.m_sSoundRes = v1;
                 if (!v2.IsEmpty()) {
-                    entry.nm_field_4 = atoi(v2);
+                    entry.m_nFrame = atoi(v2);
                 } else {
-                    entry.nm_field_4 = 0;
+                    entry.m_nFrame = 0;
                 }
                 pfield_73B4.AddTail(entry);
             }
@@ -9870,8 +9870,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.bm_field_0 = "";
-            entry.nm_field_4 = 0;
+            entry.m_sSoundRes = "";
+            entry.m_nFrame = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9901,11 +9901,11 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.bm_field_0 = v1;
+                entry.m_sSoundRes = v1;
                 if (!v2.IsEmpty()) {
-                    entry.nm_field_4 = atoi(v2);
+                    entry.m_nFrame = atoi(v2);
                 } else {
-                    entry.nm_field_4 = 0;
+                    entry.m_nFrame = 0;
                 }
                 pfield_73D0.AddTail(entry);
             }
@@ -9916,8 +9916,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.bm_field_0 = "";
-            entry.nm_field_4 = 0;
+            entry.m_sSoundRes = "";
+            entry.m_nFrame = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9947,11 +9947,11 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.bm_field_0 = v1;
+                entry.m_sSoundRes = v1;
                 if (!v2.IsEmpty()) {
-                    entry.nm_field_4 = atoi(v2);
+                    entry.m_nFrame = atoi(v2);
                 } else {
-                    entry.nm_field_4 = 0;
+                    entry.m_nFrame = 0;
                 }
                 pfield_73EC.AddTail(entry);
             }
