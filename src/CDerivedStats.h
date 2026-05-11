@@ -562,7 +562,7 @@ public:
     /* 02AC */ CImmunitiesItemTypeEquipList m_cImmunitiesItemTypeEquipAlt;
     /* 02C8 */ CImmunitiesProjectile m_cBounceProjectile;
     /* 02E4 */ CImmunitiesEffect m_cBounceEffect;
-    /* 03C8 */ CImmunitiesProjectile m_cImmunitiesProjectile;
+    /* 03C8 */ CImmunitiesProjectile m_cImmunitiesProjectile2;
     /* 03E4 */ CImmunitiesProjectile m_cBounceProjectileAlt;
     /* 0400 */ CImmunitiesProjectile m_cImmunitiesProjectileAlt;
     /* 041C */ CImmunitiesProjectile m_cBounceProjectileLevelDec;
