@@ -2169,13 +2169,13 @@ void CScreenStore::OnSellItemButtonClick()
     renderLock.Lock(INFINITE);
     if (IsSellItemButtonClickable()) {
         if (m_pStore->GetType() == 4 && m_pBag != NULL) {
-            sub_67B030();
+            SellSelectedBagItemsToStore4();
         } else if (m_pStore->GetType() == 4) {
-            sub_67ABF0();
+            SellSelectedItemsToStore4();
         } else if (m_pBag != NULL) {
-            sub_67A5B0();
+            SellSelectedBagItems();
         } else {
-            sub_67A130();
+            SellSelectedItems();
         }
         // FIXME: Wrong placement for explicit unlock, should be outside of
         // this condition.
@@ -2184,7 +2184,7 @@ void CScreenStore::OnSellItemButtonClick()
 }
 
 // 0x67A130
-void CScreenStore::sub_67A130()
+void CScreenStore::SellSelectedItems()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -2312,7 +2312,7 @@ void CScreenStore::sub_67A130()
 }
 
 // 0x67A5B0
-void CScreenStore::sub_67A5B0()
+void CScreenStore::SellSelectedBagItems()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -2461,7 +2461,7 @@ void CScreenStore::sub_67A5B0()
 }
 
 // 0x67ABF0
-void CScreenStore::sub_67ABF0()
+void CScreenStore::SellSelectedItemsToStore4()
 {
     INT nIndex = 0;
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -2577,7 +2577,7 @@ void CScreenStore::sub_67ABF0()
 }
 
 // 0x67B030
-void CScreenStore::sub_67B030()
+void CScreenStore::SellSelectedBagItemsToStore4()
 {
     INT nIndex = 0;
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();

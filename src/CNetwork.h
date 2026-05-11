@@ -154,7 +154,7 @@ public:
     void OnCloseSession();
     BOOLEAN CheckSessionStatus(BOOLEAN bInThreadLoop);
     BOOLEAN EnumerateSessions(BOOLEAN a1, BOOLEAN a2);
-    BOOLEAN sub_7A61D0();
+    BOOLEAN IsPasswordRequired();
     BOOLEAN GetPasswordRequiredForSelectedSession();
     BOOLEAN GetSessionName(INT nSession, CString& sSessionName);
     BOOLEAN GetSessionGUID(INT nSession, GUID& sessionGuid);

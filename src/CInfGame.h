@@ -150,7 +150,7 @@ public:
     INT EndListManipulation(CGameArea* pArea);
     void ReleaseAreaThreadLock(BOOL a1);
     void DestroyGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
-    void sub_5A0160();
+    void InitializeGameAreas();
     LONG CachingRequirements(const CString& areaName);
     void CacheResFileWithResource(const CString& areaName);
     LONG ImportCharacter(const CString& sFileName, INT nIndex);
@@ -231,7 +231,7 @@ public:
     BOOL AddCharacterToFamiliars(LONG nCharacterId);
     BOOL RemoveCharacterFromFamiliars(LONG nCharacterId);
     DWORD GetScrollSpeed();
-    void sub_5BDBA0(int a1, BOOL a2);
+    void SetAreaGlobalFlag(int a1, BOOL a2);
     void ReputationAdjustment(SHORT reputationAdjustment, BOOL set);
     void ChangeReputation(SHORT eventCode);
     void AddDisposableItem(CItem* pItem);
@@ -261,7 +261,7 @@ public:
     CStringList* GetPortraits();
     CStringList* GetImportCharacters();
     CStringList* GetSounds();
-    STRREF sub_5C3770(CString a1);
+    STRREF GetDefaultBiography(CString a1);
     void ChangeBiography(BYTE nFixedPartyId, CString szBiography);
     BOOLEAN GetGameSpyCharacterInformation(INT nCharacterSlot, CString& sName, CString& sRace, CString& sClass, CString& sLevel);
     void MultiplayerSetCharacterCreationLocation();

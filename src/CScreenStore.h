@@ -158,10 +158,10 @@ public:
     void OnBuyItemButtonClick();
     BOOL IsSellItemButtonClickable();
     void OnSellItemButtonClick();
-    void sub_67A130();
-    void sub_67A5B0();
-    void sub_67ABF0();
-    void sub_67B030();
+    void SellSelectedItems();
+    void SellSelectedBagItems();
+    void SellSelectedItemsToStore4();
+    void SellSelectedBagItemsToStore4();
     void OnIdentifyItemButtonClick();
     void OnBuySpellButtonClick();
     void OnRentRoomButtonClick();

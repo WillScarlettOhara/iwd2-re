@@ -2479,7 +2479,7 @@ BOOLEAN CNetwork::EnumerateSessions(BOOLEAN a1, BOOLEAN a2)
 }
 
 // 0x7A61D0
-BOOLEAN CNetwork::sub_7A61D0()
+BOOLEAN CNetwork::IsPasswordRequired()
 {
     return TRUE;
 }

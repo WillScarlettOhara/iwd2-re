@@ -1683,7 +1683,7 @@ void CScreenConnection::OnDoneButtonClick()
         }
 
         if (pNetwork->m_bConnectionInitialized == TRUE && m_bEnumeratingAsynchronous == TRUE) {
-            pNetwork->sub_7A61D0();
+            pNetwork->IsPasswordRequired();
             m_bEliminateInitialize = TRUE;
         }
 
@@ -1748,7 +1748,7 @@ void CScreenConnection::OnDoneButtonClick()
                 renderLock.Unlock();
 
                 if (m_bEnumeratingAsynchronous == TRUE) {
-                    pNetwork->sub_7A61D0();
+                    pNetwork->IsPasswordRequired();
                     m_bEliminateInitialize = TRUE;
                 }
 
@@ -3539,7 +3539,7 @@ void CScreenConnection::HandleJoinCompletion(BYTE nEvent)
             INT nProviderType;
             g_pChitin->cNetwork.GetServiceProviderType(g_pChitin->cNetwork.m_nServiceProvider, nProviderType);
             if (nProviderType == CNetwork::SERV_PROV_TCP_IP) {
-                g_pChitin->cNetwork.sub_7A61D0();
+                g_pChitin->cNetwork.IsPasswordRequired();
             }
 
             m_nSessionIndex = -1;

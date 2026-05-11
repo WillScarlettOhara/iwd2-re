@@ -1056,7 +1056,7 @@ void CInfGame::InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     m_webHoldPalette.SetType(CVidPalette::TYPE_RANGE);
     m_webHoldPalette.SetRange(0, 65, m_rgbMasterBitmap);
 
-    sub_5A0160();
+    InitializeGameAreas();
 
     m_nCharacterTerminationSequenceDelay = 0;
 
@@ -1371,7 +1371,7 @@ void CInfGame::DestroyGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInP
 }
 
 // 0x5A0160
-void CInfGame::sub_5A0160()
+void CInfGame::InitializeGameAreas()
 {
     // TODO: Incomplete.
 }
@@ -5484,7 +5484,7 @@ DWORD CInfGame::GetScrollSpeed()
 }
 
 // 0x5BDBA0
-void CInfGame::sub_5BDBA0(int a1, BOOL a2)
+void CInfGame::SetAreaGlobalFlag(int a1, BOOL a2)
 {
     // TODO: Incomplete.
 }
@@ -6410,7 +6410,7 @@ CStringList* CInfGame::GetSounds()
 }
 
 // 0x5C3770
-STRREF CInfGame::sub_5C3770(CString a1)
+STRREF CInfGame::GetDefaultBiography(CString a1)
 {
     return 9885;
 }

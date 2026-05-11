@@ -2855,7 +2855,7 @@ void CUIControlButtonSinglePlayerModifyCharacterDelete::OnLButtonClick(CPoint pt
             pSinglePlayer->OnDoneButtonClick();
 
             if (nCharacterSlot == 0) {
-                pGame->sub_5BDBA0(-1, FALSE);
+                pGame->SetAreaGlobalFlag(-1, FALSE);
             }
 
             CGameSprite* pSprite;
