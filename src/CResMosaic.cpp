@@ -9,7 +9,7 @@ CResMosaic::CResMosaic()
     m_pHeader = NULL;
     m_pPalettes = NULL;
     m_pOffsets = NULL;
-    m_nStartTime = 1;
+    nm_field_18 = 1;
 }
 
 // 0x780290

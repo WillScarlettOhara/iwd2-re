@@ -344,7 +344,7 @@ public:
     ~CUIControlButtonGeneralBase() override;
     void OnLButtonClick(CPoint pt) override;
 
-    /* 066E */ CBaldurEngine* m_pField66E;
+    /* 066E */ CBaldurEngine* pfield_66E;
 };
 
 class CUIControlButtonGeneralWorld : public CUIControlButtonGeneralBase {
@@ -412,7 +412,7 @@ public:
     void TimerAsynchronousUpdate(BOOLEAN bInside) override;
 
     /* 0666 */ short pfield_666;
-    /* 0668 */ short m_wField668;
+    /* 0668 */ short wfield_668;
 };
 
 #endif /* CUICONTROLFACTORY_H_ */

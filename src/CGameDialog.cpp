@@ -66,8 +66,8 @@ BOOL CGameDialogSprite::StartDialog(CGameSprite* pSprite)
                 pSprite->GetId());
             g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
 
-            m_nField54 = 1;
-            m_pField56 = "";
+            nfield_54 = 1;
+            pfield_56 = "";
 
             return TRUE;
         }
@@ -95,8 +95,8 @@ void CGameDialogSprite::EndDialog()
 
     m_waitingForResponse = FALSE;
     m_responseMarker = -1;
-    m_nField54 = 0;
-    m_pField56 = "";
+    nfield_54 = 0;
+    pfield_56 = "";
 
     CResRef cResRef("SilentDH");
 

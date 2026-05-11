@@ -58,7 +58,7 @@ public:
     void SetKeymap(INT nMode, INT nIndex, BYTE nKey, BYTE nKeyFlag);
     void SelectKeymap(INT nIndex);
 
-    static INT m_dword8B3FE0[CSCREENKEYMAPS_PAGES][CSCREENKEYMAPS_PER_PAGE];
+    static INT dword_8B3FE0[CSCREENKEYMAPS_PAGES][CSCREENKEYMAPS_PER_PAGE];
     static STRREF dword_8B40D0[CSCREENKEYMAPS_PAGES][CSCREENKEYMAPS_PER_PAGE];
 
     /* 0106 */ CKeyInfo m_pVirtualKeys[CSCREENKEYMAPS_VIRTUAL_KEYS];

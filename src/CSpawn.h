@@ -241,8 +241,8 @@ public:
     BOOL GetINIKey(CMemINISection* pSection, const CString& sKey, CString& sValue);
 
     /* 001C */ CString mSectionAlias;
-    /* 0020 */ int m_nField20;
-    /* 0024 */ int m_nTickInterval;
+    /* 0020 */ int nm_field_20;
+    /* 0024 */ int nm_field_24;
     /* 0028 */ int nm_field_28;
     /* 002C */ BOOL CheckSpawnTimes;
     /* 0030 */ DWORD SpawnTimeOfDay;

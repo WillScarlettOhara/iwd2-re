@@ -15,7 +15,7 @@ public:
     int Release();
 
     /* 0050 */ BOOL m_bParsed;
-    /* 0054 */ int m_nField54;
+    /* 0054 */ int nfield_54;
     /* 0058 */ CString m_string;
 void FUN_00403310(); // 0x403310
 

@@ -858,11 +858,11 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         m_quickSongs[index] = buttonData;
     }
 
-    m_field_70F6 = rand() % 20 + 1;
-    m_field_70F7 = rand() % 20 + 1;
-    m_field_70F8 = rand() % 20 + 1;
-    m_field_70F9 = rand() % 20 + 1;
-    m_field_70FA = rand() % 100;
+    bfield_70F6 = rand() % 20 + 1;
+    bfield_70F7 = rand() % 20 + 1;
+    bfield_70F8 = rand() % 20 + 1;
+    bfield_70F9 = rand() % 20 + 1;
+    bfield_70FA = rand() % 100;
     m_field_55F2 = 0;
     m_field_55F6 = 0;
     m_field_55FA = 0;
@@ -973,7 +973,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         m_dialogWait = 0;
         m_dialogWaitTarget = CGameObjectArray::INVALID_INDEX;
         m_bAllowDialogInterrupt = TRUE;
-        m_sField56E4 = "";
+        sfield_56E4 = "";
         m_talkingRenderCount = 0;
         m_clearAIOnRemoveFromArea = TRUE;
 
@@ -981,7 +981,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
             m_portraitIconVidCell.pRes->Request();
         }
 
-        m_m_field_722A = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
+        m_field_722A = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
         m_interactingWith.Set(CAIObjectType::NOONE);
         m_nHPCONBonusTotalOld = 0;
         m_bHPCONBonusTotalUpdate = TRUE;
@@ -991,7 +991,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
 
         memset(m_field_725A, 0, sizeof(m_field_725A));
 
-        m_field_727E = 0;
+        nfield_727E = 0;
         m_pLocalVariables = new CVariableHash(16);
         m_internalButtonList = NULL;
 
@@ -1071,10 +1071,10 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
             m_derivedStats.m_generalState |= STATE_DEAD;
         }
 
-        m_field_7282 = -1;
-        m_field_7283 = -1;
-        m_field_7284 = -1;
-        m_field_728E = -1;
+        bfield_7282 = -1;
+        bfield_7283 = -1;
+        bfield_7284 = -1;
+        nfield_728E = -1;
         m_bPlayedEncumberedStopped = 0;
         m_bPlayedEncumberedSlowed = 0;
         m_field_72A0 = 0;
@@ -1122,7 +1122,7 @@ BOOL CGameSprite::IsOver(const CPoint& pt)
         && m_baseStats.bm_field_294 == 0
         && (m_typeAI.GetEnemyAlly() <= CAIObjectType::EA_GOODCUTOFF
             || (m_derivedStats.m_generalState & STATE_INVISIBLE) == 0
-            || (m_baseStats.pm_field_2FC & 0x1) != 0)) {
+            || (m_baseStats.bm_field_2FC & 0x1) != 0)) {
         const CRect& rEllipse = m_animation.GetEllipseRect();
         CPoint ptRelative(pt.x - m_pos.x, pt.y - m_pos.y);
         return rEllipse.PtInRect(ptRelative);
@@ -1630,11 +1630,11 @@ void CGameSprite::AIUpdate()
             }
         }
 
-        m_field_70F6 = rand() % 20 + 1;
-        m_field_70F7 = rand() % 20 + 1;
-        m_field_70F8 = rand() % 20 + 1;
-        m_field_70F9 = rand() % 20 + 1;
-        m_field_70FA = rand() % 100;
+        bfield_70F6 = rand() % 20 + 1;
+        bfield_70F7 = rand() % 20 + 1;
+        bfield_70F8 = rand() % 20 + 1;
+        bfield_70F9 = rand() % 20 + 1;
+        bfield_70FA = rand() % 100;
 
         if (m_nBounceCounter <= 0) {
             m_nBounceCounter = 25;
@@ -2143,9 +2143,9 @@ void CGameSprite::AIUpdate()
                     if (m_animation.IsEndOfSequence()) {
                         SetSequence(CGAMESPRITE_SEQ_READY);
                     } else {
-                        if (m_animation.GetCurrentFrame() == m_field_740C) {
+                        if (m_animation.GetCurrentFrame() == nfield_740C) {
                             CSound cSound;
-                            cSound.SetResRef(m_sField7408, TRUE, TRUE);
+                            cSound.SetResRef(sfield_7408, TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(3, reinterpret_cast<DWORD>(m_pArea));
@@ -2203,9 +2203,9 @@ void CGameSprite::AIUpdate()
                         }
                     } else {
                         if (m_bHasDamageSound
-                            && m_animation.GetCurrentFrame() == m_field_7414) {
+                            && m_animation.GetCurrentFrame() == nfield_7414) {
                             CSound cSound;
-                            cSound.SetResRef(CResRef(m_sField7410), TRUE, TRUE);
+                            cSound.SetResRef(CResRef(sfield_7410), TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
@@ -2228,36 +2228,36 @@ void CGameSprite::AIUpdate()
                     }
                     if (m_animation.IsBeginningOfSequence()
                         && m_bHasDeathSound
-                        && !m_pField7398.IsEmpty()) {
-                        INT nIndex = rand() % m_pField7398.GetCount();
-                        POSITION pos = m_pField7398.GetHeadPosition();
+                        && !pfield_7398.IsEmpty()) {
+                        INT nIndex = rand() % pfield_7398.GetCount();
+                        POSITION pos = pfield_7398.GetHeadPosition();
                         while (pos != NULL && nIndex != 0) {
                             nIndex--;
-                            m_pField7398.GetNext(pos);
+                            pfield_7398.GetNext(pos);
                         }
-                        CGameSpriteSoundEntry& pEntry = m_pField7398.GetAt(pos);
-                        m_sField7418 = pEntry.m_bWinsockInitialized;
-                        m_field_741C = pEntry.nm_field_4;
+                        CGameSpriteSoundEntry& pEntry = pfield_7398.GetAt(pos);
+                        sfield_7418 = pEntry.m_bWinsockInitialized;
+                        nfield_741C = pEntry.nm_field_4;
                     }
                     if (m_animation.IsBeginningOfSequence()
                         && m_bHasFallSound
-                        && !m_pField73EC.IsEmpty()) {
-                        INT nIndex = rand() % m_pField73EC.GetCount();
-                        POSITION pos = m_pField73EC.GetHeadPosition();
+                        && !pfield_73EC.IsEmpty()) {
+                        INT nIndex = rand() % pfield_73EC.GetCount();
+                        POSITION pos = pfield_73EC.GetHeadPosition();
                         while (pos != NULL && nIndex != 0) {
                             nIndex--;
-                            m_pField73EC.GetNext(pos);
+                            pfield_73EC.GetNext(pos);
                         }
-                        CGameSpriteSoundEntry& pEntry = m_pField73EC.GetAt(pos);
-                        m_sField7428 = pEntry.m_bWinsockInitialized;
-                        m_field_742C = pEntry.nm_field_4;
+                        CGameSpriteSoundEntry& pEntry = pfield_73EC.GetAt(pos);
+                        sfield_7428 = pEntry.m_bWinsockInitialized;
+                        nfield_742C = pEntry.nm_field_4;
                     }
-                    if (m_nDeadline != 0) {
-                        pGame->GetObjectArray()->Delete(m_nDeadline,
+                    if (nm_field_1C != 0) {
+                        pGame->GetObjectArray()->Delete(nm_field_1C,
                             CGameObjectArray::THREAD_ASYNCH,
                             NULL,
                             INFINITE);
-                        m_nDeadline = 0;
+                        nm_field_1C = 0;
                     }
                     m_nSequence = CGAMESPRITE_SEQ_DIE;
                     if (m_animation.IsEndOfSequence()) {
@@ -2271,9 +2271,9 @@ void CGameSprite::AIUpdate()
                         SetSequence(CGAMESPRITE_SEQ_TWITCH);
                     } else {
                         if (m_bHasDeathSound
-                            && m_animation.GetCurrentFrame() == m_field_741C) {
+                            && m_animation.GetCurrentFrame() == nfield_741C) {
                             CSound cSound;
-                            cSound.SetResRef(CResRef(m_sField7418), TRUE, TRUE);
+                            cSound.SetResRef(CResRef(sfield_7418), TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
@@ -2283,9 +2283,9 @@ void CGameSprite::AIUpdate()
                             cSound.Play(m_pos.x, m_pos.y, 0, FALSE);
                         }
                         if (m_bHasFallSound
-                            && m_animation.GetCurrentFrame() == m_field_742C) {
+                            && m_animation.GetCurrentFrame() == nfield_742C) {
                             CSound cSound;
-                            cSound.SetResRef(CResRef(m_sField7428), TRUE, TRUE);
+                            cSound.SetResRef(CResRef(sfield_7428), TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
@@ -2312,25 +2312,25 @@ void CGameSprite::AIUpdate()
                     if (m_animation.IsBeginningOfSequence()
                         && m_bHasFidgetSound
                         && m_nSequence == CGAMESPRITE_SEQ_HEAD_TURN
-                        && !m_pField73B4.IsEmpty()) {
-                        INT nIndex = rand() % m_pField73B4.GetCount();
-                        POSITION pos = m_pField73B4.GetHeadPosition();
+                        && !pfield_73B4.IsEmpty()) {
+                        INT nIndex = rand() % pfield_73B4.GetCount();
+                        POSITION pos = pfield_73B4.GetHeadPosition();
                         while (pos != NULL && nIndex != 0) {
                             nIndex--;
-                            m_pField73B4.GetNext(pos);
+                            pfield_73B4.GetNext(pos);
                         }
-                        CGameSpriteSoundEntry& pEntry = m_pField73B4.GetAt(pos);
-                        m_sField7420 = pEntry.m_bWinsockInitialized;
-                        m_field_7424 = pEntry.nm_field_4;
+                        CGameSpriteSoundEntry& pEntry = pfield_73B4.GetAt(pos);
+                        sfield_7420 = pEntry.m_bWinsockInitialized;
+                        nfield_7424 = pEntry.nm_field_4;
                     }
                     if (pGame->GetVisibleArea() == m_pArea
                         && m_bHasFidgetSound
-                        && m_animation.GetCurrentFrame() == m_field_7424
+                        && m_animation.GetCurrentFrame() == nfield_7424
                         && m_nSequence == CGAMESPRITE_SEQ_HEAD_TURN
                         && !m_baseStats.bm_field_294) {
-                        if (m_animation.GetCurrentFrame() == m_field_740C) {
+                        if (m_animation.GetCurrentFrame() == nfield_740C) {
                             CSound cSound;
-                            cSound.SetResRef(m_sField7420, TRUE, TRUE);
+                            cSound.SetResRef(sfield_7420, TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(13, reinterpret_cast<DWORD>(m_pArea));
@@ -2347,9 +2347,9 @@ void CGameSprite::AIUpdate()
                         // NOTE: Uninline.
                         SetIdleSequence();
                     } else {
-                        if (m_animation.GetCurrentFrame() == m_field_740C) {
+                        if (m_animation.GetCurrentFrame() == nfield_740C) {
                             CSound cSound;
-                            cSound.SetResRef(m_sField7408, TRUE, TRUE);
+                            cSound.SetResRef(sfield_7408, TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(3, reinterpret_cast<DWORD>(m_pArea));
@@ -2362,12 +2362,12 @@ void CGameSprite::AIUpdate()
                     }
                     break;
                 case CGAMESPRITE_SEQ_TWITCH:
-                    if (m_nDeadline != 0) {
-                        pGame->GetObjectArray()->Delete(m_nDeadline,
+                    if (nm_field_1C != 0) {
+                        pGame->GetObjectArray()->Delete(nm_field_1C,
                             CGameObjectArray::THREAD_ASYNCH,
                             NULL,
                             INFINITE);
-                        m_nDeadline = 0;
+                        nm_field_1C = 0;
                     }
                     if (m_nTwitches != 0) {
                         if (m_animation.IsEndOfSequence()) {
@@ -2436,12 +2436,12 @@ void CGameSprite::AIUpdate()
                     }
                     break;
                 case CGAMESPRITE_SEQ_SLEEP:
-                    if (m_nDeadline != 0) {
-                        pGame->GetObjectArray()->Delete(m_nDeadline,
+                    if (nm_field_1C != 0) {
+                        pGame->GetObjectArray()->Delete(nm_field_1C,
                             CGameObjectArray::THREAD_ASYNCH,
                             NULL,
                             INFINITE);
-                        m_nDeadline = 0;
+                        nm_field_1C = 0;
                     }
                     m_nSequence = CGAMESPRITE_SEQ_SLEEP;
                     if (m_animation.IsEndOfSequence()) {
@@ -3256,7 +3256,7 @@ void CGameSprite::CheckIfVisible()
                 if (!m_bVisibleMonster
                     && m_typeAI.GetEnemyAlly() >= CAIObjectType::EA_EVILCUTOFF
                     && Animate()
-                    && ((m_derivedStats.m_generalState & STATE_INVISIBLE) == 0 || (m_baseStats.pm_field_2FC & 0x1) != 0)
+                    && ((m_derivedStats.m_generalState & STATE_INVISIBLE) == 0 || (m_baseStats.bm_field_2FC & 0x1) != 0)
                     && !m_baseStats.bm_field_294
                     && (m_baseStats.m_flags & 0x8000) == 0) {
                     if (m_pArea->m_nVisibleMonster == 0) {
@@ -4613,10 +4613,10 @@ void CGameSprite::RenderMarkers(CVidMode* pVidMode, INT nSurface)
     if (m_pArea->m_visibility.IsTileExplored(m_pArea->m_visibility.PointToTile(pt))
         && (m_typeAI.m_nEnemyAlly <= CAIObjectType::EA_CONTROLCUTOFF
             || (m_derivedStats.m_generalState & STATE_INVISIBLE) == 0
-            || (m_baseStats.pm_field_2FC & 0x1) != 0)
+            || (m_baseStats.bm_field_2FC & 0x1) != 0)
         && m_baseStats.bm_field_294 != 1) {
         DWORD level = g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nGuiFeedbackLevel;
-        if (g_pBaldurChitin->GetScreenWorld()->m_field_14A) {
+        if (g_pBaldurChitin->GetScreenWorld()->nm_m_field_14A) {
             level = 5;
         }
         if (g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_cutScene) {
@@ -6309,7 +6309,7 @@ void CGameSprite::ClearMarshal(BOOL unequip)
         if (m_domainSpells.m_lists[nLevel].m_List.size() > 0) {
             m_domainSpells.m_lists[nLevel].m_List.clear();
             m_domainSpells.m_lists[nLevel].nm_field_14 = 0;
-            m_domainSpells.m_lists[nLevel].m_nStartTime = 0;
+            m_domainSpells.m_lists[nLevel].nm_field_18 = 0;
         }
     }
     m_domainSpells.m_nHighestLevel = 0;
@@ -6317,19 +6317,19 @@ void CGameSprite::ClearMarshal(BOOL unequip)
     if (m_innateSpells.m_List.size() > 0) {
         m_innateSpells.m_List.clear();
         m_innateSpells.nm_field_14 = 0;
-        m_innateSpells.m_nStartTime = 0;
+        m_innateSpells.nm_field_18 = 0;
     }
 
     if (m_songs.m_List.size() > 0) {
         m_songs.m_List.clear();
         m_songs.nm_field_14 = 0;
-        m_songs.m_nStartTime = 0;
+        m_songs.nm_field_18 = 0;
     }
 
     if (m_shapeshifts.m_List.size() > 0) {
         m_shapeshifts.m_List.clear();
         m_shapeshifts.nm_field_14 = 0;
-        m_shapeshifts.m_nStartTime = 0;
+        m_shapeshifts.nm_field_18 = 0;
     }
 
     // NOTE: Uninline.
@@ -6554,14 +6554,14 @@ void CGameSprite::Marshal(CSavedGamePartyCreature& partyCreature, BOOLEAN bNetwo
     for (nIndex = 0; nIndex < 8; nIndex++) {
         partyCreature.m_quickWeaponsItemNum[nIndex] = m_quickWeapons[nIndex].m_abilityId.m_itemNum;
         partyCreature.m_quickWeaponsAbilityNum[nIndex] = m_quickWeapons[nIndex].m_abilityId.m_abilityNum;
-        partyCreature.bm_field_2A7[nIndex] = m_m_field_3D3A[nIndex];
+        partyCreature.bm_field_2A7[nIndex] = bm_field_3D3A[nIndex];
     }
 
     for (nIndex = 0; nIndex < 9; nIndex++) {
         m_quickSpells[nIndex].m_abilityId.m_res.GetResRef(partyCreature.m_quickSpellsSpellId[nIndex]);
         partyCreature.m_quickSpellsClass[nIndex] = m_quickSpells[nIndex].m_abilityId.m_nClass;
         partyCreature.bm_field_280[nIndex] = m_quickSpells[nIndex].m_abilityId.bm_field_1D;
-        partyCreature.bm_field_29E[nIndex] = static_cast<unsigned char>(m_quickSpells[nIndex].m_abilityId.m_bField1E);
+        partyCreature.bm_field_29E[nIndex] = static_cast<unsigned char>(m_quickSpells[nIndex].m_abilityId.bm_field_1E);
     }
 
     for (nIndex = 0; nIndex < 3; nIndex++) {
@@ -6578,7 +6578,7 @@ void CGameSprite::Marshal(CSavedGamePartyCreature& partyCreature, BOOLEAN bNetwo
     }
 
     for (nIndex = 0; nIndex < 9; nIndex++) {
-        partyCreature.nm_field_19A[nIndex] = m_m_field_3D14[nIndex];
+        partyCreature.nm_field_19A[nIndex] = nm_field_3D14[nIndex];
     }
 
     partyCreature.m_nLastSpellbookClassIndex = m_nLastSpellbookClassIndex;
@@ -6759,7 +6759,7 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
     }
 
     for (nIndex = 0; nIndex < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22; nIndex++) {
-        m_m_field_3D14[nIndex] = pCreature->nm_field_19A[nIndex];
+        nm_field_3D14[nIndex] = pCreature->nm_field_19A[nIndex];
     }
 
     m_nLastSpellbookClassIndex = pCreature->m_nLastSpellbookClassIndex;
@@ -7123,7 +7123,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
             nOffset += sizeof(unsigned int);
             creatureSize -= sizeof(unsigned int);
 
-            m_spells.m_spellsByClass[nClass].m_lists[nLevel].m_nStartTime = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+            m_spells.m_spellsByClass[nClass].m_lists[nLevel].nm_field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
             nOffset += sizeof(unsigned int);
             creatureSize -= sizeof(unsigned int);
         }
@@ -7156,7 +7156,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
         nOffset += sizeof(unsigned int);
         creatureSize -= sizeof(unsigned int);
 
-        m_domainSpells.m_lists[nLevel].m_nStartTime = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+        m_domainSpells.m_lists[nLevel].nm_field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
         nOffset += sizeof(unsigned int);
         creatureSize -= sizeof(unsigned int);
     }
@@ -7185,7 +7185,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
-    m_innateSpells.m_nStartTime = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+    m_innateSpells.nm_field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
@@ -7213,7 +7213,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
-    m_songs.m_nStartTime = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+    m_songs.nm_field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
@@ -7241,7 +7241,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
-    m_shapeshifts.m_nStartTime = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+    m_shapeshifts.nm_field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
@@ -7301,7 +7301,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
         }
     }
 
-    m_baseStats.pm_field_2FC &= ~0x1;
+    m_baseStats.bm_field_2FC &= ~0x1;
     m_dialog = offsets->m_dialog;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -7612,21 +7612,21 @@ void CGameSprite::GetWeaponButton(BYTE nButtonNum, CButtonData& cButtonData)
     CItem* pItem = m_equipment.m_items[nButtonNum + 43];
     if (pItem != NULL) {
         pItem->Demand();
-        ITEM_ABILITY* pAbility = pItem->GetAbility(m_m_field_3D3A[nButtonNum]);
+        ITEM_ABILITY* pAbility = pItem->GetAbility(bm_field_3D3A[nButtonNum]);
         if (pAbility != NULL) {
             cButtonData.m_icon = CString(pAbility->quickSlotIcon);
             cButtonData.m_abilityId.m_itemType = 2;
             cButtonData.m_abilityId.m_itemNum = nButtonNum + 43;
-            cButtonData.m_abilityId.m_abilityNum = m_m_field_3D3A[nButtonNum];
+            cButtonData.m_abilityId.m_abilityNum = bm_field_3D3A[nButtonNum];
             cButtonData.m_abilityId.wm_field_10 = rule.GetItemAbilityDescription(pItem->cResRef,
-                m_m_field_3D3A[nButtonNum]);
+                bm_field_3D3A[nButtonNum]);
             if (cButtonData.m_abilityId.wm_field_10 == -1) {
                 cButtonData.m_abilityId.wm_field_10 = pItem->GetGenericName();
             }
 
             cButtonData.m_count = 0;
             if (pItem->GetMaxStackable() > 1) {
-                cButtonData.m_count = pItem->GetUsageCount(m_m_field_3D3A[nButtonNum]);
+                cButtonData.m_count = pItem->GetUsageCount(bm_field_3D3A[nButtonNum]);
             }
         }
         pItem->Release();
@@ -7788,14 +7788,14 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
         cButtonData.m_abilityId.m_targetType = pBestAbility->actionType;
         cButtonData.m_abilityId.bm_field_1D = a5;
         cButtonData.m_abilityId.m_nClass = nClass;
-        cButtonData.m_abilityId.m_bField1E = nKitIndex;
+        cButtonData.m_abilityId.bm_field_1E = nKitIndex;
         cButtonData.m_abilityId.wm_field_10 = cSpell.GetGenericName();
 
         if (type == 1) {
-            cButtonData.m_abilityId.m_nStartTime = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassSuffixStringRef(nClass);
+            cButtonData.m_abilityId.nm_field_18 = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassSuffixStringRef(nClass);
             if (!CanCast(nClass, 0, &cSpell)) {
                 cButtonData.m_bDisabled = TRUE;
-                cButtonData.m_abilityId.m_nStartTime = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassBeyondCastingAbilityStringRef(nClass);
+                cButtonData.m_abilityId.nm_field_18 = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassBeyondCastingAbilityStringRef(nClass);
             }
         }
 
@@ -8355,7 +8355,7 @@ void CGameSprite::ReadySpell(SHORT buttonNum, INT nType, BOOLEAN firstCall)
                 m_typeAI,
                 string,
                 0,
-                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.m_bField1E << 8));
+                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.bm_field_1E << 8));
             action.m_specificID3 = m_currentUseButton.m_abilityId.bm_field_1D;
             ClearActions(FALSE);
             m_userCommandPause = 75;
@@ -8481,7 +8481,7 @@ void CGameSprite::UseSpellFromButton(CButtonData buttonData, BOOLEAN firstCall)
                 m_typeAI,
                 string,
                 0,
-                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.m_bField1E << 8));
+                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.bm_field_1E << 8));
 
             action.m_specificID3 = m_currentUseButton.m_abilityId.bm_field_1D;
             ClearActions(FALSE);
@@ -8526,7 +8526,7 @@ void CGameSprite::UseItemFromButton(CButtonData buttonData, BOOLEAN firstCall)
                 m_typeAI,
                 string,
                 0,
-                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.m_bField1E << 8));
+                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.bm_field_1E << 8));
 
             ClearActions(FALSE);
             m_userCommandPause = 75;
@@ -8546,7 +8546,7 @@ void CGameSprite::UseItemFromButton(CButtonData buttonData, BOOLEAN firstCall)
                 m_typeAI,
                 string,
                 0,
-                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.m_bField1E << 8));
+                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.bm_field_1E << 8));
             action.m_specificID3 = m_currentUseButton.m_abilityId.bm_field_1D;
             ClearActions(FALSE);
             m_userCommandPause = 75;
@@ -9815,7 +9815,7 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
                 } else {
                     entry.nm_field_4 = 0;
                 }
-                m_pField7398.AddTail(entry);
+                pfield_7398.AddTail(entry);
             }
         }
     }
@@ -9861,7 +9861,7 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
                 } else {
                     entry.nm_field_4 = 0;
                 }
-                m_pField73B4.AddTail(entry);
+                pfield_73B4.AddTail(entry);
             }
         }
     }
@@ -9953,7 +9953,7 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
                 } else {
                     entry.nm_field_4 = 0;
                 }
-                m_pField73EC.AddTail(entry);
+                pfield_73EC.AddTail(entry);
             }
         }
     }
@@ -14817,7 +14817,7 @@ INT CGameSprite::GetCustomButtonValue(BYTE buttonNum)
     // __LINE__: 2028
     UTIL_ASSERT(buttonNum < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22);
 
-    return m_m_field_3D14[buttonNum];
+    return nm_field_3D14[buttonNum];
 }
 
 // 0x594120
@@ -14827,7 +14827,7 @@ void CGameSprite::SetCustomButtonValue(BYTE buttonNum, int a2)
     // __LINE__: 2036
     UTIL_ASSERT(buttonNum < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22);
 
-    m_m_field_3D14[buttonNum] = a2;
+    nm_field_3D14[buttonNum] = a2;
 }
 
 // 0x594160
@@ -15273,8 +15273,8 @@ void CGameSprite::ResetQuickSlots()
     INT nClass = m_derivedStats.GetBestClass() - 1;
 
     for (int nSlot = 0; nSlot < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22; nSlot++) {
-        if (m_m_field_3D14[nSlot] == 0) {
-            m_m_field_3D14[nSlot] = atol(ruleTables.m_tQuickSlots.GetAt(CPoint(nSlot, nClass)));
+        if (nm_field_3D14[nSlot] == 0) {
+            nm_field_3D14[nSlot] = atol(ruleTables.m_tQuickSlots.GetAt(CPoint(nSlot, nClass)));
         }
     }
 }
@@ -15972,7 +15972,7 @@ void CGameSprite::SetQuickWeapon(BYTE buttonNum, BYTE index)
     // __LINE__: 2031
     UTIL_ASSERT(buttonNum < CGAMESAVECHARACTER_NUM_QUICK_WEAPONS22);
 
-    m_m_field_3D3A[buttonNum] = index;
+    bm_field_3D3A[buttonNum] = index;
 }
 
 // FIXME: `buttonData` should be reference.

@@ -21,7 +21,7 @@ CUIControlTextDisplay::CUIControlTextDisplay(CUIPanel* pPanel, UI_CONTROL_TEXTDI
     m_posTopString = NULL;
     m_nRenderCount = 0;
     wfield_A68 = 256;
-    m_wFieldA6C = 0;
+    wfield_A6C = 0;
     m_bField5A = 0;
     m_nScrollBarID = pControlInfo->nScrollBarID;
     m_rgbHighlightColor = RGB(255, 255, 255);
@@ -78,7 +78,7 @@ CUIControlTextDisplay::CUIControlTextDisplay(CUIPanel* pPanel, UI_CONTROL_TEXTDI
     bfield_A67 = 0;
     SetNeedAsyncUpdate();
     bfield_AB7 = 1;
-    m_wFieldA6C = m_size.cy / m_nFontHeight;
+    wfield_A6C = m_size.cy / m_nFontHeight;
 }
 
 // 0x4E1D50
@@ -140,7 +140,7 @@ POSITION CUIControlTextDisplay::DisplayString(const CString& sLabel, const CStri
     // __LINE__: 5643
     UTIL_ASSERT(m_plstStrings != NULL);
 
-    if (m_wFieldA6C >= wfield_A68) {
+    if (wfield_A6C >= wfield_A68) {
         RemoveString(m_plstStrings->GetHeadPosition());
     }
 
@@ -165,23 +165,23 @@ POSITION CUIControlTextDisplay::DisplayString(const CString& sLabel, const CStri
     } else {
         if (m_nScrollBarID == -1
             || !static_cast<CUIControlScrollBar*>(m_pPanel->GetControl(m_nScrollBarID))->bm_field_146) {
-            if (m_plstStrings->GetCount() - m_bField5A > m_wFieldA6C) {
-                m_bField5A = max(nOldCount - m_wFieldA6C, 0);
+            if (m_plstStrings->GetCount() - m_bField5A > wfield_A6C) {
+                m_bField5A = max(nOldCount - wfield_A6C, 0);
 
                 // NOTE: Uninline.
                 AdjustScrollBar();
 
-                m_posTopString = m_plstStrings->FindIndex(max(nOldCount - m_wFieldA6C, 0));
+                m_posTopString = m_plstStrings->FindIndex(max(nOldCount - wfield_A6C, 0));
                 if (m_posTopString == NULL) {
                     m_posTopString = m_plstStrings->GetTailPosition();
                 }
 
-                bfield_A65 = min(v1, m_wFieldA6C);
+                bfield_A65 = min(v1, wfield_A6C);
             }
         }
     }
 
-    m_wFieldA6C++;
+    wfield_A6C++;
     wfield_A62 = 0;
     bfield_A64 = 0;
 
@@ -199,7 +199,7 @@ void CUIControlTextDisplay::AdjustScrollBar()
         CUIControlScrollBar* pScrollBar = static_cast<CUIControlScrollBar*>(m_pPanel->GetControl(m_nScrollBarID));
 
         // NOTE: Uninline.
-        pScrollBar->AdjustScrollBar(m_bField5A, m_plstStrings->GetCount(), m_wFieldA6C);
+        pScrollBar->AdjustScrollBar(m_bField5A, m_plstStrings->GetCount(), wfield_A6C);
     }
 }
 
@@ -265,7 +265,7 @@ INT CUIControlTextDisplay::GetNumLines(POSITION posBossItem)
 void CUIControlTextDisplay::InvalidateRect()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount = CUIManager::RENDER_COUNT;
         lock.Unlock();
@@ -356,7 +356,7 @@ void CUIControlTextDisplay::OnScroll(SHORT a1, SHORT a2)
 {
     SHORT nOldIndex = m_bField5A;
     // TODO: Odd code, check.
-    m_bField5A = max(m_plstStrings->GetCount() - m_wFieldA6C, 0) * a1 / a2;
+    m_bField5A = max(m_plstStrings->GetCount() - wfield_A6C, 0) * a1 / a2;
     if (nOldIndex != m_bField5A) {
         m_posTopString = m_plstStrings->FindIndex(m_bField5A);
 
@@ -370,7 +370,7 @@ void CUIControlTextDisplay::OnScroll(SHORT a1, SHORT a2)
 void CUIControlTextDisplay::OnScrollDown()
 {
     bfield_A64 = 0;
-    if (m_bField5A < m_plstStrings->GetCount() - m_wFieldA6C) {
+    if (m_bField5A < m_plstStrings->GetCount() - wfield_A6C) {
         if (bfield_A65) {
             bfield_A67 = 1;
         } else {
@@ -395,11 +395,11 @@ void CUIControlTextDisplay::OnScrollUp()
 // 0x4E28B0
 void CUIControlTextDisplay::OnPageDown(DWORD nLines)
 {
-    if (m_plstStrings->GetCount() > m_wFieldA6C) {
+    if (m_plstStrings->GetCount() > wfield_A6C) {
         SHORT nOldIndex = m_bField5A;
         // TODO: Check casts.
-        SHORT v1 = static_cast<SHORT> min(nLines, static_cast<DWORD>(m_wFieldA6C - 1));
-        m_bField5A = min(m_bField5A + v1, m_plstStrings->GetCount() - m_wFieldA6C);
+        SHORT v1 = static_cast<SHORT> min(nLines, static_cast<DWORD>(wfield_A6C - 1));
+        m_bField5A = min(m_bField5A + v1, m_plstStrings->GetCount() - wfield_A6C);
         if (nOldIndex != m_bField5A) {
             m_posTopString = m_plstStrings->FindIndex(m_bField5A);
 
@@ -419,7 +419,7 @@ void CUIControlTextDisplay::OnPageUp(DWORD nLines)
     if (!m_plstStrings->IsEmpty()) {
         SHORT nOldIndex = m_bField5A;
         // TODO: Check casts.
-        SHORT v1 = static_cast<SHORT> min(nLines, static_cast<DWORD>(m_wFieldA6C - 1));
+        SHORT v1 = static_cast<SHORT> min(nLines, static_cast<DWORD>(wfield_A6C - 1));
         m_bField5A = max(m_bField5A - v1, 0);
         if (nOldIndex != m_bField5A) {
             m_posTopString = m_plstStrings->FindIndex(m_bField5A);
@@ -455,7 +455,7 @@ void CUIControlTextDisplay::RemoveAll()
     m_bField5A = 0;
     m_nField5C = 0;
     m_posHighlightedItem = NULL;
-    m_wFieldA6C = 0;
+    wfield_A6C = 0;
 
     CRect rDirty(m_pPanel->m_ptOrigin + m_ptOrigin, m_size);
     m_pPanel->InvalidateRect(&rDirty);
@@ -492,7 +492,7 @@ void CUIControlTextDisplay::RemoveString(POSITION posBoss)
         }
     }
 
-    m_wFieldA6C--;
+    wfield_A6C--;
 
     if (!m_plstStrings->IsEmpty()) {
         if (m_posTopString == NULL) {
@@ -657,7 +657,7 @@ BOOL CUIControlTextDisplay::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -844,7 +844,7 @@ void CUIControlTextDisplay::TimerAsynchronousUpdate(BOOLEAN bInside)
         }
 
         if (bfield_A65 != 0 || bfield_A67) {
-            if (m_bField5A < m_plstStrings->GetCount() - m_wFieldA6C) {
+            if (m_bField5A < m_plstStrings->GetCount() - wfield_A6C) {
                 if (wfield_A62 > -m_nFontHeight) {
                     wfield_A62 -= 3;
                     if (wfield_A62 <= -m_nFontHeight) {
@@ -856,7 +856,7 @@ void CUIControlTextDisplay::TimerAsynchronousUpdate(BOOLEAN bInside)
                             // NOTE: Uninline.
                             AdjustScrollBar();
 
-                            if (bfield_A67 && m_bField5A < m_plstStrings->GetCount() - m_wFieldA6C) {
+                            if (bfield_A67 && m_bField5A < m_plstStrings->GetCount() - wfield_A6C) {
                                 wfield_A62 += m_nFontHeight;
                             } else {
                                 wfield_A62 = 0;
@@ -967,8 +967,8 @@ void CUIControlTextDisplay::SetTopString(POSITION posTopString)
 // 0x4E3D60
 void CUIControlTextDisplay::ScrollToBottom()
 {
-    if (m_wFieldA6C < m_plstStrings->GetCount()) {
-        POSITION posTopString = m_plstStrings->FindIndex(m_plstStrings->GetCount() - m_wFieldA6C);
+    if (wfield_A6C < m_plstStrings->GetCount()) {
+        POSITION posTopString = m_plstStrings->FindIndex(m_plstStrings->GetCount() - wfield_A6C);
         // NOTE: Uninline.
         SetTopString(posTopString);
     }

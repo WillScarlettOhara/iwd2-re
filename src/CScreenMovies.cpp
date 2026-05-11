@@ -67,7 +67,7 @@ CScreenMovies::CScreenMovies()
     m_nEngineState = 0;
     m_pMovies = NULL;
     m_nMovieIndex = -1;
-    m_bField7B0 = 0;
+    bfield_7B0 = 0;
 }
 
 // 0x49FC40

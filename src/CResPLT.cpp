@@ -4,8 +4,8 @@
 CResPLT::CResPLT()
 {
     nfield_50 = 0;
-    m_nField54 = 0;
-    m_nField58 = 0;
+    nfield_54 = 0;
+    nfield_58 = 0;
 }
 
 // 0x77F370

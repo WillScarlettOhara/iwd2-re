@@ -126,7 +126,7 @@ public:
 
     /* 0666 */ CResRef m_spellResRef;
     /* 066E */ CResRef m_iconResRef;
-    /* 0676 */ int m_nField676;
+    /* 0676 */ int nfield_676;
     /* 067A */ int nfield_67A;
 };
 

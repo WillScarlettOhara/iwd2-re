@@ -82,8 +82,8 @@ public:
     /* 0A66 */ unsigned char bfield_A66;
     /* 0A67 */ unsigned char bfield_A67;
     /* 0A68 */ short wfield_A68;
-    /* 0A6C */ short m_wFieldA6C;
-    /* 0A6C */ short m_wFieldA6C;
+    /* 0A6C */ short wfield_A6C;
+    /* 0A6C */ short wfield_A6C;
     /* 0A6E */ DWORD m_nScrollBarID;
     /* 0A72 */ COLORREF m_rgbLabelColor;
     /* 0A76 */ COLORREF m_rgbBackgroundColor;

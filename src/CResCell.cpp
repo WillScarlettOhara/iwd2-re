@@ -14,7 +14,7 @@ CResCell::CResCell()
     m_nFrameListSize = 0;
     m_pPalette = NULL;
     m_bParsing = FALSE;
-    m_nStartTime = 1;
+    nm_field_18 = 1;
     m_bCacheHeader = TRUE;
 }
 

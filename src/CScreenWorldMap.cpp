@@ -1405,7 +1405,7 @@ void CUIControlButtonWorldMapDone::OnLButtonClick(CPoint pt)
 CUIControlButtonWorldMapWorldMap::CUIControlButtonWorldMapWorldMap(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlButton(panel, controlInfo, LBUTTON, 0)
 {
-    m_nField676 = 0;
+    nfield_676 = 0;
     nfield_67A = 0;
 }
 
@@ -1426,7 +1426,7 @@ BOOL CUIControlButtonWorldMapWorldMap::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1478,7 +1478,7 @@ BOOL CUIControlButtonWorldMapWorldMap::OnLButtonDown(CPoint pt)
     m_pPanel->m_pManager->SetCapture(this, CUIManager::MOUSELBUTTON);
     m_pPanel->m_pManager->bm_field_2D = 0;
     m_pPanel->m_pManager->nm_field_32 = m_nID;
-    m_pPanel->m_pManager->m_nDeadline = 0;
+    m_pPanel->m_pManager->nm_field_1C = 0;
 
     CScreenWorldMap* pWorldMap = g_pBaldurChitin->m_pEngineWorldMap;
 

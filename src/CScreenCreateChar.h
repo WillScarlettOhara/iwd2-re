@@ -173,7 +173,7 @@ public:
     // NOTE: Seen in `OnDoneButtonClick` assertion.
     INT GetCustomSoundSetIndex() { return m_nCustomSoundSetIndex; }
 
-    /* 0106 */ C2DArray m_critSect106;
+    /* 0106 */ C2DArray pm_m_field_106;
     /* 012A */ C2DArray m_tSubRace;
     /* 014E */ C2DArray m_tHairColor;
     /* 0172 */ C2DArray m_tSkinColor;

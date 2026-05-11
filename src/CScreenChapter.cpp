@@ -332,7 +332,7 @@ void CScreenChapter::TimerAsynchronousUpdate()
         }
 
         if (!m_bEnded) {
-            if (m_nLine >= m_pTextControl->m_plstStrings->GetCount() - m_pTextControl->m_wFieldA6C) {
+            if (m_nLine >= m_pTextControl->m_plstStrings->GetCount() - m_pTextControl->wfield_A6C) {
                 m_nEndTime = GetTickCount();
                 m_bEnded = TRUE;
             }
@@ -427,7 +427,7 @@ void CScreenChapter::ResetMainPanel()
 
     // Add leading empty lines so that the text gracefully slide in from the
     // bottom.
-    for (index = 0; index < m_pTextControl->m_wFieldA6C + 1; index++) {
+    for (index = 0; index < m_pTextControl->wfield_A6C + 1; index++) {
         UpdateText(m_pTextControl, "");
     }
 
@@ -508,11 +508,11 @@ void CScreenChapter::ResetMainPanel()
 
     // Add trailing empty lines so that the text gracefully slide out at the
     // top.
-    for (index = 0; index < m_pTextControl->m_wFieldA6C; index++) {
+    for (index = 0; index < m_pTextControl->wfield_A6C; index++) {
         UpdateText(m_pTextControl, "");
     }
 
-    m_nLineDelay = max(m_nTotalPlayTime / max(m_pTextControl->m_plstStrings->GetCount() - 7 * m_pTextControl->m_wFieldA6C / 4, 1), 833);
+    m_nLineDelay = max(m_nTotalPlayTime / max(m_pTextControl->m_plstStrings->GetCount() - 7 * m_pTextControl->wfield_A6C / 4, 1), 833);
 
     m_pTextControl->SetTopString(m_pTextControl->m_plstStrings->FindIndex(0));
 

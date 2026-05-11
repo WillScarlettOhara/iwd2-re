@@ -52,8 +52,8 @@ public:
     WORD m_windSpeed;
     DWORD wm_field_4C;
     DWORD nfield_50;
-    DWORD m_nField54;
-    DWORD m_nField58;
+    DWORD nfield_54;
+    DWORD nfield_58;
 };
 
 class CAreaSoundsAndMusic {

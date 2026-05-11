@@ -163,7 +163,7 @@ public:
     /* 00B8 */ HINSTANCE m_hInstance; // #guess
     /* 00BC */ int m_nTimerID;
     /* 00C0 */ int m_nTimerResolution;
-    /* 00C4 */ CRITICAL_SECTION m_critSectC4;
+    /* 00C4 */ CRITICAL_SECTION pfield_C4;
     /* 00DC */ CString m_sCommandLine;
     /* 00E0 */ BOOLEAN m_bReInitializing;
     /* 00E1 */ BOOLEAN m_bFullscreen;
@@ -192,7 +192,7 @@ public:
     /* 0136 */ int m_nMaxPlayers;
     /* 013A */ int nm_field_13A;
     /* 01E3 */ int nm_field_1E3;
-    /* 0142 */ int m_nField142;
+    /* 0142 */ int nm_m_field_142;
     /* 0148 */ int m_bInMouseWheelQueue;
     // FIXME: Looks like this list stores `wParam` values of `WM_MOUSEWHEEL`
     // disguised as pointers. There are more specialized collections for such
@@ -220,11 +220,11 @@ public:
     /* 02F0 */ HMODULE m_hOpenGL;
     /* 02F4 */ int nm_field_2F4;
     /* 02F8 */ HANDLE m_eventTimer;
-    /* 02FC */ CRITICAL_SECTION m_critSect2FC;
-    /* 0314 */ CRITICAL_SECTION m_critSect314;
-    /* 032C */ CRITICAL_SECTION m_critSect32C;
-    /* 0344 */ CRITICAL_SECTION m_critSect344;
-    /* 035C */ CRITICAL_SECTION m_critSect35C;
+    /* 02FC */ CRITICAL_SECTION pm_field_2FC;
+    /* 0314 */ CRITICAL_SECTION pm_field_314;
+    /* 032C */ CRITICAL_SECTION pm_field_32C;
+    /* 0344 */ CRITICAL_SECTION pm_field_344;
+    /* 035C */ CRITICAL_SECTION pm_field_35C;
     /* 0374 */ BOOL m_bExitRSThread;
     /* 0378 */ HANDLE m_hRSThread;
     /* 037C */ BOOL m_bExitMessageThread;
@@ -233,7 +233,7 @@ public:
     /* 0388 */ BOOL m_bExitMainAIThread;
     /* 038C */ HANDLE m_hMusicThread;
     /* 0390 */ BOOL m_bExitMusicThread;
-    /* 0394 */ CRITICAL_SECTION m_critSect394;
+    /* 0394 */ CRITICAL_SECTION pm_field_394;
     /* 03AC */ CRITICAL_SECTION pm_field_3AC;
     /* 03C4 */ CWarp* pActiveEngine;
     /* 03C8 */ CSoundMixer cSoundMixer; // #guess
@@ -266,7 +266,7 @@ public:
     /* 1AB2 */ DWORD nm_field_1AB2[16];
     /* 1AF2 */ DWORD nm_field_1AF2[16];
     /* 1B32 */ unsigned char bm_field_1B32[64];
-    /* 1C32 */ CRITICAL_SECTION m_critSect1C32;
+    /* 1C32 */ CRITICAL_SECTION pm_field_1C32;
     /* 1C4A */ unsigned char bm_field_1C4A;
     /* 1C4C */ int nm_field_1C4C;
 };

@@ -961,7 +961,7 @@ CButtonData* IcewindMisc::CreateButtonData(BYTE* resRef)
     button->m_abilityId.m_itemType = 1;
     button->m_abilityId.m_res = resRef;
     button->m_abilityId.m_targetType = ability->actionType;
-    button->m_abilityId.m_bField10 = cSpell.GetGenericName();
+    button->m_abilityId.m_field_10 = cSpell.GetGenericName();
     button->m_bDisabled = FALSE;
     button->m_bDisplayCount = 0;
 

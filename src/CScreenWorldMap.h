@@ -135,7 +135,7 @@ public:
     void OnLButtonUp(CPoint pt) override;
     BOOL Render(BOOL bForce) override;
 
-    /* 0676 */ int m_nField676;
+    /* 0676 */ int nfield_676;
     /* 067A */ int nfield_67A;
 };
 

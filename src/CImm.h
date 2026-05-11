@@ -48,7 +48,7 @@ public:
     /* 0108 */ CCriticalSection m_cCriticalSection;
     /* 0128 */ int nm_field_128;
     /* 012C */ BOOL bm_field_12C;
-    /* 0130 */ CString m_sField130;
+    /* 0130 */ CString sm_field_130;
     /* 0134 */ CString sm_field_134;
     /* 0138 */ CString m_sCandidateList;
     /* 013C */ CVidMosaic* pm_field_13C;

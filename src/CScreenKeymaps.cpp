@@ -10,7 +10,7 @@
 #include "CUtil.h"
 
 // 0x8B3FE0
-INT CScreenKeymaps::m_dword8B3FE0[CSCREENKEYMAPS_PAGES][CSCREENKEYMAPS_PER_PAGE] = {
+INT CScreenKeymaps::dword_8B3FE0[CSCREENKEYMAPS_PAGES][CSCREENKEYMAPS_PER_PAGE] = {
     {
         -1,
         0,
@@ -579,7 +579,7 @@ void CScreenKeymaps::HandleKeyDown(BYTE nKey)
             continue;
         }
 
-        int nKeymap = m_dword8B3FE0[index / CSCREENKEYMAPS_PER_PAGE][index % CSCREENKEYMAPS_PER_PAGE];
+        int nKeymap = dword_8B3FE0[index / CSCREENKEYMAPS_PER_PAGE][index % CSCREENKEYMAPS_PER_PAGE];
         if (nKeymap < 0
             || m_pKeymap[nKeymap] != nKey
             || m_pKeymapFlags[nKeymap] != m_bSystemKeyCtrl) {
@@ -645,7 +645,7 @@ void CScreenKeymaps::OnLButtonDown(CPoint pt)
             CUIControlLabel* pNameLabel = static_cast<CUIControlLabel*>(pPanel->GetControl(index + 0x10000041));
             CUIControlLabel* pKeyLabel = static_cast<CUIControlLabel*>(pPanel->GetControl(index + 0x10000005));
 
-            if (m_dword8B3FE0[m_nPage][index] >= 0) {
+            if (dword_8B3FE0[m_nPage][index] >= 0) {
                 if (pNameLabel->IsOver(pt) || pKeyLabel->IsOver(pt)) {
                     SelectKeymap(index);
                     break;
@@ -720,10 +720,10 @@ void CScreenKeymaps::UpdateMainPanel()
         pNameLabel->SetText(FetchString(dword_8B40D0[m_nPage][index]));
 
         CUIControlLabel* pKeyLabel = static_cast<CUIControlLabel*>(pPanel->GetControl(index + 0x10000005));
-        if (m_dword8B3FE0[m_nPage][index] >= 0) {
-            int ch = g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(m_pKeymap[m_dword8B3FE0[m_nPage][index]]);
+        if (dword_8B3FE0[m_nPage][index] >= 0) {
+            int ch = g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(m_pKeymap[dword_8B3FE0[m_nPage][index]]);
             if (ch > 0) {
-                if (m_pKeymapFlags[m_dword8B3FE0[m_nPage][index]] == 1) {
+                if (m_pKeymapFlags[dword_8B3FE0[m_nPage][index]] == 1) {
                     sValue.Format("%s%c", FetchString(24638), ch);
                     pKeyLabel->SetText(sValue);
                 } else {
@@ -1013,7 +1013,7 @@ void CScreenKeymaps::OnPageButtonClick(INT nButton)
 void CScreenKeymaps::OnDefaultButtonClick()
 {
     if (m_nSelectedKeymapIndex >= 0) {
-        BYTE nKey = g_pBaldurChitin->GetObjectGame()->GetVirtualKeyByIndex(CScreenKeymaps::m_dword8B3FE0[m_nPage][m_nSelectedKeymapIndex]);
+        BYTE nKey = g_pBaldurChitin->GetObjectGame()->GetVirtualKeyByIndex(CScreenKeymaps::dword_8B3FE0[m_nPage][m_nSelectedKeymapIndex]);
         if (nKey != 0) {
             HandleKeyDown(nKey);
         } else {
@@ -1076,7 +1076,7 @@ void CScreenKeymaps::OnErrorButtonClick(INT nButton)
             DismissPopup();
 
             for (index = 0; index < CSCREENKEYMAPS_PAGES * CSCREENKEYMAPS_PER_PAGE; index++) {
-                INT nKeymap = m_dword8B3FE0[index / CSCREENKEYMAPS_PER_PAGE][index % CSCREENKEYMAPS_PER_PAGE];
+                INT nKeymap = dword_8B3FE0[index / CSCREENKEYMAPS_PER_PAGE][index % CSCREENKEYMAPS_PER_PAGE];
                 if (m_pKeymap[nKeymap] == m_nConflictKey
                     && m_pKeymapFlags[nKeymap] == m_nConflictKeyFlag) {
                     SetKeymap(index / CSCREENKEYMAPS_PER_PAGE, index % CSCREENKEYMAPS_PER_PAGE, 0, 0);
@@ -1145,7 +1145,7 @@ void CScreenKeymaps::OnKeymapMouseMove(CPoint pt)
         CUIControlLabel* pNameLabel = static_cast<CUIControlLabel*>(pPanel->GetControl(index + 0x10000041));
         CUIControlLabel* pKeyLabel = static_cast<CUIControlLabel*>(pPanel->GetControl(index + 0x10000005));
 
-        if (m_dword8B3FE0[m_nPage][index] >= 0) {
+        if (dword_8B3FE0[m_nPage][index] >= 0) {
             if (index == m_nSelectedKeymapIndex) {
                 pNameLabel->SetForegroundColor(RGB(255, 240, 0));
             } else if (m_nSelectedKeymapIndex < 0) {
@@ -1186,7 +1186,7 @@ void CScreenKeymaps::OnKeymapMouseClick(CPoint pt)
     }
 
     for (int index = 0; index < CSCREENKEYMAPS_PER_PAGE; index++) {
-        if (m_dword8B3FE0[m_nPage][index] >= 0) {
+        if (dword_8B3FE0[m_nPage][index] >= 0) {
             CUIControlLabel* pNameLabel = static_cast<CUIControlLabel*>(pPanel->GetControl(index + 0x10000041));
             CUIControlLabel* pKeyLabel = static_cast<CUIControlLabel*>(pPanel->GetControl(index + 0x10000005));
 
@@ -1210,17 +1210,17 @@ void CScreenKeymaps::SetKeymap(INT nPage, INT nIndex, BYTE nKey, BYTE nKeyFlag)
     CUIPanel* pPanel = m_cUIManager.GetPanel(0);
     CString sKey;
 
-    m_pKeymap[m_dword8B3FE0[nPage][nIndex]] = nKey;
-    m_pKeymapFlags[m_dword8B3FE0[nPage][nIndex]] = nKeyFlag;
+    m_pKeymap[dword_8B3FE0[nPage][nIndex]] = nKey;
+    m_pKeymapFlags[dword_8B3FE0[nPage][nIndex]] = nKeyFlag;
 
     CUIControlLabel* pLabel = static_cast<CUIControlLabel*>(pPanel->GetControl(nIndex + 0x10000005));
 
     if (nKeyFlag != 0) {
         sKey.Format("%s%c",
             FetchString(24638),
-            g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(m_pKeymap[m_dword8B3FE0[nPage][nIndex]]));
+            g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(m_pKeymap[dword_8B3FE0[nPage][nIndex]]));
     } else {
-        sKey.Format("%c", g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(m_pKeymap[m_dword8B3FE0[nPage][nIndex]]));
+        sKey.Format("%c", g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(m_pKeymap[dword_8B3FE0[nPage][nIndex]]));
     }
 
     pLabel->SetText(sKey);
@@ -1232,13 +1232,13 @@ void CScreenKeymaps::SelectKeymap(INT nIndex)
     if (m_nSelectedKeymapIndex >= 0) {
         SetKeymap(m_nPage,
             m_nSelectedKeymapIndex,
-            m_pKeymap[m_dword8B3FE0[m_nPage][m_nSelectedKeymapIndex]],
-            m_pKeymapFlags[m_dword8B3FE0[m_nPage][m_nSelectedKeymapIndex]]);
+            m_pKeymap[dword_8B3FE0[m_nPage][m_nSelectedKeymapIndex]],
+            m_pKeymapFlags[dword_8B3FE0[m_nPage][m_nSelectedKeymapIndex]]);
     }
 
     m_nSelectedKeymapIndex = nIndex;
 
-    if (m_nSelectedKeymapIndex >= 0 && m_pKeymap[m_dword8B3FE0[m_nPage][m_nSelectedKeymapIndex]] == 0) {
+    if (m_nSelectedKeymapIndex >= 0 && m_pKeymap[dword_8B3FE0[m_nPage][m_nSelectedKeymapIndex]] == 0) {
         CUIPanel* pPanel = m_cUIManager.GetPanel(0);
         CUIControlLabel* pLabel = static_cast<CUIControlLabel*>(pPanel->GetControl(m_nSelectedKeymapIndex + 0x10000005));
         pLabel->SetText(CString("_"));

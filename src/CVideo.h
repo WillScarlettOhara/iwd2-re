@@ -60,7 +60,7 @@ public:
     /* 0132 */ BOOL m_bIs3dAccelerated;
     /* 0136 */ int nm_field_136;
     /* 013A */ int nm_field_13A;
-    /* 013E */ int m_nField13E;
+    /* 013E */ int nm_field_13E;
     /* 0142 */ IDirectDraw* m_pDirectDraw; // #guess
     /* 0146 */ IDirectDraw2* m_pDirectDraw2; // #guess
     /* 014A */ IDirectDrawClipper* m_pDirectDrawClipper; // #guess

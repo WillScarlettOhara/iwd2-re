@@ -83,7 +83,7 @@ public:
     /* 0012 */ CGameArea* m_pArea;
     /* 0016 */ POSITION m_posVertList;
     /* 001A */ BYTE m_listType;
-    /* 001C */ int m_nDeadline;
+    /* 001C */ int nm_field_1C;
     /* 0020 */ CAIObjectType m_typeAI;
     /* 005C */ LONG m_id;
     /* 0060 */ SHORT m_canBeSeen;

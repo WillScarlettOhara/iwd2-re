@@ -7,7 +7,7 @@ CGameSpriteSpellList::CGameSpriteSpellList()
 {
     nm_field_10 = 0;
     nm_field_14 = 0;
-    m_nStartTime = 0;
+    nm_field_18 = 0;
 }
 
 // 0x443370
@@ -15,7 +15,7 @@ CGameSpriteSpellList::~CGameSpriteSpellList()
 {
     if (m_List.size() != 0) {
         nm_field_14 = 0;
-        m_nStartTime = 0;
+        nm_field_18 = 0;
     }
 }
 
@@ -165,14 +165,14 @@ BOOLEAN CGameSpriteSpellList::RemoveCasts(const UINT& nID, const unsigned int& a
 // 0x725D30
 BOOLEAN CGameSpriteSpellList::AddAllCasts(const unsigned int& a1, const BOOLEAN& a2)
 {
-    unsigned int v1 = m_nStartTime + a1;
+    unsigned int v1 = nm_field_18 + a1;
 
     // NOTE: Unsigned compare.
     if (a2 == 1 || v1 > nm_field_14) {
         v1 = nm_field_14;
     }
 
-    m_nStartTime = v1;
+    nm_field_18 = v1;
 
     for (UINT nIndex = 0; nIndex < m_List.size(); nIndex++) {
         AddCasts(m_List[nIndex].m_nID, v1 - m_List[nIndex].nm_field_8, FALSE);
@@ -184,14 +184,14 @@ BOOLEAN CGameSpriteSpellList::AddAllCasts(const unsigned int& a1, const BOOLEAN&
 // 0x725DB0
 BOOLEAN CGameSpriteSpellList::RemoveAllCasts(const unsigned int& a1, const BOOLEAN& a2)
 {
-    int v1 = m_nStartTime - a1;
+    int v1 = nm_field_18 - a1;
 
     // NOTE: Signed compare.
     if (a2 == 1 || v1 < 0) {
         v1 = 0;
     }
 
-    m_nStartTime = v1;
+    nm_field_18 = v1;
 
     for (UINT nIndex = 0; nIndex < m_List.size(); nIndex++) {
         // NOTE: Uninline.

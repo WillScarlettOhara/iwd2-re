@@ -3958,7 +3958,7 @@ BOOL CUIControlButtonCharacterPortrait::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -4047,7 +4047,7 @@ void CUIControlPortraitWorld::OnMouseMove(CPoint pt)
             m_cVidCell.FrameSet(m_nPressedFrame);
             m_bPressed = TRUE;
 
-            CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
+            CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
             renderLock.Lock(INFINITE);
             m_nRenderCount = CUIManager::RENDER_COUNT;
             renderLock.Unlock();
@@ -4062,7 +4062,7 @@ void CUIControlPortraitWorld::OnMouseMove(CPoint pt)
             m_cVidCell.FrameSet(m_nNormalFrame);
             m_bPressed = FALSE;
 
-            CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
+            CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
             renderLock.Lock(INFINITE);
             m_nRenderCount = CUIManager::RENDER_COUNT;
             renderLock.Unlock();
@@ -4079,7 +4079,7 @@ void CUIControlPortraitWorld::OnLButtonUp(CPoint pt)
     m_cVidCell.FrameSet(m_nNormalFrame);
     m_bPressed = FALSE;
 
-    CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
+    CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
     renderLock.Lock(INFINITE);
     m_nRenderCount = CUIManager::RENDER_COUNT;
     renderLock.Unlock();
@@ -4219,7 +4219,7 @@ BOOL CUIControlButtonAI::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         renderLock.Lock(INFINITE);
         m_nRenderCount--;
         renderLock.Unlock();
@@ -4777,7 +4777,7 @@ CUIControlButtonGeneralBase::CUIControlButtonGeneralBase(CUIPanel* panel, UI_CON
 {
     m_nNotSelectedFrame = m_nNormalFrame;
     m_nSelectedFrame = m_nNotSelectedFrame / 2 + 20;
-    m_pField66E = NULL;
+    pfield_66E = NULL;
 }
 
 // 0x77CDB0
@@ -4797,7 +4797,7 @@ CUIControlButtonGeneralWorld::CUIControlButtonGeneralWorld(CUIPanel* panel, UI_C
 {
     m_nToolTipHotKeyIndex1 = 2;
     m_nToolTipStrRef = 16313;
-    m_pField66E = g_pBaldurChitin->m_pEngineWorld;
+    pfield_66E = g_pBaldurChitin->m_pEngineWorld;
 }
 
 // 0x77CF10
@@ -4817,7 +4817,7 @@ CUIControlButtonGeneralInventory::CUIControlButtonGeneralInventory(CUIPanel* pan
 {
     m_nToolTipHotKeyIndex1 = 0;
     m_nToolTipStrRef = 16307;
-    m_pField66E = g_pBaldurChitin->m_pEngineInventory;
+    pfield_66E = g_pBaldurChitin->m_pEngineInventory;
 }
 
 // 0x77D070
@@ -4831,7 +4831,7 @@ CUIControlButtonGeneralMap::CUIControlButtonGeneralMap(CUIPanel* panel, UI_CONTR
 {
     m_nToolTipHotKeyIndex1 = 4;
     m_nToolTipStrRef = 16310;
-    m_pField66E = g_pBaldurChitin->m_pEngineMap;
+    pfield_66E = g_pBaldurChitin->m_pEngineMap;
 }
 
 // 0x77D1B0
@@ -4845,7 +4845,7 @@ CUIControlButtonGeneralJournal::CUIControlButtonGeneralJournal(CUIPanel* panel, 
 {
     m_nToolTipHotKeyIndex1 = 3;
     m_nToolTipStrRef = 16308;
-    m_pField66E = g_pBaldurChitin->m_pEngineJournal;
+    pfield_66E = g_pBaldurChitin->m_pEngineJournal;
 }
 
 // 0x77D2F0
@@ -4859,7 +4859,7 @@ CUIControlButtonGeneralCharacter::CUIControlButtonGeneralCharacter(CUIPanel* pan
 {
     m_nToolTipHotKeyIndex1 = 1;
     m_nToolTipStrRef = 16306;
-    m_pField66E = g_pBaldurChitin->m_pEngineCharacter;
+    pfield_66E = g_pBaldurChitin->m_pEngineCharacter;
 }
 
 // 0x77D430
@@ -4873,7 +4873,7 @@ CUIControlButtonGeneralSpellbook::CUIControlButtonGeneralSpellbook(CUIPanel* pan
 {
     m_nToolTipHotKeyIndex1 = 5;
     m_nToolTipStrRef = 16309;
-    m_pField66E = g_pBaldurChitin->m_pEngineSpellbook;
+    pfield_66E = g_pBaldurChitin->m_pEngineSpellbook;
 }
 
 // 0x77D570
@@ -4887,7 +4887,7 @@ CUIControlButtonGeneralOptions::CUIControlButtonGeneralOptions(CUIPanel* panel, 
 {
     m_nToolTipHotKeyIndex1 = 6;
     m_nToolTipStrRef = 16311;
-    m_pField66E = g_pBaldurChitin->m_pEngineOptions;
+    pfield_66E = g_pBaldurChitin->m_pEngineOptions;
 }
 
 // 0x77D6B0
@@ -4917,7 +4917,7 @@ CUIControlButtonGeneralOptionsFromMainMenu::CUIControlButtonGeneralOptionsFromMa
     g_pBaldurChitin->GetTlkTable().Fetch(13905, strRes);
     SetText(strRes.szText);
 
-    m_pField66E = g_pBaldurChitin->m_pEngineOptions;
+    pfield_66E = g_pBaldurChitin->m_pEngineOptions;
 }
 
 // 0x77D7D0
@@ -4945,7 +4945,7 @@ CUIControlButtonGeneralMultiPlayer::CUIControlButtonGeneralMultiPlayer(CUIPanel*
 {
     m_nToolTipHotKeyIndex1 = 7;
     m_nToolTipStrRef = 16312;
-    m_pField66E = g_pBaldurChitin->m_pEngineOptions;
+    pfield_66E = g_pBaldurChitin->m_pEngineOptions;
 }
 
 // 0x77D960
@@ -4963,8 +4963,8 @@ CUIControlButton77DCC0::CUIControlButton77DCC0(CUIPanel* panel, UI_CONTROL_BUTTO
     m_cVidCell.GetCurrentFrameSize(frameSize, FALSE);
 
     // TODO: Check.
-    m_wField668 = frameSize.cx & 0xFF;
-    m_wField666 = 0;
+    wfield_668 = frameSize.cx & 0xFF;
+    wfield_666 = 0;
 
     InvalidateRect();
 }
@@ -4988,7 +4988,7 @@ BOOL CUIControlButton77DCC0::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         renderLock.Lock(INFINITE);
         m_nRenderCount--;
         renderLock.Unlock();
@@ -4996,7 +4996,7 @@ BOOL CUIControlButton77DCC0::Render(BOOL bForce)
 
     CPoint pt = m_pPanel->m_ptOrigin + m_ptOrigin;
     CRect rClip(pt, m_size);
-    rClip.right = pt.x + m_wField666;
+    rClip.right = pt.x + wfield_666;
 
     return m_cVidCell.Render(0, pt.x, pt.y, rClip, NULL, 0, dwFlags, -1);
 }
@@ -5021,11 +5021,11 @@ void CUIControlButton77DCC0::TimerAsynchronousUpdate(BOOLEAN bInside)
             if (rc == CGameObjectArray::SUCCESS) {
                 if (pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_SUPPRESS_HP_INFO]) {
                     m_cVidCell.SequenceSet(4);
-                    m_wField666 = m_wField668;
+                    wfield_666 = wfield_668;
                 } else {
                     SHORT nMaxHitPoints = max(pSprite->GetDerivedStats()->m_nMaxHitPoints, 1);
                     SHORT nCurrentHitPoints = max(pSprite->GetBaseStats()->m_hitPoints, 0);
-                    m_wField666 = nCurrentHitPoints * m_wField668 / nMaxHitPoints;
+                    wfield_666 = nCurrentHitPoints * wfield_668 / nMaxHitPoints;
 
                     SHORT nSequence = g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nHitPointBarSequence;
                     if (nSequence != 0) {
@@ -5052,7 +5052,7 @@ void CUIControlButton77DCC0::TimerAsynchronousUpdate(BOOLEAN bInside)
                 InvalidateRect();
             }
         } else {
-            m_wField666 = 0;
+            wfield_666 = 0;
             InvalidateRect();
         }
     }

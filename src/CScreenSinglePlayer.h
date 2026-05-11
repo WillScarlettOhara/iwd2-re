@@ -104,8 +104,8 @@ public:
     /* 043C */ CTypedPtrList<CPtrList, CUIPanel*> m_lPopupStack;
     /* 0458 */ int nm_field_458;
     /* 045C */ int nm_field_45C;
-    /* 0460 */ int m_nField460;
-    /* 0460 */ int m_nField460;
+    /* 0460 */ int nm_field_460;
+    /* 0460 */ int nm_field_460;
     /* 0468 */ INT m_nErrorState;
     /* 046C */ STRREF m_dwErrorTextId;
     /* 0470 */ INT m_nNumErrorButtons;

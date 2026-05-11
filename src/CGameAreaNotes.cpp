@@ -9,7 +9,7 @@
 CGameAreaNotes::CGameAreaNotes()
 {
     nfield_70 = 0;
-    m_nField74 = 0;
+    nfield_74 = 0;
     m_pMapControl = NULL;
     bm_field_8C = 0;
     m_nCurrentIcon = 0;

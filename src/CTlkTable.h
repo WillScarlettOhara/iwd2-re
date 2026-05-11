@@ -58,7 +58,7 @@ public:
     CTypedPtrMap<CMapWordToPtr, USHORT, CTlkFile*> m_mapTlkFiles;
     CMapStringToString m_mapTokens;
     CCriticalSection bm_field_38;
-    unsigned char m_nField58;
+    unsigned char nfield_58;
     CTlkFileOverride m_override;
     unsigned char nfield_A4;
 };

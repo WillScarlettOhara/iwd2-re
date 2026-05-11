@@ -47,18 +47,18 @@ public:
     /* 0008 */ CResRef m_cResRef;
     /* 0010 */ CWarp* m_pWarp; // #guess
     /* 0014 */ CUIControlBase* m_pFocusedControl; // #guess
-    /* 0018 */ int m_nStartTime;
-    /* 001C */ int m_nDeadline;
-    /* 0020 */ int m_nField20;
-    /* 0024 */ int m_nTickInterval;
+    /* 0018 */ int nm_field_18;
+    /* 001C */ int nm_field_1C;
+    /* 0020 */ int nm_field_20;
+    /* 0024 */ int nm_field_24;
     /* 0028 */ int nm_field_28;
     /* 002C */ unsigned char m_nCaptureType;
     /* 002E */ unsigned char bm_field_2E;
     /* 002D */ unsigned char bm_field_2D;
     /* 0032 */ int nm_field_32;
     /* 0036 */ CCriticalSection pm_field_36;
-    /* 0056 */ CCriticalSection m_pField56;
-    /* 0076 */ int m_nField76;
+    /* 0056 */ CCriticalSection pfield_56;
+    /* 0076 */ int nfield_76;
     /* 007A */ CRect pfield_7A;
     /* 008A */ CRect pm_field_8A;
     /* 009A */ CRect pfield_9A;

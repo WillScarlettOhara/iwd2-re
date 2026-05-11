@@ -434,7 +434,7 @@ void CResCache::FlushCache(int a2)
 
     POSITION pos = m_lEntries.GetTailPosition();
 
-    EnterCriticalSection(&(g_pChitin->m_critSect35C));
+    EnterCriticalSection(&(g_pChitin->pm_field_35C));
 
     int nUnusedSize = GetUnusedSize();
 
@@ -477,7 +477,7 @@ void CResCache::FlushCache(int a2)
         }
     }
 
-    LeaveCriticalSection(&(g_pChitin->m_critSect35C));
+    LeaveCriticalSection(&(g_pChitin->pm_field_35C));
 
     if (m_nAvailableCacheSize >= m_nCacheSize) {
         m_nAvailableCacheSize = m_nCacheSize;

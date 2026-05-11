@@ -890,7 +890,7 @@ void CSoundMixer::Lock()
 {
     if (g_pChitin != NULL) {
         if (g_pChitin->m_bExitMusicThread != TRUE) {
-            EnterCriticalSection(&(g_pChitin->m_critSect394));
+            EnterCriticalSection(&(g_pChitin->pm_field_394));
         }
     }
 }
@@ -901,7 +901,7 @@ void CSoundMixer::Unlock()
 {
     if (g_pChitin != NULL) {
         if (g_pChitin->m_bExitMusicThread != TRUE) {
-            LeaveCriticalSection(&(g_pChitin->m_critSect394));
+            LeaveCriticalSection(&(g_pChitin->pm_field_394));
         }
     }
 }

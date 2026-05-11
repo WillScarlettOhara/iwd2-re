@@ -150,7 +150,7 @@ CScreenSinglePlayer::CScreenSinglePlayer()
     m_bCapsLockKeyOn = FALSE;
     nm_field_458 = -1;
     nm_field_45C = 0;
-    m_nField460 = 0;
+    nm_field_460 = 0;
     m_nPartyCount = 0;
     m_nTopParty = 0;
     m_nParty = 0;
@@ -2635,7 +2635,7 @@ void CUIControlButtonSinglePlayerLogout::OnLButtonClick(CPoint pt)
 CUIControlEditSinglePlayerChat::CUIControlEditSinglePlayerChat(CUIPanel* panel, UI_CONTROL_EDIT* controlInfo)
     : CUIControlEdit(panel, controlInfo, 0)
 {
-    m_bField8A0 = 0;
+    bm_field_8A0 = 0;
 }
 
 // 0x666200
@@ -2647,7 +2647,7 @@ CUIControlEditSinglePlayerChat::~CUIControlEditSinglePlayerChat()
 void CUIControlEditSinglePlayerChat::OnEditReturn(CString sText)
 {
     g_pBaldurChitin->GetBaldurMessage()->SendChatMessage(sText);
-    m_sField868 = "";
+    sm_field_868 = "";
     SetText(CString(""));
 }
 
@@ -3219,7 +3219,7 @@ void CUIControlScrollBarSinglePlayerParties::OnScroll()
     // __LINE__: 5456
     UTIL_ASSERT(pSinglePlayer != NULL);
 
-    pSinglePlayer->m_nTopParty = max(pSinglePlayer->m_nPartyCount * wm_field_144, 0) / m_nField142;
+    pSinglePlayer->m_nTopParty = max(pSinglePlayer->m_nPartyCount * wm_field_144, 0) / wm_m_field_142;
     InvalidateItems();
 }
 

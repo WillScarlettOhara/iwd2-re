@@ -42,7 +42,7 @@ public:
     /* 02A8 */ CStringList* m_pMovies;
     /* 02AC */ INT m_nMovieIndex;
     /* 02B0 */ CVidFont m_preLoadFontRealms;
-    /* 07B0 */ unsigned char m_bField7B0;
+    /* 07B0 */ unsigned char bfield_7B0;
 };
 
 class CUIControlTextDisplayMovies : public CUIControlTextDisplay {

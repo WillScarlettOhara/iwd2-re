@@ -4391,7 +4391,7 @@ void CUIControlScrollBarStoreBuyDrinksDrink::OnScroll()
     UTIL_ASSERT(pStore != NULL);
 
     // NOTE: Uninline.
-    pStore->SetTopDrinkItem(max(wm_field_144 * (pStore->GetNumDrinkItems() - 8), 0) / m_nField142);
+    pStore->SetTopDrinkItem(max(wm_field_144 * (pStore->GetNumDrinkItems() - 8), 0) / wm_m_field_142);
 
     InvalidateItems();
 
@@ -4543,7 +4543,7 @@ void CUIControlScrollBarStoreStore::OnScroll()
     UTIL_ASSERT(pStore != NULL);
 
     // NOTE: Uninline.
-    pStore->SetTopStoreItem(max(wm_field_144 * (pStore->GetNumStoreItems() - 6), 0) / m_nField142);
+    pStore->SetTopStoreItem(max(wm_field_144 * (pStore->GetNumStoreItems() - 6), 0) / wm_m_field_142);
 
     InvalidateItems();
 
@@ -4695,7 +4695,7 @@ void CUIControlScrollBarStoreIdentify::OnScroll()
     UTIL_ASSERT(pStore != NULL);
 
     // NOTE: Uninline.
-    pStore->SetTopIdentifyItem(max(wm_field_144 * (pStore->GetNumIdentifyItems() - 6), 0) / m_nField142);
+    pStore->SetTopIdentifyItem(max(wm_field_144 * (pStore->GetNumIdentifyItems() - 6), 0) / wm_m_field_142);
 
     InvalidateItems();
 
@@ -4841,7 +4841,7 @@ void CUIControlScrollBarStoreGroup::OnScroll()
     UTIL_ASSERT(pStore != NULL);
 
     // NOTE: Uninline.
-    pStore->SetTopGroupItem(max(wm_field_144 * (pStore->GetNumGroupItems() - 6), 0) / m_nField142);
+    pStore->SetTopGroupItem(max(wm_field_144 * (pStore->GetNumGroupItems() - 6), 0) / wm_m_field_142);
 
     InvalidateItems();
 
@@ -4993,7 +4993,7 @@ void CUIControlScrollBarStoreSpell::OnScroll()
     UTIL_ASSERT(pStore != NULL);
 
     // NOTE: Uninline.
-    pStore->SetTopSpellItem(max(wm_field_144 * (pStore->GetNumSpellItems() - 6), 0) / m_nField142);
+    pStore->SetTopSpellItem(max(wm_field_144 * (pStore->GetNumSpellItems() - 6), 0) / wm_m_field_142);
 
     InvalidateItems();
 
@@ -5788,7 +5788,7 @@ BOOL CUIControlButtonStoreRequesterItem::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
