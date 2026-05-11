@@ -490,10 +490,3 @@ SHORT CGameAnimationTypeFlying::SetSequence(SHORT nSequence)
 
     return nSequence;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x6A3DF0
-void FUN_006a3df0() {
-    // TODO: Incomplete.
-}
-

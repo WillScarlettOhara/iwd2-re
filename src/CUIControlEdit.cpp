@@ -15,30 +15,30 @@ CUIControlEdit::CUIControlEdit(CUIPanel* panel, UI_CONTROL_EDIT* controlInfo, in
     // __LINE__: 1375
     UTIL_ASSERT(panel != NULL && controlInfo != NULL);
 
-    m_bFontNeedsLoading = 0;
+    field_8A1 = 0;
 
     if (m_pPanel->m_pManager->m_bDoubleSize) {
         m_ptText.x = 2 * controlInfo->x;
         m_ptText.y = 2 * controlInfo->y;
-        m_nTextOffsetX = 2 * controlInfo->pm_field_36;
-        m_nTextOffsetY = 2 * controlInfo->bm_field_38;
+        field_350 = 2 * controlInfo->field_36;
+        field_354 = 2 * controlInfo->field_38;
     } else {
         m_ptText.x = controlInfo->x;
         m_ptText.y = controlInfo->y;
-        m_nTextOffsetX = controlInfo->pm_field_36;
-        m_nTextOffsetY = controlInfo->bm_field_38;
+        field_350 = controlInfo->field_36;
+        field_354 = controlInfo->field_38;
     }
 
     m_nMaxLength = controlInfo->nMaxLength;
     m_nTextCapitalization = controlInfo->nTextCapitalization;
     m_nRenderCount = 0;
     m_bFocused = 0;
-    m_nEditMode = controlInfo->nfield_68;
+    field_85C = controlInfo->field_68;
     m_sText = controlInfo->initialText;
     m_nCursorIndex = -1;
     m_nVisibleIndex = 0;
-    m_nCommandHistoryIndex = 1;
-    m_nCommandHistorySize = 1;
+    field_872 = 1;
+    field_873 = 1;
 
     m_mosBackground.SetResRef(CResRef(controlInfo->refMosaic), FALSE, TRUE);
     m_mosTextFocusedBackground.SetResRef(CResRef(controlInfo->refMosaicTextFocused), FALSE, TRUE);
@@ -52,9 +52,9 @@ CUIControlEdit::CUIControlEdit(CUIPanel* panel, UI_CONTROL_EDIT* controlInfo, in
 
     m_cVidFont.SetResRef(CResRef(controlInfo->refFont), m_pPanel->m_pManager->m_bDoubleSize, FALSE);
     m_cVidFont.SetColor(RGB(200, 200, 200), RGB(60, 60, 60), 0);
-    m_bConfirmOnExit = a3;
-    pm_field_36 = 1;
-    m_bDefocusOnReturn = 1;
+    field_89C = a3;
+    field_36 = 1;
+    field_8A0 = 1;
 }
 
 // 0x4D6B80
@@ -89,8 +89,8 @@ void CUIControlEdit::KillFocus()
 {
     // FIXME: Unused.
     CWnd* pWnd = g_pChitin->GetWnd();
-    if (g_pChitin->cImm.nm_field_128) {
-        g_pChitin->cImm.DeactivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
+    if (g_pChitin->cImm.field_128) {
+        g_pChitin->cImm.sub_7C2E10(g_pChitin->GetWnd()->GetSafeHwnd());
         m_pPanel->InvalidateRect(&(m_pPanel->m_rImeSuggestionsFrame));
         m_pPanel->m_rImeSuggestionsFrame.SetRectEmpty();
         m_pPanel->m_pImeSuggestionsFont = 0;
@@ -108,14 +108,14 @@ void CUIControlEdit::KillFocus()
 void CUIControlEdit::SetFocus()
 {
     m_bFocused = TRUE;
-    m_sTextOriginal = m_sText;
+    field_868 = m_sText;
     m_nCursorIndex = m_sText.GetLength();
     m_nVisibleIndex = 0;
     AdjustVisibleIndex();
 
     InvalidateRect();
 
-    static_cast<CBaldurEngine*>(m_pPanel->m_pManager->m_pWarp)->EnableEditKeys(m_nEditMode);
+    static_cast<CBaldurEngine*>(m_pPanel->m_pManager->m_pWarp)->EnableEditKeys(field_85C);
 }
 
 // 0x4D6E20
@@ -137,8 +137,8 @@ BOOL CUIControlEdit::OnLButtonDown(CPoint pt)
 
     if (x < 0 || x >= size.cx || y < 0 || y >= size.cy) {
         if (m_bFocused == TRUE) {
-            if (m_bConfirmOnExit) {
-                m_sText = m_sTextOriginal;
+            if (field_89C) {
+                m_sText = field_868;
             }
 
             // NOTE: Uninline.
@@ -151,7 +151,7 @@ BOOL CUIControlEdit::OnLButtonDown(CPoint pt)
             int index = m_nVisibleIndex;
             while (index < m_sText.GetLength()) {
                 LONG nStringLength;
-                if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(m_sText[index])) {
+                if (g_pChitin->field_1A0 && IsDBCSLeadByte(m_sText[index])) {
                     nStringLength = m_cVidFont.GetStringLength(m_sText.Mid(index, 2), TRUE);
                     index++;
                 } else {
@@ -163,7 +163,7 @@ BOOL CUIControlEdit::OnLButtonDown(CPoint pt)
                     break;
                 }
 
-                if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(m_sText[index])) {
+                if (g_pChitin->field_1A0 && IsDBCSLeadByte(m_sText[index])) {
                     index++;
                 }
 
@@ -200,8 +200,8 @@ BOOL CUIControlEdit::OnRButtonDown(CPoint pt)
 
     if (x < 0 || x >= size.cx || y < 0 || y >= size.cy) {
         if (m_bFocused == TRUE) {
-            if (m_bConfirmOnExit) {
-                m_sText = m_sTextOriginal;
+            if (field_89C) {
+                m_sText = field_868;
             }
 
             // NOTE: Uninline.
@@ -215,7 +215,7 @@ BOOL CUIControlEdit::OnRButtonDown(CPoint pt)
 // 0x4D7130
 void CUIControlEdit::OnKeyDown(SHORT nKey)
 {
-    if (g_pBaldurChitin->nm_field_1A0) {
+    if (g_pBaldurChitin->field_1A0) {
         // TODO: Incomplete.
     }
 
@@ -286,7 +286,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
                 m_nVisibleIndex = m_nCursorIndex;
             }
 
-            if (g_pChitin->nm_field_1A0) {
+            if (g_pChitin->field_1A0) {
                 // TODO: Incomplete.
             } else {
                 m_sText = m_sText.Left(m_nCursorIndex) + m_sText.Right(m_sText.GetLength() - m_nCursorIndex - 1);
@@ -296,15 +296,15 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         }
         break;
     case VK_RETURN:
-        m_nCommandHistoryIndex = 1;
-        if (m_sText != sm_field_874[0]) {
+        field_872 = 1;
+        if (m_sText != field_874[0]) {
             // TODO: Incomplete.
-            sm_field_874[0] = m_sText;
+            field_874[0] = m_sText;
         }
 
         OnEditReturn(m_sText);
 
-        if (m_bDefocusOnReturn) {
+        if (field_8A0) {
             // NOTE: Uninline.
             m_pPanel->m_pManager->KillCapture();
         }
@@ -312,7 +312,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         InvalidateRect();
         break;
     case VK_SPACE:
-        if (m_nEditMode != 2) {
+        if (field_85C != 2) {
             if (m_sText.GetLength() != m_nMaxLength) {
                 m_sText = m_sText.Left(m_nCursorIndex)
                     + ' '
@@ -344,7 +344,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
                 m_nVisibleIndex = m_nCursorIndex;
             }
 
-            if (g_pChitin->nm_field_1A0) {
+            if (g_pChitin->field_1A0) {
                 // TODO: Incomplete.
             }
 
@@ -352,8 +352,8 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         }
         break;
     case VK_UP:
-        if (m_nCommandHistoryIndex != m_nCommandHistorySize && sm_field_874[m_nCommandHistoryIndex].GetLength() != 0) {
-            m_sText = sm_field_874[m_nCommandHistoryIndex++];
+        if (field_872 != field_873 && field_874[field_872].GetLength() != 0) {
+            m_sText = field_874[field_872++];
             m_nCursorIndex = m_sText.GetLength();
 
             AdjustVisibleIndex();
@@ -362,7 +362,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         break;
     case VK_RIGHT:
         if (m_nCursorIndex != m_sText.GetLength()) {
-            if (g_pChitin->nm_field_1A0) {
+            if (g_pChitin->field_1A0) {
                 if (IsDBCSLeadByte(m_sText[(int)m_nCursorIndex])) {
                     m_nCursorIndex++;
                 }
@@ -375,8 +375,8 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         }
         break;
     case VK_DOWN:
-        if (m_nCommandHistoryIndex > 1 && sm_field_874[m_nCommandHistoryIndex].GetLength() != 0) {
-            m_sText = sm_field_874[m_nCommandHistoryIndex--];
+        if (field_872 > 1 && field_874[field_872].GetLength() != 0) {
+            m_sText = field_874[field_872--];
             m_nCursorIndex = m_sText.GetLength();
 
             AdjustVisibleIndex();
@@ -406,7 +406,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         break;
     case VK_DELETE:
         if (m_nCursorIndex != m_sText.GetLength()) {
-            if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(m_sText[(int)m_nCursorIndex])) {
+            if (g_pChitin->field_1A0 && IsDBCSLeadByte(m_sText[(int)m_nCursorIndex])) {
                 m_sText = m_sText.Left(m_nCursorIndex)
                     + m_sText.Right(m_sText.GetLength() - m_nCursorIndex - 2);
             } else {
@@ -419,12 +419,12 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         break;
     case VK_F3:
     case VK_PROCESSKEY:
-        if (g_pChitin->nm_field_1A4) {
-            g_pChitin->cImm.ActivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
+        if (g_pChitin->field_1A4) {
+            g_pChitin->cImm.sub_7C2CC0(g_pChitin->GetWnd()->GetSafeHwnd());
 
             // FIXME: Unused.
             g_pChitin->GetWnd();
-            if (g_pChitin->cImm.nm_field_128) {
+            if (g_pChitin->cImm.field_128) {
                 CRect r = g_pChitin->cImm.sub_7C3020(
                     m_pPanel->m_ptOrigin,
                     m_pPanel->m_size,
@@ -443,7 +443,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
         InvalidateRect();
         break;
     case VK_F4:
-        if (g_pBaldurChitin->nm_field_1A0) {
+        if (g_pBaldurChitin->field_1A0) {
             m_pPanel->InvalidateRect(NULL);
         }
 
@@ -452,7 +452,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
     default:
         if (nKey >= 'A' && nKey <= 'Z') {
             if (m_sText.GetLength() < m_nMaxLength) {
-                if (m_nEditMode != 2) {
+                if (field_85C != 2) {
                     switch (m_nTextCapitalization) {
                     case 0:
                         if (m_pPanel->m_pManager->m_pWarp->GetCapsLockKey() == m_pPanel->m_pManager->m_pWarp->GetShiftKey()) {
@@ -570,7 +570,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
 }
 
 // 0x4D89E0
-void PopResultString()
+void sub_4D89E0()
 {
     // TODO: Incomplete.
 }
@@ -595,13 +595,13 @@ BOOL CUIControlEdit::Render(BOOL bForce)
         return FALSE;
     }
 
-    if (m_bFontNeedsLoading) {
+    if (field_8A1) {
         m_cVidFont.Load(FALSE);
-        m_bFontNeedsLoading = 0;
+        field_8A1 = 0;
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -731,7 +731,7 @@ BOOL CUIControlEdit::Render(BOOL bForce)
 void CUIControlEdit::InvalidateRect()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount = CUIManager::RENDER_COUNT;
         lock.Unlock();
@@ -750,7 +750,7 @@ void CUIControlEdit::AdjustVisibleIndex()
 
     int index = m_nVisibleIndex;
     while (index < m_sText.GetLength() && index < m_nCursorIndex) {
-        if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(m_sText[index])) {
+        if (g_pChitin->field_1A0 && IsDBCSLeadByte(m_sText[index])) {
             frameSize.cx -= m_cVidFont.GetStringLength(m_sText.Mid(index, 2), TRUE);
             index++;
         } else {
@@ -758,7 +758,7 @@ void CUIControlEdit::AdjustVisibleIndex()
         }
 
         while (frameSize.cx < 1) {
-            if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(m_sText[m_nVisibleIndex])) {
+            if (g_pChitin->field_1A0 && IsDBCSLeadByte(m_sText[m_nVisibleIndex])) {
                 frameSize.cx += m_cVidFont.GetStringLength(m_sText.Mid(m_nVisibleIndex, 2), TRUE);
                 m_nVisibleIndex += 2;
             } else {
@@ -776,7 +776,7 @@ void CUIControlEdit::AdjustVisibleIndex()
 // 0x4D9360
 void CUIControlEdit::SetText(CString sText)
 {
-    m_sTextOriginal = sText;
+    field_868 = sText;
     if (sText != m_sText) {
         m_sText = sText;
         if (m_bFocused) {
@@ -790,10 +790,3 @@ void CUIControlEdit::SetText(CString sText)
         InvalidateRect();
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4D6BF0
-void FUN_004d6bf0() {
-    // TODO: Incomplete.
-}
-

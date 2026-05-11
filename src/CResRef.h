@@ -1,11 +1,6 @@
 #ifndef CRESREF_H_
 #define CRESREF_H_
 
-// ============================================================================
-// CResRef - 8-byte resource name reference (filename without extension)
-//
-// Address: varies by method
-// ============================================================================
 #include "ChDataTypes.h"
 
 class CResRef {

@@ -529,10 +529,3 @@ SHORT CGameAnimationTypeTownStatic::SetSequence(SHORT nSequence)
 
     return nSequence;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x6A4F80
-void FUN_006a4f80() {
-    // TODO: Incomplete.
-}
-

@@ -20,8 +20,8 @@ public:
     DWORD TimerAsynchronousUpdate();
     CUIControlBase* GetControl(DWORD nID);
     BOOL IsOver(const CPoint& pt);
-    BOOL Activate();
-    BOOL Deactivate();
+    BOOL sub_4D2D20();
+    BOOL sub_4D2D50();
     BOOL OnLButtonDown(const CPoint& pt);
     BOOL OnLButtonDblClk(const CPoint& pt);
     void OnMouseMove(const CPoint& pt);
@@ -47,7 +47,7 @@ public:
     /* 0109 */ BOOLEAN m_bNeedMouseMove;
     /* 010A */ BOOL m_bInactiveRender;
     /* 010E */ BOOL m_bEnabled;
-    /* 0112 */ int m_bPendingActivation;
+    /* 0112 */ int field_112;
     /* 0116 */ CRect m_rImeSuggestionsFrame;
     /* 0126 */ CVidFont* m_pImeSuggestionsFont;
 };

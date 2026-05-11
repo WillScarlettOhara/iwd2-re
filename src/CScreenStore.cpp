@@ -112,17 +112,17 @@ CScreenStoreItem::CScreenStoreItem()
 CScreenStore::CScreenStore()
 {
     m_dwRoomType = 0;
-    nfield_57C = 0;
-    pfield_5A4 = 0;
-    nfield_5A8 = 0;
+    field_57C = 0;
+    field_5A4 = 0;
+    field_5A8 = 0;
     m_nErrorState = 0;
     m_nNumErrorButtons = 0;
-    bfield_5D8 = 0;
-    bfield_5D9 = 0;
-    pm_field_14DA = NULL;
-    nm_field_14DE = 0;
-    nm_m_field_14E2 = 0;
-    nm_m_field_14E6 = 0;
+    field_5D8 = 0;
+    field_5D9 = 0;
+    field_14DA = NULL;
+    field_14DE = 0;
+    field_14E2 = 0;
+    field_14E6 = 0;
 
     SetVideoMode(0);
 
@@ -238,7 +238,7 @@ CScreenStore::CScreenStore()
     m_cResBag = "";
     m_cResStore = "";
     m_nDrinkRumorIndex = -1;
-    nfield_584 = -1;
+    field_584 = -1;
     m_pButtonBar = NULL;
     m_pChatDisplay = NULL;
     m_nChatMessageCount = 0;
@@ -477,10 +477,10 @@ void CScreenStore::EngineDeactivated()
 // 0x671D60
 void CScreenStore::EngineGameInit()
 {
-    m_cUIManager.fInit(this, CResRef("GUISTORE"), g_pBaldurChitin->nm_field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUISTORE"), g_pBaldurChitin->field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->nm_field_4A28) {
+    if (g_pBaldurChitin->field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -509,7 +509,7 @@ void CScreenStore::EngineGameInit()
     m_pStore = 0;
     m_pBag = NULL;
     m_nDrinkRumorIndex = -1;
-    nfield_584 = -1;
+    field_584 = -1;
     m_pButtonBar = NULL;
     m_pChatDisplay = NULL;
     m_nChatMessageCount = 0;
@@ -592,14 +592,14 @@ void CScreenStore::OnKeyDown(SHORT nKeysFlags)
                 if (GetTopPopup() != NULL
                     && GetTopPopup()->m_nID == 20) {
                     CScreenStoreItem cItem;
-                    if (nm_m_field_14E6) {
-                        GetStoreItem(nm_m_field_14E2, cItem);
+                    if (field_14E6) {
+                        GetStoreItem(field_14E2, cItem);
                     } else {
-                        GetGroupItem(nm_m_field_14E2, cItem);
+                        GetGroupItem(field_14E2, cItem);
                     }
 
-                    if (nm_field_14DE < cItem.m_nMaxCount) {
-                        nm_field_14DE += 1;
+                    if (field_14DE < cItem.m_nMaxCount) {
+                        field_14DE += 1;
                         UpdateRequesterPanel();
                     }
                 }
@@ -608,8 +608,8 @@ void CScreenStore::OnKeyDown(SHORT nKeysFlags)
                 if (GetTopPopup() != NULL
                     && GetTopPopup()->m_nID == 20) {
                     // NOTE: Signed compare.
-                    if (static_cast<int>(nm_field_14DE) > 0) {
-                        nm_field_14DE -= 1;
+                    if (static_cast<int>(field_14DE) > 0) {
+                        field_14DE -= 1;
                         UpdateRequesterPanel();
                     }
                 }
@@ -651,7 +651,7 @@ void CScreenStore::OnMouseMove(CPoint pt)
         } else {
             pScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(12));
         }
-        pm_field_14DA = pScrollBar;
+        field_14DA = pScrollBar;
         m_pCurrentScrollBar = pScrollBar;
     } else if (m_cUIManager.GetPanel(4)->m_bActive) {
         pPanel = m_cUIManager.GetPanel(4);
@@ -820,7 +820,7 @@ void CScreenStore::TimerAsynchronousUpdate()
             m_nChatMessageCount);
     }
 
-    CGameSprite* pCustomer = static_cast<CGameSprite*>(m_cAICustomer.GetObjectByType(NULL, CGameObject::TYPE_SPRITE, FALSE));
+    CGameSprite* pCustomer = static_cast<CGameSprite*>(m_cAICustomer.sub_40CB20(NULL, CGameObject::TYPE_SPRITE, FALSE));
     if (m_pMainPanel != NULL && m_pMainPanel->m_nID != 5) {
         if (pCustomer != NULL
             && (pCustomer->GetBaseStats()->m_generalState & STATE_DEAD) == 0
@@ -873,7 +873,7 @@ void CScreenStore::TimerAsynchronousUpdate()
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
 
-            CGameSprite* pProprietor = static_cast<CGameSprite*>(m_cAIProprietor.GetObjectByType(NULL, CGameObject::TYPE_SPRITE, FALSE));
+            CGameSprite* pProprietor = static_cast<CGameSprite*>(m_cAIProprietor.sub_40CB20(NULL, CGameObject::TYPE_SPRITE, FALSE));
             if (pProprietor != NULL
                 && pProprietor->GetAIType().GetEnemyAlly() != CAIObjectType::EA_ENEMY
                 && (pProprietor->GetBaseStats()->m_generalState & STATE_DEAD) == 0
@@ -926,8 +926,8 @@ void CScreenStore::TimerSynchronousUpdate()
             if (pPanel->m_nID != 20 && pPanel->m_nID == 12) {
                 CUIPanel* pPanel = m_cUIManager.GetPanel(12);
                 CUIControlBase* pControl = pPanel->GetControl(9);
-                pControl->SetActive(nfield_5A8);
-                pControl->SetInactiveRender(nfield_5A8);
+                pControl->SetActive(field_5A8);
+                pControl->SetInactiveRender(field_5A8);
             }
         }
     }
@@ -958,7 +958,7 @@ void CScreenStore::EnableMainPanel(BOOL bEnable)
 
     m_pButtonBar->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -1015,10 +1015,10 @@ void CScreenStore::ResetPopupPanel(DWORD dwPanelId)
         ResetErrorPanel(pPanel);
         break;
     case 12:
-        UpdateItemDescription(pPanel);
+        sub_6734F0(pPanel);
         break;
     case 14:
-        UpdateSpellDescription(pPanel);
+        sub_673740(pPanel);
         break;
     case 20:
         break;
@@ -1036,8 +1036,8 @@ void CScreenStore::UpdatePopupPanel(DWORD dwPanelId)
     case 12:
         if (1) {
             CUIControlBase* pControl = m_cUIManager.GetPanel(12)->GetControl(9);
-            pControl->SetActive(nfield_5A8);
-            pControl->SetInactiveRender(nfield_5A8);
+            pControl->SetActive(field_5A8);
+            pControl->SetInactiveRender(field_5A8);
         }
         break;
     case 20:
@@ -1172,12 +1172,12 @@ void CScreenStore::ResetErrorPanel(CUIPanel* pPanel)
 }
 
 // 0x6734F0
-void CScreenStore::UpdateItemDescription(CUIPanel* pPanel)
+void CScreenStore::sub_6734F0(CUIPanel* pPanel)
 {
     // FIXME: Unused.
     CString v1;
 
-    CItem* pItem = pfield_5A4;
+    CItem* pItem = field_5A4;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenStore.cpp
     // __LINE__: 1713
@@ -1205,7 +1205,7 @@ void CScreenStore::UpdateItemDescription(CUIPanel* pPanel)
     pText->m_labelFont.GetFrameSize(64, 0, frameSize, FALSE);
 
     SHORT nFontHeight = pText->m_labelFont.GetFontHeight(FALSE);
-    pText->wfield_AB4 = static_cast<SHORT>((nFontHeight + frameSize.cy - 1) / nFontHeight);
+    pText->field_AB4 = static_cast<SHORT>((nFontHeight + frameSize.cy - 1) / nFontHeight);
 
     pText->RemoveAll();
     pItem->sub_4EA580(pText, RGB(200, 200, 0));
@@ -1236,7 +1236,7 @@ void CScreenStore::UpdateItemDescription(CUIPanel* pPanel)
 }
 
 // 0x673740
-void CScreenStore::UpdateSpellDescription(CUIPanel* pPanel)
+void CScreenStore::sub_673740(CUIPanel* pPanel)
 {
     m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(4));
 
@@ -2154,8 +2154,8 @@ BOOL CScreenStore::IsSellItemButtonClickable()
         return FALSE;
     }
 
-    if (m_pStore->m_header.nfield_94 != 0
-        && nItems + m_pStore->GetNumItems() > m_pStore->m_header.nfield_94) {
+    if (m_pStore->m_header.field_94 != 0
+        && nItems + m_pStore->GetNumItems() > m_pStore->m_header.field_94) {
         return FALSE;
     }
 
@@ -2165,17 +2165,17 @@ BOOL CScreenStore::IsSellItemButtonClickable()
 // 0x67A070
 void CScreenStore::OnSellItemButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
     if (IsSellItemButtonClickable()) {
         if (m_pStore->GetType() == 4 && m_pBag != NULL) {
-            SellSelectedBagItemsToStore4();
+            sub_67B030();
         } else if (m_pStore->GetType() == 4) {
-            SellSelectedItemsToStore4();
+            sub_67ABF0();
         } else if (m_pBag != NULL) {
-            SellSelectedBagItems();
+            sub_67A5B0();
         } else {
-            SellSelectedItems();
+            sub_67A130();
         }
         // FIXME: Wrong placement for explicit unlock, should be outside of
         // this condition.
@@ -2184,7 +2184,7 @@ void CScreenStore::OnSellItemButtonClick()
 }
 
 // 0x67A130
-void CScreenStore::SellSelectedItems()
+void CScreenStore::sub_67A130()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -2312,7 +2312,7 @@ void CScreenStore::SellSelectedItems()
 }
 
 // 0x67A5B0
-void CScreenStore::SellSelectedBagItems()
+void CScreenStore::sub_67A5B0()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -2461,7 +2461,7 @@ void CScreenStore::SellSelectedBagItems()
 }
 
 // 0x67ABF0
-void CScreenStore::SellSelectedItemsToStore4()
+void CScreenStore::sub_67ABF0()
 {
     INT nIndex = 0;
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -2577,7 +2577,7 @@ void CScreenStore::SellSelectedItemsToStore4()
 }
 
 // 0x67B030
-void CScreenStore::SellSelectedBagItemsToStore4()
+void CScreenStore::sub_67B030()
 {
     INT nIndex = 0;
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -2720,7 +2720,7 @@ void CScreenStore::OnIdentifyItemButtonClick()
     // __LINE__: 6643
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     DWORD nPartyGold = pGame->GetGameSave()->m_nPartyGold;
@@ -2801,7 +2801,7 @@ void CScreenStore::OnRentRoomButtonClick()
     // NOTE: Uninline.
     DWORD nCost = GetRoomCost();
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     if (m_dwRoomType != 0) {
@@ -2839,7 +2839,7 @@ void CScreenStore::OnBuyDrinkButtonClick(INT nButton)
     // __LINE__: 7302
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     STR_RES strRes;
@@ -2880,8 +2880,8 @@ void CScreenStore::OnBuyDrinkButtonClick(INT nButton)
                 if (pSprite->GetBaseStats()->m_intoxication < nIntoxicationCap) {
                     PlayGUISound(CResRef("GAM_07"));
                     pSprite->GetBaseStats()->m_intoxication += nIntoxicationRate;
-                    pSprite->nfield_562C = 1;
-                    pSprite->nfield_562C = 1;
+                    pSprite->field_562C = 1;
+                    pSprite->field_562C = 1;
                     pSprite->ProcessEffectList();
 
                     // NOTE: Unsigned compare.
@@ -2928,40 +2928,40 @@ void CScreenStore::OnDoneButtonClick()
         if (pPanel->m_nID == 10 || pPanel->m_nID == 11) {
             OnErrorButtonClick(0);
         } else {
-            CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+            CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
             renderLock.Lock(INFINITE);
 
             switch (pPanel->m_nID) {
             case 12:
-                pfield_5A4 = 0;
-                nfield_5A8 = 0;
+                field_5A4 = 0;
+                field_5A8 = 0;
                 break;
             case 14:
                 m_cResInfoSpell = CResRef("");
                 break;
             case 20:
-                if (nm_m_field_14E6) {
+                if (field_14E6) {
                     // NOTE: Uninline.
-                    SelectStoreItem(nm_m_field_14E2, TRUE);
+                    SelectStoreItem(field_14E2, TRUE);
 
                     // NOTE: Uninline.
-                    SetStoreItemCount(nm_m_field_14E2, nm_field_14DE);
+                    SetStoreItemCount(field_14E2, field_14DE);
 
                     // NOTE: Uninline.
                     UpdateStoreCost();
                 } else {
                     // NOTE: Uninline.
-                    SelectGroupItem(nm_m_field_14E2, TRUE);
+                    SelectGroupItem(field_14E2, TRUE);
 
                     // NOTE: Uninline.
-                    SetStoreItemCount(nm_m_field_14E2, nm_field_14DE);
+                    SetStoreItemCount(field_14E2, field_14DE);
 
                     // NOTE: Uninline.
                     UpdateGroupCost();
                 }
 
-                nm_m_field_14E2 = -1;
-                nm_m_field_14E6 = 1;
+                field_14E2 = -1;
+                field_14E6 = 1;
                 UpdateMainPanel();
                 break;
             default:
@@ -2982,7 +2982,7 @@ void CScreenStore::OnCancelButtonClick()
 {
     CUIPanel* pPanel = GetTopPopup();
     if (pPanel != NULL) {
-        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         if (g_pBaldurChitin->m_pEngineWorld->m_bInControlOfStore
@@ -2993,8 +2993,8 @@ void CScreenStore::OnCancelButtonClick()
                 DismissPopup();
                 break;
             case 12:
-                pfield_5A4 = NULL;
-                nfield_5A8 = 0;
+                field_5A4 = NULL;
+                field_5A8 = 0;
                 DismissPopup();
                 break;
             case 14:
@@ -3002,22 +3002,22 @@ void CScreenStore::OnCancelButtonClick()
                 DismissPopup();
                 break;
             case 20:
-                if (nm_m_field_14E6) {
+                if (field_14E6) {
                     // NOTE: Uninline.
-                    SelectStoreItem(nm_m_field_14E2, FALSE);
+                    SelectStoreItem(field_14E2, FALSE);
 
                     // NOTE: Uninline.
                     UpdateStoreCost();
                 } else {
                     // NOTE: Uninline.
-                    SelectGroupItem(nm_m_field_14E2, FALSE);
+                    SelectGroupItem(field_14E2, FALSE);
 
                     // NOTE: Uninline.
                     UpdateGroupCost();
                 }
 
-                nm_m_field_14E2 = -1;
-                nm_m_field_14E6 = 1;
+                field_14E2 = -1;
+                field_14E6 = 1;
                 UpdateMainPanel();
                 DismissPopup();
                 break;
@@ -3052,7 +3052,7 @@ void CScreenStore::StartStore(const CAIObjectType& proprietor, const CAIObjectTy
     m_cAIProprietor = proprietor;
     m_cAICustomer = customer;
     m_nDrinkRumorIndex = -1;
-    nfield_584 = -1;
+    field_584 = -1;
 
     if (g_pChitin->cNetwork.GetSessionOpen() == TRUE) {
         if (g_pChitin->cNetwork.GetSessionHosting()) {
@@ -3084,8 +3084,8 @@ void CScreenStore::StartStore(const CAIObjectType& proprietor, const CAIObjectTy
 
     SetSelectedCharacter(nPortrait);
 
-    bfield_5D8 = 9;
-    bfield_5D9 = 0;
+    field_5D8 = 9;
+    field_5D9 = 0;
 
     if (g_pChitin->cNetwork.GetSessionOpen() == TRUE) {
         for (SHORT nPortrait = 0; nPortrait < CMultiplayerSettings::MAX_CHARACTERS; nPortrait++) {
@@ -3102,8 +3102,8 @@ void CScreenStore::StartStore(const CAIObjectType& proprietor, const CAIObjectTy
                 } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
                 if (rc == CGameObjectArray::SUCCESS) {
-                    bfield_5D8 = static_cast<BYTE>(pSprite->GetDerivedStats()->m_nCHR);
-                    bfield_5D9 = pSprite->HasFeat(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
+                    field_5D8 = static_cast<BYTE>(pSprite->GetDerivedStats()->m_nCHR);
+                    field_5D9 = pSprite->sub_763150(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
 
                     pGame->GetObjectArray()->ReleaseShare(nCharacterId,
                         CGameObjectArray::THREAD_ASYNCH,
@@ -3127,8 +3127,8 @@ void CScreenStore::StartStore(const CAIObjectType& proprietor, const CAIObjectTy
                 } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
                 if (rc == CGameObjectArray::SUCCESS) {
-                    bfield_5D8 = static_cast<BYTE>(pSprite->GetDerivedStats()->m_nCHR);
-                    bfield_5D9 = pSprite->HasFeat(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
+                    field_5D8 = static_cast<BYTE>(pSprite->GetDerivedStats()->m_nCHR);
+                    field_5D9 = pSprite->sub_763150(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
 
                     pGame->GetObjectArray()->ReleaseShare(nCharacterId,
                         CGameObjectArray::THREAD_ASYNCH,
@@ -3547,7 +3547,7 @@ void CScreenStore::OnErrorButtonClick(INT nButton)
     // __LINE__: 8634
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -3878,10 +3878,10 @@ void CScreenStore::UpdateRequesterPanel()
 {
     CScreenStoreItem cItem;
 
-    if (nm_m_field_14E6 == 0) {
-        GetGroupItem(nm_m_field_14E2, cItem);
+    if (field_14E6 == 0) {
+        GetGroupItem(field_14E2, cItem);
     } else {
-        GetStoreItem(nm_m_field_14E2, cItem);
+        GetStoreItem(field_14E2, cItem);
     }
 
     CUIPanel* pPanel = m_cUIManager.GetPanel(20);
@@ -3902,10 +3902,10 @@ void CScreenStore::UpdateRequesterPanel()
     // __LINE__: 9427
     UTIL_ASSERT(pButton != NULL);
 
-    nm_field_14DE = min(nm_field_14DE, cItem.m_nMaxCount);
+    field_14DE = min(field_14DE, cItem.m_nMaxCount);
 
     char szCount[4];
-    sprintf(szCount, "%d", nm_field_14DE);
+    sprintf(szCount, "%d", field_14DE);
 
     pEdit->SetText(CString(szCount));
     pEdit->InvalidateRect();
@@ -4115,7 +4115,7 @@ void CUIControlButtonStoreBarPanel::OnLButtonClick(CPoint pt)
     // __LINE__: 9634
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -4391,7 +4391,7 @@ void CUIControlScrollBarStoreBuyDrinksDrink::OnScroll()
     UTIL_ASSERT(pStore != NULL);
 
     // NOTE: Uninline.
-    pStore->SetTopDrinkItem(max(wm_field_144 * (pStore->GetNumDrinkItems() - 8), 0) / wm_m_field_142);
+    pStore->SetTopDrinkItem(max(field_144 * (pStore->GetNumDrinkItems() - 8), 0) / field_142);
 
     InvalidateItems();
 
@@ -4408,7 +4408,7 @@ void CUIControlScrollBarStoreBuyDrinksDrink::InvalidateItems()
     // __LINE__: 10231
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->UpdateMainPanel();
@@ -4543,7 +4543,7 @@ void CUIControlScrollBarStoreStore::OnScroll()
     UTIL_ASSERT(pStore != NULL);
 
     // NOTE: Uninline.
-    pStore->SetTopStoreItem(max(wm_field_144 * (pStore->GetNumStoreItems() - 6), 0) / wm_m_field_142);
+    pStore->SetTopStoreItem(max(field_144 * (pStore->GetNumStoreItems() - 6), 0) / field_142);
 
     InvalidateItems();
 
@@ -4560,7 +4560,7 @@ void CUIControlScrollBarStoreStore::InvalidateItems()
     // __LINE__: 10507
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->UpdateMainPanel();
@@ -4695,7 +4695,7 @@ void CUIControlScrollBarStoreIdentify::OnScroll()
     UTIL_ASSERT(pStore != NULL);
 
     // NOTE: Uninline.
-    pStore->SetTopIdentifyItem(max(wm_field_144 * (pStore->GetNumIdentifyItems() - 6), 0) / wm_m_field_142);
+    pStore->SetTopIdentifyItem(max(field_144 * (pStore->GetNumIdentifyItems() - 6), 0) / field_142);
 
     InvalidateItems();
 
@@ -4712,7 +4712,7 @@ void CUIControlScrollBarStoreIdentify::InvalidateItems()
     // __LINE__: 10783
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->UpdateMainPanel();
@@ -4841,7 +4841,7 @@ void CUIControlScrollBarStoreGroup::OnScroll()
     UTIL_ASSERT(pStore != NULL);
 
     // NOTE: Uninline.
-    pStore->SetTopGroupItem(max(wm_field_144 * (pStore->GetNumGroupItems() - 6), 0) / wm_m_field_142);
+    pStore->SetTopGroupItem(max(field_144 * (pStore->GetNumGroupItems() - 6), 0) / field_142);
 
     InvalidateItems();
 
@@ -4858,7 +4858,7 @@ void CUIControlScrollBarStoreGroup::InvalidateItems()
     // __LINE__: 11057
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->UpdateMainPanel();
@@ -4993,7 +4993,7 @@ void CUIControlScrollBarStoreSpell::OnScroll()
     UTIL_ASSERT(pStore != NULL);
 
     // NOTE: Uninline.
-    pStore->SetTopSpellItem(max(wm_field_144 * (pStore->GetNumSpellItems() - 6), 0) / wm_m_field_142);
+    pStore->SetTopSpellItem(max(field_144 * (pStore->GetNumSpellItems() - 6), 0) / field_142);
 
     InvalidateItems();
 
@@ -5010,7 +5010,7 @@ void CUIControlScrollBarStoreSpell::InvalidateItems()
     // __LINE__: 11334
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->UpdateMainPanel();
@@ -5084,11 +5084,11 @@ void CUIControlButtonStoreStoreItem::OnLButtonDoubleClick(CPoint pt)
         if (pStore->m_pStore->m_header.m_nStoreType == 4) {
             if (cItem.m_pItem->GetMaxStackable() > 1
                 && cItem.m_pItem->GetUsageCount(0) > 1) {
-                pStore->nm_field_14DE = cItem.m_pItem->GetUsageCount(0);
-                pStore->nm_m_field_14E2 = nIndex;
-                pStore->nm_m_field_14E6 = 1;
+                pStore->field_14DE = cItem.m_pItem->GetUsageCount(0);
+                pStore->field_14E2 = nIndex;
+                pStore->field_14E6 = 1;
 
-                CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+                CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
                 renderLock.Lock(INFINITE);
 
                 pStore->SummonPopup(20);
@@ -5097,7 +5097,7 @@ void CUIControlButtonStoreStoreItem::OnLButtonDoubleClick(CPoint pt)
             }
         } else {
             if (cItem.m_nStoreCount != -1) {
-                CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+                CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
                 renderLock.Lock(INFINITE);
 
                 pStore->SummonPopup(20);
@@ -5122,7 +5122,7 @@ void CUIControlButtonStoreStoreItem::OnRButtonClick(CPoint pt)
     // __LINE__: 11551
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nIndex;
@@ -5133,8 +5133,8 @@ void CUIControlButtonStoreStoreItem::OnRButtonClick(CPoint pt)
         nIndex = pStore->m_nTopStoreItem + m_nID - 5;
         pos = pStore->m_lStoreItems.FindIndex(nIndex);
         if (pos != NULL) {
-            pStore->pfield_5A4 = pStore->m_lStoreItems.GetAt(pos)->m_pItem;
-            pStore->nfield_5A8 = 0;
+            pStore->field_5A4 = pStore->m_lStoreItems.GetAt(pos)->m_pItem;
+            pStore->field_5A8 = 0;
             pStore->SummonPopup(12);
         }
         break;
@@ -5294,7 +5294,7 @@ void CUIControlButtonStoreGroupItem::OnRButtonClick(CPoint pt)
     // __LINE__: 11922
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nIndex;
@@ -5307,8 +5307,8 @@ void CUIControlButtonStoreGroupItem::OnRButtonClick(CPoint pt)
         pos = pStore->m_lGroupItems.FindIndex(nIndex);
         if (pos != NULL) {
             pItem = pStore->m_lGroupItems.GetAt(pos);
-            pStore->pfield_5A4 = pItem->m_pItem;
-            pStore->nfield_5A8 = pStore->m_pBag == NULL && pItem->m_pItem->GetItemType() == 58;
+            pStore->field_5A4 = pItem->m_pItem;
+            pStore->field_5A8 = pStore->m_pBag == NULL && pItem->m_pItem->GetItemType() == 58;
             pStore->SummonPopup(12);
         }
         break;
@@ -5317,7 +5317,7 @@ void CUIControlButtonStoreGroupItem::OnRButtonClick(CPoint pt)
         pos = pStore->m_lIdentifyItems.FindIndex(nIndex);
         if (pos != NULL) {
             pItem = pStore->m_lIdentifyItems.GetAt(pos);
-            pStore->pfield_5A4 = pItem->m_pItem;
+            pStore->field_5A4 = pItem->m_pItem;
             pStore->SummonPopup(12);
         }
         break;
@@ -5415,7 +5415,7 @@ void CUIControlButtonStoreStoreSpell::OnRButtonClick(CPoint pt)
     // __LINE__: 12252
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nIndex;
@@ -5692,7 +5692,7 @@ void CUIControlButtonStoreBuyDrinksDrink::OnLButtonClick(CPoint pt)
     // __LINE__: 12811
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenStore.cpp
@@ -5788,7 +5788,7 @@ BOOL CUIControlButtonStoreRequesterItem::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -5924,23 +5924,23 @@ void CUIControlButtonStoreRequesterPlusMinus::AdjustValue()
         if (1) {
             CScreenStoreItem cItem;
 
-            if (pStore->nm_m_field_14E6 == 0) {
-                pStore->GetGroupItem(pStore->nm_m_field_14E2, cItem);
+            if (pStore->field_14E6 == 0) {
+                pStore->GetGroupItem(pStore->field_14E2, cItem);
             } else {
-                pStore->GetStoreItem(pStore->nm_m_field_14E2, cItem);
+                pStore->GetStoreItem(pStore->field_14E2, cItem);
             }
 
             // NOTE: Unsigned compare.
-            if (pStore->nm_field_14DE < cItem.m_nMaxCount) {
-                pStore->nm_field_14DE++;
+            if (pStore->field_14DE < cItem.m_nMaxCount) {
+                pStore->field_14DE++;
                 pStore->UpdateRequesterPanel();
             }
         }
         break;
     case 4:
         // NOTE: Signed compare.
-        if (static_cast<int>(pStore->nm_field_14DE) > 1) {
-            pStore->nm_field_14DE--;
+        if (static_cast<int>(pStore->field_14DE) > 1) {
+            pStore->field_14DE--;
             pStore->UpdateRequesterPanel();
         }
         break;
@@ -5975,17 +5975,17 @@ void CUIControlEditStoreRequesterAmount::KillFocus()
 
     CScreenStoreItem cItem;
 
-    if (pStore->nm_m_field_14E6) {
-        pStore->GetStoreItem(pStore->nm_m_field_14E2, cItem);
+    if (pStore->field_14E6) {
+        pStore->GetStoreItem(pStore->field_14E2, cItem);
     } else {
-        pStore->GetGroupItem(pStore->nm_m_field_14E2, cItem);
+        pStore->GetGroupItem(pStore->field_14E2, cItem);
     }
 
     DWORD nValue = atol(m_sText);
 
     // NOTE: Unsigned compare.
     if (nValue > 0 && nValue <= cItem.m_nMaxCount) {
-        pStore->nm_field_14DE = nValue;
+        pStore->field_14DE = nValue;
     }
 
     pStore->UpdateRequesterPanel();
@@ -6064,13 +6064,13 @@ void CUIControlButtonStoreOpenBag::OnLButtonClick(CPoint pt)
     // __LINE__: 13847
     UTIL_ASSERT(pStore != NULL);
 
-    CItem* pItem = pStore->pfield_5A4;
+    CItem* pItem = pStore->field_5A4;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenStore.cpp
     // __LINE__: 13851
     UTIL_ASSERT(pItem != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->OpenBag(pItem->GetResRef());
@@ -6101,155 +6101,3 @@ void CUIControlButtonStoreOpenBag::OnLButtonClick(CPoint pt)
 
     renderLock.Unlock();
 }
-
-// Phase 1-2: Scaffold functions
-// 0x671810
-void FUN_00671810() {
-    // TODO: Incomplete.
-}
-
-// 0x677E60
-void FUN_00677e60() {
-    // TODO: Incomplete.
-}
-
-// 0x678110
-void FUN_00678110() {
-    // TODO: Incomplete.
-}
-
-// 0x678900
-void FUN_00678900() {
-    // TODO: Incomplete.
-}
-
-// 0x679170
-void FUN_00679170() {
-    // TODO: Incomplete.
-}
-
-// 0x679810
-void FUN_00679810() {
-    // TODO: Incomplete.
-}
-
-// 0x67E560
-void FUN_0067e560() {
-    // TODO: Incomplete.
-}
-
-// 0x67EAF0
-void FUN_0067eaf0() {
-    // TODO: Incomplete.
-}
-
-// 0x67EC90
-void FUN_0067ec90() {
-    // TODO: Incomplete.
-}
-
-// 0x67EFB0
-void FUN_0067efb0() {
-    // TODO: Incomplete.
-}
-
-// 0x67F180
-void FUN_0067f180() {
-    // TODO: Incomplete.
-}
-
-// 0x67F350
-void FUN_0067f350() {
-    // TODO: Incomplete.
-}
-
-// 0x67F520
-void FUN_0067f520() {
-    // TODO: Incomplete.
-}
-
-// 0x6812F0
-void FUN_006812f0() {
-    // TODO: Incomplete.
-}
-
-// 0x681E10
-void FUN_00681e10() {
-    // TODO: Incomplete.
-}
-
-// 0x682970
-void FUN_00682970() {
-    // TODO: Incomplete.
-}
-
-// 0x6831C0
-void FUN_006831c0() {
-    // TODO: Incomplete.
-}
-
-// 0x6833B0
-void FUN_006833b0() {
-    // TODO: Incomplete.
-}
-
-// 0x683620
-void FUN_00683620() {
-    // TODO: Incomplete.
-}
-
-// 0x683750
-void FUN_00683750() {
-    // TODO: Incomplete.
-}
-
-// 0x683910
-void FUN_00683910() {
-    // TODO: Incomplete.
-}
-
-// 0x683B30
-void FUN_00683b30() {
-    // TODO: Incomplete.
-}
-
-// 0x683CC0
-void FUN_00683cc0() {
-    // TODO: Incomplete.
-}
-
-// 0x683E40
-void FUN_00683e40() {
-    // TODO: Incomplete.
-}
-
-// 0x6842E0
-void FUN_006842e0() {
-    // TODO: Incomplete.
-}
-
-// 0x6844B0
-void FUN_006844b0() {
-    // TODO: Incomplete.
-}
-
-// 0x6845D0
-void FUN_006845d0() {
-    // TODO: Incomplete.
-}
-
-// 0x6847E0
-void FUN_006847e0() {
-    // TODO: Incomplete.
-}
-
-// 0x684ED0
-void FUN_00684ed0() {
-    // TODO: Incomplete.
-}
-
-// 0x685320
-void FUN_00685320() {
-    // TODO: Incomplete.
-}
-

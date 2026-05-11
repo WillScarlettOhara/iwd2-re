@@ -5,17 +5,17 @@
 // 0x443350
 CGameSpriteSpellList::CGameSpriteSpellList()
 {
-    nm_field_10 = 0;
-    nm_field_14 = 0;
-    nm_field_18 = 0;
+    field_10 = 0;
+    field_14 = 0;
+    field_18 = 0;
 }
 
 // 0x443370
 CGameSpriteSpellList::~CGameSpriteSpellList()
 {
     if (m_List.size() != 0) {
-        nm_field_14 = 0;
-        nm_field_18 = 0;
+        field_14 = 0;
+        field_18 = 0;
     }
 }
 
@@ -26,8 +26,8 @@ BOOLEAN CGameSpriteSpellList::Add(const UINT& nID, const unsigned int& a2, const
 
     // NOTE: Uninline.
     if (Find(nID, nIndex)) {
-        unsigned int v1 = m_List[nIndex].nm_field_4 + a2;
-        unsigned int v2 = m_List[nIndex].nm_field_8 + a3;
+        unsigned int v1 = m_List[nIndex].field_4 + a2;
+        unsigned int v2 = m_List[nIndex].field_8 + a3;
 
         // NOTE: Unsigned compare.
         if (v1 < v2) {
@@ -36,19 +36,19 @@ BOOLEAN CGameSpriteSpellList::Add(const UINT& nID, const unsigned int& a2, const
             UTIL_ASSERT(FALSE);
         }
 
-        m_List[nIndex].nm_field_4 = v1;
-        m_List[nIndex].nm_field_8 = v2;
+        m_List[nIndex].field_4 = v1;
+        m_List[nIndex].field_8 = v2;
     } else {
         CGameSpriteSpellListEntry entry;
         entry.m_nID = nID;
-        entry.nm_field_4 = a2;
-        entry.nm_field_8 = a3;
-        entry.nfield_C = a4;
+        entry.field_4 = a2;
+        entry.field_8 = a3;
+        entry.field_C = a4;
         m_List.push_back(entry);
     }
 
     if (a3 != 0) {
-        nm_field_10 += a3;
+        field_10 += a3;
     }
 
     return TRUE;
@@ -69,12 +69,12 @@ BOOLEAN CGameSpriteSpellList::Remove(const UINT& nID, BOOLEAN a2, const unsigned
     std::vector<CGameSpriteSpellListEntry>::iterator it = m_List.begin();
     while (it != m_List.end()) {
         if (it->m_nID == nID) {
-            unsigned int v3 = it->nm_field_4;
+            unsigned int v3 = it->field_4;
             if (v3 < v1) {
                 v1 = v3;
             }
 
-            unsigned int v4 = it->nm_field_8;
+            unsigned int v4 = it->field_8;
             if (v4 < v2) {
                 v2 = v4;
             }
@@ -82,17 +82,17 @@ BOOLEAN CGameSpriteSpellList::Remove(const UINT& nID, BOOLEAN a2, const unsigned
             if (a2 == TRUE) {
                 m_List.erase(it);
             } else {
-                it->nm_field_4 = v3 - v1;
-                it->nm_field_8 = v4 - v2;
+                it->field_4 = v3 - v1;
+                it->field_8 = v4 - v2;
 
-                if (it->nm_field_4 < it->nm_field_8) {
-                    v2 += it->nm_field_8 - it->nm_field_4;
-                    it->nm_field_8 = it->nm_field_4;
+                if (it->field_4 < it->field_8) {
+                    v2 += it->field_8 - it->field_4;
+                    it->field_8 = it->field_4;
                 }
             }
 
             if (v2 != 0) {
-                nm_field_10 -= v2;
+                field_10 -= v2;
             }
 
             return TRUE;
@@ -104,7 +104,7 @@ BOOLEAN CGameSpriteSpellList::Remove(const UINT& nID, BOOLEAN a2, const unsigned
 }
 
 // 0x725C50
-BOOLEAN CGameSpriteSpellList::AddCasts(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteSpellList::sub_725C50(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
 {
     UINT nIndex;
 
@@ -115,27 +115,27 @@ BOOLEAN CGameSpriteSpellList::AddCasts(const UINT& nID, const unsigned int& a2, 
 
     CGameSpriteSpellListEntry& entry = m_List[nIndex];
 
-    if (entry.nm_field_4 == 0) {
+    if (entry.field_4 == 0) {
         return FALSE;
     }
 
-    unsigned int v1 = entry.nm_field_8;
+    unsigned int v1 = entry.field_8;
     unsigned int v2 = v1 + a2;
 
     // NOTE: Unsigned compare.
-    if (a3 == 1 || v2 > entry.nm_field_4) {
-        v2 = entry.nm_field_4;
+    if (a3 == 1 || v2 > entry.field_4) {
+        v2 = entry.field_4;
     }
 
-    nm_field_10 -= v1;
-    entry.nm_field_8 = v2;
-    nm_field_10 += v2;
+    field_10 -= v1;
+    entry.field_8 = v2;
+    field_10 += v2;
 
     return TRUE;
 }
 
 // 0x725CC0
-BOOLEAN CGameSpriteSpellList::RemoveCasts(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteSpellList::sub_725CC0(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
 {
     UINT nIndex;
 
@@ -146,7 +146,7 @@ BOOLEAN CGameSpriteSpellList::RemoveCasts(const UINT& nID, const unsigned int& a
 
     CGameSpriteSpellListEntry& entry = m_List[nIndex];
 
-    int v1 = entry.nm_field_8;
+    int v1 = entry.field_8;
 
     int v2 = v1 - a2;
 
@@ -155,47 +155,47 @@ BOOLEAN CGameSpriteSpellList::RemoveCasts(const UINT& nID, const unsigned int& a
         v2 = 0;
     }
 
-    nm_field_10 -= v1;
-    entry.nm_field_8 = v2;
-    nm_field_10 += v2;
+    field_10 -= v1;
+    entry.field_8 = v2;
+    field_10 += v2;
 
     return TRUE;
 }
 
 // 0x725D30
-BOOLEAN CGameSpriteSpellList::AddAllCasts(const unsigned int& a1, const BOOLEAN& a2)
+BOOLEAN CGameSpriteSpellList::sub_725D30(const unsigned int& a1, const BOOLEAN& a2)
 {
-    unsigned int v1 = nm_field_18 + a1;
+    unsigned int v1 = field_18 + a1;
 
     // NOTE: Unsigned compare.
-    if (a2 == 1 || v1 > nm_field_14) {
-        v1 = nm_field_14;
+    if (a2 == 1 || v1 > field_14) {
+        v1 = field_14;
     }
 
-    nm_field_18 = v1;
+    field_18 = v1;
 
     for (UINT nIndex = 0; nIndex < m_List.size(); nIndex++) {
-        AddCasts(m_List[nIndex].m_nID, v1 - m_List[nIndex].nm_field_8, FALSE);
+        sub_725C50(m_List[nIndex].m_nID, v1 - m_List[nIndex].field_8, FALSE);
     }
 
     return TRUE;
 }
 
 // 0x725DB0
-BOOLEAN CGameSpriteSpellList::RemoveAllCasts(const unsigned int& a1, const BOOLEAN& a2)
+BOOLEAN CGameSpriteSpellList::sub_725DB0(const unsigned int& a1, const BOOLEAN& a2)
 {
-    int v1 = nm_field_18 - a1;
+    int v1 = field_18 - a1;
 
     // NOTE: Signed compare.
     if (a2 == 1 || v1 < 0) {
         v1 = 0;
     }
 
-    nm_field_18 = v1;
+    field_18 = v1;
 
     for (UINT nIndex = 0; nIndex < m_List.size(); nIndex++) {
         // NOTE: Uninline.
-        RemoveCasts(m_List[nIndex].m_nID, v1 - m_List[nIndex].nm_field_8, FALSE);
+        sub_725CC0(m_List[nIndex].m_nID, v1 - m_List[nIndex].field_8, FALSE);
     }
 
     return TRUE;
@@ -230,7 +230,7 @@ BOOLEAN CGameSpriteSpellList::CheckF8(UINT nIndex)
     // __FILE__: 2429
     UTIL_ASSERT(nIndex < m_List.size());
 
-    return m_List[nIndex].nm_field_8 != 0;
+    return m_List[nIndex].field_8 != 0;
 }
 
 // NOTE: Inlined.
@@ -291,12 +291,12 @@ UINT CGameSpriteGroupedSpellList::GetNumSpells()
 }
 
 // 0x725F00
-UINT CGameSpriteGroupedSpellList::CountTotalCasts()
+UINT CGameSpriteGroupedSpellList::sub_725F00()
 {
     UINT nCount = 0;
 
     for (UINT nIndex = 0; nIndex < m_nHighestLevel; nIndex++) {
-        nCount += m_lists[nIndex].nm_field_10;
+        nCount += m_lists[nIndex].field_10;
     }
 
     return nCount;
@@ -345,46 +345,46 @@ BOOLEAN CGameSpriteGroupedSpellList::Remove(const UINT& nID, const UINT& nLevel,
 }
 
 // 0x726060
-BOOLEAN CGameSpriteGroupedSpellList::AddCasts(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
+BOOLEAN CGameSpriteGroupedSpellList::sub_726060(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26822
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
-    return m_lists[nLevel].AddCasts(nID, a3, a4);
+    return m_lists[nLevel].sub_725C50(nID, a3, a4);
 }
 
 // 0x7260B0
-BOOLEAN CGameSpriteGroupedSpellList::RemoveCasts(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
+BOOLEAN CGameSpriteGroupedSpellList::sub_7260B0(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26832
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
     // NOTE: Uninline.
-    return m_lists[nLevel].RemoveCasts(nID, a3, a4);
+    return m_lists[nLevel].sub_725CC0(nID, a3, a4);
 }
 
 // 0x726150
-BOOLEAN CGameSpriteGroupedSpellList::AddAllCasts(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteGroupedSpellList::sub_726150(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26842
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
-    m_lists[nLevel].AddAllCasts(a2, a3);
+    m_lists[nLevel].sub_725D30(a2, a3);
 
     return TRUE;
 }
 
 // 0x7261A0
-BOOLEAN CGameSpriteGroupedSpellList::RemoveAllCasts(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteGroupedSpellList::sub_7261A0(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26852
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
-    m_lists[nLevel].RemoveAllCasts(a2, a3);
+    m_lists[nLevel].sub_725DB0(a2, a3);
 
     return TRUE;
 }
@@ -439,15 +439,3 @@ CGameSpriteSpellList* CGameSpriteSpells::GetSpellsAtLevel(UINT nClassIndex, UINT
 
     return m_spellsByClass[nClassIndex].GetSpellsAtLevel(nLevel);
 }
-
-// Phase 1-2: Scaffold functions
-// 0x443400
-void FUN_00443400() {
-    // TODO: Incomplete.
-}
-
-// 0x58FE70
-void FUN_0058fe70() {
-    // TODO: Incomplete.
-}
-

@@ -8,15 +8,15 @@
 CRes::CRes()
 {
     m_pCurrentListPos = NULL;
-    nm_field_40 = 0;
+    field_40 = 0;
     m_nID = 0;
-    nm_field_44 = 0;
+    field_44 = 0;
     nSize = 0;
     m_nResSizeActual = 0;
     m_pData = NULL;
     m_pDimmKeyTableEntry = NULL;
     m_pCurrentList = NULL;
-    nm_field_18 = 0;
+    field_18 = 0;
     dwFlags = 0;
 }
 
@@ -68,9 +68,9 @@ void* CRes::Demand()
         m_nResSizeActual = nSize;
     }
 
-    if (nm_field_18) {
+    if (field_18) {
         if (pData != NULL) {
-            CSingleLock lock(&pm_field_20, FALSE);
+            CSingleLock lock(&field_20, FALSE);
             lock.Lock(INFINITE);
 
             unsigned char* pBytes = reinterpret_cast<unsigned char*>(m_pData);
@@ -124,7 +124,7 @@ int CRes::Dump(int a2)
 // 0x77E550
 int CRes::GetDemands()
 {
-    return nm_field_40;
+    return field_40;
 }
 
 // 0x77E560
@@ -193,15 +193,3 @@ BOOL CRes::Write(const CString& sFilePath, LPVOID lpBuf, DWORD dwSize)
 {
     return g_pChitin->cDimm.WriteResourceWithData(sFilePath, this, lpBuf, dwSize);
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4010D0
-void FUN_004010d0() {
-    // TODO: Incomplete.
-}
-
-// 0x77E2D0
-void FUN_0077e2d0() {
-    // TODO: Incomplete.
-}
-

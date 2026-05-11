@@ -98,19 +98,19 @@ public:
     /* 33EE */ CVidPalette m_weaponPalette;
     /* 3412 */ SHORT m_currentBamSequence;
     /* 3414 */ SHORT m_currentBamDirection;
-    /* 3416 */ int nm_field_3416;
-    /* 341A */ int nm_field_341A;
-    /* 341E */ int nm_field_341E;
+    /* 3416 */ int field_3416;
+    /* 341A */ int field_341A;
+    /* 341E */ int field_341E;
     /* 3422 */ CVidBitmap m_bitmap;
-    /* 34DC */ unsigned char bm_field_34DC;
-    /* 34DD */ unsigned char bm_field_34DD;
+    /* 34DC */ unsigned char field_34DC;
+    /* 34DD */ unsigned char field_34DD;
     /* 34DE */ BOOL m_renderWeapons;
-    /* 34E2 */ int nm_field_34E2;
-    /* 34E6 */ BYTE bm_field_34E6;
+    /* 34E2 */ int field_34E2;
+    /* 34E6 */ BYTE field_34E6;
     /* 34E7 */ BYTE m_extendDirectionTest;
-    /* 34E8 */ CString sm_field_34E8[3];
-    /* 34F4 */ int nm_field_34F4;
-    /* 34F8 */ int nm_field_34F8;
+    /* 34E8 */ CString field_34E8[3];
+    /* 34F4 */ int field_34F4;
+    /* 34F8 */ int field_34F8;
 };
 
 #endif /* CGAMEANIMATIONTYPEMONSTERICEWINDNEW_H_ */

@@ -9,11 +9,11 @@
 CGameAnimationTypeMonsterMulti::CGameAnimationTypeMonsterMulti(USHORT animationID, BYTE* colorRangeValues, WORD facing)
     : m_charPalette(CVidPalette::TYPE_RANGE)
 {
-    bm_field_800 = 0;
+    field_800 = 0;
     m_bDoubleBlit = FALSE;
     m_colorChunks = -1;
     m_falseColor = FALSE;
-    nm_field_446 = 0;
+    field_446 = 0;
     m_nQuadrants = 1;
     m_bSplitBams = FALSE;
     SetNeckOffsets(0, 10, -10, 10, -10, 0, -10, -10, 0, -10, 10, -10, 10, 0, 10, 10);
@@ -66,122 +66,122 @@ CGameAnimationTypeMonsterMulti::CGameAnimationTypeMonsterMulti(USHORT animationI
             break;
         case 3:
             m_resRef = "MDR1";
-            nm_field_446 = 1;
+            field_446 = 1;
 
-            pm_field_44E.SetResRef(CResRef("MDR1_GR1"), TRUE, TRUE);
-            pm_field_44E.m_bDoubleSize = FALSE;
+            field_44E.SetResRef(CResRef("MDR1_GR1"), TRUE, TRUE);
+            field_44E.m_bDoubleSize = FALSE;
 
-            pfield_508.SetResRef(CResRef("MDR1_GR2"), TRUE, TRUE);
-            pfield_508.m_bDoubleSize = FALSE;
+            field_508.SetResRef(CResRef("MDR1_GR2"), TRUE, TRUE);
+            field_508.m_bDoubleSize = FALSE;
 
-            pfield_5C2.SetResRef(CResRef("MDR1_GR3"), TRUE, TRUE);
-            pfield_5C2.m_bDoubleSize = FALSE;
+            field_5C2.SetResRef(CResRef("MDR1_GR3"), TRUE, TRUE);
+            field_5C2.m_bDoubleSize = FALSE;
 
-            pfield_67C.SetResRef(CResRef("MDR1_GR4"), TRUE, TRUE);
-            pfield_67C.m_bDoubleSize = FALSE;
+            field_67C.SetResRef(CResRef("MDR1_GR4"), TRUE, TRUE);
+            field_67C.m_bDoubleSize = FALSE;
 
-            pfield_736.SetResRef(CResRef("MDR1_GR5"), TRUE, TRUE);
-            pfield_736.m_bDoubleSize = FALSE;
+            field_736.SetResRef(CResRef("MDR1_GR5"), TRUE, TRUE);
+            field_736.m_bDoubleSize = FALSE;
 
             break;
         case 4:
             m_resRef = "MDR1";
-            nm_field_446 = 1;
+            field_446 = 1;
 
-            pm_field_44E.SetResRef(CResRef("MDR1_AQ1"), TRUE, TRUE);
-            pm_field_44E.m_bDoubleSize = FALSE;
+            field_44E.SetResRef(CResRef("MDR1_AQ1"), TRUE, TRUE);
+            field_44E.m_bDoubleSize = FALSE;
 
-            pfield_508.SetResRef(CResRef("MDR1_AQ2"), TRUE, TRUE);
-            pfield_508.m_bDoubleSize = FALSE;
+            field_508.SetResRef(CResRef("MDR1_AQ2"), TRUE, TRUE);
+            field_508.m_bDoubleSize = FALSE;
 
-            pfield_5C2.SetResRef(CResRef("MDR1_AQ3"), TRUE, TRUE);
-            pfield_5C2.m_bDoubleSize = FALSE;
+            field_5C2.SetResRef(CResRef("MDR1_AQ3"), TRUE, TRUE);
+            field_5C2.m_bDoubleSize = FALSE;
 
-            pfield_67C.SetResRef(CResRef("MDR1_AQ4"), TRUE, TRUE);
-            pfield_67C.m_bDoubleSize = FALSE;
+            field_67C.SetResRef(CResRef("MDR1_AQ4"), TRUE, TRUE);
+            field_67C.m_bDoubleSize = FALSE;
 
-            pfield_736.SetResRef(CResRef("MDR1_AQ5"), TRUE, TRUE);
-            pfield_736.m_bDoubleSize = FALSE;
+            field_736.SetResRef(CResRef("MDR1_AQ5"), TRUE, TRUE);
+            field_736.m_bDoubleSize = FALSE;
 
             break;
         case 5:
             m_resRef = "MDR1";
-            nm_field_446 = 1;
+            field_446 = 1;
 
-            pm_field_44E.SetResRef(CResRef("MDR1_BL1"), TRUE, TRUE);
-            pm_field_44E.m_bDoubleSize = FALSE;
+            field_44E.SetResRef(CResRef("MDR1_BL1"), TRUE, TRUE);
+            field_44E.m_bDoubleSize = FALSE;
 
-            pfield_508.SetResRef(CResRef("MDR1_BL2"), TRUE, TRUE);
-            pfield_508.m_bDoubleSize = FALSE;
+            field_508.SetResRef(CResRef("MDR1_BL2"), TRUE, TRUE);
+            field_508.m_bDoubleSize = FALSE;
 
-            pfield_5C2.SetResRef(CResRef("MDR1_BL3"), TRUE, TRUE);
-            pfield_5C2.m_bDoubleSize = FALSE;
+            field_5C2.SetResRef(CResRef("MDR1_BL3"), TRUE, TRUE);
+            field_5C2.m_bDoubleSize = FALSE;
 
-            pfield_67C.SetResRef(CResRef("MDR1_BL4"), TRUE, TRUE);
-            pfield_67C.m_bDoubleSize = FALSE;
+            field_67C.SetResRef(CResRef("MDR1_BL4"), TRUE, TRUE);
+            field_67C.m_bDoubleSize = FALSE;
 
-            pfield_736.SetResRef(CResRef("MDR1_BL5"), TRUE, TRUE);
-            pfield_736.m_bDoubleSize = FALSE;
+            field_736.SetResRef(CResRef("MDR1_BL5"), TRUE, TRUE);
+            field_736.m_bDoubleSize = FALSE;
 
             break;
         case 6:
             m_resRef = "MDR1";
-            nm_field_446 = 1;
+            field_446 = 1;
 
-            pm_field_44E.SetResRef(CResRef("MDR1_BR1"), TRUE, TRUE);
-            pm_field_44E.m_bDoubleSize = FALSE;
+            field_44E.SetResRef(CResRef("MDR1_BR1"), TRUE, TRUE);
+            field_44E.m_bDoubleSize = FALSE;
 
-            pfield_508.SetResRef(CResRef("MDR1_BR2"), TRUE, TRUE);
-            pfield_508.m_bDoubleSize = FALSE;
+            field_508.SetResRef(CResRef("MDR1_BR2"), TRUE, TRUE);
+            field_508.m_bDoubleSize = FALSE;
 
-            pfield_5C2.SetResRef(CResRef("MDR1_BR3"), TRUE, TRUE);
-            pfield_5C2.m_bDoubleSize = FALSE;
+            field_5C2.SetResRef(CResRef("MDR1_BR3"), TRUE, TRUE);
+            field_5C2.m_bDoubleSize = FALSE;
 
-            pfield_67C.SetResRef(CResRef("MDR1_BR4"), TRUE, TRUE);
-            pfield_67C.m_bDoubleSize = FALSE;
+            field_67C.SetResRef(CResRef("MDR1_BR4"), TRUE, TRUE);
+            field_67C.m_bDoubleSize = FALSE;
 
-            pfield_736.SetResRef(CResRef("MDR1_BR5"), TRUE, TRUE);
-            pfield_736.m_bDoubleSize = FALSE;
+            field_736.SetResRef(CResRef("MDR1_BR5"), TRUE, TRUE);
+            field_736.m_bDoubleSize = FALSE;
 
             break;
         case 7:
             m_resRef = "MDR1";
-            nm_field_446 = 1;
+            field_446 = 1;
 
-            pm_field_44E.SetResRef(CResRef("MDR1_MC1"), TRUE, TRUE);
-            pm_field_44E.m_bDoubleSize = FALSE;
+            field_44E.SetResRef(CResRef("MDR1_MC1"), TRUE, TRUE);
+            field_44E.m_bDoubleSize = FALSE;
 
-            pfield_508.SetResRef(CResRef("MDR1_MC2"), TRUE, TRUE);
-            pfield_508.m_bDoubleSize = FALSE;
+            field_508.SetResRef(CResRef("MDR1_MC2"), TRUE, TRUE);
+            field_508.m_bDoubleSize = FALSE;
 
-            pfield_5C2.SetResRef(CResRef("MDR1_MC3"), TRUE, TRUE);
-            pfield_5C2.m_bDoubleSize = FALSE;
+            field_5C2.SetResRef(CResRef("MDR1_MC3"), TRUE, TRUE);
+            field_5C2.m_bDoubleSize = FALSE;
 
-            pfield_67C.SetResRef(CResRef("MDR1_MC4"), TRUE, TRUE);
-            pfield_67C.m_bDoubleSize = FALSE;
+            field_67C.SetResRef(CResRef("MDR1_MC4"), TRUE, TRUE);
+            field_67C.m_bDoubleSize = FALSE;
 
-            pfield_736.SetResRef(CResRef("MDR1_MC5"), TRUE, TRUE);
-            pfield_736.m_bDoubleSize = FALSE;
+            field_736.SetResRef(CResRef("MDR1_MC5"), TRUE, TRUE);
+            field_736.m_bDoubleSize = FALSE;
 
             break;
         case 8:
             m_resRef = "MDR1";
-            nm_field_446 = 1;
+            field_446 = 1;
 
-            pm_field_44E.SetResRef(CResRef("MDR1_PU1"), TRUE, TRUE);
-            pm_field_44E.m_bDoubleSize = FALSE;
+            field_44E.SetResRef(CResRef("MDR1_PU1"), TRUE, TRUE);
+            field_44E.m_bDoubleSize = FALSE;
 
-            pfield_508.SetResRef(CResRef("MDR1_PU2"), TRUE, TRUE);
-            pfield_508.m_bDoubleSize = FALSE;
+            field_508.SetResRef(CResRef("MDR1_PU2"), TRUE, TRUE);
+            field_508.m_bDoubleSize = FALSE;
 
-            pfield_5C2.SetResRef(CResRef("MDR1_PU3"), TRUE, TRUE);
-            pfield_5C2.m_bDoubleSize = FALSE;
+            field_5C2.SetResRef(CResRef("MDR1_PU3"), TRUE, TRUE);
+            field_5C2.m_bDoubleSize = FALSE;
 
-            pfield_67C.SetResRef(CResRef("MDR1_PU4"), TRUE, TRUE);
-            pfield_67C.m_bDoubleSize = FALSE;
+            field_67C.SetResRef(CResRef("MDR1_PU4"), TRUE, TRUE);
+            field_67C.m_bDoubleSize = FALSE;
 
-            pfield_736.SetResRef(CResRef("MDR1_PU5"), TRUE, TRUE);
-            pfield_736.m_bDoubleSize = FALSE;
+            field_736.SetResRef(CResRef("MDR1_PU5"), TRUE, TRUE);
+            field_736.m_bDoubleSize = FALSE;
 
             break;
         default:
@@ -239,7 +239,7 @@ CGameAnimationTypeMonsterMulti::CGameAnimationTypeMonsterMulti(USHORT animationI
     m_currentVidCellBase = m_g2VidCellBase;
     m_currentVidCell = m_g2VidCellBase;
 
-    pm_field_44A = &pfield_508;
+    field_44A = &field_508;
 
     if (m_falseColor) {
         for (BYTE colorRange = 0; colorRange < CVidPalette::NUM_RANGES; colorRange++) {
@@ -838,20 +838,3 @@ void CGameAnimationTypeMonsterMulti::GetAnimationResRef(CString& resRef, BYTE ra
         resRef = "";
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x6B5A60
-void FUN_006b5a60() {
-    // TODO: Incomplete.
-}
-
-// 0x6B5D80
-void FUN_006b5d80() {
-    // TODO: Incomplete.
-}
-
-// 0x6B7660
-void FUN_006b7660() {
-    // TODO: Incomplete.
-}
-

@@ -60,7 +60,7 @@ public:
     /* 006C */ DWORD m_gameTime;
     /* 0070 */ DWORD m_storedLocationsOffsetPocketPlane;
     /* 0074 */ DWORD m_storedLocationsCountPocketPlane;
-    /* 0098 */ unsigned char bfield_98[52];
+    /* 0098 */ unsigned char field_78[52];
 };
 
 class CSavedGameJournalEntry {
@@ -110,7 +110,7 @@ public:
     /* 0104 */ SHORT m_quickItemsAbilityNum[3];
     /* 010A */ RESREF m_quickInnatesSpellId[9];
     /* 0152 */ RESREF m_quickSongsSpellId[9];
-    /* 019A */ int nm_field_19A[9];
+    /* 019A */ int field_19A[9];
     /* 01BE */ SCRIPTNAME m_name;
     /* 01DE */ LONG m_nNumberOfTimesTalkedTo;
     /* 01E2 */ STRREF m_strStrongestKillName;
@@ -127,16 +127,16 @@ public:
     /* 022E */ RESREF m_lWeaponStatsName[4];
     /* 024E */ SHORT m_lWeaponStatsCount[4];
     /* 0256 */ RESREF m_secondarySounds;
-    /* 025E */ unsigned char bm_field_25E[32];
+    /* 025E */ unsigned char field_25E[32];
     /* 027E */ BYTE m_nLastSpellbookClassIndex;
     /* 027F */ BYTE m_nLastSpellbookSpellLevel;
-    /* 0280 */ BYTE bm_field_280[9];
+    /* 0280 */ BYTE field_280[9];
     /* 0289 */ BYTE m_nWeaponSet;
-    /* 028A */ int nm_field_28A[5];
-    /* 029E */ unsigned char bm_field_29E[9];
-    /* 02A7 */ BYTE bm_field_2A7[8];
+    /* 028A */ int field_28A[5];
+    /* 029E */ unsigned char field_29E[9];
+    /* 02A7 */ BYTE field_2A7[8];
     /* 02AF */ BYTE m_nLastSong;
-    /* 02B0 */ unsigned char bm_field_2B0[144];
+    /* 02B0 */ unsigned char field_2B0[144];
 };
 
 #pragma pack(pop)
@@ -314,8 +314,8 @@ public:
     /* 007C */ RESREF m_script;
     /* 0084 */ WORD m_transitionWalkToX;
     /* 0086 */ WORD m_transitionWalkToY;
-    /* 0088 */ LONG nm_field_88;
-    /* 008C */ LONG nm_field_8C;
+    /* 0088 */ LONG field_88;
+    /* 008C */ LONG field_8C;
     /* 0090 */ DWORD m_notUsed[13];
 };
 
@@ -448,13 +448,13 @@ public:
     /* 001C */ SHORT m_hitPoints;
     /* 001E */ WORD m_maxHitPointsBase;
     /* 0020 */ short m_animationType;
-    /* 0022 */ short wm_field_22;
+    /* 0022 */ short field_22;
     /* 0024 */ BYTE m_colors[7];
     /* 002B */ BYTE m_effectVersion;
     /* 002C */ RESREF m_portraitSmall;
     /* 0034 */ RESREF m_portraitLarge;
     /* 003C */ BYTE m_reputation;
-    /* 003E */ short wm_field_3E;
+    /* 003E */ short field_3E;
     /* 0040 */ SHORT m_armorClassCrushingAdjustment;
     /* 0042 */ SHORT m_armorClassMissileAdjustment;
     /* 0044 */ SHORT m_armorClassPiercingAdjustment;
@@ -476,15 +476,15 @@ public:
     /* 0056 */ signed char m_resistPiercingBase;
     /* 0057 */ signed char m_resistMissileBase;
     /* 0058 */ signed char m_resistMagicDamageBase;
-    /* 0059 */ unsigned char bfield_59;
-    /* 005A */ unsigned char bfield_5A;
-    /* 005B */ unsigned char bfield_5B;
-    /* 005C */ unsigned char bfield_5C;
+    /* 0059 */ unsigned char field_59;
+    /* 005A */ unsigned char field_5A;
+    /* 005B */ unsigned char field_5B;
+    /* 005C */ unsigned char field_5C;
     /* 005D */ BYTE m_fatigue;
     /* 005E */ BYTE m_intoxication;
     /* 005F */ signed char m_luckBase;
     /* 0060 */ BYTE m_turnUndeadLevel;
-    /* 0061 */ unsigned char bfield_61[33];
+    /* 0061 */ unsigned char field_60[33];
     /* 0082 */ BYTE m_characterLevel;
     /* 0083 */ union {
         struct {
@@ -502,14 +502,14 @@ public:
         };
         BYTE m_classLevels[11];
     };
-    /* 008E */ unsigned char bm_field_8E[22];
+    /* 008E */ unsigned char field_8E[22];
     /* 00A4 */ STRREF m_speech[63];
     /* 01A0 */ STRREF m_biography;
     /* 01A4 */ RESREF m_scriptTeam;
     /* 01AC */ RESREF m_scriptSpecial1;
-    /* 01B4 */ int nm_field_1B4;
+    /* 01B4 */ int field_1B4;
     /* 01B8 */ DWORD m_feats[3];
-    /* 01C4 */ unsigned char bm_field_1C4[12];
+    /* 01C4 */ unsigned char field_1C4[12];
     /* 01D0 */ BYTE m_featBow;
     /* 01D1 */ BYTE m_featCrossbow;
     /* 01D2 */ BYTE m_featMissile;
@@ -536,14 +536,14 @@ public:
     /* 01E7 */ BYTE m_featExtraSmiting;
     /* 01E8 */ BYTE m_featExtraTurning;
     /* 01E9 */ BYTE m_featBastardSword;
-    /* 01EA */ unsigned char bm_field_1EA[38];
+    /* 01EA */ unsigned char field_1EA[38];
     /* 0210 */ BYTE m_skills[64];
-    /* 0250 */ unsigned char bm_field_250;
-    /* 0251 */ unsigned char bm_field_251;
-    /* 0252 */ unsigned char bm_field_252;
+    /* 0250 */ unsigned char field_250;
+    /* 0251 */ unsigned char field_251;
+    /* 0252 */ unsigned char field_252;
     /* 0253 */ BYTE m_favoredEnemies[MAX_HATED_RACES];
     /* 025B */ BYTE m_subrace;
-    /* 025C */ unsigned char bm_field_25C;
+    /* 025C */ unsigned char field_25C;
     /* 025D */ BYTE m_sex;
     /* 025E */ BYTE m_STRBase;
     /* 025F */ BYTE m_DEXBase;
@@ -560,20 +560,20 @@ public:
     /* 027C */ RESREF m_scriptCombat;
     /* 0284 */ RESREF m_scriptSpecial3;
     /* 028C */ RESREF m_scriptMovement;
-    /* 0294 */ BOOLEAN bm_field_294;
-    /* 02E2 */ BOOLEAN bm_field_2E2;
-    /* 02E4 */ SHORT wm_field_2E4;
-    /* 02E6 */ SHORT wm_field_2E6;
-    /* 02E8 */ SHORT wm_field_2E8;
-    /* 02E9 */ BYTE bm_field_2E9;
-    /* 02EA */ BOOLEAN bm_field_2EA[6];
-    /* 02F7 */ BOOLEAN bm_field_2F7;
-    /* 02F8 */ BOOLEAN bm_field_2F8;
-    /* 02F9 */ BYTE bm_field_2F9;
+    /* 0294 */ BOOLEAN field_294;
+    /* 02E2 */ BOOLEAN field_2E2;
+    /* 02E4 */ SHORT field_2E4;
+    /* 02E6 */ SHORT field_2E6;
+    /* 02E8 */ SHORT field_2E8;
+    /* 02E9 */ BYTE field_2E9;
+    /* 02EA */ BOOLEAN field_2EA[6];
+    /* 02F7 */ BOOLEAN field_2F7;
+    /* 02F8 */ BOOLEAN field_2F8;
+    /* 02F9 */ BYTE field_2F9;
     /* 02FA */ BYTE m_fadeSpeed;
-    /* 02FB */ unsigned char bm_field_2FB;
-    /* 02FC */ unsigned char bm_field_2FC;
-    /* 02FF */ unsigned char bm_field_2FF;
+    /* 02FB */ unsigned char field_2FB;
+    /* 02FC */ unsigned char field_2FC;
+    /* 02FF */ unsigned char field_2FF;
 };
 
 #pragma pack(push)
@@ -625,10 +625,10 @@ public:
         memset(this, 0, sizeof(*this));
     }
 
-    /* 0000 */ UINT nm_field_0;
-    /* 0004 */ UINT nm_field_4;
-    /* 0008 */ UINT nm_field_8;
-    /* 000C */ UINT nfield_C;
+    /* 0000 */ UINT field_0;
+    /* 0004 */ UINT field_4;
+    /* 0008 */ UINT field_8;
+    /* 000C */ UINT field_C;
 };
 
 class CCreatureFileItem {
@@ -806,8 +806,8 @@ public:
     /* 0088 */ DWORD m_rouletWinAmount;
     /* 008C */ DWORD m_crapsWinAmount;
     /* 0090 */ DWORD m_wheelWinAmount;
-    /* 0094 */ DWORD nfield_94;
-    /* 0098 */ int nfield_98[20];
+    /* 0094 */ DWORD field_94;
+    /* 0098 */ int field_98[20];
 };
 
 class CStoreFileSpell {

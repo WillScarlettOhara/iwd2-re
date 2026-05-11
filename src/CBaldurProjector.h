@@ -56,27 +56,27 @@ public:
     BOOL ResolveMovieFileName(const CResRef& cResRef, CString& sMovieFileName);
     void PlayMovieInternal(const CResRef& cResRef, BOOL bAsynchThread);
     void PlayMovieNext(const CResRef& cResRef);
-    void RenderBinkFrame(HBINK bnk);
+    void sub_43E300(HBINK bnk);
 
-    /* 0106 */ int nm_m_field_106;
-    /* 010A */ int nm_field_10A;
+    /* 0106 */ int field_106;
+    /* 010A */ int field_10A;
     /* 0112 */ BOOL m_bDeactivateEngine; // #guess
     /* 0116 */ CKeyInfo m_pVirtualKeys[CBALDURPROJECTOR_VIRTUAL_KEYS];
     /* 0126 */ BYTE m_pVirtualKeysFlags[CBALDURPROJECTOR_VIRTUAL_KEYS];
     /* 0128 */ CTypedPtrList<CPtrList, CResRef*> m_lMovies; // #guess
-    /* 0144 */ unsigned char bm_field_144;
-    /* 0145 */ unsigned char bm_field_145;
+    /* 0144 */ unsigned char field_144;
+    /* 0145 */ unsigned char field_145;
     /* 0146 */ BOOLEAN m_bSelectEngine;
-    /* 0147 */ unsigned char bm_field_147;
-    /* 014A */ CVidFont pm_m_field_14A;
+    /* 0147 */ unsigned char field_147;
+    /* 014A */ CVidFont field_14A;
     /* 064A */ HBINK m_hBink; // #guess
     /* 064E */ CString m_sCurrentMovieFileName;
     /* 0652 */ CResRef m_currentMovieResRef;
-    /* 065A */ int nfield_65A;
+    /* 065A */ int field_65A;
     /* 065E */ BinkOpen* m_pfnBinkOpen; // #guess
     /* 0662 */ BinkDDSurfaceType* m_pfnBinkDDSurfaceType; // #guess
     /* 0666 */ BinkDoFrame* m_pfnBinkDoFrame; // #guess
-    /* 066A */ int nfield_66A;
+    /* 066A */ int field_66A;
     /* 066E */ BinkNextFrame* m_pfnBinkNextFrame; // #guess
     /* 0672 */ BinkClose* m_pfnBinkClose; // #guess
     /* 0676 */ BinkGetSummary* m_pfnBinkGetSummary; // #guess

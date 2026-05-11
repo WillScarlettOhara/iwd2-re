@@ -1,11 +1,6 @@
 #ifndef CAIOBJECTTYPE_H_
 #define CAIOBJECTTYPE_H_
 
-// ============================================================================
-// CAIObjectType - Object filter/matcher for script targeting
-//
-// Address: varies by method
-// ============================================================================
 #include "mfc.h"
 
 #define CLASSMASK_BARBARIAN 0x00000001
@@ -405,22 +400,22 @@ public:
     void Set(const CAIObjectType& type);
     void Decode(CGameAIBase* caller);
     CString GetName() const;
-    CGameObject* GetObjectByType(CGameAIBase* caller, BYTE type, BOOL checkBackList) const;
-
-    CGameObject* GetObject(CGameAIBase* caller, BOOL checkBackList) const;
-
-    LONG ResolveObjectId(CGameAIBase* caller, BOOL checkBackList) const;
-    CGameObject* GetObjectByTypeChecked(CGameAIBase* caller, BYTE type, BOOL checkBackList) const;
-    CGameObject* GetObjectChecked(CGameAIBase* caller, BOOL checkBackList) const;
+    CGameObject* sub_40CB20(CGameAIBase* caller, BYTE type, BOOL checkBackList) const;
+    BOOL Equal(const CAIObjectType& type) const;
+    CGameObject* sub_40CCA0(CGameAIBase* caller, BOOL checkBackList) const;
+    BOOL sub_40CD80(CGameAIBase* caller, CPoint& pt, INT& nRadius) const;
+    LONG sub_40CED0(CGameAIBase* caller, BOOL checkBackList) const;
+    CGameObject* sub_40D050(CGameAIBase* caller, BYTE type, BOOL checkBackList) const;
+    CGameObject* sub_40D0F0(CGameAIBase* caller, BOOL checkBackList) const;
     void SetSpecialCase(const BYTE* SpecialCase);
     void Read(CString sData);
     BOOL IsEnemyOf(const CAIObjectType& type) const;
     CAIObjectType GetEnemyOf() const;
     BOOL IsClassValid(BYTE nClass) const;
     void AddClass(BYTE nClass);
-    BOOL IsPointInRange(const CPoint& pt) const;
-    BOOL IsPointInRect(const CPoint& pt) const;
-    BOOL GetPoint(const CPoint& pt) const;
+    BOOL sub_40D8A0(const CPoint& pt) const;
+    BOOL sub_40D900(const CPoint& pt) const;
+    BOOL sub_40D920(const CPoint& pt) const;
     void SetCenter(const CPoint& pt);
     void SetRadius(int radius);
     void SetRect(const CRect& rect);

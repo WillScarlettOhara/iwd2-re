@@ -62,10 +62,3 @@ void CUIControlButtonPlusMinus::TimerAsynchronousUpdate(BOOLEAN bInside)
         }
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4E6460
-void FUN_004e6460() {
-    // TODO: Incomplete.
-}
-

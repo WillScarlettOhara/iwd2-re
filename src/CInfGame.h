@@ -1,25 +1,6 @@
 #ifndef CINFGAME_H_
 #define CINFGAME_H_
 
-// ============================================================================
-// CInfGame - Game state singleton
-//
-// The central hub that holds all game state. Accessed globally via
-// g_pBaldurChitin->GetObjectGame(). This class persists across areas
-// and manages the party, journal, world map, multiplayer, and save game data.
-//
-// Key subsystems:
-// - Party: up to 6 characters (CGameSprite)
-// - Areas: current area + area list
-// - Journal: quest entries and user notes (CGameJournal)
-// - World map: discovered locations (CWorldMap)
-// - Multiplayer: CMultiplayerSettings for co-op
-// - Rules: CRuleTables for game mechanics
-// - Saves: CGameSave for serialization
-//
-// Address: varies by method
-// ============================================================================
-
 #include "mfc.h"
 
 #include <vector>
@@ -148,9 +129,9 @@ public:
     void InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
     void BeginListManipulation(CGameArea* pArea);
     INT EndListManipulation(CGameArea* pArea);
-    void ReleaseAreaThreadLock(BOOL a1);
+    void sub_59FA00(BOOL a1);
     void DestroyGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
-    void InitializeGameAreas();
+    void sub_5A0160();
     LONG CachingRequirements(const CString& areaName);
     void CacheResFileWithResource(const CString& areaName);
     LONG ImportCharacter(const CString& sFileName, INT nIndex);
@@ -162,9 +143,9 @@ public:
     BOOL SaveGame(unsigned char a1, unsigned char a2, unsigned char a3);
     BOOL Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace);
     void ProgressBarCallback(DWORD dwSize, BOOLEAN bInitialize);
-    char VirtualKeyToChar(BYTE nKey);
-    BYTE CharToVirtualKey(char ch);
-    BYTE GetVirtualKeyByIndex(int index);
+    char sub_5A9780(BYTE nKey);
+    BYTE sub_5A97D0(char ch);
+    BYTE sub_5A9830(int index);
     void LoadKeymap();
     void LoadKey(const CString& sKey, SHORT index);
     void SetKey(INT nIndex, BYTE nKey, BYTE nKeyFlag);
@@ -174,8 +155,8 @@ public:
     void SaveMultiPlayerPermissions();
     void LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
     void NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
-    BOOLEAN IsAreaSaveDisabled(CGameArea* pArea);
-    void UpdateAreaSaveStatus();
+    BOOLEAN sub_5AC0A0(CGameArea* pArea);
+    void sub_5AC0D0();
     void SelectAll(BOOLEAN bPlaySound);
     void UnselectAll();
     BOOL SelectCharacter(LONG characterId, BOOLEAN bPlaySelectSound);
@@ -185,7 +166,7 @@ public:
     CStore* GetServerStore(const CResRef& store);
     void SwapCharacters(DWORD pos1, DWORD pos2);
     void UpdatePortrait(SHORT nPortrait, DWORD dwPanelId);
-    void RefreshPortrait(SHORT nPortrait, DWORD dwPanelId);
+    void sub_5AF420(SHORT nPortrait, DWORD dwPanelId);
     SHORT GetCharacterPortraitNum(LONG nCharacterId);
     SHORT GetFixedOrderCharacterPortraitNum(LONG nCharacterId);
     void RemoveFamiliarResRef(const CResRef& resRef, BYTE nAlignment, BYTE nLevel);
@@ -231,7 +212,7 @@ public:
     BOOL AddCharacterToFamiliars(LONG nCharacterId);
     BOOL RemoveCharacterFromFamiliars(LONG nCharacterId);
     DWORD GetScrollSpeed();
-    void SetAreaGlobalFlag(int a1, BOOL a2);
+    void sub_5BDBA0(int a1, BOOL a2);
     void ReputationAdjustment(SHORT reputationAdjustment, BOOL set);
     void ChangeReputation(SHORT eventCode);
     void AddDisposableItem(CItem* pItem);
@@ -244,7 +225,7 @@ public:
     CStringList* GetSaveGames();
     CString GetDirSaveRoot();
     CString GetDirSave();
-    CString GetSaveGameDir();
+    CString sub_5C0B30();
     BOOL CanEnterStore(STRREF& strError);
     BOOL AddCharacterToOverflow(LONG id);
     CStringList* GetScripts();
@@ -261,16 +242,16 @@ public:
     CStringList* GetPortraits();
     CStringList* GetImportCharacters();
     CStringList* GetSounds();
-    STRREF GetDefaultBiography(CString a1);
+    STRREF sub_5C3770(CString a1);
     void ChangeBiography(BYTE nFixedPartyId, CString szBiography);
     BOOLEAN GetGameSpyCharacterInformation(INT nCharacterSlot, CString& sName, CString& sRace, CString& sClass, CString& sLevel);
     void MultiplayerSetCharacterCreationLocation();
     BOOL IsItemExclusive(CGameSprite* pSprite, INT slotNum, CItem* pItem, STRREF& strError);
     CWorldMap* GetWorldMap(CString sArea);
-    BOOL IsExpansionArea(CString sArea);
+    BOOL sub_5C79C0(CString sArea);
     DWORD FindItemInStore(const CResRef& cResStore, const CResRef& cResItem, BOOL checkForIdentified);
     SHORT TakeItemFromStore(const CResRef& cResStore, const CResRef& cResItem, LONG number);
-    INT CountDualClassedCharacters();
+    INT sub_5C93E0();
     void ResetMultiPlayerPermissions();
     INT GetNumberOfItemsInBag(const CResRef& storeResRef, CString a2);
     LONG GetAveragePartyLevel();
@@ -282,7 +263,7 @@ public:
     DWORD GetClassMask(const BYTE& nClass);
     BYTE GetSpellType(const CResRef& resRef);
     INT GetSpellLevel(const CResRef& resRef, BYTE nClass, DWORD nSpecialization);
-    void WakeAllCharacters();
+    void sub_5CADF0();
 
     INT GetCurrentChapter();
     void SetCurrentChapter(INT nChapter);
@@ -377,13 +358,13 @@ public:
     static int dword_8E52F0;
 
     /* 0000 */ CRuleTables m_ruleTables;
-    /* 1B58 */ CCriticalSection pm_field_1B58;
+    /* 1B58 */ CCriticalSection field_1B58;
     /* 1B78 */ CTimerWorld m_worldTime;
     /* 1B7E */ BOOL m_bGameLoaded;
     /* 1B82 */ BOOLEAN m_bInLoadGame;
     /* 1B83 */ BOOLEAN m_bInLoadArea;
-    /* 1B84 */ unsigned char bm_field_1B84;
-    /* 1B86 */ CString sm_field_1B86;
+    /* 1B84 */ unsigned char field_1B84;
+    /* 1B86 */ CString field_1B86;
     /* 1B8A */ DWORD m_nUniqueAreaID;
     /* 1B8E */ DWORD m_nAreaFirstObject;
     /* 1B92 */ BOOLEAN m_bFromNewGame;
@@ -400,7 +381,7 @@ public:
     /* 1BB2 */ CMultiplayerSettings m_multiplayerSettings;
     /* 1C78 */ CInfButtonArray m_cButtonArray;
     /* 3662 */ CVRamPool m_cVRamPool;
-    /* 366E */ int nm_field_366E;
+    /* 366E */ int field_366E;
     /* 3672 */ CVidBitmap m_rgbMasterBitmap;
     /* 372C */ CGameObjectArray m_cObjectArray;
     /* 375A */ CGameRemoteObjectArray m_cRemoteObjectArray;
@@ -418,12 +399,12 @@ public:
     /* 387C */ CPathSearch* m_pathSearch;
     /* 3880 */ CPathNode** m_listGrid;
     /* 3884 */ CAIGroup m_group;
-    /* 38A6 */ unsigned char bm_field_38A6;
+    /* 38A6 */ unsigned char field_38A6;
     /* 38A8 */ CTypedPtrList<CPtrList, int*> m_allies; // NOTE: Stores actual ints disguised as pointers.
     /* 38C4 */ CTypedPtrList<CPtrList, int*> m_familiars; // NOTES: Stores actual ints disguised as pointers.
     /* 38E0 */ RESREF m_defaultFamiliarResRefs[9];
     /* 3928 */ CTypedPtrList<CPtrList, CResRef*> m_familiarResRefs[9][9];
-    /* 4204 */ int nm_field_4204;
+    /* 4204 */ int field_4204;
     /* 4208 */ CString m_sTempDir;
     /* 420C */ CString m_sTempSaveDir;
     /* 4210 */ CString m_sScriptsDir;
@@ -442,8 +423,8 @@ public:
     /* 4688 */ BOOLEAN m_pKeymapFlags[CINFGAME_KEYMAP_SIZE];
     /* 47FC */ CVariableHash m_variables;
     /* 4808 */ CNamedCreatureVariableHash m_namedCreatures;
-    /* 4814 */ STR_RES m_m_field_4814;
-    /* 487C */ STR_RES m_m_field_487C;
+    /* 4814 */ STR_RES field_4814;
+    /* 487C */ STR_RES field_487C;
     /* 48E4 */ BOOLEAN m_bForceDither;
     /* 48E6 */ CVidCell m_vcLocator;
     /* 49C0 */ CTypedPtrList<CPtrList, CSearchRequest*> m_searchRequests;
@@ -454,9 +435,9 @@ public:
     /* 4A04 */ CCriticalSection m_disposableItemsCritSect;
     /* 4A24 */ CTypedPtrList<CPtrList, CItem*> m_lDisposableItems;
     /* 4A40 */ SHORT m_currArmor;
-    /* 4A42 */ short wm_field_4A42;
-    /* 4A44 */ short wm_field_4A44;
-    /* 4A46 */ short wm_field_4A46;
+    /* 4A42 */ short field_4A42;
+    /* 4A44 */ short field_4A44;
+    /* 4A46 */ short field_4A46;
     /* 4A48 */ SHORT m_currAnimation;
     /* 4A4A */ CAIIdList m_saveObjectList;
     /* 4A8A */ LONG m_nProtagonistId;
@@ -468,13 +449,13 @@ public:
     /* 4AA2 */ ULONG m_nLastSaveTime;
     /* 4AA6 */ CPoint m_lastClick;
     /* 4AAE */ LONG m_lastTarget;
-    /* 4AB2 */ unsigned char bm_field_4AB2;
+    /* 4AB2 */ unsigned char field_4AB2;
     /* 4AB4 */ CVidPalette m_entanglePalette;
     /* 4AD8 */ CVidPalette m_webHoldPalette;
     /* 4AFC */ LONG m_nCharacterTerminationSequenceDelay;
     /* 4B00 */ CMoveList m_cMoveList;
     /* 4B1C */ CMoveList m_cLimboList;
-    /* 4B38 */ int nm_field_4B38;
+    /* 4B38 */ int field_4B38;
     /* 4B3C */ LONG m_nAIIndex;
     /* 4B40 */ LONG m_nTimeStop;
     /* 4B44 */ LONG m_nTimeStopCaster;
@@ -489,19 +470,19 @@ public:
     /* 4BA2 */ BYTE m_appearanceColorsShield[7];
     /* 4BA9 */ BYTE m_appearanceColorsHelmet[7];
     /* 4BB0 */ CMemINI m_INISounds;
-    /* 4BD4 */ unsigned char bm_field_4BD4;
+    /* 4BD4 */ unsigned char field_4BD4;
     /* 4BD5 */ BOOLEAN m_bExpansion; // NOTE: Can also be BYTE indicating number of expansion pack.
-    /* 4BD6 */ BOOLEAN bm_field_4BD6;
+    /* 4BD6 */ BOOLEAN field_4BD6;
     /* 4BD8 */ DWORD m_nDifficultyLevel;
-    /* 4BDC */ CTypedPtrList<CPtrList, CString*> pm_field_4BDC;
+    /* 4BDC */ CTypedPtrList<CPtrList, CString*> field_4BDC;
     /* 4BF8 */ CSpellResRefList m_spells;
     /* 4C00 */ CSpellResRefList m_innateSpells;
     /* 4C08 */ CSpellResRefList m_songs;
     /* 4C10 */ CSpellResRefList m_shapeshifts;
     /* 4C18 */ CGroupedSpellList m_spellsByClass[7];
     /* 4E2C */ CGroupedSpellList m_spellsByDomain[9];
-    /* 50D8 */ BOOL bfield_50D8;
-    /* 50DC */ unsigned char bfield_50DC;
+    /* 50D8 */ BOOL field_50D8;
+    /* 50DC */ unsigned char field_50DC;
 };
 
 class CGameFile : public CResHelper<CResGame, 1013> {

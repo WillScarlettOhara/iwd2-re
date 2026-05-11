@@ -34,9 +34,14 @@ public:
 
     void UpdateMainPanel();
     void OnQuitButtonClick();
-    void StartMultiplayer();
-
-    void DismissTopPopup();
+    void sub_66F990();
+    void EnableMainPanel(BOOL bEnabled);
+    void SummonPopup(DWORD nID);
+    void DismissPopup();
+    void ResetErrorPanel(CUIPanel* pPanel);
+    void OnErrorButtonClick(DWORD nID);
+    void ResetVersionMismatchPanel(CUIPanel* pPanel);
+    void sub_6702C0();
 
     void SetPopupEnabled(DWORD nID, BOOL bEnabled);
     void ResetPopupPanel(DWORD nID);
@@ -44,21 +49,21 @@ public:
     void OnLoadGameButtonClick();
     void OnPreGenerateButtonClick();
 
-    /* 0106 */ int nm_m_field_106;
+    /* 0106 */ int field_106;
     /* 010A */ BOOL m_bExitProgram;
     /* 010E */ CKeyInfo m_pVirtualKeys[CSCREENSTART_VIRTUAL_KEYS];
     /* 0136 */ BOOL m_bCtrlKeyDown;
     /* 013A */ BYTE m_pVirtualKeysFlags[CSCREENSTART_VIRTUAL_KEYS];
-    /* 013F */ unsigned char bm_field_13F;
+    /* 013F */ unsigned char field_13F;
     /* 0140 */ INT m_nEngineState;
-    /* 0144 */ int nm_field_144;
+    /* 0144 */ int field_144;
     /* 0148 */ CTypedPtrList<CPtrList, CUIPanel*> m_lPopupStack;
     /* 0164 */ INT m_nErrorState;
     /* 0168 */ STRREF m_dwErrorTextId;
     /* 016C */ INT m_nNumErrorButtons;
     /* 0170 */ STRREF m_strErrorButtonText[CSCREENSTART_ERROR_BUTTONS];
-    /* 017C */ int nm_field_17C;
-    /* 0180 */ CVidFont pm_field_180;
+    /* 017C */ int field_17C;
+    /* 0180 */ CVidFont field_180;
 };
 
 class CUIControlButtonStartMenu : public CUIControlButton {

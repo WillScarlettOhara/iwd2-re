@@ -57,7 +57,7 @@ BOOLEAN CChitin::byte_8FB950;
 // 0x78D960
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-    if ((g_pChitin->m_bMouseWheelSupport && Msg == g_pChitin->m_nMouseWheelMessage)
+    if ((g_pChitin->field_16C && Msg == g_pChitin->field_170)
         || Msg == WM_MOUSEWHEEL) {
         if (!g_pChitin->m_bInMouseWheelQueue) {
             g_pChitin->m_bInMouseWheelQueue = TRUE;
@@ -69,7 +69,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPara
 
     switch (Msg) {
     case WM_DESTROY:
-        if (!g_pChitin->m_bSwitchingDisplayMode) {
+        if (!g_pChitin->field_F8) {
             g_pChitin->ShutDown(-1, NULL, NULL);
             return 0;
         }
@@ -77,15 +77,15 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPara
     case WM_MOVE:
     case WM_SIZE:
         if (g_pChitin->m_bFullscreen) {
-            SetRect(&(g_pChitin->m_rClient),
+            SetRect(&(g_pChitin->field_E8),
                 0,
                 0,
                 GetSystemMetrics(SM_CXSCREEN),
                 GetSystemMetrics(SM_CYSCREEN));
         } else {
-            GetClientRect(hWnd, &(g_pChitin->m_rClient));
-            ClientToScreen(hWnd, reinterpret_cast<LPPOINT>(&(g_pChitin->m_rClient.left)));
-            ClientToScreen(hWnd, reinterpret_cast<LPPOINT>(&(g_pChitin->m_rClient.right)));
+            GetClientRect(hWnd, &(g_pChitin->field_E8));
+            ClientToScreen(hWnd, reinterpret_cast<LPPOINT>(&(g_pChitin->field_E8.left)));
+            ClientToScreen(hWnd, reinterpret_cast<LPPOINT>(&(g_pChitin->field_E8.right)));
             g_pChitin->RedrawScreen();
 
             RECT rect;
@@ -113,8 +113,8 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPara
         }
         return 1;
     case WM_CLOSE:
-        if (g_pChitin->cDimm.m_bCDSwitchActivated && !g_pChitin->cDimm.bm_field_296) {
-            g_pChitin->cDimm.nm_field_2A0 = 1;
+        if (g_pChitin->cDimm.m_bCDSwitchActivated && !g_pChitin->cDimm.field_296) {
+            g_pChitin->cDimm.field_2A0 = 1;
             return 0;
         }
 
@@ -143,7 +143,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPara
     case WM_ERASEBKGND:
         return 1;
     case WM_ACTIVATEAPP:
-        if (g_pChitin->m_bSwitchingDisplayMode || g_pChitin->nm_m_field_1932) {
+        if (g_pChitin->field_F8 || g_pChitin->field_1932) {
             return 0;
         }
 
@@ -169,25 +169,25 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPara
         }
         break;
     case WM_IME_STARTCOMPOSITION:
-        if (g_pChitin->m_bIMEEnabled) {
+        if (g_pChitin->field_1A4) {
             g_pChitin->cImm.OnStartComposition();
             return 0;
         }
         break;
     case WM_IME_ENDCOMPOSITION:
-        if (g_pChitin->m_bIMEEnabled) {
+        if (g_pChitin->field_1A4) {
             g_pChitin->cImm.OnEndComposition();
             return 0;
         }
         break;
     case WM_IME_COMPOSITION:
-        if (g_pChitin->m_bIMEEnabled) {
+        if (g_pChitin->field_1A4) {
             g_pChitin->cImm.OnComposition(hWnd, wParam, lParam);
             return 0;
         }
         break;
     case WM_IME_NOTIFY:
-        if (g_pChitin->m_bIMEEnabled) {
+        if (g_pChitin->field_1A4) {
             g_pChitin->cImm.OnNotify(hWnd, wParam, lParam);
             return 0;
         }
@@ -195,7 +195,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPara
     case WM_IME_SETCONTEXT:
     case WM_IME_CONTROL:
     case WM_IME_COMPOSITIONFULL:
-        if (g_pChitin->m_bIMEEnabled) {
+        if (g_pChitin->field_1A4) {
             return 0;
         }
         break;
@@ -222,7 +222,7 @@ CChitin::CChitin()
     m_nRenderPerSec = 0;
     m_nRenderElasped = 0;
     m_nThreads = 0;
-    wm_field_1A28 = 0;
+    field_1A28 = 0;
     m_dwThreadIds[m_nThreads] = GetCurrentThreadId();
 
     HANDLE currentProcess = GetCurrentProcess();
@@ -231,15 +231,15 @@ CChitin::CChitin()
         m_nThreads++;
     }
 
-    InitializeCriticalSection(&pm_field_2FC);
-    InitializeCriticalSection(&pm_field_32C);
-    InitializeCriticalSection(&pm_field_314);
-    InitializeCriticalSection(&pm_field_344);
-    InitializeCriticalSection(&nfield_C4);
-    InitializeCriticalSection(&pm_field_35C);
-    InitializeCriticalSection(&pm_field_394);
-    InitializeCriticalSection(&pm_field_3AC);
-    InitializeCriticalSection(&pm_field_1C32);
+    InitializeCriticalSection(&field_2FC);
+    InitializeCriticalSection(&field_32C);
+    InitializeCriticalSection(&field_314);
+    InitializeCriticalSection(&field_344);
+    InitializeCriticalSection(&field_C4);
+    InitializeCriticalSection(&field_35C);
+    InitializeCriticalSection(&field_394);
+    InitializeCriticalSection(&field_3AC);
+    InitializeCriticalSection(&field_1C32);
 
     InitializeVariables();
     InitVariables3D();
@@ -251,45 +251,45 @@ CChitin::CChitin()
 #pragma warning(suppress : 4996)
     GetVersionExA(&versionInfo);
 
-    m_opSystemPlatformId = versionInfo.m_opSystemPlatformId;
+    dwPlatformId = versionInfo.dwPlatformId;
 
-    if (versionInfo.m_opSystemPlatformId == VER_PLATFORM_WIN32_NT) {
-        cDimm.nfield_D6 = cDimm.dwTotalPhysicalMemory - 0x1000000;
+    if (versionInfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+        cDimm.field_D6 = cDimm.dwTotalPhysicalMemory - 0x1000000;
     } else {
-        cDimm.nfield_D6 = cDimm.dwTotalPhysicalMemory - 0x800000;
+        cDimm.field_D6 = cDimm.dwTotalPhysicalMemory - 0x800000;
     }
 
-    m_nCapsLockState = 0;
-    nm_field_1C4C = 0;
-    nm_field_1A2A = 0;
-    nm_field_1A2E = 0;
+    field_FE = 0;
+    field_1C4C = 0;
+    field_1A2A = 0;
+    field_1A2E = 0;
 
     for (int i = 0; i < 16; i++) {
-        nm_field_1A32[i] = 1000;
+        field_1A32[i] = 1000;
     }
 
-    memset(nm_field_1A72, 0, sizeof(nm_field_1A72));
-    memset(nm_field_1AB2, 0, sizeof(nm_field_1AB2));
-    memset(nm_field_1AF2, 0, sizeof(nm_field_1AF2));
-    memset(bm_field_1B32, 0, sizeof(bm_field_1B32));
+    memset(field_1A72, 0, sizeof(field_1A72));
+    memset(field_1AB2, 0, sizeof(field_1AB2));
+    memset(field_1AF2, 0, sizeof(field_1AF2));
+    memset(field_1B32, 0, sizeof(field_1B32));
 
-    m_bStartUpHost = 0;
+    field_110 = 0;
     m_bStartUpConnect = FALSE;
     m_sStartUpAddress = "";
     m_sStartUpPlayer = "";
-    m_sStartUpPort = "";
-    m_bStartUpNewGame = 0;
-    m_bStartUpLoadGame = 0;
+    field_11C = "";
+    field_124 = 0;
+    field_128 = 0;
     m_sStartUpSession = "";
-    m_bStartUpGameSpyLocation = 0;
+    field_131 = 0;
     m_sStartUpGameSpyLocation = "";
-    m_bStartUpDirectPlayLobby = 0;
-    m_nMaxPlayers = 6;
+    field_130 = 0;
+    field_136 = 6;
     memset(CVidFont::byte_8FB974, 0, sizeof(CVidFont::byte_8FB974));
-    pm_field_180 = 0;
-    m_nAISleeper = 0;
-    bm_field_1C4A = 1;
-    nm_field_2EC = 0;
+    field_180 = 0;
+    field_19C = 0;
+    field_1C4A = 1;
+    field_2EC = 0;
 }
 
 // TODO: Check generated assembly once memory layout is complete.
@@ -306,23 +306,23 @@ CChitin::~CChitin()
     cDimm.DestroyKeyTable();
     cDimm.DumpAll();
 
-    DeleteCriticalSection(&pm_field_2FC);
-    DeleteCriticalSection(&pm_field_32C);
-    DeleteCriticalSection(&pm_field_314);
-    DeleteCriticalSection(&nfield_C4);
-    DeleteCriticalSection(&pm_field_35C);
+    DeleteCriticalSection(&field_2FC);
+    DeleteCriticalSection(&field_32C);
+    DeleteCriticalSection(&field_314);
+    DeleteCriticalSection(&field_C4);
+    DeleteCriticalSection(&field_35C);
 
     if (m_eventTimer != NULL) {
         CloseHandle(m_eventTimer);
     }
 
-    if (m_hCopyData != NULL) {
-        CloseHandle(m_hCopyData);
+    if (field_B4 != NULL) {
+        CloseHandle(field_B4);
     }
 
-    DeleteCriticalSection(&pm_field_394);
-    DeleteCriticalSection(&pm_field_3AC);
-    DeleteCriticalSection(&pm_field_1C32);
+    DeleteCriticalSection(&field_394);
+    DeleteCriticalSection(&field_3AC);
+    DeleteCriticalSection(&field_1C32);
 }
 
 // BINARY IDENTICAL
@@ -401,7 +401,7 @@ BOOL CChitin::InitInstance()
     }
 
     m_hRSThread = reinterpret_cast<HANDLE>(_beginthread(::RSThreadMain, 0, NULL));
-    m_bServicingEnabled = 1;
+    field_4C = 1;
     m_hMessageThread = reinterpret_cast<HANDLE>(_beginthread(::MessageThreadMain, 0, NULL));
     m_hMusicThread = reinterpret_cast<HANDLE>(_beginthread(::MusicThreadMain, 0, NULL));
 
@@ -417,8 +417,8 @@ BOOL CChitin::InitInstance()
     TIMECAPS tc;
     timeGetDevCaps(&tc, sizeof(tc));
 
-    m_nTimerResolution = min(max(tc.wPeriodMin, 5), tc.wPeriodMax);
-    timeBeginPeriod(m_nTimerResolution);
+    field_C0 = min(max(tc.wPeriodMin, 5), tc.wPeriodMax);
+    timeBeginPeriod(field_C0);
 
     SECURITY_ATTRIBUTES attrs;
     attrs.nLength = sizeof(attrs);
@@ -430,7 +430,7 @@ BOOL CChitin::InitInstance()
     // __LINE__: 1808
     UTIL_ASSERT(m_eventTimer != NULL);
 
-    m_nTimerID = timeSetEvent(1000 / TIMER_UPDATES_PER_SECOND, 5, ::TimerFunction, 0, 1);
+    field_BC = timeSetEvent(1000 / TIMER_UPDATES_PER_SECOND, 5, ::TimerFunction, 0, 1);
 
     m_hMainAIThread = reinterpret_cast<HANDLE>(_beginthread(::MainAIThread, 0, NULL));
 
@@ -455,7 +455,7 @@ BOOL CChitin::InitializeServices(HWND hWnd)
 
     if (initialized) {
         cSoundMixer.Initialize(&cWnd, 16, GetNumberSoundChannels());
-        wm_m_field_142 = 1;
+        field_142 = 1;
     }
 
     return initialized;
@@ -492,7 +492,7 @@ int CChitin::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
 
     if (!InitApplication(hInstance, nCmdShow)) {
-        nm_m_field_1932 = 1;
+        field_1932 = 1;
         cWnd.Detach();
         return 0;
     }
@@ -503,14 +503,14 @@ int CChitin::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     HANDLE hCurrentThread = GetCurrentThread();
     HANDLE hCurrentProcess = GetCurrentProcess();
     DuplicateHandle(hCurrentProcess, hCurrentThread, hCurrentProcess, &hCopy, 0, FALSE, DUPLICATE_SAME_ACCESS);
-    m_hCopyData = hCopy;
+    field_B4 = hCopy;
 
     InitInstance();
 
     MSG msg;
     while (1) {
         while (!PeekMessageA(&msg, NULL, 0, 0, 0)) {
-            if (nm_m_field_1932 == 0) {
+            if (field_1932 == 0) {
                 if (m_bDisplayStale == TRUE) {
                     m_bDisplayStale = FALSE;
 
@@ -619,22 +619,22 @@ void CChitin::DoFixReadonlyPermissions(CString path)
 void CChitin::InitializeVariables()
 {
     m_bInSynchronousUpdate = FALSE;
-    nm_field_1A0 = 0;
-    m_bIMEEnabled = 0;
-    nm_field_13A = -1;
-    nm_field_13E = 0;
-    wm_m_field_142 = 0;
+    field_1A0 = 0;
+    field_1A4 = 0;
+    field_13A = -1;
+    field_13E = 0;
+    field_142 = 0;
     m_bReInitializing = FALSE;
     m_bFullscreen = TRUE;
     m_nNextFullscreen = TRUE;
-    nfield_E4 = 0;
+    field_E4 = 0;
     m_ptScreen.x = 0;
     m_ptScreen.y = 0;
-    m_bSwitchingDisplayMode = 0;
+    field_F8 = 0;
     m_nScreenWidth = GetSystemMetrics(SM_CXFULLSCREEN);
     m_nScreenHeight = GetSystemMetrics(SM_CYFULLSCREEN);
-    m_bEdgeScrollActive = 0;
-    nm_field_174 = 0;
+    field_F9 = 0;
+    field_174 = 0;
     m_bMouseLButtonDown = FALSE;
     m_bMouseRButtonDown = FALSE;
     m_bMouseMButtonDown = FALSE;
@@ -674,18 +674,18 @@ void CChitin::InitializeVariables()
         m_nWheelScrollLines = 3;
     }
 
-    m_bMouseWheelSupport = 0;
-    m_nMouseWheelMessage = WM_MOUSEWHEEL;
+    field_16C = 0;
+    field_170 = WM_MOUSEWHEEL;
 
     HWND hWnd = FindWindowA("MouseZ", "Magellan MSWHEEL");
-    m_nMouseWheelMessage = RegisterWindowMessageA("MSWHEEL_ROLLMSG");
+    field_170 = RegisterWindowMessageA("MSWHEEL_ROLLMSG");
 
     UINT v1 = RegisterWindowMessageA("MSH_WHEELSUPPORT_MSG");
     UINT v2 = RegisterWindowMessageA("MSH_SCROLL_LINES_MSG");
     if (v1 != 0) {
-        m_bMouseWheelSupport = SendMessage(hWnd, v1, 0, 0);
+        field_16C = SendMessage(hWnd, v1, 0, 0);
     } else {
-        m_bMouseWheelSupport = 0;
+        field_16C = 0;
     }
 
     int scrollLines;
@@ -695,33 +695,33 @@ void CChitin::InitializeVariables()
         scrollLines = 3;
     }
 
-    if (hWnd != NULL && m_bMouseWheelSupport != 0) {
+    if (hWnd != NULL && field_16C != 0) {
         m_nWheelScrollLines = scrollLines;
     }
 
     m_bInMouseWheelQueue = FALSE;
-    nm_m_field_1932 = 0;
+    field_1932 = 0;
     m_bAIStale = TRUE;
     m_bDisplayStale = FALSE;
     m_bPointerUpdated = FALSE;
     m_bEngineActive = FALSE;
     m_bInAsynchronousUpdate = FALSE;
-    m_bServicingEnabled = 0;
+    field_4C = 0;
     m_bExitRSThread = FALSE;
     m_bExitMainAIThread = FALSE;
-    m_bMessagesEnabled = 0;
+    field_50 = 0;
     m_bExitMessageThread = FALSE;
     m_ptPointer.x = 0;
     m_ptPointer.y = 0;
     m_eventTimer = NULL;
-    m_hCopyData = 0;
+    field_B4 = 0;
     m_hRSThread = NULL;
     m_hMusicThread = NULL;
     m_bExitMusicThread = FALSE;
     nAUCounter = 0;
-    m_nIterations = 0;
-    m_nTimerID = 0;
-    m_nTimerResolution = 0;
+    field_70 = 0;
+    field_BC = 0;
+    field_C0 = 0;
     pActiveEngine = NULL;
     m_pStartingEngine = NULL;
 
@@ -734,7 +734,7 @@ void CChitin::SelectEngine(CWarp* pNewEngine)
 {
     CVidMode* pPrevVidMode = NULL;
     if (pNewEngine != NULL) {
-        EnterCriticalSection(&pm_field_3AC);
+        EnterCriticalSection(&field_3AC);
 
         m_bEngineActive = FALSE;
         if (pActiveEngine != NULL) {
@@ -776,7 +776,7 @@ void CChitin::SelectEngine(CWarp* pNewEngine)
         pActiveEngine->EngineActivated();
 
         m_bEngineActive = TRUE;
-        LeaveCriticalSection(&pm_field_3AC);
+        LeaveCriticalSection(&field_3AC);
     }
 }
 
@@ -897,7 +897,7 @@ BOOL CChitin::InitGraphics()
         NULL,
         m_hInstance,
         NULL);
-    if (m_opSystemPlatformId == VER_PLATFORM_WIN32_NT) {
+    if (dwPlatformId == VER_PLATFORM_WIN32_NT) {
         HMODULE hKernel32 = GetModuleHandleA("Kernel32");
         if (hKernel32 != NULL) {
             typedef BOOL(__stdcall SetProcessAffinityMaskFunc)(HANDLE, DWORD);
@@ -955,7 +955,7 @@ void CChitin::EnginesGameUninit()
 BOOLEAN CChitin::OnAltEnter(BOOLEAN bSave)
 {
     if (m_bFullscreen) {
-        if (nfield_E4) {
+        if (field_E4) {
             return TRUE;
         }
     } else {
@@ -965,7 +965,7 @@ BOOLEAN CChitin::OnAltEnter(BOOLEAN bSave)
         m_ptScreen.y = rect.top;
     }
 
-    m_bSwitchingDisplayMode = 1;
+    field_F8 = 1;
     m_bReInitializing = TRUE;
 
     if (pActiveEngine != NULL) {
@@ -976,7 +976,7 @@ BOOLEAN CChitin::OnAltEnter(BOOLEAN bSave)
     cSoundMixer.StopMusic(TRUE);
 
     CVidMode* pCurrentVidMode = cVideo.m_pCurrentVidMode;
-    wm_m_field_142 = 0;
+    field_142 = 0;
 
     cSoundMixer.CleanUp();
     cVideo.CleanUp();
@@ -1015,7 +1015,7 @@ BOOLEAN CChitin::OnAltEnter(BOOLEAN bSave)
     }
 
     Resume();
-    m_bSwitchingDisplayMode = 0;
+    field_F8 = 0;
 
     return TRUE;
 }
@@ -1024,11 +1024,11 @@ BOOLEAN CChitin::OnAltEnter(BOOLEAN bSave)
 void CChitin::OnAltTab(HWND hWnd, BOOL a2)
 {
     if (a2 == 1) {
-        bm_field_1C4A = 1;
+        field_1C4A = 1;
         if (pActiveEngine != NULL) {
             CVidMode* pVidMode = pActiveEngine->pVidMode;
             if (pVidMode != NULL) {
-                m_bSwitchingDisplayMode = 1;
+                field_F8 = 1;
                 if (cVideo.m_bIs3dAccelerated) {
                     if (m_bFullscreen) {
                         cVideo.m_pCurrentVidMode = pVidMode;
@@ -1037,7 +1037,7 @@ void CChitin::OnAltTab(HWND hWnd, BOOL a2)
                 } else {
                     pVidMode->RestoreSurfaces();
                 }
-                m_bSwitchingDisplayMode = 0;
+                field_F8 = 0;
 
                 if (cDimm.m_bCDSwitchActivated) {
                     SetCDSwitchActivateEngine(TRUE);
@@ -1058,7 +1058,7 @@ void CChitin::OnAltTab(HWND hWnd, BOOL a2)
         }
     } else {
         byte_8FB950 = 1;
-        bm_field_1C4A = 0;
+        field_1C4A = 0;
         m_bReInitializing = TRUE;
 
         if (pActiveEngine != NULL) {
@@ -1144,7 +1144,7 @@ int CChitin::AskCloseConfirmation()
 
     int iResult;
     if (m_bFullscreen) {
-        m_bSwitchingDisplayMode = 1;
+        field_F8 = 1;
         m_bReInitializing = TRUE;
 
         if (pActiveEngine != NULL) {
@@ -1155,7 +1155,7 @@ int CChitin::AskCloseConfirmation()
         cSoundMixer.StopMusic(TRUE);
 
         CVidMode* pVidMode = cVideo.m_pCurrentVidMode;
-        wm_m_field_142 = 0;
+        field_142 = 0;
 
         cSoundMixer.CleanUp();
         cVideo.CleanUp();
@@ -1185,7 +1185,7 @@ int CChitin::AskCloseConfirmation()
             }
 
             Resume();
-            m_bSwitchingDisplayMode = 0;
+            field_F8 = 0;
         } else {
             ShutDown(-1, NULL, NULL);
         }
@@ -1250,7 +1250,7 @@ void CChitin::DestroyServices()
         } while (dwSuspendCount > 1);
     }
 
-    wm_m_field_142 = 0;
+    field_142 = 0;
     cSoundMixer.CleanUp();
     cVideo.CleanUp();
 
@@ -1272,7 +1272,7 @@ void CChitin::AsynchronousUpdate(UINT nTimerID, UINT uMsg, DWORD dwUser, DWORD d
     if (!m_bReInitializing) {
         nAUCounter++;
 
-        if (m_bServicingEnabled && !m_bExitRSThread) {
+        if (field_4C && !m_bExitRSThread) {
             cDimm.ResumeServicing();
         }
 
@@ -1334,10 +1334,10 @@ void CChitin::AsynchronousUpdate(UINT nTimerID, UINT uMsg, DWORD dwUser, DWORD d
 
             CPoint pt;
             GetCursorPos(&pt);
-            if (m_bFullscreen || PtInRect(&m_rClient, pt)) {
+            if (m_bFullscreen || PtInRect(&field_E8, pt)) {
                 ScreenToClient(cWnd, &pt);
 
-                if (!m_bEdgeScrollActive
+                if (!field_F9
                     || m_bFullscreen
                     || (pt.x != 0
                         && pt.x != CVideo::SCREENWIDTH - 1
@@ -1373,14 +1373,14 @@ void CChitin::AsynchronousUpdate(UINT nTimerID, UINT uMsg, DWORD dwUser, DWORD d
                     }
                 }
             } else {
-                if (m_bEdgeScrollActive && (pt.x == 0 || pt.x == m_nScreenWidth - 1)) {
+                if (field_F9 && (pt.x == 0 || pt.x == m_nScreenWidth - 1)) {
                     pt.x = min(max(pt.x, 0), m_nScreenWidth - 1);
 
                     if (pVidMode != NULL) {
                         pVidMode->m_bPointerInside = TRUE;
                     }
                     pt.y = pt.y * (CVideo::SCREENHEIGHT - 1) / (m_nScreenHeight - 1);
-                } else if (m_bEdgeScrollActive && (pt.y == 0 || pt.y == m_nScreenHeight - 1)) {
+                } else if (field_F9 && (pt.y == 0 || pt.y == m_nScreenHeight - 1)) {
                     pt.x = pt.x * (CVideo::SCREENWIDTH - 1) / (m_nScreenWidth - 1);
                     pt.y = min(max(pt.y, 0), m_nScreenHeight - 1);
 
@@ -1441,7 +1441,7 @@ void CChitin::AsynchronousUpdate(UINT nTimerID, UINT uMsg, DWORD dwUser, DWORD d
             }
 
             if (pActiveEngine->CheckSystemKeyCapsLock()) {
-                if ((m_nCapsLockState & 1) != 0) {
+                if ((field_FE & 1) != 0) {
                     pActiveEngine->SetSystemKeyCapsLock(TRUE);
                 } else {
                     pActiveEngine->SetSystemKeyCapsLock(FALSE);
@@ -1655,7 +1655,7 @@ void CChitin::ReadIniFiles()
     CString temp;
     char buffer[256];
 
-    if (m_bServicingEnabled == 0) {
+    if (field_4C == 0) {
         GetPrivateProfileStringA("Alias", "HD0:", "", buffer, sizeof(buffer), GetIniFileName());
         if (strlen(buffer) == 0) {
             temp = "path:=.\\";
@@ -2000,14 +2000,14 @@ void CChitin::ShutDown(int nLineNumber, const char* szFileName, const char* text
 {
     CString sString;
 
-    if (!nm_m_field_1932) {
-        nm_m_field_1932 = TRUE;
+    if (!field_1932) {
+        field_1932 = TRUE;
 
         m_bReInitializing = TRUE;
-        if (m_nTimerID != 0) {
-            m_nTimerID = timeKillEvent(m_nTimerID);
+        if (field_BC != 0) {
+            field_BC = timeKillEvent(field_BC);
         }
-        timeEndPeriod(m_nTimerResolution);
+        timeEndPeriod(field_C0);
 
         POSITION pos = lEngines.GetHeadPosition();
         while (pos != NULL) {
@@ -2074,7 +2074,7 @@ void CChitin::SynchronousUpdate()
             if (cVideo.m_nNextBpp != cVideo.m_nBpp) {
                 cVideo.ChangeBppValue();
             } else {
-                if (cVideo.cVidBlitter.bfield_E6) {
+                if (cVideo.cVidBlitter.field_E6) {
                     cVideo.cVidBlitter.Reset();
                 }
             }
@@ -2089,11 +2089,11 @@ void CChitin::SynchronousUpdate()
         if (cDimm.m_bCDSwitchActivated == TRUE) {
             SetCDSwitchStatus(TRUE,
                 TRUE,
-                cDimm.bm_field_297,
+                cDimm.field_297,
                 cDimm.GetCDSwitchDriveLetter(),
-                cDimm.bm_field_296,
-                cDimm.bm_field_295,
-                cDimm.bm_field_2A4);
+                cDimm.field_296,
+                cDimm.field_295,
+                cDimm.field_2A4);
         } else if (cProgressBar.m_bProgressBarActivated == 1) {
             BOOLEAN bDisplayMinibars = FALSE;
             if (cProgressBar.m_nActionProgress == cProgressBar.m_nActionTarget
@@ -2201,25 +2201,3 @@ static void CALLBACK TimerFunction(UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD
 {
     SetEvent(g_pChitin->m_eventTimer);
 }
-
-// Phase 1-2: Scaffold functions
-// 0x78D730
-void FUN_0078d730() {
-    // TODO: Incomplete.
-}
-
-// 0x78D7F0
-void FUN_0078d7f0() {
-    // TODO: Incomplete.
-}
-
-// 0x78D860
-void FUN_0078d860() {
-    // TODO: Incomplete.
-}
-
-// 0x78D940
-void FUN_0078d940() {
-    // TODO: Incomplete.
-}
-

@@ -118,22 +118,22 @@ CGameTrigger::CGameTrigger(CGameArea* pArea, CAreaFileTriggerObject* pTriggerObj
         pArea->GetNamedCreatures()->AddKey(name);
 
         if ((m_dwFlags & 0x200) != 0) {
-            m_usePoint.x = pTriggerObject->nm_field_88;
-            m_usePoint.y = pTriggerObject->nm_field_8C;
+            field_628.x = pTriggerObject->field_88;
+            field_628.y = pTriggerObject->field_8C;
         }
 
-        sub_481890(&m_rBounding, m_pBoundingRects);
+        sub_481890(&m_rBounding, field_630);
 
         // FIXME: One assignment is usually enough.
-        m_pAreaPoints = NULL;
-        m_pAreaPoints = NULL;
+        field_644 = NULL;
+        field_644 = NULL;
 
         if (m_nPolygon != 0) {
-            m_pAreaPoints = new CAreaPoint[m_nPolygon];
+            field_644 = new CAreaPoint[m_nPolygon];
 
             for (WORD cnt = 0; cnt < m_nPolygon; cnt++) {
-                m_pAreaPoints[cnt].m_xPos = static_cast<WORD>(m_pPolygon[cnt].x);
-                m_pAreaPoints[cnt].m_yPos = static_cast<WORD>(m_pPolygon[cnt].y);
+                field_644[cnt].m_xPos = static_cast<WORD>(m_pPolygon[cnt].x);
+                field_644[cnt].m_yPos = static_cast<WORD>(m_pPolygon[cnt].y);
             }
         }
     } else {
@@ -148,19 +148,19 @@ CGameTrigger::~CGameTrigger()
         delete m_pPolygon;
     }
 
-    if (m_pAreaPoints != NULL) {
-        delete m_pAreaPoints;
-        m_pAreaPoints = NULL;
+    if (field_644 != NULL) {
+        delete field_644;
+        field_644 = NULL;
     }
 
     // When there is only one element its an unowned pointer to `m_rBounding`.
-    if (m_pBoundingRects.GetCount() > 1) {
-        for (INT nIndex = 0; nIndex < m_pBoundingRects.GetCount(); nIndex++) {
-            delete m_pBoundingRects[nIndex];
+    if (field_630.GetCount() > 1) {
+        for (INT nIndex = 0; nIndex < field_630.GetCount(); nIndex++) {
+            delete field_630[nIndex];
         }
     }
 
-    m_pBoundingRects.SetSize(0);
+    field_630.SetSize(0);
 }
 
 // 0x4CD630
@@ -521,48 +521,11 @@ void CGameTrigger::SetDrawPoly(SHORT time)
 // 0x4D02A0
 CPoint& CGameTrigger::GetPos()
 {
-    return (m_dwFlags & 0x200) != 0 ? m_usePoint : m_pos;
+    return (m_dwFlags & 0x200) != 0 ? field_628 : m_pos;
 }
 
 // 0x45B950
-BOOL CGameTrigger::CanActivateTrap()
+BOOL CGameTrigger::sub_45B950()
 {
     return m_trapActivated && (m_dwFlags & 0x100) == 0;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4CD130
-void FUN_004cd130() {
-    // TODO: Incomplete.
-}
-
-// 0x4CD220
-void FUN_004cd220() {
-    // TODO: Incomplete.
-}
-
-// 0x4CED10
-void FUN_004ced10() {
-    // TODO: Incomplete.
-}
-
-// 0x4CFA60
-void FUN_004cfa60() {
-    // TODO: Incomplete.
-}
-
-// 0x4CFF70
-void FUN_004cff70() {
-    // TODO: Incomplete.
-}
-
-// 0x4D0520
-void FUN_004d0520() {
-    // TODO: Incomplete.
-}
-
-// 0x4D05A0
-void FUN_004d05a0() {
-    // TODO: Incomplete.
-}
-

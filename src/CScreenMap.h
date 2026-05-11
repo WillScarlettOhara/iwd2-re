@@ -1,11 +1,6 @@
 #ifndef CSCREENMAP_H_
 #define CSCREENMAP_H_
 
-// ============================================================================
-// CScreenMap - Auto-map and world travel
-//
-// Address: varies by method
-// ============================================================================
 #include "CBaldurEngine.h"
 #include "CKeyInfo.h"
 #include "CUIControlButton.h"
@@ -122,7 +117,7 @@ public:
     /* 0068 */ void OnLButtonClick(CPoint pt) override;
     /* 0070 */ void OnRButtonClick(CPoint pt) override;
 
-    BOOLEAN IsPointOnSprite(CGameSprite* pSprite, const CPoint& pt);
+    BOOLEAN sub_642C90(CGameSprite* pSprite, const CPoint& pt);
     CPoint ConvertScreenToWorldCoords(CPoint pt);
     void CenterViewPort(const CPoint& pt);
     void SetRenderCharacter(SHORT nPortrait, WORD nVisualRange);
@@ -139,24 +134,24 @@ public:
 
     /* 0666 */ CVidMosaic m_vmMap;
     /* 071A */ CGameArea* m_pArea;
-    /* 071E */ BOOLEAN bfield_71E;
-    /* 071F */ BOOLEAN bfield_71F;
-    /* 0720 */ BOOLEAN bfield_720;
-    /* 0722 */ LONG nfield_722;
-    /* 0726 */ LONG nfield_726;
-    /* 072A */ CRect pfield_72A;
+    /* 071E */ BOOLEAN field_71E;
+    /* 071F */ BOOLEAN field_71F;
+    /* 0720 */ BOOLEAN field_720;
+    /* 0722 */ LONG field_722;
+    /* 0726 */ LONG field_726;
+    /* 072A */ CRect field_72A;
     /* 073A */ CCriticalSection m_critSect;
-    /* 075A */ BYTE bfield_75A;
-    /* 075B */ unsigned char bfield_75B;
-    /* 075C */ CPoint pfield_75C;
-    /* 0764 */ CPoint pfield_764;
-    /* 076C */ unsigned char bfield_76C;
+    /* 075A */ BYTE field_75A;
+    /* 075B */ unsigned char field_75B;
+    /* 075C */ CPoint field_75C;
+    /* 0764 */ CPoint field_764;
+    /* 076C */ unsigned char field_76C;
     /* 076E */ MAP_CHAR_POSITIONS m_charPositions[6];
     /* 07B6 */ USHORT m_nCharInArea;
     /* 07B8 */ DWORD m_nUserNoteId;
-    /* 07BC */ BOOLEAN bfield_7BC;
-    /* 07BE */ CList<DWORD> pfield_7BE;
-    /* 07DA */ unsigned char bfield_7DA;
+    /* 07BC */ BOOLEAN field_7BC;
+    /* 07BE */ CList<DWORD> field_7BE;
+    /* 07DA */ unsigned char field_7DA;
 };
 
 class CUIControlButtonMapError : public CUIControlButton {
@@ -210,9 +205,9 @@ public:
     void SetInactiveRender(BOOL bInactiveRender) override;
     void OnRButtonClick(CPoint pt) override;
 
-    /* 0666 */ unsigned char bfield_666;
+    /* 0666 */ unsigned char field_666;
     /* 0667 */ unsigned char fiedl_667;
-    /* 0668 */ int nfield_668;
+    /* 0668 */ int field_668;
     /* 066C */ CResRef m_areaResRef;
     /* 0674 */ CPoint m_ptWorld;
 };
@@ -225,7 +220,7 @@ public:
     BOOL Render(BOOL bForce) override;
     void OnLButtonClick(CPoint pt) override;
 
-    /* 066E */ BOOL bfield_66E;
+    /* 066E */ BOOL field_66E;
 };
 
 #endif /* CSCREENMAP_H_ */

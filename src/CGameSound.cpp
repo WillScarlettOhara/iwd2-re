@@ -169,10 +169,3 @@ void CGameSound::Marshal(CAreaFileSoundObject** pSoundObject)
 
     memcpy(*pSoundObject, &m_soundObject, sizeof(CAreaFileSoundObject));
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4C8FF0
-void FUN_004c8ff0() {
-    // TODO: Incomplete.
-}
-

@@ -1,11 +1,6 @@
 #ifndef CRES_H_
 #define CRES_H_
 
-// ============================================================================
-// CRes - Base resource class - .ARE, .CRE, .ITM files
-//
-// Address: varies by method
-// ============================================================================
 #include "mfc.h"
 
 #include "CChitin.h"
@@ -52,11 +47,11 @@ public:
     /* 000C */ CObList* m_pCurrentList; // #guess
     /* 0010 */ CDimmKeyTableEntry* m_pDimmKeyTableEntry; // #guess
     /* 0014 */ DWORD nSize;
-    /* 0018 */ int nm_field_18;
+    /* 0018 */ int field_18;
     /* 001C */ DWORD m_nResSizeActual;
-    /* 0020 */ CCriticalSection pm_field_20;
-    /* 0040 */ int nm_field_40;
-    /* 0044 */ int nm_field_44;
+    /* 0020 */ CCriticalSection field_20;
+    /* 0040 */ int field_40;
+    /* 0044 */ int field_44;
     /* 0048 */ POSITION m_pCurrentListPos; // #guess
     /* 004C */ RESID m_nID;
 };

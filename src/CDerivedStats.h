@@ -1,11 +1,6 @@
 #ifndef CDERIVEDSTATS_H_
 #define CDERIVEDSTATS_H_
 
-// ============================================================================
-// CDerivedStats - Calculated stats - AC, THAC0, saves with modifiers
-//
-// Address: varies by method
-// ============================================================================
 #include "CAIObjectType.h"
 #include "CColorEffects.h"
 #include "CGameSpriteSpells.h"
@@ -400,10 +395,10 @@ class CDerivedStatsTemplate {
 public:
     /* 0000 */ DWORD m_generalState;
     /* 0004 */ SHORT m_nMaxHitPoints;
-    /* 0006 */ short m_nArmorClass;
-    /* 0008 */ short m_nACDexBonus;
-    /* 000A */ short m_nACDodgeBonus;
-    /* 000C */ short m_nACDeflectionBonus;
+    /* 0006 */ short field_6;
+    /* 0008 */ short field_8;
+    /* 000A */ short field_A;
+    /* 000C */ short field_C;
     /* 000E */ SHORT m_nACCrushingMod;
     /* 0010 */ SHORT m_nACMissileMod;
     /* 0012 */ SHORT m_nACPiercingMod;
@@ -507,13 +502,13 @@ public:
     /* 011E */ SHORT m_nDamageModPiercing;
     /* 0120 */ SHORT m_nDamageModCrushing;
     /* 0122 */ SHORT m_nDamageModMissile;
-    /* 0124 */ int m_nNaturalArmorBonus;
-    /* 0128 */ int m_nSTRBonus;
-    /* 012C */ int m_nDEXBonus;
-    /* 0130 */ int m_nCONBonus;
-    /* 0134 */ int m_nINTBonus;
-    /* 0138 */ int m_nWISBonus;
-    /* 013C */ int m_nCHRBonus;
+    /* 0124 */ int field_124;
+    /* 0128 */ int field_128;
+    /* 012C */ int field_12C;
+    /* 0130 */ int field_130;
+    /* 0134 */ int field_134;
+    /* 0138 */ int field_138;
+    /* 013C */ int field_13C;
     /* 0140 */ int m_nMirrorImages;
     /* 0144 */ BYTE m_nSkills[64];
     /* 0184 */ BOOL m_bPreventAISlowDown;
@@ -543,43 +538,43 @@ public:
     void SetClassLevel(INT iClassType, INT nLevel);
     BOOL HasClass(INT iClassType);
     INT GetBestClass();
-    CGameSpriteGroupedSpellList* GetSpellListByClass(const BYTE& nClass);
+    CGameSpriteGroupedSpellList* sub_447B00(const BYTE& nClass);
 
     /* 0188 */ CImmunitiesProjectile m_cImmunitiesProjectile;
     /* 01A4 */ CImmunitiesEffect m_cImmunitiesEffect;
     /* 01C0 */ CImmunitiesAIType m_cImmunitiesAIType;
     /* 01DC */ CImmunitiesSpellLevel m_cImmunitiesSpellLevel;
-    /* 01E0 */ long m_nVisualRange;
-    /* 01E4 */ int m_bExplore;
-    /* 01E8 */ int m_bThrullCharm;
-    /* 01EC */ int m_bSummonDisable;
+    /* 01E0 */ int field_1E0;
+    /* 01E4 */ int field_1E4;
+    /* 01E8 */ int field_1E8;
+    /* 01EC */ int field_1EC;
     /* 0204 */ CImmunitiesWeapon m_cImmunitiesWeapon;
     /* 0220 */ CSelectiveBonusList m_cToHitBonusList;
     /* 023C */ CSelectiveBonusList m_cDamageBonusList;
     /* 0258 */ CImmunitiesItemEquipList m_cImmunitiesItemEquip;
     /* 0274 */ CImmunitiesItemTypeEquipList m_cImmunitiesItemTypeEquip;
-    /* 0290 */ CImmunitiesItemEquipList m_cImmunitiesItemEquipAlt;
-    /* 02AC */ CImmunitiesItemTypeEquipList m_cImmunitiesItemTypeEquipAlt;
+    /* 0290 */ CImmunitiesItemEquipList field_290;
+    /* 02AC */ CImmunitiesItemTypeEquipList field_2AC;
     /* 02C8 */ CImmunitiesProjectile m_cBounceProjectile;
     /* 02E4 */ CImmunitiesEffect m_cBounceEffect;
-    /* 03C8 */ CImmunitiesProjectile m_cImmunitiesProjectile2;
-    /* 03E4 */ CImmunitiesProjectile m_cBounceProjectileAlt;
-    /* 0400 */ CImmunitiesProjectile m_cImmunitiesProjectileAlt;
-    /* 041C */ CImmunitiesProjectile m_cBounceProjectileLevelDec;
+    /* 03C8 */ CImmunitiesProjectile field_3C8;
+    /* 03E4 */ CImmunitiesProjectile field_3E4;
+    /* 0400 */ CImmunitiesProjectile field_400;
+    /* 041C */ CImmunitiesProjectile field_41C;
     /* 0438 */ CImmunitiesItemEquipList m_cImmunitiesItemUse;
     /* 0454 */ CImmunitiesItemTypeEquipList m_cImmunitiesItemTypeUse;
-    /* 04AC */ CPtrList m_cImmunitiesSpell;
+    /* 04AC */ CPtrList field_4AC;
     /* 0480 */ std::set<int> m_naturalImmunities;
-    /* 04C8 */ CPtrList m_cBounceSpell;
-    /* 04E4 */ CPtrList m_cImmunitiesSchool;
-    /* 0500 */ CPtrList m_cImmunitiesSecondaryType;
-    /* 051C */ CPtrList m_cBounceSchool;
-    /* 0538 */ CPtrList m_cBounceSecondaryType;
+    /* 04C8 */ CPtrList field_4C8;
+    /* 04E4 */ CPtrList field_4E4;
+    /* 0500 */ CPtrList field_500;
+    /* 051C */ CPtrList field_51C;
+    /* 0538 */ CPtrList field_538;
     /* 0554 */ CTypedPtrList<CPtrList, CPersistantEffect*> m_cRegeneratedPersistantEffectList;
     /* 0574 */ CColorRanges m_appliedColorRanges;
     /* 0590 */ CColorEffects m_appliedColorEffects;
     /* 05AC */ CGameSpriteSpells m_spells;
-    /* 0DA8 */ int nfield_DA8;
+    /* 0DA8 */ int field_DA8;
     /* 0DAC */ BOOL m_disabledButtons[40];
     /* 0E4C */ BOOL m_disabledSpellTypes[3];
 };

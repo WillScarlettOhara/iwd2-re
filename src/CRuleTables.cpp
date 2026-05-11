@@ -1815,7 +1815,7 @@ INT CRuleTables::GetAbilityScoreModifier(INT nScore) const
 }
 
 // 0x542560
-int CRuleTables::GetMonsterEncounterRate(unsigned short a1, unsigned short a2) const
+int CRuleTables::sub_542560(unsigned short a1, unsigned short a2) const
 {
     if (a1 == 0) {
         return 0;
@@ -3403,7 +3403,7 @@ INT CRuleTables::GetEncumbranceMod(CGameSprite* pSprite) const
 
     INT nEncMod = atol(m_tEncMod.GetAt(ENCUMBRANCE_MOD_PERCENT, sClass)) + 100;
 
-    if (pSprite->HasFeat(CGAMESPRITE_FEAT_STRONG_BACK)) {
+    if (pSprite->sub_763150(CGAMESPRITE_FEAT_STRONG_BACK)) {
         nEncMod += 50;
     }
 
@@ -3625,80 +3625,3 @@ DWORD CRuleTables::GetSpecializationMask(BYTE nClass, BYTE nIndex) const
 
     return 0;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x5402E0
-void FUN_005402e0() {
-    // TODO: Incomplete.
-}
-
-// 0x542A90
-void FUN_00542a90() {
-    // TODO: Incomplete.
-}
-
-// 0x542B40
-void FUN_00542b40() {
-    // TODO: Incomplete.
-}
-
-// 0x542CB0
-void FUN_00542cb0() {
-    // TODO: Incomplete.
-}
-
-// 0x542EC0
-void FUN_00542ec0() {
-    // TODO: Incomplete.
-}
-
-// 0x5456C0
-void FUN_005456c0() {
-    // TODO: Incomplete.
-}
-
-// 0x545EB0
-void FUN_00545eb0() {
-    // TODO: Incomplete.
-}
-
-// 0x5461E0
-void FUN_005461e0() {
-    // TODO: Incomplete.
-}
-
-// 0x5463E0
-void FUN_005463e0() {
-    // TODO: Incomplete.
-}
-
-// 0x5466F0
-void FUN_005466f0() {
-    // TODO: Incomplete.
-}
-
-// 0x5467E0
-void FUN_005467e0() {
-    // TODO: Incomplete.
-}
-
-// 0x5468B0
-void FUN_005468b0() {
-    // TODO: Incomplete.
-}
-
-// 0x547020
-void FUN_00547020() {
-    // TODO: Incomplete.
-}
-
-// 0x547040
-void FUN_00547040() {
-    // TODO: Incomplete.
-}
-
-// 0x547620
-void FUN_00547620() {
-    // TODO: Incomplete.
-}
-

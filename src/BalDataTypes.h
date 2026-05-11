@@ -71,14 +71,14 @@ typedef struct UI_Control_Text_st {
     /* 0030 */ WORD nFrame;
     /* 0032 */ WORD x;
     /* 0034 */ WORD y;
-    /* 0036 */ WORD wm_field_36;
-    /* 0038 */ WORD wm_field_38;
+    /* 0036 */ WORD field_36;
+    /* 0038 */ WORD field_38;
     /* 003A */ RESREF refFont;
-    /* 0042 */ WORD wm_field_42;
+    /* 0042 */ WORD field_42;
     /* 0044 */ char initialText[32];
     /* 0064 */ WORD nMaxLength;
     /* 0066 */ WORD nTextCapitalization;
-    /* 0068 */ WORD wfield_68;
+    /* 0068 */ WORD field_68;
 } UI_CONTROL_EDIT;
 
 // TODO: Incomplete.
@@ -332,8 +332,8 @@ typedef struct Spell_Header_st {
     /* 006A */ DWORD effectsOffset;
     /* 006E */ WORD castingStartingEffect;
     /* 0070 */ WORD castingEffectCount;
-    /* 0072 */ BYTE bfield_72;
-    /* 0073 */ BYTE bfield_73;
+    /* 0072 */ BYTE field_72;
+    /* 0073 */ BYTE field_73;
 } SPELL_HEADER;
 
 typedef struct Spell_ability_st {

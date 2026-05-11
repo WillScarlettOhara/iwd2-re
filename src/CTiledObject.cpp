@@ -35,10 +35,3 @@ void CTiledObject::SetNewResWED(CResWED* pNewResWED)
 {
     // TODO: Incomplete.
 }
-
-// Phase 1-2: Scaffold functions
-// 0x54E220
-void FUN_0054e220() {
-    // TODO: Incomplete.
-}
-

@@ -43,11 +43,11 @@ public:
     /* 0136 */ SHORT m_nThumbFrame;
     /* 0138 */ CUIControlButtonScrollBar* m_pScrollUpButton;
     /* 013C */ CUIControlButtonScrollBar* m_pScrollDownButton;
-    /* 0140 */ short wm_field_140;
-    /* 0142 */ short wm_m_field_142;
-    /* 0144 */ short wm_field_144;
-    /* 0146 */ unsigned char bm_field_146;
-    /* 0148 */ short wm_field_148;
+    /* 0140 */ short field_140;
+    /* 0142 */ short field_142;
+    /* 0144 */ short field_144;
+    /* 0146 */ unsigned char field_146;
+    /* 0148 */ short field_148;
 };
 
 class CUIControlEditScrollBar : public CUIControlScrollBar {

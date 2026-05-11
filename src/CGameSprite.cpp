@@ -678,12 +678,12 @@ CAIAction CGameSprite::m_aiDoAction;
 
 // 0x6EF990
 CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, DWORD expirationTime, WORD huntingRange, WORD followRange, DWORD timeOfDayVisible, CPoint startPos, WORD facing)
-    : m_portraitIconVidCell(CResRef("STATES"), g_pBaldurChitin->nm_field_4A28)
+    : m_portraitIconVidCell(CResRef("STATES"), g_pBaldurChitin->field_4A28)
 {
     int index;
 
-    nfield_7540 = 0;
-    nfield_7544 = 0;
+    field_7540 = 0;
+    field_7544 = 0;
     m_spriteEffectSequenceLength = 0;
     m_spriteEffectBaseIntensity = 0;
     m_spriteEffectRandomIntensity = 0;
@@ -707,35 +707,35 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
     m_posLastVisMapEntry.x = 0;
     m_posLastVisMapEntry.y = 0;
     m_nCommandPause = 0;
-    nfield_557A = 0;
-    nfield_557E = 0;
-    nfield_558E = 0;
-    wfield_559E = 0;
-    wfield_55A0 = 0;
+    field_557A = 0;
+    field_557E = 0;
+    field_558E = 0;
+    field_559E = 0;
+    field_55A0 = 0;
     m_speedFactor = 0;
     m_lastActionID = 0;
-    wfield_560E = 0;
-    wfield_5610 = 0;
-    nfield_5618 = 0;
-    wfield_561C = 0;
+    field_560E = 0;
+    field_5610 = 0;
+    field_5618 = 0;
+    field_561C = 0;
     m_noActionCount = 0;
-    bfield_5630 = 0;
-    nfield_5632 = 0;
-    bfield_5636 = 0;
-    nfield_7118 = 0;
-    wfield_711C = 0;
+    field_5630 = 0;
+    field_5632 = 0;
+    field_5636 = 0;
+    field_7118 = 0;
+    field_711C = 0;
     m_firstActionSound = FALSE;
     m_bForceVisualEffects = FALSE;
     m_currentActionId = 0;
-    bfield_72A8 = 0;
+    field_72A8 = 0;
     m_bInUnmarshal = FALSE;
-    nfield_72D6 = 0;
-    nfield_72DE = 0;
-    nfield_7532 = 0;
-    nfield_7536 = 0;
-    nfield_9D08 = 0;
-    nfield_9D0C = 0;
-    nfield_9D10 = 0;
+    field_72D6 = 0;
+    field_72DE = 0;
+    field_7532 = 0;
+    field_7536 = 0;
+    field_9D08 = 0;
+    field_9D0C = 0;
+    field_9D10 = 0;
     m_objectType = TYPE_SPRITE;
     m_resRef = "";
     m_fCircleChange = 0.0;
@@ -749,8 +749,8 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
     m_posDest.y = 0;
     m_posOld.x = 0;
     m_posOld.y = 0;
-    nfield_536A = 0;
-    nfield_536E = 0;
+    field_536A = 0;
+    field_536E = 0;
     m_nSequence = -1;
     m_nNewDirection = facing & 0xF;
     m_nDirection = facing & 0xF;
@@ -759,7 +759,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
     m_currPath = 0;
     m_pathSearchInvalidDest = FALSE;
     m_selectedSound = 17;
-    nfield_53D2 = 0;
+    field_53D2 = 0;
     m_currentSearchRequest = 0;
     m_lastCharacterCount = 0;
     m_sequenceTest = FALSE;
@@ -781,7 +781,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
     m_targetPoint.y = -1;
     m_targetAreaSize = 0;
     m_destMarker.SetType(CMarker::RECTICLE);
-    nfield_72E2 = CGameObjectArray::INVALID_INDEX;
+    field_72E2 = CGameObjectArray::INVALID_INDEX;
     m_typeAI.Set(CAIObjectType::ANYONE);
     m_liveTypeAI.Set(CAIObjectType::ANYONE);
     m_startTypeAI.Set(CAIObjectType::ANYONE);
@@ -798,38 +798,38 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
     m_followStart = 0;
     m_userCommandPause = 0;
     m_recoilFrame = 0;
-    wfield_561E = 0;
-    m_PAICallCounter = 0;
-    m_bJustAttacked = 0;
-    wfield_560C = 0;
-    wfield_5616 = 0;
-    wfield_5612 = 0;
-    wfield_5614 = 0;
+    field_561E = 0;
+    field_44A = 0;
+    field_54C = 0;
+    field_560C = 0;
+    field_5616 = 0;
+    field_5612 = 0;
+    field_5614 = 0;
     m_castCounter = -1;
     m_bStartedCasting = FALSE;
     m_attackFrame = -2;
-    wfield_72A2 = 0;
+    field_72A2 = 0;
     m_bAllowEffectListCall = TRUE;
-    nfield_72AA = 0;
+    field_72AA = 0;
     m_bForceVisualEffects = FALSE;
-    nfield_5582 = 0;
-    m_field_9D14 = 0;
-    m_field_9D15 = 0;
+    field_5582 = 0;
+    field_9D14 = 0;
+    field_9D15 = 0;
     m_hasColorEffects = FALSE;
     m_hasColorRangeEffects = FALSE;
-    nfield_5640 = 0;
+    field_5640 = 0;
     m_groupPosition = 0;
     m_groupMove = 0;
-    nfield_562C = 0;
+    field_562C = 0;
     m_curProjectile = 0;
     m_curSpell = 0;
     m_curItem = 0;
     m_nNumberOfTimesTalkedTo = 0;
     m_bSeenPartyBefore = 0;
-    wfield_710A = 0;
-    wfield_710C = 0;
-    wfield_710E = 0;
-    nfield_7110 = 0x7FFF;
+    field_710A = 0;
+    field_710C = 0;
+    field_710E = 0;
+    field_7110 = 0x7FFF;
     m_moraleFailure = FALSE;
     m_nHappiness = 0;
     m_bHappinessChanged = FALSE;
@@ -858,25 +858,25 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         m_quickSongs[index] = buttonData;
     }
 
-    bfield_70F6 = rand() % 20 + 1;
-    bfield_70F7 = rand() % 20 + 1;
-    bfield_70F8 = rand() % 20 + 1;
-    bfield_70F9 = rand() % 20 + 1;
-    bfield_70FA = rand() % 100;
-    nfield_55F2 = 0;
-    nfield_55F6 = 0;
-    nfield_55FA = 0;
-    nfield_55FE = 0;
-    bfield_5602 = 0;
+    field_70F6 = rand() % 20 + 1;
+    field_70F7 = rand() % 20 + 1;
+    field_70F8 = rand() % 20 + 1;
+    field_70F9 = rand() % 20 + 1;
+    field_70FA = rand() % 100;
+    field_55F2 = 0;
+    field_55F6 = 0;
+    field_55FA = 0;
+    field_55FE = 0;
+    field_5602 = 0;
 
     for (index = 0; index < 20; index++) {
-        nfield_55A2[index] = -65538;
+        field_55A2[index] = -65538;
     }
 
     memset(m_nNumberOfTimesInteractedWith, 0, sizeof(m_nNumberOfTimesInteractedWith));
 
-    nfield_54B8 = 0;
-    nfield_54A8 = 0;
+    field_54B8 = 0;
+    field_54A8 = 0;
     m_bBumped = FALSE;
     m_ptBumpedFrom.x = -1;
     m_ptBumpedFrom.y = -1;
@@ -888,7 +888,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
     m_nDamageLocatorTime = 0;
     m_nDamageLocatorColor = 0x1E1EFF;
     m_bBloodFlashOn = 0;
-    nfield_53E6 = 0;
+    field_53E6 = 0;
     m_nTwitches = 0;
 
     // NOTE: See `CGameArea` note on default terrain tables.
@@ -901,60 +901,60 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         m_pSpriteEffectArrayPosition = NULL;
         m_spriteEffectDuration = 0;
         m_spriteEffectFlags = 0;
-        nfield_5304 = 0;
+        field_5304 = 0;
         m_doBounce = 3;
         m_nModalState = 0;
-        m_nFeatSlots[0] = 0;
-        m_nFeatSlots[1] = 0;
-        m_nFeatSlots[2] = 0;
-        m_nFeatSlots[3] = 0;
-        m_nFeatSlots[4] = 0;
+        field_4C54[0] = 0;
+        field_4C54[1] = 0;
+        field_4C54[2] = 0;
+        field_4C54[3] = 0;
+        field_4C54[4] = 0;
         m_nWeaponSet = 0;
 
-        pfield_7548[IWD_VFX_SANCTUARY].SetResRef(CResRef("SanctuC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_ENTANGLE].SetResRef(CResRef("EntangC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("MGoInvC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_SHIELD].SetResRef(CResRef("ShieldC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_GREASE].SetResRef(CResRef("GreaseC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_WEB].SetResRef(CResRef("WebC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("GoInvuC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_SHROUD_OF_FLAME].SetResRef(CResRef("SoFlamC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_ANTIMAGIC_MISSILE].SetResRef(CResRef("AMShelC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_PROTECTION_FROM_MISSILES].SetResRef(CResRef("PFNMisC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_CLOAK_OF_FEAR].SetResRef(CResRef("CoFearC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_ENTROPY_SHIELD].SetResRef(CResRef("EShielC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_FIRE_AURA].SetResRef(CResRef("FiAuraC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_FROST_AURA].SetResRef(CResRef("FrAuraC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_INSECT_PLAGUE].SetResRef(CResRef("IPlaguC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_STORM_SHELL].SetResRef(CResRef("SShellC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_SHIELD_OF_LATHANDER].SetResRef(CResRef("SoLatC1"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_SHIELD_OF_LATHANDER_2].SetResRef(CResRef("SoLatC2"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER].SetResRef(CResRef("GSoLaC1"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER_2].SetResRef(CResRef("GSoLaC2"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("SEyesC1"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_SEVEN_EYES_2].SetResRef(CResRef("SEyesC2"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_FIRE_SHIELD_RED].SetResRef(CResRef("FShiRC1"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_28].SetResRef(CResRef("FShiRC1"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_FIRE_SHIELD_BLUE].SetResRef(CResRef("FShiBC1"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_29].SetResRef(CResRef("FShiBC1"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_DEATH_ARMOR].SetResRef(CResRef("DArmorC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_TORTOISE_SHELL].SetResRef(CResRef("TShellC"), FALSE, TRUE, TRUE);
-        pfield_7548[IWD_VFX_WISP].SetResRef(CResRef("Wisp"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_SANCTUARY].SetResRef(CResRef("SanctuC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_ENTANGLE].SetResRef(CResRef("EntangC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("MGoInvC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_SHIELD].SetResRef(CResRef("ShieldC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_GREASE].SetResRef(CResRef("GreaseC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_WEB].SetResRef(CResRef("WebC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("GoInvuC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_SHROUD_OF_FLAME].SetResRef(CResRef("SoFlamC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_ANTIMAGIC_MISSILE].SetResRef(CResRef("AMShelC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_PROTECTION_FROM_MISSILES].SetResRef(CResRef("PFNMisC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_CLOAK_OF_FEAR].SetResRef(CResRef("CoFearC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_ENTROPY_SHIELD].SetResRef(CResRef("EShielC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_FIRE_AURA].SetResRef(CResRef("FiAuraC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_FROST_AURA].SetResRef(CResRef("FrAuraC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_INSECT_PLAGUE].SetResRef(CResRef("IPlaguC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_STORM_SHELL].SetResRef(CResRef("SShellC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_SHIELD_OF_LATHANDER].SetResRef(CResRef("SoLatC1"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_SHIELD_OF_LATHANDER_2].SetResRef(CResRef("SoLatC2"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER].SetResRef(CResRef("GSoLaC1"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER_2].SetResRef(CResRef("GSoLaC2"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("SEyesC1"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_SEVEN_EYES_2].SetResRef(CResRef("SEyesC2"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_FIRE_SHIELD_RED].SetResRef(CResRef("FShiRC1"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_28].SetResRef(CResRef("FShiRC1"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_FIRE_SHIELD_BLUE].SetResRef(CResRef("FShiBC1"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_29].SetResRef(CResRef("FShiBC1"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_DEATH_ARMOR].SetResRef(CResRef("DArmorC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_TORTOISE_SHELL].SetResRef(CResRef("TShellC"), FALSE, TRUE, TRUE);
+        field_7548[IWD_VFX_WISP].SetResRef(CResRef("Wisp"), FALSE, TRUE, TRUE);
 
-        pfield_9088[IWD_VFX_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("AFT_M05"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_SHROUD_OF_FLAME].SetResRef(CResRef("MISC_01C"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_ANTIMAGIC_MISSILE].SetResRef(CResRef("AFT_M04"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("AFT_M03"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_PROTECTION_FROM_MISSILES].SetResRef(CResRef("AFT_M01"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_CLOAK_OF_FEAR].SetResRef(CResRef("AFT_P02"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_ENTROPY_SHIELD].SetResRef(CResRef("AFT_P03"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_STORM_SHELL].SetResRef(CResRef("AFT_P25"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_SHIELD_OF_LATHANDER].SetResRef(CResRef("AFT_P20"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_GREATER_SHIELD_OF_LATHANDER].SetResRef(CResRef("AFT_P26"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_SANCTUARY].SetResRef(CResRef("AFT_P01"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("AFT_M02"), TRUE, TRUE);
-        pfield_9088[IWD_VFX_SHIELD].SetResRef(CResRef("EFF_M11C"), TRUE, TRUE);
+        field_9088[IWD_VFX_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("AFT_M05"), TRUE, TRUE);
+        field_9088[IWD_VFX_SHROUD_OF_FLAME].SetResRef(CResRef("MISC_01C"), TRUE, TRUE);
+        field_9088[IWD_VFX_ANTIMAGIC_MISSILE].SetResRef(CResRef("AFT_M04"), TRUE, TRUE);
+        field_9088[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("AFT_M03"), TRUE, TRUE);
+        field_9088[IWD_VFX_PROTECTION_FROM_MISSILES].SetResRef(CResRef("AFT_M01"), TRUE, TRUE);
+        field_9088[IWD_VFX_CLOAK_OF_FEAR].SetResRef(CResRef("AFT_P02"), TRUE, TRUE);
+        field_9088[IWD_VFX_ENTROPY_SHIELD].SetResRef(CResRef("AFT_P03"), TRUE, TRUE);
+        field_9088[IWD_VFX_STORM_SHELL].SetResRef(CResRef("AFT_P25"), TRUE, TRUE);
+        field_9088[IWD_VFX_SHIELD_OF_LATHANDER].SetResRef(CResRef("AFT_P20"), TRUE, TRUE);
+        field_9088[IWD_VFX_GREATER_SHIELD_OF_LATHANDER].SetResRef(CResRef("AFT_P26"), TRUE, TRUE);
+        field_9088[IWD_VFX_SANCTUARY].SetResRef(CResRef("AFT_P01"), TRUE, TRUE);
+        field_9088[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("AFT_M02"), TRUE, TRUE);
+        field_9088[IWD_VFX_SHIELD].SetResRef(CResRef("EFF_M11C"), TRUE, TRUE);
 
         m_type = type;
         m_expirationTime = expirationTime;
@@ -973,7 +973,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         m_dialogWait = 0;
         m_dialogWaitTarget = CGameObjectArray::INVALID_INDEX;
         m_bAllowDialogInterrupt = TRUE;
-        sfield_56E4 = "";
+        field_56E4 = "";
         m_talkingRenderCount = 0;
         m_clearAIOnRemoveFromArea = TRUE;
 
@@ -981,7 +981,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
             m_portraitIconVidCell.pRes->Request();
         }
 
-        m_dwLastUpdateTime = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
+        field_722A = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
         m_interactingWith.Set(CAIObjectType::NOONE);
         m_nHPCONBonusTotalOld = 0;
         m_bHPCONBonusTotalUpdate = TRUE;
@@ -989,9 +989,9 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         m_bHiding = FALSE;
         m_secondarySounds = "";
 
-        memset(bfield_725A, 0, sizeof(bfield_725A));
+        memset(field_725A, 0, sizeof(field_725A));
 
-        nfield_727E = 0;
+        field_727E = 0;
         m_pLocalVariables = new CVariableHash(16);
         m_internalButtonList = NULL;
 
@@ -1019,7 +1019,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         m_sndArmor[m_currSndArmor].m_nVolumeVariance = 50;
         m_animationRunning = (m_baseStats.m_animationType & 0xF000) != 0;
         m_triggerId = CGameObjectArray::INVALID_INDEX;
-        nfield_562C = TRUE;
+        field_562C = TRUE;
         m_firstCall = FALSE;
         m_berserkActive = FALSE;
         m_attackSoundDeadzone = 0;
@@ -1071,27 +1071,27 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
             m_derivedStats.m_generalState |= STATE_DEAD;
         }
 
-        bfield_7282 = -1;
-        bfield_7283 = -1;
-        bfield_7284 = -1;
-        nfield_728E = -1;
+        field_7282 = -1;
+        field_7283 = -1;
+        field_7284 = -1;
+        field_728E = -1;
         m_bPlayedEncumberedStopped = 0;
         m_bPlayedEncumberedSlowed = 0;
-        wfield_72A0 = 0;
+        field_72A0 = 0;
         m_nBounceCounter = 0;
-        nfield_7106 = 0;
+        field_7106 = 0;
 
-        LoadAnimationSounds();
+        sub_7204C0();
 
-        nfield_70EE = 0;
-        bfield_7430 = 0;
-        m_nDualClassFlag = 0;
+        field_70EE = 0;
+        field_7430 = 0;
+        field_70F2 = 0;
         if (IcewindMisc::IsLarge(this) == TRUE) {
-            pfield_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheB"), FALSE, TRUE, TRUE);
+            field_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheB"), FALSE, TRUE, TRUE);
         }
 
-        nfield_753A = 0;
-        nfield_753C = 0;
+        field_753A = 0;
+        field_753C = 0;
     } else {
         // FIXME: Does not look cool.
         delete this;
@@ -1119,10 +1119,10 @@ BOOL CGameSprite::IsOver(const CPoint& pt)
         && m_activeAI
         && m_activeImprisonment
         && Animate()
-        && m_baseStats.bm_field_294 == 0
+        && m_baseStats.field_294 == 0
         && (m_typeAI.GetEnemyAlly() <= CAIObjectType::EA_GOODCUTOFF
             || (m_derivedStats.m_generalState & STATE_INVISIBLE) == 0
-            || (m_baseStats.bm_field_2FC & 0x1) != 0)) {
+            || (m_baseStats.field_2FC & 0x1) != 0)) {
         const CRect& rEllipse = m_animation.GetEllipseRect();
         CPoint ptRelative(pt.x - m_pos.x, pt.y - m_pos.y);
         return rEllipse.PtInRect(ptRelative);
@@ -1208,7 +1208,7 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
     m_posExact.x = m_pos.x << 10;
     m_posExact.y = (m_pos.y << 12) / 3;
     m_posOld = m_pos;
-    nfield_562C = 1;
+    field_562C = 1;
 
     if (m_active && m_activeAI && m_activeImprisonment) {
         CheckIfVisible();
@@ -1227,8 +1227,8 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
                                             m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                 m_typeAI.GetEnemyAlly(),
                 m_animation.GetPersonalSpace(),
-                nfield_54A8,
-                bfield_7430);
+                field_54A8,
+                field_7430);
         }
         break;
     case CGAMEOBJECT_LIST_BACK:
@@ -1325,8 +1325,8 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
         }
     }
 
-    if (m_baseStats.bm_field_294) {
-        m_baseStats.bm_field_294 = FALSE;
+    if (m_baseStats.field_294) {
+        m_baseStats.field_294 = FALSE;
         sub_75F3D0(1);
         if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL) {
             CMessage* message = new CMessage90(m_id, m_id, 1);
@@ -1334,16 +1334,16 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
         }
     }
 
-    if (m_baseStats.bm_field_2F8) {
+    if (m_baseStats.field_2F8) {
         m_removeFromArea = TRUE;
     }
 
-    if (!m_baseStats.bm_field_2E2) {
-        SavePositionToBaseStats();
-        m_baseStats.bm_field_2E2 = TRUE;
+    if (!m_baseStats.field_2E2) {
+        sub_75F240();
+        m_baseStats.field_2E2 = TRUE;
     }
 
-    Icewind586B70::Instance()->Reinstate(this);
+    Icewind586B70::Instance()->sub_586FC0(this);
 }
 
 // 0x6F47F0
@@ -1358,7 +1358,7 @@ void CGameSprite::RemoveReplacementFromArea()
         }
 
         if (g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id) != -1) {
-            if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode || InControl()) {
+            if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->field_1AC || InControl()) {
                 if (Animate()) {
                     m_pArea->m_visibility.RemoveCharacter(m_pos,
                         m_id,
@@ -1399,8 +1399,8 @@ void CGameSprite::RemoveReplacementFromArea()
                                                    m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    nfield_54A8,
-                    bfield_7430);
+                    field_54A8,
+                    field_7430);
             }
             break;
         case CGAMEOBJECT_LIST_BACK:
@@ -1415,8 +1415,8 @@ void CGameSprite::RemoveReplacementFromArea()
                                                        m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                         m_typeAI.GetEnemyAlly(),
                         m_animation.GetPersonalSpace(),
-                        nfield_54A8,
-                        bfield_7430);
+                        field_54A8,
+                        field_7430);
                 } else {
                     m_pArea->DecrHeightDynamic(m_pos);
                 }
@@ -1488,7 +1488,7 @@ void CGameSprite::RemoveFromArea()
         }
 
         if (g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id) != -1) {
-            if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode || InControl()) {
+            if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->field_1AC || InControl()) {
                 if (Animate()) {
                     m_pArea->m_visibility.RemoveCharacter(m_pos,
                         m_id,
@@ -1529,8 +1529,8 @@ void CGameSprite::RemoveFromArea()
                                                    m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    nfield_54A8,
-                    bfield_7430);
+                    field_54A8,
+                    field_7430);
             }
             break;
         case CGAMEOBJECT_LIST_BACK:
@@ -1545,8 +1545,8 @@ void CGameSprite::RemoveFromArea()
                                                        m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                         m_typeAI.GetEnemyAlly(),
                         m_animation.GetPersonalSpace(),
-                        nfield_54A8,
-                        bfield_7430);
+                        field_54A8,
+                        field_7430);
                 } else {
                     m_pArea->DecrHeightDynamic(m_pos);
                 }
@@ -1613,28 +1613,28 @@ void CGameSprite::AIUpdate()
 
     if (pGame->GetWorldTimer()->m_active) {
         if ((m_baseStats.m_generalState & STATE_FADE_OUT) != 0) {
-            if (static_cast<int>(m_baseStats.bm_field_2F9 + m_baseStats.m_fadeSpeed) > 255) {
+            if (static_cast<int>(m_baseStats.field_2F9 + m_baseStats.m_fadeSpeed) > 255) {
                 m_baseStats.m_generalState &= ~STATE_FADE_OUT;
                 m_derivedStats.m_generalState &= ~STATE_FADE_OUT;
-                m_baseStats.bm_field_2F9 = -1;
+                m_baseStats.field_2F9 = -1;
             } else {
-                m_baseStats.bm_field_2F9 += m_baseStats.m_fadeSpeed;
+                m_baseStats.field_2F9 += m_baseStats.m_fadeSpeed;
             }
         } else if ((m_baseStats.m_generalState & STATE_FADE_IN) != 0) {
-            if (static_cast<int>(m_baseStats.bm_field_2F9 - m_baseStats.m_fadeSpeed) < 0) {
+            if (static_cast<int>(m_baseStats.field_2F9 - m_baseStats.m_fadeSpeed) < 0) {
                 m_baseStats.m_generalState &= ~STATE_FADE_IN;
                 m_derivedStats.m_generalState &= ~STATE_FADE_IN;
-                m_baseStats.bm_field_2F9 = -1;
+                m_baseStats.field_2F9 = -1;
             } else {
-                m_baseStats.bm_field_2F9 -= m_baseStats.m_fadeSpeed;
+                m_baseStats.field_2F9 -= m_baseStats.m_fadeSpeed;
             }
         }
 
-        bfield_70F6 = rand() % 20 + 1;
-        bfield_70F7 = rand() % 20 + 1;
-        bfield_70F8 = rand() % 20 + 1;
-        bfield_70F9 = rand() % 20 + 1;
-        bfield_70FA = rand() % 100;
+        field_70F6 = rand() % 20 + 1;
+        field_70F7 = rand() % 20 + 1;
+        field_70F8 = rand() % 20 + 1;
+        field_70F9 = rand() % 20 + 1;
+        field_70FA = rand() % 100;
 
         if (m_nBounceCounter <= 0) {
             m_nBounceCounter = 25;
@@ -1724,8 +1724,8 @@ void CGameSprite::AIUpdate()
                                                        m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                         m_typeAI.GetEnemyAlly(),
                         m_animation.GetPersonalSpace(),
-                        nfield_54A8,
-                        bfield_7430);
+                        field_54A8,
+                        field_7430);
                     break;
                 case CGAMEOBJECT_LIST_BACK:
                     if ((m_derivedStats.m_generalState & STATE_SLEEPING) != 0) {
@@ -1736,8 +1736,8 @@ void CGameSprite::AIUpdate()
                                                            m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                             m_typeAI.GetEnemyAlly(),
                             m_animation.GetPersonalSpace(),
-                            nfield_54A8,
-                            bfield_7430);
+                            field_54A8,
+                            field_7430);
                     } else {
                         m_pArea->IncrHeightDynamic(m_pos);
                     }
@@ -1771,7 +1771,7 @@ void CGameSprite::AIUpdate()
 
                     switch (m_listType) {
                     case CGAMEOBJECT_LIST_FRONT:
-                        if (m_baseStats.bm_field_294 != TRUE) {
+                        if (m_baseStats.field_294 != TRUE) {
                             if ((m_derivedStats.m_generalState & STATE_DEAD) == 0) {
                                 // NOTE: Uninline.
                                 m_pArea->AddToMarkers(m_id);
@@ -1781,21 +1781,21 @@ void CGameSprite::AIUpdate()
                                                             m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                                 m_typeAI.GetEnemyAlly(),
                                 m_animation.GetPersonalSpace(),
-                                nfield_54A8,
-                                bfield_7430);
+                                field_54A8,
+                                field_7430);
 
                             JumpToPoint(m_pos, TRUE);
                         }
                         break;
                     case CGAMEOBJECT_LIST_BACK:
-                        if (m_baseStats.bm_field_294 != TRUE) {
+                        if (m_baseStats.field_294 != TRUE) {
                             if ((m_derivedStats.m_generalState & STATE_SLEEPING) != 0) {
                                 m_pArea->m_search.AddObject(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
                                                                 m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                                     m_typeAI.GetEnemyAlly(),
                                     m_animation.GetPersonalSpace(),
-                                    nfield_54A8,
-                                    bfield_7430);
+                                    field_54A8,
+                                    field_7430);
 
                                 // NOTE: Uninline.
                                 m_pArea->AddToMarkers(m_id);
@@ -1889,7 +1889,7 @@ void CGameSprite::AIUpdate()
         return;
     }
 
-    if (m_pArea == NULL || m_baseStats.bm_field_294 == TRUE) {
+    if (m_pArea == NULL || m_baseStats.field_294 == TRUE) {
         return;
     }
 
@@ -1962,10 +1962,10 @@ void CGameSprite::AIUpdate()
         return;
     }
 
-    BOOL v1 = IsValidActionState();
-    if (v1 != nfield_54A8
+    BOOL v1 = sub_6FB440();
+    if (v1 != field_54A8
         && Animate()
-        && !m_baseStats.bm_field_294) {
+        && !m_baseStats.field_294) {
         if (!v1) {
             m_bBumped = FALSE;
             m_ptBumpedFrom.x = -1;
@@ -1976,26 +1976,26 @@ void CGameSprite::AIUpdate()
                                            m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
             m_typeAI.GetEnemyAlly(),
             m_animation.GetPersonalSpace(),
-            nfield_54A8,
-            bfield_7430);
+            field_54A8,
+            field_7430);
 
-        nfield_54A8 = v1;
+        field_54A8 = v1;
 
         m_pArea->m_search.AddObject(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
                                         m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
             m_typeAI.GetEnemyAlly(),
             m_animation.GetPersonalSpace(),
-            nfield_54A8,
-            bfield_7430);
+            field_54A8,
+            field_7430);
     }
 
-    if (m_bBumped && !m_baseStats.bm_field_294) {
+    if (m_bBumped && !m_baseStats.field_294) {
         m_pArea->m_search.RemoveObject(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
                                            m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
             m_typeAI.GetEnemyAlly(),
             m_animation.GetPersonalSpace(),
-            nfield_54A8,
-            bfield_7430);
+            field_54A8,
+            field_7430);
 
         SHORT nTableIndex;
         if (m_pArea->m_search.GetCost(m_ptBumpedFrom, GetTerrainTable(), m_animation.GetPersonalSpace(), nTableIndex, TRUE) != CPathSearch::COST_IMPASSABLE) {
@@ -2003,8 +2003,8 @@ void CGameSprite::AIUpdate()
                                             m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                 m_typeAI.GetEnemyAlly(),
                 m_animation.GetPersonalSpace(),
-                nfield_54A8,
-                bfield_7430);
+                field_54A8,
+                field_7430);
             JumpToPoint(CPoint(m_ptBumpedFrom.x * CPathSearch::GRID_SQUARE_SIZEX + CPathSearch::GRID_SQUARE_SIZEX / 2,
                             m_ptBumpedFrom.y * CPathSearch::GRID_SQUARE_SIZEY + CPathSearch::GRID_SQUARE_SIZEY / 2),
                 TRUE);
@@ -2012,13 +2012,13 @@ void CGameSprite::AIUpdate()
             m_ptBumpedFrom.x = -1;
             m_ptBumpedFrom.y = -1;
         } else {
-            if (!m_baseStats.bm_field_294) {
+            if (!m_baseStats.field_294) {
                 m_pArea->m_search.AddObject(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
                                                 m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    nfield_54A8,
-                    bfield_7430);
+                    field_54A8,
+                    field_7430);
             }
         }
     }
@@ -2143,9 +2143,9 @@ void CGameSprite::AIUpdate()
                     if (m_animation.IsEndOfSequence()) {
                         SetSequence(CGAMESPRITE_SEQ_READY);
                     } else {
-                        if (m_animation.GetCurrentFrame() == nfield_740C) {
+                        if (m_animation.GetCurrentFrame() == field_740C) {
                             CSound cSound;
-                            cSound.SetResRef(sfield_7408, TRUE, TRUE);
+                            cSound.SetResRef(field_7408, TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(3, reinterpret_cast<DWORD>(m_pArea));
@@ -2202,10 +2202,10 @@ void CGameSprite::AIUpdate()
                             SetIdleSequence();
                         }
                     } else {
-                        if (m_bHasDamageSound
-                            && m_animation.GetCurrentFrame() == nfield_7414) {
+                        if (field_70FD
+                            && m_animation.GetCurrentFrame() == field_7414) {
                             CSound cSound;
-                            cSound.SetResRef(CResRef(sfield_7410), TRUE, TRUE);
+                            cSound.SetResRef(CResRef(field_7410), TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
@@ -2227,37 +2227,37 @@ void CGameSprite::AIUpdate()
                         }
                     }
                     if (m_animation.IsBeginningOfSequence()
-                        && m_bHasDeathSound
-                        && !pfield_7398.IsEmpty()) {
-                        INT nIndex = rand() % pfield_7398.GetCount();
-                        POSITION pos = pfield_7398.GetHeadPosition();
+                        && field_70FE
+                        && !field_7398.IsEmpty()) {
+                        INT nIndex = rand() % field_7398.GetCount();
+                        POSITION pos = field_7398.GetHeadPosition();
                         while (pos != NULL && nIndex != 0) {
                             nIndex--;
-                            pfield_7398.GetNext(pos);
+                            field_7398.GetNext(pos);
                         }
-                        CGameSpriteSoundEntry& pEntry = pfield_7398.GetAt(pos);
-                        sfield_7418 = pEntry.m_sSoundRes;
-                        nfield_741C = pEntry.m_nFrame;
+                        CGameSpriteSoundEntry& pEntry = field_7398.GetAt(pos);
+                        field_7418 = pEntry.field_0;
+                        field_741C = pEntry.field_4;
                     }
                     if (m_animation.IsBeginningOfSequence()
-                        && m_bHasFallSound
-                        && !pfield_73EC.IsEmpty()) {
-                        INT nIndex = rand() % pfield_73EC.GetCount();
-                        POSITION pos = pfield_73EC.GetHeadPosition();
+                        && field_7101
+                        && !field_73EC.IsEmpty()) {
+                        INT nIndex = rand() % field_73EC.GetCount();
+                        POSITION pos = field_73EC.GetHeadPosition();
                         while (pos != NULL && nIndex != 0) {
                             nIndex--;
-                            pfield_73EC.GetNext(pos);
+                            field_73EC.GetNext(pos);
                         }
-                        CGameSpriteSoundEntry& pEntry = pfield_73EC.GetAt(pos);
-                        sfield_7428 = pEntry.m_sSoundRes;
-                        nfield_742C = pEntry.m_nFrame;
+                        CGameSpriteSoundEntry& pEntry = field_73EC.GetAt(pos);
+                        field_7428 = pEntry.field_0;
+                        field_742C = pEntry.field_4;
                     }
-                    if (nm_field_1C != 0) {
-                        pGame->GetObjectArray()->Delete(nm_field_1C,
+                    if (field_1C != 0) {
+                        pGame->GetObjectArray()->Delete(field_1C,
                             CGameObjectArray::THREAD_ASYNCH,
                             NULL,
                             INFINITE);
-                        nm_field_1C = 0;
+                        field_1C = 0;
                     }
                     m_nSequence = CGAMESPRITE_SEQ_DIE;
                     if (m_animation.IsEndOfSequence()) {
@@ -2270,10 +2270,10 @@ void CGameSprite::AIUpdate()
                         m_nTwitches = rand() % 4 + rand() % 4;
                         SetSequence(CGAMESPRITE_SEQ_TWITCH);
                     } else {
-                        if (m_bHasDeathSound
-                            && m_animation.GetCurrentFrame() == nfield_741C) {
+                        if (field_70FE
+                            && m_animation.GetCurrentFrame() == field_741C) {
                             CSound cSound;
-                            cSound.SetResRef(CResRef(sfield_7418), TRUE, TRUE);
+                            cSound.SetResRef(CResRef(field_7418), TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
@@ -2282,10 +2282,10 @@ void CGameSprite::AIUpdate()
                             }
                             cSound.Play(m_pos.x, m_pos.y, 0, FALSE);
                         }
-                        if (m_bHasFallSound
-                            && m_animation.GetCurrentFrame() == nfield_742C) {
+                        if (field_7101
+                            && m_animation.GetCurrentFrame() == field_742C) {
                             CSound cSound;
-                            cSound.SetResRef(CResRef(sfield_7428), TRUE, TRUE);
+                            cSound.SetResRef(CResRef(field_7428), TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
@@ -2310,27 +2310,27 @@ void CGameSprite::AIUpdate()
                     SetIdleSequence();
 
                     if (m_animation.IsBeginningOfSequence()
-                        && m_bHasFidgetSound
+                        && field_70FF
                         && m_nSequence == CGAMESPRITE_SEQ_HEAD_TURN
-                        && !pfield_73B4.IsEmpty()) {
-                        INT nIndex = rand() % pfield_73B4.GetCount();
-                        POSITION pos = pfield_73B4.GetHeadPosition();
+                        && !field_73B4.IsEmpty()) {
+                        INT nIndex = rand() % field_73B4.GetCount();
+                        POSITION pos = field_73B4.GetHeadPosition();
                         while (pos != NULL && nIndex != 0) {
                             nIndex--;
-                            pfield_73B4.GetNext(pos);
+                            field_73B4.GetNext(pos);
                         }
-                        CGameSpriteSoundEntry& pEntry = pfield_73B4.GetAt(pos);
-                        sfield_7420 = pEntry.m_sSoundRes;
-                        nfield_7424 = pEntry.m_nFrame;
+                        CGameSpriteSoundEntry& pEntry = field_73B4.GetAt(pos);
+                        field_7420 = pEntry.field_0;
+                        field_7424 = pEntry.field_4;
                     }
                     if (pGame->GetVisibleArea() == m_pArea
-                        && m_bHasFidgetSound
-                        && m_animation.GetCurrentFrame() == nfield_7424
+                        && field_70FF
+                        && m_animation.GetCurrentFrame() == field_7424
                         && m_nSequence == CGAMESPRITE_SEQ_HEAD_TURN
-                        && !m_baseStats.bm_field_294) {
-                        if (m_animation.GetCurrentFrame() == nfield_740C) {
+                        && !m_baseStats.field_294) {
+                        if (m_animation.GetCurrentFrame() == field_740C) {
                             CSound cSound;
-                            cSound.SetResRef(sfield_7420, TRUE, TRUE);
+                            cSound.SetResRef(field_7420, TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(13, reinterpret_cast<DWORD>(m_pArea));
@@ -2347,9 +2347,9 @@ void CGameSprite::AIUpdate()
                         // NOTE: Uninline.
                         SetIdleSequence();
                     } else {
-                        if (m_animation.GetCurrentFrame() == nfield_740C) {
+                        if (m_animation.GetCurrentFrame() == field_740C) {
                             CSound cSound;
-                            cSound.SetResRef(sfield_7408, TRUE, TRUE);
+                            cSound.SetResRef(field_7408, TRUE, TRUE);
                             cSound.m_nPitchVariance = 5;
                             cSound.m_nVolumeVariance = 20;
                             cSound.SetChannel(3, reinterpret_cast<DWORD>(m_pArea));
@@ -2362,12 +2362,12 @@ void CGameSprite::AIUpdate()
                     }
                     break;
                 case CGAMESPRITE_SEQ_TWITCH:
-                    if (nm_field_1C != 0) {
-                        pGame->GetObjectArray()->Delete(nm_field_1C,
+                    if (field_1C != 0) {
+                        pGame->GetObjectArray()->Delete(field_1C,
                             CGameObjectArray::THREAD_ASYNCH,
                             NULL,
                             INFINITE);
-                        nm_field_1C = 0;
+                        field_1C = 0;
                     }
                     if (m_nTwitches != 0) {
                         if (m_animation.IsEndOfSequence()) {
@@ -2436,12 +2436,12 @@ void CGameSprite::AIUpdate()
                     }
                     break;
                 case CGAMESPRITE_SEQ_SLEEP:
-                    if (nm_field_1C != 0) {
-                        pGame->GetObjectArray()->Delete(nm_field_1C,
+                    if (field_1C != 0) {
+                        pGame->GetObjectArray()->Delete(field_1C,
                             CGameObjectArray::THREAD_ASYNCH,
                             NULL,
                             INFINITE);
-                        nm_field_1C = 0;
+                        field_1C = 0;
                     }
                     m_nSequence = CGAMESPRITE_SEQ_SLEEP;
                     if (m_animation.IsEndOfSequence()) {
@@ -2643,7 +2643,7 @@ void CGameSprite::AddBlood(SHORT nHeight, SHORT nDirection, SHORT nType)
 // 0x6F9040
 void CGameSprite::AIUpdateWalk()
 {
-    CSingleLock pathLock(&(g_pBaldurChitin->GetObjectGame()->pm_field_1B58), FALSE);
+    CSingleLock pathLock(&(g_pBaldurChitin->GetObjectGame()->field_1B58), FALSE);
     CMessage* message;
 
     if (m_pPath == NULL && m_currentSearchRequest != NULL) {
@@ -2879,18 +2879,18 @@ void CGameSprite::AIUpdateWalk()
         m_pArea->m_search.RemoveObject(ptOldSearch,
             m_typeAI.GetEnemyAlly(),
             m_animation.GetPersonalSpace(),
-            nfield_54A8,
-            bfield_7430);
+            field_54A8,
+            field_7430);
 
         if (InControl()
             && m_pArea->m_search.GetMobileCost(ptSearch, m_terrainTable, m_animation.GetPersonalSpace(), TRUE) == CPathSearch::COST_IMPASSABLE
             && !ClearBumpPath(ptOldSearch, ptSearch)) {
-            if (!m_baseStats.bm_field_294) {
+            if (!m_baseStats.field_294) {
                 m_pArea->m_search.AddObject(ptOldSearch,
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    nfield_54A8,
-                    bfield_7430);
+                    field_54A8,
+                    field_7430);
 
                 m_posExact = posExactOld;
                 m_pos = m_posOld;
@@ -2930,12 +2930,12 @@ void CGameSprite::AIUpdateWalk()
                 }
             }
         } else {
-            if (!m_baseStats.bm_field_294) {
+            if (!m_baseStats.field_294) {
                 m_pArea->m_search.AddObject(ptSearch,
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    nfield_54A8,
-                    bfield_7430);
+                    field_54A8,
+                    field_7430);
             }
 
             char* pSndWalk = m_animation.GetSndWalk(m_pArea->m_search.GetTableIndex(ptOldSearch));
@@ -2980,7 +2980,7 @@ void CGameSprite::AIUpdateWalk()
     if ((m_posLastVisMapEntry.x / CVisibilityMap::SQUARE_SIZEX != m_pos.x / CVisibilityMap::SQUARE_SIZEX
             || m_posLastVisMapEntry.y / CVisibilityMap::SQUARE_SIZEY != m_pos.y / CVisibilityMap::SQUARE_SIZEY)
         && g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id) != -1
-        && (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode || InControl())) {
+        && (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->field_1AC || InControl())) {
         SHORT nTableIndex;
         if (m_pArea->m_search.GetLOSCost(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX, m_pos.y / CPathSearch::GRID_SQUARE_SIZEY), m_terrainTable, nTableIndex, FALSE) != CPathSearch::COST_IMPASSABLE) {
             m_pArea->m_visibility.UpDate(m_posLastVisMapEntry,
@@ -2993,7 +2993,7 @@ void CGameSprite::AIUpdateWalk()
                 && g_pBaldurChitin->GetActiveEngine() == g_pBaldurChitin->m_pEngineMap) {
                 SHORT nPortrait = g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id);
                 CUIControlButtonMapAreaMap* pMap = static_cast<CUIControlButtonMapAreaMap*>(g_pBaldurChitin->m_pEngineMap->GetManager()->GetPanel(2)->GetControl(2));
-                pMap->bfield_7DA |= 1 << nPortrait;
+                pMap->field_7DA |= 1 << nPortrait;
             }
         } else {
             m_bVisibilityUpdated = FALSE;
@@ -3038,7 +3038,7 @@ BOOL CGameSprite::ClearBumpPath(const CPoint& start, const CPoint& goal)
 }
 
 // 0x6FB440
-BOOL CGameSprite::IsValidActionState()
+BOOL CGameSprite::sub_6FB440()
 {
     if (!InControl()) {
         return FALSE;
@@ -3256,8 +3256,8 @@ void CGameSprite::CheckIfVisible()
                 if (!m_bVisibleMonster
                     && m_typeAI.GetEnemyAlly() >= CAIObjectType::EA_EVILCUTOFF
                     && Animate()
-                    && ((m_derivedStats.m_generalState & STATE_INVISIBLE) == 0 || (m_baseStats.bm_field_2FC & 0x1) != 0)
-                    && !m_baseStats.bm_field_294
+                    && ((m_derivedStats.m_generalState & STATE_INVISIBLE) == 0 || (m_baseStats.field_2FC & 0x1) != 0)
+                    && !m_baseStats.field_294
                     && (m_baseStats.m_flags & 0x8000) == 0) {
                     if (m_pArea->m_nVisibleMonster == 0) {
                         AutoPause(0x200);
@@ -3303,7 +3303,7 @@ void CGameSprite::DropPath()
 void CGameSprite::DropSearchRequest()
 {
     if (m_currentSearchRequest != NULL) {
-        CSingleLock searchLock(&(g_pBaldurChitin->GetObjectGame()->pm_field_1B58), TRUE);
+        CSingleLock searchLock(&(g_pBaldurChitin->GetObjectGame()->field_1B58), TRUE);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
         // __LINE__: 5590
@@ -3341,8 +3341,8 @@ BOOL CGameSprite::MoveToBack()
                                                m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                 m_typeAI.GetEnemyAlly(),
                 m_animation.GetPersonalSpace(),
-                nfield_54A8,
-                bfield_7430);
+                field_54A8,
+                field_7430);
             m_pArea->IncrHeightDynamic(m_pos);
             m_derivedStats.m_generalState &= ~STATE_SLEEPING;
             return FALSE;
@@ -3360,8 +3360,8 @@ BOOL CGameSprite::MoveToBack()
                                                    m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    nfield_54A8,
-                    bfield_7430);
+                    field_54A8,
+                    field_7430);
                 m_pArea->IncrHeightDynamic(m_pos);
             }
 
@@ -3405,8 +3405,8 @@ BOOL CGameSprite::MoveToFront()
                                                 m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    nfield_54A8,
-                    bfield_7430);
+                    field_54A8,
+                    field_7430);
                 m_pArea->DecrHeightDynamic(m_pos);
             }
 
@@ -3445,7 +3445,7 @@ void CGameSprite::OnActionButton(const CPoint& pt)
             if (pGame->GetCharacterPortraitNum(m_id) != -1
                 || pGame->IsAlly(m_id)
                 || pGame->IsFamiliar(m_id)) {
-                if (!pGame->GetGameSave()->m_bArenaMode || InControl()) {
+                if (!pGame->GetGameSave()->field_1AC || InControl()) {
                     if (InControl()) {
                         // NOTE: Uninline.
                         pGame->SetLastTarget(CGameObjectArray::INVALID_INDEX);
@@ -3499,7 +3499,7 @@ void CGameSprite::OnActionButton(const CPoint& pt)
 
                             pGroup->GroupSetTarget(m_id);
                         }
-                    } else if (pGame->bm_field_38A6) {
+                    } else if (pGame->field_38A6) {
                         if (m_typeAI.GetEnemyAlly() >= CAIObjectType::EA_EVILCUTOFF) {
                             pGroup->m_groupChanged = FALSE;
 
@@ -3508,7 +3508,7 @@ void CGameSprite::OnActionButton(const CPoint& pt)
 
                             pGroup->GroupSetTarget(m_id);
                         }
-                        pGame->bm_field_38A6 = FALSE;
+                        pGame->field_38A6 = FALSE;
                     }
                 } else {
                     // NOTE: Uninline.
@@ -3965,23 +3965,23 @@ BYTE CGameSprite::GetSound(BYTE soundID)
         }
         break;
     case 9:
-        if (wfield_710C > 8) {
-            nSound = wfield_710E + 29;
-            wfield_710E++;
-            if (wfield_710E >= GetNumSounds(29, 4)) {
-                wfield_710E = 0;
+        if (field_710C > 8) {
+            nSound = field_710E + 29;
+            field_710E++;
+            if (field_710E >= GetNumSounds(29, 4)) {
+                field_710E = 0;
             }
-            wfield_710A = 0;
-            wfield_710C = 0;
+            field_710A = 0;
+            field_710C = 0;
         } else {
             nNumSounds = GetNumSounds(15, 7);
             if (nNumSounds > 0) {
-                nSound = wfield_710A % nNumSounds;
+                nSound = field_710A % nNumSounds;
             } else {
                 nSound = 0;
             }
-            wfield_710A++;
-            wfield_710C++;
+            field_710A++;
+            field_710C++;
         }
         break;
     case 10:
@@ -4083,7 +4083,7 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
         && m_pArea == pArea
         && (m_typeAI.GetEnemyAlly() <= CAIObjectType::EA_CONTROLCUTOFF
             || (m_derivedStats.m_generalState & STATE_INVISIBLE) == 0)
-        && m_baseStats.bm_field_294 != 1
+        && m_baseStats.field_294 != 1
         && m_baseStats.m_animationType != 0) {
         pSearch = &(m_pArea->m_search);
         pVisibility = &(m_pArea->m_visibility);
@@ -4178,8 +4178,8 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
                 }
             }
 
-            if (m_baseStats.bm_field_2F9 > 0 && transparency < m_baseStats.bm_field_2F9) {
-                transparency = m_baseStats.bm_field_2F9;
+            if (m_baseStats.field_2F9 > 0 && transparency < m_baseStats.field_2F9) {
+                transparency = m_baseStats.field_2F9;
             }
 
             if (m_derivedStats.m_nMirrorImages > 0) {
@@ -4265,47 +4265,47 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
             }
 
             IcewindCVisualEffect vfx;
-            vfx.SetGlowing(TRUE);
+            vfx.sub_586A90(TRUE);
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_GREASE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_GREASE]),
+                    &(field_7548[IWD_VFX_GREASE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SHIELD_OF_LATHANDER_2]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_SHIELD_OF_LATHANDER_2]),
+                    &(field_7548[IWD_VFX_SHIELD_OF_LATHANDER_2]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_GREATER_SHIELD_OF_LATHANDER_2]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER_2]),
+                    &(field_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER_2]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SEVEN_EYES_2]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_SEVEN_EYES_2]),
+                    &(field_7548[IWD_VFX_SEVEN_EYES_2]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_28]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_28]),
+                    &(field_7548[IWD_VFX_28]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_29]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_29]),
+                    &(field_7548[IWD_VFX_29]),
                     vfx);
             }
 
@@ -4420,170 +4420,170 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
             if (m_derivedStats.m_visualEffects[IWD_VFX_ENTANGLE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_ENTANGLE]),
+                    &(field_7548[IWD_VFX_ENTANGLE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_WEB]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_WEB]),
+                    &(field_7548[IWD_VFX_WEB]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SHROUD_OF_FLAME]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_SHROUD_OF_FLAME]),
+                    &(field_7548[IWD_VFX_SHROUD_OF_FLAME]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_ANTIMAGIC_MISSILE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_ANTIMAGIC_MISSILE]),
+                    &(field_7548[IWD_VFX_ANTIMAGIC_MISSILE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_OTILUKES_RESILIENT_SPHERE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE]),
+                    &(field_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_PROTECTION_FROM_MISSILES]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_PROTECTION_FROM_MISSILES]),
+                    &(field_7548[IWD_VFX_PROTECTION_FROM_MISSILES]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_CLOAK_OF_FEAR]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_CLOAK_OF_FEAR]),
+                    &(field_7548[IWD_VFX_CLOAK_OF_FEAR]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_ENTROPY_SHIELD]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_ENTROPY_SHIELD]),
+                    &(field_7548[IWD_VFX_ENTROPY_SHIELD]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_FIRE_AURA]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_FIRE_AURA]),
+                    &(field_7548[IWD_VFX_FIRE_AURA]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_FROST_AURA]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_FROST_AURA]),
+                    &(field_7548[IWD_VFX_FROST_AURA]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SANCTUARY]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_SANCTUARY]),
+                    &(field_7548[IWD_VFX_SANCTUARY]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_GLOBE_OF_INVULNERABILITY]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_GLOBE_OF_INVULNERABILITY]),
+                    &(field_7548[IWD_VFX_GLOBE_OF_INVULNERABILITY]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_INSECT_PLAGUE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_INSECT_PLAGUE]),
+                    &(field_7548[IWD_VFX_INSECT_PLAGUE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_STORM_SHELL]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_STORM_SHELL]),
+                    &(field_7548[IWD_VFX_STORM_SHELL]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SHIELD_OF_LATHANDER]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_SHIELD_OF_LATHANDER]),
+                    &(field_7548[IWD_VFX_SHIELD_OF_LATHANDER]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_GREATER_SHIELD_OF_LATHANDER]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER]),
+                    &(field_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SEVEN_EYES]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_SEVEN_EYES]),
+                    &(field_7548[IWD_VFX_SEVEN_EYES]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY]),
+                    &(field_7548[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SHIELD]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_SHIELD]),
+                    &(field_7548[IWD_VFX_SHIELD]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_FIRE_SHIELD_RED]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_FIRE_SHIELD_RED]),
+                    &(field_7548[IWD_VFX_FIRE_SHIELD_RED]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_FIRE_SHIELD_BLUE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_FIRE_SHIELD_BLUE]),
+                    &(field_7548[IWD_VFX_FIRE_SHIELD_BLUE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_TORTOISE_SHELL]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_TORTOISE_SHELL]),
+                    &(field_7548[IWD_VFX_TORTOISE_SHELL]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_DEATH_ARMOR]) {
-                vfx.SetGlowing(FALSE);
-                vfx.SetTransparent(TRUE, 192);
+                vfx.sub_586A90(FALSE);
+                vfx.sub_586AC0(TRUE, 192);
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_DEATH_ARMOR]),
+                    &(field_7548[IWD_VFX_DEATH_ARMOR]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_WISP]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(pfield_7548[IWD_VFX_WISP]),
+                    &(field_7548[IWD_VFX_WISP]),
                     vfx);
             }
 
@@ -4613,10 +4613,10 @@ void CGameSprite::RenderMarkers(CVidMode* pVidMode, INT nSurface)
     if (m_pArea->m_visibility.IsTileExplored(m_pArea->m_visibility.PointToTile(pt))
         && (m_typeAI.m_nEnemyAlly <= CAIObjectType::EA_CONTROLCUTOFF
             || (m_derivedStats.m_generalState & STATE_INVISIBLE) == 0
-            || (m_baseStats.bm_field_2FC & 0x1) != 0)
-        && m_baseStats.bm_field_294 != 1) {
+            || (m_baseStats.field_2FC & 0x1) != 0)
+        && m_baseStats.field_294 != 1) {
         DWORD level = g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nGuiFeedbackLevel;
-        if (g_pBaldurChitin->GetScreenWorld()->nm_m_field_14A) {
+        if (g_pBaldurChitin->GetScreenWorld()->field_14A) {
             level = 5;
         }
         if (g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_cutScene) {
@@ -4756,7 +4756,7 @@ void CGameSprite::RenderPortrait(const CPoint& cpRenderPosition, const CSize& sz
 {
     BOOL bDead = FALSE;
 
-    if (g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode
+    if (g_pBaldurChitin->GetObjectGame()->GetGameSave()->field_1AC
         && !InControl()) {
         return;
     }
@@ -4851,7 +4851,7 @@ void CGameSprite::RenderPortrait(const CPoint& cpRenderPosition, const CSize& sz
                     0x20000,
                     FALSE);
             } else {
-                if (nfield_53E6) {
+                if (field_53E6) {
                     m_vbPortraitSmall.SetTintColor(RGB(50, 255, 50));
                 } else {
                     m_vbPortraitSmall.SetTintColor(RGB(120, 30, 30));
@@ -5069,8 +5069,8 @@ void CGameSprite::RenderPortrait(const CPoint& cpRenderPosition, const CSize& sz
 void CGameSprite::RenderToMapScreen(const CRect& rClipBase, const CPoint& ptCharPos)
 {
     CRect rClip(rClipBase);
-    INT nScale = g_pBaldurChitin->nm_field_4A28 ? 2 : 1;
-    if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode
+    INT nScale = g_pBaldurChitin->field_4A28 ? 2 : 1;
+    if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->field_1AC
         || InControl()) {
         if (!IcewindMisc::IsDead(this)) {
             CPoint center;
@@ -5082,7 +5082,7 @@ void CGameSprite::RenderToMapScreen(const CRect& rClipBase, const CPoint& ptChar
             rClip.OffsetRect(-rClip.left, -rClip.top);
 
             axes.cx = GetAnimation()->GetPersonalSpace();
-            if (!g_pBaldurChitin->nm_field_4A28) {
+            if (!g_pBaldurChitin->field_4A28) {
                 axes.cx = max(axes.cx - 2, 3);
             }
             axes.cy = 3 * GetAnimation()->GetPersonalSpace() / 4;
@@ -5256,7 +5256,7 @@ void CGameSprite::SetCursor(LONG nToolTip)
                             || pGame->IsAlly(m_id)
                             || pGame->IsFamiliar(m_id)
                             || m_typeAI.GetEnemyAlly() <= CAIObjectType::EA_CONTROLCUTOFF)
-                        && (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_bArenaMode || InControl())) {
+                        && (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->field_1AC || InControl())) {
                         if (InControl()) {
                             g_pBaldurChitin->GetObjectCursor()->SetCursor(0, FALSE);
                         } else {
@@ -5537,7 +5537,7 @@ SHORT CGameSprite::GetIdleSequence()
 {
     if (m_pArea != NULL
         && m_pArea->m_bAreaLoaded
-        && g_pBaldurChitin->GetObjectGame()->IsAreaSaveDisabled(m_pArea)) {
+        && g_pBaldurChitin->GetObjectGame()->sub_5AC0A0(m_pArea)) {
         return 7; // SEQ_READY
     } else {
         return 6; // SEQ_HEAD_TURN
@@ -5742,7 +5742,7 @@ void CGameSprite::SetTarget(const CPoint& target, BOOL collisionPath)
         if (m_currentSearchRequest->m_targetPoints) {
             m_currentSearchRequest->m_targetPoints[0] = target;
             if (m_currentSearchRequest->m_collisionDelay == 0) {
-                CSingleLock lock(&(g_pBaldurChitin->GetObjectGame()->pm_field_1B58), TRUE);
+                CSingleLock lock(&(g_pBaldurChitin->GetObjectGame()->field_1B58), TRUE);
                 g_pBaldurChitin->GetObjectGame()->m_searchRequests.AddTail(m_currentSearchRequest);
                 g_pBaldurChitin->GetObjectGame()->m_searchRequestListEmpty = FALSE;
                 ReleaseSemaphore(g_pBaldurChitin->GetObjectGame()->m_hSearchThread, 1, NULL);
@@ -5791,7 +5791,7 @@ void CGameSprite::SetTarget(CSearchRequest* pSearchRequest, BOOL collisionPath, 
     m_currentSearchRequest->m_frontList = frontList;
 
     if (!m_currentSearchRequest->m_collisionDelay) {
-        CSingleLock lock(&(g_pBaldurChitin->GetObjectGame()->pm_field_1B58), TRUE);
+        CSingleLock lock(&(g_pBaldurChitin->GetObjectGame()->field_1B58), TRUE);
         if (frontList == CSearchRequest::LIST_FRONT) {
             g_pBaldurChitin->GetObjectGame()->m_searchRequests.AddTail(m_currentSearchRequest);
             g_pBaldurChitin->GetObjectGame()->m_searchRequestListEmpty = FALSE;
@@ -5870,7 +5870,7 @@ void CGameSprite::StartSpriteEffect(BYTE spriteEffect, BYTE intensityLevel, BYTE
 
     switch (spriteEffect) {
     case 0:
-        nfield_5304 = 0;
+        field_5304 = 0;
         m_spriteEffectFlags = 0;
 
         if (m_animation.GetColorBlood() != 255) {
@@ -6053,7 +6053,7 @@ void CGameSprite::RenderSpriteCover(CVidMode* pVidMode, INT nSurface, CVidCell* 
     newPos.x = m_pos.x;
     newPos.y = m_pArea->GetHeightOffset(m_pos, m_listType) + m_pos.y + 1;
 
-    if (vfx.bm_field_1 == TRUE || vfx.bm_field_3 == TRUE) {
+    if (vfx.field_1 == TRUE || vfx.field_3 == TRUE) {
         dwRenderFlags |= CInfinity::FXPREP_COPYFROMBACK | 0x2;
     } else {
         dwRenderFlags |= CInfinity::FXPREP_CLEARFILL | 0x1;
@@ -6118,20 +6118,20 @@ void CGameSprite::UpdateSpriteEffect()
             if (nIndex == IWD_VFX_ENTANGLE
                 || nIndex == IWD_VFX_WEB
                 || nIndex == IWD_VFX_CLOAK_OF_FEAR) {
-                pfield_7548[nIndex].SequenceSet(0);
-                pfield_7548[nIndex].FrameSet(0);
+                field_7548[nIndex].SequenceSet(0);
+                field_7548[nIndex].FrameSet(0);
             }
 
             if (nIndex == IWD_VFX_FIRE_SHIELD_RED
                 || nIndex == IWD_VFX_FIRE_SHIELD_BLUE) {
-                pfield_7548[nIndex].SequenceSet(0);
-                pfield_7548[nIndex].FrameSet(0);
+                field_7548[nIndex].SequenceSet(0);
+                field_7548[nIndex].FrameSet(0);
             }
 
             if (nIndex == IWD_VFX_28
                 || nIndex == IWD_VFX_29) {
-                pfield_7548[nIndex].SequenceSet(1);
-                pfield_7548[nIndex].FrameSet(0);
+                field_7548[nIndex].SequenceSet(1);
+                field_7548[nIndex].FrameSet(0);
             }
         }
 
@@ -6140,50 +6140,50 @@ void CGameSprite::UpdateSpriteEffect()
             && nIndex != IWD_VFX_BLUR) {
             switch (nIndex) {
             case IWD_VFX_SHROUD_OF_FLAME:
-                if (pfield_7548[nIndex].IsEndOfSequence(FALSE)) {
+                if (field_7548[nIndex].IsEndOfSequence(FALSE)) {
                     m_sndSpriteEffect.Stop();
                     m_sndSpriteEffect.SetResRef(CResRef("MISC_01C"), TRUE, TRUE);
                     m_sndSpriteEffect.SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
                     m_sndSpriteEffect.Play(m_pos.x, m_pos.y, 0, FALSE);
 
-                    nNumberSequences = pfield_7548[nIndex].GetNumberSequences(FALSE);
+                    nNumberSequences = field_7548[nIndex].GetNumberSequences(FALSE);
                     if (nNumberSequences != 0) {
-                        pfield_7548[nIndex].SequenceSet(rand() % nNumberSequences);
+                        field_7548[nIndex].SequenceSet(rand() % nNumberSequences);
                     } else {
-                        pfield_7548[nIndex].SequenceSet(0);
+                        field_7548[nIndex].SequenceSet(0);
                     }
                 } else {
-                    pfield_7548[nIndex].FrameAdvance();
+                    field_7548[nIndex].FrameAdvance();
                 }
                 break;
             case IWD_VFX_FIRE_SHIELD_RED:
             case IWD_VFX_FIRE_SHIELD_BLUE:
-                if (pfield_7548[nIndex].IsEndOfSequence(FALSE)) {
-                    pfield_7548[nIndex].SequenceSet(2);
+                if (field_7548[nIndex].IsEndOfSequence(FALSE)) {
+                    field_7548[nIndex].SequenceSet(2);
                 } else {
-                    pfield_7548[nIndex].FrameAdvance();
+                    field_7548[nIndex].FrameAdvance();
                 }
                 break;
             case IWD_VFX_28:
             case IWD_VFX_29:
-                if (pfield_7548[nIndex].IsEndOfSequence(FALSE)) {
-                    pfield_7548[nIndex].SequenceSet(3);
+                if (field_7548[nIndex].IsEndOfSequence(FALSE)) {
+                    field_7548[nIndex].SequenceSet(3);
                 } else {
-                    pfield_7548[nIndex].FrameAdvance();
+                    field_7548[nIndex].FrameAdvance();
                 }
                 break;
             case IWD_VFX_ENTANGLE:
             case IWD_VFX_WEB:
             case IWD_VFX_CLOAK_OF_FEAR:
-                if (pfield_7548[nIndex].IsEndOfSequence(FALSE)) {
-                    nSequence = pfield_7548[nIndex].GetCurrentSequenceId() + 1;
-                    nNumberSequences = pfield_7548[nIndex].GetNumberSequences(FALSE);
+                if (field_7548[nIndex].IsEndOfSequence(FALSE)) {
+                    nSequence = field_7548[nIndex].GetCurrentSequenceId() + 1;
+                    nNumberSequences = field_7548[nIndex].GetNumberSequences(FALSE);
                     if (nSequence >= nNumberSequences) {
                         nSequence--;
                     }
-                    pfield_7548[nIndex].SequenceSet(nSequence);
+                    field_7548[nIndex].SequenceSet(nSequence);
                 } else {
-                    pfield_7548[nIndex].FrameAdvance();
+                    field_7548[nIndex].FrameAdvance();
                 }
                 break;
             case IWD_VFX_SEVEN_EYES:
@@ -6209,47 +6209,47 @@ void CGameSprite::UpdateSpriteEffect()
                 if (!m_derivedStats.m_spellStates[SPLSTATE_EYE_OF_STONE]) {
                     nSequence++;
                 }
-                if (!pfield_9088[IWD_VFX_SEVEN_EYES].IsSoundPlaying()) {
+                if (!field_9088[IWD_VFX_SEVEN_EYES].IsSoundPlaying()) {
                     if (nSequence == 7) {
-                        pfield_9088[IWD_VFX_SEVEN_EYES].Stop();
+                        field_9088[IWD_VFX_SEVEN_EYES].Stop();
                     } else {
                         if (nSequence >= 5) {
-                            pfield_9088[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M17"), TRUE, TRUE);
+                            field_9088[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M17"), TRUE, TRUE);
                         } else if (nSequence >= 2) {
-                            pfield_9088[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M16"), TRUE, TRUE);
+                            field_9088[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M16"), TRUE, TRUE);
                         } else {
-                            pfield_9088[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M15"), TRUE, TRUE);
+                            field_9088[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M15"), TRUE, TRUE);
                         }
-                        pfield_9088[IWD_VFX_SEVEN_EYES].SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
-                        pfield_9088[IWD_VFX_SEVEN_EYES].Play(m_pos.x, m_pos.y, 0, FALSE);
+                        field_9088[IWD_VFX_SEVEN_EYES].SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
+                        field_9088[IWD_VFX_SEVEN_EYES].Play(m_pos.x, m_pos.y, 0, FALSE);
                     }
                 }
-                pfield_7548[IWD_VFX_SEVEN_EYES].SequenceSet(nSequence);
-                pfield_7548[IWD_VFX_SEVEN_EYES_2].SequenceSet(nSequence);
-                if (pfield_7548[IWD_VFX_SEVEN_EYES].IsEndOfSequence(FALSE)) {
-                    pfield_7548[IWD_VFX_SEVEN_EYES].FrameSet(0);
-                    pfield_7548[IWD_VFX_SEVEN_EYES_2].FrameSet(0);
+                field_7548[IWD_VFX_SEVEN_EYES].SequenceSet(nSequence);
+                field_7548[IWD_VFX_SEVEN_EYES_2].SequenceSet(nSequence);
+                if (field_7548[IWD_VFX_SEVEN_EYES].IsEndOfSequence(FALSE)) {
+                    field_7548[IWD_VFX_SEVEN_EYES].FrameSet(0);
+                    field_7548[IWD_VFX_SEVEN_EYES_2].FrameSet(0);
                 } else {
-                    pfield_7548[IWD_VFX_SEVEN_EYES].FrameAdvance();
-                    pfield_7548[IWD_VFX_SEVEN_EYES_2].FrameAdvance();
+                    field_7548[IWD_VFX_SEVEN_EYES].FrameAdvance();
+                    field_7548[IWD_VFX_SEVEN_EYES_2].FrameAdvance();
                 }
                 break;
             case IWD_VFX_SEVEN_EYES_2:
                 break;
             default:
-                if (!pfield_9088[nIndex].IsSoundPlaying()) {
-                    pfield_9088[nIndex].SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
-                    pfield_9088[nIndex].Play(m_pos.x, m_pos.y, 0, FALSE);
+                if (!field_9088[nIndex].IsSoundPlaying()) {
+                    field_9088[nIndex].SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
+                    field_9088[nIndex].Play(m_pos.x, m_pos.y, 0, FALSE);
                 }
-                if (pfield_7548[nIndex].IsEndOfSequence(FALSE)) {
-                    nNumberSequences = pfield_7548[nIndex].GetNumberSequences(FALSE);
+                if (field_7548[nIndex].IsEndOfSequence(FALSE)) {
+                    nNumberSequences = field_7548[nIndex].GetNumberSequences(FALSE);
                     if (nNumberSequences != 0) {
-                        pfield_7548[nIndex].SequenceSet(rand() % nNumberSequences);
+                        field_7548[nIndex].SequenceSet(rand() % nNumberSequences);
                     } else {
-                        pfield_7548[nIndex].SequenceSet(0);
+                        field_7548[nIndex].SequenceSet(0);
                     }
                 } else {
-                    pfield_7548[nIndex].FrameAdvance();
+                    field_7548[nIndex].FrameAdvance();
                 }
             }
         }
@@ -6308,28 +6308,28 @@ void CGameSprite::ClearMarshal(BOOL unequip)
     for (nLevel = 0; nLevel < CSPELLLIST_MAX_LEVELS; nLevel++) {
         if (m_domainSpells.m_lists[nLevel].m_List.size() > 0) {
             m_domainSpells.m_lists[nLevel].m_List.clear();
-            m_domainSpells.m_lists[nLevel].nm_field_14 = 0;
-            m_domainSpells.m_lists[nLevel].nm_field_18 = 0;
+            m_domainSpells.m_lists[nLevel].field_14 = 0;
+            m_domainSpells.m_lists[nLevel].field_18 = 0;
         }
     }
     m_domainSpells.m_nHighestLevel = 0;
 
     if (m_innateSpells.m_List.size() > 0) {
         m_innateSpells.m_List.clear();
-        m_innateSpells.nm_field_14 = 0;
-        m_innateSpells.nm_field_18 = 0;
+        m_innateSpells.field_14 = 0;
+        m_innateSpells.field_18 = 0;
     }
 
     if (m_songs.m_List.size() > 0) {
         m_songs.m_List.clear();
-        m_songs.nm_field_14 = 0;
-        m_songs.nm_field_18 = 0;
+        m_songs.field_14 = 0;
+        m_songs.field_18 = 0;
     }
 
     if (m_shapeshifts.m_List.size() > 0) {
         m_shapeshifts.m_List.clear();
-        m_shapeshifts.nm_field_14 = 0;
-        m_shapeshifts.nm_field_18 = 0;
+        m_shapeshifts.field_14 = 0;
+        m_shapeshifts.field_18 = 0;
     }
 
     // NOTE: Uninline.
@@ -6546,7 +6546,7 @@ void CGameSprite::Marshal(CSavedGamePartyCreature& partyCreature, BOOLEAN bNetwo
     partyCreature.m_nModalState = m_nModalState;
 
     for (nIndex = 0; nIndex < 5; nIndex++) {
-        partyCreature.nm_field_28A[nIndex] = m_nFeatSlots[nIndex];
+        partyCreature.field_28A[nIndex] = field_4C54[nIndex];
     }
 
     partyCreature.m_nWeaponSet = m_nWeaponSet;
@@ -6554,14 +6554,14 @@ void CGameSprite::Marshal(CSavedGamePartyCreature& partyCreature, BOOLEAN bNetwo
     for (nIndex = 0; nIndex < 8; nIndex++) {
         partyCreature.m_quickWeaponsItemNum[nIndex] = m_quickWeapons[nIndex].m_abilityId.m_itemNum;
         partyCreature.m_quickWeaponsAbilityNum[nIndex] = m_quickWeapons[nIndex].m_abilityId.m_abilityNum;
-        partyCreature.bm_field_2A7[nIndex] = m_nAbilityIndices[nIndex];
+        partyCreature.field_2A7[nIndex] = field_3D3A[nIndex];
     }
 
     for (nIndex = 0; nIndex < 9; nIndex++) {
         m_quickSpells[nIndex].m_abilityId.m_res.GetResRef(partyCreature.m_quickSpellsSpellId[nIndex]);
         partyCreature.m_quickSpellsClass[nIndex] = m_quickSpells[nIndex].m_abilityId.m_nClass;
-        partyCreature.bm_field_280[nIndex] = m_quickSpells[nIndex].m_abilityId.bm_field_1D;
-        partyCreature.bm_field_29E[nIndex] = static_cast<unsigned char>(m_quickSpells[nIndex].m_abilityId.bm_field_1E);
+        partyCreature.field_280[nIndex] = m_quickSpells[nIndex].m_abilityId.field_1D;
+        partyCreature.field_29E[nIndex] = static_cast<unsigned char>(m_quickSpells[nIndex].m_abilityId.field_1E);
     }
 
     for (nIndex = 0; nIndex < 3; nIndex++) {
@@ -6578,7 +6578,7 @@ void CGameSprite::Marshal(CSavedGamePartyCreature& partyCreature, BOOLEAN bNetwo
     }
 
     for (nIndex = 0; nIndex < 9; nIndex++) {
-        partyCreature.nm_field_19A[nIndex] = m_nFeatModes[nIndex];
+        partyCreature.field_19A[nIndex] = field_3D14[nIndex];
     }
 
     partyCreature.m_nLastSpellbookClassIndex = m_nLastSpellbookClassIndex;
@@ -6618,7 +6618,7 @@ void CGameSprite::Marshal(CSavedGamePartyCreature& partyCreature, BOOLEAN bNetwo
 
     partyCreature.m_nNumberOfTimesTalkedTo = m_nNumberOfTimesTalkedTo;
     m_secondarySounds.GetResRef(partyCreature.m_secondarySounds);
-    memcpy(partyCreature.bm_field_25E, bfield_725A, 32);
+    memcpy(partyCreature.field_25E, field_725A, 32);
 }
 
 // 0x70C3F0
@@ -6707,19 +6707,19 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
     m_nModalState = static_cast<BYTE>(pCreature->m_nModalState);
 
     for (nIndex = 0; nIndex < 5; nIndex++) {
-        m_nFeatSlots[nIndex] = pCreature->nm_field_28A[nIndex];
+        field_4C54[nIndex] = pCreature->field_28A[nIndex];
     }
 
-    ApplyFeatEffects();
+    sub_726570();
 
     for (nIndex = 0; nIndex < CGAMESAVECHARACTER_NUM_QUICK_WEAPONS22; nIndex++) {
         InitQuickItemData(pCreature->m_quickWeaponsItemNum[nIndex],
             pCreature->m_quickWeaponsAbilityNum[nIndex],
-            pCreature->bm_field_2A7[nIndex],
+            pCreature->field_2A7[nIndex],
             m_quickWeapons[nIndex]);
 
         // NOTE: Uninline.
-        SetQuickWeapon(static_cast<BYTE>(nIndex), pCreature->bm_field_2A7[nIndex]);
+        SetQuickWeapon(static_cast<BYTE>(nIndex), pCreature->field_2A7[nIndex]);
     }
 
     for (nIndex = 0; nIndex < CGAMESAVECHARACTER_NUM_QUICK_SPELLS22; nIndex++) {
@@ -6728,8 +6728,8 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
                 1,
                 m_quickSpells[nIndex],
                 pCreature->m_quickSpellsClass[nIndex],
-                pCreature->bm_field_280[nIndex],
-                pCreature->bm_field_29E[nIndex]);
+                pCreature->field_280[nIndex],
+                pCreature->field_29E[nIndex]);
         }
     }
 
@@ -6759,7 +6759,7 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
     }
 
     for (nIndex = 0; nIndex < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22; nIndex++) {
-        m_nFeatModes[nIndex] = pCreature->nm_field_19A[nIndex];
+        field_3D14[nIndex] = pCreature->field_19A[nIndex];
     }
 
     m_nLastSpellbookClassIndex = pCreature->m_nLastSpellbookClassIndex;
@@ -6800,9 +6800,9 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
     }
 
     m_secondarySounds = pCreature->m_secondarySounds;
-    memcpy(bfield_725A, pCreature->bm_field_25E, sizeof(bfield_725A));
+    memcpy(field_725A, pCreature->field_25E, sizeof(field_725A));
 
-    CString sPath = g_pBaldurChitin->GetObjectGame()->GetDirSounds() + bfield_725A + '\\';
+    CString sPath = g_pBaldurChitin->GetObjectGame()->GetDirSounds() + field_725A + '\\';
     g_pBaldurChitin->cDimm.AddToDirectoryList(sPath, TRUE);
 
     if (bPartyMember) {
@@ -6877,7 +6877,7 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
                 // __LINE__: 1751
                 UTIL_ASSERT(nClassIndex < CSPELLLIST_NUM_CLASSES);
 
-                m_spells.m_spellsByClass[nClassIndex].m_lists[nLevel].nm_field_14 = nMaxSpells + nBonus;
+                m_spells.m_spellsByClass[nClassIndex].m_lists[nLevel].field_14 = nMaxSpells + nBonus;
             }
         }
     } else {
@@ -6888,14 +6888,14 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
         }
     }
 
-    SetWeaponSet(pCreature->m_nWeaponSet);
+    sub_726810(pCreature->m_nWeaponSet);
 
     INT nDruidLevel = m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_DRUID);
     if (nDruidLevel > 0) {
-        INT nMaxShapeshifts = pGame->GetRuleTables().GetMaxDruidShapeshifts(m_baseStats, nDruidLevel) - m_shapeshifts.nm_field_14;
+        INT nMaxShapeshifts = pGame->GetRuleTables().GetMaxDruidShapeshifts(m_baseStats, nDruidLevel) - m_shapeshifts.field_14;
         if (nMaxShapeshifts) {
-            AdjustShapeshiftLevel(nMaxShapeshifts);
-            m_shapeshifts.AddAllCasts(nMaxShapeshifts, FALSE);
+            sub_724C40(nMaxShapeshifts);
+            m_shapeshifts.sub_725D30(nMaxShapeshifts, FALSE);
         }
     }
 
@@ -7067,7 +7067,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
         if (m_equipment.m_selectedWeapon >= 43) {
             m_nWeaponSet = (m_equipment.m_selectedWeapon - 43) / 2;
         }
-        SetWeaponSet(m_nWeaponSet);
+        sub_726810(m_nWeaponSet);
     }
 
     for (INT buttonNum = 0; buttonNum < g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetNumQuickWeaponSlots(m_typeAI.m_nClass); buttonNum++) {
@@ -7100,7 +7100,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
                 *pSpell = *reinterpret_cast<CCreatureFileSpell*>(pCreature + nOffset);
                 nOffset += sizeof(CCreatureFileSpell);
 
-                const CResRef& resRef = g_pBaldurChitin->GetObjectGame()->m_spells.Get(pSpell->bm_field_0);
+                const CResRef& resRef = g_pBaldurChitin->GetObjectGame()->m_spells.Get(pSpell->field_0);
                 if (memcmp(resRef.GetResRef(), "**", strlen("**")) == 0) {
                     CString sError;
                     sError.Format("*** %s has OBSOLETE DOMAIN SPELL FILE: %s.\n",
@@ -7108,22 +7108,22 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
                         (LPCSTR)resRef.GetResRefStr());
                 } else {
                     // NOTE: Uninline.
-                    m_spells.Get(nClass)->Add(pSpell->bm_field_0,
+                    m_spells.Get(nClass)->Add(pSpell->field_0,
                         nLevel,
-                        pSpell->nm_field_4,
-                        pSpell->nm_field_8,
-                        pSpell->nfield_C);
+                        pSpell->field_4,
+                        pSpell->field_8,
+                        pSpell->field_C);
                 }
             }
             creatureSize -= sizeof(CCreatureFileSpell) * offsets->m_spellListCount[nClass][nLevel];
 
             // NOTE: There are some inlining.
 
-            m_spells.m_spellsByClass[nClass].m_lists[nLevel].nm_field_14 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+            m_spells.m_spellsByClass[nClass].m_lists[nLevel].field_14 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
             nOffset += sizeof(unsigned int);
             creatureSize -= sizeof(unsigned int);
 
-            m_spells.m_spellsByClass[nClass].m_lists[nLevel].nm_field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+            m_spells.m_spellsByClass[nClass].m_lists[nLevel].field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
             nOffset += sizeof(unsigned int);
             creatureSize -= sizeof(unsigned int);
         }
@@ -7135,7 +7135,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
             *pSpell = *reinterpret_cast<CCreatureFileSpell*>(pCreature + nOffset);
             nOffset += sizeof(CCreatureFileSpell);
 
-            const CResRef& resRef = g_pBaldurChitin->GetObjectGame()->m_spells.Get(pSpell->bm_field_0);
+            const CResRef& resRef = g_pBaldurChitin->GetObjectGame()->m_spells.Get(pSpell->field_0);
             if (memcmp(resRef.GetResRef(), "**", strlen("**")) == 0) {
                 CString sError;
                 sError.Format("*** %s has OBSOLETE DOMAIN SPELL FILE: %s.\n",
@@ -7143,20 +7143,20 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
                     (LPCSTR)resRef.GetResRefStr());
             } else {
                 // NOTE: Uninline.
-                m_domainSpells.Add(pSpell->bm_field_0,
+                m_domainSpells.Add(pSpell->field_0,
                     nLevel,
-                    pSpell->nm_field_4,
-                    pSpell->nm_field_8,
-                    pSpell->nfield_C);
+                    pSpell->field_4,
+                    pSpell->field_8,
+                    pSpell->field_C);
             }
         }
         creatureSize -= sizeof(CCreatureFileSpell) * offsets->m_domainListCount[nLevel];
 
-        m_domainSpells.m_lists[nLevel].nm_field_14 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+        m_domainSpells.m_lists[nLevel].field_14 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
         nOffset += sizeof(unsigned int);
         creatureSize -= sizeof(unsigned int);
 
-        m_domainSpells.m_lists[nLevel].nm_field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+        m_domainSpells.m_lists[nLevel].field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
         nOffset += sizeof(unsigned int);
         creatureSize -= sizeof(unsigned int);
     }
@@ -7166,26 +7166,26 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
         *pSpell = *reinterpret_cast<CCreatureFileSpell*>(pCreature + nOffset);
         nOffset += sizeof(CCreatureFileSpell);
 
-        const CResRef& resRef = g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Get(pSpell->bm_field_0);
+        const CResRef& resRef = g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Get(pSpell->field_0);
         if (memcmp(resRef.GetResRef(), "**", strlen("**")) == 0) {
             CString sError;
             sError.Format("*** %s has OBSOLETE INNATE SPELL FILE: %s.\n",
                 m_scriptName,
                 (LPCSTR)resRef.GetResRefStr());
         } else {
-            m_innateSpells.Add(pSpell->bm_field_0,
-                pSpell->nm_field_4,
-                pSpell->nm_field_8,
-                pSpell->nfield_C);
+            m_innateSpells.Add(pSpell->field_0,
+                pSpell->field_4,
+                pSpell->field_8,
+                pSpell->field_C);
         }
     }
     creatureSize -= sizeof(CCreatureFileSpell) * offsets->m_innateListCount;
 
-    m_innateSpells.nm_field_14 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+    m_innateSpells.field_14 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
-    m_innateSpells.nm_field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+    m_innateSpells.field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
@@ -7194,26 +7194,26 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
         *pSpell = *reinterpret_cast<CCreatureFileSpell*>(pCreature + nOffset);
         nOffset += sizeof(CCreatureFileSpell);
 
-        const CResRef& resRef = g_pBaldurChitin->GetObjectGame()->GetMasterSongLookup().Get(pSpell->bm_field_0);
+        const CResRef& resRef = g_pBaldurChitin->GetObjectGame()->GetMasterSongLookup().Get(pSpell->field_0);
         if (memcmp(resRef.GetResRef(), "**", strlen("**")) == 0) {
             CString sError;
             sError.Format("*** %s has OBSOLETE SONG FILE: %s.\n",
                 m_scriptName,
                 (LPCSTR)resRef.GetResRefStr());
         } else {
-            m_songs.Add(pSpell->bm_field_0,
-                pSpell->nm_field_4,
-                pSpell->nm_field_8,
-                pSpell->nfield_C);
+            m_songs.Add(pSpell->field_0,
+                pSpell->field_4,
+                pSpell->field_8,
+                pSpell->field_C);
         }
     }
     creatureSize -= sizeof(CCreatureFileSpell) * offsets->m_songListCount;
 
-    m_songs.nm_field_14 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+    m_songs.field_14 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
-    m_songs.nm_field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+    m_songs.field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
@@ -7222,26 +7222,26 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
         *pSpell = *reinterpret_cast<CCreatureFileSpell*>(pCreature + nOffset);
         nOffset += sizeof(CCreatureFileSpell);
 
-        const CResRef& resRef = g_pBaldurChitin->GetObjectGame()->GetShapeshifts()->Get(pSpell->bm_field_0);
+        const CResRef& resRef = g_pBaldurChitin->GetObjectGame()->GetShapeshifts()->Get(pSpell->field_0);
         if (memcmp(resRef.GetResRef(), "**", strlen("**")) == 0) {
             CString sError;
             sError.Format("*** %s has OBSOLETE SHAPESHIFT FILE: %s.\n",
                 m_scriptName,
                 (LPCSTR)resRef.GetResRefStr());
         } else {
-            m_shapeshifts.Add(pSpell->bm_field_0,
-                pSpell->nm_field_4,
-                pSpell->nm_field_8,
-                pSpell->nfield_C);
+            m_shapeshifts.Add(pSpell->field_0,
+                pSpell->field_4,
+                pSpell->field_8,
+                pSpell->field_C);
         }
     }
     creatureSize -= sizeof(CCreatureFileSpell) * offsets->m_shapeListCount;
 
-    m_shapeshifts.nm_field_14 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+    m_shapeshifts.field_14 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
-    m_shapeshifts.nm_field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
+    m_shapeshifts.field_18 = *reinterpret_cast<unsigned int*>(pCreature + nOffset);
     nOffset += sizeof(unsigned int);
     creatureSize -= sizeof(unsigned int);
 
@@ -7257,7 +7257,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
     m_bInUnmarshal = FALSE;
 
     if (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nNightmareMode == TRUE
-        && (m_baseStats.bm_field_2FB & 0x1) == 0
+        && (m_baseStats.field_2FB & 0x1) == 0
         && a4 == NULL) {
         BOOL bIncreaseStats = FALSE;
         if (m_type == 2) {
@@ -7296,12 +7296,12 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
             m_baseStats.m_DEXBase += 10;
             m_baseStats.m_CONBase += 10;
             m_baseStats.m_CHRBase += 10;
-            m_baseStats.bm_field_252 += 10;
-            m_baseStats.bm_field_2FB |= 0x1;
+            m_baseStats.field_252 += 10;
+            m_baseStats.field_2FB |= 0x1;
         }
     }
 
-    m_baseStats.bm_field_2FC &= ~0x1;
+    m_baseStats.field_2FC &= ~0x1;
     m_dialog = offsets->m_dialog;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -7567,7 +7567,7 @@ void CGameSprite::GetSelectedWeaponButton(CButtonData& cButtonData)
     cButtonData.m_abilityId.m_itemType = 2;
     cButtonData.m_abilityId.m_itemNum = 10;
     cButtonData.m_abilityId.m_abilityNum = 1;
-    cButtonData.m_abilityId.wm_field_10 = -1;
+    cButtonData.m_abilityId.field_10 = -1;
 
     CItem* pItem = m_equipment.m_items[m_nTempSelectedWeapon];
     if (pItem != NULL) {
@@ -7578,10 +7578,10 @@ void CGameSprite::GetSelectedWeaponButton(CButtonData& cButtonData)
             cButtonData.m_abilityId.m_itemNum = m_nTempSelectedWeapon;
             cButtonData.m_abilityId.m_itemType = 2;
             cButtonData.m_abilityId.m_abilityNum = m_nTempSelectedWeaponAbility;
-            cButtonData.m_abilityId.wm_field_10 = rule.GetItemAbilityDescription(pItem->cResRef,
+            cButtonData.m_abilityId.field_10 = rule.GetItemAbilityDescription(pItem->cResRef,
                 m_nTempSelectedWeaponAbility);
-            if (cButtonData.m_abilityId.wm_field_10 == -1) {
-                cButtonData.m_abilityId.wm_field_10 = pItem->GetGenericName();
+            if (cButtonData.m_abilityId.field_10 == -1) {
+                cButtonData.m_abilityId.field_10 = pItem->GetGenericName();
             }
 
             cButtonData.m_count = 0;
@@ -7607,26 +7607,26 @@ void CGameSprite::GetWeaponButton(BYTE nButtonNum, CButtonData& cButtonData)
     cButtonData.m_abilityId.m_itemType = 2;
     cButtonData.m_abilityId.m_itemNum = 10;
     cButtonData.m_abilityId.m_abilityNum = 1;
-    cButtonData.m_abilityId.wm_field_10 = -1;
+    cButtonData.m_abilityId.field_10 = -1;
 
     CItem* pItem = m_equipment.m_items[nButtonNum + 43];
     if (pItem != NULL) {
         pItem->Demand();
-        ITEM_ABILITY* pAbility = pItem->GetAbility(m_nAbilityIndices[nButtonNum]);
+        ITEM_ABILITY* pAbility = pItem->GetAbility(field_3D3A[nButtonNum]);
         if (pAbility != NULL) {
             cButtonData.m_icon = CString(pAbility->quickSlotIcon);
             cButtonData.m_abilityId.m_itemType = 2;
             cButtonData.m_abilityId.m_itemNum = nButtonNum + 43;
-            cButtonData.m_abilityId.m_abilityNum = m_nAbilityIndices[nButtonNum];
-            cButtonData.m_abilityId.wm_field_10 = rule.GetItemAbilityDescription(pItem->cResRef,
-                m_nAbilityIndices[nButtonNum]);
-            if (cButtonData.m_abilityId.wm_field_10 == -1) {
-                cButtonData.m_abilityId.wm_field_10 = pItem->GetGenericName();
+            cButtonData.m_abilityId.m_abilityNum = field_3D3A[nButtonNum];
+            cButtonData.m_abilityId.field_10 = rule.GetItemAbilityDescription(pItem->cResRef,
+                field_3D3A[nButtonNum]);
+            if (cButtonData.m_abilityId.field_10 == -1) {
+                cButtonData.m_abilityId.field_10 = pItem->GetGenericName();
             }
 
             cButtonData.m_count = 0;
             if (pItem->GetMaxStackable() > 1) {
-                cButtonData.m_count = pItem->GetUsageCount(m_nAbilityIndices[nButtonNum]);
+                cButtonData.m_count = pItem->GetUsageCount(field_3D3A[nButtonNum]);
             }
         }
         pItem->Release();
@@ -7640,7 +7640,7 @@ void CGameSprite::SetSelectedWeaponButton(SHORT buttonNum)
         g_pBaldurChitin->GetObjectGame()->SetState(2);
         g_pBaldurChitin->GetObjectGame()->SetIconIndex(12);
         g_pBaldurChitin->GetObjectGame()->m_iconResRef = "";
-        g_pBaldurChitin->GetObjectGame()->bm_field_38A6 = 1;
+        g_pBaldurChitin->GetObjectGame()->field_38A6 = 1;
     } else {
         g_pBaldurChitin->GetObjectGame()->SetLastTarget(CGameObjectArray::INVALID_INDEX);
 
@@ -7661,7 +7661,7 @@ void CGameSprite::SetSelectedWeaponButton(SHORT buttonNum)
                 g_pBaldurChitin->GetObjectGame()->SetIconIndex(12);
                 g_pBaldurChitin->GetObjectGame()->m_iconResRef = "";
             }
-            g_pBaldurChitin->GetObjectGame()->bm_field_38A6 = 1;
+            g_pBaldurChitin->GetObjectGame()->field_38A6 = 1;
         }
     }
 }
@@ -7706,7 +7706,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
 
                     if (m_domainSpells.Find(v1, nLevel, v2) == TRUE) {
                         bFound = TRUE;
-                        count += m_domainSpells.m_lists[nLevel].Get(v2)->nm_field_8;
+                        count += m_domainSpells.m_lists[nLevel].Get(v2)->field_8;
                     }
                 }
             }
@@ -7719,7 +7719,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
 
                 if (m_spells.m_spellsByClass[nClass].Find(v1, nLevel, v2) == TRUE) {
                     bFound = TRUE;
-                    count += m_spells.m_spellsByClass[nClass].m_lists[nLevel].Get(v2)->nm_field_8;
+                    count += m_spells.m_spellsByClass[nClass].m_lists[nLevel].Get(v2)->field_8;
                 }
             }
         }
@@ -7732,7 +7732,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
         }
 
         if (m_innateSpells.Find(v1, v2) == TRUE) {
-            count += m_innateSpells.Get(v2)->nm_field_8;
+            count += m_innateSpells.Get(v2)->field_8;
         }
         break;
     case 3:
@@ -7743,7 +7743,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
         }
 
         if (m_songs.Find(v1, v2) == TRUE) {
-            count += m_songs.Get(v2)->nm_field_8;
+            count += m_songs.Get(v2)->field_8;
         }
         break;
     case 4:
@@ -7754,7 +7754,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
         }
 
         if (m_shapeshifts.Find(v1, v2) == TRUE) {
-            count += m_shapeshifts.Get(v2)->nm_field_8;
+            count += m_shapeshifts.Get(v2)->field_8;
         }
         break;
     default:
@@ -7786,16 +7786,16 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
         cButtonData.m_name = cSpell.GetGenericName();
         cButtonData.m_abilityId.m_itemType = 1;
         cButtonData.m_abilityId.m_targetType = pBestAbility->actionType;
-        cButtonData.m_abilityId.bm_field_1D = a5;
+        cButtonData.m_abilityId.field_1D = a5;
         cButtonData.m_abilityId.m_nClass = nClass;
-        cButtonData.m_abilityId.bm_field_1E = nKitIndex;
-        cButtonData.m_abilityId.wm_field_10 = cSpell.GetGenericName();
+        cButtonData.m_abilityId.field_1E = nKitIndex;
+        cButtonData.m_abilityId.field_10 = cSpell.GetGenericName();
 
         if (type == 1) {
-            cButtonData.m_abilityId.nm_field_18 = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassSuffixStringRef(nClass);
+            cButtonData.m_abilityId.field_18 = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassSuffixStringRef(nClass);
             if (!CanCast(nClass, 0, &cSpell)) {
                 cButtonData.m_bDisabled = TRUE;
-                cButtonData.m_abilityId.nm_field_18 = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassBeyondCastingAbilityStringRef(nClass);
+                cButtonData.m_abilityId.field_18 = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassBeyondCastingAbilityStringRef(nClass);
             }
         }
 
@@ -7810,21 +7810,21 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
                 cButtonData.m_bDisplayCount = FALSE;
                 cButtonData.m_count = 0;
 
-                if (!HasFeat(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
+                if (!sub_763150(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
                     cButtonData.m_bDisabled = TRUE;
                 }
             } else if (resRef == CGameSprite::SPIN278) {
                 cButtonData.m_bDisplayCount = FALSE;
                 cButtonData.m_count = 0;
 
-                if (!HasFeat(CGAMESPRITE_FEAT_HAMSTRING)) {
+                if (!sub_763150(CGAMESPRITE_FEAT_HAMSTRING)) {
                     cButtonData.m_bDisabled = TRUE;
                 }
             } else if (resRef == CGameSprite::SPIN279) {
                 cButtonData.m_bDisplayCount = FALSE;
                 cButtonData.m_count = 0;
 
-                if (!HasFeat(CGAMESPRITE_FEAT_RAPID_SHOT)) {
+                if (!sub_763150(CGAMESPRITE_FEAT_RAPID_SHOT)) {
                     cButtonData.m_bDisabled = TRUE;
                 }
             }
@@ -7853,9 +7853,9 @@ void CGameSprite::InitQuickItemData(SHORT itemNum, SHORT abilityNum, int a3, CBu
                     cButtonData.m_abilityId.m_itemNum = itemNum;
                     cButtonData.m_abilityId.m_abilityNum = abilityNum;
                     cButtonData.m_abilityId.m_targetType = ability->actionType;
-                    cButtonData.m_abilityId.wm_field_10 = cRule.GetItemAbilityDescription(pItem->GetResRef(), abilityNum);
-                    if (cButtonData.m_abilityId.wm_field_10 == -1) {
-                        cButtonData.m_abilityId.wm_field_10 = pItem->GetGenericName();
+                    cButtonData.m_abilityId.field_10 = cRule.GetItemAbilityDescription(pItem->GetResRef(), abilityNum);
+                    if (cButtonData.m_abilityId.field_10 == -1) {
+                        cButtonData.m_abilityId.field_10 = pItem->GetGenericName();
                     }
                     cButtonData.m_count = 0;
                     if (pItem->GetMaxStackable() > 1
@@ -8027,9 +8027,9 @@ CGameButtonList* CGameSprite::GetItemUsages(SHORT slotNum, WORD buttonType, SHOR
                 pButtonData->m_abilityId.m_itemNum = slotNum;
                 pButtonData->m_abilityId.m_abilityNum = nAbility;
                 pButtonData->m_abilityId.m_targetType = curAbility->actionType;
-                pButtonData->m_abilityId.wm_field_10 = cRule.GetItemAbilityDescription(pItem->GetResRef(), nAbility);
-                if (pButtonData->m_abilityId.wm_field_10 == -1) {
-                    pButtonData->m_abilityId.wm_field_10 = pItem->GetGenericName();
+                pButtonData->m_abilityId.field_10 = cRule.GetItemAbilityDescription(pItem->GetResRef(), nAbility);
+                if (pButtonData->m_abilityId.field_10 == -1) {
+                    pButtonData->m_abilityId.field_10 = pItem->GetGenericName();
                 }
                 pButtonData->m_count = 0;
                 if (pItem->GetMaxStackable() > 1 || pItem->GetMaxUsageCount(nAbility) > 0) {
@@ -8072,9 +8072,9 @@ CGameButtonList* CGameSprite::GetItemUsages(SHORT slotNum, WORD buttonType, SHOR
                             if (curAmmoAbility->maxUsageCount == 0) {
                                 pButtonData->m_bDisplayCount = FALSE;
                             }
-                            pButtonData->m_abilityId.wm_field_10 = cRule.GetItemAbilityDescription(pAmmo->GetResRef(), nAmmoAbility);
-                            if (pButtonData->m_abilityId.wm_field_10 == -1) {
-                                pButtonData->m_abilityId.wm_field_10 = pAmmo->GetGenericName();
+                            pButtonData->m_abilityId.field_10 = cRule.GetItemAbilityDescription(pAmmo->GetResRef(), nAmmoAbility);
+                            if (pButtonData->m_abilityId.field_10 == -1) {
+                                pButtonData->m_abilityId.field_10 = pAmmo->GetGenericName();
                             }
                             pButtonData->m_launcherIcon = pItem->GetItemIcon();
                             pButtonData->m_launcherName = pItem->GetGenericName();
@@ -8355,8 +8355,8 @@ void CGameSprite::ReadySpell(SHORT buttonNum, INT nType, BOOLEAN firstCall)
                 m_typeAI,
                 string,
                 0,
-                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.bm_field_1E << 8));
-            action.m_specificID3 = m_currentUseButton.m_abilityId.bm_field_1D;
+                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.field_1E << 8));
+            action.m_specificID3 = m_currentUseButton.m_abilityId.field_1D;
             ClearActions(FALSE);
             m_userCommandPause = 75;
             m_triggerId = CGameObjectArray::INVALID_INDEX;
@@ -8459,7 +8459,7 @@ void CGameSprite::ReadyOffInternalList(CButtonData buttonData, BOOLEAN firstCall
 // FIXME: `buttonData` should be reference.
 //
 // 0x71A0E0
-void CGameSprite::UseSpellFromButton(CButtonData buttonData, BOOLEAN firstCall)
+void CGameSprite::sub_71A0E0(CButtonData buttonData, BOOLEAN firstCall)
 {
     m_currentUseButton = buttonData;
 
@@ -8481,9 +8481,9 @@ void CGameSprite::UseSpellFromButton(CButtonData buttonData, BOOLEAN firstCall)
                 m_typeAI,
                 string,
                 0,
-                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.bm_field_1E << 8));
+                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.field_1E << 8));
 
-            action.m_specificID3 = m_currentUseButton.m_abilityId.bm_field_1D;
+            action.m_specificID3 = m_currentUseButton.m_abilityId.field_1D;
             ClearActions(FALSE);
             m_userCommandPause = 75;
             m_triggerId = CGameObjectArray::INVALID_INDEX;
@@ -8502,7 +8502,7 @@ void CGameSprite::UseSpellFromButton(CButtonData buttonData, BOOLEAN firstCall)
 // FIXME: `buttonData` should be reference.
 //
 // 0x71A550
-void CGameSprite::UseItemFromButton(CButtonData buttonData, BOOLEAN firstCall)
+void CGameSprite::sub_71A550(CButtonData buttonData, BOOLEAN firstCall)
 {
     m_currentUseButton = buttonData;
 
@@ -8526,7 +8526,7 @@ void CGameSprite::UseItemFromButton(CButtonData buttonData, BOOLEAN firstCall)
                 m_typeAI,
                 string,
                 0,
-                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.bm_field_1E << 8));
+                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.field_1E << 8));
 
             ClearActions(FALSE);
             m_userCommandPause = 75;
@@ -8546,8 +8546,8 @@ void CGameSprite::UseItemFromButton(CButtonData buttonData, BOOLEAN firstCall)
                 m_typeAI,
                 string,
                 0,
-                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.bm_field_1E << 8));
-            action.m_specificID3 = m_currentUseButton.m_abilityId.bm_field_1D;
+                m_currentUseButton.m_abilityId.m_nClass | (m_currentUseButton.m_abilityId.field_1E << 8));
+            action.m_specificID3 = m_currentUseButton.m_abilityId.field_1D;
             ClearActions(FALSE);
             m_userCommandPause = 75;
             m_triggerId = CGameObjectArray::INVALID_INDEX;
@@ -8574,7 +8574,7 @@ void CGameSprite::CheckToolTipItem(BYTE buttonNum)
         if (pItem != NULL) {
             // FIXME: Calls `GetGenericName` twice.
             m_quickItems[nItemNum].m_name = pItem->GetGenericName();
-            m_quickItems[nItemNum].m_abilityId.wm_field_10 = pItem->GetGenericName();
+            m_quickItems[nItemNum].m_abilityId.field_10 = pItem->GetGenericName();
         }
     }
 }
@@ -9027,7 +9027,7 @@ void CGameSprite::GetQuickWeapon(BYTE buttonNum, CButtonData& buttonData)
                 buttonData.m_abilityId.m_itemType = 2;
                 buttonData.m_abilityId.m_itemNum = buttonNum + 43;
                 buttonData.m_abilityId.m_targetType = -1;
-                buttonData.m_abilityId.wm_field_10 = pItem->GetGenericName();
+                buttonData.m_abilityId.field_10 = pItem->GetGenericName();
             }
         }
     }
@@ -9385,7 +9385,7 @@ void CGameSprite::SetModalState(BYTE modalState, BOOL bUpdateToolbar)
 }
 
 // 0x7202E0
-BOOL CGameSprite::IsActionAllowed()
+BOOL CGameSprite::sub_7202E0()
 {
     if (g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_cutScene) {
         return FALSE;
@@ -9401,7 +9401,7 @@ void CGameSprite::CheckSequence(BYTE& sequence)
 }
 
 // 0x7204C0
-void CGameSprite::LoadAnimationSounds()
+void CGameSprite::sub_7204C0()
 {
     CString animationResRef;
     CMemINI* pINI = &(g_pBaldurChitin->GetObjectGame()->m_INISounds);
@@ -9410,74 +9410,74 @@ void CGameSprite::LoadAnimationSounds()
     // NOTE: Uninline.
     m_animation.GetAnimationResRef(animationResRef, CGameAnimationType::RANGE_BODY);
 
-    m_bHasAttackSound = FALSE;
-    m_bHasBattleCrySound = FALSE;
-    m_bHasDamageSound = FALSE;
-    m_bHasDeathSound = FALSE;
-    m_bHasFidgetSound = FALSE;
-    m_bHasSelectedSound = FALSE;
-    m_bHasFallSound = FALSE;
+    field_70FB = FALSE;
+    field_70FC = FALSE;
+    field_70FD = FALSE;
+    field_70FE = FALSE;
+    field_70FF = FALSE;
+    field_7100 = FALSE;
+    field_7101 = FALSE;
 
     pValue = pINI->GetFast(animationResRef, CString("att1"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        m_bHasAttackSound = TRUE;
-        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att1frame")));
+        field_70FB = TRUE;
+        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att1frame")));
 
         pValue = pINI->GetFast(animationResRef, CString("att2"));
         if (pValue != NULL && pValue->GetValue() != "") {
-            LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att2frame")));
+            sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att2frame")));
         }
 
         pValue = pINI->GetFast(animationResRef, CString("att3"));
         if (pValue != NULL && pValue->GetValue() != "") {
-            LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att3frame")));
+            sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att3frame")));
         }
 
         pValue = pINI->GetFast(animationResRef, CString("att4"));
         if (pValue != NULL && pValue->GetValue() != "") {
-            LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att4frame")));
+            sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att4frame")));
         }
     }
 
     pValue = pINI->GetFast(animationResRef, CString("btlcry"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        m_bHasBattleCrySound = TRUE;
-        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("btlcryframe")));
+        field_70FC = TRUE;
+        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("btlcryframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("damage"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        m_bHasDamageSound = TRUE;
-        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("damageframe")));
+        field_70FD = TRUE;
+        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("damageframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("death"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        m_bHasDeathSound = TRUE;
-        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("deathframe")));
+        field_70FE = TRUE;
+        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("deathframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("fidget"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        m_bHasFidgetSound = TRUE;
-        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("fidgetframe")));
+        field_70FF = TRUE;
+        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("fidgetframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("selected"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        m_bHasSelectedSound = TRUE;
-        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("selectedframe")));
+        field_7100 = TRUE;
+        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("selectedframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("fall"));
     if (pValue != NULL && pValue->GetValue() != "") {
-        m_bHasFallSound = TRUE;
-        LoadAnimationSoundEntry(pValue, pINI->GetFast(animationResRef, CString("fallframe")));
+        field_7101 = TRUE;
+        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("fallframe")));
     }
 }
 
 // 0x720B50
-void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
+void CGameSprite::sub_720B50(CMemINIValue* a1, CMemINIValue* a2)
 {
     CString v1;
     CString v2;
@@ -9502,8 +9502,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.m_sSoundRes = "";
-            entry.m_nFrame = 0;
+            entry.field_0 = "";
+            entry.field_4 = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9533,13 +9533,13 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.m_sSoundRes = v1;
+                entry.field_0 = v1;
                 if (!v2.IsEmpty()) {
-                    entry.m_nFrame = atoi(v2);
+                    entry.field_4 = atoi(v2);
                 } else {
-                    entry.m_nFrame = 0;
+                    entry.field_4 = 0;
                 }
-                pfield_72F0.AddTail(entry);
+                field_72F0.AddTail(entry);
             }
         }
     }
@@ -9548,8 +9548,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.m_sSoundRes = "";
-            entry.m_nFrame = 0;
+            entry.field_0 = "";
+            entry.field_4 = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9579,13 +9579,13 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.m_sSoundRes = v1;
+                entry.field_0 = v1;
                 if (!v2.IsEmpty()) {
-                    entry.m_nFrame = atoi(v2);
+                    entry.field_4 = atoi(v2);
                 } else {
-                    entry.m_nFrame = 0;
+                    entry.field_4 = 0;
                 }
-                pfield_730C.AddTail(entry);
+                field_730C.AddTail(entry);
             }
         }
     }
@@ -9594,8 +9594,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.m_sSoundRes = "";
-            entry.m_nFrame = 0;
+            entry.field_0 = "";
+            entry.field_4 = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9625,13 +9625,13 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.m_sSoundRes = v1;
+                entry.field_0 = v1;
                 if (!v2.IsEmpty()) {
-                    entry.m_nFrame = atoi(v2);
+                    entry.field_4 = atoi(v2);
                 } else {
-                    entry.m_nFrame = 0;
+                    entry.field_4 = 0;
                 }
-                pfield_7328.AddTail(entry);
+                field_7328.AddTail(entry);
             }
         }
     }
@@ -9640,8 +9640,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.m_sSoundRes = "";
-            entry.m_nFrame = 0;
+            entry.field_0 = "";
+            entry.field_4 = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9671,13 +9671,13 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.m_sSoundRes = v1;
+                entry.field_0 = v1;
                 if (!v2.IsEmpty()) {
-                    entry.m_nFrame = atoi(v2);
+                    entry.field_4 = atoi(v2);
                 } else {
-                    entry.m_nFrame = 0;
+                    entry.field_4 = 0;
                 }
-                pfield_7344.AddTail(entry);
+                field_7344.AddTail(entry);
             }
         }
     }
@@ -9686,8 +9686,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.m_sSoundRes = "";
-            entry.m_nFrame = 0;
+            entry.field_0 = "";
+            entry.field_4 = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9717,13 +9717,13 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.m_sSoundRes = v1;
+                entry.field_0 = v1;
                 if (!v2.IsEmpty()) {
-                    entry.m_nFrame = atoi(v2);
+                    entry.field_4 = atoi(v2);
                 } else {
-                    entry.m_nFrame = 0;
+                    entry.field_4 = 0;
                 }
-                pfield_7360.AddTail(entry);
+                field_7360.AddTail(entry);
             }
         }
     }
@@ -9732,8 +9732,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.m_sSoundRes = "";
-            entry.m_nFrame = 0;
+            entry.field_0 = "";
+            entry.field_4 = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9763,13 +9763,13 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.m_sSoundRes = v1;
+                entry.field_0 = v1;
                 if (!v2.IsEmpty()) {
-                    entry.m_nFrame = atoi(v2);
+                    entry.field_4 = atoi(v2);
                 } else {
-                    entry.m_nFrame = 0;
+                    entry.field_4 = 0;
                 }
-                pfield_737C.AddTail(entry);
+                field_737C.AddTail(entry);
             }
         }
     }
@@ -9778,8 +9778,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.m_sSoundRes = "";
-            entry.m_nFrame = 0;
+            entry.field_0 = "";
+            entry.field_4 = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9809,13 +9809,13 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.m_sSoundRes = v1;
+                entry.field_0 = v1;
                 if (!v2.IsEmpty()) {
-                    entry.m_nFrame = atoi(v2);
+                    entry.field_4 = atoi(v2);
                 } else {
-                    entry.m_nFrame = 0;
+                    entry.field_4 = 0;
                 }
-                pfield_7398.AddTail(entry);
+                field_7398.AddTail(entry);
             }
         }
     }
@@ -9824,8 +9824,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.m_sSoundRes = "";
-            entry.m_nFrame = 0;
+            entry.field_0 = "";
+            entry.field_4 = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9855,13 +9855,13 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.m_sSoundRes = v1;
+                entry.field_0 = v1;
                 if (!v2.IsEmpty()) {
-                    entry.m_nFrame = atoi(v2);
+                    entry.field_4 = atoi(v2);
                 } else {
-                    entry.m_nFrame = 0;
+                    entry.field_4 = 0;
                 }
-                pfield_73B4.AddTail(entry);
+                field_73B4.AddTail(entry);
             }
         }
     }
@@ -9870,8 +9870,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.m_sSoundRes = "";
-            entry.m_nFrame = 0;
+            entry.field_0 = "";
+            entry.field_4 = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9901,13 +9901,13 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.m_sSoundRes = v1;
+                entry.field_0 = v1;
                 if (!v2.IsEmpty()) {
-                    entry.m_nFrame = atoi(v2);
+                    entry.field_4 = atoi(v2);
                 } else {
-                    entry.m_nFrame = 0;
+                    entry.field_4 = 0;
                 }
-                pfield_73D0.AddTail(entry);
+                field_73D0.AddTail(entry);
             }
         }
     }
@@ -9916,8 +9916,8 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
         while (1) {
             v1 = "";
             v2 = "";
-            entry.m_sSoundRes = "";
-            entry.m_nFrame = 0;
+            entry.field_0 = "";
+            entry.field_4 = 0;
 
             if (v3.IsEmpty()) {
                 break;
@@ -9947,13 +9947,13 @@ void CGameSprite::LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
             }
 
             if (!v1.IsEmpty()) {
-                entry.m_sSoundRes = v1;
+                entry.field_0 = v1;
                 if (!v2.IsEmpty()) {
-                    entry.m_nFrame = atoi(v2);
+                    entry.field_4 = atoi(v2);
                 } else {
-                    entry.m_nFrame = 0;
+                    entry.field_4 = 0;
                 }
-                pfield_73EC.AddTail(entry);
+                field_73EC.AddTail(entry);
             }
         }
     }
@@ -10161,7 +10161,7 @@ void CGameSprite::sub_71E760(CDerivedStats& DStats, int a2)
 }
 
 // 0x71F6E0
-int CGameSprite::GetBaseAttackBonus()
+int CGameSprite::sub_71F6E0()
 {
     int v1;
 
@@ -10402,9 +10402,9 @@ void CGameSprite::ResolveInstants(BOOL dropNonInstants)
             }
         }
 
-        nfield_5582 = 0;
-        m_field_9D14 = 0;
-        m_field_9D15 = 0;
+        field_5582 = 0;
+        field_9D14 = 0;
+        field_9D15 = 0;
     }
 }
 
@@ -11266,7 +11266,7 @@ void CGameSprite::FeedBack(WORD nFeedBackId, LONG a3, LONG a4, LONG a5, LONG a6,
             CString sText;
             g_pBaldurChitin->GetTlkTable().Fetch(a6, strRes);
             sText.Format(strRes.szText, a3);
-            if (HasFeat(CGAMESPRITE_FEAT_CRIPPLING_STRIKE)) {
+            if (sub_763150(CGAMESPRITE_FEAT_CRIPPLING_STRIKE)) {
                 g_pBaldurChitin->GetTlkTable().Fetch(25070, strRes); // " with Crippling Strike (-1 Str)"
                 sText.Format(strRes.szText, a3);
             }
@@ -11718,7 +11718,7 @@ void CGameSprite::FeedBack(WORD nFeedBackId, LONG a3, LONG a4, LONG a5, LONG a6,
 }
 
 // 0x737910
-BOOLEAN CGameSprite::CheckWeaponAmmunition(BOOL a1)
+BOOLEAN CGameSprite::sub_737910(BOOL a1)
 {
     if (!a1
         && m_equipment.m_items[m_equipment.m_selectedWeapon] != NULL
@@ -11744,14 +11744,14 @@ BOOLEAN CGameSprite::CheckWeaponAmmunition(BOOL a1)
 SHORT CGameSprite::GetCriticalHitBonus()
 {
     SHORT nCriticalHitBonus = m_derivedStats.m_nCriticalHitBonus;
-    if (HasFeat(CGAMESPRITE_FEAT_IMPROVED_CRITICAL)) {
+    if (sub_763150(CGAMESPRITE_FEAT_IMPROVED_CRITICAL)) {
         nCriticalHitBonus++;
     }
     return nCriticalHitBonus;
 }
 
 // 0x73C6A0
-SHORT CGameSprite::GetTargetACModForDamageType(CGameSprite* target, CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::sub_73C6A0(CGameSprite* target, CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 9840
@@ -11803,7 +11803,7 @@ SHORT CGameSprite::GetTargetACModForDamageType(CGameSprite* target, CItem* curWe
 }
 
 // 0x73C7E0
-SHORT CGameSprite::GetRacialLightTHAC0Mod()
+SHORT CGameSprite::sub_73C7E0()
 {
     SHORT mod = 0;
 
@@ -11833,7 +11833,7 @@ SHORT CGameSprite::GetRacialLightTHAC0Mod()
 }
 
 // 0x73C8C0
-SHORT CGameSprite::GetRacialTHAC0ModVsTarget(CGameSprite* target)
+SHORT CGameSprite::sub_73C8C0(CGameSprite* target)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 9925
@@ -11881,7 +11881,7 @@ SHORT CGameSprite::GetRacialTHAC0ModVsTarget(CGameSprite* target)
 }
 
 // 0x73CA20
-SHORT CGameSprite::GetRacialWeaponTHAC0Mod(CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::sub_73CA20(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 9988
@@ -11927,7 +11927,7 @@ SHORT CGameSprite::sub_73CAE0(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 }
 
 // 0x73CB10
-SHORT CGameSprite::GetAbilityAttackMod(CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::sub_73CB10(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 10083
@@ -11946,7 +11946,7 @@ SHORT CGameSprite::GetAbilityAttackMod(CItem* curWeapon, const ITEM_ABILITY* cur
     WORD itemType = curWeapon->GetItemType();
     INT mod = cRule.GetAbilityScoreModifier(m_derivedStats.m_nSTR);
 
-    if (HasFeat(CGAMESPRITE_FEAT_WEAPON_FINESSE)
+    if (sub_763150(CGAMESPRITE_FEAT_WEAPON_FINESSE)
         && (itemType == 19 || itemType == 16)) {
         INT nDEXMod = cRule.GetAbilityScoreModifier(m_derivedStats.m_nDEX);
         if (mod < nDEXMod) {
@@ -11954,21 +11954,21 @@ SHORT CGameSprite::GetAbilityAttackMod(CItem* curWeapon, const ITEM_ABILITY* cur
         }
     }
 
-    if (HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)
-        && GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
-        mod -= GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK);
+    if (sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)
+        && sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
+        mod -= sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK);
     }
 
-    if (HasFeat(CGAMESPRITE_FEAT_EXPERTISE)
-        && GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
-        mod -= GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE);
+    if (sub_763150(CGAMESPRITE_FEAT_EXPERTISE)
+        && sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
+        mod -= sub_726270(CGAMESPRITE_FEAT_EXPERTISE);
     }
 
     return static_cast<SHORT>(mod);
 }
 
 // 0x73CC40
-SHORT CGameSprite::GetWeaponTHAC0Bonus(CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::sub_73CC40(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 10144
@@ -12003,7 +12003,7 @@ SHORT CGameSprite::GetWeaponTHAC0Bonus(CItem* curWeapon, const ITEM_ABILITY* cur
 }
 
 // 0x73D420
-SHORT CGameSprite::GetBaseTHAC0()
+SHORT CGameSprite::sub_73D420()
 {
     SHORT mod = 0;
 
@@ -12017,7 +12017,7 @@ SHORT CGameSprite::GetBaseTHAC0()
 }
 
 // 0x73D440
-SHORT CGameSprite::GetWeaponProficiencyTHAC0Mod(CItem* curWeapon)
+SHORT CGameSprite::sub_73D440(CItem* curWeapon)
 {
     SHORT mod = 0;
     switch (curWeapon->GetItemType()) {
@@ -12104,13 +12104,13 @@ SHORT CGameSprite::MoveToPoint()
     if (x == -1) {
         x = m_posStart.x;
     } else if (x == -2) {
-        x = m_baseStats.wm_field_2E4;
+        x = m_baseStats.field_2E4;
     }
 
     if (y == -1) {
         y = m_posStart.y;
     } else if (y == -2) {
-        y = m_baseStats.wm_field_2E6;
+        y = m_baseStats.field_2E6;
     }
 
     if (x / CPathSearch::GRID_SQUARE_SIZEX == m_pos.x / CPathSearch::GRID_SQUARE_SIZEX
@@ -12670,11 +12670,11 @@ SHORT CGameSprite::GetCasterLevel(CSpell* pSpell, BYTE nClass, DWORD nSpecializa
 }
 
 // 0x75F240
-SHORT CGameSprite::SavePositionToBaseStats()
+SHORT CGameSprite::sub_75F240()
 {
-    m_baseStats.wm_field_2E4 = static_cast<SHORT>(m_pos.x);
-    m_baseStats.wm_field_2E6 = static_cast<SHORT>(m_pos.y);
-    m_baseStats.wm_field_2E8 = m_nDirection;
+    m_baseStats.field_2E4 = static_cast<SHORT>(m_pos.x);
+    m_baseStats.field_2E6 = static_cast<SHORT>(m_pos.y);
+    m_baseStats.field_2E8 = m_nDirection;
     return ACTION_DONE;
 }
 
@@ -13393,11 +13393,11 @@ SHORT CGameSprite::ForceHide(CGameSprite* pSprite)
     SetModalState(3, TRUE);
     g_pBaldurChitin->GetObjectGame()->GetButtonArray()->SetSelectedButton(5);
 
-    if (!m_bHiding && !m_baseStats.bm_field_294) {
+    if (!m_bHiding && !m_baseStats.field_294) {
         PlaySound(CResRef("ACT_07"));
     }
 
-    if (!m_baseStats.bm_field_294) {
+    if (!m_baseStats.field_294) {
         FeedBack(FEEDBACK_HIDESUCCEEDED,
             0,
             0,
@@ -13429,16 +13429,16 @@ SHORT CGameSprite::ForceHide(CGameSprite* pSprite)
 }
 
 // 0x7615F0
-SHORT CGameSprite::SetVisibilityRange(int a1)
+SHORT CGameSprite::sub_7615F0(int a1)
 {
     if (a1 == 0) {
         m_pArea->m_visibility.SetAreaVisible(FALSE);
         a1 = CVisibilityMap::EXPLORED_RANGE_3;
     }
 
-    m_pArea->m_visibility.m_nEllipseArcWidth = static_cast<short>(a1);
-    m_pArea->m_visibility.m_nEllipseArcHeight = static_cast<short>(3 * a1 / 4);
-    m_pArea->m_visibility.InitializeEllipseArcs();
+    m_pArea->m_visibility.field_E = static_cast<short>(a1);
+    m_pArea->m_visibility.field_10 = static_cast<short>(3 * a1 / 4);
+    m_pArea->m_visibility.sub_5518A0();
 
     return ACTION_DONE;
 }
@@ -13484,7 +13484,7 @@ SHORT CGameSprite::DropItem(CItem* pItem)
 }
 
 // 0x761990
-void CGameSprite::RefreshEffects()
+void CGameSprite::sub_761990()
 {
     m_timedEffectList.RemoveAllEffectsIgnoreMoreThenPermanent(NULL, FALSE, FALSE, 0, 0);
     UnequipAll(FALSE);
@@ -13904,7 +13904,7 @@ INT CGameSprite::GetMaxFeatValue(UINT nFeatNumber)
 }
 
 // 0x763150
-BOOL CGameSprite::HasFeat(UINT nFeatNumber)
+BOOL CGameSprite::sub_763150(UINT nFeatNumber)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 29278
@@ -13916,7 +13916,7 @@ BOOL CGameSprite::HasFeat(UINT nFeatNumber)
 
     if (nFeatNumber == CGAMESPRITE_FEAT_CLEAVE) {
         if (m_derivedStats.m_nSTR >= 13) {
-            if (HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)) {
+            if (sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)) {
                 INT nValue = GetFeatValue(CGAMESPRITE_FEAT_CLEAVE);
                 if (nValue == 1 || nValue == 2) {
                     if (m_baseStats.m_attackBase >= 4) {
@@ -13928,11 +13928,11 @@ BOOL CGameSprite::HasFeat(UINT nFeatNumber)
         return FALSE;
     }
 
-    return MeetFeatRequirements(nFeatNumber, 0);
+    return sub_763200(nFeatNumber, 0);
 }
 
 // 0x763200
-BOOL CGameSprite::MeetFeatRequirements(UINT nFeatNumber, INT a2)
+BOOL CGameSprite::sub_763200(UINT nFeatNumber, INT a2)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 29333
@@ -13994,7 +13994,7 @@ BOOL CGameSprite::MeetFeatRequirements(UINT nFeatNumber, INT a2)
         return m_typeAI.m_nRace == CAIOBJECTTYPE_R_HUMAN
             || m_typeAI.m_nRace == CAIOBJECTTYPE_R_DWARF;
     case CGAMESPRITE_FEAT_CLEAVE:
-        if (!(nSTR >= 13 && HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK))) {
+        if (!(nSTR >= 13 && sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK))) {
             return FALSE;
         }
 
@@ -14120,7 +14120,7 @@ BOOL CGameSprite::MeetFeatRequirements(UINT nFeatNumber, INT a2)
 }
 
 // 0x763A40
-BOOL CGameSprite::CanUpgradeFeat(UINT nFeatNumber, INT a2)
+BOOL CGameSprite::sub_763A40(UINT nFeatNumber, INT a2)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 29873
@@ -14129,106 +14129,106 @@ BOOL CGameSprite::CanUpgradeFeat(UINT nFeatNumber, INT a2)
     switch (nFeatNumber) {
     case CGAMESPRITE_FEAT_ARMOR_PROF:
         return m_baseStats.m_featArmorProficiency < CGAMESPRITE_FEAT_MAX_ARMOR_PROFICIENCY_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_ARMORED_ARCANA:
         return m_baseStats.m_featArmoredArcana < CGAMESPRITE_FEAT_MAX_ARMORED_ARCANA_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_CLEAVE:
         return m_baseStats.m_featCleave < CGAMESPRITE_FEAT_MAX_CLEAVE_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXOTIC_BASTARD:
         return m_baseStats.m_featBastardSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_RAGE:
         return m_baseStats.m_featExtraRage < CGAMESPRITE_FEAT_MAX_EXTRA_RAGE_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_SHAPESHIFTING:
         return m_baseStats.m_featExtraShapeshifting < CGAMESPRITE_FEAT_MAX_EXTRA_SHAPESHIFTING_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_SMITING:
         return m_baseStats.m_featExtraSmiting < CGAMESPRITE_FEAT_MAX_EXTRA_SMITING_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_TURNING:
         return m_baseStats.m_featExtraTurning < CGAMESPRITE_FEAT_MAX_EXTRA_TURNING_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_AXE:
         return (m_baseStats.m_featAxe != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featAxe < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_BOW:
         return (m_baseStats.m_featBow != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featBow < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_FLAIL:
         return (m_baseStats.m_featFlail != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featFlail < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_GREATSWORD:
         return (m_baseStats.m_featGreatSword != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featGreatSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_HAMMER:
         return (m_baseStats.m_featHammer != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featHammer < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_LARGESWORD:
         return (m_baseStats.m_featLargeSword != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featLargeSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_POLEARM:
         return (m_baseStats.m_featPolearm != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featPolearm < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_CROSSBOW:
         return (m_baseStats.m_featCrossbow != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featCrossbow < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_MACE:
         return (m_baseStats.m_featMace != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featMace < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_MISSILE:
         return (m_baseStats.m_featMissile != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featMissile < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_QUARTERSTAFF:
         return (m_baseStats.m_featQuarterStaff != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featQuarterStaff < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_SMALLBLADE:
         return (m_baseStats.m_featSmallBlade != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featSmallBlade < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_ENCHANTMENT:
         return m_baseStats.m_featFocusEnchantment < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_ENCHANTMENT_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_EVOCATION:
         return m_baseStats.m_featFocusEvocation < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_EVOCATION_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_NECROMANCY:
         return m_baseStats.m_featFocusNecromancy < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_NECROMANCY_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_TRANSMUTE:
         return m_baseStats.m_featFocusTransmutation < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_TRANSMUTATION_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_PENETRATION:
         return m_baseStats.m_featSpellPenetration < CGAMESPRITE_FEAT_MAX_SPELL_PENETRATION_UPGRADE
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_TOUGHNESS:
         return m_baseStats.m_featToughness < CGAMESPRITE_FEAT_TOUGHNESS_MAX_LEVEL
-            && MeetFeatRequirements(nFeatNumber, 1);
+            && sub_763200(nFeatNumber, 1);
     }
 
     if ((m_baseStats.m_feats[nFeatNumber >> 5] & (1 << (nFeatNumber & 0x1F))) != 0) {
@@ -14236,7 +14236,7 @@ BOOL CGameSprite::CanUpgradeFeat(UINT nFeatNumber, INT a2)
     }
 
     if (a2) {
-        return MeetFeatRequirements(nFeatNumber, 1);
+        return sub_763200(nFeatNumber, 1);
     }
 
     return TRUE;
@@ -14716,13 +14716,13 @@ void CGameSprite::SetResRef(const CResRef& resRef)
 }
 
 // 0x453160
-void CGameSprite::SetBHiding(int a1)
+void CGameSprite::sub_453160(int a1)
 {
     m_bHiding = a1;
 }
 
 // 0x453170
-int CGameSprite::GetBHiding()
+int CGameSprite::sub_453170()
 {
     return m_bHiding;
 }
@@ -14746,9 +14746,9 @@ CDerivedStats* CGameSprite::GetDerivedStats()
 }
 
 // 0x4531B0
-void CGameSprite::SetField562C()
+void CGameSprite::sub_4531B0()
 {
-    nfield_562C = 1;
+    field_562C = 1;
 }
 
 // 0x4531C0
@@ -14805,29 +14805,29 @@ CGameSpriteSpellList* CGameSprite::GetShapeshifts()
 }
 
 // 0x5940D0
-DWORD CGameSprite::GetField_80C()
+DWORD CGameSprite::sub_5940D0()
 {
     return m_baseStats.m_specialization;
 }
 
 // 0x5940E0
-INT CGameSprite::GetCustomButtonValue(BYTE buttonNum)
+INT CGameSprite::sub_5940E0(BYTE buttonNum)
 {
     // __FILE__: .\Include\ObjCreature.h
     // __LINE__: 2028
     UTIL_ASSERT(buttonNum < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22);
 
-    return m_nFeatModes[buttonNum];
+    return field_3D14[buttonNum];
 }
 
 // 0x594120
-void CGameSprite::SetCustomButtonValue(BYTE buttonNum, int a2)
+void CGameSprite::sub_594120(BYTE buttonNum, int a2)
 {
     // __FILE__: .\Include\ObjCreature.h
     // __LINE__: 2036
     UTIL_ASSERT(buttonNum < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22);
 
-    m_nFeatModes[buttonNum] = a2;
+    field_3D14[buttonNum] = a2;
 }
 
 // 0x594160
@@ -14837,9 +14837,9 @@ BYTE CGameSprite::GetModalState()
 }
 
 // 0x45B710
-int CGameSprite::GetField70F2()
+int CGameSprite::sub_45B710()
 {
-    return m_nDualClassFlag;
+    return field_70F2;
 }
 
 // 0x706D50
@@ -14968,7 +14968,7 @@ CVariableHash* CGameSprite::GetLocalVariables()
 }
 
 // 0x724010
-INT CGameSprite::GetMaxDexBonusForArmor(INT a1)
+INT CGameSprite::sub_724010(INT a1)
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -14997,7 +14997,7 @@ INT CGameSprite::GetMaxDexBonusForArmor(INT a1)
 }
 
 // 0x7240A0
-INT CGameSprite::GetArmorCheckPenalty()
+INT CGameSprite::sub_7240A0()
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -15063,7 +15063,7 @@ INT CGameSprite::GetArmorCheckPenalty()
 }
 
 // 0x724170
-INT CGameSprite::GetShieldCheckPenalty()
+INT CGameSprite::sub_724170()
 {
     INT nSlot = 2 * (m_nWeaponSet + 22);
     CItem* pItem = m_equipment.m_items[nSlot];
@@ -15105,7 +15105,7 @@ INT CGameSprite::GetShieldCheckPenalty()
 }
 
 // 0x724270
-INT CGameSprite::GetShieldArcaneFailure()
+INT CGameSprite::sub_724270()
 {
     INT nSlot = 2 * (m_nWeaponSet + 22);
     CItem* pItem = m_equipment.m_items[nSlot];
@@ -15132,7 +15132,7 @@ INT CGameSprite::GetShieldArcaneFailure()
 }
 
 // 0x724360
-INT CGameSprite::GetArmorArcaneFailure()
+INT CGameSprite::sub_724360()
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -15163,7 +15163,7 @@ INT CGameSprite::GetArmorArcaneFailure()
 // 0x7243F0
 BOOL CGameSprite::CheckAranceFailure(INT nRoll)
 {
-    INT nFailureChance = GetArcaneSpellFailure();
+    INT nFailureChance = sub_724430();
 
     if (nRoll >= nFailureChance) {
         return FALSE;
@@ -15176,7 +15176,7 @@ BOOL CGameSprite::CheckAranceFailure(INT nRoll)
 }
 
 // 0x724430
-int CGameSprite::GetArcaneSpellFailure()
+int CGameSprite::sub_724430()
 {
     INT nMod = 0;
 
@@ -15194,10 +15194,10 @@ int CGameSprite::GetArcaneSpellFailure()
 
     INT nFailureChance = m_derivedStats.m_nSpellFailureArcane
         + nMod
-        + GetArmorArcaneFailure()
-        + GetShieldArcaneFailure();
+        + sub_724360()
+        + sub_724270();
 
-    if (HasFeat(CGAMESPRITE_FEAT_ARMORED_ARCANA)) {
+    if (sub_763150(CGAMESPRITE_FEAT_ARMORED_ARCANA)) {
         nFailureChance -= 5 * GetFeatValue(CGAMESPRITE_FEAT_ARMORED_ARCANA);
     }
 
@@ -15245,7 +15245,7 @@ BOOL CGameSprite::CheckDivineFailure(INT nRoll)
 }
 
 // 0x7245D0
-BOOLEAN CGameSprite::IsHeld()
+BOOLEAN CGameSprite::sub_7245D0()
 {
     return m_derivedStats.m_spellStates[SPLSTATE_HELD]
         || m_derivedStats.m_spellStates[SPLSTATE_HOPELESSNESS]
@@ -15273,14 +15273,14 @@ void CGameSprite::ResetQuickSlots()
     INT nClass = m_derivedStats.GetBestClass() - 1;
 
     for (int nSlot = 0; nSlot < CGAMESAVECHARACTER_NUM_CUSTOM_BUTTONS22; nSlot++) {
-        if (m_nFeatModes[nSlot] == 0) {
-            m_nFeatModes[nSlot] = atol(ruleTables.m_tQuickSlots.GetAt(CPoint(nSlot, nClass)));
+        if (field_3D14[nSlot] == 0) {
+            field_3D14[nSlot] = atol(ruleTables.m_tQuickSlots.GetAt(CPoint(nSlot, nClass)));
         }
     }
 }
 
 // 0x724690
-BOOL CGameSprite::IsArmorType(SHORT a1)
+BOOL CGameSprite::sub_724690(SHORT a1)
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -15377,7 +15377,7 @@ UINT CGameSprite::GetNumSpells()
 }
 
 // 0x724900
-BOOLEAN CGameSprite::IsSpellcaster()
+BOOLEAN CGameSprite::sub_724900()
 {
     DWORD dwClassMask = GetAIType().m_nClassMask;
 
@@ -15386,7 +15386,7 @@ BOOLEAN CGameSprite::IsSpellcaster()
 }
 
 // 0x724920
-BOOLEAN CGameSprite::IsBard()
+BOOLEAN CGameSprite::sub_724920()
 {
     return (GetAIType().m_nClassMask & CLASSMASK_BARD) != 0;
 }
@@ -15472,15 +15472,15 @@ BOOLEAN CGameSprite::AddShapeshift(const CResRef& resRef, const unsigned int& a2
 }
 
 // 0x724C40
-BOOLEAN CGameSprite::AdjustShapeshiftLevel(const unsigned int& a1)
+BOOLEAN CGameSprite::sub_724C40(const unsigned int& a1)
 {
-    m_shapeshifts.nm_field_14 += a1;
+    m_shapeshifts.field_14 += a1;
 
     for (UINT nIndex = 0; nIndex < m_shapeshifts.m_List.size(); nIndex++) {
         CGameSpriteSpellListEntry* pEntry = m_shapeshifts.Get(nIndex);
 
         m_shapeshifts.Add(pEntry->m_nID,
-            m_shapeshifts.nm_field_14 - pEntry->nm_field_4,
+            m_shapeshifts.field_14 - pEntry->field_4,
             0,
             0);
     }
@@ -15561,7 +15561,7 @@ BOOLEAN CGameSprite::RemoveShapeshift(const CResRef& resRef)
 }
 
 // 0x724FD0
-BOOLEAN CGameSprite::AddClassSpell(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
+BOOLEAN CGameSprite::sub_724FD0(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26177
@@ -15578,11 +15578,11 @@ BOOLEAN CGameSprite::AddClassSpell(const BYTE& nClass, const UINT& nSpellLevel, 
     CGameSpriteGroupedSpellList* pSpellsByLevel = m_spells.Get(nClassIndex);
 
     // NOTE: Uninline.
-    return pSpellsByLevel->RemoveCasts(nID, nSpellLevel, a4, a5);
+    return pSpellsByLevel->sub_7260B0(nID, nSpellLevel, a4, a5);
 }
 
 // 0x725110
-BOOLEAN CGameSprite::AddDomainSpell(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
+BOOLEAN CGameSprite::sub_725110(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26211
@@ -15597,22 +15597,22 @@ BOOLEAN CGameSprite::AddDomainSpell(const UINT& nSpellLevel, const CResRef& resR
     CGameSpriteSpellList* pList = m_domainSpells.GetSpellsAtLevel(nSpellLevel);
 
     // NOTE: Uninline.
-    return pList->RemoveCasts(nID, a4, a5);
+    return pList->sub_725CC0(nID, a4, a5);
 }
 
 // 0x725210
-BOOLEAN CGameSprite::AddInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
+BOOLEAN CGameSprite::sub_725210(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
 {
     UINT nID;
     if (g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Find(resRef, nID) != TRUE) {
         return FALSE;
     }
 
-    return m_innateSpells.AddCasts(nID, a2, a3);
+    return m_innateSpells.sub_725C50(nID, a2, a3);
 }
 
 // 0x725270
-BOOLEAN CGameSprite::RemoveInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
+BOOLEAN CGameSprite::sub_725270(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
 {
     UINT nID;
     if (g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Find(resRef, nID) != TRUE) {
@@ -15620,13 +15620,13 @@ BOOLEAN CGameSprite::RemoveInnateSpell(const CResRef& resRef, const unsigned int
     }
 
     // NOTE: Uninline.
-    return m_innateSpells.RemoveCasts(nID, a2, a3);
+    return m_innateSpells.sub_725CC0(nID, a2, a3);
 }
 
 // FIXME: `dwClassMask` should not be reference.
 //
 // 0x725330
-BOOLEAN CGameSprite::HasSpell(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4)
+BOOLEAN CGameSprite::sub_725330(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4)
 {
     BOOLEAN v1 = FALSE;
     UINT nStartLevel = 0;
@@ -15698,7 +15698,7 @@ BOOLEAN CGameSprite::HasSpell(const CResRef& resRef, const DWORD& dwClassMask, U
 }
 
 // 0x7256B0
-BOOLEAN CGameSprite::HasDomainSpell(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3)
+BOOLEAN CGameSprite::sub_7256B0(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3)
 {
     BOOLEAN v1 = FALSE;
     UINT nStartLevel = 0;
@@ -15737,7 +15737,7 @@ BOOLEAN CGameSprite::HasDomainSpell(const CResRef& resRef, const UINT& nLevel, B
 }
 
 // 0x725840
-BOOLEAN CGameSprite::HasInnateSpell(const CResRef& resRef, BOOLEAN a2)
+BOOLEAN CGameSprite::sub_725840(const CResRef& resRef, BOOLEAN a2)
 {
     UINT nID;
     if (!g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Find(resRef, nID)) {
@@ -15757,25 +15757,25 @@ BOOLEAN CGameSprite::HasInnateSpell(const CResRef& resRef, BOOLEAN a2)
 }
 
 // 0x726270
-INT CGameSprite::GetFeatMode(UINT nFeatNumber)
+INT CGameSprite::sub_726270(UINT nFeatNumber)
 {
     INT v1 = 0;
-    if (HasFeat(nFeatNumber)) {
+    if (sub_763150(nFeatNumber)) {
         switch (nFeatNumber) {
         case CGAMESPRITE_FEAT_ARTERIAL_STRIKE:
-            v1 = m_nFeatSlots[2];
+            v1 = field_4C54[2];
             break;
         case CGAMESPRITE_FEAT_EXPERTISE:
-            v1 = m_nFeatSlots[0];
+            v1 = field_4C54[0];
             break;
         case CGAMESPRITE_FEAT_HAMSTRING:
-            v1 = m_nFeatSlots[3];
+            v1 = field_4C54[3];
             break;
         case CGAMESPRITE_FEAT_POWER_ATTACK:
-            v1 = m_nFeatSlots[1];
+            v1 = field_4C54[1];
             break;
         case CGAMESPRITE_FEAT_RAPID_SHOT:
-            v1 = m_nFeatSlots[4];
+            v1 = field_4C54[4];
             break;
         }
     }
@@ -15783,9 +15783,9 @@ INT CGameSprite::GetFeatMode(UINT nFeatNumber)
 }
 
 // 0x726330
-void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
+void CGameSprite::sub_726330(UINT nFeatNumber, INT nValue)
 {
-    if (HasFeat(nFeatNumber)) {
+    if (sub_763150(nFeatNumber)) {
         switch (nFeatNumber) {
         case CGAMESPRITE_FEAT_ARTERIAL_STRIKE:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15796,8 +15796,8 @@ void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
             // __LINE__: 26977
             UTIL_ASSERT_MSG(nValue <= 1, "Invalid feat level.");
 
-            m_nFeatSlots[2] = nValue;
-            m_nFeatSlots[3] = 0;
+            field_4C54[2] = nValue;
+            field_4C54[3] = 0;
             break;
         case CGAMESPRITE_FEAT_EXPERTISE:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15808,8 +15808,8 @@ void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
             // __LINE__: 26963
             UTIL_ASSERT_MSG(nValue <= MAX_SELECTABLE_FEAT_USE_LEVELS, "Invalid feat level.");
 
-            m_nFeatSlots[0] = nValue;
-            m_nFeatSlots[1] = 0;
+            field_4C54[0] = nValue;
+            field_4C54[1] = 0;
             break;
         case CGAMESPRITE_FEAT_HAMSTRING:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15820,8 +15820,8 @@ void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
             // __LINE__: 26984
             UTIL_ASSERT_MSG(nValue <= 1, "Invalid feat level.");
 
-            m_nFeatSlots[3] = nValue;
-            m_nFeatSlots[2] = 0;
+            field_4C54[3] = nValue;
+            field_4C54[2] = 0;
             break;
         case CGAMESPRITE_FEAT_POWER_ATTACK:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15832,8 +15832,8 @@ void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
             // __LINE__: 26970
             UTIL_ASSERT_MSG(nValue <= MAX_SELECTABLE_FEAT_USE_LEVELS, "Invalid feat level.");
 
-            m_nFeatSlots[1] = nValue;
-            m_nFeatSlots[0] = 0;
+            field_4C54[1] = nValue;
+            field_4C54[0] = 0;
             break;
         case CGAMESPRITE_FEAT_RAPID_SHOT:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15844,48 +15844,48 @@ void CGameSprite::SetFeatMode(UINT nFeatNumber, INT nValue)
             // __LINE__: 269991
             UTIL_ASSERT_MSG(nValue <= 1, "Invalid feat level.");
 
-            m_nFeatSlots[4] = nValue;
+            field_4C54[4] = nValue;
             break;
         }
     }
 }
 
 // 0x726570
-void CGameSprite::ApplyFeatEffects()
+void CGameSprite::sub_726570()
 {
     ITEM_EFFECT effect;
     CGameEffect* pEffect;
     CMessageAddEffect* pMessage;
 
-    if (m_nFeatSlots[1] > 0) {
+    if (field_4C54[1] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATPOWERATTACK);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (m_nFeatSlots[0] > 0) {
+    if (field_4C54[0] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATEXPERTISE);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (m_nFeatSlots[2] > 0) {
+    if (field_4C54[2] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATARTERIALSTRIKE);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (m_nFeatSlots[3] > 0) {
+    if (field_4C54[3] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATHAMSTRING);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (m_nFeatSlots[4] > 0) {
+    if (field_4C54[4] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATRAPIDSHOT);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
@@ -15894,13 +15894,13 @@ void CGameSprite::ApplyFeatEffects()
 }
 
 // 0x726800
-INT CGameSprite::GetWeaponSlot()
+INT CGameSprite::sub_726800()
 {
     return 2 * m_nWeaponSet + 44;
 }
 
 // 0x726810
-void CGameSprite::SetWeaponSet(BYTE nWeaponSet)
+void CGameSprite::sub_726810(BYTE nWeaponSet)
 {
     // TODO: Incomplete.
 }
@@ -15972,7 +15972,7 @@ void CGameSprite::SetQuickWeapon(BYTE buttonNum, BYTE index)
     // __LINE__: 2031
     UTIL_ASSERT(buttonNum < CGAMESAVECHARACTER_NUM_QUICK_WEAPONS22);
 
-    m_nAbilityIndices[buttonNum] = index;
+    field_3D3A[buttonNum] = index;
 }
 
 // FIXME: `buttonData` should be reference.
@@ -16032,740 +16032,3 @@ CDerivedStats* CGameSprite::GetActiveStats()
         return &m_tempStats;
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x594170
-void FUN_00594170() {
-    // TODO: Incomplete.
-}
-
-// 0x594280
-void FUN_00594280() {
-    // TODO: Incomplete.
-}
-
-// 0x6F3B80
-void FUN_006f3b80() {
-    // TODO: Incomplete.
-}
-
-// 0x6F50A0
-void FUN_006f50a0() {
-    // TODO: Incomplete.
-}
-
-// 0x6F5330
-void FUN_006f5330() {
-    // TODO: Incomplete.
-}
-
-// 0x6FC260
-void FUN_006fc260() {
-    // TODO: Incomplete.
-}
-
-// 0x6FD9F0
-void FUN_006fd9f0() {
-    // TODO: Incomplete.
-}
-
-// 0x70A810
-void FUN_0070a810() {
-    // TODO: Incomplete.
-}
-
-// 0x70F4F0
-void FUN_0070f4f0() {
-    // TODO: Incomplete.
-}
-
-// 0x70F750
-void FUN_0070f750() {
-    // TODO: Incomplete.
-}
-
-// 0x70F770
-void FUN_0070f770() {
-    // TODO: Incomplete.
-}
-
-// 0x70FCF0
-void FUN_0070fcf0() {
-    // TODO: Incomplete.
-}
-
-// 0x70FD50
-void FUN_0070fd50() {
-    // TODO: Incomplete.
-}
-
-// 0x70FFE0
-void FUN_0070ffe0() {
-    // TODO: Incomplete.
-}
-
-// 0x710000
-void FUN_00710000() {
-    // TODO: Incomplete.
-}
-
-// 0x710550
-void FUN_00710550() {
-    // TODO: Incomplete.
-}
-
-// 0x7105B0
-void FUN_007105b0() {
-    // TODO: Incomplete.
-}
-
-// 0x714F70
-void FUN_00714f70() {
-    // TODO: Incomplete.
-}
-
-// 0x7155C0
-void FUN_007155c0() {
-    // TODO: Incomplete.
-}
-
-// 0x715BD0
-void FUN_00715bd0() {
-    // TODO: Incomplete.
-}
-
-// 0x716770
-void FUN_00716770() {
-    // TODO: Incomplete.
-}
-
-// 0x716E80
-void FUN_00716e80() {
-    // TODO: Incomplete.
-}
-
-// 0x717250
-void FUN_00717250() {
-    // TODO: Incomplete.
-}
-
-// 0x717FC0
-void FUN_00717fc0() {
-    // TODO: Incomplete.
-}
-
-// 0x718390
-void FUN_00718390() {
-    // TODO: Incomplete.
-}
-
-// 0x719180
-void FUN_00719180() {
-    // TODO: Incomplete.
-}
-
-// 0x71C0C0
-void FUN_0071c0c0() {
-    // TODO: Incomplete.
-}
-
-// 0x71CC90
-void FUN_0071cc90() {
-    // TODO: Incomplete.
-}
-
-// 0x71CEA0
-void FUN_0071cea0() {
-    // TODO: Incomplete.
-}
-
-// 0x71CFF0
-void FUN_0071cff0() {
-    // TODO: Incomplete.
-}
-
-// 0x71D0B0
-void FUN_0071d0b0() {
-    // TODO: Incomplete.
-}
-
-// 0x71E240
-void FUN_0071e240() {
-    // TODO: Incomplete.
-}
-
-// 0x71F480
-void FUN_0071f480() {
-    // TODO: Incomplete.
-}
-
-// 0x71F860
-void FUN_0071f860() {
-    // TODO: Incomplete.
-}
-
-// 0x720480
-void FUN_00720480() {
-    // TODO: Incomplete.
-}
-
-// 0x720490
-void FUN_00720490() {
-    // TODO: Incomplete.
-}
-
-// 0x722090
-void FUN_00722090() {
-    // TODO: Incomplete.
-}
-
-// 0x722520
-void FUN_00722520() {
-    // TODO: Incomplete.
-}
-
-// 0x722740
-void FUN_00722740() {
-    // TODO: Incomplete.
-}
-
-// 0x722820
-void FUN_00722820() {
-    // TODO: Incomplete.
-}
-
-// 0x722D50
-void FUN_00722d50() {
-    // TODO: Incomplete.
-}
-
-// 0x723830
-void FUN_00723830() {
-    // TODO: Incomplete.
-}
-
-// 0x723AF0
-void FUN_00723af0() {
-    // TODO: Incomplete.
-}
-
-// 0x723DB0
-void FUN_00723db0() {
-    // TODO: Incomplete.
-}
-
-// 0x723EA0
-void FUN_00723ea0() {
-    // TODO: Incomplete.
-}
-
-// 0x726F20
-void FUN_00726f20() {
-    // TODO: Incomplete.
-}
-
-// 0x727720
-void FUN_00727720() {
-    // TODO: Incomplete.
-}
-
-// 0x727B40
-void FUN_00727b40() {
-    // TODO: Incomplete.
-}
-
-// 0x727B80
-void FUN_00727b80() {
-    // TODO: Incomplete.
-}
-
-// 0x727BB0
-void FUN_00727bb0() {
-    // TODO: Incomplete.
-}
-
-// 0x727BD0
-void FUN_00727bd0() {
-    // TODO: Incomplete.
-}
-
-// 0x727BF0
-void FUN_00727bf0() {
-    // TODO: Incomplete.
-}
-
-// 0x727C10
-void FUN_00727c10() {
-    // TODO: Incomplete.
-}
-
-// 0x727C30
-void FUN_00727c30() {
-    // TODO: Incomplete.
-}
-
-// 0x727C70
-void FUN_00727c70() {
-    // TODO: Incomplete.
-}
-
-// 0x727C90
-void FUN_00727c90() {
-    // TODO: Incomplete.
-}
-
-// 0x727CD0
-void FUN_00727cd0() {
-    // TODO: Incomplete.
-}
-
-// 0x727D50
-void FUN_00727d50() {
-    // TODO: Incomplete.
-}
-
-// 0x727DF0
-void FUN_00727df0() {
-    // TODO: Incomplete.
-}
-
-// 0x727ED0
-void FUN_00727ed0() {
-    // TODO: Incomplete.
-}
-
-// 0x728050
-void FUN_00728050() {
-    // TODO: Incomplete.
-}
-
-// 0x728090
-void FUN_00728090() {
-    // TODO: Incomplete.
-}
-
-// 0x7280D0
-void FUN_007280d0() {
-    // TODO: Incomplete.
-}
-
-// 0x7280F0
-void FUN_007280f0() {
-    // TODO: Incomplete.
-}
-
-// 0x728160
-void FUN_00728160() {
-    // TODO: Incomplete.
-}
-
-// 0x728580
-void FUN_00728580() {
-    // TODO: Incomplete.
-}
-
-// 0x728B70
-void FUN_00728b70() {
-    // TODO: Incomplete.
-}
-
-// 0x728F80
-void FUN_00728f80() {
-    // TODO: Incomplete.
-}
-
-// 0x72B9A0
-void FUN_0072b9a0() {
-    // TODO: Incomplete.
-}
-
-// 0x72FBF0
-void FUN_0072fbf0() {
-    // TODO: Incomplete.
-}
-
-// 0x72FD20
-void FUN_0072fd20() {
-    // TODO: Incomplete.
-}
-
-// 0x733050
-void FUN_00733050() {
-    // TODO: Incomplete.
-}
-
-// 0x733200
-void FUN_00733200() {
-    // TODO: Incomplete.
-}
-
-// 0x733340
-void FUN_00733340() {
-    // TODO: Incomplete.
-}
-
-// 0x734720
-void FUN_00734720() {
-    // TODO: Incomplete.
-}
-
-// 0x737990
-void FUN_00737990() {
-    // TODO: Incomplete.
-}
-
-// 0x737EF0
-void FUN_00737ef0() {
-    // TODO: Incomplete.
-}
-
-// 0x738E70
-void FUN_00738e70() {
-    // TODO: Incomplete.
-}
-
-// 0x739B60
-void FUN_00739b60() {
-    // TODO: Incomplete.
-}
-
-// 0x73B760
-void FUN_0073b760() {
-    // TODO: Incomplete.
-}
-
-// 0x73C490
-void FUN_0073c490() {
-    // TODO: Incomplete.
-}
-
-// 0x73CD00
-void FUN_0073cd00() {
-    // TODO: Incomplete.
-}
-
-// 0x73CF10
-void FUN_0073cf10() {
-    // TODO: Incomplete.
-}
-
-// 0x73D080
-void FUN_0073d080() {
-    // TODO: Incomplete.
-}
-
-// 0x73D1B0
-void FUN_0073d1b0() {
-    // TODO: Incomplete.
-}
-
-// 0x73D560
-void FUN_0073d560() {
-    // TODO: Incomplete.
-}
-
-// 0x73EA80
-void FUN_0073ea80() {
-    // TODO: Incomplete.
-}
-
-// 0x73EDD0
-void FUN_0073edd0() {
-    // TODO: Incomplete.
-}
-
-// 0x73FEC0
-void FUN_0073fec0() {
-    // TODO: Incomplete.
-}
-
-// 0x740270
-void FUN_00740270() {
-    // TODO: Incomplete.
-}
-
-// 0x742840
-void FUN_00742840() {
-    // TODO: Incomplete.
-}
-
-// 0x744C00
-void FUN_00744c00() {
-    // TODO: Incomplete.
-}
-
-// 0x745450
-void FUN_00745450() {
-    // TODO: Incomplete.
-}
-
-// 0x746480
-void FUN_00746480() {
-    // TODO: Incomplete.
-}
-
-// 0x7473E0
-void FUN_007473e0() {
-    // TODO: Incomplete.
-}
-
-// 0x747F80
-void FUN_00747f80() {
-    // TODO: Incomplete.
-}
-
-// 0x748CA0
-void FUN_00748ca0() {
-    // TODO: Incomplete.
-}
-
-// 0x7496E0
-void FUN_007496e0() {
-    // TODO: Incomplete.
-}
-
-// 0x749FC0
-void FUN_00749fc0() {
-    // TODO: Incomplete.
-}
-
-// 0x74C0D0
-void FUN_0074c0d0() {
-    // TODO: Incomplete.
-}
-
-// 0x74CDB0
-void FUN_0074cdb0() {
-    // TODO: Incomplete.
-}
-
-// 0x74FF10
-void FUN_0074ff10() {
-    // TODO: Incomplete.
-}
-
-// 0x7500F0
-void FUN_007500f0() {
-    // TODO: Incomplete.
-}
-
-// 0x750F10
-void FUN_00750f10() {
-    // TODO: Incomplete.
-}
-
-// 0x751BD0
-void FUN_00751bd0() {
-    // TODO: Incomplete.
-}
-
-// 0x7526D0
-void FUN_007526d0() {
-    // TODO: Incomplete.
-}
-
-// 0x752DD0
-void FUN_00752dd0() {
-    // TODO: Incomplete.
-}
-
-// 0x7537A0
-void FUN_007537a0() {
-    // TODO: Incomplete.
-}
-
-// 0x7543B0
-void FUN_007543b0() {
-    // TODO: Incomplete.
-}
-
-// 0x754980
-void FUN_00754980() {
-    // TODO: Incomplete.
-}
-
-// 0x754D70
-void FUN_00754d70() {
-    // TODO: Incomplete.
-}
-
-// 0x754EE0
-void FUN_00754ee0() {
-    // TODO: Incomplete.
-}
-
-// 0x7555F0
-void FUN_007555f0() {
-    // TODO: Incomplete.
-}
-
-// 0x755A70
-void FUN_00755a70() {
-    // TODO: Incomplete.
-}
-
-// 0x7564E0
-void FUN_007564e0() {
-    // TODO: Incomplete.
-}
-
-// 0x756770
-void FUN_00756770() {
-    // TODO: Incomplete.
-}
-
-// 0x7567F0
-void FUN_007567f0() {
-    // TODO: Incomplete.
-}
-
-// 0x757540
-void FUN_00757540() {
-    // TODO: Incomplete.
-}
-
-// 0x757720
-void FUN_00757720() {
-    // TODO: Incomplete.
-}
-
-// 0x757B40
-void FUN_00757b40() {
-    // TODO: Incomplete.
-}
-
-// 0x7586E0
-void FUN_007586e0() {
-    // TODO: Incomplete.
-}
-
-// 0x759240
-void FUN_00759240() {
-    // TODO: Incomplete.
-}
-
-// 0x75A4B0
-void FUN_0075a4b0() {
-    // TODO: Incomplete.
-}
-
-// 0x75AAC0
-void FUN_0075aac0() {
-    // TODO: Incomplete.
-}
-
-// 0x75ACB0
-void FUN_0075acb0() {
-    // TODO: Incomplete.
-}
-
-// 0x75B280
-void FUN_0075b280() {
-    // TODO: Incomplete.
-}
-
-// 0x75BC70
-void FUN_0075bc70() {
-    // TODO: Incomplete.
-}
-
-// 0x75C980
-void FUN_0075c980() {
-    // TODO: Incomplete.
-}
-
-// 0x75CBD0
-void FUN_0075cbd0() {
-    // TODO: Incomplete.
-}
-
-// 0x75D450
-void FUN_0075d450() {
-    // TODO: Incomplete.
-}
-
-// 0x75E150
-void FUN_0075e150() {
-    // TODO: Incomplete.
-}
-
-// 0x75E330
-void FUN_0075e330() {
-    // TODO: Incomplete.
-}
-
-// 0x75E630
-void FUN_0075e630() {
-    // TODO: Incomplete.
-}
-
-// 0x75E890
-void FUN_0075e890() {
-    // TODO: Incomplete.
-}
-
-// 0x75E930
-void FUN_0075e930() {
-    // TODO: Incomplete.
-}
-
-// 0x75EC50
-void FUN_0075ec50() {
-    // TODO: Incomplete.
-}
-
-// 0x75F270
-void FUN_0075f270() {
-    // TODO: Incomplete.
-}
-
-// 0x760C50
-void FUN_00760c50() {
-    // TODO: Incomplete.
-}
-
-// 0x761AB0
-void FUN_00761ab0() {
-    // TODO: Incomplete.
-}
-
-// 0x761C50
-void FUN_00761c50() {
-    // TODO: Incomplete.
-}
-
-// 0x7624F0
-void FUN_007624f0() {
-    // TODO: Incomplete.
-}
-
-// 0x7625F0
-void FUN_007625f0() {
-    // TODO: Incomplete.
-}
-
-// 0x763E40
-void FUN_00763e40() {
-    // TODO: Incomplete.
-}
-
-// 0x764810
-void FUN_00764810() {
-    // TODO: Incomplete.
-}
-
-// 0x764880
-void FUN_00764880() {
-    // TODO: Incomplete.
-}
-
-// 0x765830
-void FUN_00765830() {
-    // TODO: Incomplete.
-}
-
-// 0x765FA0
-void FUN_00765fa0() {
-    // TODO: Incomplete.
-}
-

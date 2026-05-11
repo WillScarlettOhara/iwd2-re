@@ -212,30 +212,3 @@ void CAIResponseSet::Read(CString sData)
         v2 = CAIUtil::ReadBetween(sData, CString("RE\n"));
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x40FA50
-void FUN_0040fa50() {
-    // TODO: Incomplete.
-}
-
-// 0x40FA70
-void FUN_0040fa70() {
-    // TODO: Incomplete.
-}
-
-// 0x40FA90
-void FUN_0040fa90() {
-    // TODO: Incomplete.
-}
-
-// 0x40FAB0
-void FUN_0040fab0() {
-    // TODO: Incomplete.
-}
-
-// 0x40FAD0
-void FUN_0040fad0() {
-    // TODO: Incomplete.
-}
-

@@ -247,7 +247,7 @@ CScreenKeymaps::CScreenKeymaps()
     m_bSystemKeyCtrl = FALSE;
     m_bSystemKeyShift = FALSE;
     m_bSystemKeyCapsLock = FALSE;
-    nm_field_44A = -1;
+    field_44A = -1;
     m_dwErrorTextId = -1;
     m_strErrorButtonText[0] = -1;
     m_strErrorButtonText[1] = -1;
@@ -429,10 +429,10 @@ void CScreenKeymaps::EngineDestroyed()
 // 0x638F40
 void CScreenKeymaps::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUIKEYS"), g_pBaldurChitin->nm_field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIKEYS"), g_pBaldurChitin->field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->nm_field_4A28) {
+    if (g_pBaldurChitin->field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -478,11 +478,11 @@ void CScreenKeymaps::HandleKeyDown(BYTE nKey)
     switch (nKey) {
     case VK_ESCAPE:
         if (GetTopPopup() != NULL) {
-            OnDoneButtonClick();
+            sub_639E70();
         } else {
             if (m_nSelectedKeymapIndex >= 0) {
                 SelectKeymap(-1);
-                OnKeymapMouseMove(g_pBaldurChitin->m_ptPointer);
+                sub_63A660(g_pBaldurChitin->m_ptPointer);
             } else {
                 // NOTE: Uninline.
                 OnCancelButtonClick();
@@ -493,7 +493,7 @@ void CScreenKeymaps::HandleKeyDown(BYTE nKey)
         if (GetTopPopup() == NULL) {
             if (m_nSelectedKeymapIndex >= 0) {
                 SelectKeymap(-1);
-                OnKeymapMouseMove(g_pBaldurChitin->m_ptPointer);
+                sub_63A660(g_pBaldurChitin->m_ptPointer);
             } else {
                 // NOTE: Uninline.
                 OnDoneButtonClick();
@@ -562,7 +562,7 @@ void CScreenKeymaps::HandleKeyDown(BYTE nKey)
     } else if ((nKey >= 'A' && nKey <= 'Z') || (nKey >= '0' && nKey <= '9')) {
         nKey = nKey;
     } else {
-        nKey = g_pBaldurChitin->GetObjectGame()->CharToVirtualKey(g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(nKey));
+        nKey = g_pBaldurChitin->GetObjectGame()->sub_5A97D0(g_pBaldurChitin->GetObjectGame()->sub_5A9780(nKey));
         if (nKey < 0) {
             return;
         }
@@ -597,7 +597,7 @@ void CScreenKeymaps::HandleKeyDown(BYTE nKey)
     if (conflict == -1) {
         SetKeymap(m_nPage, m_nSelectedKeymapIndex, nKey, m_bSystemKeyCtrl);
         SelectKeymap(-1);
-        OnKeymapMouseMove(g_pBaldurChitin->m_ptPointer);
+        sub_63A660(g_pBaldurChitin->m_ptPointer);
         return;
     }
 
@@ -606,9 +606,9 @@ void CScreenKeymaps::HandleKeyDown(BYTE nKey)
 
     CString sValue;
     if (m_bSystemKeyCtrl) {
-        sValue.Format("%s%c", FetchString(24638), g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(nKey));
+        sValue.Format("%s%c", FetchString(24638), g_pBaldurChitin->GetObjectGame()->sub_5A9780(nKey));
     } else {
-        sValue.Format("%c", g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(nKey));
+        sValue.Format("%c", g_pBaldurChitin->GetObjectGame()->sub_5A9780(nKey));
     }
 
     g_pBaldurChitin->GetTlkTable().SetToken(CString("KEY"), sValue);
@@ -653,7 +653,7 @@ void CScreenKeymaps::OnLButtonDown(CPoint pt)
             }
         }
 
-        OnKeymapMouseClick(pt);
+        sub_63A7A0(pt);
     }
 }
 
@@ -663,7 +663,7 @@ void CScreenKeymaps::OnMouseMove(CPoint pt)
     m_cUIManager.OnMouseMove(pt);
 
     CUIPanel* pPanel = m_cUIManager.GetPanel(0);
-    OnKeymapMouseClick(pt - pPanel->m_ptOrigin);
+    sub_63A7A0(pt - pPanel->m_ptOrigin);
 }
 
 // 0x639980
@@ -721,7 +721,7 @@ void CScreenKeymaps::UpdateMainPanel()
 
         CUIControlLabel* pKeyLabel = static_cast<CUIControlLabel*>(pPanel->GetControl(index + 0x10000005));
         if (dword_8B3FE0[m_nPage][index] >= 0) {
-            int ch = g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(m_pKeymap[dword_8B3FE0[m_nPage][index]]);
+            int ch = g_pBaldurChitin->GetObjectGame()->sub_5A9780(m_pKeymap[dword_8B3FE0[m_nPage][index]]);
             if (ch > 0) {
                 if (m_pKeymapFlags[dword_8B3FE0[m_nPage][index]] == 1) {
                     sValue.Format("%s%c", FetchString(24638), ch);
@@ -746,7 +746,7 @@ void CScreenKeymaps::UpdateMainPanel()
         }
     }
 
-    OnKeymapMouseMove(g_pBaldurChitin->m_ptPointer);
+    sub_63A660(g_pBaldurChitin->m_ptPointer);
 }
 
 // 0x639DC0
@@ -764,9 +764,9 @@ void CScreenKeymaps::StartKeymaps()
 }
 
 // 0x639E70
-void CScreenKeymaps::OnDoneButtonClick()
+void CScreenKeymaps::sub_639E70()
 {
-    CSingleLock lock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock lock(&(GetManager()->field_36), FALSE);
     lock.Lock(INFINITE);
 
     CUIPanel* pPanel = GetTopPopup();
@@ -1013,7 +1013,7 @@ void CScreenKeymaps::OnPageButtonClick(INT nButton)
 void CScreenKeymaps::OnDefaultButtonClick()
 {
     if (m_nSelectedKeymapIndex >= 0) {
-        BYTE nKey = g_pBaldurChitin->GetObjectGame()->GetVirtualKeyByIndex(CScreenKeymaps::dword_8B3FE0[m_nPage][m_nSelectedKeymapIndex]);
+        BYTE nKey = g_pBaldurChitin->GetObjectGame()->sub_5A9830(CScreenKeymaps::dword_8B3FE0[m_nPage][m_nSelectedKeymapIndex]);
         if (nKey != 0) {
             HandleKeyDown(nKey);
         } else {
@@ -1066,7 +1066,7 @@ void CScreenKeymaps::OnErrorButtonClick(INT nButton)
 {
     int index;
 
-    CSingleLock lock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
     lock.Lock(INFINITE);
 
     switch (m_dwErrorTextId) {
@@ -1104,7 +1104,7 @@ void CScreenKeymaps::OnErrorButtonClick(INT nButton)
             DismissPopup();
 
             for (index = 0; index < CINFGAME_KEYMAP_SIZE; index++) {
-                m_pKeymap[index] = g_pBaldurChitin->GetObjectGame()->GetVirtualKeyByIndex(index);
+                m_pKeymap[index] = g_pBaldurChitin->GetObjectGame()->sub_5A9830(index);
             }
 
             UpdateMainPanel();
@@ -1118,7 +1118,7 @@ void CScreenKeymaps::OnErrorButtonClick(INT nButton)
     lock.Unlock();
 
     SelectKeymap(-1);
-    OnKeymapMouseMove(g_pBaldurChitin->m_ptPointer);
+    sub_63A660(g_pBaldurChitin->m_ptPointer);
 }
 
 // 0x63A640
@@ -1131,7 +1131,7 @@ void CScreenKeymaps::CancelEngine()
 }
 
 // 0x63A660
-void CScreenKeymaps::OnKeymapMouseMove(CPoint pt)
+void CScreenKeymaps::sub_63A660(CPoint pt)
 {
     if (GetTopPopup() != NULL) {
         return;
@@ -1166,7 +1166,7 @@ void CScreenKeymaps::OnKeymapMouseMove(CPoint pt)
 }
 
 // 0x63A7A0
-void CScreenKeymaps::OnKeymapMouseClick(CPoint pt)
+void CScreenKeymaps::sub_63A7A0(CPoint pt)
 {
     if (GetTopPopup() != NULL) {
         return;
@@ -1218,9 +1218,9 @@ void CScreenKeymaps::SetKeymap(INT nPage, INT nIndex, BYTE nKey, BYTE nKeyFlag)
     if (nKeyFlag != 0) {
         sKey.Format("%s%c",
             FetchString(24638),
-            g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(m_pKeymap[dword_8B3FE0[nPage][nIndex]]));
+            g_pBaldurChitin->GetObjectGame()->sub_5A9780(m_pKeymap[dword_8B3FE0[nPage][nIndex]]));
     } else {
-        sKey.Format("%c", g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(m_pKeymap[dword_8B3FE0[nPage][nIndex]]));
+        sKey.Format("%c", g_pBaldurChitin->GetObjectGame()->sub_5A9780(m_pKeymap[dword_8B3FE0[nPage][nIndex]]));
     }
 
     pLabel->SetText(sKey);
@@ -1266,7 +1266,7 @@ void CUIControlButtonKeymap::OnLButtonClick(CPoint pt)
     // __LINE__: 2107
     UTIL_ASSERT(pKeymaps != NULL);
 
-    CSingleLock lock(&(pKeymaps->GetManager()->pm_field_36), FALSE);
+    CSingleLock lock(&(pKeymaps->GetManager()->field_36), FALSE);
     lock.Lock(INFINITE);
 
     switch (m_pPanel->m_nID) {
@@ -1300,10 +1300,3 @@ void CUIControlButtonKeymap::OnLButtonClick(CPoint pt)
 
     lock.Unlock();
 }
-
-// Phase 1-2: Scaffold functions
-// 0x63ABE0
-void FUN_0063abe0() {
-    // TODO: Incomplete.
-}
-

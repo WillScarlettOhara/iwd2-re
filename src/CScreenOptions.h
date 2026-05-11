@@ -1,11 +1,6 @@
 #ifndef CSCREENOPTIONS_H_
 #define CSCREENOPTIONS_H_
 
-// ============================================================================
-// CScreenOptions - Game settings and options
-//
-// Address: varies by method
-// ============================================================================
 #include "CBaldurEngine.h"
 
 #include "CKeyInfo.h"

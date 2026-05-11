@@ -1,11 +1,6 @@
 #ifndef CGAMEEFFECT_H_
 #define CGAMEEFFECT_H_
 
-// ============================================================================
-// CGameEffect - Magical/physical effects - buffs, debuffs, damage over time
-//
-// Address: varies by method
-// ============================================================================
 #include "mfc.h"
 
 #include <set>
@@ -263,7 +258,7 @@ public:
     /* 003C */ LONG m_saveMod;
     /* 0040 */ DWORD m_special;
     /* 0044 */ DWORD m_school;
-    /* 0048 */ int m_JeremyIsAnIdiot;
+    /* 0048 */ int field_48;
     /* 004C */ DWORD m_minLevel;
     /* 0050 */ DWORD m_maxLevel;
     /* 0054 */ DWORD m_flags;
@@ -314,12 +309,12 @@ public:
     void CopyFromBase(CGameEffectBase* pBase);
     void SetEffectID(WORD effectID);
     void SetDWFlags(DWORD dwFlags);
-    void SetSelfApply(BOOL bEnable);
-    void SetTimingModeFlag(BOOL bEnabled);
+    void sub_493400(BOOL a1);
+    void sub_594020(BOOL bEnabled);
     void SetSource(const CPoint& pt);
     void SetSourceId(LONG sourceID);
 
-    void ClampACDexBonusMinimum(CGameSprite* pSprite, INT nValue);
+    void sub_4C3F30(CGameSprite* pSprite, INT nValue);
     void AdjustResistMagic(CGameSprite* pSprite, SHORT nValue);
     void AdjustTHAC0(CGameSprite* pSprite, SHORT nValue);
     void AdjustSTR(CGameSprite* pSprite, INT nValue);
@@ -335,16 +330,16 @@ public:
     void SetSpellState(CGameSprite* pSprite, DWORD dwSpellState);
     static void FeedBackImmuneToResource(CGameSprite* pSprite, const CResRef& res);
     static void ClearItemEffect(ITEM_EFFECT* itemEffect, WORD newEffectId);
-    static void DestroyItemInSlot(CGameSprite* pSprite, INT slotNum);
+    static void sub_4B8730(CGameSprite* pSprite, INT slotNum);
 
     /* 010C */ LONG m_sourceID;
     /* 0110 */ BOOL m_done;
     /* 0114 */ BOOL m_forceRepass;
-    /* 0118 */ DWORD m_durationTemp;
+    /* 0118 */ int field_118;
     /* 011C */ BOOL m_compareIdOnly;
     /* 0120 */ BOOL m_compareIdAndFlagsOnly;
     /* 0124 */ CSound m_sound;
-    /* 0188 */ LONG m_sourceTarget;
+    /* 0188 */ int field_188;
 };
 
 class CGameEffectAC : public CGameEffect {
@@ -447,7 +442,7 @@ public:
     CGameEffectDamage(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target);
     CGameEffect* Copy() override;
 
-    void RemoveStatusOnDamage(CGameSprite* pSprite);
+    void sub_4A7750(CGameSprite* pSprite);
 };
 
 class CGameEffectDeath : public CGameEffect {
@@ -458,7 +453,7 @@ public:
     CGameEffect* Copy() override;
     void DisplayString(CGameSprite* pSprite) override;
 
-    /* 018C */ int m_nDeathFlags;
+    /* 018C */ int field_18C;
 };
 
 class CGameEffectDefrost : public CGameEffect {
@@ -664,7 +659,7 @@ public:
     CGameEffect* Copy() override;
     BOOL ApplyEffect(CGameSprite* pSprite) override;
 
-    BOOL ResolveStunDuration(CGameSprite* pSprite);
+    BOOL sub_4B2680(CGameSprite* pSprite);
 };
 
 class CGameEffectUnstun : public CGameEffect {
@@ -822,8 +817,8 @@ public:
     CGameEffectSummon(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target);
     CGameEffect* Copy() override;
 
-    /* 018C */ int m_nSummonState;
-    /* 0190 */ int m_nSummonSide;
+    /* 018C */ int field_18C;
+    /* 0190 */ int field_190;
 };
 
 class CGameEffectSkillUnsummon : public CGameEffect {
@@ -910,10 +905,10 @@ public:
     CGameEffect* Copy() override;
     BOOL ApplyEffect(CGameSprite* pSprite) override;
 
-    void ApplyDiseaseBlindingFever(CGameSprite* pSprite);
-    void ApplyDiseaseFeverSlow(CGameSprite* pSprite);
-    void ApplyDiseaseMoldTouch(CGameSprite* pSprite);
-    void ScheduleDiseaseRecurrence(CGameSprite* pSprite);
+    void sub_4B5BF0(CGameSprite* pSprite);
+    void sub_4B5D90(CGameSprite* pSprite);
+    void sub_4B5E50(CGameSprite* pSprite);
+    void sub_4B5FF0(CGameSprite* pSprite);
 };
 
 class CGameEffectCureDisease : public CGameEffect {
@@ -1914,7 +1909,7 @@ public:
     CGameEffectDisguise(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target);
     CGameEffect* Copy() override;
 
-    /* 018C */ int m_nDisguiseValue;
+    /* 018C */ int field_18C;
 };
 
 class CGameEffectHeroicInspiration : public CGameEffect {
@@ -1995,15 +1990,15 @@ public:
     /* 0004 */ void AIUpdate(CGameSprite* pSprite, LONG deltaT) override;
     /* 000C */ virtual void ApplyEffect(CGameSprite* pSprite, int index) = 0;
 
-    /* 0018 */ int nm_field_18;
-    /* 001C */ int nm_field_1C;
-    /* 0020 */ int nm_field_20;
-    /* 0024 */ int nm_field_24;
-    /* 0028 */ unsigned char bm_field_28;
-    /* 0029 */ RESREF sm_field_29;
-    /* 0031 */ unsigned char bm_field_31;
-    /* 0032 */ unsigned char bm_field_32;
-    /* 0033 */ unsigned char bm_field_33;
+    /* 0018 */ int field_18;
+    /* 001C */ int field_1C;
+    /* 0020 */ int field_20;
+    /* 0024 */ int field_24;
+    /* 0028 */ unsigned char field_28;
+    /* 0029 */ RESREF field_29;
+    /* 0031 */ unsigned char field_31;
+    /* 0032 */ unsigned char field_32;
+    /* 0033 */ unsigned char field_33;
 };
 
 class CPersistantEffect84C4B4 : public CPersistantEffect84C4A4 {
@@ -2014,10 +2009,10 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0034 */ std::string nm_field_34;
-    /* 0044 */ std::string nm_field_44;
-    /* 0054 */ int nfield_54;
-    /* 0058 */ std::set<void*> nfield_58;
+    /* 0034 */ std::string field_34;
+    /* 0044 */ std::string field_44;
+    /* 0054 */ int field_54;
+    /* 0058 */ std::set<void*> field_58;
 };
 
 class CPersistantEffect84C4C4 : public CPersistantEffect84C4A4 {
@@ -2028,8 +2023,8 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0034 */ std::string nm_field_34;
-    /* 0044 */ std::string nm_field_44;
+    /* 0034 */ std::string field_34;
+    /* 0044 */ std::string field_44;
 };
 
 class CPersistantEffect84C420 : public CPersistantEffect84C4A4 {
@@ -2039,8 +2034,8 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0034 */ int nm_field_34;
-    /* 0038 */ int nm_field_38;
+    /* 0034 */ int field_34;
+    /* 0038 */ int field_38;
 };
 
 class CPersistantEffect84C494 : public CPersistantEffect84C4A4 {
@@ -2050,7 +2045,7 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0034 */ int nm_field_34;
+    /* 0034 */ int field_34;
 };
 
 class CPersistantEffect84C4D4 : public CPersistantEffect84C4A4 {
@@ -2061,10 +2056,10 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0034 */ std::string nm_field_34;
-    /* 0044 */ std::string nm_field_44;
-    /* 0054 */ int nfield_54;
-    /* 0058 */ std::set<void*> nfield_58;
+    /* 0034 */ std::string field_34;
+    /* 0044 */ std::string field_44;
+    /* 0054 */ int field_54;
+    /* 0058 */ std::set<void*> field_58;
 };
 
 class CPersistantEffect84C484 : public CPersistantEffect84C4B4 {
@@ -2075,7 +2070,7 @@ public:
     /* 0008 */ CPersistantEffect* Copy() override;
     /* 000C */ void ApplyEffect(CGameSprite* pSprite, int index) override;
 
-    /* 0068 */ int nfield_68;
+    /* 0068 */ int field_68;
 };
 
 #endif /* CGAMEEFFECT_H_ */

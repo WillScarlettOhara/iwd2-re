@@ -629,10 +629,3 @@ BOOL CGameAnimationTypeAmbientStatic::IsInvulnerable()
 {
     return m_bInvulnerable;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x6A6170
-void FUN_006a6170() {
-    // TODO: Incomplete.
-}
-

@@ -190,15 +190,15 @@ CSize CWorldMap::GetMapSize(DWORD nMap)
     // NOTE: Uninline.
     CWorldMapData* pData = GetMap(nMap);
 
-    return CSize(pData->m_nWidth * (g_pBaldurChitin->nm_field_4A28 ? 2 : 1),
-        pData->m_nHeight * (g_pBaldurChitin->nm_field_4A28 ? 2 : 1));
+    return CSize(pData->m_nWidth * (g_pBaldurChitin->field_4A28 ? 2 : 1),
+        pData->m_nHeight * (g_pBaldurChitin->field_4A28 ? 2 : 1));
 }
 
 // 0x559540
 CSize CWorldMap::GetAreaPosition(CWorldMapArea* pArea)
 {
-    return CSize(pArea->m_mapLocationX * (g_pBaldurChitin->nm_field_4A28 ? 2 : 1),
-        pArea->m_mapLocationY * (g_pBaldurChitin->nm_field_4A28 ? 2 : 1));
+    return CSize(pArea->m_mapLocationX * (g_pBaldurChitin->field_4A28 ? 2 : 1),
+        pArea->m_mapLocationY * (g_pBaldurChitin->field_4A28 ? 2 : 1));
 }
 
 // 0x559580
@@ -377,16 +377,16 @@ void CWorldMap::EnableArea(DWORD nMap, const CResRef& cResArea, BOOL bEnable)
 }
 
 // 0x55A3A0
-DWORD CWorldMap::GetCurrentAreaIndex()
+DWORD CWorldMap::sub_55A3A0()
 {
     CResRef cResArea = g_pBaldurChitin->GetObjectGame()->GetVisibleArea()->m_resRef;
     CString sResArea;
     cResArea.CopyToString(sResArea);
-    return GetAreaIndex(sResArea);
+    return sub_55A450(sResArea);
 }
 
 // 0x55A450
-DWORD CWorldMap::GetAreaIndex(CString sResArea)
+DWORD CWorldMap::sub_55A450(CString sResArea)
 {
     if (sResArea.GetLength() <= 3
         || sResArea[0] == '\0'
@@ -434,95 +434,3 @@ DWORD CWorldMapFile::GetDataSize()
 
     return nSize;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x558F40
-void FUN_00558f40() {
-    // TODO: Incomplete.
-}
-
-// 0x559B40
-void FUN_00559b40() {
-    // TODO: Incomplete.
-}
-
-// 0x55A7A0
-void FUN_0055a7a0() {
-    // TODO: Incomplete.
-}
-
-// 0x55A890
-void FUN_0055a890() {
-    // TODO: Incomplete.
-}
-
-// 0x55AB20
-void FUN_0055ab20() {
-    // TODO: Incomplete.
-}
-
-// 0x55AB80
-void FUN_0055ab80() {
-    // TODO: Incomplete.
-}
-
-// 0x55ACC0
-void FUN_0055acc0() {
-    // TODO: Incomplete.
-}
-
-// 0x55AD90
-void FUN_0055ad90() {
-    // TODO: Incomplete.
-}
-
-// 0x55AF40
-void FUN_0055af40() {
-    // TODO: Incomplete.
-}
-
-// 0x55B010
-void FUN_0055b010() {
-    // TODO: Incomplete.
-}
-
-// 0x55B1B0
-void FUN_0055b1b0() {
-    // TODO: Incomplete.
-}
-
-// 0x55B520
-void FUN_0055b520() {
-    // TODO: Incomplete.
-}
-
-// 0x55B590
-void FUN_0055b590() {
-    // TODO: Incomplete.
-}
-
-// 0x55B5E0
-void FUN_0055b5e0() {
-    // TODO: Incomplete.
-}
-
-// 0x55B830
-void FUN_0055b830() {
-    // TODO: Incomplete.
-}
-
-// 0x55B900
-void FUN_0055b900() {
-    // TODO: Incomplete.
-}
-
-// 0x55B970
-void FUN_0055b970() {
-    // TODO: Incomplete.
-}
-
-// 0x55BA60
-void FUN_0055ba60() {
-    // TODO: Incomplete.
-}
-

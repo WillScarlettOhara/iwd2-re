@@ -175,10 +175,3 @@ const CString& CAITrigger::GetString2() const
 {
     return m_string2;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4664E0
-void FUN_004664e0() {
-    // TODO: Incomplete.
-}
-

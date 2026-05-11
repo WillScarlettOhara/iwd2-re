@@ -8,12 +8,12 @@
 // 0x47A730
 CGameAreaNotes::CGameAreaNotes()
 {
-    nfield_70 = 0;
-    nfield_74 = 0;
+    field_70 = 0;
+    field_74 = 0;
     m_pMapControl = NULL;
-    bm_field_8C = 0;
-    m_nCurrentIcon = 0;
-    m_bAddingNote = 0;
+    field_8C = 0;
+    field_8D = 0;
+    field_8E = 0;
     m_bInitialized = FALSE;
     m_areaNoteGrid = NULL;
     m_pControlInfo = NULL;
@@ -41,7 +41,7 @@ CGameAreaNotes::~CGameAreaNotes()
         CUIControlButtonMapAreaMap* pMapControl = static_cast<CUIControlButtonMapAreaMap*>(pPanel->GetControl(2));
         if (pMapControl != NULL) {
             // NOTE: Uninline.
-            pMapControl->pfield_7BE.RemoveAll();
+            pMapControl->field_7BE.RemoveAll();
         }
     }
 
@@ -59,7 +59,7 @@ CGameAreaNotes::~CGameAreaNotes()
 void CGameAreaNotes::IntrnlInitialize()
 {
     if (!m_bInitialized) {
-        m_nCurrentIcon = 0;
+        field_8D = 0;
 
         CVidCell vcFlag(CResRef("FLAG1"), FALSE);
 
@@ -134,14 +134,14 @@ void CGameAreaNotes::IntrnlInitialize()
                         m_areaNoteList.RemoveAt(posOld);
                     }
                 } else {
-                    m_nCurrentIcon = (m_cAreaNote.m_dwflags >> 16) & 0xFF;
+                    field_8D = (m_cAreaNote.m_dwflags >> 16) & 0xFF;
                     AddButton(sq);
                     pNote->m_id = m_cAreaNote.m_id;
                 }
             }
         }
     } else {
-        if (m_bAddingNote) {
+        if (field_8E) {
             if (m_areaNoteList.GetCount() > 0) {
                 CPoint sq;
                 POSITION pos = m_areaNoteList.GetHeadPosition();
@@ -152,7 +152,7 @@ void CGameAreaNotes::IntrnlInitialize()
                         sq,
                         TRUE);
                     if (!IsANoteThere(sq)) {
-                        m_nCurrentIcon = (m_cAreaNote.m_dwflags >> 16) & 0xFF;
+                        field_8D = (m_cAreaNote.m_dwflags >> 16) & 0xFF;
                         AddButton(sq);
                         pNote->m_id = m_cAreaNote.m_id;
                     }
@@ -160,7 +160,7 @@ void CGameAreaNotes::IntrnlInitialize()
                 }
             }
         }
-        m_bAddingNote = 0;
+        field_8E = 0;
     }
 }
 
@@ -216,7 +216,7 @@ BOOL CGameAreaNotes::AddButton(CPoint pt)
     CUIControlButtonMapNote* pNoteControl = static_cast<CUIControlButtonMapNote*>(pPanel->GetControl(pControlInfo->base.nID));
     pNoteControl->m_areaResRef = m_rArea;
     pNoteControl->SetInactiveRender(FALSE);
-    pNoteControl->m_cVidCell.SequenceSet(min(m_nCurrentIcon, 7));
+    pNoteControl->m_cVidCell.SequenceSet(min(field_8D, 7));
     pNoteControl->m_ptWorld = pMapControl->ConvertScreenToWorldCoords(pNoteControl->m_ptOrigin);
     m_cAreaNote.m_id = pControlInfo->base.nID;
     m_areaNoteGrid[pt.x][pt.y] = pControlInfo->base.nID;
@@ -245,18 +245,18 @@ void CGameAreaNotes::Add()
         m_cAreaNote.m_startX,
         m_cAreaNote.m_startY,
         m_szBuffer,
-        GetNoteIconIndex() << 16,
+        sub_47B140() << 16,
         -1);
 }
 
 // 0x47B140
-BYTE CGameAreaNotes::GetNoteIconIndex()
+BYTE CGameAreaNotes::sub_47B140()
 {
-    return m_nCurrentIcon;
+    return field_8D;
 }
 
 // 0x47B150
-BOOL CGameAreaNotes::UpdateNote(WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef)
+BOOL CGameAreaNotes::sub_47B150(WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef)
 {
     STR_RES strRes;
 
@@ -405,20 +405,3 @@ BOOL CGameAreaNotes::IsANoteThere(const CPoint& pt)
 {
     return m_areaNoteGrid[pt.x][pt.y] != -1;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x47A5A0
-void FUN_0047a5a0() {
-    // TODO: Incomplete.
-}
-
-// 0x47A5C0
-void FUN_0047a5c0() {
-    // TODO: Incomplete.
-}
-
-// 0x47B330
-void FUN_0047b330() {
-    // TODO: Incomplete.
-}
-

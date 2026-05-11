@@ -1,11 +1,6 @@
 #ifndef CGAMEAREA_H_
 #define CGAMEAREA_H_
 
-// ============================================================================
-// CGameArea - Area/level controller - objects, animations, sounds
-//
-// Address: varies by method
-// ============================================================================
 #include "mfc.h"
 
 #include "CGameAreaNotes.h"
@@ -50,10 +45,10 @@ public:
     WORD m_fogProbability;
     WORD m_lightningProbability;
     WORD m_windSpeed;
-    DWORD wm_field_4C;
-    DWORD nfield_50;
-    DWORD nfield_54;
-    DWORD nfield_58;
+    DWORD field_4C;
+    DWORD field_50;
+    DWORD field_54;
+    DWORD field_58;
 };
 
 class CAreaSoundsAndMusic {
@@ -214,9 +209,10 @@ public:
     BOOL SetSong(SHORT slot, BYTE song);
     BYTE GetSong(SHORT slot);
     void PlaySong(SHORT slot, DWORD flags);
-    void LoadLocalVariables();
-
-    void SaveMusicPosition();
+    void sub_47A060();
+    int ExitSpawn();
+    int EnterSpawn();
+    void sub_47A190();
 
     CAreaFileHeader* GetHeader();
     CInfinity* GetInfinity();
@@ -243,15 +239,15 @@ public:
     /* 01EF */ BOOLEAN m_bAreaLoaded;
     /* 01F0 */ CResRef m_resRef;
     /* 01F8 */ CResWED* m_pResWED;
-    /* 01FC */ CRITICAL_SECTION pm_field_1FC;
-    /* 0214 */ CRITICAL_SECTION pm_field_214;
+    /* 01FC */ CRITICAL_SECTION field_1FC;
+    /* 0214 */ CRITICAL_SECTION field_214;
     /* 022C */ INT m_nListManipulationThreadCounter;
     /* 0230 */ DWORD m_ListManipulationThreadId;
     /* 0234 */ CInfGame* m_pGame;
     /* 0238 */ LONG m_nScrollState;
     /* 023C */ LONG m_nKeyScrollState;
     /* 0240 */ BOOLEAN m_bTravelSquare;
-    /* 0241 */ unsigned char bm_field_241;
+    /* 0241 */ unsigned char field_241;
     /* 0242 */ LONG m_iPickedOnDown;
     /* 0246 */ LONG m_iPicked;
     /* 024A */ LONG m_iPickedTarget;
@@ -264,7 +260,7 @@ public:
     /* 03D6 */ CObjectMarker* m_pObjectMarker;
     /* 03DA */ BYTE m_firstRender;
     /* 03DC */ CRect m_selectSquare;
-    /* 03EC */ short wm_field_3EC;
+    /* 03EC */ short field_3EC;
     /* 03EE */ CPoint m_moveDest;
     /* 03F6 */ BOOL m_groupMove;
     /* 03FA */ BYTE m_terrainTable[16];
@@ -277,8 +273,8 @@ public:
     /* 042E */ DWORD m_dwLastProgressMsgTickCount;
     /* 0432 */ BYTE m_nRandomMonster;
     /* 0434 */ SHORT m_nVisibleMonster;
-    /* 0436 */ unsigned char bm_field_436;
-    /* 0438 */ int nm_field_438;
+    /* 0436 */ unsigned char field_436;
+    /* 0438 */ int field_438;
     /* 043C */ CGameAreaNotes m_cGameAreaNotes;
     /* 04CC */ CInfinity m_cInfinity;
     /* 076C */ CSearchBitmap m_search;
@@ -303,13 +299,13 @@ public:
     /* 0AC6 */ CPoint m_ptOldViewPos;
     /* 0ACE */ CVariableHash m_variables;
     /* 0ADA */ CNamedCreatureVariableHash m_namedCreatures;
-    /* 0AE6 */ unsigned char bfield_AE6;
+    /* 0AE6 */ unsigned char field_AE6;
     /* 0AE8 */ SHORT m_nCurrentSong;
     /* 0AEA */ INT m_nBattleSongCounter;
     /* 0AEE */ CMemINI INIFile;
-    /* 0B0E */ int nfield_B0E;
+    /* 0B0E */ int field_B0E;
     /* 0B12 */ CSpawnFile* mpSpawner;
-    /* 0B16 */ BOOL bfield_B16;
+    /* 0B16 */ BOOL field_B16;
 };
 
 class CAreaFile : public CResHelper<CResArea, 1010> {

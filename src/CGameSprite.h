@@ -14,26 +14,10 @@
 #include "CMarker.h"
 #include "CResRef.h"
 #include "CSound.h"
+#include "CStrRes.h"
 #include "CVidBitmap.h"
 #include "CVidCell.h"
-
-// ============================================================================
-// CGameSprite - Player and creature class
-//
-// Represents all living entities in the game: player characters, NPCs,
-// monsters, animals. This is the most complex class in the engine.
-//
-// Key subsystems:
-// - Animation: CGameAnimation (BAM sprite rendering)
-// - Derived stats: CDerivedStats (calculated from base stats + effects)
-// - Equipment: CGameSpriteEquipment (worn items)
-// - Spells: CGameSpriteSpells (memorized, innate, bard songs)
-// - Effects: CGameEffectList (ongoing magical effects)
-// - Actions: CGameAIBase action queue
-// - Modal abilities: stealth, detect traps, bard song, etc.
-//
-// Address: varies by method
-// ============================================================================
+#include "FileFormat.h"
 
 // SEQUENCE.IDS
 
@@ -184,8 +168,8 @@ class CVisibilityMap;
 class IcewindCVisualEffect;
 
 typedef struct {
-    CString m_sSoundRes;
-    INT m_nFrame;
+    CString field_0;
+    INT field_4;
 } CGameSpriteSoundEntry;
 
 class CGameSpriteLastUpdate {
@@ -453,7 +437,7 @@ public:
     void AIUpdateWalk();
     void SetPath(LONG* pPath, SHORT nPath);
     BOOL ClearBumpPath(const CPoint& start, const CPoint& goal);
-    BOOL IsValidActionState();
+    BOOL sub_6FB440();
     void AIUpdateFly();
     void ChangeDirection();
     void CheckIfVisible();
@@ -520,8 +504,8 @@ public:
     void ReadySpell(SHORT buttonNum, INT nType, BOOLEAN firstCall);
     void ReadyItem(SHORT buttonNum, BOOLEAN firstCall);
     void ReadyOffInternalList(CButtonData buttonData, BOOLEAN firstCall);
-    void UseSpellFromButton(CButtonData buttonData, BOOLEAN firstCall);
-    void UseItemFromButton(CButtonData buttonData, BOOLEAN firstCall);
+    void sub_71A0E0(CButtonData buttonData, BOOLEAN firstCall);
+    void sub_71A550(CButtonData buttonData, BOOLEAN firstCall);
     void CheckToolTipItem(BYTE buttonNum);
     CItem* GetQuickItem(BYTE buttonNum);
     void UnequipAll(BOOL a1);
@@ -545,10 +529,10 @@ public:
     void DisplayTextRef(STRREF nameRef, STRREF textRef, COLORREF nameColor, COLORREF textColor);
     void GetNumInventoryPersonalSlots(INT& nUsedSlots, INT& nTotalSlots);
     void SetModalState(BYTE modalState, BOOL bUpdateToolbar);
-    BOOL IsActionAllowed();
+    BOOL sub_7202E0();
     void CheckSequence(BYTE& sequence);
-    void LoadAnimationSounds();
-    void LoadAnimationSoundEntry(CMemINIValue* a1, CMemINIValue* a2);
+    void sub_7204C0();
+    void sub_720B50(CMemINIValue* a1, CMemINIValue* a2);
     SHORT FindItemBags(const CString& sName, LONG number, BOOL checkForIdentified);
     SHORT TakeItemBags(const CString& sName, LONG number, SHORT slotNum);
     BOOL HaveUnexportableItems();
@@ -559,7 +543,7 @@ public:
     INT sub_723F60();
     void sub_72DE60();
     void sub_71E760(CDerivedStats& DStats, int a2);
-    int GetBaseAttackBonus();
+    int sub_71F6E0();
     const CString& GetName();
     STRREF GetNameRef();
     void PlaySound(const CResRef& res);
@@ -574,18 +558,18 @@ public:
     void ClearDialogActions();
     BOOL HandleEffects();
     void FeedBack(WORD nFeedBackId, LONG a2, LONG a3, LONG a4, LONG a5, LONG a6, LONG a7);
-    BOOLEAN CheckWeaponAmmunition(BOOL a1);
+    BOOLEAN sub_737910(BOOL a1);
     SHORT GetCriticalHitBonus();
-    SHORT GetTargetACModForDamageType(CGameSprite* target, CItem* curWeapon, const ITEM_ABILITY* curAttack);
-    SHORT GetRacialLightTHAC0Mod();
-    SHORT GetRacialTHAC0ModVsTarget(CGameSprite* target);
-    SHORT GetRacialWeaponTHAC0Mod(CItem* curWeapon, const ITEM_ABILITY* curAttack);
+    SHORT sub_73C6A0(CGameSprite* target, CItem* curWeapon, const ITEM_ABILITY* curAttack);
+    SHORT sub_73C7E0();
+    SHORT sub_73C8C0(CGameSprite* target);
+    SHORT sub_73CA20(CItem* curWeapon, const ITEM_ABILITY* curAttack);
     SHORT sub_73CAD0();
     SHORT sub_73CAE0(CItem* curWeapon, const ITEM_ABILITY* curAttack);
-    SHORT GetAbilityAttackMod(CItem* curWeapon, const ITEM_ABILITY* curAttack);
-    SHORT GetWeaponTHAC0Bonus(CItem* curWeapon, const ITEM_ABILITY* curAttack);
-    SHORT GetBaseTHAC0();
-    SHORT GetWeaponProficiencyTHAC0Mod(CItem* curWeapon);
+    SHORT sub_73CB10(CItem* curWeapon, const ITEM_ABILITY* curAttack);
+    SHORT sub_73CC40(CItem* curWeapon, const ITEM_ABILITY* curAttack);
+    SHORT sub_73D420();
+    SHORT sub_73D440(CItem* curWeapon);
     SHORT MoveToPoint();
     SHORT OneSwing();
     SHORT Recoil();
@@ -607,14 +591,14 @@ public:
     SHORT EquipMostDamagingMelee();
     const CAIObjectType& GetLiveAIType();
     SHORT GetCasterLevel(CSpell* pSpell, BYTE nClass, DWORD nSpecialization);
-    SHORT SavePositionToBaseStats();
+    SHORT sub_75F240();
     SHORT sub_75F3D0(int a1);
     SHORT SetAtOffset(DWORD stat, DWORD value, BOOL modify);
     SHORT ForceHide(CGameSprite* pSprite);
-    SHORT SetVisibilityRange(int a1);
+    SHORT sub_7615F0(int a1);
     void sub_761650();
     SHORT DropItem(CItem* pItem);
-    void RefreshEffects();
+    void sub_761990();
     SHORT PlayBardSong();
     BOOL HasClassMask(DWORD dwMask);
     INT GetClassLevel(INT iClassType);
@@ -623,9 +607,9 @@ public:
     void SetFeatValue(UINT nFeatNumber, INT iFeatValue);
     INT GetFeatValue(UINT nFeatNumber);
     INT GetMaxFeatValue(UINT nFeatNumber);
-    BOOL HasFeat(UINT nFeatNumber);
-    BOOL MeetFeatRequirements(UINT nFeatNumber, INT a2);
-    BOOL CanUpgradeFeat(UINT nFeatNumber, INT a2);
+    BOOL sub_763150(UINT nFeatNumber);
+    BOOL sub_763200(UINT nFeatNumber, INT a2);
+    BOOL sub_763A40(UINT nFeatNumber, INT a2);
     int GetExtraFeats(BYTE nClass);
     int GetExtraSkillPoints(BYTE nClass);
     void SetSkillValue(UINT iSkillNumber, INT iSkillValue);
@@ -641,12 +625,12 @@ public:
     void MoveOntoArea(CGameArea* pArea, const CPoint& dest, SHORT facingDirection);
 
     void SetResRef(const CResRef& resRef);
-    void SetBHiding(int a1);
-    int GetBHiding();
+    void sub_453160(int a1);
+    int sub_453170();
     SHORT GetSequence();
     CCreatureFileHeader* GetBaseStats();
     CDerivedStats* GetDerivedStats();
-    void SetField562C();
+    void sub_4531B0();
     CGameEffectList* GetEquipedEffectList();
     CGameEffectList* GetTimedEffectList();
     void SetStealthGreyOut(LONG greyOut);
@@ -655,12 +639,12 @@ public:
     CGameSpriteSpellList* GetInnateSpells();
     CGameSpriteSpellList* GetSongs();
     CGameSpriteSpellList* GetShapeshifts();
-    DWORD GetField_80C();
-    INT GetCustomButtonValue(BYTE buttonNum);
-    void SetCustomButtonValue(BYTE buttonNum, int a2);
+    DWORD sub_5940D0();
+    INT sub_5940E0(BYTE buttonNum);
+    void sub_594120(BYTE buttonNum, int a2);
     BYTE GetModalState();
 
-    int GetField70F2();
+    int sub_45B710();
     SHORT GetDirection(const CPoint& target);
     SHORT GetDirection();
     static SHORT GetDirection(const CPoint& ptStart, const CPoint& ptTarget);
@@ -670,18 +654,18 @@ public:
     BOOL GetActive();
     CVariableHash* GetLocalVariables();
 
-    INT GetMaxDexBonusForArmor(INT a1);
-    INT GetArmorCheckPenalty();
-    INT GetShieldCheckPenalty();
-    INT GetShieldArcaneFailure();
-    INT GetArmorArcaneFailure();
+    INT sub_724010(INT a1);
+    INT sub_7240A0();
+    INT sub_724170();
+    INT sub_724270();
+    INT sub_724360();
     BOOL CheckAranceFailure(INT nRoll);
-    INT GetArcaneSpellFailure();
+    INT sub_724430();
     BOOL CheckDivineFailure(INT nRoll);
-    BOOLEAN IsHeld();
+    BOOLEAN sub_7245D0();
     INT GetNextHatedRacesSlot();
     void ResetQuickSlots();
-    BOOL IsArmorType(SHORT a1);
+    BOOL sub_724690(SHORT a1);
 
     // NOTE: See `CGameSpriteSpells` for explanation of the overall ugliness of
     // the following functions.
@@ -689,32 +673,32 @@ public:
     CGameSpriteGroupedSpellList* GetSpells(const BYTE& nClass);
     CGameSpriteSpellList* GetSpellsAtLevel(const BYTE& nClass, const UINT& nLevel);
     UINT GetNumSpells();
-    BOOLEAN IsSpellcaster();
-    BOOLEAN IsBard();
+    BOOLEAN sub_724900();
+    BOOLEAN sub_724920();
     BOOLEAN AddKnownSpell(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5, const unsigned int& a6);
     BOOLEAN AddDomainSpell(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a3, const unsigned int& a4, const unsigned int& a5);
     BOOLEAN AddInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
     BOOLEAN AddSong(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
     BOOLEAN AddShapeshift(const CResRef& resRef, const unsigned int& a2);
-    BOOLEAN AdjustShapeshiftLevel(const unsigned int& a1);
+    BOOLEAN sub_724C40(const unsigned int& a1);
     BOOLEAN RemoveKnownSpell(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5, const unsigned int& a6);
     BOOLEAN RemoveDomainSpell(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a3, const unsigned int& a4, const unsigned int& a5);
     BOOLEAN RemoveInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
     BOOLEAN RemoveSong(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
     BOOLEAN RemoveShapeshift(const CResRef& resRef);
-    BOOLEAN AddClassSpell(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5);
-    BOOLEAN AddDomainSpell(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5);
-    BOOLEAN AddInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3);
-    BOOLEAN RemoveInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3);
-    BOOLEAN HasSpell(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4);
-    BOOLEAN HasDomainSpell(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3);
-    BOOLEAN HasInnateSpell(const CResRef& resRef, BOOLEAN a2);
+    BOOLEAN sub_724FD0(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5);
+    BOOLEAN sub_725110(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5);
+    BOOLEAN sub_725210(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3);
+    BOOLEAN sub_725270(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3);
+    BOOLEAN sub_725330(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4);
+    BOOLEAN sub_7256B0(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3);
+    BOOLEAN sub_725840(const CResRef& resRef, BOOLEAN a2);
 
-    INT GetFeatMode(UINT nFeatNumber);
-    void SetFeatMode(UINT nFeatNumber, INT nValue);
-    void ApplyFeatEffects();
-    INT GetWeaponSlot();
-    void SetWeaponSet(BYTE nWeaponSet);
+    INT sub_726270(UINT nFeatNumber);
+    void sub_726330(UINT nFeatNumber, INT nValue);
+    void sub_726570();
+    INT sub_726800();
+    void sub_726810(BYTE nWeaponSet);
     BYTE GetLastSong();
 
     void GetQuickSpell(BYTE buttonNum, CButtonData& buttonData);
@@ -740,10 +724,10 @@ public:
     /* 3828 */ CButtonData m_quickItems[3];
     /* 38DC */ CButtonData m_quickInnates[9];
     /* 3AF8 */ CButtonData m_quickSongs[9];
-    /* 3D14 */ int m_nFeatModes[9];
+    /* 3D14 */ int field_3D14[9];
     /* 3D38 */ BYTE m_nLastSpellbookClassIndex;
     /* 3D39 */ BYTE m_nLastSpellbookSpellLevel;
-    /* 3D3A */ unsigned char m_nAbilityIndices[8];
+    /* 3D3A */ unsigned char field_3D3A[8];
     /* 3D42 */ BYTE m_nLastSong;
     /* 3DFA */ CAIObjectType m_liveTypeAI;
     /* 3E36 */ CAIObjectType m_startTypeAI;
@@ -766,7 +750,7 @@ public:
     /* 4C4A */ CResRef m_currentArea;
     /* 4C52 */ BOOLEAN m_bGlobal;
     /* 4C53 */ BYTE m_nModalState;
-    /* 4C54 */ int m_nFeatSlots[5];
+    /* 4C54 */ int field_4C54[5];
     /* 4C68 */ BYTE m_nWeaponSet;
     /* 4C6A */ CSound m_sndWalk[2];
     /* 4D32 */ int m_nSndWalk;
@@ -805,7 +789,7 @@ public:
     /* 5202 */ DWORD m_spriteEffectFlags;
     /* 5206 */ CVidCell m_spriteSplashVidCell;
     /* 52E0 */ CVidPalette m_spriteSplashPalette;
-    /* 5304 */ int m_field_5304;
+    /* 5304 */ int field_5304;
     /* 5308 */ CRect m_rSpriteEffectFX;
     /* 5318 */ CPoint m_ptSpriteEffectReference;
     /* 5320 */ BYTE m_effectExtendDirection;
@@ -824,8 +808,8 @@ public:
     /* 5352 */ CPoint m_posDelta;
     /* 535A */ CPoint m_posDest;
     /* 5362 */ CPoint m_posOld;
-    /* 536A */ int m_field_536A;
-    /* 536E */ int m_field_536E;
+    /* 536A */ int field_536A;
+    /* 536E */ int field_536E;
     /* 5372 */ CPoint m_posLastVisMapEntry;
     /* 537A */ SHORT m_skipDeltaDirection;
     /* 537C */ SHORT m_deltaDirection;
@@ -840,19 +824,19 @@ public:
     /* 53C6 */ BOOL m_turningAbout;
     /* 53CA */ COLORREF m_lastRGBColor;
     /* 53CE */ BOOL m_pathSearchInvalidDest;
-    /* 53D2 */ int m_field_53D2;
+    /* 53D2 */ int field_53D2;
     /* 53D6 */ CSearchRequest* m_currentSearchRequest;
     /* 53DA */ SHORT m_nBloodFlashAmount;
     /* 53DC */ SHORT m_nDamageLocatorTime;
     /* 53DE */ COLORREF m_nDamageLocatorColor;
     /* 53E2 */ BOOL m_bBloodFlashOn;
-    /* 53E6 */ int m_field_53E6;
+    /* 53E6 */ int field_53E6;
     /* 53EA */ CVidBitmap m_vbPortraitSmall;
     /* 54A4 */ BOOL m_bVisibleMonster;
-    /* 54A8 */ int m_field_54A8;
+    /* 54A8 */ int field_54A8;
     /* 54AC */ BOOL m_bBumped;
     /* 54B0 */ CPoint m_ptBumpedFrom;
-    /* 54B8 */ int m_field_54B8;
+    /* 54B8 */ int field_54B8;
     /* 54BC */ BOOL m_followLeader;
     /* 54C0 */ BOOL m_followLeaderAdditive;
     /* 54C4 */ LONG m_followLeaderNext;
@@ -871,46 +855,46 @@ public:
     /* 556E */ CPoint m_curDest;
     /* 5576 */ SHORT m_userCommandPause;
     /* 5578 */ SHORT m_nCommandPause;
-    /* 557A */ int m_field_557A;
-    /* 557E */ int m_field_557E;
-    /* 5582 */ int m_field_5582;
+    /* 557A */ int field_557A;
+    /* 557E */ int field_557E;
+    /* 5582 */ int field_5582;
     /* 5586 */ POSITION m_groupPosition;
     /* 558A */ BOOL m_groupMove;
-    /* 558E */ int m_field_558E;
+    /* 558E */ int field_558E;
     /* 5592 */ CProjectile* m_curProjectile;
     /* 5596 */ CSpell* m_curSpell;
     /* 559A */ CItem* m_curItem;
-    /* 559E */ short m_field_559E;
-    /* 55A0 */ short m_field_55A0;
-    /* 55A2 */ int m_field_55A2[20];
-    /* 55F2 */ int m_field_55F2;
-    /* 55F6 */ int m_field_55F6;
-    /* 55FA */ int m_field_55FA;
-    /* 55FE */ int m_field_55FE;
-    /* 5602 */ unsigned char m_field_5602;
+    /* 559E */ short field_559E;
+    /* 55A0 */ short field_55A0;
+    /* 55A2 */ int field_55A2[20];
+    /* 55F2 */ int field_55F2;
+    /* 55F6 */ int field_55F6;
+    /* 55FA */ int field_55FA;
+    /* 55FE */ int field_55FE;
+    /* 5602 */ unsigned char field_5602;
     /* 5604 */ SHORT m_speedFactor;
     /* 5606 */ short m_lastActionID;
     /* 5608 */ BOOL m_endOfDamageSeq;
-    /* 560C */ short m_field_560C;
-    /* 560E */ short m_field_560E;
-    /* 5610 */ short m_field_5610;
-    /* 5612 */ short m_field_5612;
-    /* 5614 */ short m_field_5614;
-    /* 5616 */ short m_field_5616;
-    /* 5618 */ int m_field_5618;
-    /* 561C */ short m_field_561C;
-    /* 561E */ short m_field_561E;
+    /* 560C */ short field_560C;
+    /* 560E */ short field_560E;
+    /* 5610 */ short field_5610;
+    /* 5612 */ short field_5612;
+    /* 5614 */ short field_5614;
+    /* 5616 */ short field_5616;
+    /* 5618 */ int field_5618;
+    /* 561C */ short field_561C;
+    /* 561E */ short field_561E;
     /* 5620 */ SHORT m_recoilFrame;
     /* 5622 */ SHORT m_attackFrame;
     /* 5624 */ LONG m_noActionCount;
     /* 5628 */ BOOL m_inFormation;
-    /* 562C */ int m_field_562C;
-    /* 5630 */ unsigned char m_field_5630;
-    /* 5632 */ int m_field_5632;
-    /* 5636 */ unsigned char m_field_5636;
+    /* 562C */ int field_562C;
+    /* 5630 */ unsigned char field_5630;
+    /* 5632 */ int field_5632;
+    /* 5636 */ unsigned char field_5636;
     /* 5638 */ BOOL m_hasColorEffects;
     /* 563C */ BOOL m_hasColorRangeEffects;
-    /* 5640 */ int m_field_5640;
+    /* 5640 */ int field_5640;
     /* 5644 */ BOOL m_removeFromArea;
     /* 5648 */ CMarker m_marker;
     /* 566C */ CMarker m_destMarker;
@@ -920,32 +904,32 @@ public:
     /* 569E */ BYTE m_nTempSelectedWeapon;
     /* 56DF */ BYTE m_nTempSelectedWeaponAbility;
     /* 56A0 */ CButtonData m_currentUseButton;
-    /* 56E4 */ CResRef m_field_56E4;
+    /* 56E4 */ CResRef field_56E4;
     /* 56EC */ BOOLEAN m_sequenceTest;
     /* 56DC */ CResRef m_dialog;
     /* 56EE */ STR_RES m_speech[64];
-    /* 70EE */ int m_field_70EE;
-    /* 70F2 */ int m_nDualClassFlag;
-    /* 70F6 */ BYTE m_field_70F6;
-    /* 70F7 */ BYTE m_field_70F7;
-    /* 70F8 */ BYTE m_field_70F8;
-    /* 70F9 */ BYTE m_field_70F9;
-    /* 70FA */ BYTE m_field_70FA;
-    /* 70FB */ BOOLEAN m_bHasAttackSound;
-    /* 70FC */ BOOLEAN m_bHasBattleCrySound;
-    /* 70FD */ BOOLEAN m_bHasDamageSound;
-    /* 70FE */ BOOLEAN m_bHasDeathSound;
-    /* 70FF */ BOOLEAN m_bHasFidgetSound;
-    /* 7100 */ BOOLEAN m_bHasSelectedSound;
-    /* 7101 */ BOOLEAN m_bHasFallSound;
-    /* 7106 */ int m_field_7106;
-    /* 710A */ SHORT m_field_710A;
-    /* 710C */ SHORT m_field_710C;
-    /* 710E */ SHORT m_field_710E;
-    /* 7110 */ int m_field_7110;
+    /* 70EE */ int field_70EE;
+    /* 70F2 */ int field_70F2;
+    /* 70F6 */ BYTE field_70F6;
+    /* 70F7 */ BYTE field_70F7;
+    /* 70F8 */ BYTE field_70F8;
+    /* 70F9 */ BYTE field_70F9;
+    /* 70FA */ BYTE field_70FA;
+    /* 70FB */ BOOLEAN field_70FB;
+    /* 70FC */ BOOLEAN field_70FC;
+    /* 70FD */ BOOLEAN field_70FD;
+    /* 70FE */ BOOLEAN field_70FE;
+    /* 70FF */ BOOLEAN field_70FF;
+    /* 7100 */ BOOLEAN field_7100;
+    /* 7101 */ BOOLEAN field_7101;
+    /* 7106 */ int field_7106;
+    /* 710A */ SHORT field_710A;
+    /* 710C */ SHORT field_710C;
+    /* 710E */ SHORT field_710E;
+    /* 7110 */ int field_7110;
     /* 7114 */ BOOL m_moraleFailure;
-    /* 7118 */ int m_field_7118;
-    /* 711C */ short m_field_711C;
+    /* 7118 */ int field_7118;
+    /* 711C */ short field_711C;
     /* 711E */ BOOL m_clearAIOnRemoveFromArea;
     /* 7122 */ LONG m_dialogWait;
     /* 7126 */ LONG m_dialogWaitTarget;
@@ -955,7 +939,7 @@ public:
     /* 7130 */ CTypedPtrList<CPtrList, int*> m_portraitIcons; // NOTE: Stores actual ints disguised as pointers.
     /* 714C */ CVidCell m_portraitIconVidCell;
     /* 7226 */ BOOL m_firstActionSound;
-    /* 722A */ ULONG m_dwLastUpdateTime;
+    /* 722A */ ULONG field_722A;
     /* 722E */ BOOL m_berserkActive;
     /* 7232 */ SHORT m_attackSoundDeadzone;
     /* 7234 */ LONG m_nHPCONBonusTotalOld;
@@ -968,67 +952,67 @@ public:
     /* 724D */ BOOLEAN m_bHappinessChanged;
     /* 724E */ LONG m_nUnselectableCounter;
     /* 7252 */ CResRef m_secondarySounds;
-    /* 725A */ unsigned char m_field_725A[32];
+    /* 725A */ unsigned char field_725A[32];
     /* 727A */ LONG m_nStealthGreyOut;
-    /* 727E */ int m_field_727E;
-    /* 7282 */ unsigned char m_field_7282;
-    /* 7283 */ unsigned char m_field_7283;
-    /* 7284 */ unsigned char m_field_7284;
-    /* 728E */ int m_field_728E;
+    /* 727E */ int field_727E;
+    /* 7282 */ unsigned char field_7282;
+    /* 7283 */ unsigned char field_7283;
+    /* 7284 */ unsigned char field_7284;
+    /* 728E */ int field_728E;
     /* 7292 */ BOOL m_bForceVisualEffects;
     /* 7296 */ SHORT m_currentActionId;
     /* 7298 */ BOOL m_bPlayedEncumberedStopped;
     /* 729C */ BOOL m_bPlayedEncumberedSlowed;
-    /* 72A0 */ short m_field_72A0;
-    /* 72A2 */ short m_field_72A2;
+    /* 72A0 */ short field_72A0;
+    /* 72A2 */ short field_72A2;
     /* 72A4 */ BOOL m_bAllowEffectListCall;
-    /* 72A8 */ unsigned char m_field_72A8;
-    /* 72AA */ int m_field_72AA;
+    /* 72A8 */ unsigned char field_72A8;
+    /* 72AA */ int field_72AA;
     /* 72AE */ BOOL m_bDeleteOnRemove;
     /* 72B2 */ CVariableHash* m_pLocalVariables;
     /* 72B6 */ BOOL m_bInUnmarshal;
     /* 72BA */ CBounceList m_lBounceList;
-    /* 72D6 */ int m_field_72D6;
+    /* 72D6 */ int field_72D6;
     /* 72DA */ LONG m_nBounceCounter;
-    /* 72DE */ int m_field_72DE;
-    /* 72E2 */ LONG m_field_72E2;
+    /* 72DE */ int field_72DE;
+    /* 72E2 */ LONG field_72E2;
     /* 72E6 */ CGameButtonList* m_internalButtonList;
-    /* 72F0 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> m_field_72F0;
-    /* 730C */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> m_field_730C;
-    /* 7328 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> m_field_7328;
-    /* 7344 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> m_field_7344;
-    /* 7360 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> m_field_7360;
-    /* 737C */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> m_field_737C;
-    /* 7398 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> m_field_7398;
-    /* 73B4 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> m_field_73B4;
-    /* 73D0 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> m_field_73D0;
-    /* 73EC */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> m_field_73EC;
-    /* 7408 */ CString m_field_7408;
-    /* 740C */ int m_field_740C;
-    /* 7410 */ CString m_field_7410;
-    /* 7414 */ int m_field_7414;
-    /* 7418 */ CString m_field_7418;
-    /* 741C */ int m_field_741C;
-    /* 7420 */ CString m_field_7420;
-    /* 7424 */ int m_field_7424;
-    /* 7428 */ CString m_field_7428;
-    /* 742C */ int m_field_742C;
-    /* 7430 */ unsigned char m_field_7430;
+    /* 72F0 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> field_72F0;
+    /* 730C */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> field_730C;
+    /* 7328 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> field_7328;
+    /* 7344 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> field_7344;
+    /* 7360 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> field_7360;
+    /* 737C */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> field_737C;
+    /* 7398 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> field_7398;
+    /* 73B4 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> field_73B4;
+    /* 73D0 */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> field_73D0;
+    /* 73EC */ CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry> field_73EC;
+    /* 7408 */ CString field_7408;
+    /* 740C */ int field_740C;
+    /* 7410 */ CString field_7410;
+    /* 7414 */ int field_7414;
+    /* 7418 */ CString field_7418;
+    /* 741C */ int field_741C;
+    /* 7420 */ CString field_7420;
+    /* 7424 */ int field_7424;
+    /* 7428 */ CString field_7428;
+    /* 742C */ int field_742C;
+    /* 7430 */ unsigned char field_7430;
     /* 7432 */ CGameSpriteLastUpdate m_cLastSpriteUpdate;
     /* 752E */ BOOL m_bSendSpriteUpdate;
-    /* 7532 */ int m_field_7532;
-    /* 7536 */ int m_field_7536;
-    /* 753A */ int m_field_753A;
-    /* 753C */ int m_field_753C;
-    /* 7540 */ int m_field_7540;
-    /* 7544 */ int m_field_7544;
-    /* 7548 */ CVidCell m_field_7548[32];
-    /* 9088 */ CSound m_field_9088[32];
-    /* 9D08 */ int m_field_9D08;
-    /* 9D0C */ int m_field_9D0C;
-    /* 9D10 */ int m_field_9D10;
-    /* 9D14 */ unsigned char m_field_9D14;
-    /* 9D15 */ unsigned char m_field_9D15;
+    /* 7532 */ int field_7532;
+    /* 7536 */ int field_7536;
+    /* 753A */ int field_753A;
+    /* 753C */ int field_753C;
+    /* 7540 */ int field_7540;
+    /* 7544 */ int field_7544;
+    /* 7548 */ CVidCell field_7548[32];
+    /* 9088 */ CSound field_9088[32];
+    /* 9D08 */ int field_9D08;
+    /* 9D0C */ int field_9D0C;
+    /* 9D10 */ int field_9D10;
+    /* 9D14 */ unsigned char field_9D14;
+    /* 9D15 */ unsigned char field_9D15;
 };
 
 #endif /* CGAMESPRITE_H_ */

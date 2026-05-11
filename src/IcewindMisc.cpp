@@ -27,7 +27,7 @@ INT IcewindMisc::Roll(INT nRolls, INT nSides)
 // NOTE: Unclear if it returns CPoint or CSize.
 //
 // 0x584610
-CPoint IcewindMisc::DirectionToVector(INT nDirection)
+CPoint IcewindMisc::sub_584610(INT nDirection)
 {
     switch (nDirection) {
     case 0:
@@ -70,7 +70,7 @@ CPoint IcewindMisc::DirectionToVector(INT nDirection)
 }
 
 // 0x5847B0
-CPoint IcewindMisc::PointOnCircle(const CPoint& pt, int x, int y, int radius)
+CPoint IcewindMisc::sub_5847B0(const CPoint& pt, int x, int y, int radius)
 {
     if (x != 0 || y != 0) {
         float v1 = static_cast<float>(sqrt(static_cast<float>(radius * radius) / static_cast<float>(x * x + y * y)));
@@ -81,7 +81,7 @@ CPoint IcewindMisc::PointOnCircle(const CPoint& pt, int x, int y, int radius)
 }
 
 // 0x584880
-void IcewindMisc::DisplayEffectText(CGameSprite* pSprite, STRREF strRef, INT nNumber)
+void IcewindMisc::sub_584880(CGameSprite* pSprite, STRREF strRef, INT nNumber)
 {
     if (strRef != -1 && (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nEffectTextLevel & 0x8) != 0) {
         if (nNumber != 0) {
@@ -493,14 +493,14 @@ BOOLEAN IcewindMisc::IsPC(CGameSprite* pSprite)
 }
 
 // 0x585210
-BOOLEAN IcewindMisc::IsPlayableRace(CGameSprite* pSprite)
+BOOLEAN IcewindMisc::sub_585210(CGameSprite* pSprite)
 {
     BYTE nRace = pSprite->GetAIType().m_nRace;
     return nRace > 0 && nRace <= CAIOBJECTTYPE_R_GNOME;
 }
 
 // 0x585230
-BOOLEAN IcewindMisc::AreAllies(CGameSprite* pSprite1, CGameSprite* pSprite2)
+BOOLEAN IcewindMisc::sub_585230(CGameSprite* pSprite1, CGameSprite* pSprite2)
 {
     if (pSprite1->GetAIType().m_nEnemyAlly <= CAIObjectType::EA_CONTROLCUTOFF
         && pSprite2->GetAIType().m_nEnemyAlly <= CAIObjectType::EA_CONTROLCUTOFF) {
@@ -516,7 +516,7 @@ BOOLEAN IcewindMisc::AreAllies(CGameSprite* pSprite1, CGameSprite* pSprite2)
 }
 
 // 0x5852A0
-BOOLEAN IcewindMisc::AreEnemies(CGameSprite* pSprite1, CGameSprite* pSprite2)
+BOOLEAN IcewindMisc::sub_5852A0(CGameSprite* pSprite1, CGameSprite* pSprite2)
 {
     if (pSprite1->GetAIType().m_nEnemyAlly <= CAIObjectType::EA_GOODCUTOFF
         && pSprite2->GetAIType().m_nEnemyAlly >= CAIObjectType::EA_EVILCUTOFF) {
@@ -532,7 +532,7 @@ BOOLEAN IcewindMisc::AreEnemies(CGameSprite* pSprite1, CGameSprite* pSprite2)
 }
 
 // 0x585310
-BOOLEAN IcewindMisc::IsGoodAlignment(CGameSprite* pSprite)
+BOOLEAN IcewindMisc::sub_585310(CGameSprite* pSprite)
 {
     return CAIObjectType::EA_GOODCUTOFF >= pSprite->GetAIType().m_nEnemyAlly;
 }
@@ -550,25 +550,25 @@ BOOLEAN IcewindMisc::IsGoodEvilSame(CGameSprite* pSprite1, CGameSprite* pSprite2
 }
 
 // 0x585380
-CGameEffect* IcewindMisc::CreateDamageEffectMagic(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
+CGameEffect* IcewindMisc::sub_585380(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
 {
     return CreateEffectDamage(pObject, 0x400000, numDice, diceSize, effectAmount, spellLevel, savingThrow);
 }
 
 // 0x5853B0
-CGameEffect* IcewindMisc::CreateDamageEffectFire(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
+CGameEffect* IcewindMisc::sub_5853B0(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
 {
     return CreateEffectDamage(pObject, 0x80000, numDice, diceSize, effectAmount, spellLevel, savingThrow);
 }
 
 // 0x5853E0
-CGameEffect* IcewindMisc::CreateDamageEffectCold(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
+CGameEffect* IcewindMisc::sub_5853E0(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
 {
     return CreateEffectDamage(pObject, 0x20000, numDice, diceSize, effectAmount, spellLevel, savingThrow);
 }
 
 // 0x585410
-CGameEffect* IcewindMisc::CreateDamageEffectCrushing(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
+CGameEffect* IcewindMisc::sub_585410(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
 {
     return CreateEffectDamage(pObject, 0, numDice, diceSize, effectAmount, spellLevel, savingThrow);
 }
@@ -597,7 +597,7 @@ CGameEffect* IcewindMisc::CreateEffectDamage(CGameObject* pObject, DWORD dwFlags
     pEffect->m_sourceID = pObject->GetId();
 
     if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
-        ApplyDamageMod(static_cast<CGameSprite*>(pObject), pEffect);
+        sub_5860F0(static_cast<CGameSprite*>(pObject), pEffect);
     }
 
     return pEffect;
@@ -928,20 +928,20 @@ INT IcewindMisc::GetSneakAttackDice()
 }
 
 // 0x585D90
-INT IcewindMisc::GetMaxSneakAttackDice()
+INT IcewindMisc::sub_585D90()
 {
     return 21;
 }
 
 // 0x585DA0
-BOOLEAN IcewindMisc::CanSneakAttack(CGameSprite* pSprite)
+BOOLEAN IcewindMisc::sub_585DA0(CGameSprite* pSprite)
 {
     return (pSprite->GetClassLevel(CAIOBJECTTYPE_C_ROGUE) >= 2
                || pSprite->HasClassLevel(CAIOBJECTTYPE_C_MONK))
         && (pSprite->GetDerivedStats()->m_generalState & (STATE_DEAD | STATE_HELPLESS | STATE_STUNNED | STATE_SLEEPING)) == 0
         && pSprite->m_nSequence != 5
-        && !pSprite->IsArmorType(2)
-        && !pSprite->IsArmorType(3);
+        && !pSprite->sub_724690(2)
+        && !pSprite->sub_724690(3);
 }
 
 // 0x585E00
@@ -961,7 +961,7 @@ CButtonData* IcewindMisc::CreateButtonData(BYTE* resRef)
     button->m_abilityId.m_itemType = 1;
     button->m_abilityId.m_res = resRef;
     button->m_abilityId.m_targetType = ability->actionType;
-    button->m_abilityId.m_field_10 = cSpell.GetGenericName();
+    button->m_abilityId.field_10 = cSpell.GetGenericName();
     button->m_bDisabled = FALSE;
     button->m_bDisplayCount = 0;
 
@@ -969,7 +969,7 @@ CButtonData* IcewindMisc::CreateButtonData(BYTE* resRef)
 }
 
 // 0x5860F0
-void IcewindMisc::ApplyDamageMod(CGameSprite* pSprite, CGameEffect* pEffect)
+void IcewindMisc::sub_5860F0(CGameSprite* pSprite, CGameEffect* pEffect)
 {
     if (pEffect->m_effectID == CGAMEEFFECT_DAMAGE) {
         int nDamageMod;
@@ -1017,245 +1017,3 @@ void IcewindMisc::ApplyDamageMod(CGameSprite* pSprite, CGameEffect* pEffect)
         }
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x5806C0
-void FUN_005806c0() {
-    // TODO: Incomplete.
-}
-
-// 0x580750
-void FUN_00580750() {
-    // TODO: Incomplete.
-}
-
-// 0x580770
-void FUN_00580770() {
-    // TODO: Incomplete.
-}
-
-// 0x580B30
-void FUN_00580b30() {
-    // TODO: Incomplete.
-}
-
-// 0x580C00
-void FUN_00580c00() {
-    // TODO: Incomplete.
-}
-
-// 0x580CC0
-void FUN_00580cc0() {
-    // TODO: Incomplete.
-}
-
-// 0x580CE0
-void FUN_00580ce0() {
-    // TODO: Incomplete.
-}
-
-// 0x581060
-void FUN_00581060() {
-    // TODO: Incomplete.
-}
-
-// 0x5819B0
-void FUN_005819b0() {
-    // TODO: Incomplete.
-}
-
-// 0x581CA0
-void FUN_00581ca0() {
-    // TODO: Incomplete.
-}
-
-// 0x581DB0
-void FUN_00581db0() {
-    // TODO: Incomplete.
-}
-
-// 0x581DD0
-void FUN_00581dd0() {
-    // TODO: Incomplete.
-}
-
-// 0x5820B0
-void FUN_005820b0() {
-    // TODO: Incomplete.
-}
-
-// 0x582210
-void FUN_00582210() {
-    // TODO: Incomplete.
-}
-
-// 0x582230
-void FUN_00582230() {
-    // TODO: Incomplete.
-}
-
-// 0x582270
-void FUN_00582270() {
-    // TODO: Incomplete.
-}
-
-// 0x582670
-void FUN_00582670() {
-    // TODO: Incomplete.
-}
-
-// 0x582780
-void FUN_00582780() {
-    // TODO: Incomplete.
-}
-
-// 0x582790
-void FUN_00582790() {
-    // TODO: Incomplete.
-}
-
-// 0x5828E0
-void FUN_005828e0() {
-    // TODO: Incomplete.
-}
-
-// 0x582910
-void FUN_00582910() {
-    // TODO: Incomplete.
-}
-
-// 0x582930
-void FUN_00582930() {
-    // TODO: Incomplete.
-}
-
-// 0x582970
-void FUN_00582970() {
-    // TODO: Incomplete.
-}
-
-// 0x582980
-void FUN_00582980() {
-    // TODO: Incomplete.
-}
-
-// 0x5829E0
-void FUN_005829e0() {
-    // TODO: Incomplete.
-}
-
-// 0x582B50
-void FUN_00582b50() {
-    // TODO: Incomplete.
-}
-
-// 0x582B70
-void FUN_00582b70() {
-    // TODO: Incomplete.
-}
-
-// 0x582BA0
-void FUN_00582ba0() {
-    // TODO: Incomplete.
-}
-
-// 0x583030
-void FUN_00583030() {
-    // TODO: Incomplete.
-}
-
-// 0x583440
-void FUN_00583440() {
-    // TODO: Incomplete.
-}
-
-// 0x5834C0
-void FUN_005834c0() {
-    // TODO: Incomplete.
-}
-
-// 0x5834E0
-void FUN_005834e0() {
-    // TODO: Incomplete.
-}
-
-// 0x583530
-void FUN_00583530() {
-    // TODO: Incomplete.
-}
-
-// 0x583550
-void FUN_00583550() {
-    // TODO: Incomplete.
-}
-
-// 0x5836B0
-void FUN_005836b0() {
-    // TODO: Incomplete.
-}
-
-// 0x5836F0
-void FUN_005836f0() {
-    // TODO: Incomplete.
-}
-
-// 0x5837D0
-void FUN_005837d0() {
-    // TODO: Incomplete.
-}
-
-// 0x583820
-void FUN_00583820() {
-    // TODO: Incomplete.
-}
-
-// 0x5838A0
-void FUN_005838a0() {
-    // TODO: Incomplete.
-}
-
-// 0x583E60
-void FUN_00583e60() {
-    // TODO: Incomplete.
-}
-
-// 0x5840E0
-void FUN_005840e0() {
-    // TODO: Incomplete.
-}
-
-// 0x5842C0
-void FUN_005842c0() {
-    // TODO: Incomplete.
-}
-
-// 0x584320
-void FUN_00584320() {
-    // TODO: Incomplete.
-}
-
-// 0x584400
-void FUN_00584400() {
-    // TODO: Incomplete.
-}
-
-// 0x584420
-void FUN_00584420() {
-    // TODO: Incomplete.
-}
-
-// 0x5844E0
-void FUN_005844e0() {
-    // TODO: Incomplete.
-}
-
-// 0x586220
-void FUN_00586220() {
-    // TODO: Incomplete.
-}
-
-// 0x5864F0
-void FUN_005864f0() {
-    // TODO: Incomplete.
-}
-

@@ -1,11 +1,6 @@
 #ifndef CSCREENCONNECTION_H_
 #define CSCREENCONNECTION_H_
 
-// ============================================================================
-// CScreenConnection - Multiplayer connection screen
-//
-// Address: varies by method
-// ============================================================================
 #include "CBaldurEngine.h"
 #include "CKeyInfo.h"
 #include "CUIControlButton.h"
@@ -83,7 +78,7 @@ public:
     void OnDoneButtonClick();
     void OnCancelButtonClick();
     void OnJoinGameButtonClick();
-    void OnSelectServiceProvider();
+    void sub_5FEB70();
     void EnableMainPanel(BOOL bEnable);
     void UpdateMainPanel();
     void UpdateSessionList(CUIPanel* pPanel, DWORD nTextId);
@@ -130,7 +125,7 @@ public:
 
     static BOOL IsValidAddress(const CString& sAddress);
 
-    /* 0106 */ int nm_m_field_106;
+    /* 0106 */ int field_106;
     /* 010A */ CKeyInfo m_pVirtualKeys[CSCREENCONNECTION_VIRTUAL_KEYS];
     /* 03E2 */ BYTE m_pVirtualKeysFlags[CSCREENCONNECTION_VIRTUAL_KEYS];
     /* 043E */ BOOL m_bCtrlKeyDown;
@@ -148,7 +143,7 @@ public:
     /* 0492 */ BOOL m_bStartedCountDown;
     /* 0497 */ BOOLEAN m_bEliminateInitialize;
     /* 04B2 */ BOOL m_bAllowInput;
-    /* 0496 */ unsigned char m_bFirstRender;
+    /* 0496 */ unsigned char field_496;
     /* 0498 */ BOOLEAN m_bEMSwapped;
     /* 0499 */ BOOLEAN m_bEMValue;
     /* 049A */ BOOLEAN m_bEMWaiting;
@@ -170,13 +165,13 @@ public:
     /* 0F9A */ BOOL m_bIsNight;
     /* 0F9E */ BOOL m_bPlayEndCredits;
     /* 0FA2 */ BOOL m_bExitProgram;
-    /* 0FA6 */ unsigned char bfield_FA6;
-    /* 0FA8 */ int nfield_FA8;
-    /* 0FAC */ int nfield_FAC;
-    /* 0FB4 */ int nfield_FB4;
-    /* 0FB8 */ int nfield_FB8;
+    /* 0FA6 */ unsigned char field_FA6;
+    /* 0FA8 */ int field_FA8;
+    /* 0FAC */ int field_FAC;
+    /* 0FB4 */ int field_FB4;
+    /* 0FB8 */ int field_FB8;
     /* 0EC0 */ CVidCell m_vcTorch;
-    /* 0FB0 */ int nfield_FB0;
+    /* 0FB0 */ int field_FB0;
 };
 
 class CUIControlButtonConnectionGameMode : public CUIControlButton {

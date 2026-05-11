@@ -407,15 +407,3 @@ BYTE CSpell::GetSchool() const
 
     return nSchool;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x54A210
-void FUN_0054a210() {
-    // TODO: Incomplete.
-}
-
-// 0x54A510
-void FUN_0054a510() {
-    // TODO: Incomplete.
-}
-

@@ -183,22 +183,22 @@ CGameContainer::CGameContainer(CGameArea* pArea, CAreaFileContainer* pContainerO
             pArea->GetNamedCreatures()->AddKey(name);
         }
 
-        sub_481890(&m_rBounding, m_pBoundingRects);
+        sub_481890(&m_rBounding, field_8D6);
 
-        m_pAreaPoints = NULL;
+        field_8EA = NULL;
 
         if (m_nPolygon != 0) {
-            m_pAreaPoints = new CAreaPoint[m_nPolygon];
+            field_8EA = new CAreaPoint[m_nPolygon];
 
             for (WORD cnt = 0; cnt < m_nPolygon; cnt++) {
-                m_pAreaPoints[cnt].m_xPos = static_cast<WORD>(m_pPolygon[cnt].x);
-                m_pAreaPoints[cnt].m_yPos = static_cast<WORD>(m_pPolygon[cnt].y);
+                field_8EA[cnt].m_xPos = static_cast<WORD>(m_pPolygon[cnt].x);
+                field_8EA[cnt].m_yPos = static_cast<WORD>(m_pPolygon[cnt].y);
             }
         } else {
-            m_pAreaPoints = NULL;
+            field_8EA = NULL;
         }
 
-        nm_field_8D2 = 0;
+        field_8D2 = 0;
     } else {
         delete this;
     }
@@ -242,8 +242,8 @@ CGameContainer::CGameContainer(CGameArea* pArea, const CRect& rBound)
 
         AddToArea(pArea, m_ptWalkToUse, 0, LIST_BACK);
         m_bDeleteMe = FALSE;
-        m_pAreaPoints = NULL;
-        nm_field_8D2 = 0;
+        field_8EA = NULL;
+        field_8D2 = 0;
     } else {
         delete this;
     }
@@ -265,18 +265,18 @@ CGameContainer::~CGameContainer()
         delete m_pPolygon;
     }
 
-    if (m_pAreaPoints != NULL) {
-        delete m_pAreaPoints;
-        m_pAreaPoints = NULL;
+    if (field_8EA != NULL) {
+        delete field_8EA;
+        field_8EA = NULL;
     }
 
     // When there is only one element its an unowned pointer to `m_rBounding`.
-    if (m_pBoundingRects.GetCount() > 1) {
-        for (INT nIndex = 0; nIndex < m_pBoundingRects.GetCount(); nIndex++) {
-            delete m_pBoundingRects[nIndex];
+    if (field_8D6.GetCount() > 1) {
+        for (INT nIndex = 0; nIndex < field_8D6.GetCount(); nIndex++) {
+            delete field_8D6[nIndex];
         }
     }
-    m_pBoundingRects.SetSize(0);
+    field_8D6.SetSize(0);
 }
 
 // 0x47D7F0
@@ -1145,25 +1145,3 @@ SHORT CGameContainer::GetNumItems()
 {
     return static_cast<SHORT>(m_lstItems.GetCount());
 }
-
-// Phase 1-2: Scaffold functions
-// 0x47C870
-void FUN_0047c870() {
-    // TODO: Incomplete.
-}
-
-// 0x47CBE0
-void FUN_0047cbe0() {
-    // TODO: Incomplete.
-}
-
-// 0x47D850
-void FUN_0047d850() {
-    // TODO: Incomplete.
-}
-
-// 0x47E970
-void FUN_0047e970() {
-    // TODO: Incomplete.
-}
-

@@ -1,11 +1,6 @@
 #ifndef CSCREENCHARACTER_H_
 #define CSCREENCHARACTER_H_
 
-// ============================================================================
-// CScreenCharacter - Character sheet - stats, inventory, spells
-//
-// Address: varies by method
-// ============================================================================
 #include "CAIObjectType.h"
 #include "CBaldurEngine.h"
 #include "CGameSpriteSpells.h"
@@ -164,9 +159,9 @@ public:
     /* 012C */ CAIObjectType m_typeAI;
     /* 01B0 */ BOOL m_bShiftKeyDown;
     /* 01B4 */ BOOL m_bCapsLockKeyOn;
-    /* 01B8 */ BOOLEAN bm_field_1B8;
+    /* 01B8 */ BOOLEAN field_1B8;
     /* 01BA */ CGameSpriteGroupedSpellList m_spells;
-    /* 02B6 */ int nm_field_2B6;
+    /* 02B6 */ int field_2B6;
     /* 02BA */ SHORT m_nTopSkill;
     /* 02C0 */ INT m_storedSkills[16];
     /* 0300 */ CKeyInfo m_pVirtualKeys[CSCREENCHARACTER_VIRTUAL_KEYS];
@@ -175,18 +170,18 @@ public:
     /* 0646 */ INT m_nExtraFeats;
     /* 064A */ SHORT m_nTopFeat;
     /* 0650 */ INT m_storedFeats[75];
-    /* 077C */ WORD wfield_77C;
-    /* 0780 */ int nfield_780;
+    /* 077C */ WORD field_77C;
+    /* 0780 */ int field_780;
     /* 0798 */ INT m_nExtraSkillPoints;
-    /* 079C */ int nfield_79C;
-    /* 07A0 */ int nfield_7A0;
-    /* 07A4 */ int nfield_7A4;
-    /* 07A8 */ int nfield_7A8;
-    /* 07AC */ int nfield_7AC;
-    /* 07B0 */ int nfield_7B0;
+    /* 079C */ int field_79C;
+    /* 07A0 */ int field_7A0;
+    /* 07A4 */ int field_7A4;
+    /* 07A8 */ int field_7A8;
+    /* 07AC */ int field_7AC;
+    /* 07B0 */ int field_7B0;
     /* 07B4 */ BOOLEAN m_bCtrlKeyDown;
     /* 07B6 */ INT m_nExtraMageSpells;
-    /* 07BA */ int nfield_7BA;
+    /* 07BA */ int field_7BA;
     /* 07BE */ CStringList* m_pScripts;
     /* 07C2 */ INT m_nScriptIndex;
     /* 07C6 */ INT m_nErrorState;
@@ -205,27 +200,27 @@ public:
     /* 080E */ CStringList* m_pPortraits;
     /* 0812 */ INT m_nCustomSoundSetIndex;
     /* 0816 */ INT m_nCustomSoundIndex;
-    /* 081A */ unsigned char bm_field_81A;
+    /* 081A */ unsigned char field_81A;
     /* 081B */ CResRef m_cResPortraitSmall;
     /* 0823 */ CResRef m_cResPortraitLarge;
-    /* 0832 */ CString sm_field_832;
+    /* 0832 */ CString field_832;
     /* 0836 */ CResRef m_cResPortraitSmallTemp;
     /* 083E */ CResRef m_cResPortraitLargeTemp;
     /* 0846 */ DWORD m_nSpecialization;
     /* 084A */ CStringList* m_pSounds;
     /* 084E */ CResRef m_cResSoundSet;
-    /* 0856 */ CString sm_field_856;
+    /* 0856 */ CString field_856;
     /* 085A */ CCreatureFileHeader* m_pTempBaseStats;
     /* 085E */ CDerivedStats* m_pTempDerivedStats;
     /* 0862 */ CDerivedStats* m_pBeforeLevelUpDerivedStats;
-    /* 0866 */ int nm_field_866;
-    /* 086A */ int nm_field_86A;
+    /* 0866 */ int field_866;
+    /* 086A */ int field_86A;
     /* 086E */ CVidFont m_preLoadFontRealms;
     /* 0D6E */ CVidFont m_preLoadFontStnSml;
     /* 126E */ CVidFont m_preLoadFontTool;
-    /* 176E */ CString sm_field_176E;
-    /* 1772 */ int nm_field_1772;
-    /* 1776 */ int nm_field_1776;
+    /* 176E */ CString field_176E;
+    /* 1772 */ int field_1772;
+    /* 1776 */ int field_1776;
     /* 1778 */ INT m_nExtraAbilityPoints;
     /* 177C */ BYTE m_nMinSTR;
     /* 177D */ BYTE m_nMinDEX;
@@ -246,16 +241,16 @@ public:
     /* 1798 */ INT m_nModWIS;
     /* 179C */ INT m_nModCHR;
     /* 17A0 */ INT m_nHatedRaceIndex;
-    /* 17A4 */ int nm_field_17A4;
-    /* 17A8 */ int nm_field_17A8;
-    /* 17C0 */ int nm_field_17C0;
-    /* 1800 */ int nm_field_1800;
-    /* 1840 */ int nm_field_1840;
-    /* 1844 */ unsigned char bm_field_1844;
-    /* 1846 */ int nm_field_1846;
-    /* 184A */ int nm_field_184A;
-    /* 184E */ int nm_field_184E;
-    /* 1852 */ int nm_field_1852;
+    /* 17A4 */ int field_17A4;
+    /* 17A8 */ int field_17A8;
+    /* 17C0 */ int field_17C0;
+    /* 1800 */ int field_1800;
+    /* 1840 */ int field_1840;
+    /* 1844 */ unsigned char field_1844;
+    /* 1846 */ int field_1846;
+    /* 184A */ int field_184A;
+    /* 184E */ int field_184E;
+    /* 1852 */ int field_1852;
 };
 
 class CUIControlButtonCharacterSpecializationSelection : public CUIControlButton3State {
@@ -374,8 +369,8 @@ public:
     BOOL Render(BOOL bForce) override;
     void OnLButtonClick(CPoint pt) override;
 
-    /* 066E */ CResRef sfield_66E;
-    /* 0676 */ CResRef sfield_676;
+    /* 066E */ CResRef field_66E;
+    /* 0676 */ CResRef field_676;
 };
 
 class CUIControlButtonCharacterPopupDone : public CUIControlButton {

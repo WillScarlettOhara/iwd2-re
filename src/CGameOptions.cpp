@@ -19,10 +19,10 @@ CGameOptions::CGameOptions()
     m_nVolumeAmbients = 50;
     m_nVolumeMovie = 50;
     m_bFootStepsSounds = TRUE;
-    nm_field_30 = 1;
+    field_30 = 1;
     m_bTranslucentShadows = TRUE;
-    nm_field_38 = 0;
-    nm_field_3C = 0;
+    field_38 = 0;
+    field_3C = 0;
     m_nTooltips = 30;
     m_nBoredTime = CScreenWorld::BORED_TIME;
     m_nCommandSoundsFrequency = 2;
@@ -44,13 +44,13 @@ CGameOptions::CGameOptions()
     m_bEnvironmentalAudio = TRUE;
     m_bTerrainHugging = FALSE;
     m_bDisplayMovieSubtitles = FALSE;
-    nfield_94 = 1;
+    field_94 = 1;
     m_bStaticAnimations = TRUE;
     m_bTranslucentBlts = TRUE;
     m_bMaxHP = FALSE;
     m_bAutoPauseOnTrap = FALSE;
     m_bShowQuestXP = FALSE;
-    bfield_AC = 0;
+    field_AC = 0;
     m_bCriticalHitScreenShake = TRUE;
     m_bSuppressExtraDifficultyDamage = FALSE;
     m_nTilesPrecachePercent = 100;
@@ -62,10 +62,3 @@ CGameOptions::CGameOptions()
     m_nOldPortraitHealth = 0;
     m_nHitPointBarSequence = 0;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x5C9C90
-void FUN_005c9c90() {
-    // TODO: Incomplete.
-}
-

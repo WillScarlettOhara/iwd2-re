@@ -125,13 +125,13 @@ CScreenMultiPlayer::CScreenMultiPlayer()
     m_bCtrlKeyDown = FALSE;
     m_bShiftKeyDown = FALSE;
     m_bCapsLockKeyOn = FALSE;
-    nm_field_458 = -1;
-    nm_field_45C = 0;
+    field_458 = -1;
+    field_45C = 0;
     m_nChatMessageCount = 0;
     m_nPermissionsChatMessageCount = 0;
     m_bMultiplayerStartup = 0;
     m_bLastLockAllowInput = FALSE;
-    nm_field_138E = 0;
+    field_138E = 0;
 }
 
 // 0x49FC40
@@ -326,17 +326,17 @@ void CScreenMultiPlayer::EngineDeactivated()
     // NOTE: Uninline.
     m_cUIManager.KillCapture();
 
-    g_pBaldurChitin->nm_field_4F38 = g_pBaldurChitin->cSoundMixer.GetSectionPlaying();
-    g_pBaldurChitin->nm_field_4F3C = g_pBaldurChitin->cSoundMixer.GetMusicPosition();
+    g_pBaldurChitin->field_4F38 = g_pBaldurChitin->cSoundMixer.GetSectionPlaying();
+    g_pBaldurChitin->field_4F3C = g_pBaldurChitin->cSoundMixer.GetMusicPosition();
 }
 
 // 0x6490F0
 void CScreenMultiPlayer::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUIMP"), g_pBaldurChitin->nm_field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIMP"), g_pBaldurChitin->field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->nm_field_4A28) {
+    if (g_pBaldurChitin->field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -427,20 +427,20 @@ void CScreenMultiPlayer::OnKeyDown(SHORT nKeysFlags)
                     break;
                 case VK_RETURN:
                     if (GetTopPopup() != NULL) {
-                        if (g_pBaldurChitin->nm_field_1A0) {
+                        if (g_pBaldurChitin->field_1A0) {
                             // FIXME: Unused.
                             g_pChitin->GetWnd();
-                            if (g_pBaldurChitin->cImm.nm_field_128) {
+                            if (g_pBaldurChitin->cImm.field_128) {
                                 m_cUIManager.OnKeyDown(VK_RETURN);
                                 break;
                             }
                         }
                         OnDoneButtonClick();
                     } else {
-                        if (g_pBaldurChitin->nm_field_1A0) {
+                        if (g_pBaldurChitin->field_1A0) {
                             // FIXME: Unused.
                             g_pChitin->GetWnd();
-                            if (g_pBaldurChitin->cImm.nm_field_128) {
+                            if (g_pBaldurChitin->cImm.field_128) {
                                 m_cUIManager.OnKeyDown(VK_RETURN);
                                 break;
                             }
@@ -452,7 +452,7 @@ void CScreenMultiPlayer::OnKeyDown(SHORT nKeysFlags)
                     if (GetTopPopup() != NULL) {
                         OnCancelButtonClick();
                     } else {
-                        switch (nm_field_45C) {
+                        switch (field_45C) {
                         case 1:
                             break;
                         case 2:
@@ -496,13 +496,13 @@ void CScreenMultiPlayer::TimerAsynchronousUpdate()
 
     BOOLEAN bDoMainButtonClick = FALSE;
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     CMultiplayerSettings* pSettings = pGame->GetMultiplayerSettings();
 
-    if (nm_field_45C == 2) {
+    if (field_45C == 2) {
         g_pBaldurChitin->m_pEngineWorld->AsynchronousUpdate(FALSE);
     } else {
         if (pSettings->m_bArbitrationLockAllowInput && !m_bLastLockAllowInput) {
@@ -543,7 +543,7 @@ void CScreenMultiPlayer::TimerAsynchronousUpdate()
             renderLock.Unlock();
 
             g_pChitin->m_bDisplayStale = TRUE;
-            pGame->ReleaseAreaThreadLock(TRUE);
+            pGame->sub_59FA00(TRUE);
 
             renderLock.Lock(INFINITE);
 
@@ -669,7 +669,7 @@ void CScreenMultiPlayer::TimerAsynchronousUpdate()
 
         if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
             && !g_pChitin->cNetwork.GetSessionHosting()
-            && nm_field_45C == 1
+            && field_45C == 1
             && IsMainDoneButtonClickable()) {
             while (GetTopPopup() != NULL) {
                 OnCancelButtonClick();
@@ -682,20 +682,20 @@ void CScreenMultiPlayer::TimerAsynchronousUpdate()
 
         if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
             && !g_pChitin->cNetwork.GetSessionHosting()
-            && nm_field_45C == 1
+            && field_45C == 1
             && IsMainDoneButtonClickable()) {
             bDoMainButtonClick = TRUE;
         }
     }
 
     if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
-        && nm_field_45C == 2
+        && field_45C == 2
         && pGame->GetMultiplayerSettings()->m_bArbitrationLockStatus == TRUE) {
         if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
             pGame->MultiplayerSetCharacterCreationLocation();
         }
 
-        nm_field_45C = 1;
+        field_45C = 1;
         StartMultiPlayer(1);
     }
 
@@ -937,12 +937,12 @@ void CScreenMultiPlayer::DismissPopup()
         UpdateMainPanel();
     }
 
-    if (g_pBaldurChitin->nm_field_1A0) {
+    if (g_pBaldurChitin->field_1A0) {
         // FIXME: Unused.
         g_pChitin->GetWnd();
 
-        if (g_pBaldurChitin->cImm.nm_field_128) {
-            g_pBaldurChitin->cImm.DeactivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
+        if (g_pBaldurChitin->cImm.field_128) {
+            g_pBaldurChitin->cImm.sub_7C2E10(g_pChitin->GetWnd()->GetSafeHwnd());
         }
     }
 }
@@ -963,7 +963,7 @@ BOOL CScreenMultiPlayer::IsMainDoneButtonClickable()
     UTIL_ASSERT(pSettings != NULL);
 
     BOOL bResult;
-    switch (nm_field_45C) {
+    switch (field_45C) {
     case 1:
         bResult = !pSettings->m_bFirstConnected;
 
@@ -1028,7 +1028,7 @@ void CScreenMultiPlayer::OnDoneButtonClick()
         return;
     }
 
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (pPanel->m_nID) {
@@ -1063,7 +1063,7 @@ void CScreenMultiPlayer::OnCancelButtonClick()
     // __LINE__: 1702
     UTIL_ASSERT(pPanel != NULL);
 
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (pPanel->m_nID) {
@@ -1106,7 +1106,7 @@ void CScreenMultiPlayer::EnableMainPanel(BOOL bEnable)
 
     pPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -1316,7 +1316,7 @@ void CScreenMultiPlayer::CheckCharacterButtons(INT nCharacterSlot, BOOL& bReadyA
     BOOLEAN bCharacterReady = pSettings->GetCharacterReady(nCharacterSlot);
     BOOL bIsLocalPlayer = idPlayer != 0 && idPlayer == pNetwork->m_idLocalPlayer;
 
-    switch (nm_field_45C) {
+    switch (field_45C) {
     case 1:
         bReadyActive = bIsLocalPlayer
             && bSlotFull
@@ -1749,7 +1749,7 @@ void CScreenMultiPlayer::UpdateModifyCharacterPanel()
     // __LINE__: 2623
     UTIL_ASSERT(pSettings != NULL);
 
-    INT nCharacterSlot = nm_field_458;
+    INT nCharacterSlot = field_458;
     BYTE nLocalPlayer = static_cast<BYTE>(g_pBaldurChitin->cNetwork.m_nLocalPlayer);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenMultiPlayer.cpp
@@ -1769,7 +1769,7 @@ void CScreenMultiPlayer::UpdateModifyCharacterPanel()
     // __LINE__: 2638
     UTIL_ASSERT(pButton != NULL);
 
-    pButton->SetEnabled(nm_field_45C == 1
+    pButton->SetEnabled(field_45C == 1
         && bModifyChars
         && bIsLocalPlayer
         && bSlotFree);
@@ -1780,7 +1780,7 @@ void CScreenMultiPlayer::UpdateModifyCharacterPanel()
     // __LINE__: 2642
     UTIL_ASSERT(pButton != NULL);
 
-    pButton->SetEnabled(nm_field_45C == 1
+    pButton->SetEnabled(field_45C == 1
         && bModifyChars
         && bIsLocalPlayer
         && bSlotFull);
@@ -1846,7 +1846,7 @@ BOOL CScreenMultiPlayer::IsModifyButtonClickable()
         return FALSE;
     }
 
-    if (nm_field_45C != 2) {
+    if (field_45C != 2) {
         return FALSE;
     }
 
@@ -1867,7 +1867,7 @@ void CScreenMultiPlayer::OnModifyButtonClick()
     UTIL_ASSERT(pGame != NULL);
 
     if (IsModifyButtonClickable()) {
-        CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+        CSingleLock renderLock(&(GetManager()->field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         m_nErrorState = 2;
@@ -1878,7 +1878,7 @@ void CScreenMultiPlayer::OnModifyButtonClick()
 
         renderLock.Unlock();
     } else {
-        CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+        CSingleLock renderLock(&(GetManager()->field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         m_nErrorState = 0;
@@ -1905,7 +1905,7 @@ void CScreenMultiPlayer::OnErrorButtonClick(INT nButton)
     // __LINE__: 3611
     UTIL_ASSERT(0 <= nButton && nButton < CSCREENMULTIPLAYER_ERROR_BUTTONS);
 
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -2110,7 +2110,7 @@ void CScreenMultiPlayer::FocusChatEditBox()
 // 0x64E0B0
 void CScreenMultiPlayer::OnKickPlayerButtonClick(INT nButton)
 {
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     m_nKickPlayerSlot = nButton;
@@ -2185,7 +2185,7 @@ BOOL CScreenMultiPlayer::IsPortraitButtonClickable(INT nCharacterSlot)
 void CScreenMultiPlayer::OnPortraitButtonClick(INT nButton)
 {
     if (IsPortraitButtonClickable(nButton)) {
-        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         m_nCharacterSlot = nButton;
@@ -2198,7 +2198,7 @@ void CScreenMultiPlayer::OnPortraitButtonClick(INT nButton)
 // 0x64F200
 void CScreenMultiPlayer::OnLogoutButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     m_nErrorState = 4;
@@ -2530,10 +2530,10 @@ void CUIControlButtonMultiPlayerPlayer::OnLButtonClick(CPoint pt)
     // __LINE__: 4979
     UTIL_ASSERT(pMultiPlayer != NULL);
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    pMultiPlayer->nm_field_458 = m_nID - 12;
+    pMultiPlayer->field_458 = m_nID - 12;
     pMultiPlayer->SummonPopup(4);
 
     renderLock.Unlock();
@@ -2563,10 +2563,10 @@ void CUIControlButtonMultiPlayerCharacter::OnLButtonClick(CPoint pt)
     // __LINE__: 5044
     UTIL_ASSERT(pMultiPlayer != NULL);
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    pMultiPlayer->nm_field_458 = m_nID - 18;
+    pMultiPlayer->field_458 = m_nID - 18;
     pMultiPlayer->SummonPopup(3);
 
     renderLock.Unlock();
@@ -2625,7 +2625,7 @@ void CUIControlButtonMultiPlayerOptions::OnLButtonClick(CPoint pt)
     // __LINE__: 5165
     UTIL_ASSERT(pMultiPlayer != NULL);
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pMultiPlayer->SummonPopup(1);
@@ -2667,7 +2667,7 @@ void CUIControlButtonMultiPlayerLogout::OnLButtonClick(CPoint pt)
 CUIControlEditMultiPlayerChat::CUIControlEditMultiPlayerChat(CUIPanel* panel, UI_CONTROL_EDIT* controlInfo)
     : CUIControlEdit(panel, controlInfo, 0)
 {
-    bm_field_8A0 = 0;
+    field_8A0 = 0;
 }
 
 // 0x6506D0
@@ -2679,7 +2679,7 @@ CUIControlEditMultiPlayerChat::~CUIControlEditMultiPlayerChat()
 void CUIControlEditMultiPlayerChat::OnEditReturn(CString sText)
 {
     g_pBaldurChitin->GetBaldurMessage()->SendChatMessage(sText);
-    sm_field_868 = sText;
+    field_868 = sText;
     SetText(CString(""));
 }
 
@@ -2858,7 +2858,7 @@ void CUIControlButtonMultiPlayerPermissionsOptions::OnLButtonClick(CPoint pt)
     // __LINE__: 5604
     UTIL_ASSERT(pMultiPlayer != NULL);
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pMultiPlayer->SummonPopup(2);
@@ -3124,10 +3124,10 @@ void CUIControlButtonMultiPlayerModifyCharacterCreate::OnLButtonClick(CPoint pt)
 
     CNetwork& cNetwork = g_pBaldurChitin->cNetwork;
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    INT nCharacterSlot = pMultiPlayer->nm_field_458;
+    INT nCharacterSlot = pMultiPlayer->field_458;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenMultiPlayer.cpp
     // __LINE__: 6101
@@ -3224,10 +3224,10 @@ void CUIControlButtonMultiPlayerModifyCharacterDelete::OnLButtonClick(CPoint pt)
     // __LINE__: 6217
     UTIL_ASSERT(pSettings != NULL);
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    INT nCharacterSlot = pMultiPlayer->nm_field_458;
+    INT nCharacterSlot = pMultiPlayer->field_458;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenMultiPlayer.cpp
     // __LINE__: 6226
@@ -3280,7 +3280,7 @@ void CUIControlButtonMultiPlayerModifyCharacterDelete::OnLButtonClick(CPoint pt)
             pMultiPlayer->OnDoneButtonClick();
 
             if (nCharacterSlot == 0) {
-                pGame->SetAreaGlobalFlag(-1, FALSE);
+                pGame->sub_5BDBA0(-1, FALSE);
             }
 
             CGameSprite* pSprite;
@@ -3394,10 +3394,10 @@ void CUIControlButtonMultiPlayerModifyPlayerPlayer::OnLButtonClick(CPoint pt)
     // __LINE__: 6443
     UTIL_ASSERT(pSettings != NULL);
 
-    pSettings->SetCharacterControlledByPlayer(pMultiPlayer->nm_field_458,
+    pSettings->SetCharacterControlledByPlayer(pMultiPlayer->field_458,
         m_nID,
         TRUE,
-        pMultiPlayer->nm_field_45C != 1);
+        pMultiPlayer->field_45C != 1);
 
     pMultiPlayer->OnDoneButtonClick();
 }
@@ -3635,150 +3635,3 @@ BOOL CUIControlButtonMultiPlayerSelection::Render(BOOL bForce)
     }
     return CUIControlButton::Render(bForce);
 }
-
-// Phase 1-2: Scaffold functions
-// 0x648E10
-void FUN_00648e10() {
-    // TODO: Incomplete.
-}
-
-// 0x64D950
-void FUN_0064d950() {
-    // TODO: Incomplete.
-}
-
-// 0x64F6E0
-void FUN_0064f6e0() {
-    // TODO: Incomplete.
-}
-
-// 0x64F870
-void FUN_0064f870() {
-    // TODO: Incomplete.
-}
-
-// 0x64FCD0
-void FUN_0064fcd0() {
-    // TODO: Incomplete.
-}
-
-// 0x64FF20
-void FUN_0064ff20() {
-    // TODO: Incomplete.
-}
-
-// 0x650170
-void FUN_00650170() {
-    // TODO: Incomplete.
-}
-
-// 0x650340
-void FUN_00650340() {
-    // TODO: Incomplete.
-}
-
-// 0x650580
-void FUN_00650580() {
-    // TODO: Incomplete.
-}
-
-// 0x6506B0
-void FUN_006506b0() {
-    // TODO: Incomplete.
-}
-
-// 0x650890
-void FUN_00650890() {
-    // TODO: Incomplete.
-}
-
-// 0x650AC0
-void FUN_00650ac0() {
-    // TODO: Incomplete.
-}
-
-// 0x650C90
-void FUN_00650c90() {
-    // TODO: Incomplete.
-}
-
-// 0x650ED0
-void FUN_00650ed0() {
-    // TODO: Incomplete.
-}
-
-// 0x6510B0
-void FUN_006510b0() {
-    // TODO: Incomplete.
-}
-
-// 0x651210
-void FUN_00651210() {
-    // TODO: Incomplete.
-}
-
-// 0x6514F0
-void FUN_006514f0() {
-    // TODO: Incomplete.
-}
-
-// 0x6516C0
-void FUN_006516c0() {
-    // TODO: Incomplete.
-}
-
-// 0x651890
-void FUN_00651890() {
-    // TODO: Incomplete.
-}
-
-// 0x651D70
-void FUN_00651d70() {
-    // TODO: Incomplete.
-}
-
-// 0x652370
-void FUN_00652370() {
-    // TODO: Incomplete.
-}
-
-// 0x652510
-void FUN_00652510() {
-    // TODO: Incomplete.
-}
-
-// 0x652760
-void FUN_00652760() {
-    // TODO: Incomplete.
-}
-
-// 0x652930
-void FUN_00652930() {
-    // TODO: Incomplete.
-}
-
-// 0x652A60
-void FUN_00652a60() {
-    // TODO: Incomplete.
-}
-
-// 0x652C10
-void FUN_00652c10() {
-    // TODO: Incomplete.
-}
-
-// 0x652E30
-void FUN_00652e30() {
-    // TODO: Incomplete.
-}
-
-// 0x660790
-void FUN_00660790() {
-    // TODO: Incomplete.
-}
-
-// 0x699630
-void FUN_00699630() {
-    // TODO: Incomplete.
-}
-

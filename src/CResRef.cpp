@@ -237,10 +237,3 @@ void CResRef::GetResRef(BYTE* resRef) const
 {
     memcpy(resRef, m_resRef, RESREF_SIZE);
 }
-
-// Phase 1-2: Scaffold functions
-// 0x78AED0
-void FUN_0078aed0() {
-    // TODO: Incomplete.
-}
-

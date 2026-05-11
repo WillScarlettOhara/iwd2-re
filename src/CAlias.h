@@ -10,9 +10,9 @@ public:
 
     BOOL ParseRawData(CString& a2);
 
-    /* 0004 */ BOOL m_bParsed;
-    /* 0008 */ CString m_sAliasPrefix;
-    /* 000C */ CStringList m_lReplacementPaths;
+    /* 0004 */ BOOL field_4;
+    /* 0008 */ CString field_8;
+    /* 000C */ CStringList field_C;
 };
 
 #endif /* CALIAS_H_ */

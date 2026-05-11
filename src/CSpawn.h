@@ -217,13 +217,13 @@ public:
     /* 0126 */ CString* pSpawnFacingStorageLabel;
     /* 012A */ int mSequentialStartValue;
     /* 012E */ DWORD mTimeOfDay;
-    /* 0132 */ int m_specVarOperation;
-    /* 0136 */ int m_specVarValue;
-    /* 013A */ int m_specVarInc;
-    /* 013E */ BOOLEAN m_bSpecKeyControlled;
-    /* 013F */ BOOLEAN m_bAreaDiff1;
-    /* 0140 */ BOOLEAN m_bAreaDiff2;
-    /* 0141 */ BOOLEAN m_bAreaDiff3;
+    /* 0132 */ int field_132;
+    /* 0136 */ int field_136;
+    /* 013A */ int field_13A;
+    /* 013E */ BOOLEAN field_13E;
+    /* 013F */ BOOLEAN field_13F;
+    /* 0140 */ BOOLEAN field_140;
+    /* 0141 */ BOOLEAN field_141;
 };
 
 class CSpawnList : public CTypedPtrList<CPtrList, CSpawn*> {
@@ -241,9 +241,9 @@ public:
     BOOL GetINIKey(CMemINISection* pSection, const CString& sKey, CString& sValue);
 
     /* 001C */ CString mSectionAlias;
-    /* 0020 */ int nm_field_20;
-    /* 0024 */ int nm_field_24;
-    /* 0028 */ int nm_field_28;
+    /* 0020 */ int field_20;
+    /* 0024 */ int field_24;
+    /* 0028 */ int field_28;
     /* 002C */ BOOL CheckSpawnTimes;
     /* 0030 */ DWORD SpawnTimeOfDay;
     /* 0034 */ unsigned int mInterval;

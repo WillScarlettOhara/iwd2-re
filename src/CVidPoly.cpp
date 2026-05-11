@@ -30,10 +30,10 @@ const BYTE CVidPoly::m_aDitherMask[] = {
 // 0x7C0DB0
 CVidPoly::CVidPoly()
 {
-    bm_field_0 = 0;
+    field_0 = 0;
     m_pVertices = NULL;
-    wm_field_10 = 0;
-    nfield_C = 0;
+    field_10 = 0;
+    field_C = 0;
     m_nVertices = -1;
     m_pDrawHLineFunction = &CVidPoly::DrawHLine16;
 }
@@ -754,65 +754,3 @@ void CVidPoly::DrawHLineShadedMirrored32(void* pSurface, int xMin, int xMax, DWO
 {
     // TODO: Incomplete.
 }
-
-// Phase 1-2: Scaffold functions
-// 0x7C0CF0
-void FUN_007c0cf0() {
-    // TODO: Incomplete.
-}
-
-// 0x7C0D90
-void FUN_007c0d90() {
-    // TODO: Incomplete.
-}
-
-// 0x7C18F0
-void FUN_007c18f0() {
-    // TODO: Incomplete.
-}
-
-// 0x7C1970
-void FUN_007c1970() {
-    // TODO: Incomplete.
-}
-
-// 0x7C1D40
-void FUN_007c1d40() {
-    // TODO: Incomplete.
-}
-
-// 0x7C1D70
-void FUN_007c1d70() {
-    // TODO: Incomplete.
-}
-
-// 0x7C1DE0
-void FUN_007c1de0() {
-    // TODO: Incomplete.
-}
-
-// 0x7C1EC0
-void FUN_007c1ec0() {
-    // TODO: Incomplete.
-}
-
-// 0x7D70F0
-void FUN_007d70f0() {
-    // TODO: Incomplete.
-}
-
-// 0x7D7120
-void FUN_007d7120() {
-    // TODO: Incomplete.
-}
-
-// 0x7D7410
-void FUN_007d7410() {
-    // TODO: Incomplete.
-}
-
-// 0x7D7880
-void FUN_007d7880() {
-    // TODO: Incomplete.
-}
-

@@ -24,23 +24,23 @@ const BYTE CUIManager::KEYBOARD = 2;
 // 0x4D39B0
 CUIManager::CUIManager()
 {
-    nm_field_18 = 1;
-    bm_field_2E = 1;
-    bm_field_2D = 1;
+    field_18 = 1;
+    field_2E = 1;
+    field_2D = 1;
     m_pWarp = NULL;
     m_nCaptureType = 0;
     m_bHidden = FALSE;
     m_bInitialized = FALSE;
     m_pFocusedControl = NULL;
-    nm_field_1C = 0;
-    nm_field_20 = 0;
-    nm_field_24 = 0;
-    nm_field_28 = 0;
-    nm_field_32 = -1;
-    nfield_76 = 0;
-    pfield_7A.SetRect(0, 0, 0, 0);
-    pm_field_8A.SetRect(0, 0, 0, 0);
-    pfield_9A.SetRect(0, 0, 0, 0);
+    field_1C = 0;
+    field_20 = 0;
+    field_24 = 0;
+    field_28 = 0;
+    field_32 = -1;
+    field_76 = 0;
+    field_7A.SetRect(0, 0, 0, 0);
+    field_8A.SetRect(0, 0, 0, 0);
+    field_9A.SetRect(0, 0, 0, 0);
     m_bDoubleSize = FALSE;
 }
 
@@ -58,18 +58,18 @@ void CUIManager::fInit(CWarp* pWarp, CResRef cResRef, BOOL bDoubleSize)
         m_pWarp = pWarp;
         m_bHidden = FALSE;
         m_pFocusedControl = NULL;
-        nm_field_18 = 1;
-        nm_field_1C = 0;
-        nm_field_20 = 0;
-        nm_field_24 = 0;
-        nm_field_28 = 0;
-        bm_field_2E = 1;
-        bm_field_2D = 1;
-        nm_field_32 = -1;
-        nfield_76 = 0;
-        pfield_7A.SetRect(0, 0, 0, 0);
-        pm_field_8A.SetRect(0, 0, 0, 0);
-        pfield_9A.SetRect(0, 0, 0, 0);
+        field_18 = 1;
+        field_1C = 0;
+        field_20 = 0;
+        field_24 = 0;
+        field_28 = 0;
+        field_2E = 1;
+        field_2D = 1;
+        field_32 = -1;
+        field_76 = 0;
+        field_7A.SetRect(0, 0, 0, 0);
+        field_8A.SetRect(0, 0, 0, 0);
+        field_9A.SetRect(0, 0, 0, 0);
 
         CResUI* pRes = static_cast<CResUI*>(g_pChitin->cDimm.GetResObject(cResRef, 1002, TRUE));
         if (pRes->Demand() != NULL) {
@@ -159,12 +159,12 @@ void CUIManager::TimerAsynchronousUpdate()
 {
     DWORD nID = -1;
     if (m_bInitialized) {
-        if (nm_field_18) {
+        if (field_18) {
             POSITION pos = m_lPanels.GetHeadPosition();
             while (pos != NULL) {
                 CUIPanel* pPanel = m_lPanels.GetNext(pos);
                 if (!pPanel->m_bNeedAsyncUpdate) {
-                    if (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips == INT_MAX && !nfield_76) {
+                    if (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips == INT_MAX && !field_76) {
                         continue;
                     }
 
@@ -177,13 +177,13 @@ void CUIManager::TimerAsynchronousUpdate()
                 nID = pPanel->TimerAsynchronousUpdate();
             }
 
-            if (bm_field_2D) {
-                nm_field_1C++;
+            if (field_2D) {
+                field_1C++;
             } else {
-                if (nID != nm_field_32) {
-                    bm_field_2D = TRUE;
-                    nm_field_32 = -1;
-                    nm_field_1C++;
+                if (nID != field_32) {
+                    field_2D = TRUE;
+                    field_32 = -1;
+                    field_1C++;
                 }
             }
         }
@@ -222,13 +222,13 @@ void CUIManager::SetCapture(CUIControlBase* pControl, BYTE nType)
 // 0x4D4060
 void CUIManager::ClearTooltip()
 {
-    nm_field_1C = 0;
-    nfield_76 = 0;
+    field_1C = 0;
+    field_76 = 0;
 
     CInfCursor* pCursor = g_pBaldurChitin->GetObjectCursor();
-    if (pCursor->pfield_A02 != NULL) {
-        pCursor->pfield_A02->ResetToolTip();
-        pCursor->pfield_A02 = NULL;
+    if (pCursor->field_A02 != NULL) {
+        pCursor->field_A02->ResetToolTip();
+        pCursor->field_A02 = NULL;
     }
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -240,13 +240,13 @@ void CUIManager::ClearTooltip()
 // 0x4D40B0
 void CUIManager::OnMouseMove(CPoint pt)
 {
-    nm_field_1C = 0;
-    nfield_76 = 0;
+    field_1C = 0;
+    field_76 = 0;
 
     CInfCursor* pCursor = g_pBaldurChitin->GetObjectCursor();
-    if (pCursor->pfield_A02 != NULL) {
-        pCursor->pfield_A02->ResetToolTip();
-        pCursor->pfield_A02 = NULL;
+    if (pCursor->field_A02 != NULL) {
+        pCursor->field_A02->ResetToolTip();
+        pCursor->field_A02 = NULL;
     }
 
     if (g_pBaldurChitin->GetObjectGame()->m_tempCursor == 101) {
@@ -277,7 +277,7 @@ void CUIManager::OnMouseMove(CPoint pt)
 void CUIManager::OnLButtonDown(CPoint pt)
 {
     if (m_bInitialized) {
-        if (nm_field_18) {
+        if (field_18) {
             if (m_pFocusedControl != NULL) {
                 if (m_nCaptureType != KEYBOARD) {
                     return;
@@ -324,7 +324,7 @@ void CUIManager::OnLButtonUp(CPoint pt)
 void CUIManager::OnLButtonDblClk(CPoint pt)
 {
     if (m_bInitialized) {
-        if (nm_field_18) {
+        if (field_18) {
             if (m_pFocusedControl == NULL || m_nCaptureType == KEYBOARD) {
                 if (!m_bHidden) {
                     POSITION pos = m_lPanels.GetTailPosition();
@@ -350,7 +350,7 @@ void CUIManager::OnLButtonDblClk(CPoint pt)
 void CUIManager::OnRButtonDown(CPoint pt)
 {
     if (m_bInitialized) {
-        if (nm_field_18) {
+        if (field_18) {
             if (m_pFocusedControl != NULL) {
                 if (m_nCaptureType != KEYBOARD) {
                     return;
@@ -409,11 +409,11 @@ BOOL CUIManager::OnKeyDown(SHORT nKey)
 // 0x4D4540
 void CUIManager::Render()
 {
-    CSingleLock renderLock(&pm_field_36, FALSE);
+    CSingleLock renderLock(&field_36, FALSE);
     renderLock.Lock(INFINITE);
 
     if (m_bInitialized) {
-        if (nm_field_18 != 0) {
+        if (field_18 != 0) {
             if (!m_bHidden) {
                 POSITION pos = m_lPanels.GetHeadPosition();
                 while (pos != NULL) {
@@ -431,7 +431,7 @@ void CUIManager::Render()
 void CUIManager::InvalidateRect(const CRect* rect)
 {
     if (m_bInitialized) {
-        if (nm_field_18 != 0) {
+        if (field_18 != 0) {
             POSITION pos = m_lPanels.GetHeadPosition();
             while (pos != NULL) {
                 CUIPanel* pPanel = m_lPanels.GetNext(pos);
@@ -444,20 +444,20 @@ void CUIManager::InvalidateRect(const CRect* rect)
 // 0x4D4620
 void CUIManager::InvalidateCursorRect(const CRect& rect)
 {
-    pfield_7A = pm_field_8A;
-    pm_field_8A = rect;
+    field_7A = field_8A;
+    field_8A = rect;
 
-    pfield_9A.left = min(pm_field_8A.left, pfield_7A.left);
-    pfield_9A.top = min(pm_field_8A.top, pfield_7A.top);
-    pfield_9A.right = max(pm_field_8A.right, pfield_7A.right);
-    pfield_9A.bottom = max(pm_field_8A.bottom, pfield_7A.bottom);
+    field_9A.left = min(field_8A.left, field_7A.left);
+    field_9A.top = min(field_8A.top, field_7A.top);
+    field_9A.right = max(field_8A.right, field_7A.right);
+    field_9A.bottom = max(field_8A.bottom, field_7A.bottom);
 }
 
 // 0x4D46D0
 void CUIManager::ForceToolTip()
 {
-    nfield_76 = 1;
-    nm_field_1C = g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips;
+    field_76 = 1;
+    field_1C = g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips;
 }
 
 // 0x4D46F0
@@ -480,15 +480,3 @@ void CUIManager::KillCapture()
         m_pFocusedControl = NULL;
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4D3D90
-void FUN_004d3d90() {
-    // TODO: Incomplete.
-}
-
-// 0x4D4730
-void FUN_004d4730() {
-    // TODO: Incomplete.
-}
-

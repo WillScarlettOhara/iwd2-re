@@ -293,10 +293,3 @@ BOOL CGameEffectList::ModifyAllOfType(WORD effectID, LONG newEffectAmount, BOOL 
     }
     return TRUE;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4C0830
-void FUN_004c0830() {
-    // TODO: Incomplete.
-}
-

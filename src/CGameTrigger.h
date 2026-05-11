@@ -1,11 +1,6 @@
 #ifndef CGAMETRIGGER_H_
 #define CGAMETRIGGER_H_
 
-// ============================================================================
-// CGameTrigger - Script trigger regions - OnEnter, OnExit events
-//
-// Address: varies by method
-// ============================================================================
 #include "CGameAIBase.h"
 #include "CResRef.h"
 #include "FileFormat.h"
@@ -27,7 +22,7 @@ public:
     /* 00B8 */ virtual BOOL IsOverActivate(const CPoint& pt);
 
     void SetDrawPoly(SHORT time);
-    BOOL CanActivateTrap();
+    BOOL sub_45B950();
 
     /* 0598 */ WORD m_triggerType;
     /* 059A */ CRect m_rBounding;
@@ -48,9 +43,9 @@ public:
     /* 0616 */ CPoint m_posTrapOrigin;
     /* 061E */ CResRef m_keyType;
     /* 0626 */ SHORT m_drawPoly;
-    /* 0628 */ CPoint m_usePoint;
-    /* 0630 */ CArray<CRect*> m_pBoundingRects;
-    /* 0644 */ CAreaPoint* m_pAreaPoints;
+    /* 0628 */ CPoint field_628;
+    /* 0630 */ CArray<CRect*> field_630;
+    /* 0644 */ CAreaPoint* field_644;
 };
 
 #endif /* CGAMETRIGGER_H_ */

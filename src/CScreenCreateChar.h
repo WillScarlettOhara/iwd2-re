@@ -1,11 +1,6 @@
 #ifndef CSCREENCREATECHAR_H_
 #define CSCREENCREATECHAR_H_
 
-// ============================================================================
-// CScreenCreateChar - Character creation - race, class, abilities
-//
-// Address: varies by method
-// ============================================================================
 #include "C2DArray.h"
 #include "CBaldurEngine.h"
 #include "CGameAnimation.h"
@@ -173,7 +168,7 @@ public:
     // NOTE: Seen in `OnDoneButtonClick` assertion.
     INT GetCustomSoundSetIndex() { return m_nCustomSoundSetIndex; }
 
-    /* 0106 */ C2DArray pm_m_field_106;
+    /* 0106 */ C2DArray field_106;
     /* 012A */ C2DArray m_tSubRace;
     /* 014E */ C2DArray m_tHairColor;
     /* 0172 */ C2DArray m_tSkinColor;
@@ -191,11 +186,11 @@ public:
     /* 04EA */ INT m_nExtraAbilityPoints;
     /* 04EE */ INT m_nExtraSpells;
     /* 04F2 */ INT m_nExtraSkillPoints;
-    /* 04F6 */ int nm_field_4F6;
-    /* 04FE */ int nm_field_4FE;
-    /* 0502 */ int nfield_502;
-    /* 0506 */ int nfield_506;
-    /* 050A */ int nfield_50A;
+    /* 04F6 */ int field_4F6;
+    /* 04FE */ int field_4FE;
+    /* 0502 */ int field_502;
+    /* 0506 */ int field_506;
+    /* 050A */ int field_50A;
     /* 050E */ BYTE m_nMinSTR;
     /* 050F */ BYTE m_nMinDEX;
     /* 0510 */ BYTE m_nMinCON;
@@ -222,7 +217,7 @@ public:
     /* 056A */ INT m_nTopHatedRace;
     /* 056E */ BYTE m_nRange;
     /* 056F */ BYTE m_nMemorySTR;
-    /* 0570 */ unsigned char bfield_570;
+    /* 0570 */ unsigned char field_570;
     /* 0571 */ BYTE m_nMemoryDEX;
     /* 0572 */ BYTE m_nMemoryCON;
     /* 0573 */ BYTE m_nMemoryINT;
@@ -236,24 +231,24 @@ public:
     /* 058A */ INT m_nCustomSoundIndex;
     /* 058E */ INT m_nCharacterIndex;
     /* 0592 */ CStringList* m_pCharacters;
-    /* 0596 */ int nfield_596;
+    /* 0596 */ int field_596;
     /* 059A */ CStringList* m_pSounds;
     /* 059E */ CVidFont m_preLoadFontRealms;
     /* 0A9E */ CVidFont m_preLoadFontStnSml;
     /* 0F9E */ CVidFont m_preLoadFontTool;
     /* 149E */ INT m_nErrorState;
     /* 14A2 */ BYTE m_nSpellLevel;
-    /* 14A3 */ unsigned char bm_m_field_14A3;
-    /* 14A4 */ int nm_m_field_14A4;
-    /* 14A8 */ int nm_m_field_14A8;
+    /* 14A3 */ unsigned char field_14A3;
+    /* 14A4 */ int field_14A4;
+    /* 14A8 */ int field_14A8;
     /* 14AC */ SHORT m_nTopFeat;
-    /* 14AE */ int nm_m_field_14AE;
+    /* 14AE */ int field_14AE;
     /* 14B2 */ INT m_storedFeats[75];
     /* 15DE */ SHORT m_nTopSkill;
-    /* 15E0 */ int nm_m_field_15E0;
+    /* 15E0 */ int field_15E0;
     /* 15E4 */ INT m_storedSkills[16];
-    /* 1624 */ CUIControlScrollBar* pm_m_field_1624;
-    /* 1628 */ int nm_m_field_1628;
+    /* 1624 */ CUIControlScrollBar* field_1624;
+    /* 1628 */ int field_1628;
 };
 
 class CUIControlButtonCharGenMenu : public CUIControlButton {

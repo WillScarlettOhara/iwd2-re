@@ -1,11 +1,6 @@
 #ifndef CGAMECONTAINER_H_
 #define CGAMECONTAINER_H_
 
-// ============================================================================
-// CGameContainer - Lootable chests, barrels, corpses
-//
-// Address: varies by method
-// ============================================================================
 #include "CGameAIBase.h"
 #include "CResRef.h"
 #include "CVidCell.h"
@@ -70,10 +65,10 @@ public:
     /* 08A4 */ SCRIPTNAME m_ownedBy;
     /* 08C4 */ CResRef m_keyType;
     /* 08CC */ DWORD m_breakDifficulty;
-    /* 08EA */ CAreaPoint* m_pAreaPoints;
+    /* 08EA */ CAreaPoint* field_8EA;
     /* 08D0 */ SHORT m_drawPoly;
-    /* 08D2 */ int nm_field_8D2;
-    /* 08D6 */ CArray<CRect*> m_pBoundingRects;
+    /* 08D2 */ int field_8D2;
+    /* 08D6 */ CArray<CRect*> field_8D6;
 };
 
 #endif /* CGAMECONTAINER_H_ */

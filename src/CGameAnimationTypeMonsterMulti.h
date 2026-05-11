@@ -43,13 +43,13 @@ public:
     /* 041E */ CVidPalette m_charPalette;
     /* 0442 */ SHORT m_currentBamSequence;
     /* 0444 */ SHORT m_currentBamDirection;
-    /* 0446 */ int nm_field_446;
-    /* 044A */ CVidBitmap* pm_field_44A;
-    /* 044E */ CVidBitmap pm_field_44E;
-    /* 0508 */ CVidBitmap pfield_508;
-    /* 05C2 */ CVidBitmap pfield_5C2;
-    /* 067C */ CVidBitmap pfield_67C;
-    /* 0736 */ CVidBitmap pfield_736;
+    /* 0446 */ int field_446;
+    /* 044A */ CVidBitmap* field_44A;
+    /* 044E */ CVidBitmap field_44E;
+    /* 0508 */ CVidBitmap field_508;
+    /* 05C2 */ CVidBitmap field_5C2;
+    /* 067C */ CVidBitmap field_67C;
+    /* 0736 */ CVidBitmap field_736;
     /* 07F0 */ BOOL m_falseColor;
     /* 07F4 */ BYTE m_extendDirectionTest;
     /* 07F5 */ BYTE m_nQuadrants;
@@ -57,7 +57,7 @@ public:
     /* 07FA */ BOOL m_bSplitBams;
     /* 07FE */ CHAR m_splitBamChar;
     /* 07FF */ CHAR m_splitDirectionBamChar;
-    /* 0800 */ unsigned char bm_field_800;
+    /* 0800 */ unsigned char field_800;
 };
 
 #endif /* CGAMEANIMATIONTYPEMONSTERMULTI_H_ */

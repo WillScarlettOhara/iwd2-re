@@ -1299,7 +1299,7 @@ void CVideo::InitializeRenderEnv()
     CVideo3d::glClear(GL_LIGHT0);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    nm_field_136 = GL_RGBA;
+    field_136 = GL_RGBA;
 }
 
 // 0x7BBF50
@@ -1332,7 +1332,7 @@ BOOL CVideo::SetPixelFormat(HDC hDC)
     pfd.dwLayerMask = 0;
     pfd.dwVisibleMask = 0;
     pfd.dwDamageMask = 0;
-    pfd.cColorBits = !g_pChitin->nm_field_2F4 ? 32 : 16;
+    pfd.cColorBits = !g_pChitin->field_2F4 ? 32 : 16;
 
     int iPixelFormat = CChitin3d::ChoosePixelFormat(hDC, &pfd);
     if (iPixelFormat == 0) {
@@ -2131,7 +2131,7 @@ BOOL CVidInf::SetDisplayMode()
     // FIXME: Unused.
     g_pChitin->GetSavedBitsPerPixel();
 
-    DWORD nBpp = !g_pChitin->nm_field_2F4 ? 32 : 16;
+    DWORD nBpp = !g_pChitin->field_2F4 ? 32 : 16;
 
     while (EnumDisplaySettingsA(NULL, i, &dm)) {
         if (dm.dmBitsPerPel == nBpp
@@ -2199,22 +2199,22 @@ BOOL CVidInf::CreateSurfaces3d()
     // `m_dwBBitCount`?
     m_dwRBitCount = 8;
 
-    m_nRBitLoss = 0;
-    m_nGBitLoss = 0;
-    m_nBBitLoss = 0;
+    field_C2 = 0;
+    field_C6 = 0;
+    field_CA = 0;
 
     m_dwRBitMask = 0xFF;
     m_dwGBitMask = 0xFF00;
     m_dwBBitMask = 0xFF0000;
 
-    m_dwShadowColor = 0;
+    field_24 = 0;
 
     g_pChitin->m_nScreenWidth = GetSystemMetrics(SM_CXSCREEN);
     g_pChitin->m_nScreenHeight = GetSystemMetrics(SM_CYSCREEN);
 
     m_nVRamSurfaces = 780;
 
-    g_pChitin->cVideo.nm_field_13E = 0;
+    g_pChitin->cVideo.field_13E = 0;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 0);
 
     CVideo3d::glEnable(GL_TEXTURE_2D);
@@ -2225,7 +2225,7 @@ BOOL CVidInf::CreateSurfaces3d()
         static_cast<GLfloat>(GL_DECAL));
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.nm_field_13E = 2;
+    g_pChitin->cVideo.field_13E = 2;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
 
     CVideo3d::glTexParameterf(GL_TEXTURE_2D,
@@ -2252,9 +2252,9 @@ BOOL CVidInf::CreateSurfaces3d()
         CVideo3d::texImageData);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    pm_field_178.SetResRef(CResRef("NORMAL"), g_pChitin->nm_field_2EC, TRUE);
-    pm_field_178.SetColor(RGB(255, 255, 255), RGB(0, 0, 0), FALSE);
-    pm_field_178.RegisterFont();
+    field_178.SetResRef(CResRef("NORMAL"), g_pChitin->field_2EC, TRUE);
+    field_178.SetColor(RGB(255, 255, 255), RGB(0, 0, 0), FALSE);
+    field_178.RegisterFont();
 
     return TRUE;
 }
@@ -2266,7 +2266,7 @@ BOOL CVidInf::DestroySurfaces3d(CVidMode* pNextVidMode)
         return TRUE;
     }
 
-    pm_field_178.Unload();
+    field_178.Unload();
 
     GLuint texture1 = 2;
     CVideo3d::glDeleteTextures(1, &texture1);
@@ -2354,10 +2354,10 @@ BOOL CVidInf::WindowedFlip3d(BOOL bRenderCursor)
 // 0x7BE530
 void CVidInf::DoTextOut3d(UINT nSurface, const CString& sText, int x, int y, COLORREF color)
 {
-    pm_field_178.SetColor(color, 0, 0);
+    field_178.SetColor(color, 0, 0);
 
     CRect screenRect(0, 0, CVideo::SCREENWIDTH, CVideo::SCREENHEIGHT);
-    pm_field_178.TextOut3d(sText, x, y + 16, screenRect, 0, 0);
+    field_178.TextOut3d(sText, x, y + 16, screenRect, 0, 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -2462,40 +2462,3 @@ void CVidMode::DeleteDisposableTextures()
 
     lock.Unlock();
 }
-
-// Phase 1-2: Scaffold functions
-// 0x7BAAC0
-void FUN_007baac0() {
-    // TODO: Incomplete.
-}
-
-// 0x7BB5D0
-void FUN_007bb5d0() {
-    // TODO: Incomplete.
-}
-
-// 0x7BB8F0
-void FUN_007bb8f0() {
-    // TODO: Incomplete.
-}
-
-// 0x7BB940
-void FUN_007bb940() {
-    // TODO: Incomplete.
-}
-
-// 0x7BB9A0
-void FUN_007bb9a0() {
-    // TODO: Incomplete.
-}
-
-// 0x7BD9D0
-void FUN_007bd9d0() {
-    // TODO: Incomplete.
-}
-
-// 0x7BE5A0
-void FUN_007be5a0() {
-    // TODO: Incomplete.
-}
-

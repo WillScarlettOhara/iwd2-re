@@ -595,7 +595,7 @@ BOOL CVidBitmap::Render3d(INT x, INT y, const CRect& rClip, DWORD dwFlags, BOOLE
     CVideo3d::glEnable(GL_TEXTURE_2D);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.nm_field_13E = 2;
+    g_pChitin->cVideo.field_13E = 2;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -627,7 +627,7 @@ BOOL CVidBitmap::Render3d(INT x, INT y, const CRect& rClip, DWORD dwFlags, BOOLE
                 nTileDataJump = nBytesPerPixel * (bmpSize.cx - tileSize.cx);
             }
 
-            lTilePitch = g_pChitin->cVideo.nm_field_13A
+            lTilePitch = g_pChitin->cVideo.field_13A
                 ? CVidTile::BYTES_PER_TEXEL * CVIDINF_FX_WIDTH
                 : CVidTile::BYTES_PER_TEXEL * tileSize.cx;
 
@@ -672,7 +672,7 @@ BOOL CVidBitmap::Render3d(INT x, INT y, const CRect& rClip, DWORD dwFlags, BOOLE
                 return FALSE;
             }
 
-            if (g_pChitin->cVideo.nm_field_13A) {
+            if (g_pChitin->cVideo.field_13A) {
                 CVideo3d::glTexImage2D(GL_TEXTURE_2D,
                     0,
                     GL_RGBA,
@@ -719,20 +719,3 @@ BOOL CVidBitmap::RenderDirect3d(INT x, INT y, const CRect& rClip, DWORD dwFlags,
 {
     return Render3d(x, y, rClip, dwFlags, bDemanded);
 }
-
-// Phase 1-2: Scaffold functions
-// 0x7B3B70
-void FUN_007b3b70() {
-    // TODO: Incomplete.
-}
-
-// 0x7B3F66
-void FUN_007b3f66() {
-    // TODO: Incomplete.
-}
-
-// 0x7B3FF8
-void FUN_007b3ff8() {
-    // TODO: Incomplete.
-}
-

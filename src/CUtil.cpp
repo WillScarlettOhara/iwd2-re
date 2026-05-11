@@ -161,7 +161,7 @@ int CUtil::Find(const CString& sString, char ch, int start)
 {
     int nIndex = start;
     while (nIndex < sString.GetLength()) {
-        if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(sString[nIndex])) {
+        if (g_pChitin->field_1A0 && IsDBCSLeadByte(sString[nIndex])) {
             nIndex++;
         } else {
             if (sString[nIndex] == ch) {
@@ -180,7 +180,7 @@ int CUtil::FindOneOf(const CString& sString, const CString& sSeparators, int sta
 {
     CString sMutableSeparators(sSeparators);
 
-    if (g_pChitin->nm_field_1A0) {
+    if (g_pChitin->field_1A0) {
         int nIndex = 0;
         while (nIndex < sMutableSeparators.GetLength()) {
             if (IsDBCSLeadByte(sMutableSeparators[nIndex])) {
@@ -220,7 +220,7 @@ void CUtil::MakeReverse(CString& sString)
 
     int nIndex = 0;
     while (nIndex < sString.GetLength()) {
-        if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(sString[nIndex])) {
+        if (g_pChitin->field_1A0 && IsDBCSLeadByte(sString[nIndex])) {
             sReversed = sString.Mid(nIndex, 2) + sReversed;
             nIndex++;
         } else {
@@ -253,7 +253,7 @@ void CUtil::TrimLeft(CString& sString)
 {
     int nIndex = 0;
     while (nIndex < sString.GetLength()) {
-        if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(sString[nIndex])) {
+        if (g_pChitin->field_1A0 && IsDBCSLeadByte(sString[nIndex])) {
             break;
         }
 
@@ -275,7 +275,7 @@ void CUtil::TrimRight(CString& sString)
     int nEnd = -1;
     int nIndex = 0;
     while (nIndex < sString.GetLength()) {
-        if (g_pChitin->nm_field_1A0 && IsDBCSLeadByte(sString[nIndex])) {
+        if (g_pChitin->field_1A0 && IsDBCSLeadByte(sString[nIndex])) {
             nIndex++;
             nEnd = nIndex;
         } else {
@@ -291,15 +291,3 @@ void CUtil::TrimRight(CString& sString)
 
     sString = sString.Left(nEnd + 1);
 }
-
-// Phase 1-2: Scaffold functions
-// 0x780A90
-void FUN_00780a90() {
-    // TODO: Incomplete.
-}
-
-// 0x781630
-void FUN_00781630() {
-    // TODO: Incomplete.
-}
-

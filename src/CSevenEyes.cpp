@@ -47,7 +47,7 @@ bool CSevenEyes::CheckEyeOfMind(CGameSprite* pSprite, CGameEffect* pEffect)
     pSprite->RemoveSpecialAbility(CResRef(RESREF_EYE_OF_THE_MIND));
 
     // "Eye of the Mind blocks effect and dissipates."
-    IcewindMisc::DisplayEffectText(pSprite, 21654, 0);
+    IcewindMisc::sub_584880(pSprite, 21654, 0);
 
     pSprite->AddEffect(IcewindMisc::CreateEffectImmunitySpell(pSprite, reinterpret_cast<const BYTE*>(s.c_str()), 0, 1, 0, 2),
         CGameAIBase::EFFECT_LIST_TIMED,
@@ -93,7 +93,7 @@ bool CSevenEyes::CheckEyeOfSword(CGameSprite* pSprite, CGameEffect* pEffect)
     pSprite->RemoveSpecialAbility(CResRef(RESREF_EYE_OF_THE_SWORD));
 
     // "Eye of the Sword blocks effect and dissipates."
-    IcewindMisc::DisplayEffectText(pSprite, 21653, 0);
+    IcewindMisc::sub_584880(pSprite, 21653, 0);
 
     pSprite->AddEffect(IcewindMisc::CreateEffectImmunitySpell(pSprite, reinterpret_cast<const BYTE*>(s.c_str()), 0, 1, 0, 2),
         CGameAIBase::EFFECT_LIST_TIMED,
@@ -138,7 +138,7 @@ bool CSevenEyes::CheckEyeOfMage(CGameSprite* pSprite, CGameEffect* pEffect)
     pSprite->RemoveSpecialAbility(CResRef(RESREF_EYE_OF_THE_MAGE));
 
     // "Eye of the Mage blocks effect and dissipates."
-    IcewindMisc::DisplayEffectText(pSprite, 21652, 0);
+    IcewindMisc::sub_584880(pSprite, 21652, 0);
 
     pSprite->AddEffect(IcewindMisc::CreateEffectImmunitySpell(pSprite, reinterpret_cast<const BYTE*>(s.c_str()), 0, 1, 0, 2),
         CGameAIBase::EFFECT_LIST_TIMED,
@@ -181,7 +181,7 @@ bool CSevenEyes::CheckEyeOfVenom(CGameSprite* pSprite, CGameEffect* pEffect)
     pSprite->RemoveSpecialAbility(CResRef(RESREF_EYE_OF_VENOM));
 
     // "Eye of Venom blocks effect and dissipates."
-    IcewindMisc::DisplayEffectText(pSprite, 21651, 0);
+    IcewindMisc::sub_584880(pSprite, 21651, 0);
 
     pSprite->AddEffect(IcewindMisc::CreateEffectImmunitySpell(pSprite, reinterpret_cast<const BYTE*>(s.c_str()), 0, 1, 0, 2),
         CGameAIBase::EFFECT_LIST_TIMED,
@@ -219,7 +219,7 @@ bool CSevenEyes::CheckEyeOfSpirit(CGameSprite* pSprite, CGameEffect* pEffect)
     pSprite->RemoveSpecialAbility(CResRef(RESREF_EYE_OF_THE_SPIRIT));
 
     // "Eye of the Spirit blocks effect and dissipates."
-    IcewindMisc::DisplayEffectText(pSprite, 21650, 0);
+    IcewindMisc::sub_584880(pSprite, 21650, 0);
 
     pSprite->AddEffect(IcewindMisc::CreateEffectImmunitySpell(pSprite, reinterpret_cast<const BYTE*>(s.c_str()), 0, 1, 0, 2),
         CGameAIBase::EFFECT_LIST_TIMED,
@@ -262,7 +262,7 @@ bool CSevenEyes::CheckEyeOfFortitude(CGameSprite* pSprite, CGameEffect* pEffect)
     pSprite->RemoveSpecialAbility(CResRef(RESREF_EYE_OF_FORTITUDE));
 
     // "Eye of Fortitude blocks effect and dissipates."
-    IcewindMisc::DisplayEffectText(pSprite, 21649, 0);
+    IcewindMisc::sub_584880(pSprite, 21649, 0);
 
     pSprite->AddEffect(IcewindMisc::CreateEffectImmunitySpell(pSprite, reinterpret_cast<const BYTE*>(s.c_str()), 0, 1, 0, 2),
         CGameAIBase::EFFECT_LIST_TIMED,
@@ -300,7 +300,7 @@ bool CSevenEyes::CheckEyeOfStone(CGameSprite* pSprite, CGameEffect* pEffect)
     pSprite->RemoveSpecialAbility(CResRef(RESREF_EYE_OF_STONE));
 
     // "Eye of Stone blocks effect and dissipates."
-    IcewindMisc::DisplayEffectText(pSprite, 21648, 0);
+    IcewindMisc::sub_584880(pSprite, 21648, 0);
 
     pSprite->AddEffect(IcewindMisc::CreateEffectImmunitySpell(pSprite, reinterpret_cast<const BYTE*>(s.c_str()), 0, 1, 0, 2),
         CGameAIBase::EFFECT_LIST_TIMED,

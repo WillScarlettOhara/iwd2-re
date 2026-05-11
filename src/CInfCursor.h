@@ -28,17 +28,17 @@ public:
     void SetTextRef(CString sExtra, const STRREF& textRef1, const STRREF& textRef2, const STRREF& textRef3);
 
     /* 00DA */ CVidFont m_font;
-    /* 05DA */ short wfield_5DA;
-    /* 05DC */ short wfield_5DC;
-    /* 05DE */ short wfield_5DE;
-    /* 05E0 */ short wfield_5E0;
-    /* 05E2 */ short wfield_5E2;
-    /* 05E4 */ short wfield_5E4;
-    /* 05E6 */ short wfield_5E6;
-    /* 05E8 */ short wfield_5E8;
-    /* 05EA */ short wfield_5EA;
-    /* 05EC */ CString sfield_5EC[2];
-    /* 05F4 */ CSound pfield_5F4;
+    /* 05DA */ short field_5DA;
+    /* 05DC */ short field_5DC;
+    /* 05DE */ short field_5DE;
+    /* 05E0 */ short field_5E0;
+    /* 05E2 */ short field_5E2;
+    /* 05E4 */ short field_5E4;
+    /* 05E6 */ short field_5E6;
+    /* 05E8 */ short field_5E8;
+    /* 05EA */ short field_5EA;
+    /* 05EC */ CString field_5EC[2];
+    /* 05F4 */ CSound field_5F4;
 };
 
 class CInfCursor {
@@ -60,12 +60,12 @@ public:
     /* 01E2 */ CVidCell m_vcArrow;
     /* 02BC */ CVidCell m_vcCustom;
     /* 0396 */ CInfToolTip m_vcToolTip;
-    /* 09EE */ int nfield_9EE;
-    /* 09F2 */ int nfield_9F2;
+    /* 09EE */ int field_9EE;
+    /* 09F2 */ int field_9F2;
     /* 09F6 */ INT m_nCurrentCursor;
     /* 09FA */ INT m_nDirection;
     /* 09FE */ INT m_nState;
-    /* 0A02 */ CUIControlBase* pfield_A02;
+    /* 0A02 */ CUIControlBase* field_A02;
     /* 0A06 */ BOOLEAN bAnimatingCustom;
 };
 

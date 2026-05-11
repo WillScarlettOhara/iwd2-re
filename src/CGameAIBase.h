@@ -1,31 +1,6 @@
 #ifndef CGAMEAIBASE_H_
 #define CGAMEAIBASE_H_
 
-// ============================================================================
-// CGameAIBase - Base class for AI-controlled game objects
-//
-// This is the foundation of the Infinity Engine AI system. All interactive
-// game objects (creatures, doors, triggers, areas) inherit from this class.
-// It manages action queues, script execution, triggers, and tick updates.
-//
-// Key systems:
-// - Action queue: pending actions scheduled for execution
-// - Script execution: CAIScript attached to each object
-// - Triggers: pending CAITrigger events (OnCreation, OnDeath, etc.)
-// - Timers: world timers for delayed actions
-//
-// Derived classes:
-// - CGameSprite (creatures/characters)
-// - CGameDoor (interactive doors)
-// - CGameTrigger (area triggers)
-// - CGameArea (AI area controller)
-// - CGameStatic (static objects)
-// - CGameTiledObject (tiled objects)
-// - CGameSpawning (spawning controller)
-//
-// Address: 0x44C8B0
-// ============================================================================
-
 #include "CAIAction.h"
 #include "CAIObjectType.h"
 #include "CGameObject.h"
@@ -131,7 +106,7 @@ public:
     SHORT DetectSecretDoor(CGameDoor* target);
     SHORT FadeToColor();
     SHORT FadeFromColor();
-    SHORT ActionFadeColor();
+    SHORT sub_467970();
     SHORT SpawnPtActivate(CGameSpawning* target);
     SHORT SpawnPtDeactivate(CGameSpawning* target);
     SHORT SpawnPtSpawn(CGameSpawning* target);
@@ -149,26 +124,28 @@ public:
     void FireSpell(const CResRef& resRef, CGameObject* target);
     void FireSpellPoint(const CResRef& resRef, const CPoint& ptTarget);
     static CVariable* GetGlobalVariable(const CString& sScope, const CString& sName, int a3);
-void SetMarked(const CAIObjectType& type);
-    void SetFollowed(const CAIObjectType& type);
-    void SetMyTargetObj(const CAIObjectType& type);
+    void sub_4530F0(const CAIObjectType& type);
+    void sub_453110(const CAIObjectType& type);
+    void SetLastActionReturn(SHORT returnValue);
+    int sub_45B6D0();
+    void sub_45B6E0(const CAIObjectType& type);
 
     /* 006E */ CAIObjectType m_lAttacker;
     /* 00AA */ LONG m_lAttackStyle;
     /* 00AE */ CAIObjectType m_lOrderedBy;
-    /* 00EA */ CAIObjectType m_lProtecting;
-    /* 0126 */ CAIObjectType m_lProtector;
-    /* 0162 */ CAIObjectType m_lTargeted;
+    /* 00EA */ CAIObjectType field_EA;
+    /* 0126 */ CAIObjectType field_126;
+    /* 0162 */ CAIObjectType field_162;
     /* 019E */ CAIObjectType m_lHitter;
     /* 01DA */ CAIObjectType m_lHelp;
     /* 0216 */ CAIObjectType m_lTrigger;
     /* 0252 */ CAIObjectType m_lSeen;
     /* 028E */ CAIObjectType m_lTalkedTo;
     /* 02CA */ CAIObjectType m_lHeard;
-    /* 0306 */ CAIObjectType m_lSummonedBy;
-    /* 0342 */ CAIObjectType m_lMarked;
-    /* 037E */ CAIObjectType m_lFollowed;
-    /* 03BA */ CAIObjectType m_lMyTarget;
+    /* 0306 */ CAIObjectType field_306;
+    /* 0342 */ CAIObjectType field_342;
+    /* 037E */ CAIObjectType field_37E;
+    /* 03BA */ CAIObjectType field_3BA;
     /* 03F6 */ CAIScript* m_overrideScript;
     /* 03FA */ CAIScript* m_special1Script;
     /* 03FE */ CAIScript* m_teamScript;
@@ -178,7 +155,7 @@ void SetMarked(const CAIObjectType& type);
     /* 040E */ CAIScript* m_movementScript;
     /* 0412 */ CTypedPtrList<CPtrList, CAIAction*> m_queuedActions;
     /* 042E */ CTypedPtrList<CPtrList, CAITrigger*> m_pendingTriggers;
-    /* 044A */ DWORD m_PAICallCounter;
+    /* 044A */ int field_44A;
     /* 044E */ CTypedPtrList<CPtrList, CGameTimer*> m_timers;
     /* 046A */ SHORT m_curResponseNum;
     /* 046C */ SHORT m_curResponseSetNum;
@@ -186,22 +163,22 @@ void SetMarked(const CAIObjectType& type);
     /* 0470 */ BOOL m_interrupt;
     /* 0474 */ SHORT m_actionCount;
     /* 0476 */ CAIAction m_curAction;
-    /* 054C */ BOOL m_bJustAttacked;
-    /* 0550 */ SHORT m_nReactionSeed;
-    /* 0552 */ SHORT m_nAlertnessPeriod;
+    /* 054C */ int field_54C;
+    /* 0550 */ short field_550;
+    /* 0552 */ short field_552;
     /* 0554 */ SCRIPTNAME m_scriptName;
     /* 0574 */ BOOL m_inCutScene;
     /* 0578 */ BOOL m_firstCall;
     /* 057C */ BOOL m_forceActionPick;
-    /* 0580 */ int nfield_580;
+    /* 0580 */ int field_580;
     /* 0584 */ LONG m_randValue;
-    /* 0588 */ int nfield_588;
-    /* 058C */ int nfield_58C;
+    /* 0588 */ int field_588;
+    /* 058C */ int field_58C;
     /* 0590 */ BYTE m_reactionRoll;
     /* 0592 */ SHORT m_nLastActionReturn;
-    /* 0594 */ BOOL m_bScrolling;
-    /* 0595 */ unsigned char m_nVisualRange;
-    /* 0596 */ unsigned char bfield_596;
+    /* 0594 */ unsigned char field_594;
+    /* 0595 */ unsigned char field_595;
+    /* 0596 */ unsigned char field_596;
 };
 
 class CGameAIArea : public CGameAIBase {

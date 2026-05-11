@@ -403,7 +403,7 @@ BOOL CVidTile::BltStencilTile8To24(DWORD* pSurface, LONG lPitch, BYTE* pData, BY
 BOOL CVidTile::BltTile8To32(DWORD* pSurface, LONG lPitch, BYTE* pData, const CSize& blitSize, LONG nDataJump, DWORD dwFlags)
 {
     INT nSurfaceJump = lPitch - 4 * blitSize.cx;
-    DWORD color = g_pChitin->GetCurrentVideoMode()->m_dwShadowColor;
+    DWORD color = g_pChitin->GetCurrentVideoMode()->field_24;
 
     if ((blitSize.cx & 1) != 0) {
         return FALSE;
@@ -467,7 +467,7 @@ BOOL CVidTile::BltStencilTile8To32(DWORD* pSurface, LONG lPitch, BYTE* pData, BY
 {
     INT nDataIndex = 0;
     INT nSurfaceJump = lPitch - 4 * blitSize.cx;
-    DWORD color = g_pChitin->GetCurrentVideoMode()->m_dwShadowColor;
+    DWORD color = g_pChitin->GetCurrentVideoMode()->field_24;
 
     if ((blitSize.cx & 1) != 0) {
         return FALSE;
@@ -573,7 +573,7 @@ BOOL CVidTile::ReadyTexture(INT nTextureId, DWORD dwFlags, DWORD dwAlpha)
 
     BltTile8To32(reinterpret_cast<DWORD*>(m_pPixels), 256, pTileData, blitSize, 0, dwFlags);
 
-    g_pChitin->cVideo.nm_field_13E = nTextureId;
+    g_pChitin->cVideo.field_13E = nTextureId;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, nTextureId);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -588,7 +588,7 @@ BOOL CVidTile::ReadyTexture(INT nTextureId, DWORD dwFlags, DWORD dwAlpha)
 
     CVideo3d::glTexImage2D(GL_TEXTURE_2D,
         0,
-        g_pChitin->cVideo.nm_field_136,
+        g_pChitin->cVideo.field_136,
         nTileSize,
         nTileSize,
         0,
@@ -654,7 +654,7 @@ BOOL CVidTile::ReadyTexture(INT nTextureId, CResTile* pResStencil, DWORD dwFlags
         dwAlpha,
         dwFlags);
 
-    g_pChitin->cVideo.nm_field_13E = nTextureId;
+    g_pChitin->cVideo.field_13E = nTextureId;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, nTextureId);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -669,7 +669,7 @@ BOOL CVidTile::ReadyTexture(INT nTextureId, CResTile* pResStencil, DWORD dwFlags
 
     CVideo3d::glTexImage2D(GL_TEXTURE_2D,
         0,
-        g_pChitin->cVideo.nm_field_136,
+        g_pChitin->cVideo.field_136,
         nTileSize,
         nTileSize,
         0,
@@ -704,7 +704,7 @@ void CVidTile::RenderTexture(INT nTextureId, const CRect& rDest, INT x, INT y, D
     CVideo3d::glEnable(GL_TEXTURE_2D);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.nm_field_13E = nTextureId;
+    g_pChitin->cVideo.field_13E = nTextureId;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, nTextureId);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -749,35 +749,3 @@ void CVidTile::RenderTexture(INT nTextureId, const CRect& rDest, INT x, INT y, D
         CVideo3d::glDisable(GL_BLEND);
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x7ACCB0
-void FUN_007accb0() {
-    // TODO: Incomplete.
-}
-
-// 0x7ACCCD
-void FUN_007acccd() {
-    // TODO: Incomplete.
-}
-
-// 0x7B1F70
-void FUN_007b1f70() {
-    // TODO: Incomplete.
-}
-
-// 0x7B25E0
-void FUN_007b25e0() {
-    // TODO: Incomplete.
-}
-
-// 0x7CE3D0
-void FUN_007ce3d0() {
-    // TODO: Incomplete.
-}
-
-// 0x7CE930
-void FUN_007ce930() {
-    // TODO: Incomplete.
-}
-

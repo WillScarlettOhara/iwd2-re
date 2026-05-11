@@ -106,10 +106,3 @@ BOOL CResItem::Parse(void* pData)
 
     return m_bParsed;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x401580
-void FUN_00401580() {
-    // TODO: Incomplete.
-}
-

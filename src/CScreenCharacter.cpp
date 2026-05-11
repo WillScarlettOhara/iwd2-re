@@ -91,16 +91,16 @@ CScreenCharacter::CScreenCharacter()
 {
     m_bShiftKeyDown = FALSE;
     m_bCapsLockKeyOn = FALSE;
-    nfield_780 = 0;
+    field_780 = 0;
     m_nExtraSkillPoints = 0;
-    nfield_79C = 0;
-    nfield_7A0 = 0;
-    nfield_7A4 = 0;
-    nfield_7A8 = 0;
-    nfield_7AC = 0;
-    bfield_7B0 = 0;
+    field_79C = 0;
+    field_7A0 = 0;
+    field_7A4 = 0;
+    field_7A8 = 0;
+    field_7AC = 0;
+    field_7B0 = 0;
     m_nExtraMageSpells = 0;
-    nfield_7BA = 0;
+    field_7BA = 0;
     m_nErrorState = 0;
     m_nNumErrorButtons = 0;
     m_nCharacterIndex = 0;
@@ -112,13 +112,13 @@ CScreenCharacter::CScreenCharacter()
     m_nPortraitLargeIndex = 0;
     m_nCustomSoundSetIndex = 0;
     m_nCustomSoundIndex = 0;
-    bm_field_81A = 0;
+    field_81A = 0;
     m_nSpecialization = 0;
-    nm_field_1772 = 0;
-    nm_field_1776 = 0;
+    field_1772 = 0;
+    field_1776 = 0;
     m_nHatedRaceIndex = 0;
     m_nClass = 0;
-    nm_field_17A4 = 0;
+    field_17A4 = 0;
     m_nMinSTR = 0;
     m_nMinDEX = 0;
     m_nMinCON = 0;
@@ -137,9 +137,9 @@ CScreenCharacter::CScreenCharacter()
     m_nModINT = 0;
     m_nModWIS = 0;
     m_nModCHR = 0;
-    nm_field_17A8 = 0;
-    nm_field_17C0 = 0;
-    nm_field_1800 = 0;
+    field_17A8 = 0;
+    field_17C0 = 0;
+    field_1800 = 0;
 
     SetVideoMode(0);
 
@@ -250,16 +250,16 @@ CScreenCharacter::CScreenCharacter()
     for (UINT nLevel = 0; nLevel < CSPELLLIST_MAX_LEVELS; nLevel++) {
         if (m_spells.m_lists[nLevel].m_List.size() != 0) {
             m_spells.m_lists[nLevel].m_List.clear();
-            m_spells.m_lists[nLevel].wm_field_10 = 0;
-            m_spells.m_lists[nLevel].nm_field_14 = 0;
+            m_spells.m_lists[nLevel].field_10 = 0;
+            m_spells.m_lists[nLevel].field_14 = 0;
         }
     }
     m_spells.m_nHighestLevel = 0;
 
-    nm_field_2B6 = 0;
-    nm_field_866 = 0;
-    nm_field_1776 = 0;
-    nm_field_86A = 0;
+    field_2B6 = 0;
+    field_866 = 0;
+    field_1776 = 0;
+    field_86A = 0;
     m_hatedRaces[0] = CAIObjectType::R_BUGBEAR;
     m_hatedRaces[1] = CAIObjectType::R_DRIDER;
     m_hatedRaces[2] = CAIObjectType::R_GIANT;
@@ -276,12 +276,12 @@ CScreenCharacter::CScreenCharacter()
     m_hatedRaces[13] = CAIObjectType::R_UNDEAD;
     m_hatedRaces[14] = CAIObjectType::R_WYVERN;
     m_hatedRaces[15] = CAIObjectType::R_YUANTI;
-    bm_field_1B8 = 0;
-    bm_field_1844 = 0;
-    nm_field_1846 = 0;
-    nm_field_184A = 0;
-    nm_field_184E = 0;
-    nm_field_1852 = 0;
+    field_1B8 = 0;
+    field_1844 = 0;
+    field_1846 = 0;
+    field_184A = 0;
+    field_184E = 0;
+    field_1852 = 0;
 }
 
 // 0x5D63B0
@@ -299,8 +299,8 @@ CScreenCharacter::~CScreenCharacter()
         for (UINT nLevel = 0; nLevel < CSPELLLIST_MAX_LEVELS; nLevel++) {
             if (m_spells.m_lists[nLevel].m_List.size() != 0) {
                 m_spells.m_lists[nLevel].m_List.clear();
-                m_spells.m_lists[nLevel].nm_field_14 = 0;
-                m_spells.m_lists[nLevel].nm_field_18 = 0;
+                m_spells.m_lists[nLevel].field_14 = 0;
+                m_spells.m_lists[nLevel].field_18 = 0;
             }
         }
         m_spells.m_nHighestLevel = 0;
@@ -327,7 +327,7 @@ void CScreenCharacter::SetSystemKeyCtrl(BOOLEAN bValue)
 // 0x5D6300
 BOOL CScreenCharacter::GetShiftKey()
 {
-    return bm_field_1B8 && m_bShiftKeyDown;
+    return field_1B8 && m_bShiftKeyDown;
 }
 
 // 0x5D6320
@@ -339,7 +339,7 @@ void CScreenCharacter::SetSystemKeyShift(BOOL bValue)
 // 0x5D6330
 BOOL CScreenCharacter::CheckSystemKeyShift()
 {
-    return bm_field_1B8;
+    return field_1B8;
 }
 
 // 0x5D6340
@@ -351,13 +351,13 @@ void CScreenCharacter::SetSystemKeyCapsLock(BOOL bValue)
 // 0x5D6350
 BOOL CScreenCharacter::GetCapsLockKey()
 {
-    return bm_field_1B8 && m_bCapsLockKeyOn;
+    return field_1B8 && m_bCapsLockKeyOn;
 }
 
 // 0x5D6330
 BOOL CScreenCharacter::CheckSystemKeyCapsLock()
 {
-    return bm_field_1B8;
+    return field_1B8;
 }
 
 // 0x49FC40
@@ -482,17 +482,17 @@ void CScreenCharacter::EngineDeactivated()
     if (m_cUIManager.m_pFocusedControl != NULL) {
         // NOTE: Uninline.
         m_cUIManager.KillCapture();
-        bm_field_1B8 = FALSE;
+        field_1B8 = FALSE;
     }
 }
 
 // 0x5D6C60
 void CScreenCharacter::EngineGameInit()
 {
-    m_cUIManager.fInit(this, CResRef("GUIREC"), g_pBaldurChitin->nm_field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIREC"), g_pBaldurChitin->field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->nm_field_4A28) {
+    if (g_pBaldurChitin->field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -517,8 +517,8 @@ void CScreenCharacter::EngineGameInit()
     m_pTempDerivedStats = NULL;
     m_pBeforeLevelUpDerivedStats = NULL;
 
-    nm_field_866 = 0;
-    nm_field_86A = 0;
+    field_866 = 0;
+    field_86A = 0;
 
     m_cUIManager.GetPanel(4)->SetActive(FALSE);
     m_cUIManager.GetPanel(6)->SetActive(FALSE);
@@ -1009,7 +1009,7 @@ void CScreenCharacter::UpdateCharacterList(CUIPanel* pPanel, DWORD dwTextId, INT
 
     pText->RemoveAll();
     pText->m_rgbHighlightColor = CBaldurChitin::TEXTDISPLAY_COLOR_HIGHLIGHT;
-    pText->wfield_A68 = 32767;
+    pText->field_A68 = 32767;
 
     INT nIndex = 0;
     POSITION pos = m_pCharacters->GetHeadPosition();
@@ -1599,7 +1599,7 @@ void CScreenCharacter::UpdatePortraitList(CUIPanel* pPanel, DWORD dwControlId, I
 
     pText->RemoveAll();
     pText->m_rgbHighlightColor = CBaldurChitin::TEXTDISPLAY_COLOR_HIGHLIGHT;
-    pText->wfield_A68 = 32767;
+    pText->field_A68 = 32767;
 
     INT nIndex = 0;
     POSITION pos = m_pPortraits->GetHeadPosition();
@@ -1649,7 +1649,7 @@ void CScreenCharacter::ResetCustomSoundsPanel(CUIPanel* pPanel, CGameSprite* pSp
 
     pText->RemoveAll();
     pText->m_rgbHighlightColor = CBaldurChitin::TEXTDISPLAY_COLOR_HIGHLIGHT;
-    pText->wfield_A68 = 32767;
+    pText->field_A68 = 32767;
 
     INT nIndex = 0;
     POSITION pos = m_pSounds->GetHeadPosition();
@@ -1693,21 +1693,21 @@ void CScreenCharacter::TimerSynchronousUpdate()
 
     pGame->SynchronousUpdate();
 
-    nm_field_17A4 = g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL;
+    field_17A4 = g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL;
 
-    if (m_lPopupStack.GetCount() > 0 && m_cUIManager.bm_field_2E == 1) {
+    if (m_lPopupStack.GetCount() > 0 && m_cUIManager.field_2E == 1) {
         SHORT nPortrait;
 
         for (nPortrait = 0; nPortrait <= 5; nPortrait++) {
-            pGame->RefreshPortrait(nPortrait, 1);
+            pGame->sub_5AF420(nPortrait, 1);
         }
 
         for (nPortrait = 50; nPortrait <= 55; nPortrait++) {
-            pGame->RefreshPortrait(nPortrait, 1);
+            pGame->sub_5AF420(nPortrait, 1);
         }
     }
 
-    nm_field_17A4 = FALSE;
+    field_17A4 = FALSE;
 
     m_cUIManager.Render();
     pVidMode->Flip(TRUE);
@@ -1823,7 +1823,7 @@ void CScreenCharacter::EnableMainPanel(BOOL bEnable)
     pLeftPanel->SetEnabled(bEnable);
     pRightPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -2075,7 +2075,7 @@ void CScreenCharacter::UpdateMainPanel(BOOL bCharacterChanged)
 
         SHORT nTopString = 0;
         if (!bCharacterChanged) {
-            nTopString = pText->bfield_5A;
+            nTopString = pText->field_5A;
         }
 
         CString sNameSeparator;
@@ -2087,10 +2087,10 @@ void CScreenCharacter::UpdateMainPanel(BOOL bCharacterChanged)
         if (m_bMultiPlayerViewable) {
             for (DWORD nButtonID = 60; nButtonID <= 63; nButtonID++) {
                 CUIControlButtonCharacterInformationFolder* pButton = static_cast<CUIControlButtonCharacterInformationFolder*>(pPanel->GetControl(nButtonID));
-                pButton->SetSelected(bm_field_1844 == nButtonID - 60);
+                pButton->SetSelected(field_1844 == nButtonID - 60);
             }
 
-            switch (bm_field_1844) {
+            switch (field_1844) {
             case 0:
                 UpdateGeneralInformation(pText, pSprite);
                 break;
@@ -2299,9 +2299,9 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
 
     BOOL bHasActiveFeats = FALSE;
     if (pDStats->m_spellStates[SPLSTATE_FEAT_ARTERIAL_STRIKE]
-        || pSprite->GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE) > 0
+        || pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0
         || pDStats->m_spellStates[SPLSTATE_FEAT_HAMSTRING]
-        || pSprite->GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK) > 0
+        || pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0
         || pDStats->m_spellStates[SPLSTATE_FEAT_RAPID_SHOT]) {
         UpdateTextForceColor(pText,
             RGB(200, 200, 0),
@@ -2310,33 +2310,33 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
         bHasActiveFeats = TRUE;
     }
 
-    if (pSprite->HasFeat(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)
+    if (pSprite->sub_763150(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)
         && pDStats->m_spellStates[SPLSTATE_FEAT_ARTERIAL_STRIKE]) {
         UpdateText(pText, "%s", (LPCSTR)FetchString(35774)); // "Arterial Strike"
     }
 
-    if (pSprite->HasFeat(CGAMESPRITE_FEAT_EXPERTISE)
-        && pSprite->GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
+    if (pSprite->sub_763150(CGAMESPRITE_FEAT_EXPERTISE)
+        && pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
         UpdateText(pText,
             "%s %d",
             (LPCSTR)FetchString(35785), // "Expertise"
-            pSprite->GetFeatMode(CGAMESPRITE_FEAT_EXPERTISE));
+            pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE));
     }
 
-    if (pSprite->HasFeat(CGAMESPRITE_FEAT_HAMSTRING)
+    if (pSprite->sub_763150(CGAMESPRITE_FEAT_HAMSTRING)
         && pDStats->m_spellStates[SPLSTATE_FEAT_HAMSTRING]) {
         UpdateText(pText, "%s", (LPCSTR)FetchString(35787)); // "Hamstring"
     }
 
-    if (pSprite->HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)
-        && pSprite->GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
+    if (pSprite->sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)
+        && pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
         UpdateText(pText,
             "%s %d",
             (LPCSTR)FetchString(35794), // "Power Attack"
-            pSprite->GetFeatMode(CGAMESPRITE_FEAT_POWER_ATTACK));
+            pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK));
     }
 
-    if (pSprite->HasFeat(CGAMESPRITE_FEAT_RAPID_SHOT)
+    if (pSprite->sub_763150(CGAMESPRITE_FEAT_RAPID_SHOT)
         && pDStats->m_spellStates[SPLSTATE_FEAT_RAPID_SHOT]) {
         UpdateText(pText, "%s", (LPCSTR)FetchString(35796)); // "Rapid Shot"
     }
@@ -2887,7 +2887,7 @@ void CScreenCharacter::SummonPopup(DWORD dwPopupId, CGameSprite* pSprite, int a3
     if (m_cUIManager.m_pFocusedControl != NULL) {
         // NOTE: Uninline.
         m_cUIManager.KillCapture();
-        bm_field_1B8 = FALSE;
+        field_1B8 = FALSE;
     }
 
     if (!m_lPopupStack.IsEmpty()) {
@@ -2928,7 +2928,7 @@ void CScreenCharacter::DismissPopup(CGameSprite* pSprite)
     if (m_cUIManager.m_pFocusedControl != NULL) {
         // NOTE: Uninline
         m_cUIManager.KillCapture();
-        bm_field_1B8 = FALSE;
+        field_1B8 = FALSE;
     }
 
     CUIPanel* pPanel = m_lPopupStack.RemoveTail();
@@ -3002,7 +3002,7 @@ void CScreenCharacter::OnInformationButtonClick()
     // __LINE__: 8345
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3038,7 +3038,7 @@ void CScreenCharacter::OnBiographyButtonClick()
     // __LINE__: 8403
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3074,7 +3074,7 @@ void CScreenCharacter::OnCustomizeBiographyButtonClick()
     // __LINE__: 8460
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3104,7 +3104,7 @@ void CScreenCharacter::OnCustomizeBiographyButtonClick()
 // 0x5E4A20
 void CScreenCharacter::sub_5E4A20()
 {
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -3140,7 +3140,7 @@ void CScreenCharacter::sub_5E4A20()
 // 0x5E4B30
 void CScreenCharacter::sub_5E4B30()
 {
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -3176,7 +3176,7 @@ void CScreenCharacter::sub_5E4B30()
 // 0x5E4C40
 void CScreenCharacter::OnScriptButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -3218,7 +3218,7 @@ void CScreenCharacter::OnExportButtonClick()
     // __LINE__: 8728
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3327,7 +3327,7 @@ void CScreenCharacter::OnRestButtonClick()
     // __LINE__: 9743
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3624,7 +3624,7 @@ void CScreenCharacter::RefreshScripts()
 
     pText->m_rgbHighlightColor = CBaldurChitin::TEXTDISPLAY_COLOR_HIGHLIGHT;
     pText->RemoveAll();
-    pText->wfield_A68 = 0x7FFE;
+    pText->field_A68 = 0x7FFE;
 
     INT nIndex = 0;
     pos1 = m_pScripts->GetHeadPosition();
@@ -3678,7 +3678,7 @@ void CScreenCharacter::OnScriptItemSelect(INT nItem)
     CString sDescription;
 
     if (nItem >= 0) {
-        CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
         renderLock.Lock(INFINITE);
 
         // NOTE: Uninline.
@@ -3774,7 +3774,7 @@ void CScreenCharacter::OnErrorButtonClick(INT nButton)
     // __LINE__: 10278
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3864,7 +3864,7 @@ void CScreenCharacter::OnErrorButtonClick(INT nButton)
                     // __LINE__: 10426
                     UTIL_ASSERT(nCharacterId != CGameObjectArray::INVALID_INDEX);
 
-                    pGame->CharacterExport(nCharacterId, sm_field_176E);
+                    pGame->CharacterExport(nCharacterId, field_176E);
 
                     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
                     // __LINE__: 10430
@@ -3903,7 +3903,7 @@ void CScreenCharacter::OnErrorButtonClick(INT nButton)
                     // __LINE__: 10395
                     UTIL_ASSERT(nCharacterId != CGameObjectArray::INVALID_INDEX);
 
-                    pGame->CharacterExport(nCharacterId, sm_field_176E);
+                    pGame->CharacterExport(nCharacterId, field_176E);
 
                     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
                     // __LINE__: 10399
@@ -4028,7 +4028,7 @@ void CScreenCharacter::UpdateCharacterStatus(LONG nCharacterId)
     CBaldurEngine::UpdateCharacterStatus(nCharacterId);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
-    if (pGame != NULL && nm_field_17A4 == 0) {
+    if (pGame != NULL && field_17A4 == 0) {
         if (pGame->GetCharacterId(GetSelectedCharacter()) == nCharacterId) {
             CGameSprite* pSprite;
 
@@ -4128,12 +4128,12 @@ void CScreenCharacter::UpdateClassSelectionPanel(CGameSprite* pSprite)
             // NOTE: Uninline.
             switch (pButton->GetClass()) {
             case CAIOBJECTTYPE_C_PALADIN:
-                if ((pSprite->GetBaseStats()->bm_field_2FB & 0x8) != 0) {
+                if ((pSprite->GetBaseStats()->field_2FB & 0x8) != 0) {
                     bEnabled = FALSE;
                 }
                 break;
             case CAIOBJECTTYPE_C_RANGER:
-                if ((pSprite->GetBaseStats()->bm_field_2FB & 0x4) != 0) {
+                if ((pSprite->GetBaseStats()->field_2FB & 0x4) != 0) {
                     bEnabled = FALSE;
                 }
                 break;
@@ -4229,7 +4229,7 @@ void CScreenCharacter::CheckMultiPlayerViewableModifyable()
 // 0x5E9600
 void CScreenCharacter::OnCustomizeButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -4257,13 +4257,13 @@ void CScreenCharacter::OnCustomizeButtonClick()
         m_cResPortraitSmallTemp = m_cResPortraitSmall;
         m_cResPortraitLargeTemp = m_cResPortraitLarge;
         m_cResSoundSet = pSprite->m_secondarySounds;
-        sm_field_856 = pSprite->bfield_725A;
+        field_856 = pSprite->field_725A;
 
         if (pSprite->m_special2Script != NULL) {
-            pSprite->m_special2Script->m_cResRef.CopyToString(sm_field_832);
-            sm_field_832.MakeUpper();
+            pSprite->m_special2Script->m_cResRef.CopyToString(field_832);
+            field_832.MakeUpper();
         } else {
-            sm_field_832 = "NONE";
+            field_832 = "NONE";
         }
 
         SummonPopup(17, pSprite, 1);
@@ -4279,7 +4279,7 @@ void CScreenCharacter::OnCustomizeButtonClick()
 // 0x5E9800
 void CScreenCharacter::OnAppearanceButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -4315,7 +4315,7 @@ void CScreenCharacter::OnAppearanceButtonClick()
 // 0x5E9910
 void CScreenCharacter::OnSoundsButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -4477,7 +4477,7 @@ void CScreenCharacter::OnPortraitSmallItemSelect(INT nItem)
 // 0x5E9D80
 void CScreenCharacter::OnCustomPortraitsButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -4549,12 +4549,12 @@ void CScreenCharacter::OnPlayButtonClick()
                     }
                 }
 
-                memcpy(pSprite->bfield_725A,
+                memcpy(pSprite->field_725A,
                     sSoundSetName.GetBuffer(sSoundSetName.GetLength()),
                     min(sSoundSetName.GetLength(), 32));
 
                 if (sSoundSetName.GetLength() < 32) {
-                    pSprite->bfield_725A[sSoundSetName.GetLength()] = '\0';
+                    pSprite->field_725A[sSoundSetName.GetLength()] = '\0';
                 }
 
                 sDirName = g_pBaldurChitin->GetObjectGame()->GetDirSounds() + sSoundSetName + '\\';
@@ -4696,7 +4696,7 @@ void CScreenCharacter::ResetCustomizeBiographyPanel(CUIPanel* pPanel, CGameSprit
     sBiography = FetchString(strBiography);
     pEdit->SetText(sBiography);
 
-    bm_field_1B8 = TRUE;
+    field_1B8 = TRUE;
     m_cUIManager.SetCapture(pEdit, CUIManager::KEYBOARD);
 
     CUIControlButton* pButton = static_cast<CUIControlButton*>(pPanel->GetControl(6));
@@ -4717,7 +4717,7 @@ void CScreenCharacter::sub_5F89B0(CGameSprite* pSprite)
     for (INT nFeat = 0; nFeat < ruleTables.m_tFeats.GetHeight(); nFeat++) {
         if (m_storedFeats[nFeat] < pSprite->GetFeatValue(nFeat)) {
             while (pSprite->GetFeatValue(nFeat) > 0) {
-                if (pSprite->MeetFeatRequirements(nFeat, 1)) {
+                if (pSprite->sub_763200(nFeat, 1)) {
                     break;
                 }
 
@@ -4850,7 +4850,7 @@ void CUIControlButtonCharacterSpecializationSelection::OnLButtonClick(CPoint pt)
         DWORD nSpecialization = GetSpecialization();
 
         // TODO: Looks odd.
-        pCharacter->m_nSpecialization = nSpecialization | static_cast<WORD>(pCharacter->wfield_77C);
+        pCharacter->m_nSpecialization = nSpecialization | static_cast<WORD>(pCharacter->field_77C);
 
         STRREF strDescription;
         switch (nSpecialization) {
@@ -5030,7 +5030,7 @@ void CUIControlButtonCharacterAbilitiesPlusMinus::AdjustValue()
 {
     CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;
 
-    INT nGameSprite = pCharacter->nm_field_1840;
+    INT nGameSprite = pCharacter->field_1840;
 
     CGameSprite* pSprite;
     BYTE rc;
@@ -5322,7 +5322,7 @@ void CUIControlScrollBarCharacterHatedRace::OnScroll()
     UTIL_ASSERT(pCharacter != NULL);
 
     // NOTE: Uninline.
-    pCharacter->SetTopHatedRace(5 * wm_field_144 / wm_m_field_142);
+    pCharacter->SetTopHatedRace(5 * field_144 / field_142);
 
     InvalidateItems();
 
@@ -5339,7 +5339,7 @@ void CUIControlScrollBarCharacterHatedRace::InvalidateItems()
     // __LINE__: 14814
     UTIL_ASSERT(pCharacter != NULL);
 
-    CSingleLock renderLock(&(pCharacter->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pCharacter->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nGameSprite = g_pBaldurChitin->GetObjectGame()->GetCharacterId(pCharacter->GetSelectedCharacter());
@@ -5690,7 +5690,7 @@ CUIControlButtonCharacterClassSelection::~CUIControlButtonCharacterClassSelectio
 // 0x5EB5E0
 void CUIControlButtonCharacterClassSelection::OnLButtonClick(CPoint pt)
 {
-    CSingleLock renderLock(&(m_pPanel->m_pManager->pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_pPanel->m_pManager->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;
@@ -5898,8 +5898,8 @@ CUIControlButtonCharacter5EBC60::CUIControlButtonCharacter5EBC60(CUIPanel* panel
     : CUIControlButton3State(panel, controlInfo, LBUTTON, 0)
 {
     m_nSelectedFrame = 0;
-    nfield_676 = "";
-    pfield_66E = "";
+    field_676 = "";
+    field_66E = "";
 }
 
 // 0x5EBD30
@@ -6065,7 +6065,7 @@ void CUIControlButtonCharacterBiographyClear::OnLButtonClick(CPoint pt)
         CUIControlEditMultiLine* pEdit = static_cast<CUIControlEditMultiLine*>(m_pPanel->GetControl(4));
         pEdit->Remove();
 
-        g_pBaldurChitin->m_pEngineCharacter->bm_field_1B8 = TRUE;
+        g_pBaldurChitin->m_pEngineCharacter->field_1B8 = TRUE;
         g_pBaldurChitin->m_pEngineCharacter->GetManager()->SetCapture(pEdit, CUIManager::KEYBOARD);
     }
 }
@@ -6682,7 +6682,7 @@ void CUIControlScrollBarCharacterFeats::OnScroll()
     // __LINE__: 17204
     UTIL_ASSERT(pCharacter != NULL);
 
-    INT nTopFeat = max(FEAT_COUNT * wm_field_144, 0) / wm_m_field_142;
+    INT nTopFeat = max(FEAT_COUNT * field_144, 0) / field_142;
     pCharacter->m_nTopFeat = max(min(nTopFeat - FEAT_SLOTS, FEAT_COUNT - FEAT_SLOTS), 0);
 
     InvalidateItems();
@@ -6700,10 +6700,10 @@ void CUIControlScrollBarCharacterFeats::InvalidateItems()
     // __LINE__: 17235
     UTIL_ASSERT(pCharacter != NULL);
 
-    CSingleLock renderLock(&(pCharacter->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pCharacter->GetManager()->field_36), FALSE);
     renderLock.Lock();
 
-    INT nGameSprite = pCharacter->nm_field_1840;
+    INT nGameSprite = pCharacter->field_1840;
 
     CGameSprite* pSprite;
     BYTE rc;
@@ -6880,7 +6880,7 @@ void CUIControlButtonCharacterFeatsPlusMinus::AdjustValue()
 
     CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;
 
-    INT nGameSprite = pCharacter->nm_field_1840;
+    INT nGameSprite = pCharacter->field_1840;
 
     CGameSprite* pSprite;
     BYTE rc;
@@ -6896,7 +6896,7 @@ void CUIControlButtonCharacterFeatsPlusMinus::AdjustValue()
         INT nValue = pSprite->GetFeatValue(id);
 
         if (bInc) {
-            if (pSprite->CanUpgradeFeat(id, 1) && pCharacter->m_nExtraFeats > 0) {
+            if (pSprite->sub_763A40(id, 1) && pCharacter->m_nExtraFeats > 0) {
                 pSprite->SetFeatValue(id, nValue + 1);
                 pCharacter->m_nExtraFeats--;
             }
@@ -6943,7 +6943,7 @@ BOOL CUIControlButtonCharacterFeatsCircle::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -7054,7 +7054,7 @@ BOOL CUIControlButtonCharacterFeatsCircle::Render(BOOL bForce)
     INT nMaxValue = pSprite->GetMaxFeatValue(nFeatNumber);
     INT nKnobValue = nFirstID - m_nID + 4;
 
-    if ((nValue > 0 || pSprite->CanUpgradeFeat(nFeatNumber, 1))
+    if ((nValue > 0 || pSprite->sub_763A40(nFeatNumber, 1))
         && nKnobValue < nMaxValue) {
         CRect rControlRect(m_pPanel->m_ptOrigin + m_ptOrigin,
             m_size);
@@ -7198,7 +7198,7 @@ void CUIControlScrollBarCharacterSkills::OnScroll()
     // __LINE__: 18291
     UTIL_ASSERT(pCharacter != NULL);
 
-    pCharacter->m_nTopSkill = max(SKILL_COUNT * wm_field_144, 0) / wm_m_field_142;
+    pCharacter->m_nTopSkill = max(SKILL_COUNT * field_144, 0) / field_142;
 
     InvalidateItems();
 
@@ -7215,10 +7215,10 @@ void CUIControlScrollBarCharacterSkills::InvalidateItems()
     // __LINE__: 18318
     UTIL_ASSERT(pCharacter != NULL);
 
-    CSingleLock renderLock(&(pCharacter->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pCharacter->GetManager()->field_36), FALSE);
     renderLock.Lock();
 
-    INT nGameSprite = pCharacter->nm_field_1840;
+    INT nGameSprite = pCharacter->field_1840;
 
     CGameSprite* pSprite;
     BYTE rc;
@@ -7396,7 +7396,7 @@ void CUIControlButtonCharacterSkillsPlusMinus::AdjustValue()
 
     CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;
 
-    INT nGameSprite = pCharacter->nm_field_1840;
+    INT nGameSprite = pCharacter->field_1840;
 
     CGameSprite* pSprite;
     BYTE rc;
@@ -7505,7 +7505,7 @@ void CUIControlCharacterHotArea778ED0::OnHotAreaClick(CPoint pt)
         pCharacter->sub_5F8C90(m_nID - 37);
         pCharacter->UpdatePopupPanel(57, NULL);
     } else if (m_nID >= 71 && m_nID <= 81) {
-        pCharacter->sub_5F91F0(pCharacter->nm_field_1852 + m_nID - 71);
+        pCharacter->sub_5F91F0(pCharacter->field_1852 + m_nID - 71);
         pCharacter->UpdatePopupPanel(57, NULL);
     }
 }
@@ -7541,7 +7541,7 @@ void CUIControlButtonCharacterInformationFolder::OnLButtonClick(CPoint pt)
     case 61:
     case 62:
     case 63:
-        pCharacter->bm_field_1844 = static_cast<BYTE>(m_nID) - 60;
+        pCharacter->field_1844 = static_cast<BYTE>(m_nID) - 60;
 
         pPanel = pCharacter->GetManager()->GetPanel(2);
         pText = static_cast<CUIControlTextDisplay*>(pPanel->GetControl(45));
@@ -7582,7 +7582,7 @@ void CUIControlScrollbarCharacter5F9410::UpdateScrollBar()
     // __LINE__: 19222
     UTIL_ASSERT(pCharacter);
 
-    AdjustScrollBar(pCharacter->nm_field_1852, pCharacter->nm_field_184E, 11);
+    AdjustScrollBar(pCharacter->field_1852, pCharacter->field_184E, 11);
 }
 
 // 0x5F9430
@@ -7594,7 +7594,7 @@ void CUIControlScrollbarCharacter5F9410::OnScrollUp()
     // __LINE__: 19250
     UTIL_ASSERT(pCharacter);
 
-    pCharacter->nm_field_1852 = max(pCharacter->nm_field_1852 - 1, 0);
+    pCharacter->field_1852 = max(pCharacter->field_1852 - 1, 0);
 
     pCharacter->UpdatePopupPanel(57, NULL);
 
@@ -7611,9 +7611,9 @@ void CUIControlScrollbarCharacter5F9410::OnScrollDown()
     // __LINE__: 19277
     UTIL_ASSERT(pCharacter);
 
-    if (pCharacter->nm_field_1852 < pCharacter->nm_field_184E - 11) {
+    if (pCharacter->field_1852 < pCharacter->field_184E - 11) {
         // NOTE: Original code is slightly different.
-        pCharacter->nm_field_1852 = min(pCharacter->nm_field_1852 + 1, pCharacter->nm_field_184E - 11);
+        pCharacter->field_1852 = min(pCharacter->field_1852 + 1, pCharacter->field_184E - 11);
     }
 
     pCharacter->UpdatePopupPanel(57, NULL);
@@ -7631,10 +7631,10 @@ void CUIControlScrollbarCharacter5F9410::OnPageUp(DWORD nLines)
     // __LINE__: 19310
     UTIL_ASSERT(pCharacter);
 
-    if (pCharacter->nm_field_184E > 11) {
+    if (pCharacter->field_184E > 11) {
         // NOTE: Original code is slightly different.
         INT nStep = min(nLines, 10);
-        pCharacter->nm_field_1852 = max(pCharacter->nm_field_1852 - nLines, 0);
+        pCharacter->field_1852 = max(pCharacter->field_1852 - nLines, 0);
 
         pCharacter->UpdatePopupPanel(57, NULL);
 
@@ -7652,10 +7652,10 @@ void CUIControlScrollbarCharacter5F9410::OnPageDown(DWORD nLines)
     // __LINE__: 19353
     UTIL_ASSERT(pCharacter);
 
-    if (pCharacter->nm_field_184E > 11) {
+    if (pCharacter->field_184E > 11) {
         // NOTE: Original code is slightly different.
         INT nStep = min(nLines, 11);
-        pCharacter->nm_field_1852 = min(pCharacter->nm_field_1852 + nStep, pCharacter->nm_field_184E - 11);
+        pCharacter->field_1852 = min(pCharacter->field_1852 + nStep, pCharacter->field_184E - 11);
 
         pCharacter->UpdatePopupPanel(57, NULL);
 
@@ -7673,265 +7673,13 @@ void CUIControlScrollbarCharacter5F9410::OnScroll()
     // __LINE__: 19396
     UTIL_ASSERT(pCharacter);
 
-    int v1 = max(pCharacter->nm_field_184E - 1, 0) * wm_field_144 / wm_m_field_142;
-    pCharacter->nm_field_1852 = min(max(v1, 0), pCharacter->nm_field_184E - 11);
+    int v1 = max(pCharacter->field_184E - 1, 0) * field_144 / field_142;
+    pCharacter->field_1852 = min(max(v1, 0), pCharacter->field_184E - 11);
 
-    if (pCharacter->nm_field_184E > 11) {
+    if (pCharacter->field_184E > 11) {
         pCharacter->UpdatePopupPanel(57, NULL);
     }
 
     // NOTE: Uninline.
     UpdateScrollBar();
 }
-
-// Phase 1-2: Scaffold functions
-// 0x5D6390
-void FUN_005d6390() {
-    // TODO: Incomplete.
-}
-
-// 0x5D8EA0
-void FUN_005d8ea0() {
-    // TODO: Incomplete.
-}
-
-// 0x5DAF30
-void FUN_005daf30() {
-    // TODO: Incomplete.
-}
-
-// 0x5DB200
-void FUN_005db200() {
-    // TODO: Incomplete.
-}
-
-// 0x5DF910
-void FUN_005df910() {
-    // TODO: Incomplete.
-}
-
-// 0x5E0FD0
-void FUN_005e0fd0() {
-    // TODO: Incomplete.
-}
-
-// 0x5E1910
-void FUN_005e1910() {
-    // TODO: Incomplete.
-}
-
-// 0x5E1B20
-void FUN_005e1b20() {
-    // TODO: Incomplete.
-}
-
-// 0x5E4E80
-void FUN_005e4e80() {
-    // TODO: Incomplete.
-}
-
-// 0x5E8680
-void FUN_005e8680() {
-    // TODO: Incomplete.
-}
-
-// 0x5E87E0
-void FUN_005e87e0() {
-    // TODO: Incomplete.
-}
-
-// 0x5EA800
-void FUN_005ea800() {
-    // TODO: Incomplete.
-}
-
-// 0x5EA930
-void FUN_005ea930() {
-    // TODO: Incomplete.
-}
-
-// 0x5EAB00
-void FUN_005eab00() {
-    // TODO: Incomplete.
-}
-
-// 0x5EACD0
-void FUN_005eacd0() {
-    // TODO: Incomplete.
-}
-
-// 0x5EAEA0
-void FUN_005eaea0() {
-    // TODO: Incomplete.
-}
-
-// 0x5EB070
-void FUN_005eb070() {
-    // TODO: Incomplete.
-}
-
-// 0x5EB240
-void FUN_005eb240() {
-    // TODO: Incomplete.
-}
-
-// 0x5EB990
-void FUN_005eb990() {
-    // TODO: Incomplete.
-}
-
-// 0x5EBB60
-void FUN_005ebb60() {
-    // TODO: Incomplete.
-}
-
-// 0x5EBD10
-void FUN_005ebd10() {
-    // TODO: Incomplete.
-}
-
-// 0x5EBDD0
-void FUN_005ebdd0() {
-    // TODO: Incomplete.
-}
-
-// 0x5EC660
-void FUN_005ec660() {
-    // TODO: Incomplete.
-}
-
-// 0x5EC820
-void FUN_005ec820() {
-    // TODO: Incomplete.
-}
-
-// 0x5ECD20
-void FUN_005ecd20() {
-    // TODO: Incomplete.
-}
-
-// 0x5ECE70
-void FUN_005ece70() {
-    // TODO: Incomplete.
-}
-
-// 0x5ED000
-void FUN_005ed000() {
-    // TODO: Incomplete.
-}
-
-// 0x5ED1A0
-void FUN_005ed1a0() {
-    // TODO: Incomplete.
-}
-
-// 0x5ED4E0
-void FUN_005ed4e0() {
-    // TODO: Incomplete.
-}
-
-// 0x5ED9F0
-void FUN_005ed9f0() {
-    // TODO: Incomplete.
-}
-
-// 0x5EE870
-void FUN_005ee870() {
-    // TODO: Incomplete.
-}
-
-// 0x5EECE0
-void FUN_005eece0() {
-    // TODO: Incomplete.
-}
-
-// 0x5EF440
-void FUN_005ef440() {
-    // TODO: Incomplete.
-}
-
-// 0x5EF5F0
-void FUN_005ef5f0() {
-    // TODO: Incomplete.
-}
-
-// 0x5EF760
-void FUN_005ef760() {
-    // TODO: Incomplete.
-}
-
-// 0x5EF920
-void FUN_005ef920() {
-    // TODO: Incomplete.
-}
-
-// 0x5EF9E0
-void FUN_005ef9e0() {
-    // TODO: Incomplete.
-}
-
-// 0x5EFAA0
-void FUN_005efaa0() {
-    // TODO: Incomplete.
-}
-
-// 0x5EFB60
-void FUN_005efb60() {
-    // TODO: Incomplete.
-}
-
-// 0x5EFCC0
-void FUN_005efcc0() {
-    // TODO: Incomplete.
-}
-
-// 0x5EFFD0
-void FUN_005effd0() {
-    // TODO: Incomplete.
-}
-
-// 0x5F6DE0
-void FUN_005f6de0() {
-    // TODO: Incomplete.
-}
-
-// 0x5F7280
-void FUN_005f7280() {
-    // TODO: Incomplete.
-}
-
-// 0x5F7B00
-void FUN_005f7b00() {
-    // TODO: Incomplete.
-}
-
-// 0x5F8420
-void FUN_005f8420() {
-    // TODO: Incomplete.
-}
-
-// 0x5F8A90
-void FUN_005f8a90() {
-    // TODO: Incomplete.
-}
-
-// 0x5F97F0
-void FUN_005f97f0() {
-    // TODO: Incomplete.
-}
-
-// 0x5F9810
-void FUN_005f9810() {
-    // TODO: Incomplete.
-}
-
-// 0x5F9870
-void FUN_005f9870() {
-    // TODO: Incomplete.
-}
-
-// 0x5F98B0
-void FUN_005f98b0() {
-    // TODO: Incomplete.
-}
-

@@ -102,30 +102,30 @@ POLYCOLOR CVisibilityMap::CLEARSHADE;
 // 0x551770
 CVisibilityMap::CVisibilityMap()
 {
-    m_nEllipseArcCountPrimary = 0;
+    field_4 = 0;
     m_nWidth = 0;
     m_nHeight = 0;
-    m_nEllipseArcCountSecondary = 0;
+    field_1A = 0;
     memset(m_aCharacterIds, 0, sizeof(m_aCharacterIds));
     m_pMap = NULL;
     m_pSearchMap = NULL;
-    m_pEllipseArcPixelsPrimary = 0;
-    m_pEllipseArcPixelsSecondary = 0;
-    m_nEllipseArcWidth = 14;
-    m_nEllipseArcHeight = 10;
-    InitializeEllipseArcs();
+    field_12 = 0;
+    field_16 = 0;
+    field_E = 14;
+    field_10 = 10;
+    sub_5518A0();
     m_bOutDoor = FALSE;
 }
 
 // 0x551800
 CVisibilityMap::~CVisibilityMap()
 {
-    if (m_pEllipseArcPixelsPrimary) {
-        delete m_pEllipseArcPixelsPrimary;
+    if (field_12) {
+        delete field_12;
     }
 
-    if (m_pEllipseArcPixelsSecondary) {
-        delete m_pEllipseArcPixelsSecondary;
+    if (field_16) {
+        delete field_16;
     }
 }
 
@@ -143,26 +143,26 @@ BOOL CVisibilityMap::AddCharacter(const CPoint& pos, LONG charId, const BYTE* pV
 }
 
 // 0x5518A0
-void CVisibilityMap::InitializeEllipseArcs()
+void CVisibilityMap::sub_5518A0()
 {
-    if (m_pEllipseArcPixelsPrimary != NULL) {
-        delete m_pEllipseArcPixelsPrimary;
+    if (field_12 != NULL) {
+        delete field_12;
     }
 
-    if (m_pEllipseArcPixelsSecondary != NULL) {
-        delete m_pEllipseArcPixelsSecondary;
+    if (field_16 != NULL) {
+        delete field_16;
     }
 
-    m_pEllipseArcPixelsPrimary = new BYTE[m_nEllipseArcWidth];
-    m_pEllipseArcPixelsSecondary = new BYTE[m_nEllipseArcHeight];
+    field_12 = new BYTE[field_E];
+    field_16 = new BYTE[field_10];
 
-    m_nEllipseArcCountPrimary = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(m_nEllipseArcWidth,
-        m_nEllipseArcHeight,
-        m_pEllipseArcPixelsPrimary));
+    field_4 = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(field_E,
+        field_10,
+        field_12));
 
-    m_nEllipseArcCountSecondary = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(m_nEllipseArcHeight,
-        m_nEllipseArcWidth,
-        m_pEllipseArcPixelsSecondary));
+    field_1A = static_cast<BYTE>(g_pBaldurChitin->GetCurrentVideoMode()->GetEllipseArcPixelList(field_10,
+        field_E,
+        field_16));
 }
 
 // 0x551950
@@ -780,25 +780,3 @@ void CVisibilityMap::SetTileVisible(LONG nIndex, BYTE charId)
 
     m_pMap[nIndex] |= charId | EXPLORED_FLAG;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x551670
-void FUN_00551670() {
-    // TODO: Incomplete.
-}
-
-// 0x5544C0
-void FUN_005544c0() {
-    // TODO: Incomplete.
-}
-
-// 0x5545E0
-void FUN_005545e0() {
-    // TODO: Incomplete.
-}
-
-// 0x554870
-void FUN_00554870() {
-    // TODO: Incomplete.
-}
-

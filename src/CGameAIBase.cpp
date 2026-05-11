@@ -60,29 +60,29 @@ CGameAIBase::CGameAIBase()
     m_objectType = CGameObject::TYPE_AIBASE;
     m_lAttacker.Set(CAIObjectType::NOONE);
     m_lOrderedBy.Set(CAIObjectType::NOONE);
-    m_lProtecting.Set(CAIObjectType::NOONE);
-    m_lProtector.Set(CAIObjectType::NOONE);
-    m_lTargeted.Set(CAIObjectType::NOONE);
+    field_EA.Set(CAIObjectType::NOONE);
+    field_126.Set(CAIObjectType::NOONE);
+    field_162.Set(CAIObjectType::NOONE);
     m_lHitter.Set(CAIObjectType::NOONE);
     m_lHelp.Set(CAIObjectType::NOONE);
     m_lTrigger.Set(CAIObjectType::NOONE);
     m_lSeen.Set(CAIObjectType::NOONE);
     m_lTalkedTo.Set(CAIObjectType::NOONE);
     m_lHeard.Set(CAIObjectType::NOONE);
-    m_lSummonedBy.Set(CAIObjectType::NOONE);
-    m_lMarked.Set(CAIObjectType::NOONE);
-    m_lFollowed.Set(CAIObjectType::NOONE);
-    m_lMyTarget.Set(CAIObjectType::NOONE);
+    field_306.Set(CAIObjectType::NOONE);
+    field_342.Set(CAIObjectType::NOONE);
+    field_37E.Set(CAIObjectType::NOONE);
+    field_3BA.Set(CAIObjectType::NOONE);
     m_curResponseNum = -1;
     m_curResponseSetNum = -1;
     m_curScriptNum = -1;
     m_curAction = CAIAction::NULL_ACTION;
     m_interrupt = FALSE;
     m_actionCount = 0;
-    m_bJustAttacked = 0;
-    m_nReactionSeed = 0;
-    m_nAlertnessPeriod = 0;
-    m_PAICallCounter = 0;
+    field_54C = 0;
+    field_550 = 0;
+    field_552 = 0;
+    field_44A = 0;
     m_overrideScript = NULL;
     m_special1Script = NULL;
     m_teamScript = NULL;
@@ -92,20 +92,20 @@ CGameAIBase::CGameAIBase()
     m_movementScript = NULL;
     m_inCutScene = FALSE;
     m_reactionRoll = 10;
-    m_nReactionSeed = rand() % 120;
+    field_550 = rand() % 120;
 
     CAITrigger trigger(CAITrigger::ONCREATION, 0);
     m_pendingTriggers.AddTail(new CAITrigger(trigger));
 
     m_firstCall = TRUE;
     m_forceActionPick = FALSE;
-    nfield_580 = 0;
+    field_580 = 0;
     m_nLastActionReturn = -1;
-    nfield_588 = 0;
-    nfield_58C = 0;
-    m_bScrolling = 0;
-    m_nVisualRange = 1;
-    bfield_596 = 0;
+    field_588 = 0;
+    field_58C = 0;
+    field_594 = 0;
+    field_595 = 1;
+    field_596 = 0;
     m_randValue = rand() & 0x7FFF;
 }
 
@@ -662,7 +662,7 @@ void CGameAIBase::ApplyEffectToParty(CGameEffect* pEffect)
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     for (SHORT nPortrait = 0; nPortrait < pGame->GetNumCharacters(); nPortrait++) {
         LONG nCharacterId = pGame->GetCharacterId(nPortrait);
-        if (pGame->GetGameSave()->m_bArenaMode) {
+        if (pGame->GetGameSave()->field_1AC) {
             CGameSprite* pSprite;
             BYTE rc = pGame->GetObjectArray()->GetShare(nCharacterId,
                 CGameObjectArray::THREAD_ASYNCH,
@@ -731,7 +731,7 @@ SHORT CGameAIBase::MoveView(CPoint dest, int speed)
     }
 
     if (m_curAction.m_actionID == CAIACTION_MOVEVIEWPOINTUNTILDONE) {
-        if (!m_bScrolling) {
+        if (!field_594) {
             CMessageStartScroll* pMessage = new CMessageStartScroll(pVisibleArea,
                 CPoint(x, y),
                 dest,
@@ -741,14 +741,14 @@ SHORT CGameAIBase::MoveView(CPoint dest, int speed)
 
             g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
 
-            m_bScrolling = TRUE;
+            field_594 = TRUE;
         }
 
         if (x != dest.x && y != dest.y) {
             return ACTION_NORMAL;
         }
 
-        m_bScrolling = FALSE;
+        field_594 = FALSE;
     } else {
         CMessageStartScroll* pMessage = new CMessageStartScroll(pVisibleArea,
             CPoint(x, y),
@@ -1306,7 +1306,7 @@ SHORT CGameAIBase::RevealAreaOnMap()
     CString sArea = m_curAction.GetString1();
 
     CWorldMap* pWorldMap = g_pBaldurChitin->GetObjectGame()->GetWorldMap(sArea);
-    pWorldMap->EnableArea(pWorldMap->GetCurrentAreaIndex(),
+    pWorldMap->EnableArea(pWorldMap->sub_55A3A0(),
         CResRef(sArea),
         TRUE);
 
@@ -1660,7 +1660,7 @@ SHORT CGameAIBase::FadeFromColor()
 }
 
 // 0x467970
-SHORT CGameAIBase::ActionFadeColor()
+SHORT CGameAIBase::sub_467970()
 {
     CMessageFadeColor* pFadeColor = new CMessageFadeColor(255,
         static_cast<BYTE>(m_curAction.m_dest.x),
@@ -1783,13 +1783,13 @@ void CGameAIBase::SetDefaultScript(CAIScript* script)
 // 0x6F2C20
 SHORT CGameAIBase::GetVisualRange()
 {
-    return m_pArea->m_visibility.m_nEllipseArcWidth * 32;
+    return m_pArea->m_visibility.field_E * 32;
 }
 
 // 0x6F2C30
 SHORT CGameAIBase::GetHelpRange()
 {
-    return m_pArea->m_visibility.m_nEllipseArcWidth * 48;
+    return m_pArea->m_visibility.field_E * 48;
 }
 
 // NOTE: Inlined.
@@ -1819,7 +1819,7 @@ CAIAction& CGameAIBase::GetNextAction(CAIAction& action)
             }
 
             actorType.Decode(this);
-            CGameAIBase* actor = static_cast<CGameAIBase*>(actorType.GetObjectByType(this, CGameObject::TYPE_AIBASE, FALSE));
+            CGameAIBase* actor = static_cast<CGameAIBase*>(actorType.sub_40CB20(this, CGameObject::TYPE_AIBASE, FALSE));
             if (actor != NULL) {
                 action.m_actorID = CAIObjectType::ANYONE;
                 action.m_internalFlags |= 0x1;
@@ -1866,15 +1866,15 @@ CVariable* CGameAIBase::GetGlobalVariable(const CString& sScope, const CString& 
 }
 
 // 0x4530F0
-void CGameAIBase::SetMarked(const CAIObjectType& type)
+void CGameAIBase::sub_4530F0(const CAIObjectType& type)
 {
-    m_lMarked.Set(type);
+    field_342.Set(type);
 }
 
 // 0x453110
-void CGameAIBase::SetFollowed(const CAIObjectType& type)
+void CGameAIBase::sub_453110(const CAIObjectType& type)
 {
-    m_lFollowed.Set(type);
+    field_37E.Set(type);
 }
 
 // 0x453130
@@ -1884,15 +1884,15 @@ void CGameAIBase::SetLastActionReturn(SHORT returnValue)
 }
 
 // 0x45B6D0
-int CGameAIBase::GetField58C()
+int CGameAIBase::sub_45B6D0()
 {
-    return nfield_58C;
+    return field_58C;
 }
 
 // 0x45B6E0
-void CGameAIBase::SetMyTargetObj(const CAIObjectType& type)
+void CGameAIBase::sub_45B6E0(const CAIObjectType& type)
 {
-    m_lMyTarget.Set(type);
+    field_3BA.Set(type);
 }
 
 // -----------------------------------------------------------------------------
@@ -1952,420 +1952,3 @@ BOOLEAN CGameAIGame::CompressTime(DWORD deltaTime)
 {
     return TRUE;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x44A4F0
-void FUN_0044a4f0() {
-    // TODO: Incomplete.
-}
-
-// 0x44A550
-void FUN_0044a550() {
-    // TODO: Incomplete.
-}
-
-// 0x44A950
-void FUN_0044a950() {
-    // TODO: Incomplete.
-}
-
-// 0x44AA40
-void FUN_0044aa40() {
-    // TODO: Incomplete.
-}
-
-// 0x44AA80
-void FUN_0044aa80() {
-    // TODO: Incomplete.
-}
-
-// 0x44AB10
-void FUN_0044ab10() {
-    // TODO: Incomplete.
-}
-
-// 0x44AD80
-void FUN_0044ad80() {
-    // TODO: Incomplete.
-}
-
-// 0x44ADC0
-void FUN_0044adc0() {
-    // TODO: Incomplete.
-}
-
-// 0x44ADF0
-void FUN_0044adf0() {
-    // TODO: Incomplete.
-}
-
-// 0x44AE50
-void FUN_0044ae50() {
-    // TODO: Incomplete.
-}
-
-// 0x44AE70
-void FUN_0044ae70() {
-    // TODO: Incomplete.
-}
-
-// 0x44AED0
-void FUN_0044aed0() {
-    // TODO: Incomplete.
-}
-
-// 0x44AF30
-void FUN_0044af30() {
-    // TODO: Incomplete.
-}
-
-// 0x44AF60
-void FUN_0044af60() {
-    // TODO: Incomplete.
-}
-
-// 0x44AFF0
-void FUN_0044aff0() {
-    // TODO: Incomplete.
-}
-
-// 0x44B010
-void FUN_0044b010() {
-    // TODO: Incomplete.
-}
-
-// 0x44B0A0
-void FUN_0044b0a0() {
-    // TODO: Incomplete.
-}
-
-// 0x44B100
-void FUN_0044b100() {
-    // TODO: Incomplete.
-}
-
-// 0x44B120
-void FUN_0044b120() {
-    // TODO: Incomplete.
-}
-
-// 0x44B180
-void FUN_0044b180() {
-    // TODO: Incomplete.
-}
-
-// 0x44B1E0
-void FUN_0044b1e0() {
-    // TODO: Incomplete.
-}
-
-// 0x44B230
-void FUN_0044b230() {
-    // TODO: Incomplete.
-}
-
-// 0x44B280
-void FUN_0044b280() {
-    // TODO: Incomplete.
-}
-
-// 0x44B2D0
-void FUN_0044b2d0() {
-    // TODO: Incomplete.
-}
-
-// 0x44B4B0
-void FUN_0044b4b0() {
-    // TODO: Incomplete.
-}
-
-// 0x44B4D0
-void FUN_0044b4d0() {
-    // TODO: Incomplete.
-}
-
-// 0x44B500
-void FUN_0044b500() {
-    // TODO: Incomplete.
-}
-
-// 0x44B6C0
-void FUN_0044b6c0() {
-    // TODO: Incomplete.
-}
-
-// 0x44B8A0
-void FUN_0044b8a0() {
-    // TODO: Incomplete.
-}
-
-// 0x44BA70
-void FUN_0044ba70() {
-    // TODO: Incomplete.
-}
-
-// 0x44BA90
-void FUN_0044ba90() {
-    // TODO: Incomplete.
-}
-
-// 0x44BC00
-void FUN_0044bc00() {
-    // TODO: Incomplete.
-}
-
-// 0x44BC20
-void FUN_0044bc20() {
-    // TODO: Incomplete.
-}
-
-// 0x44BD40
-void FUN_0044bd40() {
-    // TODO: Incomplete.
-}
-
-// 0x44BE10
-void FUN_0044be10() {
-    // TODO: Incomplete.
-}
-
-// 0x44BE69
-void Catch@0044be69() {
-    // TODO: Incomplete.
-}
-
-// 0x44BE90
-void FUN_0044be90() {
-    // TODO: Incomplete.
-}
-
-// 0x44BF20
-void FUN_0044bf20() {
-    // TODO: Incomplete.
-}
-
-// 0x44C0C0
-void FUN_0044c0c0() {
-    // TODO: Incomplete.
-}
-
-// 0x44C230
-void FUN_0044c230() {
-    // TODO: Incomplete.
-}
-
-// 0x44C320
-void FUN_0044c320() {
-    // TODO: Incomplete.
-}
-
-// 0x44D140
-void FUN_0044d140() {
-    // TODO: Incomplete.
-}
-
-// 0x44DAC0
-void FUN_0044dac0() {
-    // TODO: Incomplete.
-}
-
-// 0x45C030
-void FUN_0045c030() {
-    // TODO: Incomplete.
-}
-
-// 0x45C290
-void FUN_0045c290() {
-    // TODO: Incomplete.
-}
-
-// 0x45CA10
-void FUN_0045ca10() {
-    // TODO: Incomplete.
-}
-
-// 0x45D3E0
-void FUN_0045d3e0() {
-    // TODO: Incomplete.
-}
-
-// 0x45D560
-void FUN_0045d560() {
-    // TODO: Incomplete.
-}
-
-// 0x45E360
-void FUN_0045e360() {
-    // TODO: Incomplete.
-}
-
-// 0x45E380
-void FUN_0045e380() {
-    // TODO: Incomplete.
-}
-
-// 0x45E390
-void FUN_0045e390() {
-    // TODO: Incomplete.
-}
-
-// 0x45E3D0
-void FUN_0045e3d0() {
-    // TODO: Incomplete.
-}
-
-// 0x45E4C0
-void FUN_0045e4c0() {
-    // TODO: Incomplete.
-}
-
-// 0x45E640
-void FUN_0045e640() {
-    // TODO: Incomplete.
-}
-
-// 0x45E6B0
-void FUN_0045e6b0() {
-    // TODO: Incomplete.
-}
-
-// 0x45E6D0
-void FUN_0045e6d0() {
-    // TODO: Incomplete.
-}
-
-// 0x45E830
-void FUN_0045e830() {
-    // TODO: Incomplete.
-}
-
-// 0x45E870
-void FUN_0045e870() {
-    // TODO: Incomplete.
-}
-
-// 0x45EA70
-void FUN_0045ea70() {
-    // TODO: Incomplete.
-}
-
-// 0x45EA80
-void FUN_0045ea80() {
-    // TODO: Incomplete.
-}
-
-// 0x45EAA0
-void FUN_0045eaa0() {
-    // TODO: Incomplete.
-}
-
-// 0x45EAC0
-void FUN_0045eac0() {
-    // TODO: Incomplete.
-}
-
-// 0x45EB60
-void FUN_0045eb60() {
-    // TODO: Incomplete.
-}
-
-// 0x45EDE0
-void FUN_0045ede0() {
-    // TODO: Incomplete.
-}
-
-// 0x460300
-void FUN_00460300() {
-    // TODO: Incomplete.
-}
-
-// 0x4608A0
-void FUN_004608a0() {
-    // TODO: Incomplete.
-}
-
-// 0x460D70
-void FUN_00460d70() {
-    // TODO: Incomplete.
-}
-
-// 0x461190
-void FUN_00461190() {
-    // TODO: Incomplete.
-}
-
-// 0x461B80
-void FUN_00461b80() {
-    // TODO: Incomplete.
-}
-
-// 0x4633A0
-void FUN_004633a0() {
-    // TODO: Incomplete.
-}
-
-// 0x464EB0
-void FUN_00464eb0() {
-    // TODO: Incomplete.
-}
-
-// 0x465220
-void FUN_00465220() {
-    // TODO: Incomplete.
-}
-
-// 0x4658A0
-void FUN_004658a0() {
-    // TODO: Incomplete.
-}
-
-// 0x465D50
-void FUN_00465d50() {
-    // TODO: Incomplete.
-}
-
-// 0x466750
-void FUN_00466750() {
-    // TODO: Incomplete.
-}
-
-// 0x466910
-void FUN_00466910() {
-    // TODO: Incomplete.
-}
-
-// 0x4688A0
-void FUN_004688a0() {
-    // TODO: Incomplete.
-}
-
-// 0x469040
-void FUN_00469040() {
-    // TODO: Incomplete.
-}
-
-// 0x47C850
-void FUN_0047c850() {
-    // TODO: Incomplete.
-}
-
-// 0x481C50
-void FUN_00481c50() {
-    // TODO: Incomplete.
-}
-
-// 0x50A6C0
-void FUN_0050a6c0() {
-    // TODO: Incomplete.
-}
-
-// 0x50A820
-void FUN_0050a820() {
-    // TODO: Incomplete.
-}
-
-// 0x766670
-void FUN_00766670() {
-    // TODO: Incomplete.
-}
-

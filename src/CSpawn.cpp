@@ -393,9 +393,9 @@ BOOL CSpawnFile::GetINIKey(CMemINISection* pSection, const CString& sKey, CStrin
 CSpawnList::CSpawnList(CMemINI* pMemINI, const CString& sSection)
 {
     mInterval = INT_MAX;
-    nm_field_20 = 0;
-    nm_field_24 = 0;
-    nm_field_28 = 0;
+    field_20 = 0;
+    field_24 = 0;
+    field_28 = 0;
     CheckSpawnTimes = 0;
     SpawnTimeOfDay = 0;
     pControlVar = NULL;
@@ -478,9 +478,9 @@ CSpawnList::~CSpawnList()
     }
 
     pControlVar = NULL;
-    nm_field_20 = 0;
-    nm_field_24 = 0;
-    nm_field_28 = 0;
+    field_20 = 0;
+    field_24 = 0;
+    field_28 = 0;
 }
 
 // 0x768D50
@@ -555,12 +555,12 @@ CSpawn::CSpawn(CMemINISection* pSection)
     mDeathLadyModifier = 0;
     mDeathMurderModifier = 0;
     Facing = 0;
-    m_specVarValue = 0;
-    m_specVarInc = 0;
-    m_bSpecKeyControlled = 0;
-    m_bAreaDiff1 = 0;
-    m_bAreaDiff2 = 0;
-    m_bAreaDiff3 = 0;
+    field_136 = 0;
+    field_13A = 0;
+    field_13E = 0;
+    field_13F = 0;
+    field_140 = 0;
+    field_141 = 0;
     mInterval = -1;
     SpawnFlags = 0;
     DataIsValid = FALSE;
@@ -692,7 +692,7 @@ void CSpawn::Read(CMemINISection* pSection)
     if (GetINIKey(pSection, SpecKey, sValue)) {
         // TODO: Incomplete.
     } else {
-        m_bSpecKeyControlled = FALSE;
+        field_13E = FALSE;
     }
 
     pValue = pSection->Get(SpecVarKey);
@@ -702,53 +702,53 @@ void CSpawn::Read(CMemINISection* pSection)
 
         // NOTE: Uninline.
         if (GetINIKey(pSection, SpecVarIncKey, sValue)) {
-            m_specVarValue = atoi(sValue);
+            field_136 = atoi(sValue);
         } else {
-            m_specVarValue = 0;
+            field_136 = 0;
         }
 
         // NOTE: Uninline.
         if (GetINIKey(pSection, SpecVarOperationKey, sValue)) {
             if (_strnicmp(GreaterThanKey, sValue, GreaterThanKey.GetLength()) == 0) {
-                m_specVarOperation = 0;
+                field_132 = 0;
             } else if (_strnicmp(LessThanKey, sValue, LessThanKey.GetLength()) == 0) {
-                m_specVarOperation = 1;
+                field_132 = 1;
             } else if (_strnicmp(EqualToKey, sValue, EqualToKey.GetLength()) == 0) {
-                m_specVarOperation = 2;
+                field_132 = 2;
             } else {
-                m_specVarOperation = 3;
+                field_132 = 3;
             }
         } else {
-            m_specVarOperation = 3;
+            field_132 = 3;
         }
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, SpecVarIncKey, sValue)) {
-        m_specVarInc = atoi(sValue);
+        field_13A = atoi(sValue);
     } else {
-        m_specVarInc = 0;
+        field_13A = 0;
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, AreaDiff1Key, sValue)) {
-        m_bAreaDiff1 = atoi(sValue) > 0;
+        field_13F = atoi(sValue) > 0;
     } else {
-        m_bAreaDiff1 = TRUE;
+        field_13F = TRUE;
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, AreaDiff2Key, sValue)) {
-        m_bAreaDiff2 = atoi(sValue) > 0;
+        field_140 = atoi(sValue) > 0;
     } else {
-        m_bAreaDiff2 = TRUE;
+        field_140 = TRUE;
     }
 
     // NOTE: Uninline.
     if (GetINIKey(pSection, AreaDiff3Key, sValue)) {
-        m_bAreaDiff3 = atoi(sValue) > 0;
+        field_141 = atoi(sValue) > 0;
     } else {
-        m_bAreaDiff3 = TRUE;
+        field_141 = TRUE;
     }
 
     // NOTE: Uninline.
@@ -1416,45 +1416,3 @@ void _SpawnReleasePointer(Thing*& rPointer)
         rPointer = NULL;
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x768680
-void FUN_00768680() {
-    // TODO: Incomplete.
-}
-
-// 0x768D30
-void FUN_00768d30() {
-    // TODO: Incomplete.
-}
-
-// 0x769670
-void FUN_00769670() {
-    // TODO: Incomplete.
-}
-
-// 0x769680
-void FUN_00769680() {
-    // TODO: Incomplete.
-}
-
-// 0x769730
-void FUN_00769730() {
-    // TODO: Incomplete.
-}
-
-// 0x769A80
-void FUN_00769a80() {
-    // TODO: Incomplete.
-}
-
-// 0x76C1E0
-void FUN_0076c1e0() {
-    // TODO: Incomplete.
-}
-
-// 0x76C200
-void FUN_0076c200() {
-    // TODO: Incomplete.
-}
-

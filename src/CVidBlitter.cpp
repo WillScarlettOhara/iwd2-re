@@ -12,9 +12,9 @@ CVidBlitter::CVidBlitter()
     m_bSoftSrcKeyBlt = FALSE;
     m_bSoftBlt = FALSE;
     m_bSoftMirrorBlt = FALSE;
-    bfield_E6 = 0;
-    nfield_DE = 0;
-    nfield_E2 = 0;
+    field_E6 = 0;
+    field_DE = 0;
+    field_E2 = 0;
     m_pfnBltFast = &CVidBlitter::DxBltFast;
     m_pfnBltNoFX = &CVidBlitter::DxBlt;
     m_pfnSrcKeyBltFast = &CVidBlitter::DxBltFast;
@@ -113,7 +113,7 @@ void CVidBlitter::Reset()
         g_pChitin->pActiveEngine->EngineActivated();
     }
 
-    bfield_E6 = 0;
+    field_E6 = 0;
 }
 
 // 0x7B6840
@@ -169,55 +169,3 @@ HRESULT CVidBlitter::SoftSrcKeyBlt(IDirectDrawSurface* lpDDSurface, LPRECT lpDes
 
     return S_OK;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x7B671B
-void Catch@007b671b() {
-    // TODO: Incomplete.
-}
-
-// 0x7B6B20
-void FUN_007b6b20() {
-    // TODO: Incomplete.
-}
-
-// 0x7B6CC0
-void FUN_007b6cc0() {
-    // TODO: Incomplete.
-}
-
-// 0x7B6DC0
-void FUN_007b6dc0() {
-    // TODO: Incomplete.
-}
-
-// 0x7B6F20
-void FUN_007b6f20() {
-    // TODO: Incomplete.
-}
-
-// 0x7B7070
-void FUN_007b7070() {
-    // TODO: Incomplete.
-}
-
-// 0x7B7750
-void FUN_007b7750() {
-    // TODO: Incomplete.
-}
-
-// 0x7B7940
-void FUN_007b7940() {
-    // TODO: Incomplete.
-}
-
-// 0x7B7D40
-void FUN_007b7d40() {
-    // TODO: Incomplete.
-}
-
-// 0x7B7DA0
-void FUN_007b7da0() {
-    // TODO: Incomplete.
-}
-

@@ -252,10 +252,3 @@ int FileReader(void* data, void* buffer, int size)
 
     return size;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x77E6F0
-void FUN_0077e6f0() {
-    // TODO: Incomplete.
-}
-

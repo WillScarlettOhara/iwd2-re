@@ -73,8 +73,8 @@ public:
     /* 1CD4 */ BOOLEAN m_bDetectedByInfravision;
     /* 1CD5 */ BYTE m_extendDirectionTest;
     /* 1CD6 */ BOOL m_bExtendDir;
-    /* 1CDA */ int nm_field_1CDA;
-    /* 1CDE */ int nm_field_1CDE;
+    /* 1CDA */ int field_1CDA;
+    /* 1CDE */ int field_1CDE;
 };
 
 #endif /* CGAMEANIMATIONTYPEMONSTERICEWIND_H_ */

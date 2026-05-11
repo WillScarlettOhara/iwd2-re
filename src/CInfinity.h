@@ -1,11 +1,6 @@
 #ifndef CINFINITY_H_
 #define CINFINITY_H_
 
-// ============================================================================
-// CInfinity - 2D world rendering engine - tile maps, sprites, lighting
-//
-// Address: varies by method
-// ============================================================================
 #include "mfc.h"
 
 #include <ddraw.h>
@@ -80,7 +75,7 @@ public:
     BOOL Render3d(INT nTile, INT nStencilTile, const CRect& rDest, INT x, INT y, const TILE_CODE& tileCode, DWORD dwFlags, BYTE nDualTileCode, int a9);
     BOOL ReadyTexture(INT nTextureId, INT nTile, INT nStencilTile, const TILE_CODE& tileCode, BYTE nDualTileCode, int a9, DWORD dwFlags);
     void RenderTexture(INT nTextureId, const CRect& rDest, INT x, INT y, const TILE_CODE& tileCode, DWORD dwFlags);
-    static void RenderFogOfWar();
+    static void sub_5D2DE0();
 
     void Invalidate();
 
@@ -221,7 +216,7 @@ public:
     /* 0014 */ CResWED* pResWED;
     /* 0018 */ CVRamPool* pVRPool;
     /* 001C */ CVidMode* pVidMode;
-    /* 0020 */ int m_bUseDestSrc;
+    /* 0020 */ int field_20;
     /* 0024 */ BOOL bRefreshVRamRect;
     /* 0028 */ int bInitialized;
     /* 002C */ BOOL bWEDDemanded;
@@ -233,10 +228,10 @@ public:
     /* 0044 */ int nNewY;
     /* 0048 */ CRect rViewPort;
     /* 0058 */ CRect rVRamRect;
-    /* 0068 */ int m_nRequestRectLeft;
-    /* 006C */ int m_nRequestRectTop;
-    /* 0070 */ int m_nRequestRectRight;
-    /* 0074 */ int m_nRequestRectBottom;
+    /* 0068 */ int field_68;
+    /* 006C */ int field_6C;
+    /* 0070 */ int field_70;
+    /* 0074 */ int field_74;
     /* 0078 */ int nVisibleTilesX;
     /* 007C */ int nVisibleTilesY;
     /* 0080 */ int nAreaX;
@@ -245,24 +240,24 @@ public:
     /* 008C */ int nCurrentTileY;
     /* 0090 */ int nCurrentX;
     /* 0094 */ int nCurrentY;
-    /* 0098 */ int m_nSub1XOffset;
-    /* 009C */ int m_nSub1YOffset;
-    /* 00A0 */ int m_nSub2XOffset;
-    /* 00A4 */ int m_nSub2YOffset;
-    /* 00A8 */ int m_nSub3XOffset;
-    /* 00AC */ int m_nSub3YOffset;
-    /* 00B0 */ int m_nSub4XOffset;
-    /* 00B4 */ int m_nSub4YOffset;
+    /* 0098 */ int field_98;
+    /* 009C */ int field_9C;
+    /* 00A0 */ int field_A0;
+    /* 00A4 */ int field_A4;
+    /* 00A8 */ int field_A8;
+    /* 00AC */ int field_AC;
+    /* 00B0 */ int field_B0;
+    /* 00B4 */ int field_B4;
     /* 00B8 */ CSound sndThunder;
     /* 011C */ int nCurrentLightningFrequency;
     /* 0120 */ int nNextLightningFrequency;
-    /* 0124 */ int m_nNewLightningFrequency;
+    /* 0124 */ int field_124;
     /* 0128 */ int nCurrentRainLevel;
     /* 012C */ int nNextRainLevel;
     /* 0130 */ int nCurrentSnowLevel;
-    /* 0134 */ int m_nCurrentWindLevel;
-    /* 0138 */ int m_nCurrentFogLevel;
-    /* 013C */ int m_nNextWindLevel;
+    /* 0134 */ int field_134;
+    /* 0138 */ int field_138;
+    /* 013C */ int field_13C;
     /* 0140 */ int nTimeToNextThunder;
     /* 0144 */ int nThunderLength;
     /* 0148 */ BOOL bRenderCallLightning;
@@ -273,14 +268,14 @@ public:
     /* 015B */ unsigned char m_oldRenderDayNightCode;
     /* 015C */ BYTE m_dayLightIntensity;
     /* 015D */ BYTE m_requestDayNightCode;
-    /* 015E */ unsigned char m_oldRequestDualTileCode;
+    /* 015E */ unsigned char field_15E;
     /* 015F */ BOOLEAN m_bResizedViewPort;
     /* 0160 */ DWORD m_nLastTickCount;
     /* 0164 */ CPoint m_ptCurrentPosExact;
     /* 016C */ CCriticalSection m_currentPosCritSect;
     /* 018C */ SHORT m_autoScrollSpeed;
     /* 018E */ CPoint m_ptScrollDest;
-    /* 0196 */ int m_bScrolling;
+    /* 0196 */ int field_196;
     /* 019A */ BYTE m_nScrollDelay;
     /* 019B */ BOOLEAN m_bMovieBroadcast;
     /* 019C */ BOOL m_bStartLightning;
@@ -297,7 +292,7 @@ public:
     /* 01C6 */ CVidBitmap m_vbMessageScreen;
     /* 0280 */ DWORD m_strMessageText;
     /* 0284 */ BOOLEAN m_bRenderMessage;
-    /* 0286 */ WORD m_wMessageScreenLine;
+    /* 0286 */ WORD field_286;
     /* 0288 */ DWORD m_nMessageEndTime;
     /* 028C */ BOOL m_bScreenShake;
     /* 0290 */ CPoint m_screenShakeDelta;

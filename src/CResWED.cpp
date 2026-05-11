@@ -185,10 +185,3 @@ BOOL CResWED::Parse(void* pData)
 
     return m_bParsed;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x401000
-void FUN_00401000() {
-    // TODO: Incomplete.
-}
-

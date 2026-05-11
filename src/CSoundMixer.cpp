@@ -23,11 +23,11 @@ CSoundMixer::CSoundMixer()
     m_bInPositionUpdate = FALSE;
     m_bInReleaseAll = FALSE;
     m_bInQueueUpdate = FALSE;
-    m_bDirectSoundInit = 0;
-    nfield_C8 = 0;
-    nfield_CC = 0;
-    nfield_D0 = 0;
-    nfield_D4 = 0;
+    field_C4 = 0;
+    field_C8 = 0;
+    field_CC = 0;
+    field_D0 = 0;
+    field_D4 = 0;
     m_nMaxChannels = 0;
     m_nMaxVoices = 0;
     m_nPanRange = 0;
@@ -35,13 +35,13 @@ CSoundMixer::CSoundMixer()
     m_nYCoordinate = 0;
     m_nZCoordinate = 0;
     m_nActiveArea = 0;
-    nfield_F4 = 0;
-    nfield_F8 = 0;
-    nfield_FC = 0;
-    m_bEAXSupported = 0;
-    m_nSoundFlags |= 0x03;
+    field_F4 = 0;
+    field_F8 = 0;
+    field_FC = 0;
+    field_178 = 0;
+    field_C0 |= 0x03;
     m_bMixerInitialized = FALSE;
-    m_bStreamPlaying = 0;
+    field_40 = 0;
     m_dwEAXProperties = 0;
     m_cSoundProperties.m_nPreset = 0;
     m_pDirectSound3DListener = NULL;
@@ -64,8 +64,8 @@ CSoundMixer::CSoundMixer()
     ReleaseAll();
 
     m_bMixerInitialized = FALSE;
-    m_bStreamPlaying = 0;
-    nm_field_0 = 0;
+    field_40 = 0;
+    field_0 = 0;
 }
 
 // #binary-identical
@@ -154,8 +154,8 @@ void CSoundMixer::CleanUp()
     ReleaseAll();
 
     m_bMixerInitialized = FALSE;
-    m_bStreamPlaying = 0;
-    nm_field_0 = 0;
+    field_40 = 0;
+    field_0 = 0;
 
     Unlock();
 }
@@ -210,17 +210,17 @@ void CSoundMixer::Initialize(CWnd* pWnd, int nNewMaxVoices, int nNewMaxChannels)
 {
     HRESULT hr;
 
-    m_bDirectSoundInit = 1;
-    nfield_C8 = 0;
-    nfield_CC = 0;
-    nfield_D0 = 0;
+    field_C4 = 1;
+    field_C8 = 0;
+    field_CC = 0;
+    field_D0 = 0;
     m_nMaxChannels = -1;
     m_nMaxVoices = nNewMaxVoices;
     m_nPanRange = 1;
     m_bInPositionUpdate = FALSE;
     m_bInReleaseAll = FALSE;
     m_bInQueueUpdate = FALSE;
-    nm_field_0 = 0;
+    field_0 = 0;
     m_nActiveArea = 0;
     InitializeChannels(nNewMaxChannels);
 
@@ -310,14 +310,14 @@ void CSoundMixer::Initialize(CWnd* pWnd, int nNewMaxVoices, int nNewMaxChannels)
         }
     }
 
-    if (m_bEAXSupported) {
+    if (field_178) {
         m_dwEAXProperties |= CSOUNDPROPERTIES_EAX_SUPPORTS_ENVIRONMENT;
     } else {
-        if (pm_field_144.sub_799C90()) {
-            pm_field_144.sub_7C25B0();
-            m_bEAXSupported = FALSE;
+        if (field_144.sub_799C90()) {
+            field_144.sub_7C25B0();
+            field_178 = FALSE;
         } else {
-            m_bEAXSupported = TRUE;
+            field_178 = TRUE;
             m_dwEAXProperties |= CSOUNDPROPERTIES_EAX_SUPPORTS_ENVIRONMENT;
         }
     }
@@ -476,7 +476,7 @@ void CSoundMixer::SetPanRange(int nNewPanRange)
 // 0x7ABBA0
 void CSoundMixer::UpdateSoundList()
 {
-    if ((m_nSoundFlags & 0x1) != 0) {
+    if ((field_C0 & 0x1) != 0) {
         if (!m_bInReleaseAll) {
             m_bInReleaseAll = TRUE;
             Lock();
@@ -562,7 +562,7 @@ void CSoundMixer::UpdateSoundList()
 // 0x7ABE30
 BOOL CSoundMixer::UpdateSoundList(INT nPriority)
 {
-    if ((m_nSoundFlags & 0x1) == 0) {
+    if ((field_C0 & 0x1) == 0) {
         return FALSE;
     }
 
@@ -630,7 +630,7 @@ BOOL CSoundMixer::UpdateSoundList(INT nPriority)
 // 0x7AC030
 void CSoundMixer::UpdateSoundPositions()
 {
-    if ((m_nSoundFlags & 1) != 0) {
+    if ((field_C0 & 1) != 0) {
         if (!m_bInPositionUpdate) {
             m_bInPositionUpdate = TRUE;
             Lock();
@@ -664,7 +664,7 @@ void CSoundMixer::UpdateSoundPositions()
 // 0x7AC150
 void CSoundMixer::UpdateQueue()
 {
-    if ((m_nSoundFlags & 1) != 0) {
+    if ((field_C0 & 1) != 0) {
         if (!m_bInQueueUpdate) {
             m_bInQueueUpdate = TRUE;
             Lock();
@@ -770,7 +770,7 @@ void CSoundMixer::StartSong(INT nSong, DWORD dwFlags)
 // 0x7AC510
 void CSoundMixer::StartSong(INT nSong, INT nSection, INT nPosition, DWORD dwFlags)
 {
-    if ((m_nSoundFlags & 0x2) != 0) {
+    if ((field_C0 & 0x2) != 0) {
         BOOL bFadeIn = TRUE;
 
         if (m_bMusicInitialized) {
@@ -890,7 +890,7 @@ void CSoundMixer::Lock()
 {
     if (g_pChitin != NULL) {
         if (g_pChitin->m_bExitMusicThread != TRUE) {
-            EnterCriticalSection(&(g_pChitin->pm_field_394));
+            EnterCriticalSection(&(g_pChitin->field_394));
         }
     }
 }
@@ -901,7 +901,7 @@ void CSoundMixer::Unlock()
 {
     if (g_pChitin != NULL) {
         if (g_pChitin->m_bExitMusicThread != TRUE) {
-            LeaveCriticalSection(&(g_pChitin->pm_field_394));
+            LeaveCriticalSection(&(g_pChitin->field_394));
         }
     }
 }
@@ -909,7 +909,7 @@ void CSoundMixer::Unlock()
 // 0x7AC9B0
 void CSoundMixer::UpdateMusic()
 {
-    if ((m_nSoundFlags & 2) != 0) {
+    if ((field_C0 & 2) != 0) {
         if (m_bMusicInitialized) {
             Lock();
 
@@ -945,7 +945,7 @@ int CSoundMixer::GetMusicPosition()
 }
 
 // 0x7ACA10
-BOOL CSoundMixer::IsMusicPlaying()
+BOOL CSoundMixer::sub_7ACA10()
 {
     return musicGetSong() < 0;
 }
@@ -957,9 +957,9 @@ int CSoundMixer::GetSongPlaying()
 }
 
 // 0x7ACA30
-int CSoundMixer::GetSoundChannelState()
+int CSoundMixer::sub_7ACA30()
 {
-    return (m_nSoundFlags << 30) >> 31;
+    return (field_C0 << 30) >> 31;
 }
 
 // NOTE: Inlined in `CInfGame::ApplyVolumeSliders` and probably other places.

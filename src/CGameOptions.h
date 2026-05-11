@@ -22,10 +22,10 @@ public:
     /* 0024 */ DWORD m_nVolumeAmbients;
     /* 0028 */ DWORD m_nVolumeMovie; // #guess
     /* 002C */ BOOL m_bFootStepsSounds;
-    /* 0030 */ int nm_field_30;
+    /* 0030 */ int field_30;
     /* 0034 */ BOOL m_bTranslucentShadows;
-    /* 0038 */ int nm_field_38;
-    /* 003C */ int nm_field_3C;
+    /* 0038 */ int field_38;
+    /* 003C */ int field_3C;
     /* 0040 */ int m_nTooltips; // #guess
     /* 0044 */ LONG m_nBoredTime;
     /* 0048 */ DWORD m_nCommandSoundsFrequency;
@@ -47,13 +47,13 @@ public:
     /* 0088 */ BOOL m_bEnvironmentalAudio;
     /* 008C */ BOOL m_bTerrainHugging;
     /* 0090 */ BOOL m_bDisplayMovieSubtitles; // #guess
-    /* 0094 */ int nfield_94;
+    /* 0094 */ int field_94;
     /* 0098 */ BOOL m_bStaticAnimations;
     /* 009C */ BOOL m_bTranslucentBlts;
     /* 00A0 */ BOOL m_bMaxHP;
     /* 00A4 */ BOOL m_bAutoPauseOnTrap;
     /* 00A8 */ BOOL m_bShowQuestXP;
-    /* 00AC */ int nfield_AC;
+    /* 00AC */ int field_AC;
     /* 00B0 */ BOOL m_bCriticalHitScreenShake;
     /* 00B4 */ BOOL m_bHotkeysOnToolTips;
     /* 00B8 */ BOOL m_bSuppressExtraDifficultyDamage;

@@ -11,16 +11,16 @@ const BYTE CInfButtonArray::STATE_NONE = 0;
 // 0x587960
 CInfButtonSettings::CInfButtonSettings()
 {
-    nm_field_1C8 = 0;
-    nm_field_1CC = 0;
-    nm_field_1D8 = 0;
-    nm_field_0 = 0;
-    nm_field_4 = 0;
-    nm_field_8 = 0;
-    nm_field_1D0 = 0;
+    field_1C8 = 0;
+    field_1CC = 0;
+    field_1D8 = 0;
+    field_0 = 0;
+    field_4 = 0;
+    field_8 = 0;
+    field_1D0 = 0;
     m_bGreyOut = FALSE;
-    nfield_C = -1;
-    nm_field_10 = -1;
+    field_C = -1;
+    field_10 = -1;
 }
 
 // 0x587B80
@@ -149,75 +149,3 @@ void CInfButtonArray::OnRButtonPressed(int buttonID)
 {
     // TODO: Incomplete.
 }
-
-// Phase 1-2: Scaffold functions
-// 0x587BD0
-void FUN_00587bd0() {
-    // TODO: Incomplete.
-}
-
-// 0x587C20
-void FUN_00587c20() {
-    // TODO: Incomplete.
-}
-
-// 0x587DF0
-void FUN_00587df0() {
-    // TODO: Incomplete.
-}
-
-// 0x587F80
-void FUN_00587f80() {
-    // TODO: Incomplete.
-}
-
-// 0x588300
-void FUN_00588300() {
-    // TODO: Incomplete.
-}
-
-// 0x5884B0
-void FUN_005884b0() {
-    // TODO: Incomplete.
-}
-
-// 0x588570
-void FUN_00588570() {
-    // TODO: Incomplete.
-}
-
-// 0x5886A0
-void FUN_005886a0() {
-    // TODO: Incomplete.
-}
-
-// 0x588760
-void FUN_00588760() {
-    // TODO: Incomplete.
-}
-
-// 0x588820
-void FUN_00588820() {
-    // TODO: Incomplete.
-}
-
-// 0x588CB0
-void FUN_00588cb0() {
-    // TODO: Incomplete.
-}
-
-// 0x589FF0
-void FUN_00589ff0() {
-    // TODO: Incomplete.
-}
-
-// 0x5950F0
-void FUN_005950f0() {
-    // TODO: Incomplete.
-}
-
-// 0x5957C0
-void FUN_005957c0() {
-    // TODO: Incomplete.
-}
-

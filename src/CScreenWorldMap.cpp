@@ -23,13 +23,13 @@ CScreenWorldMap::CScreenWorldMap()
 {
     m_nEngineState = 0;
     m_pMapControl = NULL;
-    nfield_FF2 = 0;
-    nfield_FF6 = 0;
+    field_FF2 = 0;
+    field_FF6 = 0;
     m_nLeavingEdge = 0;
     m_nCurrentLink = 0;
     m_bInControl = FALSE;
     m_bClickedArea = FALSE;
-    nm_field_1050 = 0;
+    field_1050 = 0;
 
     SetVideoMode(0);
 
@@ -128,8 +128,8 @@ CScreenWorldMap::CScreenWorldMap()
     m_bShiftKeyDown = FALSE;
     m_ptMapView.x = 0;
     m_ptMapView.y = 0;
-    pfield_FCA = RGB(224, 180, 15);
-    m_vfLabel.SetColor(pfield_FCA, 0, FALSE);
+    field_FCA = RGB(224, 180, 15);
+    m_vfLabel.SetColor(field_FCA, 0, FALSE);
     m_nHighlightArea = -1;
     m_nSelectedArea = -1;
     m_bOverSelectedArea = FALSE;
@@ -286,13 +286,13 @@ void CScreenWorldMap::EngineActivated()
             pGame->GetVisibleArea()->m_resRef.CopyToString(sResArea);
 
             CWorldMap* pWorldMap = pGame->GetWorldMap(sResArea);
-            DWORD nMap = pWorldMap->GetCurrentAreaIndex();
+            DWORD nMap = pWorldMap->sub_55A3A0();
 
             for (INT y = 0; y < tWorldE.GetHeight(); y++) {
                 CString sOtherResArea;
                 sOtherResArea = tWorldE.GetAt(CPoint(1, y));
                 if (sOtherResArea.GetLength() > 0) {
-                    DWORD nMap = pWorldMap->GetAreaIndex(sOtherResArea);
+                    DWORD nMap = pWorldMap->sub_55A450(sOtherResArea);
 
                     pWorldMap->SetExplorable(nMap,
                         CResRef(sOtherResArea),
@@ -326,7 +326,7 @@ void CScreenWorldMap::EngineActivated()
                 // FIXME: Unused.
                 pWorldMap->GetArea(nMap, nArea);
 
-                DWORD nMap = pWorldMap->GetCurrentAreaIndex();
+                DWORD nMap = pWorldMap->sub_55A3A0();
                 CWorldMapList* pLinks = pWorldMap->GetAllLinks(nMap, nArea);
 
                 POSITION pos = pLinks->GetHeadPosition();
@@ -362,8 +362,8 @@ void CScreenWorldMap::EngineDeactivated()
     m_preLoadFontRealms.Unload();
     m_preLoadFontTool.Unload();
 
-    wfield_FE = 0;
-    nm_field_102 = 0;
+    field_FE = 0;
+    field_102 = 0;
 
     // NOTE: Uninline.
     m_cUIManager.KillCapture();
@@ -380,10 +380,10 @@ void CScreenWorldMap::EngineDeactivated()
 // 0x699F10
 void CScreenWorldMap::EngineGameInit()
 {
-    m_cUIManager.fInit(this, CResRef("GUIWMAP"), g_pBaldurChitin->nm_field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIWMAP"), g_pBaldurChitin->field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->nm_field_4A28) {
+    if (g_pBaldurChitin->field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -401,8 +401,8 @@ void CScreenWorldMap::EngineGameInit()
     m_ptMapView.y = 0;
     m_nSelectedCharacter = 0;
     m_pCurrentScrollBar = NULL;
-    pfield_FCA = RGB(224, 180, 15);
-    m_vfLabel.SetColor(pfield_FCA, pfield_FCA, FALSE);
+    field_FCA = RGB(224, 180, 15);
+    m_vfLabel.SetColor(field_FCA, field_FCA, FALSE);
     m_nHighlightArea = 0;
     m_nSelectedArea = -1;
     m_ptMapStartMousePos.x = 0;
@@ -624,12 +624,12 @@ void CScreenWorldMap::SetMapView(const CPoint& ptMapView)
 
     CWorldMap* pWorldMap = pGame->GetWorldMap(sArea);
 
-    if (pGame->IsExpansionArea(sArea)) {
+    if (pGame->sub_5C79C0(sArea)) {
         CSize cViewSize = m_pMapControl->m_size;
         cViewSize.cx += 1;
         cViewSize.cy += 1;
 
-        CSize cMapSize = pWorldMap->GetMapSize(pWorldMap->GetCurrentAreaIndex());
+        CSize cMapSize = pWorldMap->GetMapSize(pWorldMap->sub_55A3A0());
 
         CPoint ptNewView;
         ptNewView.x = max(min(ptMapView.x, cMapSize.cx - cViewSize.cx), 0);
@@ -673,7 +673,7 @@ void CScreenWorldMap::OnMapMouseDown(const CPoint& ptMousePos)
         }
 
         if (m_nSelectedArea != -1) {
-            CWorldMapArea* pArea = pWorldMap->GetArea(pWorldMap->GetCurrentAreaIndex(), m_nSelectedArea);
+            CWorldMapArea* pArea = pWorldMap->GetArea(pWorldMap->sub_55A3A0(), m_nSelectedArea);
 
             // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenWorldMap.cpp
             // __LINE__: 1513
@@ -754,7 +754,7 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
 {
     BOOL bResult;
 
-    CSingleLock renderLock(&pm_field_1022, FALSE);
+    CSingleLock renderLock(&field_1022, FALSE);
     renderLock.Lock(INFINITE);
 
     if (m_aAreaRect.GetCount() != 0) {
@@ -782,7 +782,7 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
         CRect rClip;
         rClip.IntersectRect(rControl, rMap1);
 
-        CSize mapSize = pWorldMap->GetMapSize(pWorldMap->GetCurrentAreaIndex());
+        CSize mapSize = pWorldMap->GetMapSize(pWorldMap->sub_55A3A0());
 
         if (mapSize.cx >= m_pMapControl->m_size.cx) {
             mapSize.cx = m_pMapControl->m_size.cx;
@@ -818,13 +818,13 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
             m_vcAreas.pRes->Demand();
             m_vfLabel.pRes->Demand();
 
-            if (pfield_FCA != RGB(250, 250, 250)) {
-                pfield_FCA = RGB(250, 250, 250);
-                m_vfLabel.SetColor(pfield_FCA, RGB(0, 0, 0), FALSE);
+            if (field_FCA != RGB(250, 250, 250)) {
+                field_FCA = RGB(250, 250, 250);
+                m_vfLabel.SetColor(field_FCA, RGB(0, 0, 0), FALSE);
             }
 
-            for (DWORD nArea = 0; nArea < pWorldMap->GetNumAreas(pWorldMap->GetCurrentAreaIndex()); nArea++) {
-                CWorldMapArea* pArea = pWorldMap->GetArea(pWorldMap->GetCurrentAreaIndex(), nArea);
+            for (DWORD nArea = 0; nArea < pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0()); nArea++) {
+                CWorldMapArea* pArea = pWorldMap->GetArea(pWorldMap->sub_55A3A0(), nArea);
                 if ((pArea->m_dwFlags & 0x1) != 0) {
                     CRect rArea = m_aAreaRect[nArea];
 
@@ -851,7 +851,7 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
                             if (nArea == m_nSelectedArea && m_bOverSelectedArea) {
                                 rgbColor = RGB(255, 255, 255);
                             } else if (nArea == m_nHighlightArea && m_nSelectedArea == -1) {
-                                rgbColor = PulseColor(rgbColor);
+                                rgbColor = sub_69CB40(rgbColor);
                             }
                         }
 
@@ -869,9 +869,9 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
                         // __LINE__: 2358
                         UTIL_ASSERT(bResult);
 
-                        if (pfield_FCA != rgbColor) {
-                            pfield_FCA = rgbColor;
-                            m_vfLabel.SetColor(pfield_FCA, RGB(0, 0, 0), FALSE);
+                        if (field_FCA != rgbColor) {
+                            field_FCA = rgbColor;
+                            m_vfLabel.SetColor(field_FCA, RGB(0, 0, 0), FALSE);
                         }
 
                         if (pArea->m_strLabel != -1) {
@@ -880,7 +880,7 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
                             bResult = pVidInf->BKTextOut(&m_vfLabel,
                                 sLabel,
                                 v1 + rArea.left + (rArea.Width() - m_vfLabel.GetStringLength(sLabel, FALSE)) / 2 - m_ptMapView.x,
-                                v2 + rArea.bottom - m_vfLabel.GetFontHeight(FALSE) / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) - m_ptMapView.y,
+                                v2 + rArea.bottom - m_vfLabel.GetFontHeight(FALSE) / (g_pBaldurChitin->field_4A28 ? 2 : 1) - m_ptMapView.y,
                                 rClip,
                                 0,
                                 TRUE);
@@ -988,25 +988,25 @@ void CScreenWorldMap::StartWorldMap(INT nEngineState, LONG nLeavingEdge, BOOLEAN
 
     m_cUIManager.GetPanel(0)->GetControl(10)->SetActive(TRUE);
 
-    m_vmMap.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->GetCurrentAreaIndex())->m_resMosaic), FALSE, TRUE);
-    m_vmMap.m_bDoubleSize = g_pBaldurChitin->nm_field_4A28;
+    m_vmMap.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->sub_55A3A0())->m_resMosaic), FALSE, TRUE);
+    m_vmMap.m_bDoubleSize = g_pBaldurChitin->field_4A28;
 
     // NOTE: Uninline.
-    m_vcAreas.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->GetCurrentAreaIndex())->m_resAreaIcons),
-        g_pBaldurChitin->nm_field_4A28,
+    m_vcAreas.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->sub_55A3A0())->m_resAreaIcons),
+        g_pBaldurChitin->field_4A28,
         FALSE,
         TRUE);
 
     // NOTE: Uninline.
-    m_vcMarker.SetResRef(CResRef("WMDAG"), g_pBaldurChitin->nm_field_4A28, TRUE, TRUE);
+    m_vcMarker.SetResRef(CResRef("WMDAG"), g_pBaldurChitin->field_4A28, TRUE, TRUE);
 
-    m_vfLabel.SetResRef(CResRef("INFOFONT"), g_pBaldurChitin->nm_field_4A28, TRUE);
+    m_vfLabel.SetResRef(CResRef("INFOFONT"), g_pBaldurChitin->field_4A28, TRUE);
 
     // NOTE: Uninline.
-    m_aAreaRect.SetSize(pWorldMap->GetNumAreas(pWorldMap->GetCurrentAreaIndex()));
+    m_aAreaRect.SetSize(pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0()));
 
-    for (DWORD nArea = 0; nArea < pWorldMap->GetNumAreas(pWorldMap->GetCurrentAreaIndex()); nArea++) {
-        m_aAreaRect[nArea] = GetAreaRect(pWorldMap->GetCurrentAreaIndex(), nArea);
+    for (DWORD nArea = 0; nArea < pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0()); nArea++) {
+        m_aAreaRect[nArea] = GetAreaRect(pWorldMap->sub_55A3A0(), nArea);
     }
 
     m_nSelectedArea = -1;
@@ -1100,7 +1100,7 @@ void CScreenWorldMap::StopWorldMap(BOOLEAN bAreaClicked)
         pGame->GetGroup()->ClearActions();
     }
 
-    CSingleLock lock(&pm_field_1022, FALSE);
+    CSingleLock lock(&field_1022, FALSE);
     lock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -1113,7 +1113,7 @@ void CScreenWorldMap::StopWorldMap(BOOLEAN bAreaClicked)
 }
 
 // 0x69CB40
-COLORREF CScreenWorldMap::PulseColor(COLORREF rgb)
+COLORREF CScreenWorldMap::sub_69CB40(COLORREF rgb)
 {
     int v1 = (g_pBaldurChitin->nAUCounter / 2) & 7;
     short v2 = v1 < 4 ? 3 - v1 : v1 - 4;
@@ -1190,11 +1190,11 @@ DWORD CScreenWorldMap::FindAreaHit(const CPoint& pt)
     CPoint ptMapPos = m_ptMapView + pt;
     DWORD nFoundArea = -1;
 
-    DWORD nNumAreas = pWorldMap->GetNumAreas(pWorldMap->GetCurrentAreaIndex());
+    DWORD nNumAreas = pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0());
     for (DWORD nArea = 0; nArea < nNumAreas; nArea++) {
         CRect rArea = m_aAreaRect[nArea];
         if (rArea.PtInRect(ptMapPos)
-            && (pWorldMap->GetArea(pWorldMap->GetCurrentAreaIndex(), nArea)->m_dwFlags & 0x4) != 0) {
+            && (pWorldMap->GetArea(pWorldMap->sub_55A3A0(), nArea)->m_dwFlags & 0x4) != 0) {
             nFoundArea = nArea;
             break;
         }
@@ -1238,10 +1238,10 @@ void CScreenWorldMap::GetMarkerPosition(CPoint& ptMarker)
     CWorldMap* pWorldMap = pGame->GetWorldMap(sResArea);
 
     if (m_nCurrentLink != -1) {
-        DWORD nSrcArea = pWorldMap->FindSourceAreaIndex(pWorldMap->GetCurrentAreaIndex(), m_nCurrentLink);
-        DWORD nDstArea = pWorldMap->GetLink(pWorldMap->GetCurrentAreaIndex(), m_nCurrentLink)->m_nArea;
-        CWorldMapArea* pSrcArea = pWorldMap->GetArea(pWorldMap->GetCurrentAreaIndex(), nSrcArea);
-        CWorldMapArea* pDstArea = pWorldMap->GetArea(pWorldMap->GetCurrentAreaIndex(), nDstArea);
+        DWORD nSrcArea = pWorldMap->FindSourceAreaIndex(pWorldMap->sub_55A3A0(), m_nCurrentLink);
+        DWORD nDstArea = pWorldMap->GetLink(pWorldMap->sub_55A3A0(), m_nCurrentLink)->m_nArea;
+        CWorldMapArea* pSrcArea = pWorldMap->GetArea(pWorldMap->sub_55A3A0(), nSrcArea);
+        CWorldMapArea* pDstArea = pWorldMap->GetArea(pWorldMap->sub_55A3A0(), nDstArea);
         ptMarker.y = (pSrcArea->m_mapLocationY + pDstArea->m_mapLocationY) / 2;
         ptMarker.x = (pWorldMap->GetAreaPosition(pSrcArea).cx + pWorldMap->GetAreaPosition(pDstArea).cx) / 2;
     } else {
@@ -1252,8 +1252,8 @@ void CScreenWorldMap::GetMarkerPosition(CPoint& ptMarker)
         }
 
         DWORD nArea;
-        if (pWorldMap->GetAreaIndex(pWorldMap->GetCurrentAreaIndex(), m_cResCurrentArea, nArea)
-            || pWorldMap->GetAreaIndex(pWorldMap->GetCurrentAreaIndex(), CResRef("AR2626"), nArea)) {
+        if (pWorldMap->GetAreaIndex(pWorldMap->sub_55A3A0(), m_cResCurrentArea, nArea)
+            || pWorldMap->GetAreaIndex(pWorldMap->sub_55A3A0(), CResRef("AR2626"), nArea)) {
             CRect rArea = m_aAreaRect[nArea];
             ptMarker.x = (rArea.left + rArea.right) / 2;
             ptMarker.y = rArea.top;
@@ -1390,7 +1390,7 @@ void CUIControlButtonWorldMapDone::OnLButtonClick(CPoint pt)
     // __LINE__: 4609
     UTIL_ASSERT(pWorldMap != NULL);
 
-    CSingleLock renderLock(&(pWorldMap->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pWorldMap->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -1405,8 +1405,8 @@ void CUIControlButtonWorldMapDone::OnLButtonClick(CPoint pt)
 CUIControlButtonWorldMapWorldMap::CUIControlButtonWorldMapWorldMap(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlButton(panel, controlInfo, LBUTTON, 0)
 {
-    nfield_676 = 0;
-    nfield_67A = 0;
+    field_676 = 0;
+    field_67A = 0;
 }
 
 // 0x6A0710
@@ -1426,7 +1426,7 @@ BOOL CUIControlButtonWorldMapWorldMap::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1476,9 +1476,9 @@ BOOL CUIControlButtonWorldMapWorldMap::OnLButtonDown(CPoint pt)
     }
 
     m_pPanel->m_pManager->SetCapture(this, CUIManager::MOUSELBUTTON);
-    m_pPanel->m_pManager->bm_field_2D = 0;
-    m_pPanel->m_pManager->nm_field_32 = m_nID;
-    m_pPanel->m_pManager->nm_field_1C = 0;
+    m_pPanel->m_pManager->field_2D = 0;
+    m_pPanel->m_pManager->field_32 = m_nID;
+    m_pPanel->m_pManager->field_1C = 0;
 
     CScreenWorldMap* pWorldMap = g_pBaldurChitin->m_pEngineWorldMap;
 
@@ -1502,45 +1502,3 @@ void CUIControlButtonWorldMapWorldMap::OnMouseMove(CPoint pt)
 
     pWorldMap->OnMapMouseMove(pt);
 }
-
-// Phase 1-2: Scaffold functions
-// 0x699E4A
-void FUN_00699e4a() {
-    // TODO: Incomplete.
-}
-
-// 0x69B7F0
-void FUN_0069b7f0() {
-    // TODO: Incomplete.
-}
-
-// 0x69D0F0
-void FUN_0069d0f0() {
-    // TODO: Incomplete.
-}
-
-// 0x6A0330
-void FUN_006a0330() {
-    // TODO: Incomplete.
-}
-
-// 0x6A0350
-void FUN_006a0350() {
-    // TODO: Incomplete.
-}
-
-// 0x6A04E0
-void FUN_006a04e0() {
-    // TODO: Incomplete.
-}
-
-// 0x6A06F0
-void FUN_006a06f0() {
-    // TODO: Incomplete.
-}
-
-// 0x6A0A80
-void FUN_006a0a80() {
-    // TODO: Incomplete.
-}
-

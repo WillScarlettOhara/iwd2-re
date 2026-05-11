@@ -11,13 +11,13 @@ public:
     BOOL sub_799C90();
     void sub_7C25B0();
 
-    int bm_field_0;
-    int nm_field_4;
-    int nm_field_8;
-    CPtrList nfield_C;
-    int nm_field_28;
-    int m_m_field_2C;
-    int nm_field_30;
+    int field_0;
+    int field_4;
+    int field_8;
+    CPtrList field_C;
+    int field_28;
+    int field_2C;
+    int field_30;
 };
 
 #endif /* CUNKNOWN2_H_ */

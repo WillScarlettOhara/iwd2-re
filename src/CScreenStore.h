@@ -116,8 +116,8 @@ public:
     void SummonPopup(DWORD dwPopupId);
     void DismissPopup();
     void ResetErrorPanel(CUIPanel* pPanel);
-    void UpdateItemDescription(CUIPanel* pPanel);
-    void UpdateSpellDescription(CUIPanel* pPanel);
+    void sub_6734F0(CUIPanel* pPanel);
+    void sub_673740(CUIPanel* pPanel);
     BOOL IsCharacterAlive(SHORT nPortraitNum);
     void CheckEnableButtonBar();
     void SwitchMainPanel(DWORD dwMainPanelId);
@@ -158,10 +158,10 @@ public:
     void OnBuyItemButtonClick();
     BOOL IsSellItemButtonClickable();
     void OnSellItemButtonClick();
-    void SellSelectedItems();
-    void SellSelectedBagItems();
-    void SellSelectedItemsToStore4();
-    void SellSelectedBagItemsToStore4();
+    void sub_67A130();
+    void sub_67A5B0();
+    void sub_67ABF0();
+    void sub_67B030();
     void OnIdentifyItemButtonClick();
     void OnBuySpellButtonClick();
     void OnRentRoomButtonClick();
@@ -232,12 +232,12 @@ public:
     /* 0500 */ DWORD m_dwRoomType;
     /* 0504 */ CAIObjectType m_cAIProprietor;
     /* 0540 */ CAIObjectType m_cAICustomer;
-    /* 057C */ int nfield_57C;
+    /* 057C */ int field_57C;
     /* 0580 */ LONG m_nDrinkRumorIndex;
-    /* 0584 */ int nfield_584;
+    /* 0584 */ int field_584;
     /* 0588 */ CTypedPtrList<CPtrList, CUIPanel*> m_lPopupStack;
-    /* 05A4 */ CItem* pfield_5A4;
-    /* 05A8 */ int nfield_5A8;
+    /* 05A4 */ CItem* field_5A4;
+    /* 05A8 */ int field_5A8;
     /* 05AC */ CResRef m_cResInfoSpell;
     /* 05B4 */ CUIPanel* m_pButtonBar;
     /* 05B8 */ CUIControlTextDisplay* m_pChatDisplay;
@@ -246,15 +246,15 @@ public:
     /* 05C4 */ STRREF m_strErrorText;
     /* 05C8 */ INT m_nNumErrorButtons;
     /* 05CC */ STRREF m_strErrorButtonText[CSCREENSTORE_ERROR_BUTTONS];
-    /* 05D8 */ unsigned char bfield_5D8;
-    /* 05D9 */ unsigned char bfield_5D9;
+    /* 05D8 */ unsigned char field_5D8;
+    /* 05D9 */ unsigned char field_5D9;
     /* 05DA */ CVidFont m_preLoadFontRealms;
     /* 0ADA */ CVidFont m_preLoadFontStnSml;
     /* 0FDA */ CVidFont m_preLoadFontTool;
-    /* 14DA */ CUIControlScrollBar* pm_field_14DA;
-    /* 14DE */ DWORD nm_field_14DE;
-    /* 14E2 */ int nm_m_field_14E2;
-    /* 14E6 */ int nm_m_field_14E6;
+    /* 14DA */ CUIControlScrollBar* field_14DA;
+    /* 14DE */ DWORD field_14DE;
+    /* 14E2 */ int field_14E2;
+    /* 14E6 */ int field_14E6;
 };
 
 class CUIControlButtonStoreBarDone : public CUIControlButton {

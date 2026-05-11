@@ -35,27 +35,27 @@ public:
     /* 01BA */ CVidMosaic m_mosTextUnFocusedBackground;
     /* 026E */ CVidCell m_vcCursor;
     /* 0348 */ CPoint m_ptText;
-    /* 0350 */ int nm_field_350;
-    /* 0354 */ int nm_field_354;
+    /* 0350 */ int field_350;
+    /* 0354 */ int field_354;
     /* 0358 */ CVidFont m_cVidFont;
     /* 0858 */ WORD m_nTextCapitalization;
-    /* 085A */ short wm_field_85A;
+    /* 085A */ short field_85A;
     /* 085C */ SHORT m_nRenderCount;
     /* 085E */ BOOL m_bFocused;
     /* 0862 */ CString m_sText;
-    /* 0866 */ CString sm_field_866;
-    /* 086A */ int nm_field_86A;
-    /* 086E */ int nm_field_86E;
-    /* 0872 */ int nm_field_872;
-    /* 0876 */ int nm_field_876;
-    /* 0877 */ unsigned char bm_field_877;
-    /* 0878 */ short wm_field_878;
-    /* 087A */ short wm_field_87A;
+    /* 0866 */ CString field_866;
+    /* 086A */ int field_86A;
+    /* 086E */ int field_86E;
+    /* 0872 */ int field_872;
+    /* 0876 */ int field_876;
+    /* 0877 */ unsigned char field_877;
+    /* 0878 */ short field_878;
+    /* 087A */ short field_87A;
     /* 087C */ COLORREF m_rgbForegroundColor;
     /* 0880 */ COLORREF m_rgbBackgroundColor;
-    /* 0888 */ unsigned char bm_field_888;
-    /* 088A */ int nm_field_88A;
-    /* 088E */ int nm_field_88E;
+    /* 0888 */ unsigned char field_888;
+    /* 088A */ int field_88A;
+    /* 088E */ int field_88E;
 };
 
 class CUIControlEditMultiLineScroller : public CUIControlEditMultiLine {
@@ -70,11 +70,11 @@ public:
     void OnPageUp(DWORD nLines);
     void OnPageDown(DWORD nLines);
 
-    /* 0892 */ int nm_field_892;
-    /* 0896 */ unsigned char bm_field_896;
-    /* 0897 */ unsigned char bm_field_897;
-    /* 0898 */ unsigned char bm_field_898;
-    /* 0899 */ unsigned char bm_field_899;
+    /* 0892 */ int field_892;
+    /* 0896 */ unsigned char field_896;
+    /* 0897 */ unsigned char field_897;
+    /* 0898 */ unsigned char field_898;
+    /* 0899 */ unsigned char field_899;
 };
 
 #endif /* CUICONTROLEDITMULTILINE_H_ */

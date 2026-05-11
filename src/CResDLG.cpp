@@ -43,10 +43,3 @@ BOOL CResDLG::Parse(void* pData)
 
     return m_bParsed;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x402730
-void FUN_00402730() {
-    // TODO: Incomplete.
-}
-

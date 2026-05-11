@@ -620,10 +620,3 @@ SHORT CGameAnimationTypeMonsterAnkheg::SetSequence(SHORT nSequence)
 
     return nSequence;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x6C2E80
-void FUN_006c2e80() {
-    // TODO: Incomplete.
-}
-

@@ -31,7 +31,7 @@ public:
     /* 015E */ CResRef m_arrivalSoundRef;
     /* 0166 */ BOOL m_loopArrivalSound;
     /* 016A */ BOOLEAN m_bHasHeight;
-    /* 0182 */ LONG m_secondaryProjectileId;
+    /* 0182 */ LONG field_182;
 };
 
 #endif /* CPROJECTILE_H_ */

@@ -49,8 +49,8 @@ CScreenSinglePlayer::CScreenSinglePlayer()
 {
     m_nErrorState = 0;
     m_nNumErrorButtons = 0;
-    nm_field_480 = 0;
-    nm_field_484 = 0;
+    field_480 = 0;
+    field_484 = 0;
 
     SetVideoMode(0);
 
@@ -148,16 +148,16 @@ CScreenSinglePlayer::CScreenSinglePlayer()
     m_bCtrlKeyDown = FALSE;
     m_bShiftKeyDown = FALSE;
     m_bCapsLockKeyOn = FALSE;
-    nm_field_458 = -1;
-    nm_field_45C = 0;
-    nm_field_460 = 0;
+    field_458 = -1;
+    field_45C = 0;
+    field_460 = 0;
     m_nPartyCount = 0;
     m_nTopParty = 0;
     m_nParty = 0;
-    nm_field_139E = 0;
+    field_139E = 0;
     m_bSinglePlayerStartup = FALSE;
     m_bLastLockAllowInput = 0;
-    nm_field_138E = 0;
+    field_138E = 0;
 }
 
 // 0x49FC40
@@ -306,8 +306,8 @@ void CScreenSinglePlayer::EngineActivated()
     g_pBaldurChitin->GetObjectCursor()->SetCursor(0, FALSE);
     m_cUIManager.InvalidateRect(NULL);
 
-    if (nm_field_45C == 1) {
-        if (!nm_field_138E) {
+    if (field_45C == 1) {
+        if (!field_138E) {
             sprintf(byte_8F64C0, "%s %i", (LPCSTR)PARTY, 0);
             if (GetPrivateProfileStringA(byte_8F64C0, NAME, "", byte_8F64E0, sizeof(byte_8F64E0), ".\\Party.ini")) {
                 CMultiplayerSettings* pSettings = g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings();
@@ -324,7 +324,7 @@ void CScreenSinglePlayer::EngineActivated()
                 }
             }
         } else {
-            nm_field_138E = 0;
+            field_138E = 0;
         }
     }
 }
@@ -343,10 +343,10 @@ void CScreenSinglePlayer::EngineDeactivated()
 // 0x660A20
 void CScreenSinglePlayer::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUISP"), g_pBaldurChitin->nm_field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUISP"), g_pBaldurChitin->field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->nm_field_4A28) {
+    if (g_pBaldurChitin->field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -404,7 +404,7 @@ void CScreenSinglePlayer::OnKeyDown(SHORT nKeysFlags)
                     if (GetTopPopup() != NULL) {
                         OnCancelButtonClick();
                     } else {
-                        if (nm_field_45C != 1 && nm_field_45C != 2) {
+                        if (field_45C != 1 && field_45C != 2) {
                             // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
                             // __LINE__: 2626
                             UTIL_ASSERT(FALSE);
@@ -429,7 +429,7 @@ void CScreenSinglePlayer::TimerAsynchronousUpdate()
 
     BOOLEAN bDoMainButtonClick = FALSE;
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     if (pPanel != NULL) {
@@ -439,7 +439,7 @@ void CScreenSinglePlayer::TimerAsynchronousUpdate()
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
-    if (nm_field_45C == 2) {
+    if (field_45C == 2) {
         g_pBaldurChitin->m_pEngineWorld->AsynchronousUpdate(FALSE);
     } else {
         m_bLastLockAllowInput = pGame->GetMultiplayerSettings()->m_bArbitrationLockAllowInput;
@@ -459,7 +459,7 @@ void CScreenSinglePlayer::TimerAsynchronousUpdate()
             renderLock.Unlock();
 
             g_pChitin->m_bDisplayStale = TRUE;
-            pGame->ReleaseAreaThreadLock(TRUE);
+            pGame->sub_59FA00(TRUE);
 
             renderLock.Lock(INFINITE);
 
@@ -581,7 +581,7 @@ void CScreenSinglePlayer::TimerAsynchronousUpdate()
 
         if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
             && !g_pChitin->cNetwork.GetSessionHosting()
-            && nm_field_45C == 1
+            && field_45C == 1
             && IsMainDoneButtonClickable()) {
             while (GetTopPopup() != NULL) {
                 OnCancelButtonClick();
@@ -594,20 +594,20 @@ void CScreenSinglePlayer::TimerAsynchronousUpdate()
 
         if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
             && !g_pChitin->cNetwork.GetSessionHosting()
-            && nm_field_45C == 1
+            && field_45C == 1
             && IsMainDoneButtonClickable()) {
             bDoMainButtonClick = TRUE;
         }
     }
 
     if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
-        && nm_field_45C == 2
+        && field_45C == 2
         && pGame->GetMultiplayerSettings()->m_bArbitrationLockStatus == TRUE) {
         if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
             pGame->MultiplayerSetCharacterCreationLocation();
         }
 
-        nm_field_45C = 1;
+        field_45C = 1;
         StartSinglePlayer(1);
     }
 
@@ -838,7 +838,7 @@ BOOL CScreenSinglePlayer::IsMainDoneButtonClickable()
     UTIL_ASSERT(pSettings != NULL);
 
     BOOL bResult;
-    if (nm_field_45C == 1) {
+    if (field_45C == 1) {
         BOOL v1 = pSettings->m_bFirstConnected == FALSE;
 
         for (INT nPlayer = 0; nPlayer < 6; nPlayer++) {
@@ -870,7 +870,7 @@ BOOL CScreenSinglePlayer::IsMainDoneButtonClickable()
         } else {
             bResult = v1;
         }
-    } else if (nm_field_45C == 2) {
+    } else if (field_45C == 2) {
         bResult = TRUE;
     } else {
         // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
@@ -901,7 +901,7 @@ void CScreenSinglePlayer::OnDoneButtonClick()
         return;
     }
 
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (pPanel->m_nID) {
@@ -934,7 +934,7 @@ void CScreenSinglePlayer::OnCancelButtonClick()
     // __LINE__: 1555
     UTIL_ASSERT(pPanel != NULL);
 
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (pPanel->m_nID) {
@@ -970,7 +970,7 @@ void CScreenSinglePlayer::EnableMainPanel(BOOL bEnable)
 
     pPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -1091,7 +1091,7 @@ void CScreenSinglePlayer::CheckCharacterButtons(INT nCharacterSlot, BOOL& bReady
 
     BOOL bIsLocalPlayer = idPlayer != 0 && idPlayer == pNetwork->m_idLocalPlayer;
 
-    switch (nm_field_45C) {
+    switch (field_45C) {
     case 1:
         bReadyActive = bIsLocalPlayer
             && bSlotFull
@@ -1295,7 +1295,7 @@ void CScreenSinglePlayer::UpdateModifyCharacterPanel()
     // __LINE__: 2038
     UTIL_ASSERT(pSettings != NULL);
 
-    INT nCharacterSlot = nm_field_458;
+    INT nCharacterSlot = field_458;
     BYTE v3 = static_cast<BYTE>(g_pBaldurChitin->cNetwork.m_nLocalPlayer);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
@@ -1309,7 +1309,7 @@ void CScreenSinglePlayer::UpdateModifyCharacterPanel()
     }
 
     BOOL v5 = CMultiplayerSettings::CHARSTATUS_NO_CHARACTER == pSettings->GetCharacterStatus(nCharacterSlot);
-    BOOL v6 = nm_field_45C == 1 && v3 == pSettings->GetCharacterControlledByPlayer(nCharacterSlot);
+    BOOL v6 = field_45C == 1 && v3 == pSettings->GetCharacterControlledByPlayer(nCharacterSlot);
 
     pButton = static_cast<CUIControlButton*>(pPanel->GetControl(0));
 
@@ -1353,7 +1353,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
     CString sSaveGame = pGame->GetSaveGame();
 
     if (IsMainDoneButtonClickable()) {
-        if (nm_field_45C == 1) {
+        if (field_45C == 1) {
             sDefault = "default";
             pGame->m_sSaveGame = sDefault;
             CScreenCharacter::SAVE_NAME = sDefault;
@@ -1363,7 +1363,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
             }
 
             pGame->m_nTravelScreenImageToUse = rand() % 5;
-            pGame->ReleaseAreaThreadLock(TRUE);
+            pGame->sub_59FA00(TRUE);
 
             LONG nActionTarget = CInfGame::PROGRESSBAR_CACHING_ADDITIONAL
                 + 2 * CInfGame::PROGRESSBAR_GAME_ADDITIONAL;
@@ -1464,7 +1464,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                 g_pChitin->cProgressBar.m_nActionProgress = g_pChitin->cProgressBar.m_nActionTarget - 1;
                 g_pChitin->m_bDisplayStale = TRUE;
 
-                pGame->ReleaseAreaThreadLock(TRUE);
+                pGame->sub_59FA00(TRUE);
 
                 g_pChitin->cProgressBar.m_bTimeoutVisible = TRUE;
                 g_pChitin->cProgressBar.m_nSecondsToTimeout = pMessage->m_dwSignalSecondsToTimeout;
@@ -1540,7 +1540,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                     pGame->DestroyGame(FALSE, TRUE);
                 }
 
-                CString v3 = pGame->GetSaveGameDir();
+                CString v3 = pGame->sub_5C0B30();
 
                 if (!g_pChitin->cDimm.DirectoryRemoveFiles(v3)) {
                     // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
@@ -1569,7 +1569,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                     g_pChitin->cProgressBar.m_nActionProgress = g_pChitin->cProgressBar.m_nActionTarget - 1;
                     g_pChitin->m_bDisplayStale = TRUE;
 
-                    pGame->ReleaseAreaThreadLock(TRUE);
+                    pGame->sub_59FA00(TRUE);
 
                     if (g_pChitin->cNetwork.GetSessionOpen() == TRUE) {
                         pMessage->SendProgressBarStatus(g_pChitin->cProgressBar.m_nActionProgress,
@@ -1628,7 +1628,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                 Sleep(200);
             }
 
-            pGame->ReleaseAreaThreadLock(TRUE);
+            pGame->sub_59FA00(TRUE);
 
             g_pChitin->cProgressBar.m_bTimeoutVisible = FALSE;
             g_pChitin->SetProgressBar(FALSE,
@@ -1667,7 +1667,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                     pGame->DestroyGame(TRUE, FALSE);
                 }
             }
-        } else if (nm_field_45C == 2) {
+        } else if (field_45C == 2) {
             SelectEngine(g_pBaldurChitin->m_pEngineWorld);
         } else {
             // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
@@ -1689,7 +1689,7 @@ BOOL CScreenSinglePlayer::IsModifyButtonClickable()
     return !pGame->GetMultiplayerSettings()->m_bFirstConnected
         && (g_pBaldurChitin->cNetwork.FindPlayerLocationByID(g_pBaldurChitin->cNetwork.m_idLocalPlayer, FALSE) != -1
             || g_pBaldurChitin->cNetwork.GetSessionHosting())
-        && nm_field_45C == 2
+        && field_45C == 2
         && pGame->GetMultiplayerSettings()->m_bArbitrationLockAllowInput;
 }
 
@@ -1710,7 +1710,7 @@ void CScreenSinglePlayer::OnModifyButtonClick()
                 pGame->GetMultiplayerSettings()->SetArbitrationLockStatus(TRUE, 0);
             }
         } else {
-            CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+            CSingleLock renderLock(&(GetManager()->field_36), FALSE);
             renderLock.Lock(INFINITE);
 
             m_nErrorState = 0;
@@ -1730,8 +1730,8 @@ void CScreenSinglePlayer::CancelEngine()
         OnCancelButtonClick();
     }
 
-    g_pBaldurChitin->nm_field_4F38 = g_pBaldurChitin->cSoundMixer.GetSectionPlaying();
-    g_pBaldurChitin->nm_field_4F3C = g_pBaldurChitin->cSoundMixer.GetMusicPosition();
+    g_pBaldurChitin->field_4F38 = g_pBaldurChitin->cSoundMixer.GetSectionPlaying();
+    g_pBaldurChitin->field_4F3C = g_pBaldurChitin->cSoundMixer.GetMusicPosition();
 }
 
 // 0x663860
@@ -1741,7 +1741,7 @@ void CScreenSinglePlayer::OnErrorButtonClick(INT nButton)
     // __LINE__: 2884
     UTIL_ASSERT(0 <= nButton && nButton < CSCREENSINGLEPLAYER_ERROR_BUTTONS);
 
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -1776,7 +1776,7 @@ void CScreenSinglePlayer::OnErrorButtonClick(INT nButton)
         case 0:
             if (1) {
                 CString sPlayerName;
-                g_pBaldurChitin->cNetwork.GetPlayerName(nm_field_480, sPlayerName);
+                g_pBaldurChitin->cNetwork.GetPlayerName(field_480, sPlayerName);
                 g_pBaldurChitin->m_cBaldurMessage.KickPlayerRequest(sPlayerName);
                 DismissPopup();
             }
@@ -2129,9 +2129,9 @@ void CScreenSinglePlayer::ResetViewCharacterPanel(CUIPanel* pPanel)
 
     CMultiplayerSettings* pSettings = pGame->GetMultiplayerSettings();
 
-    LONG nCharacterId = pGame->GetCharacterSlot(nm_field_484);
+    LONG nCharacterId = pGame->GetCharacterSlot(field_484);
 
-    BOOL bSlotFull = pSettings->GetCharacterStatus(nm_field_484) == CMultiplayerSettings::CHARSTATUS_CHARACTER
+    BOOL bSlotFull = pSettings->GetCharacterStatus(field_484) == CMultiplayerSettings::CHARSTATUS_CHARACTER
         && nCharacterId != CGameObjectArray::INVALID_INDEX;
 
     if (!pSettings->m_bFirstConnected && bSlotFull) {
@@ -2361,10 +2361,10 @@ BOOL CScreenSinglePlayer::IsPortraitButtonClickable(INT nCharacterSlot)
 // 0x665340
 void CScreenSinglePlayer::OnPortraitButtonClick(INT nButton)
 {
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    nm_field_484 = nButton;
+    field_484 = nButton;
     SummonPopup(8);
 
     renderLock.Unlock();
@@ -2373,7 +2373,7 @@ void CScreenSinglePlayer::OnPortraitButtonClick(INT nButton)
 // 0x6653D0
 void CScreenSinglePlayer::OnLogoutButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     m_nErrorState = 4;
@@ -2549,14 +2549,14 @@ void CUIControlButtonSinglePlayerCharacter::OnLButtonClick(CPoint pt)
     // __LINE__: 4129
     UTIL_ASSERT(pSettings != NULL);
 
-    CSingleLock renderLock(&(pSinglePlayer->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pSinglePlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    pSinglePlayer->nm_field_458 = m_nID - 18;
+    pSinglePlayer->field_458 = m_nID - 18;
 
-    if (pSinglePlayer->nm_field_45C == 1
-        && g_pBaldurChitin->cNetwork.m_nLocalPlayer == pSettings->GetCharacterControlledByPlayer(pSinglePlayer->nm_field_458)
-        && CMultiplayerSettings::CHARSTATUS_NO_CHARACTER == pSettings->GetCharacterStatus(pSinglePlayer->nm_field_458)) {
+    if (pSinglePlayer->field_45C == 1
+        && g_pBaldurChitin->cNetwork.m_nLocalPlayer == pSettings->GetCharacterControlledByPlayer(pSinglePlayer->field_458)
+        && CMultiplayerSettings::CHARSTATUS_NO_CHARACTER == pSettings->GetCharacterStatus(pSinglePlayer->field_458)) {
         CUIPanel* pPanel = pSinglePlayer->GetManager()->GetPanel(3);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
@@ -2635,7 +2635,7 @@ void CUIControlButtonSinglePlayerLogout::OnLButtonClick(CPoint pt)
 CUIControlEditSinglePlayerChat::CUIControlEditSinglePlayerChat(CUIPanel* panel, UI_CONTROL_EDIT* controlInfo)
     : CUIControlEdit(panel, controlInfo, 0)
 {
-    bm_field_8A0 = 0;
+    field_8A0 = 0;
 }
 
 // 0x666200
@@ -2647,7 +2647,7 @@ CUIControlEditSinglePlayerChat::~CUIControlEditSinglePlayerChat()
 void CUIControlEditSinglePlayerChat::OnEditReturn(CString sText)
 {
     g_pBaldurChitin->GetBaldurMessage()->SendChatMessage(sText);
-    sm_field_868 = "";
+    field_868 = "";
     SetText(CString(""));
 }
 
@@ -2696,10 +2696,10 @@ void CUIControlButtonSinglePlayerModifyCharacterCreate::OnLButtonClick(CPoint pt
 
     CNetwork& cNetwork = g_pBaldurChitin->cNetwork;
 
-    CSingleLock renderLock(&(pSinglePlayer->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pSinglePlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    INT nCharacterSlot = pSinglePlayer->nm_field_458;
+    INT nCharacterSlot = pSinglePlayer->field_458;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
     // __LINE__: 4650
@@ -2799,10 +2799,10 @@ void CUIControlButtonSinglePlayerModifyCharacterDelete::OnLButtonClick(CPoint pt
     // __LINE__: 4769
     UTIL_ASSERT(pSettings != NULL);
 
-    CSingleLock renderLock(&(pSinglePlayer->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pSinglePlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    INT nCharacterSlot = pSinglePlayer->nm_field_458;
+    INT nCharacterSlot = pSinglePlayer->field_458;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
     // __LINE__: 4778
@@ -2855,7 +2855,7 @@ void CUIControlButtonSinglePlayerModifyCharacterDelete::OnLButtonClick(CPoint pt
             pSinglePlayer->OnDoneButtonClick();
 
             if (nCharacterSlot == 0) {
-                pGame->SetAreaGlobalFlag(-1, FALSE);
+                pGame->sub_5BDBA0(-1, FALSE);
             }
 
             CGameSprite* pSprite;
@@ -3070,7 +3070,7 @@ void CUIControlButtonSinglePlayerPartyDone::OnLButtonClick(CPoint pt)
     // __LINE__: 5336
     UTIL_ASSERT(pSinglePlayer != NULL);
 
-    pSinglePlayer->nm_field_139E = m_nID;
+    pSinglePlayer->field_139E = m_nID;
     pSinglePlayer->OnDoneButtonClick();
 }
 
@@ -3103,7 +3103,7 @@ void CUIControlButtonSinglePlayerPartyModify::OnLButtonClick(CPoint pt)
     // __LINE__: 5357
     UTIL_ASSERT(pSinglePlayer != NULL);
 
-    pSinglePlayer->nm_field_139E = m_nID;
+    pSinglePlayer->field_139E = m_nID;
     pSinglePlayer->OnDoneButtonClick();
 }
 
@@ -3219,7 +3219,7 @@ void CUIControlScrollBarSinglePlayerParties::OnScroll()
     // __LINE__: 5456
     UTIL_ASSERT(pSinglePlayer != NULL);
 
-    pSinglePlayer->m_nTopParty = max(pSinglePlayer->m_nPartyCount * wm_field_144, 0) / wm_m_field_142;
+    pSinglePlayer->m_nTopParty = max(pSinglePlayer->m_nPartyCount * field_144, 0) / field_142;
     InvalidateItems();
 }
 
@@ -3232,7 +3232,7 @@ void CUIControlScrollBarSinglePlayerParties::InvalidateItems()
     // __LINE__: 5469
     UTIL_ASSERT(pSinglePlayer != NULL);
 
-    CSingleLock renderLock(&(pSinglePlayer->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pSinglePlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pSinglePlayer->m_nTopParty = max(min(pSinglePlayer->m_nTopParty, pSinglePlayer->m_nPartyCount - 6), 0);
@@ -3242,85 +3242,3 @@ void CUIControlScrollBarSinglePlayerParties::InvalidateItems()
 
     renderLock.Unlock();
 }
-
-// Phase 1-2: Scaffold functions
-// 0x6655D0
-void FUN_006655d0() {
-    // TODO: Incomplete.
-}
-
-// 0x665760
-void FUN_00665760() {
-    // TODO: Incomplete.
-}
-
-// 0x665B80
-void FUN_00665b80() {
-    // TODO: Incomplete.
-}
-
-// 0x665EE0
-void FUN_00665ee0() {
-    // TODO: Incomplete.
-}
-
-// 0x6660B0
-void FUN_006660b0() {
-    // TODO: Incomplete.
-}
-
-// 0x6661E0
-void FUN_006661e0() {
-    // TODO: Incomplete.
-}
-
-// 0x666430
-void FUN_00666430() {
-    // TODO: Incomplete.
-}
-
-// 0x666920
-void FUN_00666920() {
-    // TODO: Incomplete.
-}
-
-// 0x666F20
-void FUN_00666f20() {
-    // TODO: Incomplete.
-}
-
-// 0x6670F0
-void FUN_006670f0() {
-    // TODO: Incomplete.
-}
-
-// 0x667220
-void FUN_00667220() {
-    // TODO: Incomplete.
-}
-
-// 0x6673D0
-void FUN_006673d0() {
-    // TODO: Incomplete.
-}
-
-// 0x6675A0
-void FUN_006675a0() {
-    // TODO: Incomplete.
-}
-
-// 0x667750
-void FUN_00667750() {
-    // TODO: Incomplete.
-}
-
-// 0x667900
-void FUN_00667900() {
-    // TODO: Incomplete.
-}
-
-// 0x667A40
-void FUN_00667a40() {
-    // TODO: Incomplete.
-}
-

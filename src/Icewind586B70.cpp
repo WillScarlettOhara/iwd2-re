@@ -32,7 +32,7 @@ void Icewind586B70::Destroy()
 }
 
 // 0x586CA0
-bool Icewind586B70::IsPartyNotFull(CGameSprite* sprite)
+bool Icewind586B70::sub_586CA0(CGameSprite* sprite)
 {
     if (!IcewindMisc::IsPC(sprite)) {
         return true;
@@ -43,7 +43,7 @@ bool Icewind586B70::IsPartyNotFull(CGameSprite* sprite)
 }
 
 // 0x586CF0
-bool Icewind586B70::CanAddSprite(CGameSprite* sprite1, CGameSprite* sprite2)
+bool Icewind586B70::sub_586CF0(CGameSprite* sprite1, CGameSprite* sprite2)
 {
     if (!IcewindMisc::IsPC(sprite1)) {
         return true;
@@ -55,9 +55,9 @@ bool Icewind586B70::CanAddSprite(CGameSprite* sprite1, CGameSprite* sprite2)
     }
 
     for (int index = 0; index < 6; index++) {
-        if (mEntries[index].m_targetId != 0
-            && mEntries[index].m_controllerId != 0
-            && sprite2->GetId() == mEntries[index].m_targetId) {
+        if (mEntries[index].field_0 != 0
+            && mEntries[index].field_4 != 0
+            && sprite2->GetId() == mEntries[index].field_0) {
             return false;
         }
     }
@@ -66,38 +66,38 @@ bool Icewind586B70::CanAddSprite(CGameSprite* sprite1, CGameSprite* sprite2)
 }
 
 // 0x586D60
-void Icewind586B70::AddTemporary(CGameSprite* sprite1, CGameSprite* sprite2)
+void Icewind586B70::sub_586D60(CGameSprite* sprite1, CGameSprite* sprite2)
 {
     if (!IcewindMisc::IsPC(sprite1)) {
         return;
     }
 
     for (int index = 0; index < 6; index++) {
-        if (mEntries[index].m_targetId == 0 || mEntries[index].m_controllerId == 0) {
+        if (mEntries[index].field_0 == 0 || mEntries[index].field_4 == 0) {
             // NOTE: Odd check, looks like inlining.
             if (index != -1) {
-                mEntries[index].m_targetId = sprite2->GetId();
-                mEntries[index].m_controllerId = sprite1->GetId();
-                mEntries[index].m_bPermanent = false;
+                mEntries[index].field_0 = sprite2->GetId();
+                mEntries[index].field_4 = sprite1->GetId();
+                mEntries[index].field_8 = false;
             }
         }
     }
 }
 
 // 0x586F20
-void Icewind586B70::AddPermanently(CGameSprite* sprite1, CGameSprite* sprite2)
+void Icewind586B70::sub_586F20(CGameSprite* sprite1, CGameSprite* sprite2)
 {
     if (!IcewindMisc::IsPC(sprite1)) {
         return;
     }
 
     for (int index = 0; index < 6; index++) {
-        if (mEntries[index].m_targetId == 0 || mEntries[index].m_controllerId == 0) {
+        if (mEntries[index].field_0 == 0 || mEntries[index].field_4 == 0) {
             // NOTE: Odd check, looks like inlining.
             if (index != -1) {
-                mEntries[index].m_targetId = sprite2->GetId();
-                mEntries[index].m_controllerId = sprite1->GetId();
-                mEntries[index].m_bPermanent = true;
+                mEntries[index].field_0 = sprite2->GetId();
+                mEntries[index].field_4 = sprite1->GetId();
+                mEntries[index].field_8 = true;
             }
         }
     }
@@ -107,22 +107,22 @@ void Icewind586B70::AddPermanently(CGameSprite* sprite1, CGameSprite* sprite2)
 void Icewind586B70::Remove(CGameSprite* sprite)
 {
     for (std::vector<Entry>::iterator it = mEntries.begin(); it < mEntries.end(); it++) {
-        if (sprite->GetId() == it->m_targetId) {
-            it->m_targetId = 0;
-            it->m_controllerId = 0;
-            it->m_bPermanent = false;
+        if (sprite->GetId() == it->field_0) {
+            it->field_0 = 0;
+            it->field_4 = 0;
+            it->field_8 = false;
         }
     }
 }
 
 // 0x586FC0
-void Icewind586B70::Reinstate(CGameSprite* sprite)
+void Icewind586B70::sub_586FC0(CGameSprite* sprite)
 {
-    if (sprite->GetBaseStats()->m_field_2E9) {
-        mEntries[sprite->GetBaseStats()->m_field_2E9].m_targetId = sprite->GetId();
-        mEntries[sprite->GetBaseStats()->m_field_2E9].m_bPermanent = sprite->GetBaseStats()->m_field_2F7 != 0;
-        sprite->GetBaseStats()->m_field_2E9 = 0;
-        sprite->GetBaseStats()->m_field_2F7 = 0;
+    if (sprite->GetBaseStats()->field_2E9) {
+        mEntries[sprite->GetBaseStats()->field_2E9].field_0 = sprite->GetId();
+        mEntries[sprite->GetBaseStats()->field_2E9].field_8 = sprite->GetBaseStats()->field_2F7 != 0;
+        sprite->GetBaseStats()->field_2E9 = 0;
+        sprite->GetBaseStats()->field_2F7 = 0;
 
         CAIObjectType typeAI(sprite->GetAIType());
         CAIObjectType liveTypeAI(sprite->GetLiveAIType());
@@ -130,7 +130,7 @@ void Icewind586B70::Reinstate(CGameSprite* sprite)
 
         g_pBaldurChitin->GetObjectGame()->AddCharacterToAllies(sprite->GetId());
 
-        if (!mEntries[sprite->GetBaseStats()->m_field_2E9].m_bPermanent) {
+        if (!mEntries[sprite->GetBaseStats()->field_2E9].field_8) {
             startTypeAI.SetEnemyAlly(CAIObjectType::EA_ALL);
             sprite->m_startTypeAI.Set(startTypeAI);
         }
@@ -143,22 +143,22 @@ void Icewind586B70::Reinstate(CGameSprite* sprite)
     }
 
     for (int index = 0; index < 6; index++) {
-        if (sprite->GetBaseStats()->m_field_2EA[index]) {
-            mEntries[index].m_controllerId = sprite->GetId();
-            sprite->GetBaseStats()->m_field_2EA[index] = FALSE;
+        if (sprite->GetBaseStats()->field_2EA[index]) {
+            mEntries[index].field_4 = sprite->GetId();
+            sprite->GetBaseStats()->field_2EA[index] = FALSE;
         }
     }
 }
 
 // 0x587190
-void Icewind586B70::SyncToSprites()
+void Icewind586B70::sub_587190()
 {
     CGameSprite* sprite;
     BYTE rc;
 
     for (int index = 0; index < 6; index++) {
-        if (mEntries[index].m_targetId != 0) {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(mEntries[index].m_targetId,
+        if (mEntries[index].field_0 != 0) {
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(mEntries[index].field_0,
                 CGameObjectArray::THREAD_ASYNCH,
                 reinterpret_cast<CGameObject**>(&sprite),
                 INFINITE);
@@ -166,16 +166,16 @@ void Icewind586B70::SyncToSprites()
                 return;
             }
 
-            sprite->GetBaseStats()->m_field_2E9 = index + 1;
-            sprite->GetBaseStats()->m_field_2F7 = mEntries[index].m_bPermanent;
+            sprite->GetBaseStats()->field_2E9 = index + 1;
+            sprite->GetBaseStats()->field_2F7 = mEntries[index].field_8;
 
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(mEntries[index].m_targetId,
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(mEntries[index].field_0,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
         }
 
-        if (mEntries[index].m_controllerId != 0) {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(mEntries[index].m_controllerId,
+        if (mEntries[index].field_4 != 0) {
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(mEntries[index].field_4,
                 CGameObjectArray::THREAD_ASYNCH,
                 reinterpret_cast<CGameObject**>(&sprite),
                 INFINITE);
@@ -183,9 +183,9 @@ void Icewind586B70::SyncToSprites()
                 return;
             }
 
-            sprite->GetBaseStats()->m_field_2EA[index] = 1;
+            sprite->GetBaseStats()->field_2EA[index] = 1;
 
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(mEntries[index].m_controllerId,
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(mEntries[index].field_4,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
         }
@@ -196,26 +196,26 @@ void Icewind586B70::SyncToSprites()
 void Icewind586B70::Clear()
 {
     for (int index = 0; index < 6; index++) {
-        mEntries[index].m_targetId = 0;
-        mEntries[index].m_controllerId = 0;
-        mEntries[index].m_bPermanent = false;
+        mEntries[index].field_0 = 0;
+        mEntries[index].field_4 = 0;
+        mEntries[index].field_8 = false;
     }
 }
 
 // NOTE: Inlined.
 Icewind586B70::Entry::Entry()
 {
-    m_targetId = 0;
-    m_controllerId = 0;
-    m_bPermanent = false;
+    field_0 = 0;
+    field_4 = 0;
+    field_8 = false;
 }
 
 // 0x587500
 void Icewind586B70::Entry::Clear()
 {
-    m_targetId = 0;
-    m_controllerId = 0;
-    m_bPermanent = false;
+    field_0 = 0;
+    field_4 = 0;
+    field_8 = false;
 }
 
 // 0x587610
@@ -223,7 +223,7 @@ int Icewind586B70::GetCount()
 {
     int count = 0;
     for (int index = 0; index < 6; index++) {
-        if (mEntries[index].m_targetId != 0 && mEntries[index].m_controllerId != 0) {
+        if (mEntries[index].field_0 != 0 && mEntries[index].field_4 != 0) {
             count++;
         }
     }
@@ -233,39 +233,7 @@ int Icewind586B70::GetCount()
 // 0x587630
 Icewind586B70::Entry::Entry(int a1, int a2)
 {
-    m_targetId = a1;
-    m_controllerId = a2;
-    m_bPermanent = false;
+    field_0 = a1;
+    field_4 = a2;
+    field_8 = false;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x586DC0
-void FUN_00586dc0() {
-    // TODO: Incomplete.
-}
-
-// 0x5872C0
-void FUN_005872c0() {
-    // TODO: Incomplete.
-}
-
-// 0x587510
-void FUN_00587510() {
-    // TODO: Incomplete.
-}
-
-// 0x587650
-void FUN_00587650() {
-    // TODO: Incomplete.
-}
-
-// 0x587660
-void FUN_00587660() {
-    // TODO: Incomplete.
-}
-
-// 0x5876D0
-void FUN_005876d0() {
-    // TODO: Incomplete.
-}
-

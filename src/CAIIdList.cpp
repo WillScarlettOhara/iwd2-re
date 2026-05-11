@@ -157,10 +157,3 @@ CAIId* CAIIdList::Find(LONG id) const
 
     return NULL;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x40A260
-void FUN_0040a260() {
-    // TODO: Incomplete.
-}
-

@@ -1,11 +1,6 @@
 #ifndef CGAMESPRITESPELLS_H_
 #define CGAMESPRITESPELLS_H_
 
-// ============================================================================
-// CGameSpriteSpells - Spell lists - memorized, innate, bard songs, shapesifts
-//
-// Address: varies by method
-// ============================================================================
 #include <vector>
 
 #include "FileFormat.h"
@@ -20,9 +15,9 @@
 class CGameSpriteSpellListEntry {
 public:
     /* 0000 */ UINT m_nID;
-    /* 0004 */ unsigned int nm_field_4;
-    /* 0008 */ unsigned int nm_field_8;
-    /* 000C */ unsigned int nfield_C;
+    /* 0004 */ unsigned int field_4;
+    /* 0008 */ unsigned int field_8;
+    /* 000C */ unsigned int field_C;
 };
 
 class CGameSpriteSpellList {
@@ -31,10 +26,10 @@ public:
     ~CGameSpriteSpellList();
     BOOLEAN Add(const UINT& nID, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
     BOOLEAN Remove(const UINT& nID, BOOLEAN a2, const unsigned& a3, const unsigned& a4);
-    BOOLEAN AddCasts(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3);
-    BOOLEAN RemoveCasts(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3);
-    BOOLEAN AddAllCasts(const unsigned int& a1, const BOOLEAN& a2);
-    BOOLEAN RemoveAllCasts(const unsigned int& a1, const BOOLEAN& a2);
+    BOOLEAN sub_725C50(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3);
+    BOOLEAN sub_725CC0(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3);
+    BOOLEAN sub_725D30(const unsigned int& a1, const BOOLEAN& a2);
+    BOOLEAN sub_725DB0(const unsigned int& a1, const BOOLEAN& a2);
     BOOLEAN Find(const UINT& nID, UINT& nIndex);
 
     BOOLEAN CheckF8(UINT nIndex);
@@ -43,9 +38,9 @@ public:
     void Clear();
 
     /* 0000 */ std::vector<CGameSpriteSpellListEntry> m_List;
-    /* 0010 */ unsigned int nm_field_10;
-    /* 0014 */ unsigned int nm_field_14;
-    /* 0018 */ unsigned int nm_field_18;
+    /* 0010 */ unsigned int field_10;
+    /* 0014 */ unsigned int field_14;
+    /* 0018 */ unsigned int field_18;
 };
 
 class CGameSpriteGroupedSpellList {
@@ -54,13 +49,13 @@ public:
     ~CGameSpriteGroupedSpellList();
     CGameSpriteSpellList* GetSpellsAtLevel(const UINT& nLevel);
     UINT GetNumSpells();
-    UINT CountTotalCasts();
+    UINT sub_725F00();
     BOOLEAN Add(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4, const unsigned int& a5);
     BOOLEAN Remove(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4, const unsigned int& a5);
-    BOOLEAN AddCasts(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4);
-    BOOLEAN RemoveCasts(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4);
-    BOOLEAN AddAllCasts(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3);
-    BOOLEAN RemoveAllCasts(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3);
+    BOOLEAN sub_726060(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4);
+    BOOLEAN sub_7260B0(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4);
+    BOOLEAN sub_726150(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3);
+    BOOLEAN sub_7261A0(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3);
     BOOLEAN Find(const UINT& nID, const UINT& nLevel, UINT& nIndex);
 
     void Clear();

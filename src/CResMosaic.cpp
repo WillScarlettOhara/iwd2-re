@@ -9,7 +9,7 @@ CResMosaic::CResMosaic()
     m_pHeader = NULL;
     m_pPalettes = NULL;
     m_pOffsets = NULL;
-    nm_field_18 = 1;
+    field_18 = 1;
 }
 
 // 0x780290
@@ -58,15 +58,15 @@ BYTE* CResMosaic::GetTileData(UINT nTile, BOOL bDoubleSize)
         return m_pTileData + m_pOffsets[nTile];
     }
 
-    if (m_pDimmKeyTableEntry->resRef == g_pChitin->cVideo.sm_field_114
-        && m_pDimmKeyTableEntry->nResType == g_pChitin->cVideo.wm_field_11C
-        && nTile == g_pChitin->cVideo.nm_m_field_11E) {
+    if (m_pDimmKeyTableEntry->resRef == g_pChitin->cVideo.field_114
+        && m_pDimmKeyTableEntry->nResType == g_pChitin->cVideo.field_11C
+        && nTile == g_pChitin->cVideo.field_11E) {
         return reinterpret_cast<BYTE*>(g_pChitin->cVideo.m_doubleSizeData);
     }
 
-    g_pChitin->cVideo.sm_field_114 = m_pDimmKeyTableEntry->resRef;
-    g_pChitin->cVideo.wm_field_11C = m_pDimmKeyTableEntry->nResType;
-    g_pChitin->cVideo.nm_m_field_11E = nTile;
+    g_pChitin->cVideo.field_114 = m_pDimmKeyTableEntry->resRef;
+    g_pChitin->cVideo.field_11C = m_pDimmKeyTableEntry->nResType;
+    g_pChitin->cVideo.field_11E = nTile;
     g_pChitin->cVideo.SetDoubleSizeData(4 * m_pHeader->nTileSize * m_pHeader->nTileSize);
 
     BYTE* pTileData = m_pTileData + m_pOffsets[nTile];
@@ -160,15 +160,3 @@ BOOL CResMosaic::Parse(void* pData)
 
     return m_bParsed;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x780270
-void FUN_00780270() {
-    // TODO: Incomplete.
-}
-
-// 0x780370
-void FUN_00780370() {
-    // TODO: Incomplete.
-}
-

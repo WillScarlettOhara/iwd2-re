@@ -3958,7 +3958,7 @@ BOOL CUIControlButtonCharacterPortrait::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -4047,7 +4047,7 @@ void CUIControlPortraitWorld::OnMouseMove(CPoint pt)
             m_cVidCell.FrameSet(m_nPressedFrame);
             m_bPressed = TRUE;
 
-            CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+            CSingleLock renderLock(&(m_pPanel->m_pManager->field_56), FALSE);
             renderLock.Lock(INFINITE);
             m_nRenderCount = CUIManager::RENDER_COUNT;
             renderLock.Unlock();
@@ -4062,7 +4062,7 @@ void CUIControlPortraitWorld::OnMouseMove(CPoint pt)
             m_cVidCell.FrameSet(m_nNormalFrame);
             m_bPressed = FALSE;
 
-            CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+            CSingleLock renderLock(&(m_pPanel->m_pManager->field_56), FALSE);
             renderLock.Lock(INFINITE);
             m_nRenderCount = CUIManager::RENDER_COUNT;
             renderLock.Unlock();
@@ -4079,7 +4079,7 @@ void CUIControlPortraitWorld::OnLButtonUp(CPoint pt)
     m_cVidCell.FrameSet(m_nNormalFrame);
     m_bPressed = FALSE;
 
-    CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+    CSingleLock renderLock(&(m_pPanel->m_pManager->field_56), FALSE);
     renderLock.Lock(INFINITE);
     m_nRenderCount = CUIManager::RENDER_COUNT;
     renderLock.Unlock();
@@ -4219,7 +4219,7 @@ BOOL CUIControlButtonAI::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->field_56), FALSE);
         renderLock.Lock(INFINITE);
         m_nRenderCount--;
         renderLock.Unlock();
@@ -4302,7 +4302,7 @@ void CUIControlButton85C3BC::OnLButtonUp(CPoint pt)
     m_nAUCounter = 0;
 
     CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(m_pPanel->GetControl(3));
-    pText->bfield_A67 = 0;
+    pText->field_A67 = 0;
 }
 
 // 0x77B770
@@ -4355,7 +4355,7 @@ void CUIControlButton85C434::OnLButtonUp(CPoint pt)
     m_nAUCounter = 0;
 
     CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(m_pPanel->GetControl(3));
-    pText->bfield_A66 = 0;
+    pText->field_A66 = 0;
 }
 
 // 0x77B800
@@ -4552,9 +4552,9 @@ void CUIControlTextDisplayDialog::OnItemSelected(LONG lMarker)
 {
     if (g_pBaldurChitin->m_pEngineWorld->m_bInControlOfDialog) {
         if (lMarker != -1) {
-            if (GetTickCount() > g_pBaldurChitin->m_pEngineWorld->nm_m_field_11BA + 600) {
+            if (GetTickCount() > g_pBaldurChitin->m_pEngineWorld->field_11BA + 600) {
                 g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.m_responseMarker = lMarker;
-                g_pBaldurChitin->m_pEngineWorld->nm_m_field_11BA = GetTickCount();
+                g_pBaldurChitin->m_pEngineWorld->field_11BA = GetTickCount();
             }
         } else {
             g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.m_responseMarker = -1;
@@ -4599,7 +4599,7 @@ void CUIControlButton85D3E4::OnLButtonUp(CPoint pt)
     m_nAUCounter = 0;
 
     CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(m_pPanel->GetControl(3));
-    pText->bfield_A67 = 0;
+    pText->field_A67 = 0;
 }
 
 // 0x77B770
@@ -4652,7 +4652,7 @@ void CUIControlButton85D45C::OnLButtonUp(CPoint pt)
     m_nAUCounter = 0;
 
     CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(m_pPanel->GetControl(3));
-    pText->bfield_A66 = 0;
+    pText->field_A66 = 0;
 }
 
 // 0x77B800
@@ -4704,18 +4704,18 @@ CUIControlEditLua::CUIControlEditLua(CUIPanel* panel, UI_CONTROL_EDIT* controlIn
         GetPrivateProfileStringA("Lua Edit",
             sKey,
             "",
-            sm_field_874[nIndex].GetBuffer(128),
+            field_874[nIndex].GetBuffer(128),
             128,
             g_pBaldurChitin->GetIniFileName());
-        sm_field_874[nIndex].ReleaseBuffer();
+        field_874[nIndex].ReleaseBuffer();
     }
 
-    if (sm_field_874[0].GetLength() > 0) {
-        m_sText = sm_field_874[0];
+    if (field_874[0].GetLength() > 0) {
+        m_sText = field_874[0];
     }
 
-    bm_field_8A6 = 0;
-    nm_field_8A2 = CGameObjectArray::INVALID_INDEX;
+    field_8A6 = 0;
+    field_8A2 = CGameObjectArray::INVALID_INDEX;
 }
 
 // 0x77BE60
@@ -4729,11 +4729,11 @@ CUIControlEditLua::~CUIControlEditLua()
 CUIControlEncumbrance::CUIControlEncumbrance(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlButton(panel, controlInfo, 0, 1)
 {
-    nfield_662 = 0;
-    nfield_B6A = 0;
-    nfield_B66 = 0;
-    nfield_B72 = 0;
-    nfield_B6E = 0;
+    field_662 = 0;
+    field_B6A = 0;
+    field_B66 = 0;
+    field_B72 = 0;
+    field_B6E = 0;
 }
 
 // 0x77C560
@@ -4744,9 +4744,9 @@ CUIControlEncumbrance::~CUIControlEncumbrance()
 // 0x77C610
 void CUIControlEncumbrance::SetEncumbrance(int a1, int a2)
 {
-    if (nfield_B66 != a1 || nfield_B6A != a2) {
-        nfield_B66 = a1;
-        nfield_B6A = a2;
+    if (field_B66 != a1 || field_B6A != a2) {
+        field_B66 = a1;
+        field_B6A = a2;
         InvalidateRect();
     }
 }
@@ -4754,9 +4754,9 @@ void CUIControlEncumbrance::SetEncumbrance(int a1, int a2)
 // 0x77C640
 void CUIControlEncumbrance::SetVolume(int a1, int a2)
 {
-    if (nfield_B6E != a1 || nfield_B72 != a2) {
-        nfield_B6E = a1;
-        nfield_B72 = a2;
+    if (field_B6E != a1 || field_B72 != a2) {
+        field_B6E = a1;
+        field_B72 = a2;
         InvalidateRect();
     }
 }
@@ -4777,7 +4777,7 @@ CUIControlButtonGeneralBase::CUIControlButtonGeneralBase(CUIPanel* panel, UI_CON
 {
     m_nNotSelectedFrame = m_nNormalFrame;
     m_nSelectedFrame = m_nNotSelectedFrame / 2 + 20;
-    pfield_66E = NULL;
+    field_66E = NULL;
 }
 
 // 0x77CDB0
@@ -4797,7 +4797,7 @@ CUIControlButtonGeneralWorld::CUIControlButtonGeneralWorld(CUIPanel* panel, UI_C
 {
     m_nToolTipHotKeyIndex1 = 2;
     m_nToolTipStrRef = 16313;
-    pfield_66E = g_pBaldurChitin->m_pEngineWorld;
+    field_66E = g_pBaldurChitin->m_pEngineWorld;
 }
 
 // 0x77CF10
@@ -4817,7 +4817,7 @@ CUIControlButtonGeneralInventory::CUIControlButtonGeneralInventory(CUIPanel* pan
 {
     m_nToolTipHotKeyIndex1 = 0;
     m_nToolTipStrRef = 16307;
-    pfield_66E = g_pBaldurChitin->m_pEngineInventory;
+    field_66E = g_pBaldurChitin->m_pEngineInventory;
 }
 
 // 0x77D070
@@ -4831,7 +4831,7 @@ CUIControlButtonGeneralMap::CUIControlButtonGeneralMap(CUIPanel* panel, UI_CONTR
 {
     m_nToolTipHotKeyIndex1 = 4;
     m_nToolTipStrRef = 16310;
-    pfield_66E = g_pBaldurChitin->m_pEngineMap;
+    field_66E = g_pBaldurChitin->m_pEngineMap;
 }
 
 // 0x77D1B0
@@ -4845,7 +4845,7 @@ CUIControlButtonGeneralJournal::CUIControlButtonGeneralJournal(CUIPanel* panel, 
 {
     m_nToolTipHotKeyIndex1 = 3;
     m_nToolTipStrRef = 16308;
-    pfield_66E = g_pBaldurChitin->m_pEngineJournal;
+    field_66E = g_pBaldurChitin->m_pEngineJournal;
 }
 
 // 0x77D2F0
@@ -4859,7 +4859,7 @@ CUIControlButtonGeneralCharacter::CUIControlButtonGeneralCharacter(CUIPanel* pan
 {
     m_nToolTipHotKeyIndex1 = 1;
     m_nToolTipStrRef = 16306;
-    pfield_66E = g_pBaldurChitin->m_pEngineCharacter;
+    field_66E = g_pBaldurChitin->m_pEngineCharacter;
 }
 
 // 0x77D430
@@ -4873,7 +4873,7 @@ CUIControlButtonGeneralSpellbook::CUIControlButtonGeneralSpellbook(CUIPanel* pan
 {
     m_nToolTipHotKeyIndex1 = 5;
     m_nToolTipStrRef = 16309;
-    pfield_66E = g_pBaldurChitin->m_pEngineSpellbook;
+    field_66E = g_pBaldurChitin->m_pEngineSpellbook;
 }
 
 // 0x77D570
@@ -4887,7 +4887,7 @@ CUIControlButtonGeneralOptions::CUIControlButtonGeneralOptions(CUIPanel* panel, 
 {
     m_nToolTipHotKeyIndex1 = 6;
     m_nToolTipStrRef = 16311;
-    pfield_66E = g_pBaldurChitin->m_pEngineOptions;
+    field_66E = g_pBaldurChitin->m_pEngineOptions;
 }
 
 // 0x77D6B0
@@ -4917,7 +4917,7 @@ CUIControlButtonGeneralOptionsFromMainMenu::CUIControlButtonGeneralOptionsFromMa
     g_pBaldurChitin->GetTlkTable().Fetch(13905, strRes);
     SetText(strRes.szText);
 
-    pfield_66E = g_pBaldurChitin->m_pEngineOptions;
+    field_66E = g_pBaldurChitin->m_pEngineOptions;
 }
 
 // 0x77D7D0
@@ -4945,7 +4945,7 @@ CUIControlButtonGeneralMultiPlayer::CUIControlButtonGeneralMultiPlayer(CUIPanel*
 {
     m_nToolTipHotKeyIndex1 = 7;
     m_nToolTipStrRef = 16312;
-    pfield_66E = g_pBaldurChitin->m_pEngineOptions;
+    field_66E = g_pBaldurChitin->m_pEngineOptions;
 }
 
 // 0x77D960
@@ -4963,8 +4963,8 @@ CUIControlButton77DCC0::CUIControlButton77DCC0(CUIPanel* panel, UI_CONTROL_BUTTO
     m_cVidCell.GetCurrentFrameSize(frameSize, FALSE);
 
     // TODO: Check.
-    wfield_668 = frameSize.cx & 0xFF;
-    wfield_666 = 0;
+    field_668 = frameSize.cx & 0xFF;
+    field_666 = 0;
 
     InvalidateRect();
 }
@@ -4977,7 +4977,7 @@ CUIControlButton77DCC0::~CUIControlButton77DCC0()
 // 0x77DE10
 BOOL CUIControlButton77DCC0::Render(BOOL bForce)
 {
-    DWORD dwFlags = nfield_64C ? 0x80000 : 0;
+    DWORD dwFlags = field_64C ? 0x80000 : 0;
 
     if (!m_bActive && !m_bInactiveRender) {
         return FALSE;
@@ -4988,7 +4988,7 @@ BOOL CUIControlButton77DCC0::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->field_56), FALSE);
         renderLock.Lock(INFINITE);
         m_nRenderCount--;
         renderLock.Unlock();
@@ -4996,7 +4996,7 @@ BOOL CUIControlButton77DCC0::Render(BOOL bForce)
 
     CPoint pt = m_pPanel->m_ptOrigin + m_ptOrigin;
     CRect rClip(pt, m_size);
-    rClip.right = pt.x + wfield_666;
+    rClip.right = pt.x + field_666;
 
     return m_cVidCell.Render(0, pt.x, pt.y, rClip, NULL, 0, dwFlags, -1);
 }
@@ -5021,11 +5021,11 @@ void CUIControlButton77DCC0::TimerAsynchronousUpdate(BOOLEAN bInside)
             if (rc == CGameObjectArray::SUCCESS) {
                 if (pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_SUPPRESS_HP_INFO]) {
                     m_cVidCell.SequenceSet(4);
-                    wfield_666 = wfield_668;
+                    field_666 = field_668;
                 } else {
                     SHORT nMaxHitPoints = max(pSprite->GetDerivedStats()->m_nMaxHitPoints, 1);
                     SHORT nCurrentHitPoints = max(pSprite->GetBaseStats()->m_hitPoints, 0);
-                    wfield_666 = nCurrentHitPoints * wfield_668 / nMaxHitPoints;
+                    field_666 = nCurrentHitPoints * field_668 / nMaxHitPoints;
 
                     SHORT nSequence = g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nHitPointBarSequence;
                     if (nSequence != 0) {
@@ -5052,265 +5052,8 @@ void CUIControlButton77DCC0::TimerAsynchronousUpdate(BOOLEAN bInside)
                 InvalidateRect();
             }
         } else {
-            wfield_666 = 0;
+            field_666 = 0;
             InvalidateRect();
         }
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x5EC9D0
-void FUN_005ec9d0() {
-    // TODO: Incomplete.
-}
-
-// 0x778940
-void FUN_00778940() {
-    // TODO: Incomplete.
-}
-
-// 0x778A50
-void FUN_00778a50() {
-    // TODO: Incomplete.
-}
-
-// 0x778B40
-void FUN_00778b40() {
-    // TODO: Incomplete.
-}
-
-// 0x778C30
-void FUN_00778c30() {
-    // TODO: Incomplete.
-}
-
-// 0x778D20
-void FUN_00778d20() {
-    // TODO: Incomplete.
-}
-
-// 0x778E10
-void FUN_00778e10() {
-    // TODO: Incomplete.
-}
-
-// 0x778F00
-void FUN_00778f00() {
-    // TODO: Incomplete.
-}
-
-// 0x779030
-void FUN_00779030() {
-    // TODO: Incomplete.
-}
-
-// 0x779120
-void FUN_00779120() {
-    // TODO: Incomplete.
-}
-
-// 0x779210
-void FUN_00779210() {
-    // TODO: Incomplete.
-}
-
-// 0x779330
-void FUN_00779330() {
-    // TODO: Incomplete.
-}
-
-// 0x779420
-void FUN_00779420() {
-    // TODO: Incomplete.
-}
-
-// 0x779510
-void FUN_00779510() {
-    // TODO: Incomplete.
-}
-
-// 0x779600
-void FUN_00779600() {
-    // TODO: Incomplete.
-}
-
-// 0x7796F0
-void FUN_007796f0() {
-    // TODO: Incomplete.
-}
-
-// 0x7798D0
-void FUN_007798d0() {
-    // TODO: Incomplete.
-}
-
-// 0x7799C0
-void FUN_007799c0() {
-    // TODO: Incomplete.
-}
-
-// 0x779B00
-void FUN_00779b00() {
-    // TODO: Incomplete.
-}
-
-// 0x779BF0
-void FUN_00779bf0() {
-    // TODO: Incomplete.
-}
-
-// 0x779D30
-void FUN_00779d30() {
-    // TODO: Incomplete.
-}
-
-// 0x779E50
-void FUN_00779e50() {
-    // TODO: Incomplete.
-}
-
-// 0x779F90
-void FUN_00779f90() {
-    // TODO: Incomplete.
-}
-
-// 0x77A0B0
-void FUN_0077a0b0() {
-    // TODO: Incomplete.
-}
-
-// 0x77A1F0
-void FUN_0077a1f0() {
-    // TODO: Incomplete.
-}
-
-// 0x77A350
-void FUN_0077a350() {
-    // TODO: Incomplete.
-}
-
-// 0x77A410
-void FUN_0077a410() {
-    // TODO: Incomplete.
-}
-
-// 0x77A4F0
-void FUN_0077a4f0() {
-    // TODO: Incomplete.
-}
-
-// 0x77A590
-void FUN_0077a590() {
-    // TODO: Incomplete.
-}
-
-// 0x77A650
-void FUN_0077a650() {
-    // TODO: Incomplete.
-}
-
-// 0x77A740
-void FUN_0077a740() {
-    // TODO: Incomplete.
-}
-
-// 0x77A800
-void FUN_0077a800() {
-    // TODO: Incomplete.
-}
-
-// 0x77A830
-void FUN_0077a830() {
-    // TODO: Incomplete.
-}
-
-// 0x77A9C0
-void FUN_0077a9c0() {
-    // TODO: Incomplete.
-}
-
-// 0x77AAC0
-void FUN_0077aac0() {
-    // TODO: Incomplete.
-}
-
-// 0x77B450
-void FUN_0077b450() {
-    // TODO: Incomplete.
-}
-
-// 0x77B530
-void FUN_0077b530() {
-    // TODO: Incomplete.
-}
-
-// 0x77BE40
-void FUN_0077be40() {
-    // TODO: Incomplete.
-}
-
-// 0x77BF30
-void FUN_0077bf30() {
-    // TODO: Incomplete.
-}
-
-// 0x77C540
-void FUN_0077c540() {
-    // TODO: Incomplete.
-}
-
-// 0x77CD90
-void FUN_0077cd90() {
-    // TODO: Incomplete.
-}
-
-// 0x77CEF0
-void FUN_0077cef0() {
-    // TODO: Incomplete.
-}
-
-// 0x77D050
-void FUN_0077d050() {
-    // TODO: Incomplete.
-}
-
-// 0x77D190
-void FUN_0077d190() {
-    // TODO: Incomplete.
-}
-
-// 0x77D2D0
-void FUN_0077d2d0() {
-    // TODO: Incomplete.
-}
-
-// 0x77D410
-void FUN_0077d410() {
-    // TODO: Incomplete.
-}
-
-// 0x77D550
-void FUN_0077d550() {
-    // TODO: Incomplete.
-}
-
-// 0x77D690
-void FUN_0077d690() {
-    // TODO: Incomplete.
-}
-
-// 0x77D7B0
-void FUN_0077d7b0() {
-    // TODO: Incomplete.
-}
-
-// 0x77D940
-void FUN_0077d940() {
-    // TODO: Incomplete.
-}
-
-// 0x77DD50
-void FUN_0077dd50() {
-    // TODO: Incomplete.
-}
-

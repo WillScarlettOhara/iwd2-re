@@ -24,9 +24,9 @@ CScreenStart::CScreenStart()
 {
     m_nErrorState = 0;
     m_nNumErrorButtons = 0;
-    nm_field_144 = 1;
-    bm_field_13F = 0;
-    pm_m_field_106 = 1;
+    field_144 = 1;
+    field_13F = 0;
+    field_106 = 1;
     m_bExitProgram = FALSE;
     SetVideoMode(0);
     m_bCtrlKeyDown = FALSE;
@@ -36,7 +36,7 @@ CScreenStart::CScreenStart()
     m_pVirtualKeys[3] = CKeyInfo('8', 0, 0);
     m_pVirtualKeys[4] = CKeyInfo(VK_RETURN, 0, 0);
     m_nEngineState = 0;
-    nm_field_17C = 0;
+    field_17C = 0;
 }
 
 // 0x66F2A0
@@ -86,7 +86,7 @@ void CScreenStart::OnKeyDown(SHORT nKeyFlags)
                         OnErrorButtonClick(0);
                         break;
                     case 4:
-                        DismissTopPopup();
+                        sub_6702C0();
                         break;
                     }
                 }
@@ -103,7 +103,7 @@ void CScreenStart::OnKeyDown(SHORT nKeyFlags)
                         break;
                     case 4:
                         m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(m_cUIManager.GetPanel(4)->GetControl(1));
-                        DismissTopPopup();
+                        sub_6702C0();
                         break;
                     }
                 } else {
@@ -142,7 +142,7 @@ BOOL CScreenStart::CheckMouseLButton()
 // 0x647540
 void CScreenStart::OnLButtonDown(CPoint pt)
 {
-    g_pBaldurChitin->nm_field_1A2E = FALSE;
+    g_pBaldurChitin->field_1A2E = FALSE;
     g_pBaldurChitin->GetObjectCursor()->m_nState = 1;
     m_cUIManager.OnLButtonDown(pt);
 }
@@ -239,7 +239,7 @@ void CScreenStart::UpdateMainPanel()
 // 0x66F8F0
 void CScreenStart::OnQuitButtonClick()
 {
-    CSingleLock lock(&m_cUIManager.pm_field_36, TRUE);
+    CSingleLock lock(&m_cUIManager.field_36, TRUE);
 
     m_nErrorState = 0;
     m_dwErrorTextId = 19532;
@@ -251,7 +251,7 @@ void CScreenStart::OnQuitButtonClick()
 }
 
 // 0x66F990
-void CScreenStart::StartMultiplayer()
+void CScreenStart::sub_66F990()
 {
     // NOTE: Uninline.
     m_cUIManager.KillCapture();
@@ -262,7 +262,7 @@ void CScreenStart::StartMultiplayer()
     // __LINE__: 1208
     UTIL_ASSERT(pConnection != NULL);
 
-    if (g_pBaldurChitin->m_bIsAutoStarting && g_pBaldurChitin->sm_field_130) {
+    if (g_pBaldurChitin->m_bIsAutoStarting && g_pBaldurChitin->field_130) {
         if (g_pBaldurChitin->cDimm.cResCache.m_nCacheSize >= 140000000) {
             pConnection->StartConnection(TRUE);
             SelectEngine(pConnection);
@@ -297,7 +297,7 @@ void CScreenStart::EnableMainPanel(BOOL bEnabled)
 
     pPanel->SetEnabled(bEnabled);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 != 0 ? 2 : 1) != 800) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 != 0 ? 2 : 1) != 800) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnabled);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnabled);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnabled);
@@ -460,7 +460,7 @@ void CScreenStart::OnErrorButtonClick(DWORD nID)
     // __LINE__: 1778
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -525,9 +525,9 @@ void CScreenStart::ResetVersionMismatchPanel(CUIPanel* pPanel)
 }
 
 // 0x6702C0
-void CScreenStart::DismissTopPopup()
+void CScreenStart::sub_6702C0()
 {
-    CSingleLock lock(&(m_cUIManager.pm_field_36), TRUE);
+    CSingleLock lock(&(m_cUIManager.field_36), TRUE);
 
     if (m_lPopupStack.GetTailPosition() != NULL) {
         CUIPanel* pPanel = m_lPopupStack.GetTail();
@@ -697,7 +697,7 @@ void CUIControlButtonStartMenu::OnLButtonClick(CPoint pt)
             pStart->OnLoadGameButtonClick();
             break;
         case 2:
-            g_pBaldurChitin->GetObjectGame()->nm_field_4B38 = 1;
+            g_pBaldurChitin->GetObjectGame()->field_4B38 = 1;
 
             // NOTE: Uninline.
             pStart->OnLoadGameButtonClick();
@@ -719,7 +719,7 @@ void CUIControlButtonStartMenu::OnLButtonClick(CPoint pt)
             pStart->OnPreGenerateButtonClick();
             break;
         case 1:
-            pStart->StartMultiplayer();
+            pStart->sub_66F990();
             break;
         case 2:
             pStart->m_nEngineState = 0;
@@ -760,22 +760,5 @@ void CUIControlButtonStart670770::OnLButtonClick(CPoint pt)
     // __LINE__: 2010
     UTIL_ASSERT(pStart != NULL);
 
-    pStart->DismissTopPopup();
+    pStart->sub_6702C0();
 }
-
-// Phase 1-2: Scaffold functions
-// 0x66F280
-void FUN_0066f280() {
-    // TODO: Incomplete.
-}
-
-// 0x670380
-void FUN_00670380() {
-    // TODO: Incomplete.
-}
-
-// 0x6707A0
-void FUN_006707a0() {
-    // TODO: Incomplete.
-}
-

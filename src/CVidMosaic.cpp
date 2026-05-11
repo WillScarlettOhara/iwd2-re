@@ -200,7 +200,7 @@ BOOL CVidMosaic::BltFromFX(LPDIRECTDRAWSURFACE pSurface, int x, int y, const CSi
                 if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
                     break;
                 }
-            } while (!g_pChitin->nm_m_field_1932);
+            } while (!g_pChitin->field_1932);
         } else {
             do {
                 HRESULT hr = g_pChitin->cVideo.cVidBlitter.BltFast(
@@ -214,7 +214,7 @@ BOOL CVidMosaic::BltFromFX(LPDIRECTDRAWSURFACE pSurface, int x, int y, const CSi
                 if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
                     break;
                 }
-            } while (!g_pChitin->nm_m_field_1932);
+            } while (!g_pChitin->field_1932);
         }
     }
 
@@ -431,7 +431,7 @@ BOOL CVidMosaic::Render3d(int x, int y, const CRect& rMosaic, const CRect& rClip
     CVideo3d::glEnable(GL_TEXTURE_2D);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.nm_field_13E = 2;
+    g_pChitin->cVideo.field_13E = 2;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -462,7 +462,7 @@ BOOL CVidMosaic::Render3d(int x, int y, const CRect& rMosaic, const CRect& rClip
                 continue;
             }
 
-            LONG lPitch = g_pChitin->cVideo.nm_field_13A
+            LONG lPitch = g_pChitin->cVideo.field_13A
                 ? CVidTile::BYTES_PER_TEXEL * CVIDINF_FX_WIDTH
                 : CVidTile::BYTES_PER_TEXEL * rTile.right;
 
@@ -478,7 +478,7 @@ BOOL CVidMosaic::Render3d(int x, int y, const CRect& rMosaic, const CRect& rClip
                 return FALSE;
             }
 
-            if (g_pChitin->cVideo.nm_field_13A) {
+            if (g_pChitin->cVideo.field_13A) {
                 CVideo3d::glTexImage2D(GL_TEXTURE_2D,
                     0,
                     GL_RGBA,

@@ -93,15 +93,3 @@ int CVoice::GetPriority()
 
     return m_nPriority;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x7AAB50
-void FUN_007aab50() {
-    // TODO: Incomplete.
-}
-
-// 0x7AAC80
-void FUN_007aac80() {
-    // TODO: Incomplete.
-}
-

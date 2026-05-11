@@ -372,10 +372,3 @@ void CAIAction::SetString1(CString str)
 {
     m_string1 = str;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x41E160
-void FUN_0041e160() {
-    // TODO: Incomplete.
-}
-

@@ -484,8 +484,8 @@ void CAIGroup::RemoveFromSearch(CSearchBitmap* search)
             search->RemoveObject(pos,
                 nEnemyAlly,
                 nPersonalSpace,
-                pSprite->nfield_54A8,
-                pSprite->bfield_7430);
+                pSprite->field_54A8,
+                pSprite->field_7430);
 
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(memberId,
                 CGameObjectArray::THREAD_ASYNCH,
@@ -521,8 +521,8 @@ void CAIGroup::AddToSearch(CSearchBitmap* search)
             search->AddObject(pos,
                 nEnemyAlly,
                 nPersonalSpace,
-                pSprite->nfield_54A8,
-                pSprite->bfield_7430);
+                pSprite->field_54A8,
+                pSprite->field_7430);
 
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(memberId,
                 CGameObjectArray::THREAD_ASYNCH,
@@ -914,25 +914,3 @@ BYTE CAIGroup::GetCount()
 {
     return static_cast<BYTE>(m_memberList.GetCount());
 }
-
-// Phase 1-2: Scaffold functions
-// 0x405370
-void FUN_00405370() {
-    // TODO: Incomplete.
-}
-
-// 0x4058E0
-void FUN_004058e0() {
-    // TODO: Incomplete.
-}
-
-// 0x405A10
-void FUN_00405a10() {
-    // TODO: Incomplete.
-}
-
-// 0x4063D0
-void FUN_004063d0() {
-    // TODO: Incomplete.
-}
-

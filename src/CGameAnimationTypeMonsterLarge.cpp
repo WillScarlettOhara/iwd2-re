@@ -678,10 +678,3 @@ BOOL CGameAnimationTypeMonsterLarge::IsMirroring()
 {
     return MIRROR_BAM && m_currentBamDirection > m_extendDirectionTest;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x6B1130
-void FUN_006b1130() {
-    // TODO: Incomplete.
-}
-

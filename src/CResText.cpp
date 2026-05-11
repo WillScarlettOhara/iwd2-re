@@ -6,7 +6,7 @@
 CResText::CResText()
 {
     m_bParsed = FALSE;
-    nfield_54 = 0;
+    field_54 = 0;
 }
 
 // 0x780850
@@ -65,10 +65,3 @@ int CResText::Release()
     }
     return rc;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x780830
-void FUN_00780830() {
-    // TODO: Incomplete.
-}
-

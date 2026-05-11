@@ -53,10 +53,3 @@ BOOL CResCRE::Parse(void* pData)
 
     return m_bParsed;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x401EE0
-void FUN_00401ee0() {
-    // TODO: Incomplete.
-}
-

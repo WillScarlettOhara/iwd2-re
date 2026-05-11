@@ -1,11 +1,6 @@
 #ifndef CGAMEOBJECT_H_
 #define CGAMEOBJECT_H_
 
-// ============================================================================
-// CGameObject - Base class for all game world objects
-//
-// Address: varies by method
-// ============================================================================
 #include "BalDataTypes.h"
 #include "CAIObjectType.h"
 
@@ -83,14 +78,14 @@ public:
     /* 0012 */ CGameArea* m_pArea;
     /* 0016 */ POSITION m_posVertList;
     /* 001A */ BYTE m_listType;
-    /* 001C */ int nm_field_1C;
+    /* 001C */ int field_1C;
     /* 0020 */ CAIObjectType m_typeAI;
     /* 005C */ LONG m_id;
     /* 0060 */ SHORT m_canBeSeen;
     /* 0062 */ DWORD m_remotePlayerID;
     /* 0066 */ LONG m_remoteObjectID;
     /* 006A */ BYTE m_AISpeed;
-    /* 006B */ unsigned char m_bLocalControl;
+    /* 006B */ unsigned char field_6B;
     /* 006C */ BYTE m_AIInhibitor;
 };
 

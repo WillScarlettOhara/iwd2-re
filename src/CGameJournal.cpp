@@ -613,7 +613,7 @@ void CGameJournal::DeleteEntry(STRREF strRef)
 }
 
 // 0x4C7600
-void CGameJournal::WriteWrappedText(FILE* stream, const CString& sString)
+void CGameJournal::sub_4C7600(FILE* stream, const CString& sString)
 {
     CString sMutableString(sString);
     int length = sString.GetLength();
@@ -694,7 +694,7 @@ void CGameJournal::Save(INT iChapter)
 
                 sTime += strRes.szText;
 
-                WriteWrappedText(stream, sTime);
+                sub_4C7600(stream, sTime);
                 fputs("\n\n", stream);
             }
         }
@@ -702,100 +702,3 @@ void CGameJournal::Save(INT iChapter)
         fclose(stream);
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4C5410
-void FUN_004c5410() {
-    // TODO: Incomplete.
-}
-
-// 0x4C54A0
-void FUN_004c54a0() {
-    // TODO: Incomplete.
-}
-
-// 0x4C54E0
-void FUN_004c54e0() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5750
-void FUN_004c5750() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5770
-void FUN_004c5770() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5790
-void FUN_004c5790() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5870
-void FUN_004c5870() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5AE0
-void FUN_004c5ae0() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5B20
-void FUN_004c5b20() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5B30
-void FUN_004c5b30() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5B90
-void FUN_004c5b90() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5BF0
-void FUN_004c5bf0() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5C50
-void FUN_004c5c50() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5CB0
-void FUN_004c5cb0() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5D10
-void FUN_004c5d10() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5D30
-void FUN_004c5d30() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5D90
-void FUN_004c5d90() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5E80
-void FUN_004c5e80() {
-    // TODO: Incomplete.
-}
-
-// 0x4C5ED0
-void FUN_004c5ed0() {
-    // TODO: Incomplete.
-}
-

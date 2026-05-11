@@ -10,9 +10,9 @@
 CInfCursor::CInfCursor()
 {
     m_bVisible = FALSE;
-    nfield_9F2 = 0;
-    nfield_9EE = 0;
-    pfield_A02 = NULL;
+    field_9F2 = 0;
+    field_9EE = 0;
+    field_A02 = NULL;
     m_nDirection = 0;
     m_nState = 0;
     bAnimatingCustom = 0;
@@ -31,7 +31,7 @@ void CInfCursor::CursorUpdate(CVidMode* pVidMode)
         return;
     }
 
-    if (g_pBaldurChitin->nm_m_field_1932) {
+    if (g_pBaldurChitin->field_1932) {
         return;
     }
 
@@ -153,9 +153,9 @@ void CInfCursor::SetCursor(INT nNewCursor, BOOLEAN bForce)
 
             if (pVidMode->GetPointer() != &m_vcArrow) {
                 if (pVidMode->GetPointer() == &m_vcToolTip) {
-                    if (pfield_A02 != NULL) {
-                        pfield_A02->ResetToolTip();
-                        pfield_A02 = NULL;
+                    if (field_A02 != NULL) {
+                        field_A02->ResetToolTip();
+                        field_A02 = NULL;
                     }
                 }
 
@@ -165,19 +165,19 @@ void CInfCursor::SetCursor(INT nNewCursor, BOOLEAN bForce)
             break;
         case 101:
             if (pVidMode->GetPointer() != &m_vcToolTip) {
-                m_vcToolTip.wfield_5E2 = 3;
-                m_vcToolTip.wfield_5DA = 0;
-                m_vcToolTip.wfield_5DC = 0;
+                m_vcToolTip.field_5E2 = 3;
+                m_vcToolTip.field_5DA = 0;
+                m_vcToolTip.field_5DC = 0;
 
                 CSize size1;
                 m_vcToolTip.GetFrameSize(1, 0, size1, FALSE);
 
                 CSize size2;
-                m_vcToolTip.GetFrameSize(2, m_vcToolTip.wfield_5DC, size2, FALSE);
+                m_vcToolTip.GetFrameSize(2, m_vcToolTip.field_5DC, size2, FALSE);
 
                 // TODO: Check cast.
-                m_vcToolTip.wfield_5DE = static_cast<short>((size1.cx / 2) + (size2.cx / 2));
-                m_vcToolTip.wfield_5E2 = 0;
+                m_vcToolTip.field_5DE = static_cast<short>((size1.cx / 2) + (size2.cx / 2));
+                m_vcToolTip.field_5E2 = 0;
 
                 pVidMode->SetPointer(&m_vcToolTip, TRUE, -1);
                 pVidMode->m_bPointerEnabled = TRUE;
@@ -187,9 +187,9 @@ void CInfCursor::SetCursor(INT nNewCursor, BOOLEAN bForce)
         case 102:
             if (pVidMode->GetPointer() != &m_vcCustom) {
                 if (pVidMode->GetPointer() == &m_vcToolTip) {
-                    if (pfield_A02 != NULL) {
-                        pfield_A02->ResetToolTip();
-                        pfield_A02 = NULL;
+                    if (field_A02 != NULL) {
+                        field_A02->ResetToolTip();
+                        field_A02 = NULL;
                     }
                 }
 
@@ -200,9 +200,9 @@ void CInfCursor::SetCursor(INT nNewCursor, BOOLEAN bForce)
         default:
             if (pVidMode->GetPointer() != &m_vcCursors) {
                 if (pVidMode->GetPointer() == &m_vcToolTip) {
-                    if (pfield_A02 != NULL) {
-                        pfield_A02->ResetToolTip();
-                        pfield_A02 = NULL;
+                    if (field_A02 != NULL) {
+                        field_A02->ResetToolTip();
+                        field_A02 = NULL;
                     }
                 }
 
@@ -244,7 +244,7 @@ void CInfCursor::SetToolTip(const STRREF& toolTipRef, CUIControlBase* pControl, 
 {
     if (toolTipRef != -1 || sExtraText != "") {
         m_vcToolTip.SetTextRef(toolTipRef, sExtraText);
-        pfield_A02 = pControl;
+        field_A02 = pControl;
         g_pBaldurChitin->GetObjectGame()->SetTempCursor(101);
     }
 }
@@ -266,7 +266,7 @@ void CInfCursor::SetToolTip(const STRREF& nStrRef, CUIControlBase* pControl, SHO
             // NOTE: Uninline.
             char nKey = g_pBaldurChitin->GetObjectGame()->GetKeymap(nHotKeyIndex1);
 
-            ch = g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(nKey);
+            ch = g_pBaldurChitin->GetObjectGame()->sub_5A9780(nKey);
 
             if (ch != '\0' && ch != ' ') {
                 sKey = CString(ch);
@@ -304,7 +304,7 @@ void CInfCursor::SetToolTip(const STRREF& nStrRef, CUIControlBase* pControl, SHO
     }
 
     m_vcToolTip.SetTextRef(sKey, nStrRef, nSecondaryStrRef, nTertiaryStrRef);
-    pfield_A02 = pControl;
+    field_A02 = pControl;
     g_pBaldurChitin->GetObjectGame()->SetTempCursor(101);
 }
 
@@ -323,9 +323,9 @@ INT CInfCursor::SetCustomCursor(CResRef customResRef, BOOLEAN bAnimating, INT nP
         || m_vcCustom.GetResRef() != customResRef
         || g_pBaldurChitin->GetCurrentVideoMode()->GetPointerNumber() != nPointerNumber) {
         if (g_pBaldurChitin->GetCurrentVideoMode()->GetPointer() == &m_vcToolTip) {
-            if (pfield_A02 != NULL) {
-                pfield_A02->ResetToolTip();
-                pfield_A02 = NULL;
+            if (field_A02 != NULL) {
+                field_A02->ResetToolTip();
+                field_A02 = NULL;
             }
         }
 
@@ -377,28 +377,28 @@ void CInfCursor::SetScrollArrowDirection()
 // 0x597E20
 CInfToolTip::CInfToolTip()
 {
-    wfield_5DA = 0;
-    wfield_5DC = 0;
-    wfield_5DE = 0;
-    wfield_5E0 = 0;
-    wfield_5E2 = 0;
-    wfield_5E4 = 0;
-    wfield_5E6 = 0;
-    wfield_5E8 = 0;
-    wfield_5EA = 0;
+    field_5DA = 0;
+    field_5DC = 0;
+    field_5DE = 0;
+    field_5E0 = 0;
+    field_5E2 = 0;
+    field_5E4 = 0;
+    field_5E6 = 0;
+    field_5E8 = 0;
+    field_5EA = 0;
 }
 
 // 0x597EE0
 void CInfToolTip::Initialize()
 {
     SequenceSet(0);
-    wfield_5E2 = 2;
+    field_5E2 = 2;
 
     m_font.SetResRef(CResRef("TOOLFONT"), FALSE, TRUE);
     m_font.SetColor(RGB(255, 255, 255), RGB(14, 14, 14), TRUE);
-    wfield_5E4 = 256;
-    wfield_5DA = 0;
-    wfield_5DC = 0;
+    field_5E4 = 256;
+    field_5DA = 0;
+    field_5DC = 0;
 
     CSize size1;
     GetFrameSize(1, 0, size1, FALSE);
@@ -407,12 +407,12 @@ void CInfToolTip::Initialize()
     GetFrameSize(2, 0, size2, FALSE);
 
     // TODO: Check cast.
-    wfield_5DE = static_cast<short>((size2.cx / 2) + (size1.cx / 2));
-    wfield_5E0 = wfield_5DE;
+    field_5DE = static_cast<short>((size2.cx / 2) + (size1.cx / 2));
+    field_5E0 = field_5DE;
 
-    wfield_5E8 = GetSequenceLength(1, FALSE);
-    wfield_5E6 = 0;
-    wfield_5EA = GetSequenceLength(2, FALSE);
+    field_5E8 = GetSequenceLength(1, FALSE);
+    field_5E6 = 0;
+    field_5EA = GetSequenceLength(2, FALSE);
 }
 
 // 0x597FD0
@@ -421,51 +421,51 @@ BOOL CInfToolTip::FrameAdvance()
     CSize frameSize1;
     CSize frameSize2;
 
-    switch (wfield_5E2) {
+    switch (field_5E2) {
     case 0:
-        wfield_5DA++;
-        if (wfield_5DA >= wfield_5E8) {
-            wfield_5DA = 0;
+        field_5DA++;
+        if (field_5DA >= field_5E8) {
+            field_5DA = 0;
         }
 
-        wfield_5DC++;
-        if (wfield_5DC >= wfield_5EA) {
-            wfield_5DC = 0;
+        field_5DC++;
+        if (field_5DC >= field_5EA) {
+            field_5DC = 0;
         }
 
-        wfield_5DE += 8;
+        field_5DE += 8;
 
-        GetFrameSize(1, wfield_5DA, frameSize1, FALSE);
-        GetFrameSize(2, wfield_5DC, frameSize2, FALSE);
+        GetFrameSize(1, field_5DA, frameSize1, FALSE);
+        GetFrameSize(2, field_5DC, frameSize2, FALSE);
 
-        wfield_5DE = wfield_5E6 + static_cast<SHORT>(frameSize1.cx / 2 + frameSize2.cx / 2);
-        wfield_5E2 = 2;
+        field_5DE = field_5E6 + static_cast<SHORT>(frameSize1.cx / 2 + frameSize2.cx / 2);
+        field_5E2 = 2;
         break;
     case 1:
-        wfield_5DA--;
-        if (wfield_5DA < 0) {
-            wfield_5DA = 0;
+        field_5DA--;
+        if (field_5DA < 0) {
+            field_5DA = 0;
         }
 
-        wfield_5DC--;
-        if (wfield_5DC < 0) {
-            wfield_5DC = 0;
+        field_5DC--;
+        if (field_5DC < 0) {
+            field_5DC = 0;
         }
 
-        wfield_5DE--;
+        field_5DE--;
 
-        GetFrameSize(1, wfield_5DA, frameSize1, FALSE);
-        GetFrameSize(2, wfield_5DC, frameSize2, FALSE);
+        GetFrameSize(1, field_5DA, frameSize1, FALSE);
+        GetFrameSize(2, field_5DC, frameSize2, FALSE);
 
-        if (wfield_5DE <= frameSize1.cx / 2 + frameSize2.cx / 2) {
-            wfield_5E2 = 3;
+        if (field_5DE <= frameSize1.cx / 2 + frameSize2.cx / 2) {
+            field_5E2 = 3;
         }
         break;
     case 2:
-        GetFrameSize(1, wfield_5DA, frameSize1, FALSE);
-        GetFrameSize(2, wfield_5DC, frameSize2, FALSE);
+        GetFrameSize(1, field_5DA, frameSize1, FALSE);
+        GetFrameSize(2, field_5DC, frameSize2, FALSE);
 
-        wfield_5DE = wfield_5E6 + static_cast<SHORT>(frameSize1.cx / 2 + frameSize2.cx / 2);
+        field_5DE = field_5E6 + static_cast<SHORT>(frameSize1.cx / 2 + frameSize2.cx / 2);
         break;
     case 3:
         break;
@@ -498,7 +498,7 @@ BOOL CInfToolTip::GetFrame()
 
     SHORT nFrames = pRes->m_pSequences[m_nCurrentSequence].nFrames;
     if (m_nCurrentFrame >= nFrames) {
-        if (m_bCyclic != 0) {
+        if (field_C8 != 0) {
             m_nCurrentFrame = 0;
         } else {
             m_nCurrentFrame--;
@@ -506,7 +506,7 @@ BOOL CInfToolTip::GetFrame()
     }
 
     if (m_nCurrentFrame < 0) {
-        if (m_bCyclic != 0) {
+        if (field_C8 != 0) {
             m_nCurrentFrame = nFrames - 1;
         } else {
             m_nCurrentFrame = 0;
@@ -524,10 +524,10 @@ BOOL CInfToolTip::Render(INT nSurface, int x, int y, const CRect& rClip, CVidPol
     CVidInf* pVidInf = static_cast<CVidInf*>(g_pBaldurChitin->GetCurrentVideoMode());
 
     CSize size2;
-    GetFrameSize(2, wfield_5DC, size2, TRUE);
+    GetFrameSize(2, field_5DC, size2, TRUE);
 
     CSize size1;
-    GetFrameSize(1, wfield_5DA, size1, TRUE);
+    GetFrameSize(1, field_5DA, size1, TRUE);
 
     LONG nWidth1 = size1.cx / 2;
     LONG nWidth2 = size2.cx / 2;
@@ -544,7 +544,7 @@ BOOL CInfToolTip::Render(INT nSurface, int x, int y, const CRect& rClip, CVidPol
     CSize frameSize;
     GetCurrentFrameSize(frameSize, TRUE);
 
-    CRect rFXRect(0, 0, nWidth1 + nWidth2 + wfield_5E0, size2.cy);
+    CRect rFXRect(0, 0, nWidth1 + nWidth2 + field_5E0, size2.cy);
     CRect rFXClip(0, 0, 0, 0);
     DWORD dwRenderFlags = dwFlags | 0x100 | 0x1;
 
@@ -572,30 +572,30 @@ BOOL CInfToolTip::Render(INT nSurface, int x, int y, const CRect& rClip, CVidPol
     rFXClip.top = 0;
     rFXClip.right = rFXRect.Width() - size2.cx;
     rFXClip.bottom = rFXRect.Height();
-    RenderText(pVidInf, size1.cx, 0, rFXClip, dwRenderFlags, static_cast<SHORT>(wfield_5E4 - size2.cx - size1.cx));
+    RenderText(pVidInf, size1.cx, 0, rFXClip, dwRenderFlags, static_cast<SHORT>(field_5E4 - size2.cx - size1.cx));
 
     RealizePalette(dwRenderFlags);
     GetCurrentCenterPoint(ptCenter, TRUE);
 
-    INT nDestX = max(min(max(x - wfield_5E0 / 2, rClip.left), rClip.right - wfield_5E0 - nWidth2 - nWidth1), rClip.left);
+    INT nDestX = max(min(max(x - field_5E0 / 2, rClip.left), rClip.right - field_5E0 - nWidth2 - nWidth1), rClip.left);
     INT nDestY = max(min(max(y - ptCenter.y, rClip.top), rClip.bottom - frameSize.cy - ptCenter.y), rClip.top);
 
     SequenceSet(2);
-    FrameSet(wfield_5DC);
+    FrameSet(field_5DC);
     GetCurrentCenterPoint(ptCenter, TRUE);
 
     rFXClip.left = 0;
     rFXClip.top = 0;
     rFXClip.right = rFXRect.Width();
     rFXClip.bottom = rFXRect.Height();
-    if (!pVidInf->FXRender(this, ptCenter.x + nWidth1 + wfield_5E0 - nWidth2, ptCenter.y, rFXClip, TRUE, dwRenderFlags)) {
+    if (!pVidInf->FXRender(this, ptCenter.x + nWidth1 + field_5E0 - nWidth2, ptCenter.y, rFXClip, TRUE, dwRenderFlags)) {
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfCursor.cpp
         // __LINE__: 1111
         UTIL_ASSERT(FALSE);
     }
 
     SequenceSet(1);
-    FrameSet(wfield_5DA);
+    FrameSet(field_5DA);
     GetCurrentCenterPoint(ptCenter, TRUE);
 
     rFXClip.left = 0;
@@ -627,18 +627,18 @@ void CInfToolTip::RenderText(CVidInf* pVidInf, INT x, int a4, const CRect& rFXCl
     }
 
     for (index = 0; index < 2; index++) {
-        if (sfield_5EC[index] == "") {
+        if (field_5EC[index] == "") {
             break;
         }
     }
 
     INT y = m_font.GetBaseLineHeight(TRUE) + (rFXClip.Height() - index * m_font.GetFontHeight(TRUE)) / 2;
     for (index = 0; index < 2; index++) {
-        if (sfield_5EC[index] == "") {
+        if (field_5EC[index] == "") {
             break;
         }
 
-        sLine = sfield_5EC[index];
+        sLine = field_5EC[index];
 
         // FIXME: Calls `GetStringLength` two times.
         pVidInf->FXTextOut(&m_font,
@@ -662,31 +662,31 @@ void CInfToolTip::SetTextRef(const STRREF& textRef, const CString& sExtra)
     BYTE nLine;
     BYTE nLines;
 
-    wfield_5E6 = 0;
+    field_5E6 = 0;
 
     for (int index = 0; index < 2; index++) {
-        sfield_5EC[index] = "";
+        field_5EC[index] = "";
     }
 
     CSize size1;
-    GetFrameSize(1, wfield_5DA, size1, TRUE);
+    GetFrameSize(1, field_5DA, size1, TRUE);
 
     CSize size2;
-    GetFrameSize(2, wfield_5DC, size2, TRUE);
+    GetFrameSize(2, field_5DC, size2, TRUE);
 
-    WORD nMaxWidth = static_cast<WORD>(wfield_5E4 - size2.cx - size1.cx);
+    WORD nMaxWidth = static_cast<WORD>(field_5E4 - size2.cx - size1.cx);
 
     m_font.GetRes()->Demand();
 
     if (sExtra != "") {
         if (textRef != -1 && g_pBaldurChitin->GetTlkTable().Fetch(textRef, strRes)) {
-            sfield_5EC[0] = strRes.szText;
-            CUtil::TrimRight(sfield_5EC[0]);
+            field_5EC[0] = strRes.szText;
+            CUtil::TrimRight(field_5EC[0]);
             nLines = CUtil::SplitString(&m_font,
                 sExtra,
                 nMaxWidth - 8,
                 1,
-                &(sfield_5EC[1]),
+                &(field_5EC[1]),
                 FALSE,
                 TRUE,
                 TRUE,
@@ -694,13 +694,13 @@ void CInfToolTip::SetTextRef(const STRREF& textRef, const CString& sExtra)
         } else {
             int pos = CUtil::Find(sExtra, '\n', 0);
             if (pos != -1) {
-                sfield_5EC[0] = sExtra.Left(pos);
-                CUtil::TrimRight(sfield_5EC[0]);
+                field_5EC[0] = sExtra.Left(pos);
+                CUtil::TrimRight(field_5EC[0]);
                 nLines = CUtil::SplitString(&m_font,
                     sExtra.Mid(pos + 1),
                     nMaxWidth - 8,
                     1,
-                    &(sfield_5EC[1]),
+                    &(field_5EC[1]),
                     FALSE,
                     TRUE,
                     TRUE,
@@ -710,7 +710,7 @@ void CInfToolTip::SetTextRef(const STRREF& textRef, const CString& sExtra)
                     sExtra.Mid(pos + 1),
                     nMaxWidth - 8,
                     2,
-                    sfield_5EC,
+                    field_5EC,
                     FALSE,
                     TRUE,
                     TRUE,
@@ -719,42 +719,42 @@ void CInfToolTip::SetTextRef(const STRREF& textRef, const CString& sExtra)
         }
 
         if (nLines > 0) {
-            CUtil::TrimRight(sfield_5EC[nLines - 1]);
+            CUtil::TrimRight(field_5EC[nLines - 1]);
             for (nLine = 0; nLine < nLines; nLine++) {
-                LONG nLineWidth = m_font.GetStringLength(sfield_5EC[nLine], TRUE);
-                if (nLineWidth > wfield_5E6) {
-                    wfield_5E6 = static_cast<SHORT>(nLineWidth);
+                LONG nLineWidth = m_font.GetStringLength(field_5EC[nLine], TRUE);
+                if (nLineWidth > field_5E6) {
+                    field_5E6 = static_cast<SHORT>(nLineWidth);
                 }
             }
         }
 
         m_font.GetRes()->Release();
 
-        wfield_5E6 = min(wfield_5E6 + 8, nMaxWidth);
+        field_5E6 = min(field_5E6 + 8, nMaxWidth);
     } else {
         if (textRef != -1 && g_pBaldurChitin->GetTlkTable().Fetch(textRef, strRes)) {
             nLines = CUtil::SplitString(&m_font,
                 strRes.szText,
                 nMaxWidth - 8,
                 2,
-                sfield_5EC,
+                field_5EC,
                 FALSE,
                 TRUE,
                 TRUE,
                 -1);
             if (nLines > 0) {
-                CUtil::TrimRight(sfield_5EC[nLines - 1]);
+                CUtil::TrimRight(field_5EC[nLines - 1]);
                 for (nLine = 0; nLine < nLines; nLine++) {
-                    LONG nLineWidth = m_font.GetStringLength(sfield_5EC[nLine], TRUE);
-                    if (nLineWidth > wfield_5E6) {
-                        wfield_5E6 = static_cast<SHORT>(nLineWidth);
+                    LONG nLineWidth = m_font.GetStringLength(field_5EC[nLine], TRUE);
+                    if (nLineWidth > field_5E6) {
+                        field_5E6 = static_cast<SHORT>(nLineWidth);
                     }
                 }
             }
 
             m_font.GetRes()->Release();
 
-            wfield_5E6 = min(wfield_5E6 + 8, nMaxWidth);
+            field_5E6 = min(field_5E6 + 8, nMaxWidth);
         } else {
             m_font.GetRes()->Release();
         }
@@ -768,19 +768,19 @@ void CInfToolTip::SetTextRef(CString sExtra, const STRREF& textRef1, const STRRE
     STR_RES strRes2;
 
     if (textRef1 != -1) {
-        wfield_5E6 = 0;
+        field_5E6 = 0;
 
         for (int index = 0; index < 2; index++) {
-            sfield_5EC[index] = "";
+            field_5EC[index] = "";
         }
 
         CSize size1;
-        GetFrameSize(1, wfield_5DA, size1, TRUE);
+        GetFrameSize(1, field_5DA, size1, TRUE);
 
         CSize size2;
-        GetFrameSize(2, wfield_5DC, size2, TRUE);
+        GetFrameSize(2, field_5DC, size2, TRUE);
 
-        WORD nMaxWidth = static_cast<WORD>(wfield_5E4 - size2.cx - size1.cx);
+        WORD nMaxWidth = static_cast<WORD>(field_5E4 - size2.cx - size1.cx);
 
         m_font.GetRes()->Demand();
 
@@ -803,20 +803,20 @@ void CInfToolTip::SetTextRef(CString sExtra, const STRREF& textRef1, const STRRE
                 strRes1.szText,
                 nMaxWidth - 8,
                 2,
-                sfield_5EC,
+                field_5EC,
                 FALSE,
                 TRUE,
                 TRUE,
                 -1);
             if (nLines > 0) {
-                CUtil::TrimRight(sfield_5EC[nLines - 1]);
+                CUtil::TrimRight(field_5EC[nLines - 1]);
                 for (BYTE nLine = 0; nLine < nLines; nLine++) {
-                    wfield_5E6 = max(static_cast<SHORT>(m_font.GetStringLength(sfield_5EC[nLine], TRUE)), wfield_5E6);
+                    field_5E6 = max(static_cast<SHORT>(m_font.GetStringLength(field_5EC[nLine], TRUE)), field_5E6);
                 }
             }
 
             m_font.GetRes()->Release();
-            wfield_5E6 = min(wfield_5E6 + 8, nMaxWidth);
+            field_5E6 = min(field_5E6 + 8, nMaxWidth);
         }
     }
 }
@@ -843,20 +843,20 @@ void CInfToolTip::StoreBackground(INT nFrom, INT nTo, INT x, INT y, const CRect&
     }
 
     CSize size2;
-    GetFrameSize(2, wfield_5DC, size2, TRUE);
+    GetFrameSize(2, field_5DC, size2, TRUE);
 
     CSize size1;
-    GetFrameSize(1, wfield_5DA, size1, TRUE);
+    GetFrameSize(1, field_5DA, size1, TRUE);
 
-    wfield_5E0 = wfield_5DE;
+    field_5E0 = field_5DE;
 
-    rStorage.left = max(min(max(x - wfield_5DE / 2 - size1.cx / 2, rClip.left),
-                            rClip.right - wfield_5DE - size1.cx - size2.cx / 2),
+    rStorage.left = max(min(max(x - field_5DE / 2 - size1.cx / 2, rClip.left),
+                            rClip.right - field_5DE - size1.cx - size2.cx / 2),
         rClip.left);
     rStorage.top = max(min(max(y - m_pFrame->nCenterY, rClip.top),
                            rClip.bottom - m_pFrame->nHeight),
         rClip.top);
-    rStorage.right = rStorage.left + size1.cx + size2.cx / 2 + wfield_5E0;
+    rStorage.right = rStorage.left + size1.cx + size2.cx / 2 + field_5E0;
     rStorage.bottom = rStorage.top + m_pFrame->nHeight;
 
     if (rStorage.left < rClip.left) {
@@ -886,7 +886,7 @@ void CInfToolTip::StoreBackground(INT nFrom, INT nTo, INT x, INT y, const CRect&
         if (hr != DDERR_SURFACELOST && hr != DDERR_WASSTILLDRAWING) {
             break;
         }
-    } while (!g_pChitin->nm_m_field_1932);
+    } while (!g_pChitin->field_1932);
 
     pRes->Release();
     m_pFrame = NULL;
@@ -914,20 +914,20 @@ void CInfToolTip::StoreBackground(INT x, INT y, const CRect& rClip, CRect& rStor
     }
 
     CSize size2;
-    GetFrameSize(2, wfield_5DC, size2, TRUE);
+    GetFrameSize(2, field_5DC, size2, TRUE);
 
     CSize size1;
-    GetFrameSize(1, wfield_5DA, size1, TRUE);
+    GetFrameSize(1, field_5DA, size1, TRUE);
 
-    wfield_5E0 = wfield_5DE;
+    field_5E0 = field_5DE;
 
-    rStorage.left = max(min(max(x - wfield_5DE / 2 - size1.cx / 2, rClip.left),
-                            rClip.right - wfield_5DE - size1.cx - size2.cx / 2),
+    rStorage.left = max(min(max(x - field_5DE / 2 - size1.cx / 2, rClip.left),
+                            rClip.right - field_5DE - size1.cx - size2.cx / 2),
         rClip.left);
     rStorage.top = max(min(max(y - m_pFrame->nCenterY, rClip.top),
                            rClip.bottom - m_pFrame->nHeight),
         rClip.top);
-    rStorage.right = rStorage.left + size1.cx + size2.cx / 2 + wfield_5E0;
+    rStorage.right = rStorage.left + size1.cx + size2.cx / 2 + field_5E0;
     rStorage.bottom = rStorage.top + m_pFrame->nHeight;
 
     if (rStorage.left < rClip.left) {
@@ -949,135 +949,3 @@ void CInfToolTip::StoreBackground(INT x, INT y, const CRect& rClip, CRect& rStor
     pRes->Release();
     m_pFrame = NULL;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x5959A0
-void FUN_005959a0() {
-    // TODO: Incomplete.
-}
-
-// 0x595C80
-void FUN_00595c80() {
-    // TODO: Incomplete.
-}
-
-// 0x595D60
-void FUN_00595d60() {
-    // TODO: Incomplete.
-}
-
-// 0x595E70
-void FUN_00595e70() {
-    // TODO: Incomplete.
-}
-
-// 0x595EB0
-void FUN_00595eb0() {
-    // TODO: Incomplete.
-}
-
-// 0x595F70
-void FUN_00595f70() {
-    // TODO: Incomplete.
-}
-
-// 0x595FB0
-void FUN_00595fb0() {
-    // TODO: Incomplete.
-}
-
-// 0x596040
-void FUN_00596040() {
-    // TODO: Incomplete.
-}
-
-// 0x5960E0
-void FUN_005960e0() {
-    // TODO: Incomplete.
-}
-
-// 0x5961A0
-void FUN_005961a0() {
-    // TODO: Incomplete.
-}
-
-// 0x596250
-void FUN_00596250() {
-    // TODO: Incomplete.
-}
-
-// 0x5962E0
-void FUN_005962e0() {
-    // TODO: Incomplete.
-}
-
-// 0x596580
-void FUN_00596580() {
-    // TODO: Incomplete.
-}
-
-// 0x596600
-void FUN_00596600() {
-    // TODO: Incomplete.
-}
-
-// 0x596670
-void FUN_00596670() {
-    // TODO: Incomplete.
-}
-
-// 0x5967A0
-void FUN_005967a0() {
-    // TODO: Incomplete.
-}
-
-// 0x596810
-void FUN_00596810() {
-    // TODO: Incomplete.
-}
-
-// 0x596870
-void FUN_00596870() {
-    // TODO: Incomplete.
-}
-
-// 0x5968C0
-void FUN_005968c0() {
-    // TODO: Incomplete.
-}
-
-// 0x596950
-void FUN_00596950() {
-    // TODO: Incomplete.
-}
-
-// 0x596980
-void FUN_00596980() {
-    // TODO: Incomplete.
-}
-
-// 0x5969F0
-void FUN_005969f0() {
-    // TODO: Incomplete.
-}
-
-// 0x596A80
-void FUN_00596a80() {
-    // TODO: Incomplete.
-}
-
-// 0x596B10
-void FUN_00596b10() {
-    // TODO: Incomplete.
-}
-
-// 0x596B50
-void FUN_00596b50() {
-    // TODO: Incomplete.
-}
-
-// 0x5972F4
-void FUN_005972f4() {
-    // TODO: Incomplete.
-}
-

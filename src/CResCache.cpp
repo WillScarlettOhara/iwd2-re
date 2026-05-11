@@ -23,11 +23,11 @@ CResCache::CResCache()
 {
     getcwd(workingDirectory, sizeof(workingDirectory));
     m_sDirName = DEFAULT_CACHE_DIRECTORY;
-    m_bCacheLocked = 0;
+    field_110 = 0;
     m_nCacheSize = 175000000;
     m_nAvailableCacheSize = 175000000;
-    m_bCopyInProgress = 0;
-    m_bCopyError = 0;
+    field_114 = 0;
+    field_118 = 0;
     m_nEntries = 0;
     m_bInitialized = FALSE;
     InitializeCriticalSection(&m_criticalSection);
@@ -215,7 +215,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
 
     INT nTotalBytesRead = 0;
 
-    m_bCopyError = 0;
+    field_118 = 0;
 
     if (GetUnusedSize() < nSize) {
         FlushCache(nSize);
@@ -254,7 +254,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
     DWORD nLastDisplayRefreshTime = GetTickCount();
     DWORD nLastBroadcastTime = GetTickCount();
 
-    m_bCopyInProgress = 1;
+    field_114 = 1;
 
     if (bCompressed) {
         nTotalBytesToRead = static_cast<INT>(input.GetLength()) - sizeof(header);
@@ -298,7 +298,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
 
                 nBytesRead = input.Read(pCompressedBuffer, nCompressedChunkSize);
                 if (nBytesRead != nCompressedChunkSize) {
-                    m_bCopyError = 1;
+                    field_118 = 1;
 
                     delete pCompressedBuffer;
                     delete pBuffer;
@@ -314,14 +314,14 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
 
                 output.Write(pBuffer, nUncompressedChunkSize);
             } else {
-                m_bCopyError = 1;
+                field_118 = 1;
             }
         } else {
             nBytesRead = input.Read(pBuffer, nBufferSize);
             output.Write(pBuffer, nBytesRead);
         }
 
-        if (m_bCopyError == 1) {
+        if (field_118 == 1) {
             nTotalBytesRead = nTotalBytesToRead;
             g_pChitin->cProgressBar.m_nActionProgress = nTotalBytesRead;
         } else {
@@ -341,7 +341,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
         }
     }
 
-    m_bCopyInProgress = 0;
+    field_114 = 0;
 
     input.Close();
     output.Close();
@@ -352,7 +352,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
 
     delete pBuffer;
 
-    if (m_bCopyError == 1) {
+    if (field_118 == 1) {
         CFile::Remove(sDstFileName);
         return FALSE;
     }
@@ -434,7 +434,7 @@ void CResCache::FlushCache(int a2)
 
     POSITION pos = m_lEntries.GetTailPosition();
 
-    EnterCriticalSection(&(g_pChitin->pm_field_35C));
+    EnterCriticalSection(&(g_pChitin->field_35C));
 
     int nUnusedSize = GetUnusedSize();
 
@@ -477,7 +477,7 @@ void CResCache::FlushCache(int a2)
         }
     }
 
-    LeaveCriticalSection(&(g_pChitin->pm_field_35C));
+    LeaveCriticalSection(&(g_pChitin->field_35C));
 
     if (m_nAvailableCacheSize >= m_nCacheSize) {
         m_nAvailableCacheSize = m_nCacheSize;
@@ -691,50 +691,3 @@ BOOL CResCache::ValidateFile(UINT nResFileID, LONG a3)
 
     return FALSE;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x78C342
-void Catch@0078c342() {
-    // TODO: Incomplete.
-}
-
-// 0x78C4E0
-void FUN_0078c4e0() {
-    // TODO: Incomplete.
-}
-
-// 0x78C853
-void Catch@0078c853() {
-    // TODO: Incomplete.
-}
-
-// 0x78C88A
-void Catch@0078c88a() {
-    // TODO: Incomplete.
-}
-
-// 0x78C8E4
-void Catch@0078c8e4() {
-    // TODO: Incomplete.
-}
-
-// 0x78C90B
-void FUN_0078c90b() {
-    // TODO: Incomplete.
-}
-
-// 0x78C9F7
-void Catch@0078c9f7() {
-    // TODO: Incomplete.
-}
-
-// 0x78CA51
-void Catch@0078ca51() {
-    // TODO: Incomplete.
-}
-
-// 0x78CD25
-void Catch@0078cd25() {
-    // TODO: Incomplete.
-}
-

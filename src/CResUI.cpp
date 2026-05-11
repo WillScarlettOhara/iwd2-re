@@ -105,10 +105,3 @@ int CResUI::Release()
     }
     return rc;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4013D0
-void FUN_004013d0() {
-    // TODO: Incomplete.
-}
-

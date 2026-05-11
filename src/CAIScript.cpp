@@ -35,7 +35,7 @@ CAINonPlayerScript::~CAINonPlayerScript()
 // NOTE: Inlined in `CAIScriptFile::CAIScriptFile`.
 CAIScript::CAIScript()
 {
-    nm_field_8 = 0;
+    field_8 = 0;
 }
 
 // 0x45FE00
@@ -205,15 +205,3 @@ BOOL CAIScript::IsEmpty()
 {
     return m_caList.IsEmpty();
 }
-
-// Phase 1-2: Scaffold functions
-// 0x40F100
-void FUN_0040f100() {
-    // TODO: Incomplete.
-}
-
-// 0x40F120
-void FUN_0040f120() {
-    // TODO: Incomplete.
-}
-

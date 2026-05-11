@@ -532,7 +532,7 @@ BOOL CInfTileSet::SetResID(RESID nNewID, CResRef cResRef, RESID nNewDualID, CRes
 
                 m_pResTiles[index]->m_pDualTileRes->SetID(nNewDualID + index);
 
-                m_pResTiles[index]->nfield_58 = cResRef;
+                m_pResTiles[index]->field_58 = cResRef;
 
                 if (m_pResTiles[index]->m_pDualTileRes == NULL) {
                     // __FILE__: C:\Projects\Icewind2\src\Baldur\Infinity.cpp
@@ -540,7 +540,7 @@ BOOL CInfTileSet::SetResID(RESID nNewID, CResRef cResRef, RESID nNewDualID, CRes
                     UTIL_ASSERT(FALSE);
                 }
 
-                m_pResTiles[index]->m_pDualTileRes->nfield_58 = cDualResRef;
+                m_pResTiles[index]->m_pDualTileRes->field_58 = cDualResRef;
             }
         }
     } else {
@@ -555,7 +555,7 @@ BOOL CInfTileSet::SetResID(RESID nNewID, CResRef cResRef, RESID nNewDualID, CRes
             m_pResTiles[index] = new CResInfTile(FALSE, FALSE);
             if (m_pResTiles[index] != NULL) {
                 m_pResTiles[index]->SetID(nNewID + index);
-                m_pResTiles[index]->nfield_58 = cResRef;
+                m_pResTiles[index]->field_58 = cResRef;
             }
         }
     }
@@ -640,8 +640,8 @@ BOOL CInfTileSet::Render3d(INT nTile, INT nStencilTile, const CRect& rDest, INT 
             dwFlags);
         RenderTexture(nTextureId, rDest, x, y, tileCode, dwFlags);
 
-        if (!g_pChitin->cVideo.nm_field_13A) {
-            g_pChitin->cVideo.nm_field_13E = nTextureId;
+        if (!g_pChitin->cVideo.field_13A) {
+            g_pChitin->cVideo.field_13E = nTextureId;
             CVideo3d::glBindTexture(GL_TEXTURE_2D, nTextureId);
             g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
@@ -728,7 +728,7 @@ void CInfTileSet::RenderTexture(INT nTextureId, const CRect& rDest, INT x, INT y
 }
 
 // 0x5D2DE0
-void CInfTileSet::RenderFogOfWar()
+void CInfTileSet::sub_5D2DE0()
 {
     INT x;
     INT y;
@@ -922,7 +922,7 @@ CInfinity::CInfinity()
 {
     pVidMode = NULL;
     m_areaType = 0;
-    m_bUseDestSrc = 0;
+    field_20 = 0;
     bWEDDemanded = FALSE;
     bInitialized = FALSE;
     bRefreshVRamRect = FALSE;
@@ -939,14 +939,14 @@ CInfinity::CInfinity()
     nOffsetY = 0;
     nNewX = 0;
     nNewY = 0;
-    m_nSub1XOffset = 0;
-    m_nSub1YOffset = 0;
-    m_nSub2XOffset = 0;
-    m_nSub2YOffset = 0;
-    m_nSub3XOffset = 0;
-    m_nSub3YOffset = 0;
-    m_nSub4XOffset = 0;
-    m_nSub4YOffset = 0;
+    field_98 = 0;
+    field_9C = 0;
+    field_A0 = 0;
+    field_A4 = 0;
+    field_A8 = 0;
+    field_AC = 0;
+    field_B0 = 0;
+    field_B4 = 0;
     nTilesX = 0;
     nTilesY = 0;
     rViewPort.left = 0;
@@ -962,11 +962,11 @@ CInfinity::CInfinity()
     rVRamRect.top = -1;
     rVRamRect.right = -1;
     rVRamRect.bottom = -1;
-    m_nRequestRectLeft = -1;
-    m_nRequestRectTop = -1;
-    m_nRequestRectRight = -1;
-    m_nRequestRectBottom = -1;
-    m_bScrolling = 0;
+    field_68 = -1;
+    field_6C = -1;
+    field_70 = -1;
+    field_74 = -1;
+    field_196 = 0;
     pTileSets[0] = NULL;
     pTileSets[1] = NULL;
     pTileSets[2] = NULL;
@@ -976,13 +976,13 @@ CInfinity::CInfinity()
     nThunderLength = 0;
     nCurrentLightningFrequency = 0;
     nNextLightningFrequency = 0;
-    m_nNewLightningFrequency = 0;
+    field_124 = 0;
     nCurrentRainLevel = 0;
     nNextRainLevel = 0;
     nCurrentSnowLevel = 0;
-    m_nCurrentWindLevel = 0;
-    m_nCurrentFogLevel = 0;
-    m_nNextWindLevel = 0;
+    field_134 = 0;
+    field_138 = 0;
+    field_13C = 0;
     nTimeToNextThunder = -1;
     m_bStartLightning = FALSE;
     m_bStopLightning = FALSE;
@@ -997,7 +997,7 @@ CInfinity::CInfinity()
     m_rgbTimeOfDayRainColor = RGB(110, 110, 110);
     m_rgbRainColor = RGB(110, 110, 110);
     m_requestDayNightCode = 1;
-    m_oldRequestDualTileCode = 0;
+    field_15E = 0;
     m_renderDayNightCode = 1;
     m_oldRenderDayNightCode = 1;
     m_dayLightIntensity = -1;
@@ -1013,7 +1013,7 @@ CInfinity::CInfinity()
     m_strMessageText = -1;
     m_nMessageEndTime = -1;
     m_bRenderMessage = 0;
-    m_wMessageScreenLine = 0;
+    field_286 = 0;
     m_bScreenShake = FALSE;
     m_screenShakeDelta.x = 0;
     m_screenShakeDelta.y = 0;
@@ -1032,7 +1032,7 @@ CInfinity::~CInfinity()
     rViewPort.left = 0;
     rViewPort.right = 0;
     rViewPort.bottom = 0;
-    m_bUseDestSrc = 0;
+    field_20 = 0;
     nAreaX = 0;
     nAreaY = 0;
     nOffsetX = 0;
@@ -1371,18 +1371,18 @@ BOOL CInfinity::AttachVRamRect(int x1, int y1, int x2, int y2)
 // 0x5CD2E0
 BOOL CInfinity::CancelRequestRect(unsigned char a1)
 {
-    if (m_nRequestRectLeft < 0) {
+    if (field_68 < 0) {
         return FALSE;
     }
 
-    if (m_bScrolling) {
+    if (field_196) {
         ScrollingCancelRequestRect(a1);
     }
 
-    int nMinX = m_nRequestRectLeft;
-    int nMinY = m_nRequestRectTop;
-    int nMaxX = m_nRequestRectRight;
-    int nMaxY = m_nRequestRectBottom;
+    int nMinX = field_68;
+    int nMinY = field_6C;
+    int nMaxX = field_70;
+    int nMaxY = field_74;
 
     if (nMinX < 0) {
         nMinX = 0;
@@ -1422,10 +1422,10 @@ BOOL CInfinity::CancelRequestRect(unsigned char a1)
         }
     }
 
-    m_nRequestRectLeft = -1;
-    m_nRequestRectTop = -1;
-    m_nRequestRectRight = -1;
-    m_nRequestRectBottom = -1;
+    field_68 = -1;
+    field_6C = -1;
+    field_70 = -1;
+    field_74 = -1;
 
     return TRUE;
 }
@@ -1612,7 +1612,7 @@ BOOL CInfinity::FreeWED()
     }
 
     bInitialized = FALSE;
-    CancelRequestRect(m_oldRequestDualTileCode);
+    CancelRequestRect(field_15E);
     DetachVRamRect();
     pResWED->Release();
     pResWED->CancelRequest();
@@ -2113,7 +2113,7 @@ DWORD CInfinity::Render(CVidMode* pNewVidMode, INT nSurface, INT nScrollState, C
         || m_bResizedViewPort) {
         if (bRefreshVRamRect) {
             bRefreshVRamRect = FALSE;
-            CancelRequestRect(m_oldRequestDualTileCode);
+            CancelRequestRect(field_15E);
             DetachVRamRect();
         }
 
@@ -2175,7 +2175,7 @@ DWORD CInfinity::Render(CVidMode* pNewVidMode, INT nSurface, INT nScrollState, C
             nCurrentTileY,
             nCurrentTileX + nVisibleTilesX - 1,
             nCurrentTileY + nVisibleTilesY - 1);
-    } else if (m_bScrolling) {
+    } else if (field_196) {
         if (nCurrentX >= 0) {
             nCurrentTileX = nCurrentX / 64;
         } else {
@@ -2289,7 +2289,7 @@ DWORD CInfinity::Render(CVidMode* pNewVidMode, INT nSurface, INT nScrollState, C
                                 y,
                                 tileCode,
                                 dwRenderFlag,
-                                pVidMode->m_dwShadowColor,
+                                pVidMode->field_24,
                                 0,
                                 0);
                         } else {
@@ -2415,7 +2415,7 @@ BOOL CInfinity::RequestRect(int x1, int y1, int x2, int y2)
 {
     CRect r(0, 0, nTilesX, nTilesY);
 
-    CancelRequestRect(m_oldRequestDualTileCode);
+    CancelRequestRect(field_15E);
 
     BYTE flags;
     if ((m_areaType & 0x40) != 0) {
@@ -2428,7 +2428,7 @@ BOOL CInfinity::RequestRect(int x1, int y1, int x2, int y2)
         flags |= 0x4;
     }
 
-    m_oldRequestDualTileCode = flags;
+    field_15E = flags;
 
     int nMinX = max(x1 + 3, 0);
     int nMaxX = min(x2 - 3, nTilesX - 1);
@@ -2465,12 +2465,12 @@ BOOL CInfinity::RequestRect(int x1, int y1, int x2, int y2)
         }
     }
 
-    m_nRequestRectLeft = x1;
-    m_nRequestRectTop = y1;
-    m_nRequestRectRight = x2;
-    m_nRequestRectBottom = y2;
+    field_68 = x1;
+    field_6C = y1;
+    field_70 = x2;
+    field_74 = y2;
 
-    m_bScrolling = 0;
+    field_196 = 0;
 
     return TRUE;
 }
@@ -2812,9 +2812,9 @@ BOOL CInfinity::InitViewPort(const CRect& rRect)
     rViewPort.right = rRect.right;
     rViewPort.bottom = rRect.bottom;
 
-    EnterCriticalSection(&(m_pArea->pm_field_1FC));
+    EnterCriticalSection(&(m_pArea->field_1FC));
     m_bResizedViewPort = TRUE;
-    LeaveCriticalSection(&(m_pArea->pm_field_1FC));
+    LeaveCriticalSection(&(m_pArea->field_1FC));
 
     nVisibleTilesX = rRect.Width() / 64 + 1;
     nVisibleTilesY = rRect.Height() / 64 + 1;
@@ -2824,10 +2824,10 @@ BOOL CInfinity::InitViewPort(const CRect& rRect)
     rVRamRect.right = -1;
     rVRamRect.bottom = -1;
 
-    m_nRequestRectLeft = -1;
-    m_nRequestRectTop = -1;
-    m_nRequestRectRight = -1;
-    m_nRequestRectBottom = -1;
+    field_68 = -1;
+    field_6C = -1;
+    field_70 = -1;
+    field_74 = -1;
 
     nOffsetX = 0;
     nOffsetY = 0;
@@ -2844,7 +2844,7 @@ BOOL CInfinity::InitViewPort(const CRect& rRect)
     m_ptCurrentPosExact.x = 0;
     m_ptCurrentPosExact.y = 0;
 
-    CancelRequestRect(m_oldRequestDualTileCode);
+    CancelRequestRect(field_15E);
     DetachVRamRect();
 
     nCurrentTileX = nCurrentX / 64;
@@ -2871,7 +2871,7 @@ BOOL CInfinity::InitViewPort(const CRect& rRect)
 // 0x5D1040
 void CInfinity::SetScreenShake(BOOL bScreenShake, WORD duration, const CPoint& screenShakeDelta)
 {
-    EnterCriticalSection(&(m_pArea->pm_field_1FC));
+    EnterCriticalSection(&(m_pArea->field_1FC));
     m_bScreenShake = bScreenShake;
     m_screenShakeDelta.x = screenShakeDelta.x * CGameSprite::EXACT_SCALE;
     m_screenShakeDelta.y = screenShakeDelta.y * CGameSprite::EXACT_SCALE;
@@ -2885,7 +2885,7 @@ void CInfinity::SetScreenShake(BOOL bScreenShake, WORD duration, const CPoint& s
     } else {
         m_screenShakeDecrease.y = 0;
     }
-    LeaveCriticalSection(&(m_pArea->pm_field_1FC));
+    LeaveCriticalSection(&(m_pArea->field_1FC));
 }
 
 // 0x5D11F0
@@ -3184,12 +3184,12 @@ void CInfinity::AIUpdate()
         && m_nMessageEndTime < GetTickCount()) {
         m_bRenderMessage = FALSE;
         m_nMessageEndTime = -1;
-        for (WORD cnt = 0; cnt < m_wMessageScreenLine; cnt++) {
+        for (WORD cnt = 0; cnt < field_286; cnt++) {
             if (m_vbMessageScreen.GetRes() != NULL) {
                 m_vbMessageScreen.GetRes()->CancelRequest();
             }
         }
-        m_wMessageScreenLine = 0;
+        field_286 = 0;
     }
 
     if (m_nScrollDelay > 0) {
@@ -3318,9 +3318,9 @@ void CInfinity::SwapVRamTiles(WORD wFromTile, WORD wToTile)
 void CInfinity::SetMessageScreen(CResRef resRef, DWORD strText, DWORD nDuration)
 {
     m_vbMessageScreen.SetResRef(resRef, TRUE, TRUE);
-    m_vbMessageScreen.m_bDoubleSize = g_pBaldurChitin->nm_field_4A2C;
+    m_vbMessageScreen.m_bDoubleSize = g_pBaldurChitin->field_4A2C;
 
-    m_wMessageScreenLine++;
+    field_286++;
     m_strMessageText = strText;
 
     if (nDuration == -1) {
@@ -3398,20 +3398,3 @@ void CInfinity::InvalidateRainTiles()
         }
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x452C10
-void FUN_00452c10() {
-    // TODO: Incomplete.
-}
-
-// 0x452C40
-void FUN_00452c40() {
-    // TODO: Incomplete.
-}
-
-// 0x5CDD00
-void FUN_005cdd00() {
-    // TODO: Incomplete.
-}
-

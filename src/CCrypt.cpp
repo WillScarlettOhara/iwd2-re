@@ -103,10 +103,3 @@ BOOL CCrypt::DecryptText(CHAR* pszText, INT& nSize)
 
     return TRUE;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x7C8830
-void FUN_007c8830() {
-    // TODO: Incomplete.
-}
-

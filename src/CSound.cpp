@@ -25,7 +25,7 @@ CSound::CSound()
     m_nXCoordinate = 0;
     m_nYCoordinate = 0;
     m_nZCoordinate = 0;
-    m_bFrequencyInitialized = 0;
+    field_3C = 0;
     pSoundBuffer = NULL;
     m_nPitchVariance = 0;
     m_nVolumeVariance = 0;
@@ -60,7 +60,7 @@ CSound::CSound(CResRef cResRef, int nRange, int nChannel, int nLooping, int nPri
         m_nRange = 1;
     }
     m_bPositionedSound = FALSE;
-    m_bFrequencyInitialized = 0;
+    field_3C = 0;
     pSoundBuffer = NULL;
     m_nPitchVariance = 0;
     m_nVolumeVariance = 0;
@@ -268,7 +268,7 @@ BOOL CSound::ExclusivePlay(BOOL bReplay)
     if (m_nVolume > 0 && pChannel->m_nVolume > 0) {
         BOOL bFound = FALSE;
 
-        if ((m_pSoundMixer->nfield_C0 & 0x1) != 0) {
+        if ((m_pSoundMixer->field_C0 & 0x1) != 0) {
             m_pSoundMixer->Lock();
 
             POSITION pos = m_pSoundMixer->m_lVoices.GetHeadPosition();
@@ -314,9 +314,9 @@ BOOL CSound::ExclusivePlay(BOOL bReplay)
 
             LPWAVEFORMATEX pWaveFormat = GetRes()->GetWaveFormatPtr();
 
-            if (!m_bFrequencyInitialized) {
+            if (!field_3C) {
                 m_dwFrequency = pWaveFormat->nSamplesPerSec / 500;
-                m_bFrequencyInitialized = TRUE;
+                field_3C = TRUE;
             }
 
             BOOL bCreated;
@@ -555,7 +555,7 @@ BOOL CSound::IsSoundPlaying()
 // 0x7A9B10
 BOOL CSound::Play(BOOL bReplay)
 {
-    if ((m_pSoundMixer->nfield_C0 & 0x1) == 0) {
+    if ((m_pSoundMixer->field_C0 & 0x1) == 0) {
         return FALSE;
     }
 
@@ -936,15 +936,3 @@ BOOL CSound::Stop()
         return FALSE;
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x7A8C70
-void FUN_007a8c70() {
-    // TODO: Incomplete.
-}
-
-// 0x7A9DA0
-void FUN_007a9da0() {
-    // TODO: Incomplete.
-}
-

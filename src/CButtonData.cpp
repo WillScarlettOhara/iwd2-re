@@ -8,12 +8,12 @@ CAbilityId::CAbilityId()
     m_abilityNum = -1;
     m_res = "";
     m_targetType = 0;
-    nm_field_10 = -1;
-    nm_field_14 = -1;
-    nm_field_18 = -1;
+    field_10 = -1;
+    field_14 = -1;
+    field_18 = -1;
     m_nClass = 0;
-    bm_field_1D = 0;
-    wm_field_1E = 0;
+    field_1D = 0;
+    field_1E = 0;
 }
 
 // 0x4B9270
@@ -24,12 +24,12 @@ CAbilityId& CAbilityId::operator=(const CAbilityId& other)
     m_abilityNum = other.m_abilityNum;
     m_res = other.m_res;
     m_targetType = other.m_targetType;
-    nm_field_10 = other.nm_field_10;
-    nm_field_14 = other.nm_field_14;
-    nm_field_18 = other.nm_field_18;
+    field_10 = other.field_10;
+    field_14 = other.field_14;
+    field_18 = other.field_18;
     m_nClass = other.m_nClass;
-    bm_field_1D = other.bm_field_1D;
-    wm_field_1E = other.wm_field_1E;
+    field_1D = other.field_1D;
+    field_1E = other.field_1E;
     return *this;
 }
 
@@ -60,20 +60,3 @@ CButtonData& CButtonData::operator=(const CButtonData& other)
     m_bDisplayCount = other.m_bDisplayCount;
     return *this;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x504070
-void FUN_00504070() {
-    // TODO: Incomplete.
-}
-
-// 0x5041A0
-void FUN_005041a0() {
-    // TODO: Incomplete.
-}
-
-// 0x504250
-void FUN_00504250() {
-    // TODO: Incomplete.
-}
-

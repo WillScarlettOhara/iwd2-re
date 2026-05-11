@@ -16,23 +16,23 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
     , m_shieldPalette(CVidPalette::TYPE_RANGE)
     , m_helmetPalette(CVidPalette::TYPE_RANGE)
 {
-    bm_field_144D = 0;
+    field_144D = 0;
     m_animationID = animationID;
-    nm_field_1444 = 0;
+    field_1444 = 0;
     m_falseColor = TRUE;
     m_moveScale = 9;
     m_moveScaleCurrent = 9;
     m_renderWeapons = TRUE;
     m_renderHelmet = TRUE;
     m_bEquipHelmet = TRUE;
-    bm_field_1434 = 0;
+    field_1434 = 0;
     m_armorCode = '1';
-    bm_field_1441 = 66;
+    field_1441 = 66;
     m_bDetectedByInfravision = TRUE;
-    bm_field_144C = 0;
+    field_144C = 0;
     m_bInvulnerable = FALSE;
     m_bCanLieDown = TRUE;
-    bm_field_1448 = 0;
+    field_1448 = 0;
 
     SetNeckOffsets(0, 10, -10, 10, -10, 0, -10, -10, 0, -10, 10, -10, 10, 0, 10, 10);
 
@@ -51,8 +51,8 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
     switch (animationID & 0xF00) {
     case 0x000:
         m_armorMaxCode = '4';
-        bm_field_1442 = 67;
-        bm_field_1448 = 1;
+        field_1442 = 67;
+        field_1448 = 1;
 
         switch (animationID & 0xF) {
         case 0:
@@ -136,8 +136,8 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
         break;
     case 0x100:
         m_armorMaxCode = '4';
-        bm_field_1442 = 70;
-        bm_field_1448 = 1;
+        field_1442 = 70;
+        field_1448 = 1;
 
         switch (animationID & 0xF) {
         case 0:
@@ -221,9 +221,9 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
         break;
     case 0x200:
         m_armorMaxCode = '4';
-        bm_field_1441 = 87;
-        bm_field_1442 = 87;
-        bm_field_1448 = 1;
+        field_1441 = 87;
+        field_1442 = 87;
+        field_1448 = 1;
 
         switch (animationID & 0xF) {
         case 0:
@@ -291,9 +291,9 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
     case 0x300:
         m_bEquipHelmet = TRUE;
         m_armorMaxCode = '4';
-        bm_field_1441 = 84;
-        bm_field_1442 = 67;
-        bm_field_1448 = 1;
+        field_1441 = 84;
+        field_1442 = 67;
+        field_1448 = 1;
 
         switch (animationID & 0xF) {
         case 0:
@@ -379,8 +379,8 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
         switch (animationID & 0xF) {
         case 0:
             m_resRef = "UDRZ";
-            bm_field_1441 = 90;
-            bm_field_1442 = 90;
+            field_1441 = 90;
+            field_1442 = 90;
             m_heightCodeHelmet = "WPM";
             m_heightCode = m_heightCodeHelmet;
             m_nSndFreq = 5;
@@ -388,8 +388,8 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
         case 1:
             m_bInvulnerable = TRUE;
             m_resRef = "CTES";
-            bm_field_1441 = 83;
-            bm_field_1442 = 83;
+            field_1441 = 83;
+            field_1442 = 83;
             m_heightCodeHelmet = "WPL";
             m_heightCode = m_heightCodeHelmet;
             m_nSndFreq = 4;
@@ -398,8 +398,8 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
             m_bEquipHelmet = FALSE;
             m_resRef = "CMNK";
             m_resRefPaperDoll = m_resRef;
-            bm_field_1441 = 75;
-            bm_field_1442 = 75;
+            field_1441 = 75;
+            field_1442 = 75;
             m_heightCodeHelmet = "WPM";
             m_heightCode = m_heightCodeHelmet;
             m_nSndFreq = 5;
@@ -408,8 +408,8 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
             m_colorChunks = -1;
             m_resRef = "MSKL";
             m_resRefPaperDoll = m_resRef;
-            bm_field_1441 = 76;
-            bm_field_1442 = 76;
+            field_1441 = 76;
+            field_1442 = 76;
             m_heightCodeHelmet = "WPM";
             m_heightCode = m_heightCodeHelmet;
             m_colorBlood = 37;
@@ -423,8 +423,8 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
             m_bCanLieDown = FALSE;
             m_resRef = "USAR";
             m_resRefPaperDoll = m_resRef;
-            bm_field_1441 = 82;
-            bm_field_1442 = 82;
+            field_1441 = 82;
+            field_1442 = 82;
             m_heightCodeHelmet = "WPL";
             m_heightCode = m_heightCodeHelmet;
             m_nSndFreq = 5;
@@ -433,8 +433,8 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
             m_colorChunks = -1;
             m_resRef = "MDGU";
             m_resRefPaperDoll = m_resRef;
-            bm_field_1441 = 85;
-            bm_field_1442 = 85;
+            field_1441 = 85;
+            field_1442 = 85;
             m_heightCodeHelmet = "WPL";
             m_heightCode = m_heightCodeHelmet;
             m_colorBlood = 34;
@@ -448,9 +448,9 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
         break;
     case 0x500:
         m_armorMaxCode = '1';
-        bm_field_1441 = 77;
-        bm_field_1442 = 77;
-        bm_field_1448 = 1;
+        field_1441 = 77;
+        field_1442 = 77;
+        field_1448 = 1;
 
         switch (animationID & 0xF) {
         case 0:
@@ -479,11 +479,11 @@ CGameAnimationTypeCharacter::CGameAnimationTypeCharacter(USHORT animationID, BYT
     }
 
     // NOTE: Uninline.
-    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1"), nm_field_1444, TRUE, TRUE);
-    m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA"), nm_field_1444, TRUE, TRUE);
-    m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A1"), nm_field_1444, TRUE, TRUE);
-    m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A3"), nm_field_1444, TRUE, TRUE);
-    m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A5"), nm_field_1444, TRUE, TRUE);
+    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1"), field_1444, TRUE, TRUE);
+    m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA"), field_1444, TRUE, TRUE);
+    m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A1"), field_1444, TRUE, TRUE);
+    m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A3"), field_1444, TRUE, TRUE);
+    m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A5"), field_1444, TRUE, TRUE);
 
     m_currentVidCellBase = &m_g1VidCellBase;
     m_currentVidCell = &m_g1VidCellBase;
@@ -835,9 +835,9 @@ void CGameAnimationTypeCharacter::EquipArmor(CHAR armorLevel, BYTE* colorRangeVa
     }
 
     if (armorLevel == m_armorMaxCode) {
-        m_resRef.SetAt(3, bm_field_1442);
+        m_resRef.SetAt(3, field_1442);
     } else {
-        m_resRef.SetAt(3, bm_field_1441);
+        m_resRef.SetAt(3, field_1441);
     }
 
     ClearColorEffects(5);
@@ -846,31 +846,31 @@ void CGameAnimationTypeCharacter::EquipArmor(CHAR armorLevel, BYTE* colorRangeVa
 
     m_armorCode = armorLevel;
 
-    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
-    m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+    m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
 
     if (m_weaponCode == 4) {
-        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A1"), nm_field_1444, TRUE, TRUE);
-        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A3"), nm_field_1444, TRUE, TRUE);
-        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A5"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A1"), field_1444, TRUE, TRUE);
+        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A3"), field_1444, TRUE, TRUE);
+        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A5"), field_1444, TRUE, TRUE);
     } else if (m_weaponCode == 5) {
-        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A2"), nm_field_1444, TRUE, TRUE);
-        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A4"), nm_field_1444, TRUE, TRUE);
-        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A6"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A2"), field_1444, TRUE, TRUE);
+        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A4"), field_1444, TRUE, TRUE);
+        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A6"), field_1444, TRUE, TRUE);
     } else if ((m_weaponCode & 0x10) != 0) {
-        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A7"), nm_field_1444, TRUE, TRUE);
-        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A8"), nm_field_1444, TRUE, TRUE);
-        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A9"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A7"), field_1444, TRUE, TRUE);
+        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A8"), field_1444, TRUE, TRUE);
+        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A9"), field_1444, TRUE, TRUE);
     } else {
         switch (m_weaponCode) {
         case 1:
-            m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SA"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SA"), field_1444, TRUE, TRUE);
             break;
         case 2:
-            m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SX"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SX"), field_1444, TRUE, TRUE);
             break;
         case 3:
-            m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SS"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SS"), field_1444, TRUE, TRUE);
             break;
         }
     }
@@ -900,31 +900,31 @@ void CGameAnimationTypeCharacter::EquipHelmet(const CString& resRef, BYTE* color
 
         m_currentVidCellHelmetBase = &m_g1VidCellHelmetBase;
 
-        m_g1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "G1"), nm_field_1444, TRUE, TRUE);
-        m_caVidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "CA"), nm_field_1444, TRUE, TRUE);
+        m_g1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "G1"), field_1444, TRUE, TRUE);
+        m_caVidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "CA"), field_1444, TRUE, TRUE);
 
         if (m_weaponCode == 4) {
-            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A1"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A2"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A3"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A1"), field_1444, TRUE, TRUE);
+            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A2"), field_1444, TRUE, TRUE);
+            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A3"), field_1444, TRUE, TRUE);
         } else if (m_weaponCode == 5) {
-            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A2"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A4"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A6"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A2"), field_1444, TRUE, TRUE);
+            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A4"), field_1444, TRUE, TRUE);
+            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A6"), field_1444, TRUE, TRUE);
         } else if ((m_weaponCode & 0x10) != 0) {
-            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A7"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A8"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A9"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A7"), field_1444, TRUE, TRUE);
+            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A8"), field_1444, TRUE, TRUE);
+            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A9"), field_1444, TRUE, TRUE);
         } else {
             switch (m_weaponCode) {
             case 1:
-                m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SA"), nm_field_1444, TRUE, TRUE);
+                m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SA"), field_1444, TRUE, TRUE);
                 break;
             case 2:
-                m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SX"), nm_field_1444, TRUE, TRUE);
+                m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SX"), field_1444, TRUE, TRUE);
                 break;
             case 3:
-                m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SS"), nm_field_1444, TRUE, TRUE);
+                m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SS"), field_1444, TRUE, TRUE);
                 break;
             }
         }
@@ -966,11 +966,11 @@ void CGameAnimationTypeCharacter::EquipShield(const CString& resRef, BYTE* color
     if (!resRef.IsEmpty()) {
         m_currentVidCellShieldBase = &m_g1VidCellShieldBase;
 
-        m_g1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "G1"), nm_field_1444, TRUE, TRUE);
+        m_g1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "G1"), field_1444, TRUE, TRUE);
         if (m_weaponCode == 4) {
-            m_a1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A1"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A3"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A5"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A1"), field_1444, TRUE, TRUE);
+            m_a2VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A3"), field_1444, TRUE, TRUE);
+            m_a3VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A5"), field_1444, TRUE, TRUE);
         } else if (m_weaponCode == 5) {
             return;
         } else {
@@ -993,7 +993,7 @@ void CGameAnimationTypeCharacter::EquipShield(const CString& resRef, BYTE* color
             }
 
             if (m_weaponCode == 3) {
-                m_a1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "SS"), nm_field_1444, TRUE, TRUE);
+                m_a1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "SS"), field_1444, TRUE, TRUE);
             }
         }
 
@@ -1053,14 +1053,14 @@ void CGameAnimationTypeCharacter::EquipWeapon(const CString& resRef, BYTE* color
 
         m_weaponCode = 5;
 
-        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A2"), nm_field_1444, TRUE, TRUE);
-        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A4"), nm_field_1444, TRUE, TRUE);
-        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A6"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A2"), field_1444, TRUE, TRUE);
+        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A4"), field_1444, TRUE, TRUE);
+        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A6"), field_1444, TRUE, TRUE);
 
         if (resRef != "") {
-            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A2"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A4"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A6"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A2"), field_1444, TRUE, TRUE);
+            m_a2VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A4"), field_1444, TRUE, TRUE);
+            m_a3VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A6"), field_1444, TRUE, TRUE);
         } else {
             m_a1VidCellWeaponBase.CancelRequest();
             m_a2VidCellWeaponBase.CancelRequest();
@@ -1068,9 +1068,9 @@ void CGameAnimationTypeCharacter::EquipWeapon(const CString& resRef, BYTE* color
         }
 
         if (m_currentVidCellHelmetBase != NULL) {
-            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A2"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A4"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A6"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A2"), field_1444, TRUE, TRUE);
+            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A4"), field_1444, TRUE, TRUE);
+            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A6"), field_1444, TRUE, TRUE);
         }
     } else if (pAttackProb[3] != 0) {
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
@@ -1084,11 +1084,11 @@ void CGameAnimationTypeCharacter::EquipWeapon(const CString& resRef, BYTE* color
         m_weaponResRef = resRef;
         m_weaponCode = 1;
 
-        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SA"), nm_field_1444, TRUE, TRUE);
-        m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "SA"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SA"), field_1444, TRUE, TRUE);
+        m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "SA"), field_1444, TRUE, TRUE);
 
         if (m_currentVidCellHelmetBase != NULL) {
-            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SA"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SA"), field_1444, TRUE, TRUE);
         }
     } else if (pAttackProb[4] != 0) {
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
@@ -1102,11 +1102,11 @@ void CGameAnimationTypeCharacter::EquipWeapon(const CString& resRef, BYTE* color
         m_weaponResRef = resRef;
         m_weaponCode = 2;
 
-        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SX"), nm_field_1444, TRUE, TRUE);
-        m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "SX"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SX"), field_1444, TRUE, TRUE);
+        m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "SX"), field_1444, TRUE, TRUE);
 
         if (m_currentVidCellHelmetBase != NULL) {
-            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SX"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SX"), field_1444, TRUE, TRUE);
         }
     } else if (pAttackProb[5] != 0) {
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
@@ -1120,20 +1120,20 @@ void CGameAnimationTypeCharacter::EquipWeapon(const CString& resRef, BYTE* color
         m_weaponResRef = resRef;
         m_weaponCode = 3;
 
-        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SS"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "SS"), field_1444, TRUE, TRUE);
 
         if (resRef != "") {
-            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "SS"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "SS"), field_1444, TRUE, TRUE);
         } else {
             m_a1VidCellWeaponBase.CancelRequest();
         }
 
         if (m_currentVidCellShieldBase != NULL) {
-            m_a1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "SS"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "SS"), field_1444, TRUE, TRUE);
         }
 
         if (m_currentVidCellHelmetBase != NULL) {
-            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SS"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "SS"), field_1444, TRUE, TRUE);
         }
     } else {
         return;
@@ -1144,10 +1144,10 @@ void CGameAnimationTypeCharacter::EquipWeapon(const CString& resRef, BYTE* color
     ClearColorEffects(16);
 
     if (resRef != "") {
-        m_g1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "G1"), nm_field_1444, TRUE, TRUE);
+        m_g1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "G1"), field_1444, TRUE, TRUE);
         m_currentVidCellWeaponBase = &m_g1VidCellWeaponBase;
         m_currentVidCellWeapon = &m_g1VidCellWeaponBase;
-        bm_field_1434 = (itemFlags & 0x80) != 0;
+        field_1434 = (itemFlags & 0x80) != 0;
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
         // __LINE__: 18911
@@ -1183,9 +1183,9 @@ void CGameAnimationTypeCharacter::Equip1HWeapon(const CString& resRef, BYTE* col
     if (m_currentVidCellShield != NULL && (m_weaponCode & 17) == 17) {
         m_weaponCode = 19;
         if (resRef != "") {
-            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A7"), nm_field_1444, FALSE, FALSE);
-            m_a2VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A8"), nm_field_1444, FALSE, FALSE);
-            m_a3VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A9"), nm_field_1444, FALSE, FALSE);
+            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A7"), field_1444, FALSE, FALSE);
+            m_a2VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A8"), field_1444, FALSE, FALSE);
+            m_a3VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A9"), field_1444, FALSE, FALSE);
         } else {
             m_a1VidCellWeaponBase.CancelRequest();
             m_a2VidCellWeaponBase.CancelRequest();
@@ -1193,21 +1193,21 @@ void CGameAnimationTypeCharacter::Equip1HWeapon(const CString& resRef, BYTE* col
         }
     } else {
         if (m_currentVidCellShield != NULL && m_weaponCode == 3) {
-            m_a1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A1"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A3"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A5"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A1"), field_1444, TRUE, TRUE);
+            m_a2VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A3"), field_1444, TRUE, TRUE);
+            m_a3VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A5"), field_1444, TRUE, TRUE);
         }
 
         m_weaponCode = 4;
 
-        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A1"), nm_field_1444, TRUE, TRUE);
-        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A3"), nm_field_1444, TRUE, TRUE);
-        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A5"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A1"), field_1444, TRUE, TRUE);
+        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A3"), field_1444, TRUE, TRUE);
+        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A5"), field_1444, TRUE, TRUE);
 
         if (resRef != "") {
-            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A1"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A3"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A5"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A1"), field_1444, TRUE, TRUE);
+            m_a2VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A3"), field_1444, TRUE, TRUE);
+            m_a3VidCellWeaponBase.SetResRef(CResRef(m_heightCode + resRef + "A5"), field_1444, TRUE, TRUE);
         } else {
             m_a1VidCellWeaponBase.CancelRequest();
             m_a2VidCellWeaponBase.CancelRequest();
@@ -1215,14 +1215,14 @@ void CGameAnimationTypeCharacter::Equip1HWeapon(const CString& resRef, BYTE* col
         }
 
         if (m_currentVidCellHelmetBase != NULL) {
-            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCode + m_helmetResRef + "A1"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCode + m_helmetResRef + "A3"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCode + m_helmetResRef + "A5"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCode + m_helmetResRef + "A1"), field_1444, TRUE, TRUE);
+            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCode + m_helmetResRef + "A3"), field_1444, TRUE, TRUE);
+            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCode + m_helmetResRef + "A5"), field_1444, TRUE, TRUE);
         }
     }
 
     if (resRef != "") {
-        m_g1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "G1"), nm_field_1444, TRUE, TRUE);
+        m_g1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "G1"), field_1444, TRUE, TRUE);
         m_currentVidCellWeaponBase = &m_g1VidCellWeaponBase;
         m_currentVidCellWeapon = &m_g1VidCellWeaponBase;
 
@@ -1263,28 +1263,28 @@ void CGameAnimationTypeCharacter::EquipOffHWeapon(const CString& resRef, BYTE* c
             && m_weaponResRef != "") {
             m_weaponCode = 19;
 
-            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A7"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A8"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A9"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A7"), field_1444, TRUE, TRUE);
+            m_a2VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A8"), field_1444, TRUE, TRUE);
+            m_a3VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A9"), field_1444, TRUE, TRUE);
         } else {
             m_weaponCode = 17;
         }
 
-        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A7"), nm_field_1444, TRUE, TRUE);
-        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A8"), nm_field_1444, TRUE, TRUE);
-        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A9"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A7"), field_1444, TRUE, TRUE);
+        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A8"), field_1444, TRUE, TRUE);
+        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A9"), field_1444, TRUE, TRUE);
 
-        m_a1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A7"), nm_field_1444, TRUE, TRUE);
-        m_a2VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A8"), nm_field_1444, TRUE, TRUE);
-        m_a3VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A9"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A7"), field_1444, TRUE, TRUE);
+        m_a2VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A8"), field_1444, TRUE, TRUE);
+        m_a3VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "A9"), field_1444, TRUE, TRUE);
 
         if (m_currentVidCellHelmetBase != NULL) {
-            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A7"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A8"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A9"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A7"), field_1444, TRUE, TRUE);
+            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A8"), field_1444, TRUE, TRUE);
+            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A9"), field_1444, TRUE, TRUE);
         }
 
-        m_g1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "G1"), nm_field_1444, TRUE, TRUE);
+        m_g1VidCellShieldBase.SetResRef(CResRef(m_heightCode + m_shieldResRef + "G1"), field_1444, TRUE, TRUE);
 
         m_currentVidCellShieldBase = &m_g1VidCellShieldBase;
         m_currentVidCellShield = &m_g1VidCellShieldBase;
@@ -1308,14 +1308,14 @@ void CGameAnimationTypeCharacter::EquipOffHWeapon(const CString& resRef, BYTE* c
     } else {
         m_weaponCode = 4;
 
-        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A1"), nm_field_1444, TRUE, TRUE);
-        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A3"), nm_field_1444, TRUE, TRUE);
-        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A5"), nm_field_1444, TRUE, TRUE);
+        m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A1"), field_1444, TRUE, TRUE);
+        m_a2VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A3"), field_1444, TRUE, TRUE);
+        m_a3VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A5"), field_1444, TRUE, TRUE);
 
         if (m_weaponResRef != "") {
-            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A1"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A3"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A5"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A1"), field_1444, TRUE, TRUE);
+            m_a2VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A3"), field_1444, TRUE, TRUE);
+            m_a3VidCellWeaponBase.SetResRef(CResRef(m_heightCode + m_weaponResRef + "A5"), field_1444, TRUE, TRUE);
         }
 
         m_a1VidCellShieldBase.CancelRequest();
@@ -1323,9 +1323,9 @@ void CGameAnimationTypeCharacter::EquipOffHWeapon(const CString& resRef, BYTE* c
         m_a3VidCellShieldBase.CancelRequest();
 
         if (m_currentVidCellHelmetBase != NULL) {
-            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A1"), nm_field_1444, TRUE, TRUE);
-            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A3"), nm_field_1444, TRUE, TRUE);
-            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A5"), nm_field_1444, TRUE, TRUE);
+            m_a1VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A1"), field_1444, TRUE, TRUE);
+            m_a2VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A3"), field_1444, TRUE, TRUE);
+            m_a3VidCellHelmetBase.SetResRef(CResRef(m_heightCodeHelmet + m_helmetResRef + "A5"), field_1444, TRUE, TRUE);
         }
 
         m_g1VidCellShieldBase.CancelRequest();
@@ -1386,7 +1386,7 @@ void CGameAnimationTypeCharacter::GetAnimationResRef(CString& resRef, BYTE range
         if ((m_animationID & 0xF00) != 0x400
             || (m_animationID & 0xF) == 0x2) {
             resRef = m_resRefPaperDoll + m_armorCode;
-            resRef.SetAt(3, bm_field_1442);
+            resRef.SetAt(3, field_1442);
         }
         break;
     case 0x10:
@@ -1466,7 +1466,7 @@ char* CGameAnimationTypeCharacter::GetSndArmor()
         szTemp[6] = ch;
         szTemp[7] = '\0';
         szTemp[8] = '\0';
-        if (strcmp(szTemp, bm_field_3F2) == 0) {
+        if (strcmp(szTemp, field_3F2) == 0) {
             if (szTemp[6] - '1' == cnt - 1) {
                 szTemp[6] = '1';
             } else {
@@ -1476,7 +1476,7 @@ char* CGameAnimationTypeCharacter::GetSndArmor()
     } else {
         szTemp[7] = ch;
         szTemp[8] = '\0';
-        if (strcmp(szTemp, bm_field_3F2) == 0) {
+        if (strcmp(szTemp, field_3F2) == 0) {
             if (szTemp[7] - '1' == cnt - 1) {
                 szTemp[7] = '1';
             } else {
@@ -1485,7 +1485,7 @@ char* CGameAnimationTypeCharacter::GetSndArmor()
         }
     }
 
-    memcpy(bm_field_3F2, szTemp, 9);
+    memcpy(field_3F2, szTemp, 9);
 
     return szTemp;
 }
@@ -2183,9 +2183,9 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         m_currentBamSequence = 9;
 
-        if (bm_field_1448 != 0) {
-            bm_field_144C = '9';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+        if (field_1448 != 0) {
+            field_144C = '9';
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
         }
         break;
     case 2:
@@ -2199,30 +2199,30 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
         switch (rand() % 4) {
         case 0:
             m_currentBamSequence = 1;
-            if (bm_field_1448 != 0) {
-                bm_field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = 0;
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
             }
             break;
         case 1:
             m_currentBamSequence = 3;
-            if (bm_field_1448 != 0) {
-                bm_field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = 0;
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
             }
             break;
         case 2:
             m_currentBamSequence = 5;
-            if (bm_field_1448 != 0) {
-                bm_field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = 0;
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
             }
             break;
         case 3:
             m_currentBamSequence = 7;
-            if (bm_field_1448 != 0) {
-                bm_field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = 0;
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
             }
             break;
         default:
@@ -2242,30 +2242,30 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
         switch (rand() % 4) {
         case 0:
             m_currentBamSequence = 0;
-            if (bm_field_1448 != 0) {
-                bm_field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = 0;
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
             }
             break;
         case 1:
             m_currentBamSequence = 2;
-            if (bm_field_1448 != 0) {
-                bm_field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = 0;
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
             }
             break;
         case 2:
             m_currentBamSequence = 4;
-            if (bm_field_1448 != 0) {
-                bm_field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = 0;
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
             }
             break;
         case 3:
             m_currentBamSequence = 6;
-            if (bm_field_1448 != 0) {
-                bm_field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = 0;
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
             }
             break;
         default:
@@ -2291,9 +2291,9 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         m_currentBamSequence = 4;
 
-        if (bm_field_1448 != 0) {
-            bm_field_144C = '4';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+        if (field_1448 != 0) {
+            field_144C = '4';
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
         }
         break;
     case 5:
@@ -2303,9 +2303,9 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
         m_renderHelmet = FALSE;
         m_currentBamSequence = 5;
 
-        if (bm_field_1448 != 0) {
-            bm_field_144C = '5';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+        if (field_1448 != 0) {
+            field_144C = '5';
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
         }
         break;
     case 6:
@@ -2321,23 +2321,23 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
                 m_currentBamSequence = 2;
 
-                if (bm_field_1448 != 0) {
-                    bm_field_144C = '2';
-                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+                if (field_1448 != 0) {
+                    field_144C = '2';
+                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
                 }
             } else if (nChance < 97) {
                 m_currentBamSequence = 7;
 
-                if (bm_field_1448 != 0) {
-                    bm_field_144C = '7';
-                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+                if (field_1448 != 0) {
+                    field_144C = '7';
+                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
                 }
             } else {
                 m_currentBamSequence = 0;
 
-                if (bm_field_1448 != 0) {
-                    bm_field_144C = '8';
-                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+                if (field_1448 != 0) {
+                    field_144C = '8';
+                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
                 }
             }
 
@@ -2365,9 +2365,9 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
             m_currentBamSequence = 3;
 
-            if (bm_field_1448 != 0) {
-                bm_field_144C = '3';
-                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = '3';
+                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
             }
 
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
@@ -2381,9 +2381,9 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
             m_currentBamSequence = 1;
 
-            if (bm_field_1448 != 0) {
-                bm_field_144C = 0;
-                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = 0;
+                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
             }
 
             if (m_currentVidCellShield != NULL) {
@@ -2418,8 +2418,8 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         m_currentBamSequence = 0;
 
-        if (bm_field_1448 != 0) {
-            bm_field_144C = 0;
+        if (field_1448 != 0) {
+            field_144C = 0;
         }
         break;
     case 9:
@@ -2429,9 +2429,9 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
         m_renderHelmet = FALSE;
         m_currentBamSequence = 6;
 
-        if (bm_field_1448 != 0) {
-            bm_field_144C = '6';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+        if (field_1448 != 0) {
+            field_144C = '6';
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
         }
         break;
     case 10:
@@ -2451,9 +2451,9 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         m_currentBamSequence = 0;
 
-        if (bm_field_1448 != 0) {
-            bm_field_144C = '1';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+        if (field_1448 != 0) {
+            field_144C = '1';
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
         }
         break;
     case 11:
@@ -2474,8 +2474,8 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
         m_currentBamSequence = 0;
         nSequence = 0;
 
-        if (bm_field_1448 != 0) {
-            bm_field_144C = 0;
+        if (field_1448 != 0) {
+            field_144C = 0;
         }
         break;
     case 12:
@@ -2496,8 +2496,8 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
         m_currentBamSequence = 0;
         nSequence = 0;
 
-        if (bm_field_1448 != 0) {
-            bm_field_144C = 0;
+        if (field_1448 != 0) {
+            field_144C = 0;
         }
         break;
     case 13:
@@ -2518,8 +2518,8 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
         m_currentBamSequence = 0;
         nSequence = 0;
 
-        if (bm_field_1448 != 0) {
-            bm_field_144C = 0;
+        if (field_1448 != 0) {
+            field_144C = 0;
         }
         break;
     case 14:
@@ -2534,9 +2534,9 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
             m_currentBamSequence = 3;
 
-            if (bm_field_1448 != 0) {
-                bm_field_144C = '3';
-                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = '3';
+                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
             }
 
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
@@ -2550,9 +2550,9 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
             m_currentBamSequence = 1;
 
-            if (bm_field_1448 != 0) {
-                bm_field_144C = 0;
-                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+            if (field_1448 != 0) {
+                field_144C = 0;
+                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
             }
 
             if (m_currentVidCellShield != NULL) {
@@ -2587,9 +2587,9 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         m_currentBamSequence = 10;
 
-        if (bm_field_1448 != 0) {
-            bm_field_144C = '9';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + bm_field_144C), nm_field_1444, TRUE, TRUE);
+        if (field_1448 != 0) {
+            field_144C = '9';
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
         }
         break;
     default:
@@ -2629,14 +2629,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
         DecrementFrame();
     }
 
-    bm_field_144D = static_cast<unsigned char>(nSequence);
+    field_144D = static_cast<unsigned char>(nSequence);
 
     return nSequence;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x6C5D50
-void FUN_006c5d50() {
-    // TODO: Incomplete.
-}
-

@@ -122,22 +122,22 @@ CScreenSpellbook::CScreenSpellbook()
     m_nErrorState = 0;
     m_nNumErrorButtons = 0;
     m_bMultiPlayerViewable = FALSE;
-    nfield_582 = 0;
+    field_582 = 0;
     m_bCtrlKeyDown = FALSE;
     m_pFlashMemorizeSourceSpell = NULL;
     m_pFlashMemorizeDestSpell = NULL;
-    nm_field_1488 = 0;
+    field_1488 = 0;
 
     for (index = 0; index < 24; index++) {
-        sm_field_148C[index] = CResRef();
-        nm_m_field_15C4[index] = 0;
-        nm_m_field_15AC[index] = 0;
+        field_148C[index] = CResRef();
+        field_154C[index] = 0;
+        field_15AC[index] = 0;
     }
 
-    nm_field_1670 = 0;
+    field_1670 = 0;
 
     for (index = 0; index < CSPELLLIST_NUM_CLASSES; index++) {
-        nm_field_1654[index] = 0;
+        field_1654[index] = 0;
     }
 }
 
@@ -208,10 +208,10 @@ void CScreenSpellbook::EngineDeactivated()
 // 0x668ED0
 void CScreenSpellbook::EngineGameInit()
 {
-    m_cUIManager.fInit(this, CResRef("GUISPL"), g_pBaldurChitin->nm_field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUISPL"), g_pBaldurChitin->field_4A28);
 
     CPoint pt;
-    if (g_pBaldurChitin->nm_field_4A28) {
+    if (g_pBaldurChitin->field_4A28) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -235,8 +235,8 @@ void CScreenSpellbook::EngineGameInit()
     m_spellResRef = "";
 
     for (int index = 0; index < 24; index++) {
-        sm_field_148C[index] = CResRef();
-        nm_m_field_15C4[index] = 0;
+        field_148C[index] = CResRef();
+        field_154C[index] = 0;
     }
 
     m_cUIManager.GetPanel(3)->SetActive(FALSE);
@@ -245,7 +245,7 @@ void CScreenSpellbook::EngineGameInit()
     m_cUIManager.GetPanel(50)->SetActive(FALSE);
 
     // NOTE: Uninline.
-    m_vcFlash.SetResRef(CResRef("FLASH"), g_pBaldurChitin->nm_field_4A28, TRUE, TRUE);
+    m_vcFlash.SetResRef(CResRef("FLASH"), g_pBaldurChitin->field_4A28, TRUE, TRUE);
 }
 
 // 0x5D72C0
@@ -472,13 +472,13 @@ void CScreenSpellbook::sub_669830(DWORD nPortrait)
 }
 
 // 0x66A010
-int CScreenSpellbook::GetSpellLevelCount(DWORD nIndex)
+int CScreenSpellbook::sub_66A010(DWORD nIndex)
 {
     // __FILE__: .\Include\InfScreenSpellbook.h
     // __LINE__: 76
     UTIL_ASSERT(nIndex < CSPELLLIST_NUM_CLASSES);
 
-    return nm_field_1654[nIndex];
+    return field_1654[nIndex];
 }
 
 // 0x66A040
@@ -752,7 +752,7 @@ void CScreenSpellbook::EnableMainPanel(BOOL bEnable)
     pLeftPanel->SetEnabled(bEnable);
     pRightPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->nm_field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -962,7 +962,7 @@ void CScreenSpellbook::OnDoneButtonClick()
         }
     }
 
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -996,7 +996,7 @@ void CScreenSpellbook::OnDoneButtonClick()
 // 0x66BB00
 void CScreenSpellbook::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = GetTopPopup();
@@ -1026,7 +1026,7 @@ void CScreenSpellbook::OnRestButtonClick()
     // __LINE__: 2485
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.pm_field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     STRREF strError;
@@ -1166,7 +1166,7 @@ void CScreenSpellbook::OnErrorButtonClick(INT nButton)
     // __LINE__: 2733
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     // FIXME: Unncessary access via global var.
@@ -1226,7 +1226,7 @@ void CScreenSpellbook::OnErrorButtonClick(INT nButton)
             case 0:
                 DismissPopup();
 
-                UnmemorizeSpell(pSprite, nfield_582);
+                UnmemorizeSpell(pSprite, field_582);
                 UpdateMainPanel();
                 break;
             case 1:
@@ -1318,8 +1318,8 @@ CUIControlButtonSpellbookSpell::CUIControlButtonSpellbookSpell(CUIPanel* panel, 
 {
     m_spellResRef = "";
     m_iconResRef = "";
-    nfield_676 = 1;
-    nfield_67A = 0;
+    field_676 = 1;
+    field_67A = 0;
 }
 
 // 0x66D500
@@ -1375,9 +1375,9 @@ BOOL CUIControlButtonSpellbookSpell::OnLButtonDown(CPoint pt)
     m_pPanel->m_pManager->SetCapture(this, CUIManager::MOUSELBUTTON);
     InvalidateRect();
 
-    m_pPanel->m_pManager->nm_field_32 = m_nID;
-    m_pPanel->m_pManager->bm_field_2D = 0;
-    m_pPanel->m_pManager->nm_field_1C = 0;
+    m_pPanel->m_pManager->field_32 = m_nID;
+    m_pPanel->m_pManager->field_2D = 0;
+    m_pPanel->m_pManager->field_1C = 0;
 
     return TRUE;
 }
@@ -1397,7 +1397,7 @@ void CUIControlButtonSpellbookSpell::OnRButtonClick(CPoint pt)
     // __LINE__: 3730
     UTIL_ASSERT(pSpellbook != NULL);
 
-    CSingleLock renderLock(&(pSpellbook->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pSpellbook->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     if (m_spellResRef != "") {
@@ -1496,10 +1496,10 @@ void CUIControlScrollBarSpellbookKnownSpells::OnScroll()
     // __LINE__: 4098
     UTIL_ASSERT(pSpellbook != NULL);
 
-    pSpellbook->m_nTopKnownSpell = max(wm_field_144 * (pSpellbook->m_nNumKnownSpells - 8), 0) / wm_m_field_142;
+    pSpellbook->m_nTopKnownSpell = max(field_144 * (pSpellbook->m_nNumKnownSpells - 8), 0) / field_142;
 
     if (pSpellbook->m_nNumKnownSpells < 8) {
-        wm_field_144 = 0;
+        field_144 = 0;
     }
 
     InvalidateItems();
@@ -1514,7 +1514,7 @@ void CUIControlScrollBarSpellbookKnownSpells::InvalidateItems()
     // __LINE__: 4156
     UTIL_ASSERT(pSpellbook != NULL);
 
-    CSingleLock renderLock(&(pSpellbook->GetManager()->pm_field_36), FALSE);
+    CSingleLock renderLock(&(pSpellbook->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
     pSpellbook->UpdateMainPanel();
@@ -1578,7 +1578,7 @@ BOOL CUIControlButtonSpellbookSpellInfoIcon::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1763,45 +1763,3 @@ void CUIControlButtonSpellbookClassSelection::OnLButtonDoubleClick(CPoint pt)
 {
     OnLButtonClick(pt);
 }
-
-// Phase 1-2: Scaffold functions
-// 0x66A8C0
-void FUN_0066a8c0() {
-    // TODO: Incomplete.
-}
-
-// 0x66C4B0
-void FUN_0066c4b0() {
-    // TODO: Incomplete.
-}
-
-// 0x66C790
-void FUN_0066c790() {
-    // TODO: Incomplete.
-}
-
-// 0x66D4E0
-void FUN_0066d4e0() {
-    // TODO: Incomplete.
-}
-
-// 0x66E440
-void FUN_0066e440() {
-    // TODO: Incomplete.
-}
-
-// 0x66EA70
-void FUN_0066ea70() {
-    // TODO: Incomplete.
-}
-
-// 0x66EBA0
-void FUN_0066eba0() {
-    // TODO: Incomplete.
-}
-
-// 0x66ECE0
-void FUN_0066ece0() {
-    // TODO: Incomplete.
-}
-

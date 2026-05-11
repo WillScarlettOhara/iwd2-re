@@ -48,20 +48,20 @@ CVidMode::CVidMode()
     m_dwRBitMask = 0;
     m_dwGBitMask = 0;
     m_dwBBitMask = 0;
-    m_dwShadowColor = 0;
-    nfield_98 = 0;
-    m_nRBitLoss = 0;
-    m_nGBitLoss = 0;
-    m_nBBitLoss = 0;
-    wfield_D2 = 0;
-    m_bRedrawEntireScreen = 0;
+    field_24 = 0;
+    field_98 = 0;
+    field_C2 = 0;
+    field_C6 = 0;
+    field_CA = 0;
+    field_D2 = 0;
+    field_DC = 0;
     m_bPointerEnabled = FALSE;
     m_bPointerInside = TRUE;
     m_nColorDepth = 0;
-    nfield_E0 = 0;
+    field_E0 = 0;
     m_nSurfaces = 0;
     nTickCount = GetTickCount();
-    nfield_94 = 0;
+    field_94 = 0;
     m_pPointerVidCell = NULL;
     m_bPointerAnimating = FALSE;
     pSurfaces = NULL;
@@ -76,8 +76,8 @@ CVidMode::CVidMode()
     m_nGammaCorrection = 0;
     m_nPointerNumber = 0;
     m_dwCursorRenderFlags = 0;
-    nm_field_10 = 1;
-    nm_field_14 = 0;
+    field_10 = 1;
+    field_14 = 0;
     m_bFadeTo = 0;
     m_nFade = NUM_FADE_FRAMES;
 
@@ -257,7 +257,7 @@ void CVidMode::DestroySurface(IDirectDrawSurface** lplpDirectDrawSurface)
 // 0x795C70
 void CVidMode::DisplayFrameRate(UINT nSurface)
 {
-    if (g_pChitin->nm_field_1A2A) {
+    if (g_pChitin->field_1A2A) {
         CString sFrameRate;
         sFrameRate.Format("%02d %02d %d ",
             g_pChitin->m_nRenderPerSec,
@@ -273,7 +273,7 @@ void CVidMode::DisplayFrameRate(UINT nSurface)
 DWORD CVidMode::ConvertToSurfaceRGB(COLORREF rgb)
 {
     if (g_pChitin->cVideo.m_nBpp == 16) {
-        return ((GetRValue(rgb) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgb) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgb) >> m_nBBitLoss) << m_dwBBitShift);
+        return ((GetRValue(rgb) >> field_C2) << m_dwRBitShift) | ((GetGValue(rgb) >> field_C6) << m_dwGBitShift) | ((GetBValue(rgb) >> field_CA) << m_dwBBitShift);
     } else {
         return (GetRValue(rgb) << m_dwRBitShift) | (GetGValue(rgb) << m_dwGBitShift) | (GetBValue(rgb) << m_dwBBitShift);
     }
@@ -524,7 +524,7 @@ BOOL CVidMode::DrawLine(INT nXFrom, INT nYFrom, INT nXTo, INT nYTo, const DDSURF
             reinterpret_cast<WORD*>(ddsd.lpSurface),
             ddsd.lPitch >> 1,
             rSurface,
-            ((GetRValue(rgbColor) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgbColor) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgbColor) >> m_nBBitLoss) << m_dwBBitShift),
+            ((GetRValue(rgbColor) >> field_C2) << m_dwRBitShift) | ((GetGValue(rgbColor) >> field_C6) << m_dwGBitShift) | ((GetBValue(rgbColor) >> field_CA) << m_dwBBitShift),
             bClipped);
     case 24:
         return DrawLine24(nXFrom,
@@ -589,7 +589,7 @@ BOOL CVidMode::DrawRect(const CRect& r, UINT nSurface, const CRect& rClip, COLOR
 
     switch (g_pChitin->cVideo.GetBitsPerPixels()) {
     case 16:
-        color16 = ((GetRValue(rgbColor) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgbColor) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgbColor) >> m_nBBitLoss) << m_dwBBitShift);
+        color16 = ((GetRValue(rgbColor) >> field_C2) << m_dwRBitShift) | ((GetGValue(rgbColor) >> field_C6) << m_dwGBitShift) | ((GetBValue(rgbColor) >> field_CA) << m_dwBBitShift);
         DrawLine16(x1,
             y1,
             x2,
@@ -835,7 +835,7 @@ BOOL CVidMode::DrawThickLine(INT nXFrom, INT nYFrom, INT nXTo, INT nYTo, const D
             ddsd.lPitch >> 1,
             rSurface,
             a8,
-            ((GetRValue(rgbColor) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgbColor) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgbColor) >> m_nBBitLoss) << m_dwBBitShift),
+            ((GetRValue(rgbColor) >> field_C2) << m_dwRBitShift) | ((GetGValue(rgbColor) >> field_C6) << m_dwGBitShift) | ((GetBValue(rgbColor) >> field_CA) << m_dwBBitShift),
             bClipped);
     case 24:
         return DrawThickLine24(nXFrom,
@@ -895,7 +895,7 @@ BOOL CVidMode::EraseScreen(UINT nSurface, COLORREF rgbColor)
 
     DDBLTFX fx;
     fx.dwSize = sizeof(fx);
-    fx.dwFillColor = ((GetRValue(rgbColor) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgbColor) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgbColor) >> m_nBBitLoss) << m_dwBBitShift);
+    fx.dwFillColor = ((GetRValue(rgbColor) >> field_C2) << m_dwRBitShift) | ((GetGValue(rgbColor) >> field_C6) << m_dwGBitShift) | ((GetBValue(rgbColor) >> field_CA) << m_dwBBitShift);
 
     HRESULT hr;
     do {
@@ -1214,7 +1214,7 @@ DWORD CVidMode::ReduceColor(COLORREF rgbColor)
     }
 
     if (g_pChitin->cVideo.m_nBpp == 16) {
-        return ((GetRValue(rgbColor) >> m_nRBitLoss) << m_dwRBitShift) | ((GetGValue(rgbColor) >> m_nGBitLoss) << m_dwGBitShift) | ((GetBValue(rgbColor) >> m_nBBitLoss) << m_dwBBitShift);
+        return ((GetRValue(rgbColor) >> field_C2) << m_dwRBitShift) | ((GetGValue(rgbColor) >> field_C6) << m_dwGBitShift) | ((GetBValue(rgbColor) >> field_CA) << m_dwBBitShift);
     } else {
         return (GetBValue(rgbColor) << m_dwBBitShift) | (GetGValue(rgbColor) << m_dwGBitShift) | (GetRValue(rgbColor) << m_dwRBitShift);
     }
@@ -1999,50 +1999,3 @@ void CVidMode::SetFade(BOOL bFadeTo, COLORREF rgbFade)
         m_nFade = 0;
     }
 }
-
-// Phase 1-2: Scaffold functions
-// 0x797E70
-void FUN_00797e70() {
-    // TODO: Incomplete.
-}
-
-// 0x799E90
-void FUN_00799e90() {
-    // TODO: Incomplete.
-}
-
-// 0x799F80
-void FUN_00799f80() {
-    // TODO: Incomplete.
-}
-
-// 0x79A860
-void FUN_0079a860() {
-    // TODO: Incomplete.
-}
-
-// 0x79A950
-void FUN_0079a950() {
-    // TODO: Incomplete.
-}
-
-// 0x79AD20
-void FUN_0079ad20() {
-    // TODO: Incomplete.
-}
-
-// 0x79AD90
-void FUN_0079ad90() {
-    // TODO: Incomplete.
-}
-
-// 0x7CA240
-void FUN_007ca240() {
-    // TODO: Incomplete.
-}
-
-// 0x7CA630
-void FUN_007ca630() {
-    // TODO: Incomplete.
-}
-

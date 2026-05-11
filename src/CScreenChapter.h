@@ -68,7 +68,7 @@ public:
     /* 01C8 */ DWORD m_nEndTime;
     /* 01CC */ int m_bEnded;
     /* 01D0 */ INT m_nEngineState;
-    /* 01D4 */ CResRef sm_field_1D4;
+    /* 01D4 */ CResRef field_1D4;
     /* 01DC */ INT m_nSongCountDown;
     /* 01E0 */ CVidFont m_preLoadFontRealms;
 };

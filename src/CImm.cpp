@@ -34,17 +34,17 @@ void CImm::OnComposition(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     if ((lParam & GCS_RESULTSTR) != 0) {
         if ((lParam & GCS_RESULTCLAUSE) != 0) {
-            OnIMEResult(hWnd, TRUE);
+            sub_7C27D0(hWnd, TRUE);
         } else {
-            OnIMEResult(hWnd, FALSE);
+            sub_7C27D0(hWnd, FALSE);
         }
     } else if ((lParam & GCS_COMPSTR) != 0) {
-        OnIMEComposition(hWnd, lParam);
+        sub_7C2680(hWnd, lParam);
     }
 }
 
 // 0x7C2680
-void CImm::OnIMEComposition(HWND hWnd, LPARAM lParam)
+void CImm::sub_7C2680(HWND hWnd, LPARAM lParam)
 {
     CSingleLock lock(&m_cCriticalSection);
     lock.Lock();
@@ -62,7 +62,7 @@ void CImm::OnIMEComposition(HWND hWnd, LPARAM lParam)
             ImmGetCompositionStringA(hImc, GCS_COMPSTR, lpCompStr, nCompStrLength);
             lpCompStr[nCompStrLength] = '\0';
 
-            sm_field_134 = lpCompStr;
+            field_134 = lpCompStr;
 
             delete lpCompStr;
 
@@ -89,7 +89,7 @@ void CImm::OnIMEComposition(HWND hWnd, LPARAM lParam)
 }
 
 // 0x7C27D0
-void CImm::OnIMEResult(HWND hWnd, BOOL a3)
+void CImm::sub_7C27D0(HWND hWnd, BOOL a3)
 {
     CSingleLock lock(&m_cCriticalSection);
     lock.Lock();
@@ -107,7 +107,7 @@ void CImm::OnIMEResult(HWND hWnd, BOOL a3)
             ImmGetCompositionStringA(hImc, GCS_COMPSTR, lpResultStr, nResultStrLength);
             lpResultStr[nResultStrLength] = '\0';
 
-            sm_field_130 = lpResultStr;
+            field_130 = lpResultStr;
 
             delete lpResultStr;
 
@@ -123,11 +123,11 @@ void CImm::OnIMEResult(HWND hWnd, BOOL a3)
                     ImmGetCompositionStringA(hImc, GCS_RESULTCLAUSE, lpResultCls, nResultClsLength);
                     lpResultCls[nResultClsLength] = '\0';
 
-                    sm_field_130 += CString(lpResultCls);
+                    field_130 += CString(lpResultCls);
 
                     delete lpResultCls;
 
-                    sm_field_134 = "";
+                    field_134 = "";
                     m_sCandidateList = "";
 
                     g_pChitin->pActiveEngine->OnKeyDown(1);
@@ -237,9 +237,9 @@ CString CImm::ParseCandidateList(LPCANDIDATELIST lpCandidateList)
 }
 
 // 0x7C2CC0
-void CImm::ActivateNativeIME(HWND hWnd)
+void CImm::sub_7C2CC0(HWND hWnd)
 {
-    bm_field_12C = FALSE;
+    field_12C = FALSE;
 
     HIMC hImc = ImmGetContext(hWnd);
     if (hImc != NULL) {
@@ -269,31 +269,31 @@ void CImm::ActivateNativeIME(HWND hWnd)
 
             ImmSetOpenStatus(hImc, TRUE);
 
-            if (bm_field_12C) {
-                bm_field_12C = FALSE;
+            if (field_12C) {
+                field_12C = FALSE;
                 fdwConversion &= ~IME_CMODE_KATAKANA;
                 fdwConversion |= IME_CMODE_FULLSHAPE;
             } else {
                 fdwConversion |= IME_CMODE_KATAKANA;
                 fdwConversion |= IME_CMODE_FULLSHAPE;
-                bm_field_12C = TRUE;
+                field_12C = TRUE;
             }
         }
 
         ImmSetConversionStatus(hImc, fdwConversion, fdwSentense);
 
-        nm_field_128 = 1;
+        field_128 = 1;
 
         ImmReleaseContext(hWnd, hImc);
 
         m_sCandidateList = "";
-        sm_field_134 = "";
-        sm_field_130 = "";
+        field_134 = "";
+        field_130 = "";
     }
 }
 
 // 0x7C2E10
-void CImm::DeactivateNativeIME(HWND hWnd)
+void CImm::sub_7C2E10(HWND hWnd)
 {
     HIMC hImc = ImmGetContext(hWnd);
     if (hImc != NULL) {
@@ -322,13 +322,13 @@ void CImm::DeactivateNativeIME(HWND hWnd)
         ImmReleaseContext(hWnd, hImc);
 
         m_sCandidateList = "";
-        sm_field_134 = "";
-        sm_field_130 = "";
+        field_134 = "";
+        field_130 = "";
     }
 }
 
 // 0x7C2ED0
-CString CImm::GetIMEStatusText(HWND hWnd)
+CString CImm::sub_7C2ED0(HWND hWnd)
 {
     CString sString("");
 
@@ -386,33 +386,33 @@ void CImm::sub_7C3140(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL
 }
 
 // 0x7C34A0
-CString CImm::GetCandidateList()
+CString CImm::sub_7C34A0()
 {
     return m_sCandidateList;
 }
 
 // 0x7C34D0
-CString CImm::GetCompositionString()
+CString CImm::sub_7C34D0()
 {
-    return sm_field_134;
+    return field_134;
 }
 
 // NOTE: Probably inlined in `CChitin::DestroyServices`.
 void CImm::CleanUp()
 {
-    if (pm_field_13C != NULL) {
-        delete pm_field_13C;
+    if (field_13C != NULL) {
+        delete field_13C;
     }
 
-    pm_field_13C = NULL;
+    field_13C = NULL;
 }
 
 // NOTE: Odd location.
 //
 // 0x4D89E0
-CString CImm::PopResultString()
+CString CImm::sub_4D89E0()
 {
-    CString v1 = sm_field_130;
-    sm_field_130 = "";
+    CString v1 = field_130;
+    field_130 = "";
     return v1;
 }

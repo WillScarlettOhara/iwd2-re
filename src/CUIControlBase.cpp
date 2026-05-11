@@ -14,7 +14,7 @@ CUIControlBase::CUIControlBase(CUIPanel* pPanel, UI_CONTROL* controlInfo, int a4
     // __LINE__: 104
     UTIL_ASSERT(controlInfo != NULL);
 
-    bm_field_4 = 0;
+    field_4 = 0;
 
     m_pPanel = pPanel;
     m_nID = controlInfo->nID;
@@ -38,7 +38,7 @@ CUIControlBase::CUIControlBase(CUIPanel* pPanel, UI_CONTROL* controlInfo, int a4
     m_nToolTipStrRef = -1;
     m_nSecondaryToolTipStrRef = -1;
     m_nTertiaryToolTipStrRef = -1;
-    nm_field_36 = a4;
+    field_36 = a4;
     m_bNeedMouseMove = FALSE;
     m_bInactiveRender = FALSE;
     m_bToolTipActive = FALSE;
@@ -127,9 +127,9 @@ void CUIControlBase::TimerAsynchronousUpdate(BOOLEAN bInside)
             if (m_bActive || m_bInactiveRender) {
                 if (m_pPanel->m_bActive) {
                     if (!m_bToolTipActive || g_pBaldurChitin->GetObjectCursor()->m_nCurrentCursor != 101) {
-                        if (m_pPanel->m_pManager->nfield_76
+                        if (m_pPanel->m_pManager->field_76
                             || (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips != INT_MAX
-                                && m_pPanel->m_pManager->nm_field_1C >= g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips)) {
+                                && m_pPanel->m_pManager->field_1C >= g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips)) {
                             ActivateToolTip();
                             m_bToolTipActive = TRUE;
                         }
@@ -233,15 +233,3 @@ void CUIControlBase::SetNeedMouseMove()
     m_bNeedMouseMove = TRUE;
     m_pPanel->m_bNeedMouseMove = TRUE;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x4D2570
-void FUN_004d2570() {
-    // TODO: Incomplete.
-}
-
-// 0x4D25A0
-void FUN_004d25a0() {
-    // TODO: Incomplete.
-}
-

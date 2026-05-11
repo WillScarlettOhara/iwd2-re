@@ -821,10 +821,3 @@ SHORT CGameAnimationTypeMonsterLarge16::SetSequence(SHORT nSequence)
 
     return nSequence;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x6B2BF0
-void FUN_006b2bf0() {
-    // TODO: Incomplete.
-}
-

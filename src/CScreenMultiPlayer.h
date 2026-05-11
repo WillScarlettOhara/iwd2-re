@@ -101,8 +101,8 @@ public:
     /* 0434 */ BOOL m_bShiftKeyDown;
     /* 0438 */ BOOL m_bCapsLockKeyOn;
     /* 043C */ CTypedPtrList<CPtrList, CUIPanel*> m_lPopupStack;
-    /* 0458 */ int nm_field_458;
-    /* 045C */ int nm_field_45C;
+    /* 0458 */ int field_458;
+    /* 045C */ int field_45C;
     /* 0460 */ INT m_nChatMessageCount;
     /* 0464 */ INT m_nPermissionsChatMessageCount;
     /* 0468 */ INT m_nErrorState;
@@ -116,7 +116,7 @@ public:
     /* 048E */ CVidFont m_preLoadFontRealms;
     /* 098E */ CVidFont m_preLoadFontStnSml;
     /* 0E8E */ CVidFont m_preLoadFontTool;
-    /* 138E */ int nm_field_138E;
+    /* 138E */ int field_138E;
 };
 
 class CUIControlButtonMultiPlayerReady : public CUIControlButton3State {

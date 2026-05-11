@@ -11,7 +11,7 @@ CGameAnimationTypeMonsterOld::CGameAnimationTypeMonsterOld(USHORT animationID, B
     : m_charPalette(CVidPalette::TYPE_RANGE)
 {
     m_animationID = animationID;
-    bfield_7A6 = FALSE;
+    field_7A6 = FALSE;
     m_translucent = FALSE;
     m_bDetectedByInfravision = TRUE;
     m_nSndFreq = -1;
@@ -55,9 +55,9 @@ CGameAnimationTypeMonsterOld::CGameAnimationTypeMonsterOld(USHORT animationID, B
         m_pSndDeath = "FAL_03B";
 
         if ((animationID & 0xF) == 1) {
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MBAS_GR"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MBAS_GR"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
         }
         break;
     case 0x200:
@@ -76,19 +76,19 @@ CGameAnimationTypeMonsterOld::CGameAnimationTypeMonsterOld(USHORT animationID, B
 
         switch (animationID & 0xF) {
         case 0:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MBER_BL"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MBER_BL"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 2:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MBER_CA"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MBER_CA"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 3:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MBER_PO"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MBER_PO"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         }
         break;
@@ -103,19 +103,19 @@ CGameAnimationTypeMonsterOld::CGameAnimationTypeMonsterOld(USHORT animationID, B
 
         switch (animationID & 0xF) {
         case 0:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MDOG_WI"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MDOG_WI"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 1:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MDOG_WA"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MDOG_WA"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 2:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MDOG_MO"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MDOG_MO"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         }
         break;
@@ -128,9 +128,9 @@ CGameAnimationTypeMonsterOld::CGameAnimationTypeMonsterOld(USHORT animationID, B
         m_colorBlood = 60;
 
         if ((animationID & 0xF) == 1) {
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MDOP_GR"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MDOP_GR"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
         }
         break;
     case 0x600:
@@ -158,18 +158,18 @@ CGameAnimationTypeMonsterOld::CGameAnimationTypeMonsterOld(USHORT animationID, B
             m_moveScaleCurrent = 4;
             m_resRef = "MGHL";
             m_nSndFreq = 48;
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MGHL_RE"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MGHL_RE"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 2:
             m_moveScale = 4;
             m_moveScaleCurrent = 4;
             m_resRef = "MGHL";
             m_nSndFreq = 48;
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MGHL_GA"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MGHL_GA"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         }
         break;
@@ -199,27 +199,27 @@ CGameAnimationTypeMonsterOld::CGameAnimationTypeMonsterOld(USHORT animationID, B
 
         switch (animationID & 0xF) {
         case 0:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MSLI_GR"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MSLI_GR"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             m_colorBlood = 7;
             break;
         case 1:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MSLI_OL"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MSLI_OL"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             m_colorBlood = 36;
             break;
         case 2:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MSLI_MU"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MSLI_MU"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             m_colorBlood = 51;
             break;
         case 3:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MSLI_OC"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MSLI_OC"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             m_colorBlood = 37;
             break;
         case 4:
@@ -243,29 +243,29 @@ CGameAnimationTypeMonsterOld::CGameAnimationTypeMonsterOld(USHORT animationID, B
 
         switch (animationID & 0xF) {
         case 0:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MSPI_GI"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MSPI_GI"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 1:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MSPI_HU"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MSPI_HU"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 2:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MSPI_PH"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MSPI_PH"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 3:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MSPI_SW"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MSPI_SW"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 4:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MSPI_WR"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MSPI_WR"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         }
         break;
@@ -280,29 +280,29 @@ CGameAnimationTypeMonsterOld::CGameAnimationTypeMonsterOld(USHORT animationID, B
 
         switch (animationID & 0xF) {
         case 1:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MWLF_WO"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MWLF_WO"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 2:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MWLF_DI"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MWLF_DI"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 3:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MWLF_WI"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MWLF_WI"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 4:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MWLF_VA"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MWLF_VA"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         case 5:
-            bfield_7A6 = TRUE;
-            pfield_7AA.SetResRef(CResRef("MWLF_DR"), TRUE, TRUE);
-            pfield_7AA.m_bDoubleSize = FALSE;
+            field_7A6 = TRUE;
+            field_7AA.SetResRef(CResRef("MWLF_DR"), TRUE, TRUE);
+            field_7AA.m_bDoubleSize = FALSE;
             break;
         }
         break;
@@ -1060,10 +1060,3 @@ SHORT CGameAnimationTypeMonsterOld::SetSequence(SHORT nSequence)
 
     return nSequence;
 }
-
-// Phase 1-2: Scaffold functions
-// 0x6AF3B0
-void FUN_006af3b0() {
-    // TODO: Incomplete.
-}
-
