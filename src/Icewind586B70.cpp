@@ -118,11 +118,11 @@ void Icewind586B70::Remove(CGameSprite* sprite)
 // 0x586FC0
 void Icewind586B70::Reinstate(CGameSprite* sprite)
 {
-    if (sprite->GetBaseStats()->m_field_2E9) {
-        mEntries[sprite->GetBaseStats()->m_field_2E9].m_targetId = sprite->GetId();
-        mEntries[sprite->GetBaseStats()->m_field_2E9].m_bPermanent = sprite->GetBaseStats()->m_field_2F7 != 0;
-        sprite->GetBaseStats()->m_field_2E9 = 0;
-        sprite->GetBaseStats()->m_field_2F7 = 0;
+    if (sprite->GetBaseStats()->m_nSpellMemorization) {
+        mEntries[sprite->GetBaseStats()->m_nSpellMemorization].m_targetId = sprite->GetId();
+        mEntries[sprite->GetBaseStats()->m_nSpellMemorization].m_bPermanent = sprite->GetBaseStats()->m_nSpellKnown != 0;
+        sprite->GetBaseStats()->m_nSpellMemorization = 0;
+        sprite->GetBaseStats()->m_nSpellKnown = 0;
 
         CAIObjectType typeAI(sprite->GetAIType());
         CAIObjectType liveTypeAI(sprite->GetLiveAIType());
@@ -130,7 +130,7 @@ void Icewind586B70::Reinstate(CGameSprite* sprite)
 
         g_pBaldurChitin->GetObjectGame()->AddCharacterToAllies(sprite->GetId());
 
-        if (!mEntries[sprite->GetBaseStats()->m_field_2E9].m_bPermanent) {
+        if (!mEntries[sprite->GetBaseStats()->m_nSpellMemorization].m_bPermanent) {
             startTypeAI.SetEnemyAlly(CAIObjectType::EA_ALL);
             sprite->m_startTypeAI.Set(startTypeAI);
         }
@@ -143,9 +143,9 @@ void Icewind586B70::Reinstate(CGameSprite* sprite)
     }
 
     for (int index = 0; index < 6; index++) {
-        if (sprite->GetBaseStats()->m_field_2EA[index]) {
+        if (sprite->GetBaseStats()->m_nSpellCount[index]) {
             mEntries[index].m_controllerId = sprite->GetId();
-            sprite->GetBaseStats()->m_field_2EA[index] = FALSE;
+            sprite->GetBaseStats()->m_nSpellCount[index] = FALSE;
         }
     }
 }
@@ -166,8 +166,8 @@ void Icewind586B70::SyncToSprites()
                 return;
             }
 
-            sprite->GetBaseStats()->m_field_2E9 = index + 1;
-            sprite->GetBaseStats()->m_field_2F7 = mEntries[index].m_bPermanent;
+            sprite->GetBaseStats()->m_nSpellMemorization = index + 1;
+            sprite->GetBaseStats()->m_nSpellKnown = mEntries[index].m_bPermanent;
 
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(mEntries[index].m_targetId,
                 CGameObjectArray::THREAD_ASYNCH,
@@ -183,7 +183,7 @@ void Icewind586B70::SyncToSprites()
                 return;
             }
 
-            sprite->GetBaseStats()->m_field_2EA[index] = 1;
+            sprite->GetBaseStats()->m_nSpellCount[index] = 1;
 
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(mEntries[index].m_controllerId,
                 CGameObjectArray::THREAD_ASYNCH,

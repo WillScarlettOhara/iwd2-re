@@ -197,7 +197,7 @@ public:
     /* 00C2 */ DWORD m_nRBitLoss;
     /* 00C6 */ DWORD m_nGBitLoss;
     /* 00CA */ DWORD m_nBBitLoss;
-    /* 00D2 */ short wfield_D2;
+    /* 00D2 */ short m_wFieldD2;
     /* 00D4 */ BOOL m_bPointerEnabled;
     /* 00D8 */ BOOL m_bPointerInside;
     /* 00DC */ int m_bRedrawEntireScreen;

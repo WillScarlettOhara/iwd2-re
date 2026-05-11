@@ -30,7 +30,7 @@ CGameText::CGameText(CGameArea* pArea, const CPoint& pt, BYTE nDuration, BYTE nB
     if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE) == CGameObjectArray::SUCCESS) {
         AddToArea(pArea, pt, 0, LIST_FLIGHT);
         SetText(pt, nDuration, nBeginFade, sText);
-        nm_field_1C = 0;
+        m_nDeadline = 0;
     } else {
         // FIXME: Doesn't look cool.
         delete this;
@@ -147,21 +147,21 @@ CGameText::~CGameText()
         delete m_szLine;
     }
 
-    if (nm_field_1C != 0) {
+    if (m_nDeadline != 0) {
         CGameObject* pObject;
 
         BYTE rc;
         do {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(nm_field_1C,
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_nDeadline,
                 CGameObjectArray::THREAD_ASYNCH,
                 &pObject,
                 INFINITE);
         } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
         if (rc == CGameObjectArray::SUCCESS) {
-            pObject->nm_field_1C = 0;
+            pObject->m_nDeadline = 0;
 
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(nm_field_1C,
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_nDeadline,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
         }

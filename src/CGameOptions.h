@@ -24,7 +24,7 @@ public:
     /* 002C */ BOOL m_bFootStepsSounds;
     /* 0030 */ int nm_field_30;
     /* 0034 */ BOOL m_bTranslucentShadows;
-    /* 0038 */ int nm_field_38;
+    /* 0038 */ int m_nField38;
     /* 003C */ int nm_field_3C;
     /* 0040 */ int m_nTooltips; // #guess
     /* 0044 */ LONG m_nBoredTime;

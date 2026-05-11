@@ -8,7 +8,7 @@ public:
     CResBinary();
     ~CResBinary();
 
-    /* 0054 */ int nfield_54;
+    /* 0054 */ int m_nField54;
 };
 
 #endif /* CRESBINARY_H_ */

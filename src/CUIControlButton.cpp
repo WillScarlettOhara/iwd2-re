@@ -166,7 +166,7 @@ BOOL CUIControlButton::OnLButtonDown(CPoint pt)
 
     m_pPanel->m_pManager->bm_field_2D = 0;
     m_pPanel->m_pManager->nm_field_32 = m_nID;
-    m_pPanel->m_pManager->nm_field_1C = 0;
+    m_pPanel->m_pManager->m_nDeadline = 0;
 
     if (nfield_662 != 0) {
         static_cast<CBaldurEngine*>(m_pPanel->m_pManager->m_pWarp)->PlayGUISound(CBaldurEngine::RESREF_SOUND_CLICKLEFT);
@@ -232,7 +232,7 @@ BOOL CUIControlButton::OnRButtonDown(CPoint pt)
 
     m_pPanel->m_pManager->bm_field_2D = 0;
     m_pPanel->m_pManager->nm_field_32 = m_nID;
-    m_pPanel->m_pManager->nm_field_1C = 0;
+    m_pPanel->m_pManager->m_nDeadline = 0;
 
     static_cast<CBaldurEngine*>(m_pPanel->m_pManager->m_pWarp)->PlayGUISound(CBaldurEngine::RESREF_SOUND_CLICKRIGHT);
 
@@ -269,7 +269,7 @@ BOOL CUIControlButton::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -388,7 +388,7 @@ BOOL CUIControlButton::Render(BOOL bForce)
 void CUIControlButton::InvalidateRect()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
 
         m_nRenderCount = CUIManager::RENDER_COUNT;
@@ -401,7 +401,7 @@ void CUIControlButton::InvalidateRect()
 void CUIControlButton::func_54()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
 
         m_nRenderCount = 0;

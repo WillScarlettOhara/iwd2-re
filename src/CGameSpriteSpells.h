@@ -45,7 +45,7 @@ public:
     /* 0000 */ std::vector<CGameSpriteSpellListEntry> m_List;
     /* 0010 */ unsigned int nm_field_10;
     /* 0014 */ unsigned int nm_field_14;
-    /* 0018 */ unsigned int nm_field_18;
+    /* 0018 */ unsigned int m_nStartTime;
 };
 
 class CGameSpriteGroupedSpellList {

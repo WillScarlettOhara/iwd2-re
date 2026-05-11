@@ -31,7 +31,7 @@ CTlkFile::CTlkFile()
 CTlkTable::CTlkTable()
 {
     nfield_A4 = 0;
-    nfield_58 = byte_8FB954;
+    m_nField58 = byte_8FB954;
 }
 
 // 0x793E90
@@ -113,7 +113,7 @@ BOOLEAN CTlkTable::Fetch(DWORD dwStrId, STR_RES& strRes)
     }
 
     CTlkFile* pFile;
-    USHORT key = (nfield_58 << 8) | ((dwStrId & dword_85DD64) >> byte_85DD68);
+    USHORT key = (m_nField58 << 8) | ((dwStrId & dword_85DD64) >> byte_85DD68);
     if (!m_mapTlkFiles.Lookup(key, pFile) || !pFile->m_bOpened) {
         strRes.szText = "";
         strRes.cSound.SetResRef(CResRef(""), FALSE, TRUE);

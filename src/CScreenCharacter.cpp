@@ -98,7 +98,7 @@ CScreenCharacter::CScreenCharacter()
     nfield_7A4 = 0;
     nfield_7A8 = 0;
     nfield_7AC = 0;
-    bfield_7B0 = 0;
+    m_bField7B0 = 0;
     m_nExtraMageSpells = 0;
     nfield_7BA = 0;
     m_nErrorState = 0;
@@ -300,7 +300,7 @@ CScreenCharacter::~CScreenCharacter()
             if (m_spells.m_lists[nLevel].m_List.size() != 0) {
                 m_spells.m_lists[nLevel].m_List.clear();
                 m_spells.m_lists[nLevel].nm_field_14 = 0;
-                m_spells.m_lists[nLevel].nm_field_18 = 0;
+                m_spells.m_lists[nLevel].m_nStartTime = 0;
             }
         }
         m_spells.m_nHighestLevel = 0;
@@ -5322,7 +5322,7 @@ void CUIControlScrollBarCharacterHatedRace::OnScroll()
     UTIL_ASSERT(pCharacter != NULL);
 
     // NOTE: Uninline.
-    pCharacter->SetTopHatedRace(5 * wm_field_144 / wm_m_field_142);
+    pCharacter->SetTopHatedRace(5 * wm_field_144 / m_nField142);
 
     InvalidateItems();
 
@@ -5898,8 +5898,8 @@ CUIControlButtonCharacter5EBC60::CUIControlButtonCharacter5EBC60(CUIPanel* panel
     : CUIControlButton3State(panel, controlInfo, LBUTTON, 0)
 {
     m_nSelectedFrame = 0;
-    nfield_676 = "";
-    pfield_66E = "";
+    m_nField676 = "";
+    m_pField66E = "";
 }
 
 // 0x5EBD30
@@ -6682,7 +6682,7 @@ void CUIControlScrollBarCharacterFeats::OnScroll()
     // __LINE__: 17204
     UTIL_ASSERT(pCharacter != NULL);
 
-    INT nTopFeat = max(FEAT_COUNT * wm_field_144, 0) / wm_m_field_142;
+    INT nTopFeat = max(FEAT_COUNT * wm_field_144, 0) / m_nField142;
     pCharacter->m_nTopFeat = max(min(nTopFeat - FEAT_SLOTS, FEAT_COUNT - FEAT_SLOTS), 0);
 
     InvalidateItems();
@@ -6943,7 +6943,7 @@ BOOL CUIControlButtonCharacterFeatsCircle::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -7198,7 +7198,7 @@ void CUIControlScrollBarCharacterSkills::OnScroll()
     // __LINE__: 18291
     UTIL_ASSERT(pCharacter != NULL);
 
-    pCharacter->m_nTopSkill = max(SKILL_COUNT * wm_field_144, 0) / wm_m_field_142;
+    pCharacter->m_nTopSkill = max(SKILL_COUNT * wm_field_144, 0) / m_nField142;
 
     InvalidateItems();
 
@@ -7673,7 +7673,7 @@ void CUIControlScrollbarCharacter5F9410::OnScroll()
     // __LINE__: 19396
     UTIL_ASSERT(pCharacter);
 
-    int v1 = max(pCharacter->nm_field_184E - 1, 0) * wm_field_144 / wm_m_field_142;
+    int v1 = max(pCharacter->nm_field_184E - 1, 0) * wm_field_144 / m_nField142;
     pCharacter->nm_field_1852 = min(max(v1, 0), pCharacter->nm_field_184E - 11);
 
     if (pCharacter->nm_field_184E > 11) {

@@ -5491,7 +5491,7 @@ BOOL CGameEffectDisease::ApplyEffect(CGameSprite* pSprite)
     }
 
     pEffect->m_sourceID = m_sourceID;
-    strcpy(reinterpret_cast<char*>(pEffect->sm_field_29), m_sourceRes.GetResRefStr());
+    strcpy(reinterpret_cast<char*>(pEffect->m_resName), m_sourceRes.GetResRefStr());
     pSprite->GetDerivedStats()->m_cRegeneratedPersistantEffectList.AddTail(pEffect);
 
     return TRUE;
@@ -5581,7 +5581,7 @@ void CGameEffectDisease::ApplyDiseaseMoldTouch(CGameSprite* pSprite)
             m_special,
             m_duration);
         pEffect->m_sourceID = m_sourceID;
-        strcpy(reinterpret_cast<char*>(pEffect->sm_field_29), m_sourceRes.GetResRefStr());
+        strcpy(reinterpret_cast<char*>(pEffect->m_resName), m_sourceRes.GetResRefStr());
         pSprite->GetDerivedStats()->m_cRegeneratedPersistantEffectList.AddTail(pEffect);
     } else {
         m_done = TRUE;
@@ -8217,7 +8217,7 @@ BOOL CGameEffectForceVisible::ApplyEffect(CGameSprite* pSprite)
 {
     if ((pSprite->GetBaseStats()->m_generalState & STATE_IMPROVEDINVISIBILITY) != 0
         || (pSprite->GetDerivedStats()->m_generalState & STATE_IMPROVEDINVISIBILITY) != 0) {
-        pSprite->GetBaseStats()->bm_field_2FC |= 0x1;
+        pSprite->GetBaseStats()->pm_field_2FC |= 0x1;
     } else {
         pSprite->GetBaseStats()->m_generalState &= ~STATE_INVISIBLE;
         pSprite->GetDerivedStats()->m_generalState &= ~STATE_INVISIBLE;
@@ -11525,10 +11525,10 @@ void CPersistantEffectColorEffect::AIUpdate(CGameSprite* pSprite, LONG deltaT)
 // 0x4C18A0
 CPersistantEffect84C4A4::CPersistantEffect84C4A4(int a1, int a2, int a3)
 {
-    nm_field_18 = a2;
-    nm_field_1C = a3;
-    nm_field_24 = a1;
-    bm_field_28 = 1;
+    m_nStartTime = a2;
+    m_nDeadline = a3;
+    m_nTickInterval = a1;
+    m_bEnabled = 1;
 
     ULONG delta = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime - a2;
     if (delta == 0 || delta == 1) {
@@ -11542,15 +11542,15 @@ CPersistantEffect84C4A4::CPersistantEffect84C4A4(int a1, int a2, int a3)
 CPersistantEffect84C4A4::CPersistantEffect84C4A4(const CPersistantEffect84C4A4& other)
     : CPersistantEffect(other)
 {
-    nm_field_18 = other.nm_field_18;
-    nm_field_1C = other.nm_field_1C;
+    m_nStartTime = other.m_nStartTime;
+    m_nDeadline = other.m_nDeadline;
     m_nField20 = other.m_nField20;
-    nm_field_24 = other.nm_field_24;
-    bm_field_28 = other.bm_field_28;
-    memcpy(sm_field_29, other.sm_field_29, sizeof(sm_field_29));
-    bm_field_31 = other.bm_field_31;
-    bm_field_32 = other.bm_field_32;
-    bm_field_33 = other.bm_field_33;
+    m_nTickInterval = other.m_nTickInterval;
+    m_bEnabled = other.m_bEnabled;
+    memcpy(m_resName, other.m_resName, sizeof(m_resName));
+    m_bField31 = other.m_bField31;
+    m_bField32 = other.m_bField32;
+    m_bField33 = other.m_bField33;
 }
 
 // 0x4C1920
@@ -11558,14 +11558,14 @@ void CPersistantEffect84C4A4::AIUpdate(CGameSprite* pSprite, LONG deltaT)
 {
     int gameTime = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
     if (gameTime > m_nField20
-        && (nm_field_1C == 0 || gameTime <= nm_field_1C)) {
+        && (m_nDeadline == 0 || gameTime <= m_nDeadline)) {
         int time = gameTime - deltaT;
         int index = 0;
         while (time < gameTime) {
-            time += nm_field_24;
+            time += m_nTickInterval;
             index++;
         }
-        m_nField20 += index * nm_field_24;
+        m_nField20 += index * m_nTickInterval;
         ApplyEffect(pSprite, index);
     }
 }
@@ -11576,18 +11576,18 @@ void CPersistantEffect84C4A4::AIUpdate(CGameSprite* pSprite, LONG deltaT)
 CPersistantEffect84C4B4::CPersistantEffect84C4B4(const char* a1, int a2, int a3, int a4, int a5)
     : CPersistantEffect84C4A4(a3, a4, a5)
 {
-    nm_field_34 = a1;
-    nfield_54 = a2;
+    m_sField34 = a1;
+    m_nField54 = a2;
 }
 
 // NOTE: Inlined.
 CPersistantEffect84C4B4::CPersistantEffect84C4B4(const CPersistantEffect84C4B4& other)
     : CPersistantEffect84C4A4(other)
 {
-    nm_field_34 = other.nm_field_34;
-    nm_field_44 = other.nm_field_44;
-    nfield_54 = other.nfield_54;
-    nfield_58 = other.nfield_58;
+    m_sField34 = other.m_sField34;
+    m_sField44 = other.m_sField44;
+    m_nField54 = other.m_nField54;
+    m_nField58 = other.m_nField58;
 }
 
 // 0x4C1B00
@@ -11613,15 +11613,15 @@ CPersistantEffect* CPersistantEffect84C4B4::Copy()
 CPersistantEffect84C4C4::CPersistantEffect84C4C4(const char* a1, int a2, int a3, int a4)
     : CPersistantEffect84C4A4(a2, a3, a4)
 {
-    nm_field_34 = a1;
+    m_sField34 = a1;
 }
 
 // NOTE: Inlined.
 CPersistantEffect84C4C4::CPersistantEffect84C4C4(const CPersistantEffect84C4C4& other)
     : CPersistantEffect84C4A4(other)
 {
-    nm_field_34 = other.nm_field_34;
-    nm_field_44 = other.nm_field_44;
+    m_sField34 = other.m_sField34;
+    m_sField44 = other.m_sField44;
 }
 
 // 0x4C2160
@@ -11647,25 +11647,25 @@ CPersistantEffect* CPersistantEffect84C4C4::Copy()
 CPersistantEffect84C420::CPersistantEffect84C420(int a1, int a2, int a3, int a4, int a5)
     : CPersistantEffect84C4A4(a3, a4, a5)
 {
-    nm_field_34 = a1;
-    nm_field_38 = a2;
+    m_sField34 = a1;
+    m_nField38 = a2;
 }
 
 // NOTE: Inlined.
 CPersistantEffect84C420::CPersistantEffect84C420(const CPersistantEffect84C420& other)
     : CPersistantEffect84C4A4(other)
 {
-    nm_field_34 = other.nm_field_34;
-    nm_field_38 = other.nm_field_38;
+    m_sField34 = other.m_sField34;
+    m_nField38 = other.m_nField38;
 }
 
 // 0x4C25B0
 void CPersistantEffect84C420::ApplyEffect(CGameSprite* pSprite, int index)
 {
     CGameEffect* pEffect = new CGameEffectDamage();
-    pEffect->m_dwFlags = nm_field_34;
+    pEffect->m_dwFlags = m_sField34;
     pEffect->m_sourceID = m_sourceID;
-    pEffect->m_effectAmount = index * nm_field_38;
+    pEffect->m_effectAmount = index * m_nField38;
     pSprite->AddEffect(pEffect,
         CGameAIBase::EFFECT_LIST_TIMED,
         TRUE,
@@ -11684,14 +11684,14 @@ CPersistantEffect* CPersistantEffect84C420::Copy()
 CPersistantEffect84C494::CPersistantEffect84C494(int a1, int a2, int a3, int a4)
     : CPersistantEffect84C4A4(a2, a3, a4)
 {
-    nm_field_34 = a1;
+    m_sField34 = a1;
 }
 
 // NOTE: Inlined.
 CPersistantEffect84C494::CPersistantEffect84C494(const CPersistantEffect84C494& other)
     : CPersistantEffect84C4A4(other)
 {
-    nm_field_34 = other.nm_field_34;
+    m_sField34 = other.m_sField34;
 }
 
 // 0x4C2890
@@ -11700,7 +11700,7 @@ void CPersistantEffect84C494::ApplyEffect(CGameSprite* pSprite, int index)
     if (pSprite->GetBaseStats()->m_hitPoints < pSprite->GetDerivedStats()->m_nMaxHitPoints) {
         CGameEffectHeal* pEffect = new CGameEffectHeal();
         pEffect->m_sourceID = m_sourceID;
-        pEffect->m_effectAmount = index * nm_field_34;
+        pEffect->m_effectAmount = index * m_sField34;
         pSprite->AddEffect(pEffect,
             CGameAIBase::EFFECT_LIST_TIMED,
             TRUE,
@@ -11720,18 +11720,18 @@ CPersistantEffect* CPersistantEffect84C494::Copy()
 CPersistantEffect84C4D4::CPersistantEffect84C4D4(int a1, int a2, int a3, int a4)
     : CPersistantEffect84C4A4(a2, a3, a4)
 {
-    nm_field_34 = "";
-    nfield_54 = a1;
+    m_sField34 = "";
+    m_nField54 = a1;
 }
 
 // NOTE: Inlined.
 CPersistantEffect84C4D4::CPersistantEffect84C4D4(const CPersistantEffect84C4D4& other)
     : CPersistantEffect84C4A4(other)
 {
-    nm_field_34 = other.nm_field_34;
-    nm_field_44 = other.nm_field_44;
-    nfield_54 = other.nfield_54;
-    nfield_58 = other.nfield_58;
+    m_sField34 = other.m_sField34;
+    m_sField44 = other.m_sField44;
+    m_nField54 = other.m_nField54;
+    m_nField58 = other.m_nField58;
 }
 
 // 0x4C2BB0
@@ -11757,14 +11757,14 @@ CPersistantEffect* CPersistantEffect84C4D4::Copy()
 CPersistantEffect84C484::CPersistantEffect84C484(int a1, const char* a2, int a3, int a4, int a5, int a6)
     : CPersistantEffect84C4B4(a2, a3, a4, a5, a6)
 {
-    nfield_68 = a1;
+    m_nField68 = a1;
 }
 
 // NOTE: Inlined.
 CPersistantEffect84C484::CPersistantEffect84C484(const CPersistantEffect84C484& other)
     : CPersistantEffect84C4B4(other)
 {
-    nfield_68 = other.nfield_68;
+    m_nField68 = other.m_nField68;
 }
 
 // 0x4C3180

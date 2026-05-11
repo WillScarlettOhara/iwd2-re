@@ -72,7 +72,7 @@ CUIControlLabel::~CUIControlLabel()
 void CUIControlLabel::InvalidateRect()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
 
         m_nRenderCount = CUIManager::RENDER_COUNT;
@@ -101,7 +101,7 @@ BOOL CUIControlLabel::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();

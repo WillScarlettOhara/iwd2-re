@@ -231,15 +231,15 @@ CChitin::CChitin()
         m_nThreads++;
     }
 
-    InitializeCriticalSection(&pm_field_2FC);
-    InitializeCriticalSection(&pm_field_32C);
-    InitializeCriticalSection(&pm_field_314);
-    InitializeCriticalSection(&pm_field_344);
+    InitializeCriticalSection(&m_critSect2FC);
+    InitializeCriticalSection(&m_critSect32C);
+    InitializeCriticalSection(&m_critSect314);
+    InitializeCriticalSection(&m_critSect344);
     InitializeCriticalSection(&m_bDirectSoundInit);
-    InitializeCriticalSection(&pm_field_35C);
-    InitializeCriticalSection(&pm_field_394);
+    InitializeCriticalSection(&m_critSect35C);
+    InitializeCriticalSection(&m_critSect394);
     InitializeCriticalSection(&pm_field_3AC);
-    InitializeCriticalSection(&pm_field_1C32);
+    InitializeCriticalSection(&m_critSect1C32);
 
     InitializeVariables();
     InitVariables3D();
@@ -306,11 +306,11 @@ CChitin::~CChitin()
     cDimm.DestroyKeyTable();
     cDimm.DumpAll();
 
-    DeleteCriticalSection(&pm_field_2FC);
-    DeleteCriticalSection(&pm_field_32C);
-    DeleteCriticalSection(&pm_field_314);
+    DeleteCriticalSection(&m_critSect2FC);
+    DeleteCriticalSection(&m_critSect32C);
+    DeleteCriticalSection(&m_critSect314);
     DeleteCriticalSection(&m_bDirectSoundInit);
-    DeleteCriticalSection(&pm_field_35C);
+    DeleteCriticalSection(&m_critSect35C);
 
     if (m_eventTimer != NULL) {
         CloseHandle(m_eventTimer);
@@ -320,9 +320,9 @@ CChitin::~CChitin()
         CloseHandle(m_hCopyData);
     }
 
-    DeleteCriticalSection(&pm_field_394);
+    DeleteCriticalSection(&m_critSect394);
     DeleteCriticalSection(&pm_field_3AC);
-    DeleteCriticalSection(&pm_field_1C32);
+    DeleteCriticalSection(&m_critSect1C32);
 }
 
 // BINARY IDENTICAL
@@ -455,7 +455,7 @@ BOOL CChitin::InitializeServices(HWND hWnd)
 
     if (initialized) {
         cSoundMixer.Initialize(&cWnd, 16, GetNumberSoundChannels());
-        wm_m_field_142 = 1;
+        m_nField142 = 1;
     }
 
     return initialized;
@@ -623,7 +623,7 @@ void CChitin::InitializeVariables()
     m_bIMEEnabled = 0;
     nm_field_13A = -1;
     m_nField13E = 0;
-    wm_m_field_142 = 0;
+    m_nField142 = 0;
     m_bReInitializing = FALSE;
     m_bFullscreen = TRUE;
     m_nNextFullscreen = TRUE;
@@ -976,7 +976,7 @@ BOOLEAN CChitin::OnAltEnter(BOOLEAN bSave)
     cSoundMixer.StopMusic(TRUE);
 
     CVidMode* pCurrentVidMode = cVideo.m_pCurrentVidMode;
-    wm_m_field_142 = 0;
+    m_nField142 = 0;
 
     cSoundMixer.CleanUp();
     cVideo.CleanUp();
@@ -1155,7 +1155,7 @@ int CChitin::AskCloseConfirmation()
         cSoundMixer.StopMusic(TRUE);
 
         CVidMode* pVidMode = cVideo.m_pCurrentVidMode;
-        wm_m_field_142 = 0;
+        m_nField142 = 0;
 
         cSoundMixer.CleanUp();
         cVideo.CleanUp();
@@ -1250,7 +1250,7 @@ void CChitin::DestroyServices()
         } while (dwSuspendCount > 1);
     }
 
-    wm_m_field_142 = 0;
+    m_nField142 = 0;
     cSoundMixer.CleanUp();
     cVideo.CleanUp();
 

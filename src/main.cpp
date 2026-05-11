@@ -95,7 +95,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
 
     CBaldurChitin baldurChitin;
-    if (baldurChitin.m_m_field_1932 != 0) {
+    if (baldurChitin.m_field_1932 != 0) {
         CloseHandle(mutexHandle);
         return 0;
     }

@@ -27,7 +27,7 @@ CUIControlEditMultiLine::CUIControlEditMultiLine(CUIPanel* panel, UI_CONTROL_EDI
     nm_field_350 = 0;
     nm_field_354 = 0;
     m_nTextCapitalization = controlInfo->nTextCapitalization;
-    wm_field_85A = controlInfo->nfield_68;
+    wm_field_85A = controlInfo->m_nField68;
     m_nRenderCount = 0;
     m_bFocused = FALSE;
     m_sText = controlInfo->initialText;
@@ -231,7 +231,7 @@ BOOL CUIControlEditMultiLine::Render(BOOL bForce)
 void CUIControlEditMultiLine::InvalidateRect()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount = CUIManager::RENDER_COUNT;
         lock.Unlock();

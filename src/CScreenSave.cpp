@@ -34,7 +34,7 @@ CScreenSaveGameSlot::CScreenSaveGameSlot()
     m_nTime = 0;
     m_nChapter = 0;
     m_sChapter = "";
-    sm_field_314 = "";
+    pm_field_314 = "";
 }
 
 // 0x65BC00
@@ -562,7 +562,7 @@ void CScreenSave::UpdateMainPanel()
                 UpdateLabel(pPanel,
                     0x1000000F + nSlot,
                     "%s",
-                    (LPCSTR)m_aGameSlots[nGameSlot]->sm_field_314);
+                    (LPCSTR)m_aGameSlots[nGameSlot]->pm_field_314);
             } else {
                 UpdateLabel(pPanel,
                     0x10000005 + nSlot,
@@ -1647,7 +1647,7 @@ BOOL CUIControlButtonSaveScreenShot::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1718,7 +1718,7 @@ BOOL CUIControlButtonSavePortrait::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1876,7 +1876,7 @@ void CUIControlScrollBarSaveGames::OnScroll()
     // __LINE__: 3420
     UTIL_ASSERT(pSave != NULL);
 
-    pSave->m_nTopGameSlot = max(pSave->m_nNumGameSlots - GAME_SLOTS, 0) * wm_field_144 / wm_m_field_142;
+    pSave->m_nTopGameSlot = max(pSave->m_nNumGameSlots - GAME_SLOTS, 0) * wm_field_144 / m_nField142;
 
     // NOTE: Uninline.
     UpdateMainPanel();

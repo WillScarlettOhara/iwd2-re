@@ -3869,7 +3869,7 @@ void CScreenInventory::OnRequesterPlusButtonClick()
 CUIControlButtonInventorySlot::CUIControlButtonInventorySlot(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlButton(panel, controlInfo, LBUTTON | RBUTTON, 1)
 {
-    wfield_666 = FALSE;
+    m_wField666 = FALSE;
     bfield_66A = FALSE;
     SetNeedAsyncUpdate();
 }
@@ -3882,7 +3882,7 @@ CUIControlButtonInventorySlot::~CUIControlButtonInventorySlot()
 // 0x62D760
 void CUIControlButtonInventorySlot::OnMouseMove(CPoint pt)
 {
-    if (wfield_666) {
+    if (m_wField666) {
         if (!IsOver(pt)) {
             bfield_66A = TRUE;
         }
@@ -3907,7 +3907,7 @@ BOOL CUIControlButtonInventorySlot::OnLButtonDown(CPoint pt)
 
     m_pPanel->m_pManager->bm_field_2D = 0;
     m_pPanel->m_pManager->nm_field_32 = m_nID;
-    m_pPanel->m_pManager->nm_field_1C = 0;
+    m_pPanel->m_pManager->m_nDeadline = 0;
 
     CScreenInventory* pInventory = g_pBaldurChitin->m_pEngineInventory;
 
@@ -3923,7 +3923,7 @@ BOOL CUIControlButtonInventorySlot::OnLButtonDown(CPoint pt)
     pInventory->SwapWithSlot(m_nID, TRUE, -1, TRUE);
     pInventory->EndSwap();
 
-    wfield_666 = TRUE;
+    m_wField666 = TRUE;
     bfield_66A = FALSE;
 
     return TRUE;
@@ -3938,7 +3938,7 @@ void CUIControlButtonInventorySlot::OnLButtonUp(CPoint pt)
     // __LINE__: 6585
     UTIL_ASSERT(pInventory != NULL);
 
-    if (pInventory->m_bMultiPlayerViewable && wfield_666) {
+    if (pInventory->m_bMultiPlayerViewable && m_wField666) {
         if (IsOver(pt)) {
             if (bfield_66A) {
                 pInventory->BeginSwap();
@@ -3972,7 +3972,7 @@ void CUIControlButtonInventorySlot::OnLButtonUp(CPoint pt)
                 pInventory->EndSwap();
             }
         }
-        wfield_666 = FALSE;
+        m_wField666 = FALSE;
     }
 
     CUIControlButton::OnLButtonUp(pt);
@@ -4170,7 +4170,7 @@ BOOL CUIControlButtonInventoryAppearance::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         renderLock.Lock(INFINITE);
         m_nRenderCount--;
         renderLock.Unlock();
@@ -4199,7 +4199,7 @@ BOOL CUIControlButtonInventoryAppearance::Render(BOOL bForce)
     }
 
     if (pInventory->m_bMultiPlayerViewable == TRUE && pSprite->m_animation.m_animation != NULL) {
-        CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         renderLock.Lock(INFINITE);
 
         CPoint ptPos(m_pPanel->m_ptOrigin.x + m_ptOrigin.x + m_size.cx / 2,
@@ -4771,7 +4771,7 @@ void CUIControlScrollBarInventoryGround::OnScroll()
     LONG nContainerId = pInventory->FetchGroundPile(pInventory->GetSelectedCharacter(), FALSE);
     if (nContainerId != CGameObjectArray::INVALID_INDEX) {
         INT nNumGroundSlots = pGame->GetNumGroundSlots(nContainerId);
-        pInventory->m_nTopGroundItem = max(nNumGroundSlots, 0) * wm_field_144 / wm_m_field_142;
+        pInventory->m_nTopGroundItem = max(nNumGroundSlots, 0) * wm_field_144 / m_nField142;
 
         for (INT nButtonId = 68; nButtonId <= 81; nButtonId++) {
             m_pPanel->GetControl(nButtonId)->InvalidateRect();
@@ -4832,7 +4832,7 @@ BOOL CUIControlButtonInventoryRequesterItem::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -5103,7 +5103,7 @@ BOOL CUIControlButtonInventoryHistoryIcon::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -5432,7 +5432,7 @@ void CUIControlButtonInventoryHistoryUse::OnLButtonClick(CPoint pt)
 CUIControlPortraitInventory::CUIControlPortraitInventory(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlPortraitGeneral(panel, controlInfo)
 {
-    wfield_666 = 0;
+    m_wField666 = 0;
 }
 
 // 0x6350E0
@@ -5449,17 +5449,17 @@ void CUIControlPortraitInventory::OnLButtonClick(CPoint pt)
         pInventory->BeginSwap();
         pInventory->SwapWithPortrait(m_nID, TRUE);
         pInventory->EndSwap();
-        wfield_666 = 1;
+        m_wField666 = 1;
     } else {
         CUIControlPortraitGeneral::OnLButtonClick(pt);
-        wfield_666 = 0;
+        m_wField666 = 0;
     }
 }
 
 // 0x635220
 void CUIControlPortraitInventory::OnLButtonDoubleClick(CPoint pt)
 {
-    if (wfield_666) {
+    if (m_wField666) {
         OnLButtonClick(pt);
     } else {
         // NOTE: Uninline.

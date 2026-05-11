@@ -2667,7 +2667,7 @@ void CUIControlButtonMultiPlayerLogout::OnLButtonClick(CPoint pt)
 CUIControlEditMultiPlayerChat::CUIControlEditMultiPlayerChat(CUIPanel* panel, UI_CONTROL_EDIT* controlInfo)
     : CUIControlEdit(panel, controlInfo, 0)
 {
-    bm_field_8A0 = 0;
+    m_bField8A0 = 0;
 }
 
 // 0x6506D0
@@ -2679,7 +2679,7 @@ CUIControlEditMultiPlayerChat::~CUIControlEditMultiPlayerChat()
 void CUIControlEditMultiPlayerChat::OnEditReturn(CString sText)
 {
     g_pBaldurChitin->GetBaldurMessage()->SendChatMessage(sText);
-    sm_field_868 = sText;
+    m_sField868 = sText;
     SetText(CString(""));
 }
 

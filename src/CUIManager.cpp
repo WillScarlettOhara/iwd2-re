@@ -24,7 +24,7 @@ const BYTE CUIManager::KEYBOARD = 2;
 // 0x4D39B0
 CUIManager::CUIManager()
 {
-    nm_field_18 = 1;
+    m_nStartTime = 1;
     bm_field_2E = 1;
     bm_field_2D = 1;
     m_pWarp = NULL;
@@ -32,12 +32,12 @@ CUIManager::CUIManager()
     m_bHidden = FALSE;
     m_bInitialized = FALSE;
     m_pFocusedControl = NULL;
-    nm_field_1C = 0;
+    m_nDeadline = 0;
     m_nField20 = 0;
-    nm_field_24 = 0;
+    m_nTickInterval = 0;
     nm_field_28 = 0;
     nm_field_32 = -1;
-    nfield_76 = 0;
+    m_nField76 = 0;
     pfield_7A.SetRect(0, 0, 0, 0);
     pm_field_8A.SetRect(0, 0, 0, 0);
     pfield_9A.SetRect(0, 0, 0, 0);
@@ -58,15 +58,15 @@ void CUIManager::fInit(CWarp* pWarp, CResRef cResRef, BOOL bDoubleSize)
         m_pWarp = pWarp;
         m_bHidden = FALSE;
         m_pFocusedControl = NULL;
-        nm_field_18 = 1;
-        nm_field_1C = 0;
+        m_nStartTime = 1;
+        m_nDeadline = 0;
         m_nField20 = 0;
-        nm_field_24 = 0;
+        m_nTickInterval = 0;
         nm_field_28 = 0;
         bm_field_2E = 1;
         bm_field_2D = 1;
         nm_field_32 = -1;
-        nfield_76 = 0;
+        m_nField76 = 0;
         pfield_7A.SetRect(0, 0, 0, 0);
         pm_field_8A.SetRect(0, 0, 0, 0);
         pfield_9A.SetRect(0, 0, 0, 0);
@@ -159,12 +159,12 @@ void CUIManager::TimerAsynchronousUpdate()
 {
     DWORD nID = -1;
     if (m_bInitialized) {
-        if (nm_field_18) {
+        if (m_nStartTime) {
             POSITION pos = m_lPanels.GetHeadPosition();
             while (pos != NULL) {
                 CUIPanel* pPanel = m_lPanels.GetNext(pos);
                 if (!pPanel->m_bNeedAsyncUpdate) {
-                    if (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips == INT_MAX && !nfield_76) {
+                    if (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips == INT_MAX && !m_nField76) {
                         continue;
                     }
 
@@ -178,12 +178,12 @@ void CUIManager::TimerAsynchronousUpdate()
             }
 
             if (bm_field_2D) {
-                nm_field_1C++;
+                m_nDeadline++;
             } else {
                 if (nID != nm_field_32) {
                     bm_field_2D = TRUE;
                     nm_field_32 = -1;
-                    nm_field_1C++;
+                    m_nDeadline++;
                 }
             }
         }
@@ -222,8 +222,8 @@ void CUIManager::SetCapture(CUIControlBase* pControl, BYTE nType)
 // 0x4D4060
 void CUIManager::ClearTooltip()
 {
-    nm_field_1C = 0;
-    nfield_76 = 0;
+    m_nDeadline = 0;
+    m_nField76 = 0;
 
     CInfCursor* pCursor = g_pBaldurChitin->GetObjectCursor();
     if (pCursor->pfield_A02 != NULL) {
@@ -240,8 +240,8 @@ void CUIManager::ClearTooltip()
 // 0x4D40B0
 void CUIManager::OnMouseMove(CPoint pt)
 {
-    nm_field_1C = 0;
-    nfield_76 = 0;
+    m_nDeadline = 0;
+    m_nField76 = 0;
 
     CInfCursor* pCursor = g_pBaldurChitin->GetObjectCursor();
     if (pCursor->pfield_A02 != NULL) {
@@ -277,7 +277,7 @@ void CUIManager::OnMouseMove(CPoint pt)
 void CUIManager::OnLButtonDown(CPoint pt)
 {
     if (m_bInitialized) {
-        if (nm_field_18) {
+        if (m_nStartTime) {
             if (m_pFocusedControl != NULL) {
                 if (m_nCaptureType != KEYBOARD) {
                     return;
@@ -324,7 +324,7 @@ void CUIManager::OnLButtonUp(CPoint pt)
 void CUIManager::OnLButtonDblClk(CPoint pt)
 {
     if (m_bInitialized) {
-        if (nm_field_18) {
+        if (m_nStartTime) {
             if (m_pFocusedControl == NULL || m_nCaptureType == KEYBOARD) {
                 if (!m_bHidden) {
                     POSITION pos = m_lPanels.GetTailPosition();
@@ -350,7 +350,7 @@ void CUIManager::OnLButtonDblClk(CPoint pt)
 void CUIManager::OnRButtonDown(CPoint pt)
 {
     if (m_bInitialized) {
-        if (nm_field_18) {
+        if (m_nStartTime) {
             if (m_pFocusedControl != NULL) {
                 if (m_nCaptureType != KEYBOARD) {
                     return;
@@ -413,7 +413,7 @@ void CUIManager::Render()
     renderLock.Lock(INFINITE);
 
     if (m_bInitialized) {
-        if (nm_field_18 != 0) {
+        if (m_nStartTime != 0) {
             if (!m_bHidden) {
                 POSITION pos = m_lPanels.GetHeadPosition();
                 while (pos != NULL) {
@@ -431,7 +431,7 @@ void CUIManager::Render()
 void CUIManager::InvalidateRect(const CRect* rect)
 {
     if (m_bInitialized) {
-        if (nm_field_18 != 0) {
+        if (m_nStartTime != 0) {
             POSITION pos = m_lPanels.GetHeadPosition();
             while (pos != NULL) {
                 CUIPanel* pPanel = m_lPanels.GetNext(pos);
@@ -456,8 +456,8 @@ void CUIManager::InvalidateCursorRect(const CRect& rect)
 // 0x4D46D0
 void CUIManager::ForceToolTip()
 {
-    nfield_76 = 1;
-    nm_field_1C = g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips;
+    m_nField76 = 1;
+    m_nDeadline = g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips;
 }
 
 // 0x4D46F0

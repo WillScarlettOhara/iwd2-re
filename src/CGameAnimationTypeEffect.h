@@ -24,7 +24,7 @@ public:
     /* 0406 */ CVidCell m_g1VidCell;
     /* 04E0 */ CVidCell m_g1VidCellShadow;
     /* 05BA */ CVidPalette m_palette;
-    /* 05DE */ unsigned char bfield_5DE;
+    /* 05DE */ unsigned char m_wField5DE;
     /* 05DF */ BOOLEAN m_translucent;
     /* 05E0 */ BOOLEAN m_bRender;
     /* 05E1 */ unsigned char bfield_5E1;

@@ -44,7 +44,7 @@ public:
     /* 0138 */ CUIControlButtonScrollBar* m_pScrollUpButton;
     /* 013C */ CUIControlButtonScrollBar* m_pScrollDownButton;
     /* 0140 */ short wm_field_140;
-    /* 0142 */ short wm_m_field_142;
+    /* 0142 */ short m_nField142;
     /* 0144 */ short wm_field_144;
     /* 0146 */ unsigned char bm_field_146;
     /* 0148 */ short wm_field_148;

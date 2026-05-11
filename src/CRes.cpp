@@ -10,13 +10,13 @@ CRes::CRes()
     m_pCurrentListPos = NULL;
     nm_field_40 = 0;
     m_nID = 0;
-    nm_field_44 = 0;
+    m_sField44 = 0;
     nSize = 0;
     m_nResSizeActual = 0;
     m_pData = NULL;
     m_pDimmKeyTableEntry = NULL;
     m_pCurrentList = NULL;
-    nm_field_18 = 0;
+    m_nStartTime = 0;
     dwFlags = 0;
 }
 
@@ -68,7 +68,7 @@ void* CRes::Demand()
         m_nResSizeActual = nSize;
     }
 
-    if (nm_field_18) {
+    if (m_nStartTime) {
         if (pData != NULL) {
             CSingleLock lock(&pm_field_20, FALSE);
             lock.Lock(INFINITE);

@@ -532,7 +532,7 @@ BOOL CInfTileSet::SetResID(RESID nNewID, CResRef cResRef, RESID nNewDualID, CRes
 
                 m_pResTiles[index]->m_pDualTileRes->SetID(nNewDualID + index);
 
-                m_pResTiles[index]->nfield_58 = cResRef;
+                m_pResTiles[index]->m_nField58 = cResRef;
 
                 if (m_pResTiles[index]->m_pDualTileRes == NULL) {
                     // __FILE__: C:\Projects\Icewind2\src\Baldur\Infinity.cpp
@@ -540,7 +540,7 @@ BOOL CInfTileSet::SetResID(RESID nNewID, CResRef cResRef, RESID nNewDualID, CRes
                     UTIL_ASSERT(FALSE);
                 }
 
-                m_pResTiles[index]->m_pDualTileRes->nfield_58 = cDualResRef;
+                m_pResTiles[index]->m_pDualTileRes->m_nField58 = cDualResRef;
             }
         }
     } else {
@@ -555,7 +555,7 @@ BOOL CInfTileSet::SetResID(RESID nNewID, CResRef cResRef, RESID nNewDualID, CRes
             m_pResTiles[index] = new CResInfTile(FALSE, FALSE);
             if (m_pResTiles[index] != NULL) {
                 m_pResTiles[index]->SetID(nNewID + index);
-                m_pResTiles[index]->nfield_58 = cResRef;
+                m_pResTiles[index]->m_nField58 = cResRef;
             }
         }
     }

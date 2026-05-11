@@ -44,7 +44,7 @@ public:
     void OnLoadGameButtonClick();
     void OnPreGenerateButtonClick();
 
-    /* 0106 */ int nm_m_field_106;
+    /* 0106 */ int m_field_106;
     /* 010A */ BOOL m_bExitProgram;
     /* 010E */ CKeyInfo m_pVirtualKeys[CSCREENSTART_VIRTUAL_KEYS];
     /* 0136 */ BOOL m_bCtrlKeyDown;

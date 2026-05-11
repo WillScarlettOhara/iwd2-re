@@ -6,7 +6,7 @@
 CResText::CResText()
 {
     m_bParsed = FALSE;
-    nfield_54 = 0;
+    m_nField54 = 0;
 }
 
 // 0x780850

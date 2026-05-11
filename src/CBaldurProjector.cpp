@@ -84,9 +84,9 @@ CBaldurProjector::CBaldurProjector()
     m_bSelectEngine = FALSE;
     bm_field_147 = 0;
 
-    nm_m_field_14A.SetResRef(CResRef("NORMAL"), g_pChitin->nm_field_2EC, 1);
-    nm_m_field_14A.SetColor(0xFFFFFF, 0, 0);
-    nm_m_field_14A.RegisterFont();
+    m_field_14A.SetResRef(CResRef("NORMAL"), g_pChitin->nm_field_2EC, 1);
+    m_field_14A.SetColor(0xFFFFFF, 0, 0);
+    m_field_14A.RegisterFont();
     m_sCurrentMovieFileName = "";
 
     m_hBink = NULL;
@@ -207,7 +207,7 @@ CBaldurProjector::~CBaldurProjector()
     if (m_hBink != NULL) {
         m_pfnBinkClose(m_hBink);
         m_hBink = NULL;
-        nm_m_field_14A.Unload();
+        m_field_14A.Unload();
     }
 
     // TODO: Incomplete. Destroying some global object and surface, probably

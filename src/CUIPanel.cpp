@@ -154,7 +154,7 @@ DWORD CUIPanel::TimerAsynchronousUpdate()
         while (pos != NULL) {
             CUIControlBase* pControl = m_lControls.GetNext(pos);
             if (pControl->m_bActive
-                && (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips != INT_MAX || m_pManager->nfield_76)
+                && (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips != INT_MAX || m_pManager->m_nField76)
                 && pControl->IsOver(pt)) {
                 pControl->TimerAsynchronousUpdate(TRUE);
                 nID = pControl->m_nID;
@@ -362,7 +362,7 @@ void CUIPanel::Render()
         rMosaic.OffsetRect(-m_ptOrigin);
 
         if (m_nRenderCount != 0) {
-            CSingleLock lock(&(m_pManager->pfield_56), FALSE);
+            CSingleLock lock(&(m_pManager->m_pField56), FALSE);
             lock.Lock(INFINITE);
             m_nRenderCount--;
             lock.Unlock();
@@ -475,7 +475,7 @@ void CUIPanel::InvalidateRect(const CRect* pRect)
             m_rDirty.SetRect(0, 0, 0, 0);
         }
 
-        CSingleLock lock(&(m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount = CUIManager::RENDER_COUNT;
         lock.Unlock();

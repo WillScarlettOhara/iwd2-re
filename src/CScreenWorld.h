@@ -137,7 +137,7 @@ public:
     INT GetNumContainerRows(LONG nContainer);
     INT GetNumGroupRows();
 
-    /* 0106 */ CRITICAL_SECTION pm_m_field_106;
+    /* 0106 */ CRITICAL_SECTION m_critSect106;
     /* 011E */ int nm_m_field_11E;
     /* 0122 */ LONG m_boredCount;
     /* 0126 */ BOOL m_bored;
@@ -149,7 +149,7 @@ public:
     /* 013E */ BOOLEAN m_bPaused;
     /* 0142 */ BOOL bm_m_field_142;
     /* 0146 */ BOOL m_bHardPaused;
-    /* 014A */ int nm_m_field_14A;
+    /* 014A */ int m_field_14A;
     /* 014E */ int nm_m_field_14E;
     /* 0152 */ BOOL m_bPausedBeforePickParty;
     /* 0156 */ int nm_m_field_156;
@@ -164,7 +164,7 @@ public:
     /* 0668 */ CVidFont pfield_668;
     /* 0B68 */ CKeyInfo m_pVirtualKeys[CSCREENWORLD_VIRTUAL_KEYS];
     /* 0E48 */ BYTE m_pVirtualKeysFlags[CSCREENWORLD_VIRTUAL_KEYS];
-    /* 0EA4 */ int nm_field_EA4;
+    /* 0EA4 */ int m_field_EA4;
     /* 0EA8 */ CUIControlTextDisplay* m_pActiveDialogDisplay;
     /* 0EAC */ CUIControlTextDisplay* m_pActiveChatDisplay;
     /* 0EB0 */ CGameDialogSprite m_internalLoadedDialog;

@@ -9,8 +9,8 @@ public:
     ~CResPLT();
 
     /* 0050 */ int nfield_50;
-    /* 0054 */ int nfield_54;
-    /* 0058 */ int nfield_58;
+    /* 0054 */ int m_nField54;
+    /* 0058 */ int m_nField58;
 };
 
 #endif /* CRESPLT_H_ */

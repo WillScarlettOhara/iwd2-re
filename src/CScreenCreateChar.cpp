@@ -1651,7 +1651,7 @@ void CScreenCreateChar::ResetMemorizeArcaneSpellsPanel(CUIPanel* pPanel, CGameSp
             pSprite->m_spells.GetSpellsAtLevel(nClassIndex, nLevel)->nm_field_14 = nMaxKnownSpells;
 
             // NOTE: Uninline.
-            pSprite->m_spells.GetSpellsAtLevel(nClassIndex, nLevel)->nm_field_18 = 0;
+            pSprite->m_spells.GetSpellsAtLevel(nClassIndex, nLevel)->m_nStartTime = 0;
         }
     }
 
@@ -1727,13 +1727,13 @@ void CScreenCreateChar::ResetMemorizeDivineSpellsPanel(CUIPanel* pPanel, CGameSp
             pSprite->m_spells.GetSpellsAtLevel(nClassIndex, nLevel)->nm_field_14 = 0;
 
             // NOTE: Uninline.
-            pSprite->m_spells.GetSpellsAtLevel(nClassIndex, nLevel)->nm_field_18 = 0;
+            pSprite->m_spells.GetSpellsAtLevel(nClassIndex, nLevel)->m_nStartTime = 0;
         }
     }
 
     for (nLevel = 0; nLevel < CSPELLLIST_MAX_LEVELS; nLevel++) {
         pSprite->m_domainSpells.m_lists[nLevel].nm_field_14 = 0;
-        pSprite->m_domainSpells.m_lists[nLevel].nm_field_18 = 0;
+        pSprite->m_domainSpells.m_lists[nLevel].m_nStartTime = 0;
     }
 
     pSprite->m_field_562C = 1;
@@ -6824,7 +6824,7 @@ void CUIControlScrollBarCharGenSkills::OnScroll()
     // __LINE__: 11418
     UTIL_ASSERT(pCreateChar != NULL);
 
-    pCreateChar->m_nTopSkill = max(SKILL_COUNT * wm_field_144, 0) / wm_m_field_142;
+    pCreateChar->m_nTopSkill = max(SKILL_COUNT * wm_field_144, 0) / m_nField142;
 
     InvalidateItems();
 
@@ -7813,7 +7813,7 @@ BOOL CUIControlButtonCharGenPortrait::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -8156,7 +8156,7 @@ BOOL CUIControlButtonCharGenAppearancePortrait::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -8374,7 +8374,7 @@ BOOL CUIControlButtonCharGenHairSkinAppearance::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -8429,7 +8429,7 @@ BOOL CUIControlButtonCharGenHairSkinAppearance::Render(BOOL bForce)
     ptPos.x += pInfinity->nCurrentX;
     ptPos.y += pInfinity->nCurrentY + 20;
 
-    CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+    CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
     renderLock.Lock(INFINITE);
 
     pCreateChar->m_animation.Render(pInfinity,
@@ -9174,7 +9174,7 @@ void CUIControlScrollBarCharGenHatedRace::OnScroll()
     UTIL_ASSERT(pCreateChar != NULL);
 
     // NOTE: Uninline.
-    pCreateChar->SetTopHatedRace(5 * wm_field_144 / wm_m_field_142);
+    pCreateChar->SetTopHatedRace(5 * wm_field_144 / m_nField142);
 
     InvalidateItems();
 
@@ -10373,7 +10373,7 @@ void CUIControlScrollBarCharGenFeats::OnScroll()
     // __LINE__: 17253
     UTIL_ASSERT(pCreateChar != NULL);
 
-    INT nTopFeat = max(FEAT_COUNT * wm_field_144, 0) / wm_m_field_142;
+    INT nTopFeat = max(FEAT_COUNT * wm_field_144, 0) / m_nField142;
     pCreateChar->m_nTopFeat = max(min(nTopFeat - FEAT_SLOTS, FEAT_COUNT - FEAT_SLOTS), 0);
 
     InvalidateItems();
@@ -10666,7 +10666,7 @@ BOOL CUIControlButtonCharGenFeatsCircle::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();

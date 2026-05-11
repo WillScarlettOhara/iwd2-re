@@ -4972,7 +4972,7 @@ void CInfGame::UseMagicOnGround(CPoint pt)
                     string,
                     pt,
                     0,
-                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.bm_field_1E << 8));
+                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.m_bField1E << 8));
                 action.m_specificID3 = pSprite->m_currentUseButton.m_abilityId.bm_field_1D;
                 addAction = TRUE;
             }
@@ -4986,7 +4986,7 @@ void CInfGame::UseMagicOnGround(CPoint pt)
                     string,
                     pt,
                     0,
-                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.bm_field_1E << 8));
+                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.m_bField1E << 8));
                 action.m_specificID3 = pSprite->m_currentUseButton.m_abilityId.bm_field_1D;
                 addAction = TRUE;
             }
@@ -5003,7 +5003,7 @@ void CInfGame::UseMagicOnGround(CPoint pt)
                     string,
                     pt,
                     0,
-                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.bm_field_1E << 8));
+                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.m_bField1E << 8));
                 action.m_specificID3 = pSprite->m_currentUseButton.m_abilityId.bm_field_1D;
                 addAction = TRUE;
             }
@@ -5070,7 +5070,7 @@ void CInfGame::UseMagicOnObject(LONG target)
                     targetType,
                     string,
                     0,
-                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.bm_field_1E << 8));
+                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.m_bField1E << 8));
                 action.m_specificID3 = pSprite->m_currentUseButton.m_abilityId.bm_field_1D;
                 addAction = TRUE;
             }
@@ -5084,7 +5084,7 @@ void CInfGame::UseMagicOnObject(LONG target)
                     targetType,
                     string,
                     0,
-                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.bm_field_1E << 8));
+                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.m_bField1E << 8));
                 action.m_specificID3 = pSprite->m_currentUseButton.m_abilityId.bm_field_1D;
                 addAction = TRUE;
             }
@@ -5119,7 +5119,7 @@ void CInfGame::UseMagicOnObject(LONG target)
                     targetType,
                     string,
                     0,
-                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.bm_field_1E << 8));
+                    pSprite->m_currentUseButton.m_abilityId.m_nClass | (pSprite->m_currentUseButton.m_abilityId.m_bField1E << 8));
                 action.m_specificID3 = pSprite->m_currentUseButton.m_abilityId.bm_field_1D;
                 addAction = TRUE;
             }
@@ -5585,7 +5585,7 @@ void CInfGame::SetProtagonist(LONG nId)
 {
     STR_RES strRes;
 
-    if (g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.nfield_54) {
+    if (g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.m_nField54) {
         nId = g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.m_characterIndex;
     }
 

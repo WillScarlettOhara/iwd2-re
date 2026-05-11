@@ -477,14 +477,14 @@ public:
     /* 0057 */ signed char m_resistMissileBase;
     /* 0058 */ signed char m_resistMagicDamageBase;
     /* 0059 */ unsigned char bfield_59;
-    /* 005A */ unsigned char bfield_5A;
+    /* 005A */ unsigned char m_bField5A;
     /* 005B */ unsigned char bfield_5B;
     /* 005C */ unsigned char bfield_5C;
     /* 005D */ BYTE m_fatigue;
     /* 005E */ BYTE m_intoxication;
     /* 005F */ signed char m_luckBase;
     /* 0060 */ BYTE m_turnUndeadLevel;
-    /* 0061 */ unsigned char bfield_61[33];
+    /* 0061 */ unsigned char m_bField61[33];
     /* 0082 */ BYTE m_characterLevel;
     /* 0083 */ union {
         struct {
@@ -572,7 +572,7 @@ public:
     /* 02F9 */ BYTE bm_field_2F9;
     /* 02FA */ BYTE m_fadeSpeed;
     /* 02FB */ unsigned char bm_field_2FB;
-    /* 02FC */ unsigned char bm_field_2FC;
+    /* 02FC */ unsigned char pm_field_2FC;
     /* 02FF */ unsigned char bm_field_2FF;
 };
 

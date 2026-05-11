@@ -1017,7 +1017,7 @@ void CScreenMap::ResetAreaNotePanel(CUIPanel* pPanel)
     pButton->SetText(FetchString(13957));
 
     CGameArea* pArea = static_cast<CUIControlButtonMapAreaMap*>(GetManager()->GetPanel(2)->GetControl(2))->m_pArea;
-    CUIControlButtonMapNote* pNoteControl = static_cast<CUIControlButtonMapNote*>(GetManager()->GetPanel(2)->GetControl(pArea->m_cGameAreaNotes.nfield_74));
+    CUIControlButtonMapNote* pNoteControl = static_cast<CUIControlButtonMapNote*>(GetManager()->GetPanel(2)->GetControl(pArea->m_cGameAreaNotes.m_nField74));
 
     SHORT nSequence;
     if (pNoteControl != NULL) {
@@ -1031,7 +1031,7 @@ void CScreenMap::ResetAreaNotePanel(CUIPanel* pPanel)
         pButton->SetSelected(nButtonID - 4 == nSequence);
     }
 
-    static_cast<CUIControlButtonMapAreaMap*>(GetManager()->GetPanel(2)->GetControl(2))->m_pArea->m_cGameAreaNotes.bm_field_8D = min(static_cast<BYTE>(nSequence), 7);
+    static_cast<CUIControlButtonMapAreaMap*>(GetManager()->GetPanel(2)->GetControl(2))->m_pArea->m_cGameAreaNotes.m_bField8D = min(static_cast<BYTE>(nSequence), 7);
 }
 
 // 0x642130
@@ -1345,7 +1345,7 @@ BOOL CUIControlButtonMapAreaMap::OnLButtonDown(CPoint pt)
     CUIManager* pManager = m_pPanel->m_pManager;
     pManager->bm_field_2D = 0;
     pManager->nm_field_32 = m_nID;
-    pManager->nm_field_1C = 0;
+    pManager->m_nDeadline = 0;
     static_cast<CBaldurEngine*>(pManager->m_pWarp)->PlayGUISound(CBaldurEngine::RESREF_SOUND_CLICKLEFT);
 
     return TRUE;
@@ -1436,7 +1436,7 @@ void CUIControlButtonMapAreaMap::OnRButtonClick(CPoint pt)
                 STR_RES strRes;
                 g_pBaldurChitin->GetTlkTable().Fetch(strRef, strRes);
                 pText->SetText(strRes.szText);
-                m_pArea->m_cGameAreaNotes.nfield_74 = m_nID;
+                m_pArea->m_cGameAreaNotes.m_nField74 = m_nID;
                 m_pArea->m_cGameAreaNotes.nfield_70 = 0;
             } else {
                 m_pArea->m_cGameAreaNotes.nfield_70 = 1;
@@ -1624,7 +1624,7 @@ BOOL CUIControlButtonMapAreaMap::Render(BOOL bForce)
     }
 
     if (m_nRenderCount > 0) {
-        CSingleLock renderCountLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock renderCountLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         renderCountLock.Lock(INFINITE);
         m_nRenderCount--;
         renderCountLock.Unlock();
@@ -1754,7 +1754,7 @@ void CUIControlButtonMapAreaMap::InvalidateNotes()
             DWORD dwId = pfield_7BE.GetNext(pos);
             CUIControlButtonMapNote* pControl = static_cast<CUIControlButtonMapNote*>(pPanel->GetControl(dwId));
             if (pControl != NULL) {
-                if (pControl->wfield_666) {
+                if (pControl->m_wField666) {
                     pControl->InvalidateRect();
                 }
             }
@@ -1992,9 +1992,9 @@ void CUIControlButtonMapAreaMap::SetActiveNotes(BOOL bActive)
             pNote = static_cast<CUIControlButtonMapNote*>(pPanel->GetControl(nId));
             if (pNote != NULL) {
                 if (areaResRef == pNote->m_areaResRef) {
-                    if (!pNote->wfield_668) {
+                    if (!pNote->m_wField668) {
                         pNote->m_ptOrigin += ptStart;
-                        pNote->wfield_668 = TRUE;
+                        pNote->m_wField668 = TRUE;
                     }
 
                     CPoint ptScreen;
@@ -2002,7 +2002,7 @@ void CUIControlButtonMapAreaMap::SetActiveNotes(BOOL bActive)
                     ptScreen.y = pNote->m_ptOrigin.y + pNote->m_size.cy / 2;
 
                     CPoint ptWorld;
-                    if (pNote->wfield_668) {
+                    if (pNote->m_wField668) {
                         ptWorld = ConvertScreenToWorldCoords(ptScreen);
                     } else {
                         ptWorld.x = 32 * ptScreen.x / 4 / (m_pPanel->m_pManager->m_bDoubleSize ? 2 : 1);
@@ -2010,7 +2010,7 @@ void CUIControlButtonMapAreaMap::SetActiveNotes(BOOL bActive)
                     }
 
                     if (pVisMap->IsTileExplored(pVisMap->PointToTile(ptWorld))) {
-                        pNote->wfield_666 = TRUE;
+                        pNote->m_wField666 = TRUE;
                         pNote->SetActive(TRUE);
                         pNote->SetInactiveRender(TRUE);
                         pNote->m_bInactiveRender = TRUE;
@@ -2018,13 +2018,13 @@ void CUIControlButtonMapAreaMap::SetActiveNotes(BOOL bActive)
                         pNote->SetActive(FALSE);
                         pNote->SetInactiveRender(FALSE);
                         pNote->m_bInactiveRender = FALSE;
-                        pNote->wfield_666 = FALSE;
+                        pNote->m_wField666 = FALSE;
                     }
                 } else {
                     pNote->SetActive(FALSE);
                     pNote->SetInactiveRender(FALSE);
                     pNote->m_bInactiveRender = FALSE;
-                    pNote->wfield_666 = FALSE;
+                    pNote->m_wField666 = FALSE;
                 }
             }
         }
@@ -2039,7 +2039,7 @@ void CUIControlButtonMapAreaMap::SetActiveNotes(BOOL bActive)
                 pNote->SetActive(FALSE);
                 pNote->SetInactiveRender(FALSE);
                 pNote->m_bInactiveRender = FALSE;
-                pNote->wfield_666 = 0;
+                pNote->m_wField666 = 0;
             }
         }
     }
@@ -2206,7 +2206,7 @@ void CUIControlButtonMapNoteDelete::OnLButtonClick(CPoint pt)
     // twice.
     CUIPanel* pPanel = pMap->GetManager()->GetPanel(2);
     CUIControlButtonMapAreaMap* pMapControl = static_cast<CUIControlButtonMapAreaMap*>(pPanel->GetControl(2));
-    pMapControl->m_pArea->m_cGameAreaNotes.DeleteANote(pMapControl->m_pArea->m_cGameAreaNotes.nfield_74);
+    pMapControl->m_pArea->m_cGameAreaNotes.DeleteANote(pMapControl->m_pArea->m_cGameAreaNotes.m_nField74);
 
     pMap->OnCancelButtonClick();
 }
@@ -2275,8 +2275,8 @@ CUIControlButtonMapNote::CUIControlButtonMapNote(CUIPanel* panel, UI_CONTROL_BUT
     : CUIControlButton(panel, controlInfo, RBUTTON, 0)
 {
     SetNeedMouseMove();
-    wfield_666 = 0;
-    wfield_668 = 0;
+    m_wField666 = 0;
+    m_wField668 = 0;
     m_nDisabledFrame = 0;
     m_nNormalFrame = 0;
     m_nPressedFrame = 1;
@@ -2291,7 +2291,7 @@ CUIControlButtonMapNote::~CUIControlButtonMapNote()
 // 0x646230
 void CUIControlButtonMapNote::OnRButtonClick(CPoint pt)
 {
-    if (wfield_666) {
+    if (m_wField666) {
         CUIControlButtonMapAreaMap* pMapControl = static_cast<CUIControlButtonMapAreaMap*>(m_pPanel->GetControl(2));
         CGameArea* pArea = pMapControl->m_pArea;
 
@@ -2315,7 +2315,7 @@ void CUIControlButtonMapNote::OnRButtonClick(CPoint pt)
         g_pBaldurChitin->GetTlkTable().Fetch(strNote, strRes);
         pEdit->SetText(strRes.szText);
 
-        pArea->m_cGameAreaNotes.nfield_74 = m_nID;
+        pArea->m_cGameAreaNotes.m_nField74 = m_nID;
         pMap->SummonPopup(5);
 
         pMap->GetManager()->SetCapture(pEdit, CUIManager::KEYBOARD);
@@ -2338,7 +2338,7 @@ void CUIControlButtonMapNote::SetInactiveRender(BOOL bInactiveRender)
 // 0x646470
 BOOL CUIControlButtonMapNote::Render(BOOL bForce)
 {
-    if (wfield_666) {
+    if (m_wField666) {
         return CUIControlButton::Render(bForce);
     } else {
         return FALSE;
@@ -2348,7 +2348,7 @@ BOOL CUIControlButtonMapNote::Render(BOOL bForce)
 // 0x646490
 void CUIControlButtonMapNote::OnMouseMove(CPoint pt)
 {
-    if (wfield_666) {
+    if (m_wField666) {
         CUIControlButtonMapAreaMap* pMapControl = static_cast<CUIControlButtonMapAreaMap*>(m_pPanel->GetControl(2));
         g_pBaldurChitin->m_pEngineMap->UpdateNoteText(pMapControl->m_pArea->m_cGameAreaNotes.GetNoteButtonText(m_nID));
     }
@@ -2372,9 +2372,9 @@ CUIControlButtonMapNoteFlagChoice::CUIControlButtonMapNoteFlagChoice(CUIPanel* p
         m_nDisabledFrame = 0;
         m_nSelectedFrame = 2;
         m_nNotSelectedFrame = 0;
-        pfield_66E = TRUE;
+        m_pField66E = TRUE;
     } else {
-        pfield_66E = FALSE;
+        m_pField66E = FALSE;
     }
 }
 
@@ -2386,7 +2386,7 @@ CUIControlButtonMapNoteFlagChoice::~CUIControlButtonMapNoteFlagChoice()
 // 0x646830
 BOOL CUIControlButtonMapNoteFlagChoice::Render(BOOL bForce)
 {
-    if (pfield_66E) {
+    if (m_pField66E) {
         return CUIControlButton3State::Render(bForce);
     } else {
         return FALSE;
@@ -2396,7 +2396,7 @@ BOOL CUIControlButtonMapNoteFlagChoice::Render(BOOL bForce)
 // 0x646850
 BOOL CUIControlButtonMapNoteFlagChoice::OnLButtonDown(CPoint pt)
 {
-    if (pfield_66E) {
+    if (m_pField66E) {
         return CUIControlButton::OnLButtonDown(pt);
     } else {
         return FALSE;
@@ -2406,13 +2406,13 @@ BOOL CUIControlButtonMapNoteFlagChoice::OnLButtonDown(CPoint pt)
 // 0x646880
 void CUIControlButtonMapNoteFlagChoice::OnLButtonClick(CPoint pt)
 {
-    if (pfield_66E) {
+    if (m_pField66E) {
         SHORT nSequence = m_cVidCell.m_nCurrentSequence;
 
         CScreenMap* pMap = g_pBaldurChitin->m_pEngineMap;
         CUIPanel* pPanel = pMap->GetManager()->GetPanel(2);
         CUIControlButtonMapAreaMap* pMapControl = static_cast<CUIControlButtonMapAreaMap*>(pPanel->GetControl(2));
-        pMapControl->m_pArea->m_cGameAreaNotes.bm_field_8D = min(static_cast<BYTE>(nSequence), 7);
+        pMapControl->m_pArea->m_cGameAreaNotes.m_bField8D = min(static_cast<BYTE>(nSequence), 7);
     }
 
     for (DWORD nButtonID = 4; nButtonID < 12; nButtonID++) {

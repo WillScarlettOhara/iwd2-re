@@ -10,7 +10,7 @@ CAbilityId::CAbilityId()
     m_targetType = 0;
     nm_field_10 = -1;
     nm_field_14 = -1;
-    nm_field_18 = -1;
+    m_nStartTime = -1;
     m_nClass = 0;
     bm_field_1D = 0;
     wm_field_1E = 0;
@@ -26,7 +26,7 @@ CAbilityId& CAbilityId::operator=(const CAbilityId& other)
     m_targetType = other.m_targetType;
     nm_field_10 = other.nm_field_10;
     nm_field_14 = other.nm_field_14;
-    nm_field_18 = other.nm_field_18;
+    m_nStartTime = other.m_nStartTime;
     m_nClass = other.m_nClass;
     bm_field_1D = other.bm_field_1D;
     wm_field_1E = other.wm_field_1E;

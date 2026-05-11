@@ -33,7 +33,7 @@ CUIControlEdit::CUIControlEdit(CUIPanel* panel, UI_CONTROL_EDIT* controlInfo, in
     m_nTextCapitalization = controlInfo->nTextCapitalization;
     m_nRenderCount = 0;
     m_bFocused = 0;
-    m_nEditMode = controlInfo->nfield_68;
+    m_nEditMode = controlInfo->m_nField68;
     m_sText = controlInfo->initialText;
     m_nCursorIndex = -1;
     m_nVisibleIndex = 0;
@@ -601,7 +601,7 @@ BOOL CUIControlEdit::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -731,7 +731,7 @@ BOOL CUIControlEdit::Render(BOOL bForce)
 void CUIControlEdit::InvalidateRect()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount = CUIManager::RENDER_COUNT;
         lock.Unlock();

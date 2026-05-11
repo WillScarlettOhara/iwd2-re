@@ -97,13 +97,13 @@ public:
     /* 0096 */ CObList m_lRequestedHigh; // #guess
     /* 00B2 */ CObList m_lFreed; // #guess
     /* 00CE */ CRes* pfield_CE;
-    /* 00D2 */ int nfield_D2;
+    /* 00D2 */ int m_wFieldD2;
     /* 00D6 */ unsigned int nfield_D6;
     /* 00DA */ unsigned int nfield_DA;
     /* 00DE */ DWORD dwTotalPhysicalMemory; // #guess
     /* 00E2 */ unsigned int m_nResFiles;
-    /* 00E6 */ int nfield_E6;
-    /* 00EA */ short wfield_EA;
+    /* 00E6 */ int m_bFieldE6;
+    /* 00EA */ short m_pFieldEA;
     /* 00EC */ CResFile** m_ppResFiles;
     /* 00F0 */ CResCache cResCache; // #guess
     /* 024C */ CDimmKeyTable m_cKeyTable; // #guess

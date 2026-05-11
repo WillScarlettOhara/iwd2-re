@@ -2329,7 +2329,7 @@ void CScreenConnection::UpdateSessionList(CUIPanel* pPanel, DWORD nTextId)
             TRUE);
     }
 
-    INT nNewIndex = max(min(v1, pText->m_plstStrings->GetCount() - pText->wfield_A6C), 0);
+    INT nNewIndex = max(min(v1, pText->m_plstStrings->GetCount() - pText->m_wFieldA6C), 0);
     pText->SetTopString(pText->m_plstStrings->FindIndex(nNewIndex));
 }
 

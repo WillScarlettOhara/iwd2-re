@@ -1130,7 +1130,7 @@ public:
     /* 0042 */ short wm_field_42;
     /* 0044 */ short wm_field_44;
     /* 0046 */ short wm_field_46;
-    /* 0048 */ short wm_field_48;
+    /* 0048 */ short m_nDurationMod;
     /* 004A */ short wm_field_4A;
     /* 004C */ short wm_field_4C;
     /* 004E */ short wm_field_4E;
@@ -1501,9 +1501,9 @@ public:
 
     /* 000C */ CResRef m_store;
     /* 0014 */ CResRef m_itemId;
-    /* 001C */ int nm_field_1C;
-    /* 0020 */ int nm_field_20;
-    /* 0024 */ int nm_field_24;
+    /* 001C */ int m_nDeadline;
+    /* 0020 */ int m_nField20;
+    /* 0024 */ int m_nTickInterval;
 };
 
 class CMessageFamiliarAdd : public CMessage {
@@ -1545,8 +1545,8 @@ public:
     /* 000E */ LONG m_projectileTargetId;
     /* 0012 */ CPoint m_projectileTarget;
     /* 001A */ LONG m_height;
-    /* 001E */ unsigned char bm_field_1E;
-    /* 0020 */ int nm_field_20;
+    /* 001E */ unsigned char m_bField1E;
+    /* 0020 */ int m_nField20;
 };
 
 class CMessageStopEscapeArea : public CMessage {

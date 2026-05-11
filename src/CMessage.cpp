@@ -7794,7 +7794,7 @@ void CMessageExitDialogMode::Run()
 {
     g_pBaldurChitin->m_pEngineWorld->bm_m_field_1150 = 0;
     g_pBaldurChitin->m_pEngineWorld->EndDialog(1, 1);
-    g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.nfield_54 = 0;
+    g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.m_nField54 = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -10994,11 +10994,11 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
     m_bLevelUp = FALSE;
     m_pPath = 0;
     m_nPath = 0;
-    nfield_74 = 0;
-    nfield_76 = NULL;
+    m_nField74 = 0;
+    m_nField76 = NULL;
     m_currPath = 0;
     nm_field_108 = 0;
-    pfield_56 = 0;
+    m_pField56 = 0;
 
     if (pSprite != NULL) {
         m_nFadeSpeed = pSprite->GetBaseStats()->m_fadeSpeed;
@@ -11014,7 +11014,7 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
         m_dwState = pSprite->GetDerivedStats()->m_generalState;
         m_nHitPoints = pSprite->GetBaseStats()->m_hitPoints;
         m_nMaxHitPoints = pSprite->GetDerivedStats()->m_nMaxHitPoints;
-        bfield_61 = pSprite->GetBaseStats()->m_flags;
+        m_bField61 = pSprite->GetBaseStats()->m_flags;
         m_nArmorClass = pSprite->GetDerivedStats()->m_nArmorClass;
         m_nACDexBonus = pSprite->GetDerivedStats()->m_nACDexBonus;
         m_nACDodgeBonus = pSprite->GetDerivedStats()->m_nACDodgeBonus;
@@ -11059,8 +11059,8 @@ CMessageSpriteUpdate::~CMessageSpriteUpdate()
         delete m_pPath;
     }
 
-    if (nfield_76 != NULL) {
-        delete nfield_76;
+    if (m_nField76 != NULL) {
+        delete m_nField76;
     }
 }
 
@@ -14375,9 +14375,9 @@ CMessageStoreRemoveItem::CMessageStoreRemoveItem(const CResRef& store, const CRe
 {
     m_store = store;
     m_itemId = itemId;
-    nm_field_1C = a3;
+    m_nDeadline = a3;
     m_nField20 = a4;
-    nm_field_24 = a5;
+    m_nTickInterval = a5;
 }
 
 // 0x848F48
@@ -14423,13 +14423,13 @@ void CMessageStoreRemoveItem::MarshalMessage(BYTE** pData, DWORD* dwSize)
     memcpy(*pData + cnt, m_itemId.GetResRef(), RESREF_SIZE);
     cnt += RESREF_SIZE;
 
-    *reinterpret_cast<int*>(*pData + cnt) = nm_field_1C;
+    *reinterpret_cast<int*>(*pData + cnt) = m_nDeadline;
     cnt += sizeof(int);
 
     *reinterpret_cast<int*>(*pData + cnt) = m_nField20;
     cnt += sizeof(int);
 
-    *reinterpret_cast<int*>(*pData + cnt) = nm_field_24;
+    *reinterpret_cast<int*>(*pData + cnt) = m_nTickInterval;
     cnt += sizeof(int);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CMessage.cpp
@@ -14452,13 +14452,13 @@ BOOL CMessageStoreRemoveItem::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     m_itemId = pData + cnt;
     cnt += RESREF_SIZE;
 
-    nm_field_1C = *reinterpret_cast<int*>(pData + cnt);
+    m_nDeadline = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     m_nField20 = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
-    nm_field_24 = *reinterpret_cast<int*>(pData + cnt);
+    m_nTickInterval = *reinterpret_cast<int*>(pData + cnt);
     cnt += sizeof(int);
 
     // NOTE: Missing trailing guard.
@@ -14480,9 +14480,9 @@ void CMessageStoreRemoveItem::Run()
 
         if (pStore->GetItemIndex(m_itemId) != INT_MAX) {
             pStore->RemoveItemExt(m_itemId,
-                nm_field_1C,
+                m_nDeadline,
                 m_nField20,
-                nm_field_24,
+                m_nTickInterval,
                 NULL);
         }
     } else if (g_pChitin->cNetwork.GetSessionOpen()) {
@@ -14494,9 +14494,9 @@ void CMessageStoreRemoveItem::Run()
         if (pStore->m_resRef == m_store) {
             if (pStore->GetItemIndex(m_itemId) != INT_MAX) {
                 pStore->RemoveItemExt(m_itemId,
-                    nm_field_1C,
+                    m_nDeadline,
                     m_nField20,
-                    nm_field_24,
+                    m_nTickInterval,
                     NULL);
 
                 g_pBaldurChitin->m_pEngineStore->UpdateStoreItems();
@@ -14508,9 +14508,9 @@ void CMessageStoreRemoveItem::Run()
             if (pStore != NULL && pStore->m_resRef == m_store) {
                 if (pStore->GetItemIndex(m_itemId) != INT_MAX) {
                     pStore->RemoveItemExt(m_itemId,
-                        nm_field_1C,
+                        m_nDeadline,
                         m_nField20,
-                        nm_field_24,
+                        m_nTickInterval,
                         NULL);
 
                     g_pBaldurChitin->m_pEngineStore->UpdateGroupItems();
@@ -14770,7 +14770,7 @@ CMessageFireProjectile::CMessageFireProjectile(WORD projectileType, LONG project
     m_projectileTargetId = projectileTargetId;
     m_projectileTarget = projectileTarget;
     m_height = height;
-    bm_field_1E = a7;
+    m_bField1E = a7;
     m_nField20 = 0;
 }
 

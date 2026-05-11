@@ -16,7 +16,7 @@ public:
     /* 000E */ short m_targetType;
     /* 0010 */ int nm_field_10;
     /* 0014 */ int nm_field_14;
-    /* 0018 */ int nm_field_18;
+    /* 0018 */ int m_nStartTime;
     /* 001C */ BYTE m_nClass;
     /* 001D */ unsigned char bm_field_1D;
     /* 001E */ short wm_field_1E;

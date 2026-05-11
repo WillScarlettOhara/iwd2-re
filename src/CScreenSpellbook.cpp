@@ -1318,7 +1318,7 @@ CUIControlButtonSpellbookSpell::CUIControlButtonSpellbookSpell(CUIPanel* panel, 
 {
     m_spellResRef = "";
     m_iconResRef = "";
-    nfield_676 = 1;
+    m_nField676 = 1;
     nfield_67A = 0;
 }
 
@@ -1377,7 +1377,7 @@ BOOL CUIControlButtonSpellbookSpell::OnLButtonDown(CPoint pt)
 
     m_pPanel->m_pManager->nm_field_32 = m_nID;
     m_pPanel->m_pManager->bm_field_2D = 0;
-    m_pPanel->m_pManager->nm_field_1C = 0;
+    m_pPanel->m_pManager->m_nDeadline = 0;
 
     return TRUE;
 }
@@ -1496,7 +1496,7 @@ void CUIControlScrollBarSpellbookKnownSpells::OnScroll()
     // __LINE__: 4098
     UTIL_ASSERT(pSpellbook != NULL);
 
-    pSpellbook->m_nTopKnownSpell = max(wm_field_144 * (pSpellbook->m_nNumKnownSpells - 8), 0) / wm_m_field_142;
+    pSpellbook->m_nTopKnownSpell = max(wm_field_144 * (pSpellbook->m_nNumKnownSpells - 8), 0) / m_nField142;
 
     if (pSpellbook->m_nNumKnownSpells < 8) {
         wm_field_144 = 0;
@@ -1578,7 +1578,7 @@ BOOL CUIControlButtonSpellbookSpellInfoIcon::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();

@@ -125,7 +125,7 @@ CGameObject::CGameObject()
     m_remotePlayerID = 0;
     m_remoteObjectID = CGameObjectArray::INVALID_INDEX;
     m_bLocalControl = 0;
-    nm_field_1C = 0;
+    m_nDeadline = 0;
     m_listType = LIST_FRONT;
     m_AIInhibitor = 0;
 }

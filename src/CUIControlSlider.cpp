@@ -88,7 +88,7 @@ void CUIControlSlider::OnMouseMove(CPoint pt)
     if (nValue != m_nValue) {
         m_nValue = nValue;
 
-        CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         renderLock.Lock(INFINITE);
         m_nRenderCount = CUIManager::RENDER_COUNT;
         renderLock.Unlock();
@@ -124,7 +124,7 @@ BOOL CUIControlSlider::OnLButtonDown(CPoint pt)
         && y >= rKnob.top && y < rKnob.bottom) {
         m_bTracking = TRUE;
 
-        CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         renderLock.Lock(INFINITE);
         m_nRenderCount = CUIManager::RENDER_COUNT;
         renderLock.Unlock();
@@ -139,7 +139,7 @@ BOOL CUIControlSlider::OnLButtonDown(CPoint pt)
         if (nValue != m_nValue) {
             m_nValue = nValue;
 
-            CSingleLock renderLock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+            CSingleLock renderLock(&(m_pPanel->m_pManager->m_pField56), FALSE);
             renderLock.Lock(INFINITE);
             m_nRenderCount = CUIManager::RENDER_COUNT;
             renderLock.Unlock();
@@ -157,7 +157,7 @@ void CUIControlSlider::OnLButtonUp(CPoint pt)
 {
     m_bTracking = FALSE;
 
-    CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+    CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
     lock.Lock(INFINITE);
     m_nRenderCount = CUIManager::RENDER_COUNT;
     lock.Unlock();
@@ -185,7 +185,7 @@ BOOL CUIControlSlider::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -244,7 +244,7 @@ BOOL CUIControlSlider::Render(BOOL bForce)
 void CUIControlSlider::InvalidateRect()
 {
     if (m_bActive || m_bInactiveRender) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
 
         m_nRenderCount = CUIManager::RENDER_COUNT;

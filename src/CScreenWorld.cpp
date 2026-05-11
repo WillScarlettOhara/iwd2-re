@@ -38,13 +38,13 @@ CScreenWorld::CScreenWorld()
     m_m_field_164 = 0;
     m_nTopContainerRow = 0;
     m_nTopGroupRow = 0;
-    m_m_field_10CC = 0;
+    m_field_10CC = 0;
     m_ambianceForce = FALSE;
     m_bInControlOfDialog = FALSE;
     m_bInControlOfStore = FALSE;
-    m_m_field_110C = 0;
-    m_m_field_114C = 0;
-    m_m_field_1150 = 0;
+    m_field_110C = 0;
+    m_field_114C = 0;
+    m_field_1150 = 0;
     m_nPendingMapWorldDirection = 0;
     m_nLeaveAreaLuaPanicDirection = 0;
     m_comingOutOfDialog = 0;
@@ -160,7 +160,7 @@ CScreenWorld::CScreenWorld()
     m_pActiveDialogDisplay = NULL;
     m_pActiveChatDisplay = NULL;
     m_m_field_156 = 0;
-    m_field_F37 = 0;
+    m_nFieldF37 = 0;
     m_m_field_15A = 1;
     m_newViewSize.left = 0;
     m_newViewSize.top = 0;
@@ -168,24 +168,24 @@ CScreenWorld::CScreenWorld()
     m_newViewSize.bottom = 1;
     m_bForceViewSize = FALSE;
     m_waitingOnResize = 0;
-    m_field_F44 = 0;
+    m_nFieldF44 = 0;
     m_scrollLockId = CGameObjectArray::INVALID_INDEX;
     m_field_EA4 = -1;
-    m_m_field_10B2 = -1;
-    m_m_field_10B4 = 0;
+    m_field_10B2 = -1;
+    m_field_10B4 = 0;
     m_interactionIndex = CGameObjectArray::INVALID_INDEX;
     m_interactionTarget = CGameObjectArray::INVALID_INDEX;
-    m_m_field_10C0 = "";
-    m_m_field_10C4 = 0;
-    m_m_field_10C8 = 0;
-    m_m_field_10D0 = CGameObjectArray::INVALID_INDEX;
+    m_field_10C0 = "";
+    m_field_10C4 = 0;
+    m_field_10C8 = 0;
+    m_field_10D0 = CGameObjectArray::INVALID_INDEX;
     m_deltaTime = 0;
     m_nChatMessageCount = 0;
     m_movie = "";
-    m_m_field_1108 = 0;
+    m_field_1108 = 0;
     m_bGameOverPanel = 0;
-    m_m_field_10F0 = 0;
-    m_m_field_10F4 = -1;
+    m_field_10F0 = 0;
+    m_field_10F4 = -1;
     m_autoPauseId = CGameObjectArray::INVALID_INDEX;
     m_autoPauseRef = -1;
     m_nPickPartyNumCharacters = -1;
@@ -202,25 +202,25 @@ CScreenWorld::CScreenWorld()
     m_bRestMovie = FALSE;
     m_bPendingMapWorld = FALSE;
     m_bPendingReformParty = FALSE;
-    m_m_field_119D = 0;
+    m_field_119D = 0;
     InitializeCriticalSection(&m_m_field_106);
     m_nBattleCryTimeOut = 0;
     m_nPartySizeCheckStartDelay = 0;
     m_bLeaveAreaLuaPanicPending = FALSE;
     m_ulLeaveAreaLuaPanicTimer = -1;
     m_bPlayEndCredits = FALSE;
-    m_m_field_11B6 = -1;
-    m_m_field_11BA = -1;
-    m_m_field_11BE = 0;
+    m_field_11B6 = -1;
+    m_field_11BA = -1;
+    m_field_11BE = 0;
     m_lastAmbiance = CGameObjectArray::INVALID_INDEX;
     m_comingOutOfDialog = 0;
     m_nAutoHideInterface = 0;
     m_nAutoUnhideInterface = 0;
-    m_m_field_11F0 = 1;
-    m_m_field_11F4 = 1;
-    m_m_field_11D0 = CInfinity::stru_8E79B8;
+    m_field_11F0 = 1;
+    m_field_11F4 = 1;
+    m_field_11D0 = CInfinity::stru_8E79B8;
     m_nBlackOutCountDown = 0;
-    m_m_field_1204 = 0;
+    m_field_1204 = 0;
 }
 
 // 0x49FC40
@@ -400,7 +400,7 @@ void CScreenWorld::EngineActivated()
         if (g_pBaldurChitin->GetObjectGame()->m_bGameLoaded == TRUE) {
             g_pBaldurChitin->field_F9 = TRUE;
             g_pBaldurChitin->GetObjectGame()->WorldEngineActivated(pVidMode);
-            m_m_field_119D = TRUE;
+            m_field_119D = TRUE;
 
             g_pBaldurChitin->GetObjectCursor()->SetCursor(0, TRUE);
             g_pBaldurChitin->GetObjectCursor()->m_bVisible = TRUE;
@@ -487,7 +487,7 @@ void CScreenWorld::EngineGameInit()
     m_pActiveDialogDisplay = NULL;
     m_pActiveChatDisplay = NULL;
     m_m_field_156 = 0;
-    m_field_F37 = 0;
+    m_nFieldF37 = 0;
     m_m_field_15A = 1;
     m_newViewSize.left = 0;
     m_newViewSize.top = 0;
@@ -495,24 +495,24 @@ void CScreenWorld::EngineGameInit()
     m_newViewSize.bottom = 1;
     m_bForceViewSize = FALSE;
     m_waitingOnResize = 0;
-    m_field_F44 = 0;
+    m_nFieldF44 = 0;
     m_scrollLockId = CGameObjectArray::INVALID_INDEX;
     m_field_EA4 = -1;
-    m_m_field_10B2 = -1;
-    m_m_field_10B4 = 0;
+    m_field_10B2 = -1;
+    m_field_10B4 = 0;
     m_interactionIndex = CGameObjectArray::INVALID_INDEX;
     m_interactionTarget = CGameObjectArray::INVALID_INDEX;
-    m_m_field_10C0 = "";
-    m_m_field_10C4 = 0;
-    m_m_field_10C8 = 0;
-    m_m_field_10D8 = CGameObjectArray::INVALID_INDEX;
+    m_field_10C0 = "";
+    m_field_10C4 = 0;
+    m_field_10C8 = 0;
+    m_field_10D8 = CGameObjectArray::INVALID_INDEX;
     m_deltaTime = 0;
     m_nChatMessageCount = 0;
     m_movie = "";
-    m_m_field_1108 = 0;
+    m_field_1108 = 0;
     m_bGameOverPanel = FALSE;
-    m_m_field_10F0 = 0;
-    m_m_field_10F4 = -1;
+    m_field_10F0 = 0;
+    m_field_10F4 = -1;
     m_autoPauseId = CGameObjectArray::INVALID_INDEX;
     m_autoPauseRef = -1;
     m_nPickPartyNumCharacters = -1;
@@ -529,15 +529,15 @@ void CScreenWorld::EngineGameInit()
     m_bRestMovie = 0;
     m_bPendingMapWorld = 0;
     m_bPendingReformParty = 0;
-    m_m_field_119D = 0;
+    m_field_119D = 0;
     m_nBattleCryTimeOut = 0;
     m_nPartySizeCheckStartDelay = 0;
     m_bLeaveAreaLuaPanicPending = 0;
     m_ulLeaveAreaLuaPanicTimer = -1;
     m_bPlayEndCredits = FALSE;
-    m_m_field_11B6 = -1;
-    m_m_field_11BA = -1;
-    m_m_field_11BE = 0;
+    m_field_11B6 = -1;
+    m_field_11BA = -1;
+    m_field_11BE = 0;
 
     g_pBaldurChitin->m_pEngineWorld->GetManager()->GetPanel(19)->SetActive(FALSE);
     g_pBaldurChitin->m_pEngineWorld->GetManager()->GetPanel(21)->SetActive(FALSE);
@@ -554,14 +554,14 @@ void CScreenWorld::EngineGameInit()
     m_nAutoHideInterface = 0;
     m_nAutoUnhideInterface = 0;
 
-    if (!m_m_field_11F0) {
-        m_m_field_11F0 = TRUE;
-        CInfinity::stru_8E79B8.bottom = m_m_field_11F8;
+    if (!m_field_11F0) {
+        m_field_11F0 = TRUE;
+        CInfinity::stru_8E79B8.bottom = m_field_11F8;
     }
 
-    if (!m_m_field_11F4) {
-        m_m_field_11F4 = TRUE;
-        CInfinity::stru_8E79B8.bottom = m_m_field_11F8;
+    if (!m_field_11F4) {
+        m_field_11F4 = TRUE;
+        CInfinity::stru_8E79B8.bottom = m_field_11F8;
     }
 
     while (!m_deathSoundList.IsEmpty()) {
@@ -738,7 +738,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
     if (m_bPlayEndCredits) {
         if (g_pBaldurChitin->GetBaldurMessage()->NonBlockingWaitForSignal(CBaldurMessage::SIGNAL_SERVER, CBaldurMessage::SIGNAL_END_GAME)) {
             g_pBaldurChitin->m_pEngineConnection->ReadyEndCredits();
-            g_pBaldurChitin->m_pEngineConnection->field_FB0 = 0;
+            g_pBaldurChitin->m_pEngineConnection->m_field_FB0 = 0;
             g_pBaldurChitin->GetActiveEngine()->SelectEngine(g_pBaldurChitin->m_pEngineConnection);
 
             if (g_pChitin->cNetwork.GetSessionOpen() == TRUE) {
@@ -757,7 +757,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
     }
 
     if (m_playerShutdown) {
-        g_pBaldurChitin->m_pEngineConnection->field_FB0 = 0;
+        g_pBaldurChitin->m_pEngineConnection->m_field_FB0 = 0;
         SelectEngine(g_pBaldurChitin->m_pEngineConnection);
         pGame->DestroyGame(TRUE, FALSE);
     }
@@ -1334,7 +1334,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
         if (m_bGameOverPanel && m_movie == "") {
             m_bGameOverPanel = FALSE;
             StartDeath();
-            m_m_field_10F0 = 0;
+            m_field_10F0 = 0;
         }
 
         if (m_nBattleCryTimeOut > 0) {
@@ -1408,9 +1408,9 @@ void CScreenWorld::TimerSynchronousUpdate()
         }
     }
 
-    if (m_m_field_119D) {
+    if (m_field_119D) {
         pVidMode->LoadFogOWarSurfaces(CInfGame::FOGOWAR_RESREF);
-        m_m_field_119D = FALSE;
+        m_field_119D = FALSE;
     }
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -1747,7 +1747,7 @@ void CScreenWorld::StartCommand()
 // 0x6912A0
 void CScreenWorld::StopCommand()
 {
-    m_field_F37 = 0;
+    m_nFieldF37 = 0;
 
     // NOTE: Uninline.
     m_cUIManager.KillCapture();
@@ -1763,12 +1763,12 @@ void CScreenWorld::StopCommand()
     }
 
     // FIXME: Global.
-    if (g_pBaldurChitin->m_pEngineWorld->m_m_field_11F0) {
+    if (g_pBaldurChitin->m_pEngineWorld->m_field_11F0) {
         m_cUIManager.GetPanel(1)->InvalidateRect(NULL);
     }
 
     // FIXME: Global.
-    if (g_pBaldurChitin->m_pEngineWorld->m_m_field_11F4) {
+    if (g_pBaldurChitin->m_pEngineWorld->m_field_11F4) {
         // FIXME: Repeats.
         m_cUIManager.GetPanel(GetPanel_22_0())->SetActive(TRUE);
         m_cUIManager.GetPanel(GetPanel_22_0())->InvalidateRect(NULL);
@@ -2056,7 +2056,7 @@ void CScreenWorld::HideInterface()
     }
 
     // NOTE: Uninline.
-    m_m_field_11D0 = GetNewViewSize();
+    m_field_11D0 = GetNewViewSize();
 
     INT x;
     INT y;
@@ -2065,8 +2065,8 @@ void CScreenWorld::HideInterface()
     // NOTE: Uninline.
     SetNewViewSize(CInfinity::stru_8E7548, FALSE);
 
-    pGame->GetVisibleArea()->GetInfinity()->SetViewPosition(x + m_newViewSize.left - m_m_field_11D0.left,
-        y + m_newViewSize.top - m_m_field_11D0.top,
+    pGame->GetVisibleArea()->GetInfinity()->SetViewPosition(x + m_newViewSize.left - m_field_11D0.left,
+        y + m_newViewSize.top - m_field_11D0.top,
         TRUE);
 
     m_cUIManager.m_bHidden = TRUE;
@@ -2100,14 +2100,14 @@ void CScreenWorld::UnhideInterface()
         pGame->GetVisibleArea()->GetInfinity()->GetViewPosition(x, y);
 
         // NOTE: Uninline.
-        SetNewViewSize(m_m_field_11D0, FALSE);
+        SetNewViewSize(m_field_11D0, FALSE);
 
         pGame->GetVisibleArea()->GetInfinity()->SetViewPosition(x + m_newViewSize.left - oldViewSize.left,
             y + m_newViewSize.top - oldViewSize.top,
             TRUE);
     } else {
         // NOTE: Uninline.
-        SetNewViewSize(m_m_field_11D0, FALSE);
+        SetNewViewSize(m_field_11D0, FALSE);
     }
 
     m_cUIManager.InvalidateRect(NULL);
@@ -2179,12 +2179,12 @@ void CScreenWorld::StartDeath()
     }
 
     STRREF strRef;
-    switch (m_m_field_10F0) {
+    switch (m_field_10F0) {
     case 1:
         strRef = 32848;
         break;
     case 3:
-        strRef = m_m_field_10F4;
+        strRef = m_field_10F4;
         break;
     default:
         if (g_pChitin->cNetwork.GetSessionOpen()) {
@@ -2961,7 +2961,7 @@ void CScreenWorld::SetActionPanelsActive(BOOL bActive, BOOL bInvalidate)
     // __LINE__: 10120
     UTIL_ASSERT(pCommandPanel != NULL);
 
-    if (m_m_field_11F0) {
+    if (m_field_11F0) {
         pActionPanel->SetActive(bActive);
 
         if (bInvalidate) {
@@ -2969,7 +2969,7 @@ void CScreenWorld::SetActionPanelsActive(BOOL bActive, BOOL bInvalidate)
         }
     }
 
-    if (m_m_field_11F4) {
+    if (m_field_11F4) {
         pCommandPanel->SetActive(bActive);
 
         if (bInvalidate) {
@@ -3171,12 +3171,12 @@ void CUIControlButtonDialog::OnLButtonClick(CPoint pt)
     // __LINE__: 10842
     UTIL_ASSERT(pWorld != NULL);
 
-    if (GetTickCount() > pWorld->m_m_field_11BA + 600) {
-        pWorld->m_m_field_1150 = 1;
-        if (!pWorld->m_m_field_10B4) {
-            pWorld->m_internalLoadedDialog.m_responseMarker = pWorld->m_m_field_10B2;
+    if (GetTickCount() > pWorld->m_field_11BA + 600) {
+        pWorld->m_field_1150 = 1;
+        if (!pWorld->m_field_10B4) {
+            pWorld->m_internalLoadedDialog.m_responseMarker = pWorld->m_field_10B2;
         }
-        pWorld->m_m_field_11BA = GetTickCount();
+        pWorld->m_field_11BA = GetTickCount();
     }
 
     SetActive(FALSE);

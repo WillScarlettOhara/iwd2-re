@@ -1517,7 +1517,7 @@ BOOL CUIControlButtonLoadScreenShot::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1579,7 +1579,7 @@ BOOL CUIControlButtonLoadPortrait::Render(BOOL bForce)
     }
 
     if (m_nRenderCount != 0) {
-        CSingleLock lock(&(m_pPanel->m_pManager->pfield_56), FALSE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_pField56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
         lock.Unlock();
@@ -1730,7 +1730,7 @@ void CUIControlScrollBarLoadGames::OnScroll()
     // __LINE__: 3020
     UTIL_ASSERT(pLoad != NULL);
 
-    pLoad->m_nTopGameSlot = max(pLoad->m_nNumGameSlots - GAME_SLOTS, 0) * wm_field_144 / wm_m_field_142;
+    pLoad->m_nTopGameSlot = max(pLoad->m_nNumGameSlots - GAME_SLOTS, 0) * wm_field_144 / m_nField142;
 
     // NOTE: Uninline.
     UpdateMainPanel();
