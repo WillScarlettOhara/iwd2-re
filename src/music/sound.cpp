@@ -377,7 +377,7 @@ Sound* soundAllocate(int type, int soundFlags)
     waveFormat->nAvgBytesPerSec = waveFormat->nSamplesPerSec * waveFormat->nBlockAlign;
 
     sound->numBytesRead = 0;
-    sound->nfield_6C = 0;
+    sound->field_6C = 0;
     sound->soundBuffer = NULL;
     sound->soundFlags = soundFlags;
     sound->type = type;
@@ -417,9 +417,9 @@ Sound* soundAllocate(int type, int soundFlags)
         sound->loops = 0;
     }
 
-    sound->nfield_54 = 0;
-    sound->nfield_58 = -1;
-    sound->nfield_5C = 1;
+    sound->field_54 = 0;
+    sound->field_58 = -1;
+    sound->field_5C = 1;
     sound->volume = VOLUME_MAX;
     sound->deleted = 0;
 
@@ -554,7 +554,7 @@ int preloadBuffers(Sound* sound)
             bytesRead - musicGetSecondSectionSize(),
             musicGetSecondSectionSize(),
             0);
-        sound->nfield_6C = musicGetSecondSectionSize();
+        sound->field_6C = musicGetSecondSectionSize();
     }
 
     int rc = soundSetData(sound, data, size);
@@ -594,11 +594,11 @@ int soundRewind(Sound* sound)
     HRESULT hr;
     if ((sound->type & SOUND_TYPE_STREAMING) != 0) {
         sound->soundFlags &= ~(SOUND_FLAG_0x200 | SOUND_FLAG_0x80);
-        sound->nfield_74 = 0;
+        sound->field_74 = 0;
         sound->lastPosition = 0;
         sound->numBytesRead = 0;
         sectionsizeClear(sound->sectionsizes);
-        sound->nfield_6C = 0;
+        sound->field_6C = 0;
         hr = IDirectSoundBuffer_SetCurrentPosition(sound->soundBuffer, 0);
         preloadBuffers(sound);
     } else {
@@ -663,7 +663,7 @@ int soundPlayFromPosition(Sound* sound, int pos)
     DWORD readPos;
     DWORD writePos;
     IDirectSoundBuffer_GetCurrentPosition(sound->soundBuffer, &readPos, &writePos);
-    sound->nfield_74 = readPos / sound->dataSize;
+    sound->field_74 = readPos / sound->dataSize;
     sound->statusFlags |= SOUND_STATUS_IS_PLAYING;
 
     numSounds++;
@@ -904,23 +904,23 @@ void refreshSoundBuffers(Sound* sound)
         }
 
         int v1 = readPos / sound->dataSize;
-        if (sound->nfield_74 == v1) {
+        if (sound->field_74 == v1) {
             LeaveCriticalSection(&soundCritSect);
             return;
         }
 
         int v2;
-        if (sound->nfield_74 < v1) {
-            v2 = v1 - sound->nfield_74;
+        if (sound->field_74 < v1) {
+            v2 = v1 - sound->field_74;
         } else {
-            v2 = v1 + sound->numBuffers - sound->nfield_74;
+            v2 = v1 + sound->numBuffers - sound->field_74;
         }
 
         if (sound->dataSize * v2 >= sound->readLimit) {
             v2 = (sound->readLimit + sound->dataSize - 1) / sound->dataSize;
         }
 
-        if (v2 < sound->nfield_5C) {
+        if (v2 < sound->field_5C) {
             LeaveCriticalSection(&soundCritSect);
             return;
         }
@@ -930,7 +930,7 @@ void refreshSoundBuffers(Sound* sound)
         DWORD audioBytes1;
         DWORD audioBytes2;
         hr = IDirectSoundBuffer_Lock(sound->soundBuffer,
-            sound->dataSize * sound->nfield_74,
+            sound->dataSize * sound->field_74,
             sound->dataSize * v2,
             &audioPtr1,
             &audioBytes1,
@@ -940,7 +940,7 @@ void refreshSoundBuffers(Sound* sound)
         if (hr == DSERR_BUFFERLOST) {
             IDirectSoundBuffer_Restore(sound->soundBuffer);
             hr = IDirectSoundBuffer_Lock(sound->soundBuffer,
-                sound->dataSize * sound->nfield_74,
+                sound->dataSize * sound->field_74,
                 sound->dataSize * v2,
                 &audioPtr1,
                 &audioBytes1,
@@ -956,7 +956,7 @@ void refreshSoundBuffers(Sound* sound)
 
         if (audioBytes1 + audioBytes2 != v2 * sound->dataSize) {
             v2 = (audioBytes1 + audioBytes2) / sound->dataSize;
-            if (v2 < sound->nfield_5C) {
+            if (v2 < sound->field_5C) {
                 IDirectSoundBuffer_Unlock(sound->soundBuffer,
                     audioPtr1,
                     audioBytes1,
@@ -978,23 +978,23 @@ void refreshSoundBuffers(Sound* sound)
                 int section = musicGetSection();
                 int song = musicGetSong();
 
-                if (sound->nfield_58 == -1) {
+                if (sound->field_58 == -1) {
                     bytesRead = sound->io.read(sound->io.fd, sound->data, sound->dataSize);
                 } else {
                     int pos = sound->io.tell(sound->io.fd);
-                    if (sound->dataSize + pos > sound->nfield_58) {
-                        bytesRead = sound->io.read(sound->io.fd, sound->data, sound->nfield_58 - pos);
+                    if (sound->dataSize + pos > sound->field_58) {
+                        bytesRead = sound->io.read(sound->io.fd, sound->data, sound->field_58 - pos);
                     }
                 }
 
-                int sectionStart = audioPtr + sound->dataSize * sound->nfield_74 - (unsigned char*)audioPtr1;
+                int sectionStart = audioPtr + sound->dataSize * sound->field_74 - (unsigned char*)audioPtr1;
                 int sectionSize = sound->dataSize - musicGetSecondSectionSize();
                 sectionsizeAdd(sound->sectionsizes,
                     song,
                     section,
                     sectionStart,
                     sectionSize,
-                    sound->nfield_6C);
+                    sound->field_6C);
 
                 if (musicGetSecondSectionSize() > 0) {
                     int secondSectionSize = musicGetSecondSectionSize();
@@ -1004,12 +1004,12 @@ void refreshSoundBuffers(Sound* sound)
                         sectionStart + sectionSize,
                         secondSectionSize,
                         0);
-                    sound->nfield_6C = secondSectionSize;
+                    sound->field_6C = secondSectionSize;
                 } else {
                     if (section == musicGetSection()) {
-                        sound->nfield_6C += sectionSize;
+                        sound->field_6C += sectionSize;
                     } else {
-                        sound->nfield_6C = 0;
+                        sound->field_6C = 0;
                     }
                 }
 
@@ -1044,7 +1044,7 @@ void refreshSoundBuffers(Sound* sound)
                     } else {
                         while (bytesRead < sound->dataSize) {
                             if (sound->loops == -1) {
-                                sound->io.seek(sound->io.fd, sound->nfield_54, SEEK_SET);
+                                sound->io.seek(sound->io.fd, sound->field_54, SEEK_SET);
                                 if (sound->callback != NULL) {
                                     sound->callback(sound->callbackUserData, 0x400);
                                 }
@@ -1052,7 +1052,7 @@ void refreshSoundBuffers(Sound* sound)
                                 if (sound->loops > 0) {
                                     sound->loops--;
 
-                                    sound->io.seek(sound->io.fd, sound->nfield_54, SEEK_SET);
+                                    sound->io.seek(sound->io.fd, sound->field_54, SEEK_SET);
                                     if (sound->callback != NULL) {
                                         sound->callback(sound->callbackUserData, 0x400);
                                     }
@@ -1060,20 +1060,20 @@ void refreshSoundBuffers(Sound* sound)
                                     int section = musicGetSection();
                                     int song = musicGetSong();
 
-                                    sound->nfield_58 = -1;
-                                    sound->nfield_54 = 0;
+                                    sound->field_58 = -1;
+                                    sound->field_54 = 0;
                                     sound->loops = 0;
                                     sound->soundFlags &= ~SOUND_LOOPING;
                                     bytesRead += sound->io.read(sound->io.fd, sound->data + bytesRead, sound->dataSize - bytesRead);
 
-                                    int sectionStart = audioPtr + bytesRead + sound->dataSize * sound->nfield_74 - (unsigned char*)audioPtr1;
+                                    int sectionStart = audioPtr + bytesRead + sound->dataSize * sound->field_74 - (unsigned char*)audioPtr1;
                                     int sectionSize = sound->dataSize - musicGetSecondSectionSize();
                                     sectionsizeAdd(sound->sectionsizes,
                                         song,
                                         section,
                                         sectionStart,
                                         sectionSize,
-                                        sound->nfield_6C);
+                                        sound->field_6C);
 
                                     if (musicGetSecondSectionSize() > 0) {
                                         int secondSectionSize = musicGetSecondSectionSize();
@@ -1083,12 +1083,12 @@ void refreshSoundBuffers(Sound* sound)
                                             sectionStart + sectionSize,
                                             secondSectionSize,
                                             sectionSize);
-                                        sound->nfield_6C = secondSectionSize;
+                                        sound->field_6C = secondSectionSize;
                                     } else {
                                         if (section == musicGetSection()) {
-                                            sound->nfield_6C += sectionSize;
+                                            sound->field_6C += sectionSize;
                                         } else {
-                                            sound->nfield_6C = 0;
+                                            sound->field_6C = 0;
                                         }
                                     }
 
@@ -1097,14 +1097,14 @@ void refreshSoundBuffers(Sound* sound)
                             }
 
                             int bytesToRead;
-                            if (sound->nfield_58 == -1) {
+                            if (sound->field_58 == -1) {
                                 bytesToRead = sound->dataSize - bytesRead;
                             } else {
                                 int pos = sound->io.tell(sound->io.fd);
-                                if (sound->dataSize + bytesRead + pos <= sound->nfield_58) {
+                                if (sound->dataSize + bytesRead + pos <= sound->field_58) {
                                     bytesToRead = sound->dataSize - bytesRead;
                                 } else {
-                                    bytesToRead = sound->nfield_58 - bytesRead - pos;
+                                    bytesToRead = sound->field_58 - bytesRead - pos;
                                 }
                             }
 
@@ -1113,7 +1113,7 @@ void refreshSoundBuffers(Sound* sound)
 
                             int chunkSize = sound->io.read(sound->io.fd, sound->data + bytesRead, bytesToRead);
 
-                            int sectionStart = audioPtr + bytesRead + sound->dataSize * sound->nfield_74 - (unsigned char*)audioPtr1;
+                            int sectionStart = audioPtr + bytesRead + sound->dataSize * sound->field_74 - (unsigned char*)audioPtr1;
                             int sectionSize = sound->dataSize - musicGetSecondSectionSize();
                             sectionsizeAdd(sound->sectionsizes,
                                 song,
@@ -1129,13 +1129,13 @@ void refreshSoundBuffers(Sound* sound)
                                     musicGetSection(),
                                     sectionStart + sectionSize,
                                     secondSectionSize,
-                                    sound->nfield_6C);
-                                sound->nfield_6C = secondSectionSize;
+                                    sound->field_6C);
+                                sound->field_6C = secondSectionSize;
                             } else {
                                 if (section == musicGetSection()) {
-                                    sound->nfield_6C += sectionSize;
+                                    sound->field_6C += sectionSize;
                                 } else {
-                                    sound->nfield_6C = 0;
+                                    sound->field_6C = 0;
                                 }
                             }
 
@@ -1171,7 +1171,7 @@ void refreshSoundBuffers(Sound* sound)
             audioBytes1,
             audioPtr2,
             audioBytes2);
-        sound->nfield_74 = v1;
+        sound->field_74 = v1;
     }
 
     LeaveCriticalSection(&soundCritSect);
@@ -1391,12 +1391,12 @@ int soundSetPosition(Sound* sound, int pos)
         sound->fileSize = sound->io.filesize(sound->io.fd);
         sound->io.seek(sound->io.fd, sound->dataSize * (pos / sound->dataSize), SEEK_SET);
         sound->soundFlags &= ~(SOUND_FLAG_0x200 | SOUND_FLAG_0x80);
-        sound->nfield_74 = section;
+        sound->field_74 = section;
         sound->numBytesRead = pos;
         sectionsizeClear(sound->sectionsizes);
         preloadBuffers(sound);
         dword_A0E198 = IDirectSoundBuffer_SetCurrentPosition(sound->soundBuffer, 0);
-        sound->nfield_6C = pos;
+        sound->field_6C = pos;
         sound->lastPosition = 0;
     } else {
         IDirectSoundBuffer_SetCurrentPosition(sound->soundBuffer, pos);
