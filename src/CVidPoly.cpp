@@ -30,10 +30,10 @@ const BYTE CVidPoly::m_aDitherMask[] = {
 // 0x7C0DB0
 CVidPoly::CVidPoly()
 {
-    bm_field_0 = 0;
+    m_bWinsockInitialized = 0;
     m_pVertices = NULL;
     wm_field_10 = 0;
-    nfield_C = 0;
+    m_nACDeflectionBonus = 0;
     m_nVertices = -1;
     m_pDrawHLineFunction = &CVidPoly::DrawHLine16;
 }

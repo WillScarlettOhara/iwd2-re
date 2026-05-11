@@ -1098,7 +1098,7 @@ void CInfGame::InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
 void CInfGame::BeginListManipulation(CGameArea* pArea)
 {
     if (pArea != NULL) {
-        EnterCriticalSection(&(pArea->pm_field_214));
+        EnterCriticalSection(&(pArea->m_critSect214));
         pArea->SetListManipulationThreadId(GetCurrentThreadId());
     }
 }
@@ -1110,7 +1110,7 @@ INT CInfGame::EndListManipulation(CGameArea* pArea)
 
     if (pArea != NULL) {
         nCounter = pArea->SetListManipulationThreadId(0);
-        LeaveCriticalSection(&(pArea->pm_field_214));
+        LeaveCriticalSection(&(pArea->m_critSect214));
     }
 
     return nCounter;
@@ -1130,7 +1130,7 @@ void CInfGame::ReleaseAreaThreadLock(BOOL a1)
                 }
 
                 INT nRemainingCounter = pArea->SetListManipulationThreadId(0);
-                LeaveCriticalSection(&(pArea->pm_field_214));
+                LeaveCriticalSection(&(pArea->m_critSect214));
 
                 if (nRemainingCounter == 0) {
                     break;
@@ -1145,7 +1145,7 @@ void CInfGame::ReleaseAreaThreadLock(BOOL a1)
             while (nCounter != 0) {
                 CGameArea* pArea = GetVisibleArea();
                 if (pArea != NULL) {
-                    EnterCriticalSection(&(pArea->pm_field_214));
+                    EnterCriticalSection(&(pArea->m_critSect214));
                     pArea->SetListManipulationThreadId(GetCurrentThreadId());
                 }
                 nCounter--;
@@ -1214,7 +1214,7 @@ void CInfGame::DestroyGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInP
     g_pChitin->cDimm.RemoveFromDirectoryList(m_sTempDir, TRUE);
     m_cObjectArray.Clean();
 
-    EnterCriticalSection(&(g_pBaldurChitin->GetScreenWorld()->pm_m_field_106));
+    EnterCriticalSection(&(g_pBaldurChitin->GetScreenWorld()->m_m_field_106));
     for (cnt = 0; cnt < CINFGAME_MAX_AREAS; cnt++) {
         if (m_gameAreas[cnt] != NULL) {
             while (m_gameAreas[cnt]->m_bInPathSearch != FALSE) {
@@ -1226,7 +1226,7 @@ void CInfGame::DestroyGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInP
         }
     }
     m_visibleArea = 0;
-    LeaveCriticalSection(&(g_pBaldurChitin->GetScreenWorld()->pm_m_field_106));
+    LeaveCriticalSection(&(g_pBaldurChitin->GetScreenWorld()->m_m_field_106));
 
     lock.Unlock();
 
@@ -1677,7 +1677,7 @@ CGameArea* CInfGame::LoadArea(CString areaName, BYTE nTravelScreenImageToUse, BO
     }
 
     if (bProgressBarRequired) {
-        if (g_pChitin->wm_field_4C == 1 && !g_pChitin->m_bExitRSThread) {
+        if (g_pChitin->m_dwHeaderField4C == 1 && !g_pChitin->m_bExitRSThread) {
             int v1 = highRequests + mediumRequests + lowRequests;
             int v6 = 0;
             g_pChitin->cDimm.MoveRequests(CDimm::PRIORITY_HIGH, CDimm::PRIORITY_LOW, highRequests);
@@ -1698,7 +1698,7 @@ CGameArea* CInfGame::LoadArea(CString areaName, BYTE nTravelScreenImageToUse, BO
                     g_pChitin->cDimm.ResumeServicing();
                 }
 
-                g_pChitin->cDimm.bm_field_0 = 0;
+                g_pChitin->cDimm.m_bWinsockInitialized = 0;
                 g_pChitin->cDimm.nm_field_4 = 0;
                 SleepEx(50, FALSE);
 
@@ -1885,7 +1885,7 @@ void CInfGame::ProgressBarCallback(DWORD dwSize, BOOLEAN bInitialize)
         m_dwLastProgressRenderTickCount = GetTickCount();
 
         g_pChitin->m_bDisplayStale = TRUE;
-        g_pChitin->cDimm.bm_field_0 = 1;
+        g_pChitin->cDimm.m_bWinsockInitialized = 1;
         g_pChitin->cDimm.nm_field_4 = 1;
         SleepEx(25, TRUE);
 
@@ -2082,7 +2082,7 @@ void CInfGame::LoadOptions()
         0,
         g_pBaldurChitin->GetIniFileName());
 
-    m_cOptions.bfield_AC = 0;
+    m_cOptions.m_bFieldAC = 0;
 
     m_cOptions.m_bEnvironmentalAudio = GetPrivateProfileIntA("Game Options",
         "Environmental Audio",
@@ -2941,7 +2941,7 @@ BOOLEAN CInfGame::IsAreaSaveDisabled(CGameArea* pArea)
     if (!m_bInLoadGame
         && pArea != NULL
         && pArea->m_bAreaLoaded) {
-        return pArea->bfield_B16;
+        return pArea->m_bFieldB16;
     } else {
         return FALSE;
     }
@@ -2954,7 +2954,7 @@ void CInfGame::UpdateAreaSaveStatus()
 
     for (int index = 0; index < CINFGAME_MAX_AREAS; index++) {
         if (m_gameAreas[index] != NULL && m_gameAreas[index]->m_bAreaLoaded) {
-            m_gameAreas[index]->bfield_B16 = !m_gameAreas[index]->CanSaveGame(strError);
+            m_gameAreas[index]->m_bFieldB16 = !m_gameAreas[index]->CanSaveGame(strError);
         }
     }
 }
@@ -4316,8 +4316,8 @@ void CInfGame::StepAnimation(BYTE direction)
                                                                   pSprite->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY),
                         pSprite->GetAIType().m_nEnemyAlly,
                         pSprite->GetAnimation()->GetPersonalSpace(),
-                        pSprite->nfield_54A8,
-                        pSprite->bfield_7430);
+                        pSprite->m_field_54A8,
+                        pSprite->m_field_7430);
                 }
 
                 m_currAnimation--;
@@ -4343,8 +4343,8 @@ void CInfGame::StepAnimation(BYTE direction)
                                                                pSprite->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY),
                         pSprite->GetAIType().m_nEnemyAlly,
                         pSprite->GetAnimation()->GetPersonalSpace(),
-                        pSprite->nfield_54A8,
-                        pSprite->bfield_7430);
+                        pSprite->m_field_54A8,
+                        pSprite->m_field_7430);
                 }
                 break;
             case '7':
@@ -4353,8 +4353,8 @@ void CInfGame::StepAnimation(BYTE direction)
                                                                   pSprite->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY),
                         pSprite->GetAIType().m_nEnemyAlly,
                         pSprite->GetAnimation()->GetPersonalSpace(),
-                        pSprite->nfield_54A8,
-                        pSprite->bfield_7430);
+                        pSprite->m_field_54A8,
+                        pSprite->m_field_7430);
                 }
 
                 m_currAnimation++;
@@ -4380,8 +4380,8 @@ void CInfGame::StepAnimation(BYTE direction)
                                                                pSprite->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY),
                         pSprite->GetAIType().m_nEnemyAlly,
                         pSprite->GetAnimation()->GetPersonalSpace(),
-                        pSprite->nfield_54A8,
-                        pSprite->bfield_7430);
+                        pSprite->m_field_54A8,
+                        pSprite->m_field_7430);
                 }
                 break;
             }

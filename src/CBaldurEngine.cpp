@@ -452,7 +452,7 @@ CBaldurEngine::CBaldurEngine()
     m_nSelectedCharacter = 0;
     m_pCurrentScrollBar = NULL;
     nm_field_102 = 0;
-    wfield_FE = 0;
+    m_nCapsLockState = 0;
     m_nPickedCharacter = -1;
 }
 
@@ -460,7 +460,7 @@ CBaldurEngine::CBaldurEngine()
 // 0x427830
 BOOL CBaldurEngine::CheckMouseWheel()
 {
-    return m_pCurrentScrollBar != NULL || wfield_FE != 0;
+    return m_pCurrentScrollBar != NULL || m_nCapsLockState != 0;
 }
 
 // #binary-identical

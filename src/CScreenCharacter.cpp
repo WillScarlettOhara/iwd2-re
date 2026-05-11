@@ -2075,7 +2075,7 @@ void CScreenCharacter::UpdateMainPanel(BOOL bCharacterChanged)
 
         SHORT nTopString = 0;
         if (!bCharacterChanged) {
-            nTopString = pText->bfield_5A;
+            nTopString = pText->m_bField5A;
         }
 
         CString sNameSeparator;
@@ -4257,7 +4257,7 @@ void CScreenCharacter::OnCustomizeButtonClick()
         m_cResPortraitSmallTemp = m_cResPortraitSmall;
         m_cResPortraitLargeTemp = m_cResPortraitLarge;
         m_cResSoundSet = pSprite->m_secondarySounds;
-        sm_field_856 = pSprite->bfield_725A;
+        sm_field_856 = pSprite->m_field_725A;
 
         if (pSprite->m_special2Script != NULL) {
             pSprite->m_special2Script->m_cResRef.CopyToString(sm_field_832);
@@ -4549,12 +4549,12 @@ void CScreenCharacter::OnPlayButtonClick()
                     }
                 }
 
-                memcpy(pSprite->bfield_725A,
+                memcpy(pSprite->m_field_725A,
                     sSoundSetName.GetBuffer(sSoundSetName.GetLength()),
                     min(sSoundSetName.GetLength(), 32));
 
                 if (sSoundSetName.GetLength() < 32) {
-                    pSprite->bfield_725A[sSoundSetName.GetLength()] = '\0';
+                    pSprite->m_field_725A[sSoundSetName.GetLength()] = '\0';
                 }
 
                 sDirName = g_pBaldurChitin->GetObjectGame()->GetDirSounds() + sSoundSetName + '\\';

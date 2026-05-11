@@ -27,7 +27,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SequenceSet(0);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        wfield_5DE = 1;
+        m_wField5DE = 1;
         bfield_5E1 = 1;
         break;
     case 0x100:
@@ -56,7 +56,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.FrameSet(nFrame);
         m_g1VidCellShadow.FrameSet(nFrame);
         m_currentVidCellShadow = &m_g1VidCellShadow;
-        wfield_5DE = 0;
+        m_wField5DE = 0;
         break;
     case 0x200:
         m_g1VidCell.SetResRef(CResRef("SPBLOOD"), FALSE, TRUE, TRUE);
@@ -93,7 +93,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.FrameSet(nFrame);
         m_g1VidCellShadow.FrameSet(nFrame);
         m_currentVidCellShadow = &m_g1VidCellShadow;
-        wfield_5DE = 0;
+        m_wField5DE = 0;
         break;
     case 0x300:
         m_g1VidCell.SetResRef(CResRef("SPSMPUFF"), FALSE, TRUE, TRUE);
@@ -106,7 +106,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SequenceSet(m_currentBamSequence);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        wfield_5DE = 0;
+        m_wField5DE = 0;
         m_translucent = 1;
         break;
     case 0x400:
@@ -142,7 +142,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.FrameSet(nFrame);
         m_g1VidCellShadow.FrameSet(nFrame);
         m_currentVidCellShadow = &m_g1VidCellShadow;
-        wfield_5DE = 0;
+        m_wField5DE = 0;
         break;
     case 0x500:
         switch (m_animationID & 0xF0) {
@@ -168,7 +168,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SetPalette(m_palette);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        wfield_5DE = 1;
+        m_wField5DE = 1;
         break;
     case 0x600:
         switch (m_animationID & 0xF0) {
@@ -194,7 +194,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SetPalette(m_palette);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        wfield_5DE = 1;
+        m_wField5DE = 1;
         break;
     case 0x700:
         switch (m_animationID & 0xF0) {
@@ -213,7 +213,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SequenceSet(0);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        wfield_5DE = 0;
+        m_wField5DE = 0;
         break;
     case 0x800:
         switch (m_animationID & 0xF0) {
@@ -238,7 +238,7 @@ CGameAnimationTypeEffect::CGameAnimationTypeEffect(USHORT animationID, BYTE* col
         m_g1VidCell.SetPalette(m_palette);
         m_g1VidCell.FrameSet(0);
         m_currentVidCellShadow = NULL;
-        wfield_5DE = 0;
+        m_wField5DE = 0;
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
@@ -485,7 +485,7 @@ void CGameAnimationTypeEffect::Render(CInfinity* pInfinity, CVidMode* pVidMode, 
     pInfinity->FXPrep(rFXRect, dwRenderFlags, nSurface, ptPos, ptReference);
 
     if (pInfinity->FXLock(rFXRect, dwRenderFlags)) {
-        if (!wfield_5DE) {
+        if (!m_wField5DE) {
             m_currentVidCell->SetTintColor(rgbTintColor);
         }
 

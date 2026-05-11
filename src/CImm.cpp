@@ -107,7 +107,7 @@ void CImm::OnIMEResult(HWND hWnd, BOOL a3)
             ImmGetCompositionStringA(hImc, GCS_COMPSTR, lpResultStr, nResultStrLength);
             lpResultStr[nResultStrLength] = '\0';
 
-            sm_field_130 = lpResultStr;
+            m_sField130 = lpResultStr;
 
             delete lpResultStr;
 
@@ -123,7 +123,7 @@ void CImm::OnIMEResult(HWND hWnd, BOOL a3)
                     ImmGetCompositionStringA(hImc, GCS_RESULTCLAUSE, lpResultCls, nResultClsLength);
                     lpResultCls[nResultClsLength] = '\0';
 
-                    sm_field_130 += CString(lpResultCls);
+                    m_sField130 += CString(lpResultCls);
 
                     delete lpResultCls;
 
@@ -288,7 +288,7 @@ void CImm::ActivateNativeIME(HWND hWnd)
 
         m_sCandidateList = "";
         sm_field_134 = "";
-        sm_field_130 = "";
+        m_sField130 = "";
     }
 }
 
@@ -323,7 +323,7 @@ void CImm::DeactivateNativeIME(HWND hWnd)
 
         m_sCandidateList = "";
         sm_field_134 = "";
-        sm_field_130 = "";
+        m_sField130 = "";
     }
 }
 
@@ -412,7 +412,7 @@ void CImm::CleanUp()
 // 0x4D89E0
 CString CImm::PopResultString()
 {
-    CString v1 = sm_field_130;
-    sm_field_130 = "";
+    CString v1 = m_sField130;
+    m_sField130 = "";
     return v1;
 }

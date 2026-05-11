@@ -431,7 +431,7 @@ BOOL CVidMosaic::Render3d(int x, int y, const CRect& rMosaic, const CRect& rClip
     CVideo3d::glEnable(GL_TEXTURE_2D);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 
-    g_pChitin->cVideo.nm_field_13E = 2;
+    g_pChitin->cVideo.m_nField13E = 2;
     CVideo3d::glBindTexture(GL_TEXTURE_2D, 2);
     g_pChitin->GetCurrentVideoMode()->CheckResults3d(0);
 

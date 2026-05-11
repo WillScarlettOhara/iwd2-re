@@ -212,7 +212,7 @@ CBaldurChitin::CBaldurChitin()
         }
     }
 
-    nm_field_1A4 = nm_field_1A0;
+    m_bIMEEnabled = nm_field_1A0;
 
     // NOTE: Result is unused. Probably empty condition.
     m_sFontName.Compare("");
@@ -570,31 +570,31 @@ CBaldurChitin::CBaldurChitin()
         SOFT_BLT_KEY,
         FALSE,
         FILE_NAME);
-    cVideo.cVidBlitter.bfield_E6 = 0;
+    cVideo.cVidBlitter.m_bFieldE6 = 0;
 
     cVideo.cVidBlitter.m_bSoftBltFast = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_BLT_FAST_KEY,
         FALSE,
         FILE_NAME);
-    cVideo.cVidBlitter.bfield_E6 = 0;
+    cVideo.cVidBlitter.m_bFieldE6 = 0;
 
     cVideo.cVidBlitter.m_bSoftMirrorBlt = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_MIRROR_BLT_KEY,
         FALSE,
         FILE_NAME);
-    cVideo.cVidBlitter.bfield_E6 = 0;
+    cVideo.cVidBlitter.m_bFieldE6 = 0;
 
     cVideo.cVidBlitter.m_bSoftSrcKeyBlt = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_SRC_KEY_BLT_KEY,
         FALSE,
         FILE_NAME);
-    cVideo.cVidBlitter.bfield_E6 = 0;
+    cVideo.cVidBlitter.m_bFieldE6 = 0;
 
     cVideo.cVidBlitter.m_bSoftSrcKeyBltFast = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_SRC_KEY_BLT_FAST_KEY,
         FALSE,
         FILE_NAME);
-    cVideo.cVidBlitter.bfield_E6 = 0;
+    cVideo.cVidBlitter.m_bFieldE6 = 0;
 
     m_bUseMirrorFX = GetPrivateProfileIntA(PROGRAM_OPTIONS_SECTION_KEY,
         USE_MIRROR_FX_KEY,
@@ -1059,17 +1059,17 @@ void CBaldurChitin::MainAIThread(void* userInfo)
             }
 
             if (m_nRenderPerSec >= 15 || m_nAIPerSec <= 24) {
-                if (nm_field_19C != 0) {
-                    nm_field_19C = max(nm_field_19C - 1, 0);
-                    if (nm_field_19C != 0) {
-                        SleepEx(nm_field_19C, FALSE);
+                if (m_nAISleeper != 0) {
+                    m_nAISleeper = max(m_nAISleeper - 1, 0);
+                    if (m_nAISleeper != 0) {
+                        SleepEx(m_nAISleeper, FALSE);
                     }
                 }
             } else {
-                if (nm_field_19C < 30) {
-                    nm_field_19C += 5;
+                if (m_nAISleeper < 30) {
+                    m_nAISleeper += 5;
                 }
-                SleepEx(nm_field_19C, FALSE);
+                SleepEx(m_nAISleeper, FALSE);
             }
 
             ResetEvent(m_eventTimer);
@@ -1346,7 +1346,7 @@ BOOLEAN CBaldurChitin::FlipFullScreenMode(BOOLEAN bSave)
 void CBaldurChitin::SetSoftSrcKeyBltFast(BOOLEAN a2, BOOLEAN a3)
 {
     cVideo.cVidBlitter.m_bSoftSrcKeyBltFast = a2;
-    cVideo.cVidBlitter.bfield_E6 = a3;
+    cVideo.cVidBlitter.m_bFieldE6 = a3;
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_SRC_KEY_BLT_FAST_KEY,
@@ -1358,7 +1358,7 @@ void CBaldurChitin::SetSoftSrcKeyBltFast(BOOLEAN a2, BOOLEAN a3)
 void CBaldurChitin::SetSoftBltFast(BOOLEAN a2, BOOLEAN a3)
 {
     cVideo.cVidBlitter.m_bSoftBltFast = a2;
-    cVideo.cVidBlitter.bfield_E6 = a3;
+    cVideo.cVidBlitter.m_bFieldE6 = a3;
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_BLT_FAST_KEY,
@@ -1370,7 +1370,7 @@ void CBaldurChitin::SetSoftBltFast(BOOLEAN a2, BOOLEAN a3)
 void CBaldurChitin::SetSoftSrcKeyBlt(BOOLEAN a2, BOOLEAN a3)
 {
     cVideo.cVidBlitter.m_bSoftSrcKeyBlt = a2;
-    cVideo.cVidBlitter.bfield_E6 = a3;
+    cVideo.cVidBlitter.m_bFieldE6 = a3;
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_SRC_KEY_BLT_KEY,
@@ -1382,7 +1382,7 @@ void CBaldurChitin::SetSoftSrcKeyBlt(BOOLEAN a2, BOOLEAN a3)
 void CBaldurChitin::SetSoftBlt(BOOLEAN a2, BOOLEAN a3)
 {
     cVideo.cVidBlitter.m_bSoftBlt = a2;
-    cVideo.cVidBlitter.bfield_E6 = a3;
+    cVideo.cVidBlitter.m_bFieldE6 = a3;
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_BLT_KEY,
@@ -1394,7 +1394,7 @@ void CBaldurChitin::SetSoftBlt(BOOLEAN a2, BOOLEAN a3)
 void CBaldurChitin::SetSoftMirrorBlt(BOOLEAN a2, BOOLEAN a3)
 {
     cVideo.cVidBlitter.m_bSoftMirrorBlt = a2;
-    cVideo.cVidBlitter.bfield_E6 = a3;
+    cVideo.cVidBlitter.m_bFieldE6 = a3;
 
     WritePrivateProfileStringA(PROGRAM_OPTIONS_SECTION_KEY,
         SOFT_MIRROR_BLT_KEY,

@@ -362,7 +362,7 @@ void CScreenWorldMap::EngineDeactivated()
     m_preLoadFontRealms.Unload();
     m_preLoadFontTool.Unload();
 
-    wfield_FE = 0;
+    m_nCapsLockState = 0;
     nm_field_102 = 0;
 
     // NOTE: Uninline.

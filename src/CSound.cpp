@@ -268,7 +268,7 @@ BOOL CSound::ExclusivePlay(BOOL bReplay)
     if (m_nVolume > 0 && pChannel->m_nVolume > 0) {
         BOOL bFound = FALSE;
 
-        if ((m_pSoundMixer->nfield_C0 & 0x1) != 0) {
+        if ((m_pSoundMixer->m_nSoundFlags & 0x1) != 0) {
             m_pSoundMixer->Lock();
 
             POSITION pos = m_pSoundMixer->m_lVoices.GetHeadPosition();
@@ -555,7 +555,7 @@ BOOL CSound::IsSoundPlaying()
 // 0x7A9B10
 BOOL CSound::Play(BOOL bReplay)
 {
-    if ((m_pSoundMixer->nfield_C0 & 0x1) == 0) {
+    if ((m_pSoundMixer->m_nSoundFlags & 0x1) == 0) {
         return FALSE;
     }
 

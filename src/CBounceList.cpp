@@ -29,7 +29,7 @@ void CBounceList::Process(CGameSprite* pSprite)
                 pSprite->GetTimedEffectList()->ModifyAllOfType(static_cast<WORD>(node->m_effectId),
                     -node->m_levelDecrement,
                     TRUE);
-                pSprite->nfield_562C = 1;
+                pSprite->m_field_562C = 1;
             }
 
             if (!node->m_decrementOnly) {

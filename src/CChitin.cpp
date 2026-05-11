@@ -235,7 +235,7 @@ CChitin::CChitin()
     InitializeCriticalSection(&pm_field_32C);
     InitializeCriticalSection(&pm_field_314);
     InitializeCriticalSection(&pm_field_344);
-    InitializeCriticalSection(&nfield_C4);
+    InitializeCriticalSection(&m_bDirectSoundInit);
     InitializeCriticalSection(&pm_field_35C);
     InitializeCriticalSection(&pm_field_394);
     InitializeCriticalSection(&pm_field_3AC);
@@ -309,7 +309,7 @@ CChitin::~CChitin()
     DeleteCriticalSection(&pm_field_2FC);
     DeleteCriticalSection(&pm_field_32C);
     DeleteCriticalSection(&pm_field_314);
-    DeleteCriticalSection(&nfield_C4);
+    DeleteCriticalSection(&m_bDirectSoundInit);
     DeleteCriticalSection(&pm_field_35C);
 
     if (m_eventTimer != NULL) {
@@ -622,7 +622,7 @@ void CChitin::InitializeVariables()
     nm_field_1A0 = 0;
     m_bIMEEnabled = 0;
     nm_field_13A = -1;
-    nm_field_13E = 0;
+    m_nField13E = 0;
     wm_m_field_142 = 0;
     m_bReInitializing = FALSE;
     m_bFullscreen = TRUE;
@@ -2074,7 +2074,7 @@ void CChitin::SynchronousUpdate()
             if (cVideo.m_nNextBpp != cVideo.m_nBpp) {
                 cVideo.ChangeBppValue();
             } else {
-                if (cVideo.cVidBlitter.bfield_E6) {
+                if (cVideo.cVidBlitter.m_bFieldE6) {
                     cVideo.cVidBlitter.Reset();
                 }
             }

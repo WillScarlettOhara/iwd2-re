@@ -1496,7 +1496,7 @@ BOOL IcewindCGameEffectHopelessness::ApplyEffect(CGameSprite* pSprite)
     if (!pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_HOPELESSNESS]) {
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_HOPELESSNESS] = true;
         pSprite->GetDerivedStats()->m_generalState |= STATE_HELPLESS;
-        pSprite->field_9D15 = 1;
+        pSprite->m_field_9D15 = 1;
 
         // NOTE: Uninline.
         AddPortraitIcon(pSprite, 47);
@@ -1673,7 +1673,7 @@ BOOL IcewindCGameEffectNausea::ApplyEffect(CGameSprite* pSprite)
             pSprite->SetSequence(CGameSprite::SEQ_SLEEP);
         }
 
-        pSprite->field_9D15 = 1;
+        pSprite->m_field_9D15 = 1;
         break;
     case 1:
         // NOTE: Uninline.
@@ -1898,7 +1898,7 @@ BOOL IcewindCGameEffectOtilukesResilientSphere::ApplyEffect(CGameSprite* pSprite
         DisplayStringRef(pSprite, 4732); // "Encased in Otiluke's Resilient Sphere"
     }
 
-    pSprite->field_9D15 = 1;
+    pSprite->m_field_9D15 = 1;
 
     // NOTE: Uninline.
     AddPortraitIcon(pSprite, 100);
@@ -1949,11 +1949,11 @@ BOOL IcewindCGameEffectBarkskin::ApplyEffect(CGameSprite* pSprite)
         AddPortraitIcon(pSprite, 20);
 
         if (m_casterLevel < 6) {
-            pSprite->GetDerivedStats()->field_C += 3;
+            pSprite->GetDerivedStats()->m_nACDeflectionBonus += 3;
         } else if (m_casterLevel < 12) {
-            pSprite->GetDerivedStats()->field_C += 4;
+            pSprite->GetDerivedStats()->m_nACDeflectionBonus += 4;
         } else {
-            pSprite->GetDerivedStats()->field_C += 5;
+            pSprite->GetDerivedStats()->m_nACDeflectionBonus += 5;
         }
 
         pSprite->SetColorRange(2);
@@ -2108,7 +2108,7 @@ BOOL IcewindCGameEffectUnconsciousness::ApplyEffect(CGameSprite* pSprite)
         pSprite->SetSequence(CGameSprite::SEQ_SLEEP);
     }
 
-    pSprite->field_9D15 = 1;
+    pSprite->m_field_9D15 = 1;
 
     return TRUE;
 }
@@ -2496,7 +2496,7 @@ BOOL IcewindCGameEffectTortoiseShell::ApplyEffect(CGameSprite* pSprite)
         // NOTE: Uninline.
         AddPortraitIcon(pSprite, 125);
 
-        pSprite->field_9D15 = 1;
+        pSprite->m_field_9D15 = 1;
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_HELD] = true;
         pSprite->GetDerivedStats()->m_generalState |= STATE_HELPLESS;
         pSprite->GetDerivedStats()->m_nNaturalArmorBonus = m_effectAmount;
@@ -2643,7 +2643,7 @@ BOOL IcewindCGameEffectTensersTransformation::ApplyEffect(CGameSprite* pSprite)
         pSprite->GetDerivedStats()->m_nDEX += static_cast<SHORT>(m_effectAmount4);
         pSprite->GetDerivedStats()->m_nTHAC0 += static_cast<BYTE>(m_casterLevel) / 2;
         pSprite->GetDerivedStats()->m_nSaveVSFortitude += 5;
-        pSprite->GetDerivedStats()->field_C += 4;
+        pSprite->GetDerivedStats()->m_nACDeflectionBonus += 4;
         pSprite->GetDerivedStats()->m_disabledSpellTypes[0] = TRUE;
         pSprite->GetDerivedStats()->m_disabledSpellTypes[1] = TRUE;
     }
@@ -2726,7 +2726,7 @@ BOOL IcewindCGameEffectAlicornLanceGlow::ApplyEffect(CGameSprite* pSprite)
 
     if (!pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_ALICORN_LANCE]) {
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_ALICORN_LANCE] = true;
-        pSprite->GetDerivedStats()->field_C -= 2;
+        pSprite->GetDerivedStats()->m_nACDeflectionBonus -= 2;
         AddColorEffect(pSprite, 185, 185, 185);
         m_done = FALSE;
     }

@@ -176,7 +176,7 @@ void CInfCursor::SetCursor(INT nNewCursor, BOOLEAN bForce)
                 m_vcToolTip.GetFrameSize(2, m_vcToolTip.wfield_5DC, size2, FALSE);
 
                 // TODO: Check cast.
-                m_vcToolTip.wfield_5DE = static_cast<short>((size1.cx / 2) + (size2.cx / 2));
+                m_vcToolTip.m_wField5DE = static_cast<short>((size1.cx / 2) + (size2.cx / 2));
                 m_vcToolTip.wfield_5E2 = 0;
 
                 pVidMode->SetPointer(&m_vcToolTip, TRUE, -1);
@@ -379,7 +379,7 @@ CInfToolTip::CInfToolTip()
 {
     wfield_5DA = 0;
     wfield_5DC = 0;
-    wfield_5DE = 0;
+    m_wField5DE = 0;
     wfield_5E0 = 0;
     wfield_5E2 = 0;
     wfield_5E4 = 0;
@@ -407,8 +407,8 @@ void CInfToolTip::Initialize()
     GetFrameSize(2, 0, size2, FALSE);
 
     // TODO: Check cast.
-    wfield_5DE = static_cast<short>((size2.cx / 2) + (size1.cx / 2));
-    wfield_5E0 = wfield_5DE;
+    m_wField5DE = static_cast<short>((size2.cx / 2) + (size1.cx / 2));
+    wfield_5E0 = m_wField5DE;
 
     wfield_5E8 = GetSequenceLength(1, FALSE);
     wfield_5E6 = 0;
@@ -433,12 +433,12 @@ BOOL CInfToolTip::FrameAdvance()
             wfield_5DC = 0;
         }
 
-        wfield_5DE += 8;
+        m_wField5DE += 8;
 
         GetFrameSize(1, wfield_5DA, frameSize1, FALSE);
         GetFrameSize(2, wfield_5DC, frameSize2, FALSE);
 
-        wfield_5DE = wfield_5E6 + static_cast<SHORT>(frameSize1.cx / 2 + frameSize2.cx / 2);
+        m_wField5DE = wfield_5E6 + static_cast<SHORT>(frameSize1.cx / 2 + frameSize2.cx / 2);
         wfield_5E2 = 2;
         break;
     case 1:
@@ -452,12 +452,12 @@ BOOL CInfToolTip::FrameAdvance()
             wfield_5DC = 0;
         }
 
-        wfield_5DE--;
+        m_wField5DE--;
 
         GetFrameSize(1, wfield_5DA, frameSize1, FALSE);
         GetFrameSize(2, wfield_5DC, frameSize2, FALSE);
 
-        if (wfield_5DE <= frameSize1.cx / 2 + frameSize2.cx / 2) {
+        if (m_wField5DE <= frameSize1.cx / 2 + frameSize2.cx / 2) {
             wfield_5E2 = 3;
         }
         break;
@@ -465,7 +465,7 @@ BOOL CInfToolTip::FrameAdvance()
         GetFrameSize(1, wfield_5DA, frameSize1, FALSE);
         GetFrameSize(2, wfield_5DC, frameSize2, FALSE);
 
-        wfield_5DE = wfield_5E6 + static_cast<SHORT>(frameSize1.cx / 2 + frameSize2.cx / 2);
+        m_wField5DE = wfield_5E6 + static_cast<SHORT>(frameSize1.cx / 2 + frameSize2.cx / 2);
         break;
     case 3:
         break;
@@ -848,10 +848,10 @@ void CInfToolTip::StoreBackground(INT nFrom, INT nTo, INT x, INT y, const CRect&
     CSize size1;
     GetFrameSize(1, wfield_5DA, size1, TRUE);
 
-    wfield_5E0 = wfield_5DE;
+    wfield_5E0 = m_wField5DE;
 
-    rStorage.left = max(min(max(x - wfield_5DE / 2 - size1.cx / 2, rClip.left),
-                            rClip.right - wfield_5DE - size1.cx - size2.cx / 2),
+    rStorage.left = max(min(max(x - m_wField5DE / 2 - size1.cx / 2, rClip.left),
+                            rClip.right - m_wField5DE - size1.cx - size2.cx / 2),
         rClip.left);
     rStorage.top = max(min(max(y - m_pFrame->nCenterY, rClip.top),
                            rClip.bottom - m_pFrame->nHeight),
@@ -919,10 +919,10 @@ void CInfToolTip::StoreBackground(INT x, INT y, const CRect& rClip, CRect& rStor
     CSize size1;
     GetFrameSize(1, wfield_5DA, size1, TRUE);
 
-    wfield_5E0 = wfield_5DE;
+    wfield_5E0 = m_wField5DE;
 
-    rStorage.left = max(min(max(x - wfield_5DE / 2 - size1.cx / 2, rClip.left),
-                            rClip.right - wfield_5DE - size1.cx - size2.cx / 2),
+    rStorage.left = max(min(max(x - m_wField5DE / 2 - size1.cx / 2, rClip.left),
+                            rClip.right - m_wField5DE - size1.cx - size2.cx / 2),
         rClip.left);
     rStorage.top = max(min(max(y - m_pFrame->nCenterY, rClip.top),
                            rClip.bottom - m_pFrame->nHeight),
