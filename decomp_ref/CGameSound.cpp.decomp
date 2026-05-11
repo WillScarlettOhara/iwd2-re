@@ -1,0 +1,14 @@
+# Decompiled reference for: CGameSound.cpp
+# 1 incomplete functions
+
+=== 0x4C8FF0 ===
+undefined4 __thiscall FUN_004c8ff0(undefined4 param_1,byte param_2)
+
+{
+  FUN_004c9010();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

@@ -1,0 +1,615 @@
+# Decompiled reference for: CCreatureFile.cpp
+# 8 incomplete functions
+
+=== 0x481D30 ===
+undefined2 __thiscall FUN_00481d30(int param_1,int param_2)
+
+{
+  bool bVar1;
+  void **ppvVar2;
+  char cVar3;
+  int iVar4;
+  int iVar5;
+  int iVar6;
+  int iVar7;
+  undefined2 uVar8;
+  undefined1 local_10 [4];
+  void *local_c;
+  undefined1 *puStack_8;
+  undefined4 local_4;
+  
+  puStack_8 = &LAB_0080db28;
+  local_c = ExceptionList;
+  iVar7 = 0;
+  local_4 = 0;
+  bVar1 = false;
+  uVar8 = DAT_008485c4;
+  ppvVar2 = &local_c;
+  if ((*(int *)(param_1 + 0x12) != 0) &&
+     (iVar4 = param_2, ExceptionList = &local_c, ppvVar2 = &local_c,
+     0 < (short)*(undefined4 *)(param_1 + 0x5ba))) {
+    do {
+      if (!bVar1) {
+        iVar4 = FUN_005b75c0(*(undefined4 *)(param_1 + 0x5c));
+        uVar8 = DAT_008485ca;
+        ppvVar2 = ExceptionList;
+        if ((iVar4 == DAT_00851878) ||
+           (cVar3 = FUN_00599c70(iVar4,DAT_00851873,local_10,0xffffffff), uVar8 = DAT_008485ca,
+           ppvVar2 = ExceptionList, cVar3 != DAT_0085186c)) goto LAB_00481e7b;
+        bVar1 = true;
+      }
+      if ((short)iVar7 < 0) {
+        FUN_00780c00(0x6ff,s_C__Projects_Icewind2_src_Baldur__008a8674,s_nSlotNum_>__0_008a894c,0);
+      }
+      iVar5 = FUN_007fb6c0((int)(short)iVar7);
+      if ((iVar5 == 0) || (iVar5 = *(int *)(iVar5 + 8), iVar5 == 0)) {
+LAB_00481e3d:
+        FUN_004801a0();
+      }
+      else {
+        iVar6 = FUN_0078ab20(&param_2);
+        if (iVar6 != 0) {
+          FUN_00480760(iVar5,1,0x7fff);
+          FUN_00480300(iVar7,0);
+          goto LAB_00481e3d;
+        }
+      }
+      iVar7 = iVar7 + 1;
+    } while ((short)iVar7 < *(short *)(param_1 + 0x5ba));
+    uVar8 = DAT_008485c4;
+    ppvVar2 = ExceptionList;
+    if (bVar1) {
+      FUN_0059a010(iVar4,DAT_00851873,0xffffffff);
+      uVar8 = DAT_008485c4;
+      ppvVar2 = ExceptionList;
+    }
+  }
+LAB_00481e7b:
+  ExceptionList = ppvVar2;
+  local_4 = 0xffffffff;
+  FUN_007fcc1a();
+  ExceptionList = local_c;
+  return uVar8;
+}
+
+=== 0x481EB0 ===
+void __thiscall FUN_00481eb0(int param_1,undefined4 param_2)
+
+{
+  undefined4 uVar1;
+  int iVar2;
+  undefined4 *puVar3;
+  bool bVar4;
+  void *local_c;
+  undefined1 *puStack_8;
+  undefined4 local_4;
+  
+  local_4 = 0xffffffff;
+  puStack_8 = &LAB_0080db84;
+  local_c = ExceptionList;
+  ExceptionList = &local_c;
+  iVar2 = FUN_007fb6c0(param_2);
+  if (iVar2 != 0) {
+    if (*(int *)(iVar2 + 8) != 0) {
+      FUN_005bf4b0(*(int *)(iVar2 + 8));
+    }
+    if ((*(int *)(*(int *)(param_1 + 0x12) + 0x1f0) == DAT_008d3988) &&
+       (*(int *)(*(int *)(param_1 + 0x12) + 500) == DAT_008d398c)) {
+      CGameContainer__TransferItemToParty(param_2,0);
+    }
+    FUN_007fb3e3(iVar2);
+  }
+  puVar3 = (undefined4 *)FUN_007fc95b(0xfe);
+  bVar4 = puVar3 == (undefined4 *)0x0;
+  local_4 = 0;
+  if (bVar4) {
+    puVar3 = (undefined4 *)0x0;
+  }
+  else {
+    uVar1 = *(undefined4 *)(param_1 + 0x5c);
+    iVar2 = FUN_004e7840();
+    *puVar3 = &PTR_LAB_00847b40;
+    puVar3[2] = uVar1;
+    puVar3[1] = uVar1;
+    local_4 = 2;
+    FUN_004e7840();
+    local_4 = CONCAT31(local_4._1_3_,3);
+    *puVar3 = &PTR_FUN_00848f60;
+    FUN_004e8350(iVar2 + 0xc,1);
+    *(undefined2 *)(puVar3 + 9) = *(undefined2 *)(iVar2 + 0x18);
+    *(undefined2 *)((int)puVar3 + 0x26) = *(undefined2 *)(iVar2 + 0x1a);
+    *(undefined2 *)(puVar3 + 10) = *(undefined2 *)(iVar2 + 0x1c);
+    *(undefined2 *)((int)puVar3 + 0x2a) = *(undefined2 *)(iVar2 + 0x1e);
+    puVar3[0xb] = *(undefined4 *)(iVar2 + 0x20);
+    *(undefined2 *)((int)puVar3 + 0xfa) = 0x7fff;
+    *(undefined1 *)(puVar3 + 0x3f) = 1;
+  }
+  local_4 = 0xffffffff;
+  if (!bVar4) {
+    FUN_004e8180();
+  }
+  FUN_004f7500(puVar3,0);
+  ExceptionList = local_c;
+  return;
+}
+
+=== 0x482040 ===
+undefined2 __thiscall
+FUN_00482040(int param_1,int *param_2,undefined4 *param_3,undefined4 param_4,void *param_5,
+            undefined4 param_6)
+
+{
+  int iVar1;
+  undefined4 uVar2;
+  void *local_14;
+  void *pvStack_c;
+  undefined1 *puStack_8;
+  undefined4 local_4;
+  
+  local_4 = 0xffffffff;
+  puStack_8 = &LAB_0080db9b;
+  pvStack_c = ExceptionList;
+  local_14 = param_5;
+  if (param_5 == (void *)0xd2) {
+    ExceptionList = &pvStack_c;
+    param_2 = (int *)FUN_0051eaf0(0xd3,param_2,0);
+  }
+  else {
+    ExceptionList = &pvStack_c;
+    param_2 = (int *)FUN_00560310(param_5,0);
+    local_14 = (void *)((int)param_5 + 0x1000);
+  }
+  iVar1 = FUN_007fc95b(0x24);
+  local_4 = 0;
+  if (iVar1 == 0) {
+    uVar2 = 0;
+  }
+  else {
+    uVar2 = FUN_00500470(local_14,param_4,param_3,param_6,*(undefined4 *)(param_1 + 0x5c),
+                         *(undefined4 *)(param_1 + 0x5c),0);
+  }
+  local_4 = 0xffffffff;
+  FUN_004f7500(uVar2,0);
+  (**(code **)(*param_2 + 0x6c))
+            (*(undefined4 *)(param_1 + 0x12),*(undefined4 *)(param_1 + 0x5c),param_4,*param_3,
+             param_3[1],param_6);
+  ExceptionList = param_5;
+  return DAT_008485c4;
+}
+
+=== 0x482210 ===
+void __thiscall FUN_00482210(int *param_1,int param_2,int param_3,int param_4,int param_5)
+
+{
+  int iVar1;
+  undefined4 *puVar2;
+  undefined4 uVar3;
+  undefined4 uVar4;
+  undefined1 local_2c [8];
+  undefined1 local_24 [8];
+  int local_1c;
+  int local_18;
+  undefined1 local_14 [8];
+  void *local_c;
+  undefined1 *puStack_8;
+  undefined4 local_4;
+  
+  local_4 = 0xffffffff;
+  puStack_8 = &LAB_0080dbb8;
+  local_c = ExceptionList;
+  ExceptionList = &local_c;
+  iVar1 = FUN_0078ab40(&DAT_008c5cf8);
+  if (iVar1 == 0) {
+    FUN_00483970();
+    ExceptionList = local_c;
+    return;
+  }
+  if ((param_2 == *param_1) && (param_3 == param_1[1])) {
+    param_1[0xc] = param_4;
+    FUN_005bfe10(param_4);
+    if ((*(int *)(DAT_008cf6dc + 0x96e) != DAT_0085e65c) &&
+       (*(char *)(DAT_008cf6dc + 0x1033) == '\x01')) {
+      puVar2 = (undefined4 *)FUN_007fc95b(0x10);
+      if (puVar2 == (undefined4 *)0x0) {
+        puVar2 = (undefined4 *)0x0;
+      }
+      else {
+        iVar1 = param_1[0xc];
+        puVar2[2] = iVar1;
+        puVar2[1] = iVar1;
+        *puVar2 = &PTR_FUN_00848fa8;
+        puVar2[3] = iVar1;
+      }
+      FUN_004f7500(puVar2,0);
+    }
+    param_1[0xd] = param_5;
+    ExceptionList = local_c;
+    return;
+  }
+  FUN_0078a960();
+  local_18 = 0;
+  FUN_0078ad40(local_2c,&DAT_008c5cf8);
+  local_1c = 0;
+  local_4 = 0;
+  iVar1 = FUN_0040f940(local_14);
+  if (iVar1 == 0) {
+    if (((local_18 != 0) && (iVar1 = FUN_0078ab40(&DAT_008c5cf8), iVar1 != 0)) && (local_1c != 0)) {
+      FUN_0077e370();
+    }
+    iVar1 = FUN_0078abb0(&DAT_008c5cf8);
+    if (iVar1 == 0) {
+      local_18 = FUN_00786df0(&param_2,0x3f3,1);
+      if (local_18 == 0) {
+        local_18 = 0;
+        FUN_0078ad40(local_24,&DAT_008c5cf8);
+      }
+      else {
+        local_1c = 1;
+        FUN_0077e610();
+        FUN_0078ac30(local_24,&param_2);
+      }
+    }
+    else {
+      local_18 = 0;
+      FUN_0078ad40(local_24,&DAT_008c5cf8);
+    }
+  }
+  if (((local_18 == 0) || (iVar1 = FUN_00402760(), iVar1 == 0)) ||
+     (iVar1 = *(int *)(local_18 + 0x1c), FUN_004022b0(), iVar1 == 0)) {
+    FUN_00483970();
+  }
+  else {
+    FUN_0078ac30(local_24,&param_2);
+    uVar4 = 0;
+    if (local_18 == 0) {
+      uVar3 = 0;
+    }
+    else {
+      iVar1 = FUN_00402760();
+      if (iVar1 != 0) {
+        uVar4 = *(undefined4 *)(local_18 + 0x1c);
+        FUN_004022b0();
+      }
+      if (local_18 == 0) {
+        uVar3 = 0;
+      }
+      else {
+        uVar3 = FUN_00402760();
+      }
+    }
+    FUN_00482a40(uVar3,uVar4,param_4,param_5);
+    if (local_18 != 0) {
+      FUN_004022b0();
+    }
+  }
+  local_4 = 0xffffffff;
+  if ((local_18 != 0) && (iVar1 = FUN_0078ab40(&DAT_008c5cf8), iVar1 != 0)) {
+    if (local_1c != 0) {
+      FUN_0077e370();
+      local_1c = 0;
+    }
+    FUN_00787ce0(local_18);
+    ExceptionList = local_c;
+    return;
+  }
+  ExceptionList = local_c;
+  return;
+}
+
+=== 0x5C7B10 ===
+uint __thiscall FUN_005c7b10(int param_1,undefined4 param_2,undefined4 param_3,int *param_4)
+
+{
+  uint uVar1;
+  char cVar2;
+  ushort uVar3;
+  undefined4 uVar4;
+  uint uVar5;
+  undefined4 *puVar6;
+  undefined4 *puVar7;
+  int iVar8;
+  int *piVar9;
+  int *piVar10;
+  undefined4 *puVar11;
+  bool bVar12;
+  uint local_298;
+  int local_294;
+  undefined4 *local_290;
+  uint local_28c;
+  undefined1 local_288 [8];
+  undefined1 local_280 [8];
+  int local_278;
+  uint local_1e4;
+  int local_15c [3];
+  undefined1 local_150 [28];
+  int local_134;
+  uint local_a0;
+  void *local_c;
+  undefined1 *puStack_8;
+  uint local_4;
+  
+  local_4 = 0xffffffff;
+  puStack_8 = &LAB_00824bcc;
+  local_c = ExceptionList;
+  ExceptionList = &local_c;
+  *param_4 = -1;
+  local_298 = 0;
+  local_28c = 0;
+  if (*(char *)(DAT_008cf6d8 + 0x1032) == '\0') {
+    FUN_0054b150(param_2);
+    local_4 = 8;
+    if ((local_134 == 4) &&
+       (iVar8 = CGameSprite__GetCreatureName(param_3), uVar1 = local_a0, iVar8 != 0)) {
+      if (((short)local_a0 == 0) || (uVar5 = FUN_0054c020(), (uVar1 & 0xffff) == uVar5)) {
+        *param_4 = 0x6139;
+      }
+      else {
+        local_298 = 1;
+        uVar3 = FUN_004e9eb0();
+        if (1 < uVar3) {
+          local_298 = FUN_004e84b0(0);
+          local_298 = local_298 & 0xffff;
+        }
+        uVar1 = local_a0;
+        iVar8 = FUN_0054c020();
+        if ((int)(uVar1 & 0xffff) < (int)(iVar8 + local_298)) {
+          iVar8 = FUN_0054c020();
+          local_298 = (local_a0 & 0xffff) - iVar8;
+        }
+        FUN_004e8760(0,local_298);
+        CGameSprite__EmptySaveStub(param_3,1);
+      }
+    }
+    else {
+      *param_4 = 0x66ad;
+    }
+    if (*param_4 == -1) {
+      FUN_0054b9a0(param_1 + 0x4208);
+    }
+    goto LAB_005c8167;
+  }
+  local_294 = 0;
+  FUN_0054b0e0();
+  local_4 = 0;
+  if (*(char *)(DAT_008cf6d8 + 0x1033) == '\0') {
+    FUN_0054b2a0(param_2);
+    if (local_15c[2] != 0) {
+      iVar8 = 2;
+      bVar12 = true;
+      piVar9 = local_15c;
+      piVar10 = &DAT_008a8748;
+      do {
+        if (iVar8 == 0) break;
+        iVar8 = iVar8 + -1;
+        bVar12 = *piVar9 == *piVar10;
+        piVar9 = piVar9 + 1;
+        piVar10 = piVar10 + 1;
+      } while (bVar12);
+      if (bVar12) goto LAB_005c7c63;
+    }
+    uVar4 = FUN_0078aa30(&local_294);
+    local_4._0_1_ = 1;
+    cVar2 = FUN_004297c0(uVar4,0x3f6,1,1,1);
+    local_4 = (uint)local_4._1_3_ << 8;
+    FUN_007fcc1a();
+    if (cVar2 == '\0') {
+      FUN_007a5a20(1);
+      local_4 = 0xffffffff;
+      FUN_0054b1e0();
+      ExceptionList = local_c;
+      return 0;
+    }
+    FUN_0054b2a0(param_2);
+    local_294 = 1;
+  }
+  else {
+    FUN_005adc90(param_2,1);
+    FUN_0054b2a0(param_2);
+  }
+LAB_005c7c63:
+  if (local_278 == 4) {
+    iVar8 = CGameSprite__GetCreatureName(param_3);
+    uVar1 = local_1e4;
+    if (iVar8 == 0) {
+      *param_4 = 0x66ad;
+    }
+    else if (((short)local_1e4 == 0) || (uVar5 = FUN_0054c020(), (uVar1 & 0xffff) == uVar5)) {
+      *param_4 = 0x6139;
+    }
+    else {
+      uVar3 = FUN_004e9eb0();
+      if (uVar3 < 2) {
+        local_298 = 1;
+      }
+      else {
+        uVar3 = FUN_004e84b0(0);
+        local_298 = (uint)uVar3;
+        local_28c = local_298;
+        uVar3 = FUN_004e9eb0();
+        uVar1 = local_1e4;
+        if (uVar3 < 2) {
+          iVar8 = FUN_0054c020();
+          if ((int)(uVar1 & 0xffff) < (int)(iVar8 + local_298)) {
+            iVar8 = FUN_0054c020();
+            local_298 = (local_1e4 & 0xffff) - iVar8;
+            FUN_004e8760(0,local_298);
+            goto LAB_005c7d8f;
+          }
+        }
+        else {
+          uVar3 = FUN_004e9eb0();
+          iVar8 = FUN_0054c020();
+          if ((int)(uVar1 & 0xffff) <
+              (int)((ulonglong)local_298 / (ulonglong)(longlong)(int)(uint)uVar3) + iVar8) {
+            iVar8 = FUN_0054c020();
+            local_298 = (local_1e4 & 0xffff) - iVar8;
+          }
+        }
+        FUN_004e8760(0,local_298);
+      }
+LAB_005c7d8f:
+      if ((*(char *)(DAT_008cf6d8 + 0x1033) == '\0') && (local_294 == 0)) {
+        local_294 = 1;
+        puVar6 = (undefined4 *)FUN_007fc95b(0x14);
+        local_290 = puVar6;
+        if (puVar6 == (undefined4 *)0x0) {
+          puVar6 = (undefined4 *)0x0;
+        }
+        else {
+          *puVar6 = &PTR_LAB_00847b40;
+          puVar6[2] = 0xffffffff;
+          puVar6[1] = 0xffffffff;
+          local_4 = CONCAT31(local_4._1_3_,3);
+          FUN_0078a960();
+          *puVar6 = &PTR_FUN_00848f7c;
+          FUN_0078ac30(local_288,param_2);
+        }
+        local_4 = local_4 & 0xffffff00;
+        FUN_004f7500(puVar6,0);
+      }
+      puVar6 = (undefined4 *)FUN_007fc95b(0x28);
+      local_4._0_1_ = 4;
+      local_290 = puVar6;
+      if (puVar6 == (undefined4 *)0x0) {
+        puVar6 = (undefined4 *)0x0;
+      }
+      else {
+        puVar7 = (undefined4 *)FUN_004e8240(local_150);
+        *puVar6 = &PTR_LAB_00847b40;
+        puVar6[2] = 0xffffffff;
+        puVar6[1] = 0xffffffff;
+        local_4._0_1_ = 5;
+        FUN_0078a960();
+        puVar6[5] = 0;
+        puVar6[6] = 0;
+        puVar6[7] = 0;
+        puVar6[8] = 0;
+        puVar6[9] = 0;
+        *puVar6 = &PTR_FUN_0084d2f0;
+        FUN_0078ac30(local_288,local_280);
+        puVar11 = puVar6 + 5;
+        for (iVar8 = 5; iVar8 != 0; iVar8 = iVar8 + -1) {
+          *puVar11 = *puVar7;
+          puVar7 = puVar7 + 1;
+          puVar11 = puVar11 + 1;
+        }
+      }
+      local_4 = (uint)local_4._1_3_ << 8;
+      FUN_004f7500(puVar6,0);
+      if (*(char *)(DAT_008cf6d8 + 0x1033) == '\0') {
+        CGameSprite__GenerateCreature(local_280);
+      }
+      else {
+        iVar8 = FUN_005adf60(local_280);
+        if (iVar8 == 0) {
+          FUN_00780c00(0x567c,s_C__Projects_Icewind2_src_Baldur__008b019c,s_pStore____NULL_008abfa8,
+                       0);
+        }
+        CGameSprite__EmptySaveStub(param_3,1);
+      }
+      uVar3 = FUN_004e9eb0();
+      if (1 < uVar3) {
+        FUN_004e8760(0,local_28c);
+      }
+    }
+  }
+  else {
+    *param_4 = 0x66ad;
+  }
+  if (*(char *)(DAT_008cf6d8 + 0x1033) == '\0') {
+    if (local_294 != 0) {
+      puVar6 = (undefined4 *)FUN_007fc95b(0x14);
+      local_290 = puVar6;
+      if (puVar6 == (undefined4 *)0x0) {
+        puVar6 = (undefined4 *)0x0;
+      }
+      else {
+        *puVar6 = &PTR_LAB_00847b40;
+        puVar6[2] = 0xffffffff;
+        puVar6[1] = 0xffffffff;
+        local_4 = CONCAT31(local_4._1_3_,7);
+        FUN_0078a960();
+        *puVar6 = &PTR_FUN_00848f28;
+        FUN_0078ac30(local_288,local_280);
+      }
+      local_4 = local_4 & 0xffffff00;
+      FUN_004f7500(puVar6,0);
+    }
+  }
+  else {
+    FUN_005ade90(local_280);
+  }
+LAB_005c8167:
+  local_4 = 0xffffffff;
+  FUN_0054b1e0();
+  ExceptionList = local_c;
+  return local_298;
+}
+
+=== 0x711C90 ===
+undefined4 __thiscall FUN_00711c90(undefined4 param_1,byte param_2)
+
+{
+  FUN_00711cb0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x711CB0 ===
+void __fastcall FUN_00711cb0(undefined4 *param_1)
+
+{
+  void *local_c;
+  undefined1 *puStack_8;
+  int local_4;
+  
+  puStack_8 = &LAB_00839f8d;
+  local_c = ExceptionList;
+  ExceptionList = &local_c;
+  *param_1 = &PTR_FUN_0085bfe8;
+  local_4 = 3;
+  if (param_1[0x65] != 0) {
+    FUN_007fc984(param_1[0x65]);
+  }
+  if (param_1[0x68] != 0) {
+    FUN_007fc984(param_1[0x68]);
+  }
+  if (param_1[0x69] != 0) {
+    FUN_007fc984(param_1[0x69]);
+  }
+  FUN_007fcc1a();
+  local_4._0_1_ = 2;
+  FUN_007a8e20();
+  local_4._0_1_ = 1;
+  FUN_007beee0();
+  local_4 = (uint)local_4._1_3_ << 8;
+  FUN_007ad0f0();
+  *param_1 = &PTR_FUN_008486b0;
+  local_4 = 4;
+  FUN_004c7f60();
+  local_4 = 0xffffffff;
+  FUN_007fcc1a();
+  ExceptionList = local_c;
+  return;
+}
+
+=== 0x712310 ===
+void __fastcall FUN_00712310(undefined4 *param_1)
+
+{
+  char cVar1;
+  
+  FUN_004c7f60();
+  cVar1 = FUN_0059a530(param_1[0x17],DAT_00851873,0,0xffffffff);
+  if (cVar1 != DAT_0085186c) {
+    FUN_00780c00(0x39a0,s_C__Projects_Icewind2_src_Baldur__008b7674,s_FALSE_008a636c,0);
+    return;
+  }
+  if (param_1 != (undefined4 *)0x0) {
+    (**(code **)*param_1)(1);
+  }
+  return;
+}
+

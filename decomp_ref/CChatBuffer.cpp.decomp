@@ -1,0 +1,111 @@
+# Decompiled reference for: CChatBuffer.cpp
+# 3 incomplete functions
+
+=== 0x4428A0 ===
+void __thiscall FUN_004428a0(int *param_1,int *param_2,int param_3,undefined4 param_4)
+
+{
+  int iVar1;
+  undefined1 local_8 [8];
+  
+  if ((*param_2 != param_1[2]) || (param_2[1] != param_1[3])) {
+    if (param_1[1] != 0) {
+      iVar1 = FUN_0078ab40(&DAT_008c5cf8);
+      if ((iVar1 != 0) && (*param_1 != 0)) {
+        FUN_0077e370();
+      }
+    }
+    iVar1 = FUN_0078abb0(&DAT_008c5cf8);
+    if (iVar1 != 0) {
+      param_1[1] = 0;
+      FUN_0078ad40(local_8,&DAT_008c5cf8);
+      return;
+    }
+    iVar1 = FUN_00786df0(param_2,1000,param_4);
+    if (iVar1 == 0) {
+      param_1[1] = 0;
+      FUN_0078ad40(local_8,&DAT_008c5cf8);
+      return;
+    }
+    param_1[1] = iVar1;
+    if (param_3 != 0) {
+      *param_1 = 1;
+      FUN_0077e610();
+    }
+    FUN_0078ac30(local_8,param_2);
+  }
+  return;
+}
+
+=== 0x442990 ===
+void __thiscall FUN_00442990(int *param_1,int *param_2,int param_3,undefined4 param_4)
+
+{
+  int iVar1;
+  undefined1 local_8 [8];
+  
+  if ((*param_2 != param_1[2]) || (param_2[1] != param_1[3])) {
+    if (param_1[1] != 0) {
+      iVar1 = FUN_0078ab40(&DAT_008c5cf8);
+      if ((iVar1 != 0) && (*param_1 != 0)) {
+        FUN_0077e370();
+      }
+    }
+    iVar1 = FUN_0078abb0(&DAT_008c5cf8);
+    if (iVar1 != 0) {
+      param_1[1] = 0;
+      FUN_0078ad40(local_8,&DAT_008c5cf8);
+      return;
+    }
+    iVar1 = FUN_00786df0(param_2,0x44c,param_4);
+    if (iVar1 == 0) {
+      param_1[1] = 0;
+      FUN_0078ad40(local_8,&DAT_008c5cf8);
+      return;
+    }
+    param_1[1] = iVar1;
+    if (param_3 != 0) {
+      *param_1 = 1;
+      FUN_0077e610();
+    }
+    FUN_0078ac30(local_8,param_2);
+  }
+  return;
+}
+
+=== 0x442A80 ===
+void __thiscall FUN_00442a80(int *param_1,int *param_2,int param_3,undefined4 param_4)
+
+{
+  int iVar1;
+  undefined1 local_8 [8];
+  
+  if ((*param_2 != param_1[2]) || (param_2[1] != param_1[3])) {
+    if (param_1[1] != 0) {
+      iVar1 = FUN_0078ab40(&DAT_008c5cf8);
+      if ((iVar1 != 0) && (*param_1 != 0)) {
+        FUN_0077e370();
+      }
+    }
+    iVar1 = FUN_0078abb0(&DAT_008c5cf8);
+    if (iVar1 != 0) {
+      param_1[1] = 0;
+      FUN_0078ad40(local_8,&DAT_008c5cf8);
+      return;
+    }
+    iVar1 = FUN_00786df0(param_2,0x3ec,param_4);
+    if (iVar1 == 0) {
+      param_1[1] = 0;
+      FUN_0078ad40(local_8,&DAT_008c5cf8);
+      return;
+    }
+    param_1[1] = iVar1;
+    if (param_3 != 0) {
+      *param_1 = 1;
+      FUN_0077e610();
+    }
+    FUN_0078ac30(local_8,param_2);
+  }
+  return;
+}
+

@@ -1,0 +1,65 @@
+# Decompiled reference for: CMemINI.cpp
+# 5 incomplete functions
+
+=== 0x469FF0 ===
+undefined4 __thiscall FUN_00469ff0(undefined4 param_1,byte param_2)
+
+{
+  FUN_0046a010();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6A0C20 ===
+undefined4 __thiscall FUN_006a0c20(undefined4 param_1,byte param_2)
+
+{
+  FUN_006a0a80();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6A0C40 ===
+void FUN_006a0c40(undefined4 *param_1,int param_2)
+
+{
+  uint uVar1;
+  int iVar2;
+  
+  for (uVar1 = (uint)(param_2 << 4) >> 2; uVar1 != 0; uVar1 = uVar1 - 1) {
+    *param_1 = 0;
+    param_1 = param_1 + 1;
+  }
+  for (iVar2 = 0; iVar2 != 0; iVar2 = iVar2 + -1) {
+    *(undefined1 *)param_1 = 0;
+    param_1 = (undefined4 *)((int)param_1 + 1);
+  }
+  return;
+}
+
+=== 0x6A0CC0 ===
+undefined4 __thiscall FUN_006a0cc0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006a0d40();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6A0DA0 ===
+undefined4 __thiscall FUN_006a0da0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006a0dc0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

@@ -1,0 +1,136 @@
+# Decompiled reference for: CGameOptions.cpp
+# 1 incomplete functions
+
+=== 0x5C9C90 ===
+undefined4 __thiscall
+FUN_005c9c90(int param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5
+            )
+
+{
+  bool bVar1;
+  char cVar2;
+  undefined4 uVar3;
+  undefined4 *puVar4;
+  int iVar5;
+  int *piVar6;
+  int *piVar7;
+  bool bVar8;
+  undefined4 *local_280;
+  undefined4 local_27c;
+  undefined4 local_278;
+  undefined1 local_274 [8];
+  undefined4 local_26c;
+  undefined4 local_268;
+  int local_148 [79];
+  void *local_c;
+  undefined1 *puStack_8;
+  uint local_4;
+  
+  local_4 = 0xffffffff;
+  puStack_8 = &LAB_00824e93;
+  local_c = ExceptionList;
+  if (*(char *)(DAT_008cf6d8 + 0x1032) == '\0') {
+    ExceptionList = &local_c;
+    FUN_0054b150(param_2);
+    local_4 = 6;
+    FUN_0054b9a0(param_1 + 0x4208);
+    goto LAB_005c9fa2;
+  }
+  bVar1 = false;
+  ExceptionList = &local_c;
+  FUN_0054b0e0();
+  local_4 = 0;
+  if (*(char *)(DAT_008cf6d8 + 0x1033) == '\0') {
+    FUN_0054b2a0(param_2);
+    if (local_148[2] != 0) {
+      iVar5 = 2;
+      bVar8 = true;
+      piVar6 = local_148;
+      piVar7 = &DAT_008a8748;
+      do {
+        if (iVar5 == 0) break;
+        iVar5 = iVar5 + -1;
+        bVar8 = *piVar6 == *piVar7;
+        piVar6 = piVar6 + 1;
+        piVar7 = piVar7 + 1;
+      } while (bVar8);
+      if (bVar8) goto LAB_005c9dc7;
+    }
+    uVar3 = FUN_0078aa30(&local_280);
+    local_4._0_1_ = 1;
+    cVar2 = FUN_004297c0(uVar3,0x3f6,1,1,1);
+    local_4 = (uint)local_4._1_3_ << 8;
+    FUN_007fcc1a();
+    if (cVar2 == '\0') {
+      FUN_007a5a20(1);
+      local_4 = 0xffffffff;
+      FUN_0054b1e0();
+      ExceptionList = local_c;
+      return 0;
+    }
+    FUN_0054b2a0(param_2);
+    bVar1 = true;
+  }
+  else {
+    FUN_005adc90(param_2,1);
+    FUN_0054b2a0(param_2);
+  }
+LAB_005c9dc7:
+  if ((*(char *)(DAT_008cf6d8 + 0x1033) == '\0') && (!bVar1)) {
+    puVar4 = (undefined4 *)FUN_007fc95b(0x14);
+    local_280 = puVar4;
+    if (puVar4 == (undefined4 *)0x0) {
+      puVar4 = (undefined4 *)0x0;
+    }
+    else {
+      *puVar4 = &PTR_LAB_00847b40;
+      puVar4[2] = 0xffffffff;
+      puVar4[1] = 0xffffffff;
+      local_4 = CONCAT31(local_4._1_3_,3);
+      FUN_0078a960();
+      *puVar4 = &PTR_FUN_00848f7c;
+      FUN_0078ac30(&local_27c,param_2);
+    }
+    local_4 = local_4 & 0xffffff00;
+    FUN_004f7500(puVar4,0);
+  }
+  puVar4 = (undefined4 *)FUN_007fc95b(0x20);
+  local_280 = puVar4;
+  if (puVar4 == (undefined4 *)0x0) {
+    puVar4 = (undefined4 *)0x0;
+  }
+  else {
+    local_27c = local_26c;
+    local_278 = local_268;
+    *puVar4 = &PTR_LAB_00847b40;
+    puVar4[2] = 0xffffffff;
+    puVar4[1] = 0xffffffff;
+    local_4 = CONCAT31(local_4._1_3_,5);
+    FUN_0078a960();
+    *puVar4 = &PTR_FUN_0084d440;
+    FUN_0078ac30(local_274,&local_27c);
+    puVar4[5] = param_3;
+    puVar4[6] = param_4;
+    puVar4[7] = param_5;
+  }
+  local_4 = local_4 & 0xffffff00;
+  FUN_004f7500(puVar4,0);
+  if (*(char *)(DAT_008cf6d8 + 0x1033) == '\0') {
+    CGameSprite__GenerateCreature(&local_26c);
+  }
+  else {
+    iVar5 = FUN_005adf60(&local_26c);
+    if (iVar5 == 0) {
+      FUN_00780c00(0x5b21,s_C__Projects_Icewind2_src_Baldur__008b019c,s_pStore____NULL_008abfa8,0);
+    }
+    *(undefined4 *)(iVar5 + 0x14) = param_3;
+    *(undefined4 *)(iVar5 + 0x18) = param_4;
+    *(undefined4 *)(iVar5 + 0x1c) = param_5;
+  }
+LAB_005c9fa2:
+  local_4 = 0xffffffff;
+  FUN_0054b1e0();
+  ExceptionList = local_c;
+  return 1;
+}
+

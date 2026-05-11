@@ -1,0 +1,14 @@
+# Decompiled reference for: CGameAnimationTypeMonsterIcewindNew.cpp
+# 1 incomplete functions
+
+=== 0x6EB3F0 ===
+undefined4 __thiscall FUN_006eb3f0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006eb410();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

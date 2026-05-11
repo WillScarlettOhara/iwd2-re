@@ -1,0 +1,25 @@
+# Decompiled reference for: CGameStatsSprite.cpp
+# 2 incomplete functions
+
+=== 0x4CAEA0 ===
+undefined4 __thiscall FUN_004caea0(undefined4 param_1,byte param_2)
+
+{
+  FUN_0078e730();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6F2CC0 ===
+undefined4 __thiscall FUN_006f2cc0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006f2d80();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

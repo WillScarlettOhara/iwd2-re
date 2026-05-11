@@ -1,0 +1,192 @@
+# Decompiled reference for: CScreenOptions.cpp
+# 10 incomplete functions
+
+=== 0x653D50 ===
+undefined4 __thiscall FUN_00653d50(undefined4 param_1,byte param_2)
+
+{
+  FUN_00653d80();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x653D70 ===
+void thunk_FUN_007fb298(void)
+
+{
+  FUN_007fb298();
+  return;
+}
+
+=== 0x6574E0 ===
+undefined4 __thiscall FUN_006574e0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00657500();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x657CC0 ===
+undefined4 __thiscall FUN_00657cc0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00657ce0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x658010 ===
+undefined4 __thiscall FUN_00658010(undefined4 param_1,byte param_2)
+
+{
+  FUN_00658030();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x658760 ===
+undefined4 * __thiscall FUN_00658760(undefined4 *param_1,undefined4 param_2,undefined4 param_3)
+
+{
+  undefined *local_74 [26];
+  void *pvStack_c;
+  undefined1 *puStack_8;
+  int local_4;
+  
+  local_4 = 0xffffffff;
+  puStack_8 = &LAB_0082f270;
+  pvStack_c = ExceptionList;
+  ExceptionList = &pvStack_c;
+  FUN_004d47d0(param_2,param_3,DAT_0084c920,0);
+  *param_1 = &PTR_FUN_00857bc0;
+  local_74[0] = PTR_DAT_008c1758;
+  local_4._0_1_ = 1;
+  local_4._1_3_ = 0;
+  FUN_007a8bb0();
+  local_4._0_1_ = 2;
+  switch(*(undefined4 *)(*(int *)((int)param_1 + 6) + 0x20)) {
+  case 2:
+  case 0xd:
+    switch(*(undefined4 *)((int)param_1 + 10)) {
+    case 5:
+      param_3 = 0x35a1;
+      break;
+    case 6:
+      param_3 = 0x35a2;
+      break;
+    case 7:
+      param_3 = 0x430a;
+      break;
+    case 8:
+      param_3 = 0x430c;
+      break;
+    case 9:
+      param_3 = 0x430d;
+      break;
+    case 10:
+      param_3 = 0x35a3;
+      break;
+    case 0xb:
+      param_3 = 0x2844;
+      break;
+    default:
+      FUN_00780c00(0xee9,s_C__Projects_Icewind2_src_Baldur__008b46e4,s_FALSE_008a636c,0);
+      param_3 = 0xffffffff;
+      break;
+    case 0xd:
+      param_3 = 0x82bc;
+      break;
+    case 0xe:
+      param_3 = 0x3c37;
+    }
+    break;
+  default:
+    FUN_00780c00(0xf13,s_C__Projects_Icewind2_src_Baldur__008b46e4,s_FALSE_008a636c,0);
+    param_3 = 0xffffffff;
+    break;
+  case 6:
+    break;
+  case 7:
+    if (*(int *)((int)param_1 + 10) == 0xd) {
+      param_3 = 0x4572;
+    }
+    else {
+      FUN_00780c00(0xefa,s_C__Projects_Icewind2_src_Baldur__008b46e4,s_FALSE_008a636c,0);
+      param_3 = 0xffffffff;
+    }
+    break;
+  case 8:
+    if (*(int *)((int)param_1 + 10) == 5) {
+      param_3 = 0x430b;
+    }
+    else if (*(int *)((int)param_1 + 10) == 6) {
+      param_3 = 0x430e;
+    }
+    else {
+      FUN_00780c00(0xf0c,s_C__Projects_Icewind2_src_Baldur__008b46e4,s_FALSE_008a636c,0);
+      param_3 = 0xffffffff;
+    }
+  }
+  FUN_007941d0(param_3,local_74);
+  FUN_004d58a0(local_74);
+  local_4._0_1_ = 3;
+  FUN_007a8e20();
+  local_4 = (uint)local_4._1_3_ << 8;
+  FUN_007fcc1a();
+  ExceptionList = pvStack_c;
+  return param_1;
+}
+
+=== 0x6589A0 ===
+undefined4 __thiscall FUN_006589a0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006589c0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6591E0 ===
+undefined4 __thiscall FUN_006591e0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00659200();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x659370 ===
+undefined4 __thiscall FUN_00659370(undefined4 param_1,byte param_2)
+
+{
+  FUN_00659390();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6594A0 ===
+undefined4 __thiscall FUN_006594a0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006594c0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

@@ -1,0 +1,179 @@
+# Decompiled reference for: CScreenSinglePlayer.cpp
+# 16 incomplete functions
+
+=== 0x6655D0 ===
+undefined4 __thiscall FUN_006655d0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006655f0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x665760 ===
+undefined4 __thiscall FUN_00665760(undefined4 param_1,byte param_2)
+
+{
+  FUN_00665780();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x665B80 ===
+undefined4 __thiscall FUN_00665b80(undefined4 param_1,byte param_2)
+
+{
+  FUN_00665ba0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x665EE0 ===
+undefined4 __thiscall FUN_00665ee0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00665f00();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6660B0 ===
+undefined4 __thiscall FUN_006660b0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006660d0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6661E0 ===
+undefined4 __thiscall FUN_006661e0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00666200();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x666430 ===
+undefined4 __thiscall FUN_00666430(undefined4 param_1,byte param_2)
+
+{
+  FUN_00666450();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x666920 ===
+undefined4 __thiscall FUN_00666920(undefined4 param_1,byte param_2)
+
+{
+  FUN_00666940();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x666F20 ===
+undefined4 __thiscall FUN_00666f20(undefined4 param_1,byte param_2)
+
+{
+  FUN_00666f40();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6670F0 ===
+undefined4 __thiscall FUN_006670f0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00667110();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x667220 ===
+undefined4 __thiscall FUN_00667220(undefined4 param_1,byte param_2)
+
+{
+  FUN_00667240();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6673D0 ===
+undefined4 __thiscall FUN_006673d0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006673f0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6675A0 ===
+undefined4 __thiscall FUN_006675a0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006675c0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x667750 ===
+undefined4 __thiscall FUN_00667750(undefined4 param_1,byte param_2)
+
+{
+  FUN_00667770();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x667900 ===
+undefined4 __thiscall FUN_00667900(undefined4 param_1,byte param_2)
+
+{
+  FUN_00667920();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x667A40 ===
+undefined4 __thiscall FUN_00667a40(undefined4 param_1,byte param_2)
+
+{
+  FUN_00667a60();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

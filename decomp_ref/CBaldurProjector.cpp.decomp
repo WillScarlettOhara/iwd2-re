@@ -1,0 +1,132 @@
+# Decompiled reference for: CBaldurProjector.cpp
+# 3 incomplete functions
+
+=== 0x43EA50 ===
+undefined4 __thiscall FUN_0043ea50(undefined4 param_1,byte param_2)
+
+{
+  FUN_0043ea70();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x43F6D0 ===
+undefined4 * __thiscall FUN_0043f6d0(undefined4 *param_1,undefined4 param_2,undefined4 param_3)
+
+{
+  undefined4 *puVar1;
+  undefined4 uVar2;
+  short sVar3;
+  int iVar4;
+  int iVar5;
+  int *piVar6;
+  undefined4 *puStack_f4;
+  int local_dc [18];
+  undefined4 local_94 [2];
+  undefined4 uStack_8c;
+  undefined4 auStack_88 [3];
+  undefined4 uStack_7c;
+  undefined4 uStack_38;
+  void *pvStack_24;
+  void *pvStack_c;
+  undefined1 *puStack_8;
+  undefined4 local_4;
+  
+  puStack_8 = &LAB_00809d1b;
+  pvStack_c = ExceptionList;
+  ExceptionList = &pvStack_c;
+  *param_1 = PTR_DAT_008c1758;
+  puStack_f4 = (undefined4 *)&DAT_008c5cf8;
+  local_4 = 0;
+  param_1[1] = 0;
+  FUN_007fcd57();
+  param_1[2] = param_2;
+  param_1[3] = 0;
+  param_1[4] = 0xffffff;
+  piVar6 = local_dc;
+  for (iVar5 = 0x1b; iVar5 != 0; iVar5 = iVar5 + -1) {
+    *piVar6 = 0;
+    piVar6 = piVar6 + 1;
+  }
+  local_dc[0] = 0x6c;
+  local_dc[1] = 7;
+  local_dc[3] = param_3;
+  puStack_f4 = (undefined4 *)0x1;
+  sVar3 = FUN_00793050();
+  local_dc[2] = (int)sVar3 << 2;
+  local_94[0] = 0x20;
+  piVar6 = (int *)**(undefined4 **)(*(int *)(*(int *)(DAT_008cf6d8 + 0x3c4) + 4) + 0xa0);
+  puStack_f4 = local_94;
+  (**(code **)(*piVar6 + 0x54))(piVar6);
+  puVar1 = param_1 + 5;
+  param_1[6] = 0;
+  *puVar1 = 0;
+  param_1[8] = local_dc[0];
+  param_1[7] = local_dc[1];
+  if ((*(short *)(DAT_008cf6d8 + 0x7ea) == 0x10) &&
+     (((*(char *)(DAT_008cf6d8 + 0x7f4) != '\0' || (*(char *)(DAT_008cf6d8 + 0x7f2) != '\0')) ||
+      (*(char *)(DAT_008cf6d8 + 0x7f6) != '\0')))) {
+    uStack_7c = 0x840;
+  }
+  else {
+    uStack_7c = 0x4040;
+  }
+  iVar5 = *(int *)(*(int *)(DAT_008cf6d8 + 0x3c4) + 4);
+  iVar4 = (**(code **)(**(int **)(DAT_008cf6d8 + 0x930) + 0x18))
+                    (*(int **)(DAT_008cf6d8 + 0x930),&stack0xffffff1c,*(int *)(iVar5 + 0xa0) + 0x20,
+                     0);
+  if (iVar4 != 0) {
+    uStack_8c = 0x840;
+    iVar4 = (**(code **)(**(int **)(DAT_008cf6d8 + 0x930) + 0x18))
+                      (*(int **)(DAT_008cf6d8 + 0x930),&puStack_f4,*(int *)(iVar5 + 0xa0) + 0x20,0);
+    if (iVar4 != 0) {
+      *(undefined4 *)(*(int *)(iVar5 + 0xa0) + 0x20) = 0;
+    }
+  }
+  auStack_88[0] = 100;
+  uStack_38 = FUN_00795d50(0);
+  uVar2 = *(undefined4 *)(*(int *)(*(int *)(*(int *)(DAT_008cf6d8 + 0x3c4) + 4) + 0xa0) + 0x20);
+  do {
+    do {
+      iVar5 = FUN_007b6840(uVar2,puVar1,0,puVar1,0x1000400,auStack_88);
+      FUN_00799f40(iVar5);
+    } while (iVar5 == -0x7789fe3e);
+  } while (iVar5 == -0x7789fde4);
+  ExceptionList = pvStack_24;
+  return param_1;
+}
+
+=== 0x43F900 ===
+void __fastcall FUN_0043f900(int param_1)
+
+{
+  int iVar1;
+  int *piVar2;
+  void *pvStack_c;
+  undefined1 *puStack_8;
+  undefined4 local_4;
+  
+  puStack_8 = &LAB_00809d38;
+  pvStack_c = ExceptionList;
+  iVar1 = *(int *)(param_1 + 8);
+  local_4 = 0;
+  ExceptionList = &pvStack_c;
+  if (iVar1 != 0) {
+    ExceptionList = &pvStack_c;
+    FUN_007e78de(iVar1,8,*(undefined4 *)(iVar1 + -4),&LAB_00428f80);
+    FUN_007fc984(iVar1 + -4);
+    *(undefined4 *)(param_1 + 8) = 0;
+  }
+  iVar1 = *(int *)(*(int *)(DAT_008cf6d8 + 0x3c4) + 4);
+  if ((iVar1 != 0) && (piVar2 = *(int **)(*(int *)(iVar1 + 0xa0) + 0x20), piVar2 != (int *)0x0)) {
+    (**(code **)(*piVar2 + 8))(piVar2);
+    *(undefined4 *)(*(int *)(iVar1 + 0xa0) + 0x20) = 0;
+  }
+  local_4 = 0xffffffff;
+  FUN_007fcc1a();
+  ExceptionList = pvStack_c;
+  return;
+}
+

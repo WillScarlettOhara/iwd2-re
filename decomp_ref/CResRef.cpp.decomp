@@ -1,0 +1,14 @@
+# Decompiled reference for: CResRef.cpp
+# 1 incomplete functions
+
+=== 0x78AED0 ===
+void __fastcall FUN_0078aed0(int param_1)
+
+{
+  if (*(int *)(param_1 + 4) != 0) {
+    FUN_007e9689(*(int *)(param_1 + 4));
+    *(undefined4 *)(param_1 + 4) = 0;
+  }
+  return;
+}
+

@@ -1,0 +1,36 @@
+# Decompiled reference for: CScreenStart.cpp
+# 3 incomplete functions
+
+=== 0x66F280 ===
+undefined4 __thiscall FUN_0066f280(undefined4 param_1,byte param_2)
+
+{
+  FUN_0066f2a0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x670380 ===
+undefined4 __thiscall FUN_00670380(undefined4 param_1,byte param_2)
+
+{
+  FUN_006703a0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6707A0 ===
+undefined4 __thiscall FUN_006707a0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006707c0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

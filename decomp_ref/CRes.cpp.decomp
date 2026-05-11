@@ -1,0 +1,25 @@
+# Decompiled reference for: CRes.cpp
+# 2 incomplete functions
+
+=== 0x4010D0 ===
+undefined4 __thiscall FUN_004010d0(undefined4 param_1,byte param_2)
+
+{
+  FUN_004010f0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x77E2D0 ===
+undefined4 __thiscall FUN_0077e2d0(undefined4 param_1,byte param_2)
+
+{
+  FUN_0077e2f0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

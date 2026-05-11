@@ -1,0 +1,35 @@
+# Decompiled reference for: CResTile.cpp
+# 3 incomplete functions
+
+=== 0x5CBD70 ===
+undefined4 __thiscall FUN_005cbd70(undefined4 param_1,byte param_2)
+
+{
+  FUN_005cbd90();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x7806B0 ===
+undefined4 __thiscall FUN_007806b0(undefined4 param_1,byte param_2)
+
+{
+  FUN_007806d0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x780770 ===
+undefined4 __fastcall FUN_00780770(int param_1)
+
+{
+  if (*(int *)(param_1 + 0x60) == 0) {
+    return 0;
+  }
+  return *(undefined4 *)(param_1 + 0x54);
+}
+

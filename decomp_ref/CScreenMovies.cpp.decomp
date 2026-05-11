@@ -1,0 +1,58 @@
+# Decompiled reference for: CScreenMovies.cpp
+# 5 incomplete functions
+
+=== 0x6469A0 ===
+undefined4 __thiscall FUN_006469a0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00646940();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x6470B0 ===
+undefined4 __thiscall FUN_006470b0(undefined4 param_1,byte param_2)
+
+{
+  FUN_006470d0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x647BC0 ===
+undefined4 __thiscall FUN_00647bc0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00647be0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x647D90 ===
+undefined4 __thiscall FUN_00647d90(undefined4 param_1,byte param_2)
+
+{
+  FUN_00647db0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x647FA0 ===
+undefined4 __thiscall FUN_00647fa0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00647fc0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

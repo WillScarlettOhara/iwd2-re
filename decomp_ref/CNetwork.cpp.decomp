@@ -1,0 +1,69 @@
+# Decompiled reference for: CNetwork.cpp
+# 4 incomplete functions
+
+=== 0x452B00 ===
+void __thiscall FUN_00452b00(int *param_1,undefined4 param_2)
+
+{
+  *param_1 = (int)(short)param_2;
+  param_1[1] = (int)(short)((uint)param_2 >> 0x10);
+  return;
+}
+
+=== 0x452B20 ===
+undefined4 __thiscall FUN_00452b20(int *param_1,int param_2,int param_3)
+
+{
+  if ((*param_1 == param_2) && (param_1[1] == param_3)) {
+    return 0;
+  }
+  return 1;
+}
+
+=== 0x7A1E20 ===
+undefined4 * __thiscall FUN_007a1e20(undefined4 *param_1,undefined4 param_2)
+
+{
+  FUN_007fb239(param_2);
+  *param_1 = &PTR_LAB_0085e0c4;
+  return param_1;
+}
+
+=== 0x7A6895 ===
+undefined4 FUN_007a6895(void)
+
+{
+  int iVar1;
+  undefined4 *puVar2;
+  uint uVar3;
+  undefined4 uVar4;
+  undefined4 uVar5;
+  undefined4 uVar6;
+  undefined4 uVar7;
+  int iVar8;
+  void *in_stack_00000014;
+  int in_stack_00000024;
+  
+  FUN_007fcd57(*(undefined4 *)(in_stack_00000024 + 0x30));
+  iVar8 = DAT_008cf6d8;
+  uVar3 = *(uint *)(in_stack_00000024 + 4);
+  uVar4 = *(undefined4 *)(in_stack_00000024 + 8);
+  uVar5 = *(undefined4 *)(in_stack_00000024 + 0xc);
+  uVar6 = *(undefined4 *)(in_stack_00000024 + 0x10);
+  uVar7 = *(undefined4 *)(in_stack_00000024 + 0x14);
+  iVar1 = DAT_008cf6d8 + 0x952;
+  if (*(int *)(DAT_008cf6d8 + 0xa78) < 0x40) {
+    FUN_007fcd07(&stack0x00000000);
+    puVar2 = (undefined4 *)(*(int *)(iVar8 + 0xa78) * 0x10 + 0x22a + iVar1);
+    *puVar2 = uVar4;
+    puVar2[1] = uVar5;
+    puVar2[2] = uVar6;
+    puVar2[3] = uVar7;
+    *(byte *)(*(int *)(iVar8 + 0xa78) + 0x62a + iVar1) = (byte)(uVar3 >> 10) & 1;
+    *(int *)(iVar8 + 0xa78) = *(int *)(iVar8 + 0xa78) + 1;
+  }
+  FUN_007fcc1a();
+  ExceptionList = in_stack_00000014;
+  return 1;
+}
+

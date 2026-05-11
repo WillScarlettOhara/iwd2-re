@@ -1,0 +1,131 @@
+# Decompiled reference for: CBounceList.cpp
+# 1 incomplete functions
+
+=== 0x43F9B0 ===
+void __fastcall FUN_0043f9b0(int *param_1)
+
+{
+  int *piVar1;
+  bool bVar2;
+  short sVar3;
+  int iVar4;
+  int iVar5;
+  undefined4 uVar6;
+  int iVar7;
+  int iVar8;
+  int iVar9;
+  undefined1 *puVar10;
+  bool bVar11;
+  int iStack_58;
+  int local_54;
+  undefined *puStack_50;
+  undefined4 uStack_4c;
+  undefined1 auStack_48 [4];
+  undefined1 auStack_44 [4];
+  int local_40;
+  int local_3c [2];
+  int iStack_34;
+  undefined1 auStack_2c [8];
+  undefined1 auStack_24 [24];
+  void *local_c;
+  undefined1 *puStack_8;
+  int iStack_4;
+  
+  iStack_4 = 0xffffffff;
+  puStack_8 = &LAB_00809d83;
+  local_c = ExceptionList;
+  if (0 < *(int *)(*param_1 + -8)) {
+    local_54 = 0;
+    ExceptionList = &local_c;
+    iVar4 = FUN_00792d40(param_1,1);
+    piVar1 = param_1 + 5;
+    local_40 = iVar4;
+    CopyRect(local_3c,piVar1);
+    CopyRect(auStack_24,piVar1);
+    iVar9 = param_1[7];
+    iVar8 = *piVar1;
+    bVar2 = iVar4 < iVar9 - iVar8;
+    if (bVar2) {
+      local_54 = 1;
+    }
+    FUN_007e79d2(auStack_2c,4,4,FUN_00403310,FUN_007fcc1a);
+    puStack_50 = PTR_DAT_008c1758;
+    iStack_4._0_1_ = 1;
+    iStack_4._1_3_ = 0;
+    FUN_007fc98f(param_1);
+    iStack_4 = CONCAT31(iStack_4._1_3_,2);
+    if (!bVar2) {
+      iVar7 = 0;
+      do {
+        iVar4 = 0;
+        if (-1 < *(int *)(iStack_58 + -8)) {
+          bVar11 = *(int *)(iStack_58 + -8) == 0;
+          do {
+            if (bVar11) {
+              FUN_007fcd07(&iStack_58);
+              local_54 = local_54 + 1;
+              iVar7 = 4;
+              break;
+            }
+            uStack_4c = CONCAT31(uStack_4c._1_3_,*(undefined1 *)(iVar4 + iStack_58));
+            FUN_007fcfd1(uStack_4c);
+            iVar5 = FUN_00792d40(&puStack_50,1);
+            if (iVar9 - iVar8 < iVar5) goto joined_r0x0043fae6;
+            iVar4 = iVar4 + 1;
+            bVar11 = iVar4 == *(int *)(iStack_58 + -8);
+          } while (iVar4 <= *(int *)(iStack_58 + -8));
+        }
+LAB_0043fb90:
+        iVar7 = iVar7 + 1;
+        iVar4 = local_40;
+      } while (iVar7 < 4);
+    }
+    sVar3 = FUN_00793050(1);
+    iVar9 = (int)sVar3;
+    if (bVar2) {
+      FUN_007930f0(param_1[4],0,0);
+      FUN_00793720(param_1,(iStack_34 - local_3c[0]) / 2 - iVar4 / 2,iVar9,local_3c,8);
+    }
+    else if (0 < local_54) {
+      puVar10 = auStack_2c;
+      iVar8 = local_54;
+      do {
+        FUN_007930f0(param_1[4],0,0);
+        FUN_00793720(puVar10,0,iVar9,local_3c,8);
+        FUN_00793050(1);
+        sVar3 = FUN_00793050(1);
+        iVar9 = iVar9 + sVar3;
+        puVar10 = puVar10 + 4;
+        iVar8 = iVar8 + -1;
+      } while (iVar8 != 0);
+    }
+    iStack_4._0_1_ = 1;
+    FUN_007fcc1a();
+    iStack_4 = (uint)iStack_4._1_3_ << 8;
+    FUN_007fcc1a();
+    iStack_4 = 0xffffffff;
+    FUN_007e78de(auStack_2c,4,4,FUN_007fcc1a);
+  }
+  ExceptionList = local_c;
+  return;
+joined_r0x0043fae6:
+  if (iVar4 < 0) goto LAB_0043fb90;
+  if (puStack_50[iVar4] == ' ') {
+    uVar6 = FUN_007faa72(auStack_48,iVar4);
+    iStack_4._0_1_ = 3;
+    FUN_007fcd07(uVar6);
+    iStack_4._0_1_ = 2;
+    FUN_007fcc1a();
+    uVar6 = FUN_007fa9f6(auStack_44,(*(int *)(iStack_58 + -8) - iVar4) + -1);
+    iStack_4._0_1_ = 4;
+    FUN_007fcd07(uVar6);
+    iStack_4 = CONCAT31(iStack_4._1_3_,2);
+    FUN_007fcc1a();
+    local_54 = local_54 + 1;
+    FUN_007fcd57(&DAT_008c5cf8);
+    goto LAB_0043fb90;
+  }
+  iVar4 = iVar4 + -1;
+  goto joined_r0x0043fae6;
+}
+

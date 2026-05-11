@@ -1,0 +1,14 @@
+# Decompiled reference for: CAliasList.cpp
+# 1 incomplete functions
+
+=== 0x781A70 ===
+undefined4 __thiscall FUN_00781a70(undefined4 param_1,byte param_2)
+
+{
+  FUN_00781a00();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

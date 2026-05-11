@@ -1,0 +1,235 @@
+# Decompiled reference for: CImmunities.cpp
+# 13 incomplete functions
+
+=== 0x443470 ===
+undefined4 __thiscall FUN_00443470(undefined4 param_1,byte param_2)
+
+{
+  FUN_00443420();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x4434E0 ===
+undefined4 __thiscall FUN_004434e0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00443490();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x443550 ===
+undefined4 __thiscall FUN_00443550(undefined4 param_1,byte param_2)
+
+{
+  FUN_00443500();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x4435C0 ===
+undefined4 __thiscall FUN_004435c0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00443570();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x443630 ===
+undefined4 __thiscall FUN_00443630(undefined4 param_1,byte param_2)
+
+{
+  FUN_004435e0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x4436A0 ===
+undefined4 __thiscall FUN_004436a0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00443650();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x4436C0 ===
+void __fastcall FUN_004436c0(undefined4 *param_1)
+
+{
+  void *local_c;
+  undefined1 *puStack_8;
+  undefined4 local_4;
+  
+  puStack_8 = &LAB_0080a238;
+  local_c = ExceptionList;
+  ExceptionList = &local_c;
+  *param_1 = &PTR_LAB_008484cc;
+  local_4 = 0;
+  FUN_004e71b0();
+  local_4 = 0xffffffff;
+  FUN_007fb298();
+  ExceptionList = local_c;
+  return;
+}
+
+=== 0x4E7000 ===
+int __fastcall FUN_004e7000(int *param_1)
+
+{
+  int iVar1;
+  int iVar2;
+  int iVar3;
+  
+  iVar1 = 0;
+  iVar2 = 1;
+  iVar3 = 9;
+  do {
+    param_1 = param_1 + 1;
+    iVar1 = iVar1 + *param_1 * iVar2;
+    iVar2 = iVar2 * 2;
+    iVar3 = iVar3 + -1;
+  } while (iVar3 != 0);
+  return iVar1;
+}
+
+=== 0x4E7050 ===
+void __fastcall FUN_004e7050(undefined4 *param_1)
+
+{
+  int iVar1;
+  
+  iVar1 = 10;
+  do {
+    *param_1 = 0;
+    param_1[1] = 0;
+    param_1 = param_1 + 2;
+    iVar1 = iVar1 + -1;
+  } while (iVar1 != 0);
+  return;
+}
+
+=== 0x4E7070 ===
+void __thiscall FUN_004e7070(undefined4 *param_1,int param_2)
+
+{
+  int iVar1;
+  
+  param_2 = param_2 - (int)param_1;
+  iVar1 = 9;
+  do {
+    *param_1 = *(undefined4 *)(param_2 + (int)param_1);
+    param_1[1] = *(undefined4 *)(param_2 + 4 + (int)param_1);
+    param_1 = param_1 + 2;
+    iVar1 = iVar1 + -1;
+  } while (iVar1 != 0);
+  return;
+}
+
+=== 0x4E7120 ===
+undefined4 __thiscall FUN_004e7120(int param_1,int param_2)
+
+{
+  int *piVar1;
+  undefined4 *puVar2;
+  
+  puVar2 = *(undefined4 **)(param_1 + 4);
+  do {
+    if (puVar2 == (undefined4 *)0x0) {
+      return 0;
+    }
+    piVar1 = puVar2 + 2;
+    puVar2 = (undefined4 *)*puVar2;
+  } while (*piVar1 != param_2);
+  return 1;
+}
+
+=== 0x4E7680 ===
+undefined4 __thiscall FUN_004e7680(undefined4 param_1,int param_2)
+
+{
+  int *piVar1;
+  int iVar2;
+  void **ppvVar3;
+  int iVar4;
+  int *piVar5;
+  undefined4 uVar6;
+  undefined1 local_14 [8];
+  void *local_c;
+  undefined1 *puStack_8;
+  undefined4 local_4;
+  
+  local_4 = 0xffffffff;
+  puStack_8 = &LAB_0081631b;
+  local_c = ExceptionList;
+  piVar5 = *(int **)(param_2 + 4);
+  ppvVar3 = &local_c;
+  if (piVar5 == (int *)0x0) {
+    return param_1;
+  }
+  do {
+    ExceptionList = ppvVar3;
+    piVar1 = (int *)*piVar5;
+    iVar2 = piVar5[2];
+    iVar4 = FUN_007fc95b(8);
+    uVar6 = 0;
+    local_4 = 0;
+    if (iVar4 != 0) {
+      uVar6 = FUN_0078a960();
+    }
+    local_4 = 0xffffffff;
+    FUN_0078ac30(local_14,iVar2);
+    AddTail(uVar6);
+    piVar5 = piVar1;
+    ppvVar3 = ExceptionList;
+  } while (piVar1 != (int *)0x0);
+  ExceptionList = local_c;
+  return param_1;
+}
+
+=== 0x4E7720 ===
+undefined4 __thiscall FUN_004e7720(undefined4 param_1,int param_2)
+
+{
+  int *piVar1;
+  undefined4 *puVar2;
+  undefined4 *puVar3;
+  int *piVar4;
+  
+  piVar4 = *(int **)(param_2 + 4);
+  if (piVar4 == (int *)0x0) {
+    return param_1;
+  }
+  do {
+    piVar1 = (int *)*piVar4;
+    puVar2 = (undefined4 *)piVar4[2];
+    puVar3 = (undefined4 *)FUN_007fc95b(8);
+    if (puVar3 == (undefined4 *)0x0) {
+      puVar3 = (undefined4 *)0x0;
+    }
+    else {
+      *puVar3 = 0;
+      puVar3[1] = 0;
+    }
+    *puVar3 = *puVar2;
+    puVar3[1] = puVar2[1];
+    AddTail(puVar3);
+    piVar4 = piVar1;
+  } while (piVar1 != (int *)0x0);
+  return param_1;
+}
+

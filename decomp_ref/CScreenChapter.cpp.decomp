@@ -1,0 +1,36 @@
+# Decompiled reference for: CScreenChapter.cpp
+# 3 incomplete functions
+
+=== 0x5D30A0 ===
+undefined4 __thiscall FUN_005d30a0(undefined4 param_1,byte param_2)
+
+{
+  FUN_005d30c0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x5D4A00 ===
+undefined4 __thiscall FUN_005d4a00(undefined4 param_1,byte param_2)
+
+{
+  FUN_005d4a20();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x5D4C30 ===
+undefined4 __thiscall FUN_005d4c30(undefined4 param_1,byte param_2)
+
+{
+  FUN_005d4c50();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

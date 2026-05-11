@@ -1,0 +1,14 @@
+# Decompiled reference for: CResPLT.cpp
+# 1 incomplete functions
+
+=== 0x77F350 ===
+undefined4 __thiscall FUN_0077f350(undefined4 param_1,byte param_2)
+
+{
+  FUN_0077f370();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

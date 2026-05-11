@@ -1,0 +1,58 @@
+# Decompiled reference for: CScreenJournal.cpp
+# 5 incomplete functions
+
+=== 0x636120 ===
+undefined4 __thiscall FUN_00636120(undefined4 param_1,byte param_2)
+
+{
+  FUN_00636140();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x637C10 ===
+undefined4 __thiscall FUN_00637c10(undefined4 param_1,byte param_2)
+
+{
+  FUN_00637c30();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x637DA0 ===
+undefined4 __thiscall FUN_00637da0(undefined4 param_1,byte param_2)
+
+{
+  FUN_00637dc0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x668C40 ===
+undefined4 __thiscall FUN_00668c40(undefined4 param_1,byte param_2)
+
+{
+  FUN_00668c60();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x66EE40 ===
+undefined4 __thiscall FUN_0066ee40(undefined4 param_1,byte param_2)
+
+{
+  FUN_0066ee60();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

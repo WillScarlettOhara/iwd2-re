@@ -1,0 +1,52 @@
+# Decompiled reference for: CAIResponse.cpp
+# 5 incomplete functions
+
+=== 0x40FA50 ===
+undefined4 * __thiscall FUN_0040fa50(undefined4 *param_1,undefined4 param_2)
+
+{
+  FUN_007fb239(param_2);
+  *param_1 = &PTR_LAB_00847d58;
+  return param_1;
+}
+
+=== 0x40FA70 ===
+undefined4 * __thiscall FUN_0040fa70(undefined4 *param_1,undefined4 param_2)
+
+{
+  FUN_007fb239(param_2);
+  *param_1 = &PTR_LAB_00847d4c;
+  return param_1;
+}
+
+=== 0x40FA90 ===
+undefined4 * __thiscall FUN_0040fa90(undefined4 *param_1,undefined4 param_2)
+
+{
+  FUN_007fb239(param_2);
+  *param_1 = &PTR_LAB_00847d64;
+  return param_1;
+}
+
+=== 0x40FAB0 ===
+undefined4 * __thiscall FUN_0040fab0(undefined4 *param_1,undefined4 param_2)
+
+{
+  FUN_007fb239(param_2);
+  *param_1 = &PTR_LAB_00847d70;
+  return param_1;
+}
+
+=== 0x40FAD0 ===
+undefined4 * __fastcall FUN_0040fad0(undefined4 *param_1)
+
+{
+  undefined1 local_8 [8];
+  
+  FUN_0078a960();
+  param_1[1] = 0;
+  FUN_0078ad40(local_8,&DAT_008c5cf8);
+  *param_1 = 0;
+  return param_1;
+}
+

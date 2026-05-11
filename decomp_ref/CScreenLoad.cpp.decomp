@@ -1,0 +1,80 @@
+# Decompiled reference for: CScreenLoad.cpp
+# 7 incomplete functions
+
+=== 0x63B350 ===
+undefined4 __thiscall FUN_0063b350(undefined4 param_1,byte param_2)
+
+{
+  FUN_0063b370();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x63E790 ===
+undefined4 __thiscall FUN_0063e790(undefined4 param_1,byte param_2)
+
+{
+  FUN_0063e7b0();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x63E960 ===
+undefined4 __thiscall FUN_0063e960(undefined4 param_1,byte param_2)
+
+{
+  FUN_0063e980();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x63EB30 ===
+undefined4 __thiscall FUN_0063eb30(undefined4 param_1,byte param_2)
+
+{
+  FUN_0063eb50();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x63EC60 ===
+undefined4 __thiscall FUN_0063ec60(undefined4 param_1,byte param_2)
+
+{
+  FUN_0063ec80();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x63EF00 ===
+undefined4 __thiscall FUN_0063ef00(undefined4 param_1,byte param_2)
+
+{
+  FUN_0063ef20();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
+=== 0x63F700 ===
+undefined4 __thiscall FUN_0063f700(undefined4 param_1,byte param_2)
+
+{
+  FUN_0063f720();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+

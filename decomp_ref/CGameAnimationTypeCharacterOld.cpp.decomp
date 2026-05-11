@@ -1,0 +1,14 @@
+# Decompiled reference for: CGameAnimationTypeCharacterOld.cpp
+# 1 incomplete functions
+
+=== 0x6D4030 ===
+undefined4 __thiscall FUN_006d4030(undefined4 param_1,byte param_2)
+
+{
+  FUN_006d4050();
+  if ((param_2 & 1) != 0) {
+    FUN_007fc984(param_1);
+  }
+  return param_1;
+}
+
