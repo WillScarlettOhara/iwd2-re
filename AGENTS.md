@@ -89,13 +89,32 @@ ghidrasql --ghidra "$GHIDRA_INSTALL_DIR" \
 | `phase5_auto_name_fields.py` | Auto-inference from getter/setter patterns |
 | `cross_ref.py` | Cross-reference analysis |
 
+## Build Safety — CRITICAL RULES
+
+**The upstream repo compiles cleanly on VS2019 Win32 with SDK 10.0.19041. Every error in our fork was introduced by us.**
+
+### REGLE ABSOLUE: Ne jamais casser le build
+
+1. **ZERO tolerance.** Chaque commit sur `src/` doit compiler sans erreurs. Les warnings sont acceptables.
+2. **Toute modification d'un champ de struct/classe dans un `.h` nécessite la mise à jour de TOUS les `.cpp` qui y font référence.** Utiliser `rg "oldName" src/` pour trouver toutes les occurrences.
+3. **Renommage de fonction = déclaration + définition + tous les callsites dans UN SEUL commit.** Pas de commits partiels.
+4. **Tout renommage dans `FileFormat.h`, `BalDataTypes.h`, `CChitin.h`, `CGameSprite.h` est EXTRÊMEMENT DANGEREUX** — ces headers sont inclus par des dizaines de fichiers.
+5. **Après chaque série de renommages, builder sur Windows avant de commit.** Si pas possible, faire un commit séparé par classe pour isoler les problèmes.
+6. **Les champs `field_XXX` NE DOIVENT PAS être préfixés (`nm_`, `bm_`, etc.)** sauf si on renomme TOUTES les occurrences dans TOUS les fichiers en UNE SEULE opération. Le pattern upstream est `field_XXX` sans préfixe.
+
+### En cas d'erreur de build
+
+- Comparer avec upstream: `git diff upstream/main -- src/`
+- Si la cause n'est pas évidente: `git checkout upstream/main -- src/LeFichier.h` pour revenir à l'upstream
+- Ne jamais "fixer" en cascade sans comprendre la cause racine
+
 ## Naming Conventions
 - Address comments: `// 0x7D14F0` above every function/variable
 - Class offsets: `/* 0044 */ RESREF groundIcon;`
 - Unnamed functions: `sub_NNNNNN` (address-based placeholder)
-- Unnamed fields: `field_X` (offset-based placeholder)
-- MFC Hungarian: `m_` members, `n` ints, `b` bools, `p` pointers
-- Field prefixes: `nm_`=int, `bm_`=bool/byte, `sm_`=string, `pm_`=pointer, `wm_`=short
+- Unnamed fields: `field_X` (offset-based placeholder, NO type prefix — match upstream)
+- Named fields: `m_` prefix for class members, Hungarian notation (`n`, `b`, `p`)
+- Upstream convention: `field_XXX` (NO type prefix like `nm_`, `bm_`)
 
 ## Rename Strategy
 1. **GhidraSQL** — Decompile function, trace dataflow via xrefs
@@ -103,8 +122,23 @@ ghidrasql --ghidra "$GHIDRA_INSTALL_DIR" \
 3. **GemRB** — Check for semantic equivalent
 4. **NearInfinity / IESDP** — IWD2-specific structure/opcode definitions
 5. **Source context** — Usage patterns in .cpp files
+6. **CRITICAL: After name is chosen, find ALL references** with `rg "oldName" src/` before renaming
+7. **CRITICAL: Rename ALL occurrences atomically** — declaration + definition + all callsites in one commit
+8. **CRITICAL: For field renames, update the Ghidra DB AND the C++ source together.** The Ghidra DB is the source of truth; C++ source must stay in sync.
 
 Priority: small classes first → CGameSprite last (most complex, most fields)
+
+### Safe rename checklist
+```
+[ ] Researched proper name via IESDP/PDB/GemRB
+[ ] Found ALL occurrences with: rg "oldName" src/
+[ ] Updated .h declaration
+[ ] Updated .cpp definition (if applicable)
+[ ] Updated ALL call sites in ALL .cpp files
+[ ] Built on Windows: cmake --build build --config Debug
+[ ] Zero NEW errors (only pre-existing warnings)
+[ ] Commit with message: "rename: ClassName::methodName" or "rename: ClassName::fieldName"
+```
 
 ## Key Commands
 ```bash
