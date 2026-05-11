@@ -6895,7 +6895,7 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
         INT nMaxShapeshifts = pGame->GetRuleTables().GetMaxDruidShapeshifts(m_baseStats, nDruidLevel) - m_shapeshifts.nm_field_14;
         if (nMaxShapeshifts) {
             AdjustShapeshiftLevel(nMaxShapeshifts);
-            m_shapeshifts.sub_725D30(nMaxShapeshifts, FALSE);
+            m_shapeshifts.AddAllCasts(nMaxShapeshifts, FALSE);
         }
     }
 
@@ -15578,7 +15578,7 @@ BOOLEAN CGameSprite::AddClassSpell(const BYTE& nClass, const UINT& nSpellLevel, 
     CGameSpriteGroupedSpellList* pSpellsByLevel = m_spells.Get(nClassIndex);
 
     // NOTE: Uninline.
-    return pSpellsByLevel->sub_7260B0(nID, nSpellLevel, a4, a5);
+    return pSpellsByLevel->RemoveCasts(nID, nSpellLevel, a4, a5);
 }
 
 // 0x725110
@@ -15597,7 +15597,7 @@ BOOLEAN CGameSprite::AddDomainSpell(const UINT& nSpellLevel, const CResRef& resR
     CGameSpriteSpellList* pList = m_domainSpells.GetSpellsAtLevel(nSpellLevel);
 
     // NOTE: Uninline.
-    return pList->sub_725CC0(nID, a4, a5);
+    return pList->RemoveCasts(nID, a4, a5);
 }
 
 // 0x725210
@@ -15608,7 +15608,7 @@ BOOLEAN CGameSprite::AddInnateSpell(const CResRef& resRef, const unsigned int& a
         return FALSE;
     }
 
-    return m_innateSpells.sub_725C50(nID, a2, a3);
+    return m_innateSpells.AddCasts(nID, a2, a3);
 }
 
 // 0x725270
@@ -15620,7 +15620,7 @@ BOOLEAN CGameSprite::RemoveInnateSpell(const CResRef& resRef, const unsigned int
     }
 
     // NOTE: Uninline.
-    return m_innateSpells.sub_725CC0(nID, a2, a3);
+    return m_innateSpells.RemoveCasts(nID, a2, a3);
 }
 
 // FIXME: `dwClassMask` should not be reference.

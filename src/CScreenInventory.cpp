@@ -778,11 +778,11 @@ void CScreenInventory::TimerSynchronousUpdate()
         SHORT nPortrait;
 
         for (nPortrait = 0; nPortrait <= 5; nPortrait++) {
-            pGame->sub_5AF420(nPortrait, 1);
+            pGame->RefreshPortrait(nPortrait, 1);
         }
 
         for (nPortrait = 50; nPortrait <= 55; nPortrait++) {
-            pGame->sub_5AF420(nPortrait, 1);
+            pGame->RefreshPortrait(nPortrait, 1);
         }
     }
 
@@ -2968,7 +2968,7 @@ void CScreenInventory::UpdateHistoryPanel(BOOL a1)
                 CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(pPanel->GetControl(5));
                 if (pText != NULL) {
                     pText->RemoveAll();
-                    pItem->sub_4EA580(pText, RGB(200, 200, 0));
+                    pItem->DisplayItemTooltip(pText, RGB(200, 200, 0));
                     pText->SetTopString(pText->m_plstStrings->FindIndex(0));
                 }
             }

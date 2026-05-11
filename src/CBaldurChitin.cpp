@@ -1897,7 +1897,7 @@ void CBaldurChitin::SetCDSwitchStatus(BOOLEAN a1, BOOLEAN a2, BYTE a3, const CSt
 // 0x425840
 void CBaldurChitin::OnMultiplayerSessionClose()
 {
-    g_pChitin->cGameSpy.sub_4D1EC0(1);
+    g_pChitin->cGameSpy.ConnectToGameSpy(1);
     g_pChitin->cGameSpy.sub_4D2310();
 
     BOOL bEnabled = GetPrivateProfileIntA("RogerWilco",

@@ -1422,11 +1422,11 @@ void CScreenWorld::TimerSynchronousUpdate()
             SHORT nPortrait;
 
             for (nPortrait = 0; nPortrait <= 5; nPortrait++) {
-                pGame->sub_5AF420(nPortrait, 1);
+                pGame->RefreshPortrait(nPortrait, 1);
             }
 
             for (nPortrait = 50; nPortrait <= 55; nPortrait++) {
-                pGame->sub_5AF420(nPortrait, 1);
+                pGame->RefreshPortrait(nPortrait, 1);
             }
         }
 

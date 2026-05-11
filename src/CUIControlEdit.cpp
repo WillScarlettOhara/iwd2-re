@@ -90,7 +90,7 @@ void CUIControlEdit::KillFocus()
     // FIXME: Unused.
     CWnd* pWnd = g_pChitin->GetWnd();
     if (g_pChitin->cImm.nm_field_128) {
-        g_pChitin->cImm.sub_7C2E10(g_pChitin->GetWnd()->GetSafeHwnd());
+        g_pChitin->cImm.DeactivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
         m_pPanel->InvalidateRect(&(m_pPanel->m_rImeSuggestionsFrame));
         m_pPanel->m_rImeSuggestionsFrame.SetRectEmpty();
         m_pPanel->m_pImeSuggestionsFont = 0;
@@ -420,12 +420,12 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
     case VK_F3:
     case VK_PROCESSKEY:
         if (g_pChitin->nm_field_1A4) {
-            g_pChitin->cImm.sub_7C2CC0(g_pChitin->GetWnd()->GetSafeHwnd());
+            g_pChitin->cImm.ActivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
 
             // FIXME: Unused.
             g_pChitin->GetWnd();
             if (g_pChitin->cImm.nm_field_128) {
-                CRect r = g_pChitin->cImm.sub_7C3020(
+                CRect r = g_pChitin->cImm.GetIMECandidateWindowRect(
                     m_pPanel->m_ptOrigin,
                     m_pPanel->m_size,
                     m_ptOrigin,

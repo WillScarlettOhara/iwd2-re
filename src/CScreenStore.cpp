@@ -1208,7 +1208,7 @@ void CScreenStore::sub_6734F0(CUIPanel* pPanel)
     pText->wfield_AB4 = static_cast<SHORT>((nFontHeight + frameSize.cy - 1) / nFontHeight);
 
     pText->RemoveAll();
-    pItem->sub_4EA580(pText, RGB(200, 200, 0));
+    pItem->DisplayItemTooltip(pText, RGB(200, 200, 0));
     pText->SetTopString(pText->m_plstStrings->FindIndex(0));
 
     CUIControlButtonInventoryHistoryIcon* pIcon = static_cast<CUIControlButtonInventoryHistoryIcon*>(pPanel->GetControl(2));

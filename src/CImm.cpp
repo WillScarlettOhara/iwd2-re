@@ -34,17 +34,17 @@ void CImm::OnComposition(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     if ((lParam & GCS_RESULTSTR) != 0) {
         if ((lParam & GCS_RESULTCLAUSE) != 0) {
-            sub_7C27D0(hWnd, TRUE);
+            OnIMEResult(hWnd, TRUE);
         } else {
-            sub_7C27D0(hWnd, FALSE);
+            OnIMEResult(hWnd, FALSE);
         }
     } else if ((lParam & GCS_COMPSTR) != 0) {
-        sub_7C2680(hWnd, lParam);
+        OnIMEComposition(hWnd, lParam);
     }
 }
 
 // 0x7C2680
-void CImm::sub_7C2680(HWND hWnd, LPARAM lParam)
+void CImm::OnIMEComposition(HWND hWnd, LPARAM lParam)
 {
     CSingleLock lock(&m_cCriticalSection);
     lock.Lock();
@@ -89,7 +89,7 @@ void CImm::sub_7C2680(HWND hWnd, LPARAM lParam)
 }
 
 // 0x7C27D0
-void CImm::sub_7C27D0(HWND hWnd, BOOL a3)
+void CImm::OnIMEResult(HWND hWnd, BOOL a3)
 {
     CSingleLock lock(&m_cCriticalSection);
     lock.Lock();
@@ -237,7 +237,7 @@ CString CImm::ParseCandidateList(LPCANDIDATELIST lpCandidateList)
 }
 
 // 0x7C2CC0
-void CImm::sub_7C2CC0(HWND hWnd)
+void CImm::ActivateNativeIME(HWND hWnd)
 {
     bm_field_12C = FALSE;
 
@@ -293,7 +293,7 @@ void CImm::sub_7C2CC0(HWND hWnd)
 }
 
 // 0x7C2E10
-void CImm::sub_7C2E10(HWND hWnd)
+void CImm::DeactivateNativeIME(HWND hWnd)
 {
     HIMC hImc = ImmGetContext(hWnd);
     if (hImc != NULL) {
@@ -328,7 +328,7 @@ void CImm::sub_7C2E10(HWND hWnd)
 }
 
 // 0x7C2ED0
-CString CImm::sub_7C2ED0(HWND hWnd)
+CString CImm::GetIMEStatusText(HWND hWnd)
 {
     CString sString("");
 
@@ -372,7 +372,7 @@ CString CImm::sub_7C2ED0(HWND hWnd)
 }
 
 // 0x7C3020
-CRect CImm::sub_7C3020(const CPoint& ptPanel, const CSize& panelSize, const CPoint& ptEdit, const CSize& editSize, SHORT nFontHeight)
+CRect CImm::GetIMECandidateWindowRect(const CPoint& ptPanel, const CSize& panelSize, const CPoint& ptEdit, const CSize& editSize, SHORT nFontHeight)
 {
     // TODO: Incomplete.
 
@@ -380,19 +380,19 @@ CRect CImm::sub_7C3020(const CPoint& ptPanel, const CSize& panelSize, const CPoi
 }
 
 // 0x7C3140
-void CImm::sub_7C3140(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL bDemanded)
+void CImm::DrawIMECandidateWindow(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL bDemanded)
 {
     // TODO: Incomplete.
 }
 
 // 0x7C34A0
-CString CImm::sub_7C34A0()
+CString CImm::GetCandidateList()
 {
     return m_sCandidateList;
 }
 
 // 0x7C34D0
-CString CImm::sub_7C34D0()
+CString CImm::GetCompositionString()
 {
     return sm_field_134;
 }

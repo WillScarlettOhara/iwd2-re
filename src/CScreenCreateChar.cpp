@@ -1690,7 +1690,7 @@ void CScreenCreateChar::ResetMemorizeArcaneSpellsPanel(CUIPanel* pPanel, CGameSp
                 }
 
                 CGameSpriteSpellListEntry* pEntry = pSpells->Get(nIndex);
-                pSprite->m_spells.m_spellsByClass[nClassIndex].sub_7260B0(pEntry->m_nID, nLevel, 0, 1);
+                pSprite->m_spells.m_spellsByClass[nClassIndex].RemoveCasts(pEntry->m_nID, nLevel, 0, 1);
             }
         }
     }
@@ -1756,7 +1756,7 @@ void CScreenCreateChar::ResetMemorizeDivineSpellsPanel(CUIPanel* pPanel, CGameSp
                 // __LINE__: 1741
                 UTIL_ASSERT(nClassIndex <= CSPELLLIST_NUM_CLASSES);
 
-                pSprite->m_spells.Get(nClassIndex)->sub_7260B0(nID, nLevel, 0, 1);
+                pSprite->m_spells.Get(nClassIndex)->RemoveCasts(nID, nLevel, 0, 1);
 
                 // __FILE__: .\Include\ObjCreature.h
                 // __LINE__: 1741
@@ -1819,7 +1819,7 @@ void CScreenCreateChar::ResetMemorizeDomainSpellsPanel(CUIPanel* pPanel, CGameSp
         // NOTE: Uninline.
         for (UINT nIndex = 0; nIndex < pSprite->m_domainSpells.GetSpellsAtLevel(nLevel)->m_List.size(); nIndex++) {
             UINT nID = pSprite->m_domainSpells.GetSpellsAtLevel(nLevel)->Get(nIndex)->m_nID;
-            pSprite->m_domainSpells.sub_7260B0(nID, 0, 1, 0);
+            pSprite->m_domainSpells.RemoveCasts(nID, 0, 1, 0);
             pSprite->m_domainSpells.Remove(nID, 0, 0, 1, 0);
         }
     }
@@ -5773,7 +5773,7 @@ void CScreenCreateChar::DismissPopup(CGameSprite* pSprite)
         // FIXME: Unused.
         g_pChitin->GetWnd();
         if (g_pBaldurChitin->cImm.nm_field_128) {
-            g_pBaldurChitin->cImm.sub_7C2E10(g_pChitin->GetWnd()->GetSafeHwnd());
+            g_pBaldurChitin->cImm.DeactivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
         }
     }
 }

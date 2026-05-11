@@ -30,7 +30,7 @@ CGameSpy::~CGameSpy()
 }
 
 // 0x4D1EC0
-BOOLEAN CGameSpy::sub_4D1EC0(BOOL a1)
+BOOLEAN CGameSpy::ConnectToGameSpy(BOOL a1)
 {
     // TODO: Incomplete.
 

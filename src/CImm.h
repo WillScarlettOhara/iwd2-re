@@ -26,18 +26,18 @@ public:
     void OnStartComposition();
     void OnEndComposition();
     void OnComposition(HWND hWnd, WPARAM wParam, LPARAM lParam);
-    void sub_7C2680(HWND hWnd, LPARAM lParam);
-    void sub_7C27D0(HWND hWnd, BOOL a3);
+    void OnIMEComposition(HWND hWnd, LPARAM lParam);
+    void OnIMEResult(HWND hWnd, BOOL a3);
     BOOL OnNotify(HWND hWnd, WPARAM wPara, LPARAM lParam);
     void HandleCandidateList(HWND hWnd, LPARAM lParam);
     CString ParseCandidateList(LPCANDIDATELIST lpCandidateList);
-    void sub_7C2CC0(HWND hWnd);
-    void sub_7C2E10(HWND hWnd);
-    CString sub_7C2ED0(HWND hWnd);
-    CRect sub_7C3020(const CPoint& ptPanel, const CSize& panelSize, const CPoint& ptEdit, const CSize& editSize, SHORT nFontHeight);
-    void sub_7C3140(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL bDemanded);
-    CString sub_7C34A0();
-    CString sub_7C34D0();
+    void ActivateNativeIME(HWND hWnd);
+    void DeactivateNativeIME(HWND hWnd);
+    CString GetIMEStatusText(HWND hWnd);
+    CRect GetIMECandidateWindowRect(const CPoint& ptPanel, const CSize& panelSize, const CPoint& ptEdit, const CSize& editSize, SHORT nFontHeight);
+    void DrawIMECandidateWindow(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL bDemanded);
+    CString GetCandidateList();
+    CString GetCompositionString();
     void CleanUp();
     CString sub_4D89E0();
 

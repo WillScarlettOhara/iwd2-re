@@ -1087,7 +1087,7 @@ void CScreenConnection::DismissPopup()
         g_pChitin->GetWnd();
 
         if (g_pBaldurChitin->cImm.nm_field_128) {
-            g_pBaldurChitin->cImm.sub_7C2E10(g_pChitin->GetWnd()->GetSafeHwnd());
+            g_pBaldurChitin->cImm.DeactivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
         }
     }
 }
@@ -1753,7 +1753,7 @@ void CScreenConnection::OnDoneButtonClick()
                 }
 
                 g_pChitin->m_bDisplayStale = TRUE;
-                g_pBaldurChitin->GetObjectGame()->sub_59FA00(TRUE);
+                g_pBaldurChitin->GetObjectGame()->ReleaseAreaThreadLock(TRUE);
 
                 renderLock.Lock(INFINITE);
 
@@ -1916,7 +1916,7 @@ void CScreenConnection::OnDoneButtonClick()
         renderLock.Unlock();
 
         g_pChitin->m_bDisplayStale = TRUE;
-        g_pBaldurChitin->GetObjectGame()->sub_59FA00(TRUE);
+        g_pBaldurChitin->GetObjectGame()->ReleaseAreaThreadLock(TRUE);
 
         OnJoinGameButtonClick();
     } else if (pPanel->m_nID == 12) {
@@ -1932,7 +1932,7 @@ void CScreenConnection::OnDoneButtonClick()
         renderLock.Unlock();
 
         g_pChitin->m_bDisplayStale = TRUE;
-        g_pBaldurChitin->GetObjectGame()->sub_59FA00(TRUE);
+        g_pBaldurChitin->GetObjectGame()->ReleaseAreaThreadLock(TRUE);
 
         renderLock.Lock(INFINITE);
 
@@ -3659,7 +3659,7 @@ void CScreenConnection::AutoStartConnect()
 
         g_pChitin->m_bDisplayStale = TRUE;
 
-        g_pBaldurChitin->GetObjectGame()->sub_59FA00(TRUE);
+        g_pBaldurChitin->GetObjectGame()->ReleaseAreaThreadLock(TRUE);
 
         renderLock.Lock();
         if (pNetwork->m_bConnectionInitialized == TRUE) {
@@ -3711,7 +3711,7 @@ void CScreenConnection::AutoStartDirectPlayLobby()
 
         g_pChitin->m_bDisplayStale = TRUE;
 
-        g_pBaldurChitin->GetObjectGame()->sub_59FA00(TRUE);
+        g_pBaldurChitin->GetObjectGame()->ReleaseAreaThreadLock(TRUE);
 
         CMultiplayerSettings* pSettings = g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings();
         pSettings->InitializeSettings();

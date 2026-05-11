@@ -104,7 +104,7 @@ BOOLEAN CGameSpriteSpellList::Remove(const UINT& nID, BOOLEAN a2, const unsigned
 }
 
 // 0x725C50
-BOOLEAN CGameSpriteSpellList::sub_725C50(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteSpellList::AddCasts(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
 {
     UINT nIndex;
 
@@ -135,7 +135,7 @@ BOOLEAN CGameSpriteSpellList::sub_725C50(const UINT& nID, const unsigned int& a2
 }
 
 // 0x725CC0
-BOOLEAN CGameSpriteSpellList::sub_725CC0(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteSpellList::RemoveCasts(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
 {
     UINT nIndex;
 
@@ -163,7 +163,7 @@ BOOLEAN CGameSpriteSpellList::sub_725CC0(const UINT& nID, const unsigned int& a2
 }
 
 // 0x725D30
-BOOLEAN CGameSpriteSpellList::sub_725D30(const unsigned int& a1, const BOOLEAN& a2)
+BOOLEAN CGameSpriteSpellList::AddAllCasts(const unsigned int& a1, const BOOLEAN& a2)
 {
     unsigned int v1 = nm_field_18 + a1;
 
@@ -175,14 +175,14 @@ BOOLEAN CGameSpriteSpellList::sub_725D30(const unsigned int& a1, const BOOLEAN& 
     nm_field_18 = v1;
 
     for (UINT nIndex = 0; nIndex < m_List.size(); nIndex++) {
-        sub_725C50(m_List[nIndex].m_nID, v1 - m_List[nIndex].nm_field_8, FALSE);
+        AddCasts(m_List[nIndex].m_nID, v1 - m_List[nIndex].nm_field_8, FALSE);
     }
 
     return TRUE;
 }
 
 // 0x725DB0
-BOOLEAN CGameSpriteSpellList::sub_725DB0(const unsigned int& a1, const BOOLEAN& a2)
+BOOLEAN CGameSpriteSpellList::RemoveAllCasts(const unsigned int& a1, const BOOLEAN& a2)
 {
     int v1 = nm_field_18 - a1;
 
@@ -195,7 +195,7 @@ BOOLEAN CGameSpriteSpellList::sub_725DB0(const unsigned int& a1, const BOOLEAN& 
 
     for (UINT nIndex = 0; nIndex < m_List.size(); nIndex++) {
         // NOTE: Uninline.
-        sub_725CC0(m_List[nIndex].m_nID, v1 - m_List[nIndex].nm_field_8, FALSE);
+        RemoveCasts(m_List[nIndex].m_nID, v1 - m_List[nIndex].nm_field_8, FALSE);
     }
 
     return TRUE;
@@ -291,7 +291,7 @@ UINT CGameSpriteGroupedSpellList::GetNumSpells()
 }
 
 // 0x725F00
-UINT CGameSpriteGroupedSpellList::sub_725F00()
+UINT CGameSpriteGroupedSpellList::CountTotalCasts()
 {
     UINT nCount = 0;
 
@@ -345,46 +345,46 @@ BOOLEAN CGameSpriteGroupedSpellList::Remove(const UINT& nID, const UINT& nLevel,
 }
 
 // 0x726060
-BOOLEAN CGameSpriteGroupedSpellList::sub_726060(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
+BOOLEAN CGameSpriteGroupedSpellList::AddCasts(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26822
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
-    return m_lists[nLevel].sub_725C50(nID, a3, a4);
+    return m_lists[nLevel].AddCasts(nID, a3, a4);
 }
 
 // 0x7260B0
-BOOLEAN CGameSpriteGroupedSpellList::sub_7260B0(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
+BOOLEAN CGameSpriteGroupedSpellList::RemoveCasts(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26832
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
     // NOTE: Uninline.
-    return m_lists[nLevel].sub_725CC0(nID, a3, a4);
+    return m_lists[nLevel].RemoveCasts(nID, a3, a4);
 }
 
 // 0x726150
-BOOLEAN CGameSpriteGroupedSpellList::sub_726150(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteGroupedSpellList::AddAllCasts(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26842
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
-    m_lists[nLevel].sub_725D30(a2, a3);
+    m_lists[nLevel].AddAllCasts(a2, a3);
 
     return TRUE;
 }
 
 // 0x7261A0
-BOOLEAN CGameSpriteGroupedSpellList::sub_7261A0(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteGroupedSpellList::RemoveAllCasts(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26852
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
-    m_lists[nLevel].sub_725DB0(a2, a3);
+    m_lists[nLevel].RemoveAllCasts(a2, a3);
 
     return TRUE;
 }

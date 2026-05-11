@@ -148,7 +148,7 @@ public:
     void InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
     void BeginListManipulation(CGameArea* pArea);
     INT EndListManipulation(CGameArea* pArea);
-    void sub_59FA00(BOOL a1);
+    void ReleaseAreaThreadLock(BOOL a1);
     void DestroyGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
     void sub_5A0160();
     LONG CachingRequirements(const CString& areaName);
@@ -185,7 +185,7 @@ public:
     CStore* GetServerStore(const CResRef& store);
     void SwapCharacters(DWORD pos1, DWORD pos2);
     void UpdatePortrait(SHORT nPortrait, DWORD dwPanelId);
-    void sub_5AF420(SHORT nPortrait, DWORD dwPanelId);
+    void RefreshPortrait(SHORT nPortrait, DWORD dwPanelId);
     SHORT GetCharacterPortraitNum(LONG nCharacterId);
     SHORT GetFixedOrderCharacterPortraitNum(LONG nCharacterId);
     void RemoveFamiliarResRef(const CResRef& resRef, BYTE nAlignment, BYTE nLevel);

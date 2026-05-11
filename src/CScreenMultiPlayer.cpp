@@ -543,7 +543,7 @@ void CScreenMultiPlayer::TimerAsynchronousUpdate()
             renderLock.Unlock();
 
             g_pChitin->m_bDisplayStale = TRUE;
-            pGame->sub_59FA00(TRUE);
+            pGame->ReleaseAreaThreadLock(TRUE);
 
             renderLock.Lock(INFINITE);
 
@@ -942,7 +942,7 @@ void CScreenMultiPlayer::DismissPopup()
         g_pChitin->GetWnd();
 
         if (g_pBaldurChitin->cImm.nm_field_128) {
-            g_pBaldurChitin->cImm.sub_7C2E10(g_pChitin->GetWnd()->GetSafeHwnd());
+            g_pBaldurChitin->cImm.DeactivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
         }
     }
 }
