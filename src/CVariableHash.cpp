@@ -155,7 +155,7 @@ BOOL CVariableHash::AddKey(CVariable& var)
     int end = Hash(sName);
     int curr = end;
 
-    BOOL v1 = g_pBaldurChitin->GetObjectGame()->field_1B84;
+    BOOL v1 = g_pBaldurChitin->GetObjectGame()->m_bInIniSpawn;
     BOOL bDone = FALSE;
     BOOL bResult = FALSE;
     while (!bDone) {

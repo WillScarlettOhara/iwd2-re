@@ -2093,7 +2093,7 @@ void CGameArea::Unmarshal(BYTE* pArea, LONG areaSize, const CString& sName, BOOL
 
     // VARIABLES
     CVariable variable;
-    g_pBaldurChitin->GetObjectGame()->field_1B84 = 1;
+    g_pBaldurChitin->GetObjectGame()->m_bInIniSpawn = 1;
 
     if (offsets->m_areaScriptVariablesCount != 0) {
         for (DWORD nVariable = 0; nVariable < offsets->m_areaScriptVariablesCount; nVariable++) {
@@ -2112,7 +2112,7 @@ void CGameArea::Unmarshal(BYTE* pArea, LONG areaSize, const CString& sName, BOOL
         }
     }
 
-    g_pBaldurChitin->GetObjectGame()->field_1B84 = 0;
+    g_pBaldurChitin->GetObjectGame()->m_bInIniSpawn = 0;
 
     if (bProgressBarInPlace) {
         ProgressBarCallback(dwPerArea, FALSE);

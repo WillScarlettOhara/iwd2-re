@@ -363,7 +363,7 @@ public:
     /* 1B7E */ BOOL m_bGameLoaded;
     /* 1B82 */ BOOLEAN m_bInLoadGame;
     /* 1B83 */ BOOLEAN m_bInLoadArea;
-    /* 1B84 */ unsigned char field_1B84;
+    /* 1B84 */ BOOLEAN m_bInIniSpawn;
     /* 1B86 */ CString field_1B86;
     /* 1B8A */ DWORD m_nUniqueAreaID;
     /* 1B8E */ DWORD m_nAreaFirstObject;
