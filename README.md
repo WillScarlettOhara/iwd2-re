@@ -20,12 +20,12 @@ Original source code was never released. This project reconstructs it by analyzi
 
 | Metric | Progress | Details |
 |--------|----------|---------|
-| **Functions** | ~82% (~8,221 / ~10,000) | Most core systems identified |
-| **Code** | ~53% (~2.0M / ~3.8M lines) | Decompiled and organized |
+| **Functions** | ~80% (~8,200 / ~10,000) | Most core systems identified |
+| **Code** | ~53% (~2M / ~3.8M lines) | Decompiled and organized |
+| **Named Functions** | Ongoing | ~200 `sub_` remaining |
+| **Named Fields** | Ongoing | ~640 `field_` remaining |
 | **UI Screens** | Working | Start, Options, Keymaps, Party Select, Character Editor |
-| **World Screen** | **Not working** | This is the current blocker for gameplay |
-| **Named Functions** | +21 recent | Removed `sub_` placeholders |
-| **Docs** | In progress | 28 core classes documented |
+| **World Screen** | **Not working** | Current blocker for gameplay |
 
 **Current milestone**: Implement missing functions to reach the World Screen (main gameplay).
 
@@ -64,15 +64,15 @@ The Infinity Engine is split into several subsystems:
 ### Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/WillScarlettOhara/iwd2-re.git
+# Clone with all reference submodules
+git clone --recursive git@github.com:WillScarlettOhara/iwd2-re.git
 cd iwd2-re
 
-# Open in Visual Studio
-start iwd2-re.sln
+# Restore bundled data (PDB extracts + Ghidra projects)
+powershell -File data/restore.ps1
 
-# Build (Win32/Release)
-# Install original game to default path for testing
+# Build (Win32/Debug or Release)
+cmake --build build --config Debug
 ```
 
 > Only **32-bpp windowed mode** is currently implemented.
@@ -124,23 +124,47 @@ int CGameSprite::GetDerivedStats() {
 
 ---
 
-## Tools We Use
+## Tools & Reference Data
 
+Everything needed for RE work is bundled in this repo or linked as submodules.
+
+### Bundled Data (`data/`)
+| Archive | Contents | Uncompressed |
+|---------|----------|-------------|
+| `data/pdb/bg2_pdb_extracted.zip` | BG2EE PDB types, symbols, globals | 126 MB |
+| `data/ghidra/IWD2_rep.zip` | IWD2 Ghidra project repository | 301 MB |
+| `data/ghidra/BG2EE_rep.zip` | BG2EE Ghidra project repository | 227 MB |
+
+Run `data/restore.ps1` after clone to extract to `C:\projects\` and `C:\ghidra_projects\`.
+
+### Git Submodules (`refs/`)
+| Submodule | Source | Use |
+|-----------|--------|-----|
+| `refs/gemrb` | github.com/gemrb/gemrb | CGameSprite→Actor, CInfGame→Game mappings |
+| `refs/NearInfinity` | github.com/NearInfinityBrowser/NearInfinity | IWD2 file formats (.CRE, .ARE, .ITM) |
+| `refs/iesdp` | github.com/Gibberlings3/iesdp | IWD2 effects (353 opcodes), STATS.IDS |
+
+### External Tools
 | Tool | Purpose | Link |
 |------|---------|------|
-| **Ghidra** | Reverse engineering framework | [ghidra-sre.org](https://ghidra-sre.org/) |
-| **GhidraMCP** | MCP bridge for automated analysis | [github.com/...](...) |
-| **IEex** | Community framework for IE games | [GitHub](https://github.com/) |
-| **IDA Pro** | Alternative disassembler (optional) | [hex-rays.com](https://hex-rays.com/) |
+| **Ghidra 12.0.4** | Reverse engineering framework | [ghidra-sre.org](https://ghidra-sre.org/) |
+| **GhidraSQL** | SQL interface to Ghidra DB | bundled with LibGhidraHost |
+| **Visual Studio 2019** | Build compiler (Win32, C++17, MFC) | — |
 
 ---
 
 ## Related Projects
 
 - [alexbatalov/iwd2-re](https://github.com/alexbatalov/iwd2-re) — Upstream project by Alexander Batalov
-- **Infinity Engine Enhanced Editions** — Beamdog's official remasters
-- **GemRB** — Open-source Infinity Engine implementation (alternative approach)
-- **BG2EE** / **IWDEE** — Other IE games with Enhanced Edition support
+- **GemRB** — Open-source Infinity Engine implementation (see `refs/gemrb`)
+- **NearInfinity** — Infinity Engine file browser (see `refs/NearInfinity`)
+- **IESDP** — Infinity Engine Structures Description Project (see `refs/iesdp`)
+- **BG2EE** / **IWDEE** — Beamdog's official Enhanced Editions (PDB symbols in `data/pdb/`)
+
+## Documentation
+
+- **[AGENTS.md](AGENTS.md)** — Full workflow guide: GhidraSQL queries, rename strategy, build safety rules
+- **[decomp_ref/](decomp_ref/)** — Memory nodes per subsystem with field mappings and discoveries
 
 ---
 
