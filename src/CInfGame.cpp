@@ -723,7 +723,7 @@ CInfGame::CInfGame()
     m_dwLastProgressMsgTickCount = 0;
     m_nLastSaveTime = 0;
     m_lastTarget = 0;
-    field_4AB2 = 0;
+    m_bTriggerOutline = 0;
     m_nCharacterTerminationSequenceDelay = 0;
     m_nAIIndex = 0;
     m_nTimeStop = 0;
@@ -1034,7 +1034,7 @@ void CInfGame::InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     m_pGameAreaMaster = NULL;
     m_bPartyAI = TRUE;
     m_bShowAreaNotes = TRUE;
-    field_4AB2 = 0;
+    m_bTriggerOutline = 0;
     m_bGameLoaded = TRUE;
 
     m_allies.RemoveAll();

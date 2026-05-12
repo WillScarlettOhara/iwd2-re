@@ -449,7 +449,7 @@ public:
     /* 4AA2 */ ULONG m_nLastSaveTime;
     /* 4AA6 */ CPoint m_lastClick;
     /* 4AAE */ LONG m_lastTarget;
-    /* 4AB2 */ BOOL field_4AB2; // TODO: verify name (might not be m_bTriggerOutline — BG2EE-only)
+    /* 4AB2 */ BOOLEAN m_bTriggerOutline;
     /* 4AB4 */ CVidPalette m_entanglePalette;
     /* 4AD8 */ CVidPalette m_webHoldPalette;
     /* 4AFC */ LONG m_nCharacterTerminationSequenceDelay;
