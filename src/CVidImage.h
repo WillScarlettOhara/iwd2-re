@@ -11,6 +11,7 @@
 
 class CResTile;
 
+#pragma pack(push, 2)
 class CVidImage {
 public:
     static DWORD rgbTempPal[256];
@@ -56,5 +57,6 @@ public:
     /* 00A0 */ CResTile* pRes;
     /* 00A4 */ DWORD m_dwFlags;
 };
+#pragma pack(pop)
 
 #endif /* CVIDIMAGE_H_ */

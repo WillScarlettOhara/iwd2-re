@@ -1,5 +1,7 @@
 #include "CVidInf.h"
 
+#include "debuglog.h"
+
 #include "CChitin.h"
 #include "CParticle.h"
 #include "CUtil.h"
@@ -191,9 +193,9 @@ BOOLEAN CVidInf::SetClipper(IDirectDrawClipper* lpDirectDrawClipper)
     UTIL_ASSERT(pSurfaces[CVIDINF_SURFACE_FRONT] != NULL && !g_pChitin->FullScreen());
 
     if (pSurfaces[CVIDINF_SURFACE_FRONT]->SetClipper(lpDirectDrawClipper) != DD_OK) {
-        // __FILE__: C:\Projects\Icewind2\src\chitin\ChVideo.cpp
-        // __LINE__: 6208
-        UTIL_ASSERT(FALSE);
+        DBG("CVidInf: SetClipper failed (clipper disabled)");
+        // FIXME: Clipper disabled, ignore failure
+        // UTIL_ASSERT(FALSE);
     }
 
     return TRUE;

@@ -1,5 +1,7 @@
 #include "CChitin.h"
 
+#include "debuglog.h"
+
 #include <direct.h>
 #include <process.h>
 #include <winver.h>
@@ -386,7 +388,9 @@ void CChitin::InitResources()
 // 0x790080
 BOOL CChitin::InitInstance()
 {
+    DBG("InitInstance: start");
     POSITION pos = lEngines.GetHeadPosition();
+    DBG("InitInstance: GetHeadPosition done");
     while (pos != NULL) {
         CWarp* pEngine = static_cast<CWarp*>(lEngines.GetNext(pos));
         if (pEngine != NULL) {
@@ -394,9 +398,14 @@ BOOL CChitin::InitInstance()
         }
     }
 
+    DBG("InitInstance: engines iterated");
+
     if (m_pStartingEngine != NULL) {
+        DBG("InitInstance: calling SelectEngine");
         SelectEngine(m_pStartingEngine);
+        DBG("InitInstance: SelectEngine done");
     } else {
+        DBG("InitInstance: NO starting engine - ShutDown");
         ShutDown(-1, NULL, NULL);
     }
 
@@ -445,6 +454,7 @@ BOOL CChitin::InitInstance()
 // 0x790240
 BOOL CChitin::InitializeServices(HWND hWnd)
 {
+    DBG("InitServices: start");
     BOOL initialized;
 
     if (cVideo.m_bIs3dAccelerated) {
@@ -454,9 +464,12 @@ BOOL CChitin::InitializeServices(HWND hWnd)
     }
 
     if (initialized) {
-        cSoundMixer.Initialize(&cWnd, 16, GetNumberSoundChannels());
+        DBG("InitServices: about to init SoundMixer");
+        // FIXME: SoundMixer.Initialize may crash
+        // cSoundMixer.Initialize(&cWnd, 16, GetNumberSoundChannels());
         field_142 = 1;
     }
+    DBG("InitServices: returning %d", initialized);
 
     return initialized;
 }
@@ -476,6 +489,8 @@ void CChitin::ParseCommandLine()
 // 0x7926B0
 int CChitin::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+    DBG("WM: start");
+    m_bFullscreen = FALSE; // FIXME: Force windowed for testing
     m_nQueryCancelAutoPlayMsgID = RegisterWindowMessageA("QueryCancelAutoPlay");
 
     m_sCommandLine = lpCmdLine;
@@ -491,21 +506,26 @@ int CChitin::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         }
     }
 
+    DBG("WM: before InitApplication");
     if (!InitApplication(hInstance, nCmdShow)) {
+        DBG("WM: InitApplication FAILED");
         field_1932 = 1;
         cWnd.Detach();
         return 0;
     }
+    DBG("WM: InitApplication OK");
 
     CoInitialize(NULL);
+    DBG("WM: CoInit OK");
 
     HANDLE hCopy;
     HANDLE hCurrentThread = GetCurrentThread();
     HANDLE hCurrentProcess = GetCurrentProcess();
     DuplicateHandle(hCurrentProcess, hCurrentThread, hCurrentProcess, &hCopy, 0, FALSE, DUPLICATE_SAME_ACCESS);
     field_B4 = hCopy;
-
+    DBG("WM: calling InitInstance");
     InitInstance();
+    DBG("WM: entering message loop");
 
     MSG msg;
     while (1) {
@@ -732,9 +752,12 @@ void CChitin::InitializeVariables()
 // 0x790860
 void CChitin::SelectEngine(CWarp* pNewEngine)
 {
+    DBG("SelectEngine: enter");
     CVidMode* pPrevVidMode = NULL;
     if (pNewEngine != NULL) {
+        DBG("SelectEngine: EnterCriticalSection");
         EnterCriticalSection(&field_3AC);
+        DBG("SelectEngine: CS entered");
 
         m_bEngineActive = FALSE;
         if (pActiveEngine != NULL) {
@@ -840,6 +863,7 @@ int CChitin::TranslateType(const CString& sRes)
 // 0x790FE0
 int CChitin::InitApplication(HINSTANCE hInstance, int nCmdShow)
 {
+    DBG("InitApp: start");
     CString sIcon = GetIconRes();
 
     WNDCLASSEXA wc = { 0 };
@@ -866,17 +890,23 @@ int CChitin::InitApplication(HINSTANCE hInstance, int nCmdShow)
         }
     }
 
+    DBG("InitApp: before InitGraphics");
     int rc = InitGraphics();
+    DBG("InitApp: InitGraphics done rc=%d", rc);
     if (rc != 0) {
-        LoadOptions();
+        DBG("InitApp: calling LoadOptions (SKIPPED)");
+        // FIXME: LoadOptions needs m_pObjectGame which is NULL
+        // LoadOptions();
     }
 
+    DBG("InitApp: returning rc=%d", rc);
     return rc;
 }
 
 // 0x791150
 BOOL CChitin::InitGraphics()
 {
+    DBG("InitGraphics: start");
     if (m_ptScreen.x < 0 || m_ptScreen.x >= GetSystemMetrics(SM_CXFULLSCREEN) - CVideo::SCREENWIDTH) {
         m_ptScreen.x = (GetSystemMetrics(SM_CXFULLSCREEN) - CVideo::SCREENWIDTH) / 2;
     }
@@ -912,14 +942,18 @@ BOOL CChitin::InitGraphics()
     }
 
     if (hWnd == NULL) {
+        DBG("InitGraphics: CreateWindowExA FAILED");
         return FALSE;
     }
 
     cWnd.Attach(hWnd);
+    DBG("InitGraphics: window created, calling InitServices");
 
     if (!InitializeServices(hWnd)) {
+        DBG("InitGraphics: InitializeServices FAILED");
         return FALSE;
     }
+    DBG("InitGraphics: success");
 
     UpdateWindow(hWnd);
     SetCursor(NULL);

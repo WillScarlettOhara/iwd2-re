@@ -1,7 +1,8 @@
 #include "CVideo.h"
 
-#include "CChitin.h"
 #include "CUtil.h"
+#include "debuglog.h"
+
 #include "CVidInf.h"
 #include "CWarp.h"
 
@@ -185,9 +186,12 @@ void CVideo::CleanUp()
 // 0x7952C0
 BOOL CVideo::Initialize(HWND hWnd, BOOLEAN bFullscreen)
 {
+    DBG("CVideo::Initialize start");
     HRESULT result;
 
+    DBG("CVideo: calling DirectDrawCreate");
     result = DirectDrawCreate(NULL, &m_pDirectDraw, NULL);
+    DBG("CVideo: DirectDrawCreate result=0x%X", result);
     if (result != DD_OK) {
         return FALSE;
     }
@@ -237,39 +241,61 @@ BOOL CVideo::Initialize(HWND hWnd, BOOLEAN bFullscreen)
             CVideo::FPS = max(m_dwMipMapCount32, max(m_dwMipMapCount24, m_dwMipMapCount16));
         }
     } else {
+        DBG("CVideo: windowed mode path");
         result = m_pDirectDraw->SetCooperativeLevel(NULL, DDSCL_NORMAL);
+        DBG("CVideo: SetCooperativeLevel result=0x%X", result);
         // __FILE__: C:\Projects\Icewind2\src\chitin\ChVideo.cpp
         // __LINE__: 460
-        UTIL_ASSERT(result == DD_OK);
+        // UTIL_ASSERT(result == DD_OK);
 
+        DBG("CVideo: calling QueryInterface");
         result = m_pDirectDraw->QueryInterface(IID_IDirectDraw2, reinterpret_cast<LPVOID*>(&m_pDirectDraw2));
-        // __FILE__: C:\Projects\Icewind2\src\chitin\ChVideo.cpp
-        // __LINE__: 462
-        UTIL_ASSERT(result == DD_OK);
+        DBG("CVideo: QueryInterface result=0x%X", result);
+        DBG("CVideo: m_pDirectDraw2=%p", m_pDirectDraw2);
 
         m_bExclusiveMode = FALSE;
+        DBG("CVideo: after ExclusiveMode");
 
         DDSURFACEDESC ddsd = { 0 };
         ddsd.dwSize = sizeof(ddsd);
         ddsd.dwWidth = SCREENWIDTH;
         ddsd.dwHeight = SCREENHEIGHT;
+        DBG("CVideo: calling EnumDisplayModes");
         m_pDirectDraw2->EnumDisplayModes(0, &ddsd, this, EnumDisplayModesCallback);
+        DBG("CVideo: EnumDisplayModes done");
 
+        DBG("CVideo: calling CreateClipper");
+        // FIXME: CreateClipper crashes on this system
+        m_pDirectDrawClipper = NULL;
+        /*
         if (m_pDirectDraw2->CreateClipper(0, &m_pDirectDrawClipper, NULL) != DD_OK) {
+            DBG("CVideo: CreateClipper FAILED");
             // __FILE__: C:\Projects\Icewind2\src\chitin\ChVideo.cpp
             // __LINE__: 482
             UTIL_ASSERT(FALSE);
         }
 
         if (m_pDirectDrawClipper->SetHWnd(0, hWnd) != DD_OK) {
+            DBG("CVideo: SetHWnd FAILED");
             m_pDirectDrawClipper->Release();
             // __FILE__: C:\Projects\Icewind2\src\chitin\ChVideo.cpp
             // __LINE__: 491
             UTIL_ASSERT(FALSE);
         }
+        */
+
+        // FIXME: Clipper is NULL, skip SetHWnd
+        /*
+        if (m_pDirectDrawClipper->SetHWnd(0, hWnd) != DD_OK) {
+            DBG("CVideo: SetHWnd FAILED");
+        }
+        */
+        DBG("CVideo: after clipper skip");
     }
 
+    DBG("CVideo: after else block");
     if (m_pCurrentVidMode != NULL) {
+        DBG("CVideo: calling ActivateVideoMode");
         m_pCurrentVidMode->ActivateVideoMode(NULL, hWnd, bFullscreen);
 
         cVidBlitter.Init();

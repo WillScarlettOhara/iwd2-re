@@ -9,6 +9,7 @@
 
 struct CDimmKeyTableEntry;
 
+#pragma pack(push, 2)
 class CRes : public CObject {
 public:
     enum Flags {
@@ -144,5 +145,6 @@ public:
         }
     }
 };
+#pragma pack(pop)
 
 #endif /* CRES_H_ */

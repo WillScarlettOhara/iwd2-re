@@ -1,5 +1,7 @@
 #include "CBaldurChitin.h"
 
+#include "debuglog.h"
+
 #include "CBaldurProjector.h"
 #include "CDungeonMaster.h"
 #include "CGameAnimationType.h"
@@ -821,6 +823,7 @@ void CBaldurChitin::AsynchronousUpdate(UINT nTimerID, UINT uMsg, DWORD dwUser, D
 // 0x423800
 void CBaldurChitin::Init(HINSTANCE hInstance)
 {
+    DBG("Init: start");
     CString maleURI;
     CString femaleURI;
     CString path;
@@ -837,6 +840,7 @@ void CBaldurChitin::Init(HINSTANCE hInstance)
     g_pChitin->cDimm.AddToDirectoryList(OVERRIDE_DIR_NAME, FALSE);
 
     InitResources();
+    DBG("Init: after InitResources");
 
     m_pObjectCursor = new CInfCursor();
 
@@ -861,6 +865,11 @@ void CBaldurChitin::Init(HINSTANCE hInstance)
     m_pEngineChapter = new CScreenChapter();
     m_pEngineMovies = new CScreenMovies();
     m_pEngineKeymaps = new CScreenKeymaps();
+    DBG("Init: all engines created, returning early");
+
+    // FIXME: Skip remaining Init due to layout issues, but set starting engine
+    m_pStartingEngine = m_pEngineDM;
+    return;
 
     m_pObjectGame = new CInfGame();
     m_pObjectGame->StartSearchThread();

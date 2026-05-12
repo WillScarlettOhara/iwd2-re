@@ -711,7 +711,8 @@ int CInfGame::dword_8E52F0;
 
 // 0x59CC30
 CInfGame::CInfGame()
-    : m_rgbMasterBitmap(CResRef("MPALETTE"), FALSE, 24)
+    // FIXME: m_rgbMasterBitmap init crashes due to packing
+    // : m_rgbMasterBitmap(CResRef("MPALETTE"), FALSE, 24)
 {
     m_nUniqueAreaID = 0;
     m_nReputation = 0;

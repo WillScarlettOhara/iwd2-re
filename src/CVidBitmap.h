@@ -7,6 +7,7 @@
 #define CVIDBITMAP_4BIT 4
 #define CVIDBITMAP_8BIT 8
 
+#pragma pack(push, 2)
 class CVidBitmap : public CVidImage, public CResHelper<CResBitmap, 1> {
 public:
     CVidBitmap();
@@ -38,5 +39,6 @@ public:
     /* 00B0 */ SHORT m_nBitCount;
     /* 00B6 */ BOOL m_bDoubleSize;
 };
+#pragma pack(pop)
 
 #endif /* CVIDBITMAP_H_ */

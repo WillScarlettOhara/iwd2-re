@@ -84,9 +84,14 @@ CBaldurProjector::CBaldurProjector()
     m_bSelectEngine = FALSE;
     field_147 = 0;
 
-    field_14A.SetResRef(CResRef("NORMAL"), g_pChitin->field_2EC, 1);
+    // FIXME: SetResRef crashes when loading NORMAL.BAM resource
+    // field_14A.SetResRef(CResRef("NORMAL"), g_pChitin->field_2EC, 1);
     field_14A.SetColor(0xFFFFFF, 0, 0);
-    field_14A.RegisterFont();
+    // FIXME: RegisterFont crashes without a valid ResRef
+    // field_14A.RegisterFont();
+    field_14A.SetColor(0xFFFFFF, 0, 0);
+    // FIXME: RegisterFont crashes without a valid ResRef
+    // field_14A.RegisterFont();
     m_sCurrentMovieFileName = "";
 
     m_hBink = NULL;

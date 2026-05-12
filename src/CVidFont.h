@@ -22,6 +22,7 @@ public:
 };
 
 class CVidFont : public CVidCell {
+#pragma pack(push, 2)
 public:
     static BOOLEAN byte_8FB974[12];
     static CTypedPtrList<CPtrList, CVidFontRegistryEntry*> REGISTRY;
@@ -66,5 +67,6 @@ public:
     /* 04F8 */ COLORREF m_rgbPaletteForegroundColor;
     /* 04FC */ COLORREF m_rgbPaletteBackgroundColor;
 };
+#pragma pack(pop)
 
 #endif /* CHVIDFONT_H_ */

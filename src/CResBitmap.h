@@ -3,6 +3,7 @@
 
 #include "CRes.h"
 
+#pragma pack(push, 2)
 class CResBitmap : public CRes {
 public:
     CResBitmap();
@@ -29,5 +30,6 @@ public:
     /* 0064 */ LPBITMAPINFOHEADER pBitmapInfoHeader;
     /* 0068 */ RGBQUAD* pColorTable;
 };
+#pragma pack(pop)
 
 #endif /* CRESBITMAP_H_ */

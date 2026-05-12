@@ -9,6 +9,7 @@
 
 class CVidPoly;
 
+#pragma pack(push, 2)
 class CVidCell : public CVidImage, public CResHelper<CResCell, 1000> {
 public:
     static DWORD dword_8BAC88;
@@ -98,5 +99,7 @@ public:
     /* 00D4 */ BOOLEAN m_bShadowOn;
     /* 00D6 */ BOOL m_bDoubleSize;
 };
+
+#pragma pack(pop)
 
 #endif /* CVIDCELL_H_ */
