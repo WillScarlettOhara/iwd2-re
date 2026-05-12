@@ -526,14 +526,19 @@ int CChitin::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     DBG("WM: calling InitInstance");
     InitInstance();
     DBG("WM: entering message loop");
-
     MSG msg;
+    int loopCount = 0;
     while (1) {
+        loopCount++;
+        if (loopCount == 1) DBG("LOOP: iteration 1");
+        if (loopCount == 1) DBG("LOOP: field_1932=%d m_bDisplayStale=%d", field_1932, (int)m_bDisplayStale);
         while (!PeekMessageA(&msg, NULL, 0, 0, 0)) {
+            DBG("LOOP: inside idle loop");
             if (field_1932 == 0) {
                 if (m_bDisplayStale == TRUE) {
                     m_bDisplayStale = FALSE;
 
+                    DBG("LOOP: calling SynchronousUpdate");
                     m_bInSynchronousUpdate = TRUE;
                     SynchronousUpdate();
                     m_bInSynchronousUpdate = FALSE;
@@ -544,8 +549,10 @@ int CChitin::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         }
 
         if (!GetMessageA(&msg, NULL, 0, 0)) {
+            DBG("LOOP: GetMessage returned FALSE (WM_QUIT)");
             break;
         }
+        DBG("LOOP: dispatching msg=0x%X hwnd=%p", msg.message, msg.hwnd);
 
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
@@ -795,8 +802,10 @@ void CChitin::SelectEngine(CWarp* pNewEngine)
         pNewEngine->pLastEngine = pActiveEngine;
         pActiveEngine = pNewEngine;
         pActiveEngine->pVidMode->ActivateVideoMode(pPrevVidMode, cWnd.GetSafeHwnd(), m_bFullscreen);
+        DBG("SelectEngine: before EngineActivated");
         cVideo.cVidBlitter.Init();
         pActiveEngine->EngineActivated();
+        DBG("SelectEngine: EngineActivated done");
 
         m_bEngineActive = TRUE;
         LeaveCriticalSection(&field_3AC);
