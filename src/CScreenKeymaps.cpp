@@ -429,10 +429,10 @@ void CScreenKeymaps::EngineDestroyed()
 // 0x638F40
 void CScreenKeymaps::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUIKEYS"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIKEYS"), g_pBaldurChitin->m_bUseNewGui);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->m_bUseNewGui) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {

@@ -282,10 +282,10 @@ void CScreenMap::EngineDeactivated()
 // 0x640910
 void CScreenMap::EngineGameInit()
 {
-    m_cUIManager.fInit(this, CResRef("GUIMAP"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIMAP"), g_pBaldurChitin->m_bUseNewGui);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->m_bUseNewGui) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -727,7 +727,7 @@ void CScreenMap::EnableMainPanel(BOOL bEnable)
     pLeftPanel->SetEnabled(bEnable);
     pRightPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->m_bUseNewGui ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -1826,7 +1826,7 @@ void CUIControlButtonMapAreaMap::SetMap(CGameArea* pArea)
         if (g_pBaldurChitin->cDimm.m_cKeyTable.FindKey(cResMap, 1004, TRUE)) {
             if (m_vmMap.cResRef != cResMap) {
                 m_vmMap.SetResRef(cResMap, FALSE, TRUE);
-                m_vmMap.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+                m_vmMap.m_bDoubleSize = g_pBaldurChitin->m_bUseNewGui;
                 field_71E = TRUE;
             }
         } else {

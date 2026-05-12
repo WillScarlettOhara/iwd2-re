@@ -295,7 +295,7 @@ void CScreenConnection::EngineActivated()
     m_preLoadFontStnSml.RegisterFont();
 
     // NOTE: Uninline.
-    m_vcTorch.SetResRef(CResRef("MMTRCHB"), g_pBaldurChitin->field_4A28, TRUE, TRUE);
+    m_vcTorch.SetResRef(CResRef("MMTRCHB"), g_pBaldurChitin->m_bUseNewGui, TRUE, TRUE);
 
     if (field_FA8) {
         DWORD dwSectorsPerCluster;
@@ -389,10 +389,10 @@ void CScreenConnection::EngineDeactivated()
 // 0x5FADD0
 void CScreenConnection::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUICONN"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUICONN"), g_pBaldurChitin->m_bUseNewGui);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->m_bUseNewGui) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -454,7 +454,7 @@ void CScreenConnection::RenderTorch()
 
     CPoint pt(106, 383);
 
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->m_bUseNewGui) {
         pt.x *= 2;
         pt.y *= 2;
     }
@@ -2147,7 +2147,7 @@ void CScreenConnection::EnableMainPanel(BOOL bEnable)
 
     pPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->m_bUseNewGui ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);
@@ -2175,13 +2175,13 @@ void CScreenConnection::UpdateMainPanel()
     CTime time = CTime::GetCurrentTime();
     if (time.GetHour() > 6 && time.GetHour() < 18) {
         if (pPanel->m_mosBackground.GetResRef() == "STARTN") {
-            pPanel->SetBackgroundResRef(CResRef("START"), g_pBaldurChitin->field_4A28);
+            pPanel->SetBackgroundResRef(CResRef("START"), g_pBaldurChitin->m_bUseNewGui);
             m_bIsNight = FALSE;
             m_vcTorch.FrameSet(0);
         }
     } else {
         if (pPanel->m_mosBackground.GetResRef() == "START") {
-            pPanel->SetBackgroundResRef(CResRef("STARTN"), g_pBaldurChitin->field_4A28);
+            pPanel->SetBackgroundResRef(CResRef("STARTN"), g_pBaldurChitin->m_bUseNewGui);
             m_bIsNight = TRUE;
             m_vcTorch.FrameSet(0);
         }

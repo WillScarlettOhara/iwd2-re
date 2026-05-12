@@ -297,7 +297,7 @@ void CScreenStart::EnableMainPanel(BOOL bEnabled)
 
     pPanel->SetEnabled(bEnabled);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 != 0 ? 2 : 1) != 800) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->m_bUseNewGui != 0 ? 2 : 1) != 800) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnabled);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnabled);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnabled);

@@ -678,7 +678,7 @@ CAIAction CGameSprite::m_aiDoAction;
 
 // 0x6EF990
 CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, DWORD expirationTime, WORD huntingRange, WORD followRange, DWORD timeOfDayVisible, CPoint startPos, WORD facing)
-    : m_portraitIconVidCell(CResRef("STATES"), g_pBaldurChitin->field_4A28)
+    : m_portraitIconVidCell(CResRef("STATES"), g_pBaldurChitin->m_bUseNewGui)
 {
     int index;
 
@@ -5069,7 +5069,7 @@ void CGameSprite::RenderPortrait(const CPoint& cpRenderPosition, const CSize& sz
 void CGameSprite::RenderToMapScreen(const CRect& rClipBase, const CPoint& ptCharPos)
 {
     CRect rClip(rClipBase);
-    INT nScale = g_pBaldurChitin->field_4A28 ? 2 : 1;
+    INT nScale = g_pBaldurChitin->m_bUseNewGui ? 2 : 1;
     if (!g_pBaldurChitin->GetObjectGame()->GetGameSave()->field_1AC
         || InControl()) {
         if (!IcewindMisc::IsDead(this)) {
@@ -5082,7 +5082,7 @@ void CGameSprite::RenderToMapScreen(const CRect& rClipBase, const CPoint& ptChar
             rClip.OffsetRect(-rClip.left, -rClip.top);
 
             axes.cx = GetAnimation()->GetPersonalSpace();
-            if (!g_pBaldurChitin->field_4A28) {
+            if (!g_pBaldurChitin->m_bUseNewGui) {
                 axes.cx = max(axes.cx - 2, 3);
             }
             axes.cy = 3 * GetAnimation()->GetPersonalSpace() / 4;

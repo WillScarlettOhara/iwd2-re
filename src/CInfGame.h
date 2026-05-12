@@ -435,9 +435,9 @@ public:
     /* 4A04 */ CCriticalSection m_disposableItemsCritSect;
     /* 4A24 */ CTypedPtrList<CPtrList, CItem*> m_lDisposableItems;
     /* 4A40 */ SHORT m_currArmor;
-    /* 4A42 */ short field_4A42;
-    /* 4A44 */ short field_4A44;
-    /* 4A46 */ short field_4A46;
+    /* 4A42 */ SHORT m_zoomLevel;
+    /* 4A44 */ SHORT m_zoomEnabled;
+    /* 4A46 */ SHORT field_4A46;
     /* 4A48 */ SHORT m_currAnimation;
     /* 4A4A */ CAIIdList m_saveObjectList;
     /* 4A8A */ LONG m_nProtagonistId;
@@ -449,7 +449,7 @@ public:
     /* 4AA2 */ ULONG m_nLastSaveTime;
     /* 4AA6 */ CPoint m_lastClick;
     /* 4AAE */ LONG m_lastTarget;
-    /* 4AB2 */ unsigned char field_4AB2;
+    /* 4AB2 */ BOOL field_4AB2; // TODO: verify name (might not be m_bTriggerOutline — BG2EE-only)
     /* 4AB4 */ CVidPalette m_entanglePalette;
     /* 4AD8 */ CVidPalette m_webHoldPalette;
     /* 4AFC */ LONG m_nCharacterTerminationSequenceDelay;

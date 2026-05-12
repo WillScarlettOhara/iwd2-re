@@ -190,15 +190,15 @@ CSize CWorldMap::GetMapSize(DWORD nMap)
     // NOTE: Uninline.
     CWorldMapData* pData = GetMap(nMap);
 
-    return CSize(pData->m_nWidth * (g_pBaldurChitin->field_4A28 ? 2 : 1),
-        pData->m_nHeight * (g_pBaldurChitin->field_4A28 ? 2 : 1));
+    return CSize(pData->m_nWidth * (g_pBaldurChitin->m_bUseNewGui ? 2 : 1),
+        pData->m_nHeight * (g_pBaldurChitin->m_bUseNewGui ? 2 : 1));
 }
 
 // 0x559540
 CSize CWorldMap::GetAreaPosition(CWorldMapArea* pArea)
 {
-    return CSize(pArea->m_mapLocationX * (g_pBaldurChitin->field_4A28 ? 2 : 1),
-        pArea->m_mapLocationY * (g_pBaldurChitin->field_4A28 ? 2 : 1));
+    return CSize(pArea->m_mapLocationX * (g_pBaldurChitin->m_bUseNewGui ? 2 : 1),
+        pArea->m_mapLocationY * (g_pBaldurChitin->m_bUseNewGui ? 2 : 1));
 }
 
 // 0x559580

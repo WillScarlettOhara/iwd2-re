@@ -243,10 +243,10 @@ void CScreenLoad::EngineDestroyed()
 // 0x63B590
 void CScreenLoad::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUILOAD"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUILOAD"), g_pBaldurChitin->m_bUseNewGui);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->m_bUseNewGui) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -949,7 +949,7 @@ void CScreenLoad::RefreshGameSlots()
 // 0x63D460
 BOOL CScreenLoad::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rClip)
 {
-    CVidBitmap vbScreenShot(CResRef(""), g_pBaldurChitin->field_4A28);
+    CVidBitmap vbScreenShot(CResRef(""), g_pBaldurChitin->m_bUseNewGui);
 
     INT nGameSlot = nSlot + m_nTopGameSlot;
     if (nGameSlot >= m_nNumGameSlots) {
@@ -968,7 +968,7 @@ BOOL CScreenLoad::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rCl
         UTIL_ASSERT(bResult);
     } else {
         vbScreenShot.SetResRef(CResRef("ICEWIND2"), TRUE, TRUE);
-        vbScreenShot.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+        vbScreenShot.m_bDoubleSize = g_pBaldurChitin->m_bUseNewGui;
         bResult = vbScreenShot.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
@@ -982,7 +982,7 @@ BOOL CScreenLoad::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rCl
 // 0x63D720
 BOOL CScreenLoad::DrawPortrait(USHORT nPortrait, INT nSlot, const CRect& rArea, const CRect& rClip)
 {
-    CVidBitmap vbPortrait(CResRef(""), g_pBaldurChitin->field_4A28);
+    CVidBitmap vbPortrait(CResRef(""), g_pBaldurChitin->m_bUseNewGui);
 
     INT nGameSlot = nSlot + m_nTopGameSlot;
     if (nGameSlot >= m_nNumGameSlots) {
@@ -1097,7 +1097,7 @@ void CScreenLoad::EnableMainPanel(BOOL bEnable)
 
     pPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->m_bUseNewGui ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);

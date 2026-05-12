@@ -211,10 +211,10 @@ void CScreenChapter::EngineDestroyed()
 // 0x5D3370
 void CScreenChapter::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUICHAP"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUICHAP"), g_pBaldurChitin->m_bUseNewGui);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->m_bUseNewGui) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {

@@ -380,10 +380,10 @@ void CScreenWorldMap::EngineDeactivated()
 // 0x699F10
 void CScreenWorldMap::EngineGameInit()
 {
-    m_cUIManager.fInit(this, CResRef("GUIWMAP"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIWMAP"), g_pBaldurChitin->m_bUseNewGui);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->m_bUseNewGui) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -880,7 +880,7 @@ BOOL CScreenWorldMap::DrawMap(const CRect& r)
                             bResult = pVidInf->BKTextOut(&m_vfLabel,
                                 sLabel,
                                 v1 + rArea.left + (rArea.Width() - m_vfLabel.GetStringLength(sLabel, FALSE)) / 2 - m_ptMapView.x,
-                                v2 + rArea.bottom - m_vfLabel.GetFontHeight(FALSE) / (g_pBaldurChitin->field_4A28 ? 2 : 1) - m_ptMapView.y,
+                                v2 + rArea.bottom - m_vfLabel.GetFontHeight(FALSE) / (g_pBaldurChitin->m_bUseNewGui ? 2 : 1) - m_ptMapView.y,
                                 rClip,
                                 0,
                                 TRUE);
@@ -989,18 +989,18 @@ void CScreenWorldMap::StartWorldMap(INT nEngineState, LONG nLeavingEdge, BOOLEAN
     m_cUIManager.GetPanel(0)->GetControl(10)->SetActive(TRUE);
 
     m_vmMap.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->sub_55A3A0())->m_resMosaic), FALSE, TRUE);
-    m_vmMap.m_bDoubleSize = g_pBaldurChitin->field_4A28;
+    m_vmMap.m_bDoubleSize = g_pBaldurChitin->m_bUseNewGui;
 
     // NOTE: Uninline.
     m_vcAreas.SetResRef(CResRef(pWorldMap->GetMap(pWorldMap->sub_55A3A0())->m_resAreaIcons),
-        g_pBaldurChitin->field_4A28,
+        g_pBaldurChitin->m_bUseNewGui,
         FALSE,
         TRUE);
 
     // NOTE: Uninline.
-    m_vcMarker.SetResRef(CResRef("WMDAG"), g_pBaldurChitin->field_4A28, TRUE, TRUE);
+    m_vcMarker.SetResRef(CResRef("WMDAG"), g_pBaldurChitin->m_bUseNewGui, TRUE, TRUE);
 
-    m_vfLabel.SetResRef(CResRef("INFOFONT"), g_pBaldurChitin->field_4A28, TRUE);
+    m_vfLabel.SetResRef(CResRef("INFOFONT"), g_pBaldurChitin->m_bUseNewGui, TRUE);
 
     // NOTE: Uninline.
     m_aAreaRect.SetSize(pWorldMap->GetNumAreas(pWorldMap->sub_55A3A0()));

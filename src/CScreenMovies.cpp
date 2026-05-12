@@ -176,10 +176,10 @@ void CScreenMovies::EngineActivated()
 // 0x647300
 void CScreenMovies::EngineInitialized()
 {
-    m_cUIManager.fInit(this, CResRef("GUIMOVIE"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUIMOVIE"), g_pBaldurChitin->m_bUseNewGui);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->m_bUseNewGui) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {

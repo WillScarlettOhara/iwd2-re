@@ -208,10 +208,10 @@ void CScreenSpellbook::EngineDeactivated()
 // 0x668ED0
 void CScreenSpellbook::EngineGameInit()
 {
-    m_cUIManager.fInit(this, CResRef("GUISPL"), g_pBaldurChitin->field_4A28);
+    m_cUIManager.fInit(this, CResRef("GUISPL"), g_pBaldurChitin->m_bUseNewGui);
 
     CPoint pt;
-    if (g_pBaldurChitin->field_4A28) {
+    if (g_pBaldurChitin->m_bUseNewGui) {
         pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
         pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
     } else {
@@ -245,7 +245,7 @@ void CScreenSpellbook::EngineGameInit()
     m_cUIManager.GetPanel(50)->SetActive(FALSE);
 
     // NOTE: Uninline.
-    m_vcFlash.SetResRef(CResRef("FLASH"), g_pBaldurChitin->field_4A28, TRUE, TRUE);
+    m_vcFlash.SetResRef(CResRef("FLASH"), g_pBaldurChitin->m_bUseNewGui, TRUE, TRUE);
 }
 
 // 0x5D72C0
@@ -752,7 +752,7 @@ void CScreenSpellbook::EnableMainPanel(BOOL bEnable)
     pLeftPanel->SetEnabled(bEnable);
     pRightPanel->SetEnabled(bEnable);
 
-    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->field_4A28 ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
+    if (CVideo::SCREENWIDTH / (g_pBaldurChitin->m_bUseNewGui ? 2 : 1) != CBaldurChitin::DEFAULT_SCREEN_WIDTH) {
         m_cUIManager.GetPanel(-5)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-4)->SetEnabled(bEnable);
         m_cUIManager.GetPanel(-3)->SetEnabled(bEnable);

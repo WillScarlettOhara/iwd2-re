@@ -786,8 +786,8 @@ CInfGame::CInfGame()
     m_gameSave.m_curFormation = TRUE;
     m_gameSave.field_1AC = FALSE;
 
-    field_4A42 = 48;
-    field_4A44 = 48;
+    m_zoomLevel = 48;
+    m_zoomEnabled = 48;
     m_gameSave.m_mode = -1;
     m_gameSave.m_cutScene = FALSE;
     m_currArmor = '1';
@@ -1273,8 +1273,8 @@ void CInfGame::DestroyGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInP
         ProgressBarCallback(dwPerSegment, FALSE);
     }
 
-    field_4A42 = 48;
-    field_4A44 = 48;
+    m_zoomLevel = 48;
+    m_zoomEnabled = 48;
     m_nState = 0;
     m_tempCursor = 4;
     m_iconIndex = -1;
