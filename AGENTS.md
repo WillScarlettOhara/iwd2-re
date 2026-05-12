@@ -9,9 +9,9 @@ Reverse engineering of Icewind Dale 2 — recover the lost source code.
 ## Current Status
 - Functions: 80% (~8,200 / ~10,000)
 - Code: 53% (~2M / ~3.8M lines)
-- Game: NOT playable (only UI screens work)
+- Game: boots to window with rendering loop (many subsystems stubbed)
 - sub_ remaining: ~200 unique functions
-- field_ remaining: ~640 unnamed fields
+- field_ remaining: ~640 unnamed fields (715 unique, 966 occurrences)
 - TODO: ~2199 | FIXME: ~427
 
 ## Workflow — Iterative RE Loop
@@ -27,17 +27,25 @@ For each unnamed function/field, execute:
 
 Markdown files for persistent knowledge. Create one per sub-system. Always read before analyzing a function in that sub-system, and write back when you discover new structs/globals/patterns.
 
-**Existing**: (none yet — create as you go)
-- Pattern: `/home/wills/projects/IWD2-RE/iwd2-re/decomp_ref/<subsystem>.md`
+**Existing**: `decomp_ref/*.md` — see directory for current list
+- Pattern: `C:\iwd2-re\decomp_ref\<subsystem>.md`
 
 ## Reference Sources
 
 ### GhidraSQL (PRIMARY — decompilation & DB queries)
-```bash
-ghidrasql --ghidra "$GHIDRA_INSTALL_DIR" \
-  --project ~/ghidra_projects/IWD2 --project-name IWD2 \
+```powershell
+ghidrasql --ghidra "$env:GHIDRA_INSTALL_DIR" `
+  --project C:\ghidra_projects\IWD2 --project-name IWD2 `
   --program IWD2.exe --no-analyze -q "SQL"
 ```
+
+**Server management**:
+- Start: `C:\ghidra_projects\IWD2\start_ghidrasql.bat` (background, uses `--no-analyze`)
+- Health: `curl http://127.0.0.1:8081/health`
+- Shutdown: `curl -X POST http://127.0.0.1:8081/shutdown` (ALWAYS graceful — saves DB)
+- **NEVER kill the process** — always use `/shutdown` to save the project
+- **Save frequently**: `SELECT save_database();` after every rename batch
+- **First import** uses `--analyze`. All subsequent starts use `--no-analyze`.
 
 | Query | SQL |
 |-------|-----|
@@ -53,25 +61,25 @@ ghidrasql --ghidra "$GHIDRA_INSTALL_DIR" \
 **Rules**: `pseudocode`, `decomp_lvars`, `decomp_tokens` MUST filter by `func_addr`. Never unbounded.
 
 ### BG2EE PDB Symbols
-- **File**: `/home/wills/projects/bg2-symbols/Baldur.pdb` (BG2EE v2.5.16.6)
-- **Extracted**: `/tmp/bg2_pdb_members.txt`, `/tmp/bg2_pdb_types.txt`
+- **File**: `C:\projects\bg2-symbols\Baldur.pdb` (BG2EE v2.5.16.6)
+- **Extracted**: `C:\projects\bg2-symbols\bg2_pdb_types.txt` (72 MB), `bg2_pdb_symbols.txt` (45 MB), `bg2_pdb_globals.txt` (9 MB)
 - BG2 shares ~90% engine classes — names are authoritative, offsets differ
 
 ### GemRB (secondary cross-reference)
-- **Path**: `/home/wills/projects/gemrb/`
+- **Path**: `C:\projects\gemrb\`
 - CGameSprite→Actor, CInfGame→Game, CGameArea→Map, CGameEffect→Effect, CInfinity→Interface
 
 ### Other References
-- **NearInfinity**: `/home/wills/projects/NearInfinity/` — IWD2 file format structures (CreResource.java for CRE v2.2, AreResource.java, Effect2.java)
-- **IESDP**: `/tmp/iesdp/iesdp-gh-pages/` — IWD2 effects (353 opcodes), STATS.IDS (106 entries), IDS files, file formats
+- **NearInfinity**: `C:\projects\NearInfinity\` — IWD2 file format structures (CreResource.java for CRE v2.2, AreResource.java, Effect2.java)
+- **IESDP**: `C:\projects\iesdp\` — IWD2 effects (353 opcodes), STATS.IDS (106 entries), IDS files, file formats
 
 ## Tooling
 - Ghidra 12.0.4 + LibGhidraHost extension
-- GhidraSQL CLI at `/home/wills/projects/IWD2-RE/ghidrasql/build/bin/` (in PATH via .zshrc)
+- GhidraSQL CLI at `C:\ghidrasql-repo\build\bin\Release\ghidrasql.exe`
 - Binary: IWD2.exe (28,024 functions in Ghidra project)
-- `GHIDRA_INSTALL_DIR=/opt/ghidra_12.0.4_PUBLIC`
-- `JAVA_HOME=/usr/lib/jvm/java-21-openjdk` (required for Ghidra)
-- **protoc 29.6** at `/home/wills/tools/protoc-29.6/bin/protoc` (needed if rebuilding libghidra)
+- `GHIDRA_INSTALL_DIR=C:\ghidra_dist\ghidra_12.0.4_PUBLIC`
+- `JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot`
+- **protoc** — not installed on this VM (bundled with libghidra build)
 
 ## Directory Structure
 - `src/` — Flat layout, ~202 .cpp + ~209 .h, MFC Hungarian naming
@@ -134,9 +142,17 @@ rg "sub_NNNNNN" src/              # find all occurrences
 # Update .h declaration + .cpp definition + all callsites
 ```
 
+### Field rename strategy (via BG2EE PDB)
+For naming `field_XXX` in C++ classes:
+1. Find the class in `bg2_pdb_types.txt` (search for class name)
+2. Locate the `LF_FIELDLIST` entry containing `LF_MEMBER` entries with offsets
+3. Match member names from BG2 PDB to IWD2 offsets (names are identical, offsets differ)
+4. Rename in C++ header + all .cpp references in one commit
+5. Fields are NOT stored in Ghidra DB — C++ source is the truth for offsets
+
 ### Research
 1. **GhidraSQL** — Decompile function, trace dataflow via xrefs
-2. **BG2EE PDB** — Check `/tmp/bg2_pdb_members.txt` for original name
+2. **BG2EE PDB** — Check `bg2_pdb_types.txt` for class members, `bg2_pdb_symbols.txt` for functions
 3. **GemRB** — Check for semantic equivalent
 4. **NearInfinity / IESDP** — IWD2-specific structure/opcode definitions
 5. **Source context** — Usage patterns in .cpp files
@@ -159,21 +175,25 @@ Priority: small classes first → CGameSprite last (most complex, most fields)
 ```
 
 ## Key Commands
-```bash
-# GhidraSQL decompilation
-ghidrasql --ghidra "$GHIDRA_INSTALL_DIR" --project ~/ghidra_projects/IWD2 \
-  --project-name IWD2 --program IWD2.exe --no-analyze \
-  -q "SELECT text FROM pseudocode WHERE func_addr = 0x5D2DE0;"
+```powershell
+# GhidraSQL decompilation (server must be running on :8081)
+ghidrasql --url http://127.0.0.1:8081 -q "SELECT text FROM pseudocode WHERE func_addr = 0x5D2DE0;"
 
 # Count remaining sub_ functions
-ghidrasql ... -q "SELECT COUNT(*) FROM funcs WHERE name LIKE 'FUN_00%';"
+ghidrasql --url http://127.0.0.1:8081 -q "SELECT COUNT(*) FROM funcs WHERE name LIKE 'FUN_00%';"
+
+# Query via curl
+curl -X POST http://127.0.0.1:8081/query --data "SELECT * FROM db_info;"
+
+# Start ghidrasql server (if not running)
+ghidrasql --ghidra "$env:GHIDRA_INSTALL_DIR" --binary "C:\GOG Games\Icewind Dale 2\IWD2.exe" --project C:\ghidra_projects\IWD2 --project-name IWD2 --no-analyze --http --port 8081 --max-runtime 0
 
 # Extract PDB symbols
-llvm-pdbutil dump -types /home/wills/projects/bg2-symbols/Baldur.pdb > /tmp/bg2_pdb_types.txt
+llvm-pdbutil dump -types C:\projects\bg2-symbols\Baldur.pdb > C:\projects\bg2-symbols\bg2_pdb_types.txt
 
 # Fix header/cpp mismatches
-python3 scripts/fix_mismatches.py         # dry run
-python3 scripts/fix_mismatches.py --apply  # apply
+python scripts/fix_mismatches.py         # dry run
+python scripts/fix_mismatches.py --apply  # apply
 ```
 
 ## Plan
