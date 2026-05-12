@@ -391,7 +391,6 @@ FodyWeavers.xsd
 # CMake
 /out
 /build
-decomp_ref/
 
 # External dependencies and tools at workspace root
 /IWD2EE/

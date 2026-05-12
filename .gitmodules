@@ -1,0 +1,9 @@
+[submodule "refs/NearInfinity"]
+	path = refs/NearInfinity
+	url = git@github.com:NearInfinityBrowser/NearInfinity.git
+[submodule "refs/gemrb"]
+	path = refs/gemrb
+	url = git@github.com:gemrb/gemrb.git
+[submodule "refs/iesdp"]
+	path = refs/iesdp
+	url = git@github.com:Gibberlings3/iesdp.git
