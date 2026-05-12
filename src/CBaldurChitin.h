@@ -191,17 +191,17 @@ public:
     /* 499E */ BOOL m_bFontRectOutline;
     /* 49A2 */ DWORD m_dwCloseConfirmationFlags; // #guess
     /* 49A6 */ DWORD m_dwCloseConfirmationStrId; // #guess
-    /* 49AA */ unsigned char field_49AA;
-    /* 49AB */ unsigned char field_49AB;
-    /* 49B0 */ unsigned char field_49B0;
-    /* 49B1 */ unsigned char field_49B1;
-    /* 49AC */ CString field_49AC;
+    /* 49AA */ BOOLEAN m_bCDScanDone;
+    /* 49AB */ BOOLEAN m_bCDFoundDrive;
+    /* 49AC */ CString m_sCDDriveName;
+    /* 49B0 */ BOOLEAN m_bCDMediaInDrive;
+    /* 49B1 */ BOOLEAN m_bCDFoundBaldurCD;
     /* 49B2 */ BOOLEAN m_bIsAutoStarting;
     /* 49B4 */ UI_PANELHEADER m_aBorderPanels[4];
-    /* 4A24 */ int field_4A24;
-    /* 4A28 */ int field_4A28;
+    /* 4A24 */ INT m_nInstallType;
+    /* 4A28 */ BOOLEAN m_bUseNewGui;
     /* 4A2C */ int field_4A2C;
-    /* 4A34 */ CVidFont field_4A34;
+    /* 4A34 */ CVidFont m_preLoadedFont;
     /* 4F38 */ int field_4F38;
     /* 4F3C */ int field_4F3C;
     /* 4F40 */ CMusicPosition* m_pMusicPositions;

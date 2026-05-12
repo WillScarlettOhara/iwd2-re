@@ -2047,7 +2047,7 @@ void CScreenWorld::HideInterface()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
-    if (!g_pBaldurChitin->field_4A24) {
+    if (!g_pBaldurChitin->m_nInstallType) {
         return;
     }
 
@@ -2081,7 +2081,7 @@ void CScreenWorld::UnhideInterface()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
-    if (!g_pBaldurChitin->field_4A24) {
+    if (!g_pBaldurChitin->m_nInstallType) {
         return;
     }
 
@@ -3639,7 +3639,7 @@ CUIControlButtonClock::CUIControlButtonClock(CUIPanel* panel, UI_CONTROL_BUTTON*
     : CUIControlButton3State(panel, controlInfo, LBUTTON, 0)
 {
     // NOTE: Uninline.
-    m_vcGear.SetResRef(CResRef("CGEAR"), g_pBaldurChitin->field_4A28, TRUE, TRUE);
+    m_vcGear.SetResRef(CResRef("CGEAR"), g_pBaldurChitin->m_bUseNewGui, TRUE, TRUE);
 
     SetNeedAsyncUpdate();
 
