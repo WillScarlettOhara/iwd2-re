@@ -626,8 +626,8 @@ public:
     }
 
     /* 0000 */ UINT field_0;
-    /* 0004 */ UINT field_4;
-    /* 0008 */ UINT field_8;
+    /* 0004 */ UINT m_nMax;
+    /* 0008 */ UINT m_nCurrent;
     /* 000C */ UINT field_C;
 };
 

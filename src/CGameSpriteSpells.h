@@ -15,8 +15,8 @@
 class CGameSpriteSpellListEntry {
 public:
     /* 0000 */ UINT m_nID;
-    /* 0004 */ unsigned int field_4;
-    /* 0008 */ unsigned int field_8;
+    /* 0004 */ unsigned int m_nMax;
+    /* 0008 */ unsigned int m_nCurrent;
     /* 000C */ unsigned int field_C;
 };
 

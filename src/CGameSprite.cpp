@@ -7110,8 +7110,8 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
                     // NOTE: Uninline.
                     m_spells.Get(nClass)->Add(pSpell->field_0,
                         nLevel,
-                        pSpell->field_4,
-                        pSpell->field_8,
+                        pSpell->m_nMax,
+                        pSpell->m_nCurrent,
                         pSpell->field_C);
                 }
             }
@@ -7145,8 +7145,8 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
                 // NOTE: Uninline.
                 m_domainSpells.Add(pSpell->field_0,
                     nLevel,
-                    pSpell->field_4,
-                    pSpell->field_8,
+                    pSpell->m_nMax,
+                    pSpell->m_nCurrent,
                     pSpell->field_C);
             }
         }
@@ -7174,8 +7174,8 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
                 (LPCSTR)resRef.GetResRefStr());
         } else {
             m_innateSpells.Add(pSpell->field_0,
-                pSpell->field_4,
-                pSpell->field_8,
+                pSpell->m_nMax,
+                pSpell->m_nCurrent,
                 pSpell->field_C);
         }
     }
@@ -7202,8 +7202,8 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
                 (LPCSTR)resRef.GetResRefStr());
         } else {
             m_songs.Add(pSpell->field_0,
-                pSpell->field_4,
-                pSpell->field_8,
+                pSpell->m_nMax,
+                pSpell->m_nCurrent,
                 pSpell->field_C);
         }
     }
@@ -7230,8 +7230,8 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
                 (LPCSTR)resRef.GetResRefStr());
         } else {
             m_shapeshifts.Add(pSpell->field_0,
-                pSpell->field_4,
-                pSpell->field_8,
+                pSpell->m_nMax,
+                pSpell->m_nCurrent,
                 pSpell->field_C);
         }
     }
@@ -7706,7 +7706,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
 
                     if (m_domainSpells.Find(v1, nLevel, v2) == TRUE) {
                         bFound = TRUE;
-                        count += m_domainSpells.m_lists[nLevel].Get(v2)->field_8;
+                        count += m_domainSpells.m_lists[nLevel].Get(v2)->m_nCurrent;
                     }
                 }
             }
@@ -7719,7 +7719,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
 
                 if (m_spells.m_spellsByClass[nClass].Find(v1, nLevel, v2) == TRUE) {
                     bFound = TRUE;
-                    count += m_spells.m_spellsByClass[nClass].m_lists[nLevel].Get(v2)->field_8;
+                    count += m_spells.m_spellsByClass[nClass].m_lists[nLevel].Get(v2)->m_nCurrent;
                 }
             }
         }
@@ -7732,7 +7732,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
         }
 
         if (m_innateSpells.Find(v1, v2) == TRUE) {
-            count += m_innateSpells.Get(v2)->field_8;
+            count += m_innateSpells.Get(v2)->m_nCurrent;
         }
         break;
     case 3:
@@ -7743,7 +7743,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
         }
 
         if (m_songs.Find(v1, v2) == TRUE) {
-            count += m_songs.Get(v2)->field_8;
+            count += m_songs.Get(v2)->m_nCurrent;
         }
         break;
     case 4:
@@ -7754,7 +7754,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
         }
 
         if (m_shapeshifts.Find(v1, v2) == TRUE) {
-            count += m_shapeshifts.Get(v2)->field_8;
+            count += m_shapeshifts.Get(v2)->m_nCurrent;
         }
         break;
     default:
@@ -15480,7 +15480,7 @@ BOOLEAN CGameSprite::sub_724C40(const unsigned int& a1)
         CGameSpriteSpellListEntry* pEntry = m_shapeshifts.Get(nIndex);
 
         m_shapeshifts.Add(pEntry->m_nID,
-            m_shapeshifts.field_14 - pEntry->field_4,
+            m_shapeshifts.field_14 - pEntry->m_nMax,
             0,
             0);
     }

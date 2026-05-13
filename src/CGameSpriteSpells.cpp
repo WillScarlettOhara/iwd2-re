@@ -26,8 +26,8 @@ BOOLEAN CGameSpriteSpellList::Add(const UINT& nID, const unsigned int& a2, const
 
     // NOTE: Uninline.
     if (Find(nID, nIndex)) {
-        unsigned int v1 = m_List[nIndex].field_4 + a2;
-        unsigned int v2 = m_List[nIndex].field_8 + a3;
+        unsigned int v1 = m_List[nIndex].m_nMax + a2;
+        unsigned int v2 = m_List[nIndex].m_nCurrent + a3;
 
         // NOTE: Unsigned compare.
         if (v1 < v2) {
@@ -36,13 +36,13 @@ BOOLEAN CGameSpriteSpellList::Add(const UINT& nID, const unsigned int& a2, const
             UTIL_ASSERT(FALSE);
         }
 
-        m_List[nIndex].field_4 = v1;
-        m_List[nIndex].field_8 = v2;
+        m_List[nIndex].m_nMax = v1;
+        m_List[nIndex].m_nCurrent = v2;
     } else {
         CGameSpriteSpellListEntry entry;
         entry.m_nID = nID;
-        entry.field_4 = a2;
-        entry.field_8 = a3;
+        entry.m_nMax = a2;
+        entry.m_nCurrent = a3;
         entry.field_C = a4;
         m_List.push_back(entry);
     }
@@ -69,12 +69,12 @@ BOOLEAN CGameSpriteSpellList::Remove(const UINT& nID, BOOLEAN a2, const unsigned
     std::vector<CGameSpriteSpellListEntry>::iterator it = m_List.begin();
     while (it != m_List.end()) {
         if (it->m_nID == nID) {
-            unsigned int v3 = it->field_4;
+            unsigned int v3 = it->m_nMax;
             if (v3 < v1) {
                 v1 = v3;
             }
 
-            unsigned int v4 = it->field_8;
+            unsigned int v4 = it->m_nCurrent;
             if (v4 < v2) {
                 v2 = v4;
             }
@@ -82,12 +82,12 @@ BOOLEAN CGameSpriteSpellList::Remove(const UINT& nID, BOOLEAN a2, const unsigned
             if (a2 == TRUE) {
                 m_List.erase(it);
             } else {
-                it->field_4 = v3 - v1;
-                it->field_8 = v4 - v2;
+                it->m_nMax = v3 - v1;
+                it->m_nCurrent = v4 - v2;
 
-                if (it->field_4 < it->field_8) {
-                    v2 += it->field_8 - it->field_4;
-                    it->field_8 = it->field_4;
+                if (it->m_nMax < it->m_nCurrent) {
+                    v2 += it->m_nCurrent - it->m_nMax;
+                    it->m_nCurrent = it->m_nMax;
                 }
             }
 
@@ -115,20 +115,20 @@ BOOLEAN CGameSpriteSpellList::sub_725C50(const UINT& nID, const unsigned int& a2
 
     CGameSpriteSpellListEntry& entry = m_List[nIndex];
 
-    if (entry.field_4 == 0) {
+    if (entry.m_nMax == 0) {
         return FALSE;
     }
 
-    unsigned int v1 = entry.field_8;
+    unsigned int v1 = entry.m_nCurrent;
     unsigned int v2 = v1 + a2;
 
     // NOTE: Unsigned compare.
-    if (a3 == 1 || v2 > entry.field_4) {
-        v2 = entry.field_4;
+    if (a3 == 1 || v2 > entry.m_nMax) {
+        v2 = entry.m_nMax;
     }
 
     field_10 -= v1;
-    entry.field_8 = v2;
+    entry.m_nCurrent = v2;
     field_10 += v2;
 
     return TRUE;
@@ -146,7 +146,7 @@ BOOLEAN CGameSpriteSpellList::sub_725CC0(const UINT& nID, const unsigned int& a2
 
     CGameSpriteSpellListEntry& entry = m_List[nIndex];
 
-    int v1 = entry.field_8;
+    int v1 = entry.m_nCurrent;
 
     int v2 = v1 - a2;
 
@@ -156,7 +156,7 @@ BOOLEAN CGameSpriteSpellList::sub_725CC0(const UINT& nID, const unsigned int& a2
     }
 
     field_10 -= v1;
-    entry.field_8 = v2;
+    entry.m_nCurrent = v2;
     field_10 += v2;
 
     return TRUE;
@@ -175,7 +175,7 @@ BOOLEAN CGameSpriteSpellList::sub_725D30(const unsigned int& a1, const BOOLEAN& 
     field_18 = v1;
 
     for (UINT nIndex = 0; nIndex < m_List.size(); nIndex++) {
-        sub_725C50(m_List[nIndex].m_nID, v1 - m_List[nIndex].field_8, FALSE);
+        sub_725C50(m_List[nIndex].m_nID, v1 - m_List[nIndex].m_nCurrent, FALSE);
     }
 
     return TRUE;
@@ -195,7 +195,7 @@ BOOLEAN CGameSpriteSpellList::sub_725DB0(const unsigned int& a1, const BOOLEAN& 
 
     for (UINT nIndex = 0; nIndex < m_List.size(); nIndex++) {
         // NOTE: Uninline.
-        sub_725CC0(m_List[nIndex].m_nID, v1 - m_List[nIndex].field_8, FALSE);
+        sub_725CC0(m_List[nIndex].m_nID, v1 - m_List[nIndex].m_nCurrent, FALSE);
     }
 
     return TRUE;
@@ -230,7 +230,7 @@ BOOLEAN CGameSpriteSpellList::CheckF8(UINT nIndex)
     // __FILE__: 2429
     UTIL_ASSERT(nIndex < m_List.size());
 
-    return m_List[nIndex].field_8 != 0;
+    return m_List[nIndex].m_nCurrent != 0;
 }
 
 // NOTE: Inlined.
