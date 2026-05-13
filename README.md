@@ -25,10 +25,11 @@ Original source code was never released. This project reconstructs it by analyzi
 | **Named Functions** | Ongoing | ~200 `sub_` remaining |
 | **Named Fields** | Ongoing | ~640 `field_` remaining |
 | **Main Menu** | **Working** | Boots directly to CScreenConnection; mouse cursor visible and clickable |
-| **UI Screens** | Working | Options, Keymaps, Single Player, Party Select, Character Editor |
-| **World Screen** | **Not working** | Current blocker for gameplay |
+| **UI Screens** | Working | Options, Keymaps, Single Player, Party Select, **Character Creation** |
+| **World Screen** | **Partial** | Loads from menu but crashes during level transition |
+| **Gameplay** | **Not working** | Blocked by World Screen load crash |
 
-**Current milestone**: Stabilize the World Screen transition so the main gameplay loop can start.
+**Current milestone**: Debug the World Screen level-load crash so the main gameplay loop can start.
 
 ---
 
