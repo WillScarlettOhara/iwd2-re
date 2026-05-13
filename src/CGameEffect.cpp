@@ -5524,7 +5524,7 @@ void CGameEffectDisease::sub_4B5BF0(CGameSprite* pSprite)
             &pSource,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
-            CGameEffect* pEffect = IcewindMisc::sub_585380(pSource,
+            CGameEffect* pEffect = IcewindMisc::CreatePiercingDamageEffect(pSource,
                 0,
                 0,
                 3,
@@ -10457,7 +10457,7 @@ BOOL CGameEffectImmunitySpell::Evaluate(CGameSprite* pSprite)
             &pObject,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
-            bResult = !IcewindMisc::sub_585230(pSprite, static_cast<CGameSprite*>(pObject));
+            bResult = !IcewindMisc::AreAllies(pSprite, static_cast<CGameSprite*>(pObject));
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceID,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
@@ -10471,7 +10471,7 @@ BOOL CGameEffectImmunitySpell::Evaluate(CGameSprite* pSprite)
             &pObject,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
-            bResult = IcewindMisc::sub_585230(pSprite, static_cast<CGameSprite*>(pObject));
+            bResult = IcewindMisc::AreAllies(pSprite, static_cast<CGameSprite*>(pObject));
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceID,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
@@ -10485,7 +10485,7 @@ BOOL CGameEffectImmunitySpell::Evaluate(CGameSprite* pSprite)
             &pObject,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
-            bResult = !IcewindMisc::sub_5852A0(pSprite, static_cast<CGameSprite*>(pObject));
+            bResult = !IcewindMisc::AreEnemies(pSprite, static_cast<CGameSprite*>(pObject));
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceID,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
@@ -10499,7 +10499,7 @@ BOOL CGameEffectImmunitySpell::Evaluate(CGameSprite* pSprite)
             &pObject,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
-            bResult = IcewindMisc::sub_5852A0(pSprite, static_cast<CGameSprite*>(pObject));
+            bResult = IcewindMisc::AreEnemies(pSprite, static_cast<CGameSprite*>(pObject));
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceID,
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);

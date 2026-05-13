@@ -820,7 +820,7 @@ void CScreenStore::TimerAsynchronousUpdate()
             m_nChatMessageCount);
     }
 
-    CGameSprite* pCustomer = static_cast<CGameSprite*>(m_cAICustomer.sub_40CB20(NULL, CGameObject::TYPE_SPRITE, FALSE));
+    CGameSprite* pCustomer = static_cast<CGameSprite*>(m_cAICustomer.GetObjectWithType(NULL, CGameObject::TYPE_SPRITE, FALSE));
     if (m_pMainPanel != NULL && m_pMainPanel->m_nID != 5) {
         if (pCustomer != NULL
             && (pCustomer->GetBaseStats()->m_generalState & STATE_DEAD) == 0
@@ -873,7 +873,7 @@ void CScreenStore::TimerAsynchronousUpdate()
                 CGameObjectArray::THREAD_ASYNCH,
                 INFINITE);
 
-            CGameSprite* pProprietor = static_cast<CGameSprite*>(m_cAIProprietor.sub_40CB20(NULL, CGameObject::TYPE_SPRITE, FALSE));
+            CGameSprite* pProprietor = static_cast<CGameSprite*>(m_cAIProprietor.GetObjectWithType(NULL, CGameObject::TYPE_SPRITE, FALSE));
             if (pProprietor != NULL
                 && pProprietor->GetAIType().GetEnemyAlly() != CAIObjectType::EA_ENEMY
                 && (pProprietor->GetBaseStats()->m_generalState & STATE_DEAD) == 0

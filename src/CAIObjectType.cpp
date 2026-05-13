@@ -879,7 +879,7 @@ CString CAIObjectType::GetName() const
 }
 
 // 0x40CB20
-CGameObject* CAIObjectType::sub_40CB20(CGameAIBase* caller, BYTE type, BOOL checkBackList) const
+CGameObject* CAIObjectType::GetObjectWithType(CGameAIBase* caller, BYTE type, BOOL checkBackList) const
 {
     CGameObject* pObject = NULL;
 
@@ -889,7 +889,7 @@ CGameObject* CAIObjectType::sub_40CB20(CGameAIBase* caller, BYTE type, BOOL chec
 
     LONG nId = m_nInstance;
     if (nId < 0) {
-        nId = sub_40CED0(caller, checkBackList);
+        nId = FindObjectId(caller, checkBackList);
     }
 
     BYTE rc;
@@ -933,7 +933,7 @@ BOOL CAIObjectType::Equal(const CAIObjectType& type) const
 }
 
 // 0x40CCA0
-CGameObject* CAIObjectType::sub_40CCA0(CGameAIBase* caller, BOOL checkBackList) const
+CGameObject* CAIObjectType::GetObject(CGameAIBase* caller, BOOL checkBackList) const
 {
     if (Equal(NOONE)) {
         return NULL;
@@ -941,7 +941,7 @@ CGameObject* CAIObjectType::sub_40CCA0(CGameAIBase* caller, BOOL checkBackList) 
 
     LONG nId = m_nInstance;
     if (nId < 0) {
-        nId = sub_40CED0(caller, checkBackList);
+        nId = FindObjectId(caller, checkBackList);
     }
 
     CGameObject* pObject;
@@ -957,7 +957,7 @@ CGameObject* CAIObjectType::sub_40CCA0(CGameAIBase* caller, BOOL checkBackList) 
 }
 
 // 0x40CD80
-BOOL CAIObjectType::sub_40CD80(CGameAIBase* caller, CPoint& pt, INT& nRadius) const
+BOOL CAIObjectType::GetAiLocation(CGameAIBase* caller, CPoint& pt, INT& nRadius) const
 {
     nRadius = 0;
     pt.x = 0;
@@ -991,7 +991,7 @@ BOOL CAIObjectType::sub_40CD80(CGameAIBase* caller, CPoint& pt, INT& nRadius) co
 }
 
 // 0x40CED0
-LONG CAIObjectType::sub_40CED0(CGameAIBase* caller, BOOL checkBackList) const
+LONG CAIObjectType::FindObjectId(CGameAIBase* caller, BOOL checkBackList) const
 {
     LONG nId;
     if (caller->GetArea() != NULL) {
@@ -1001,7 +1001,7 @@ LONG CAIObjectType::sub_40CED0(CGameAIBase* caller, BOOL checkBackList) const
             INT nRadius;
 
             // NOTE: Uninline.
-            sub_40CD80(caller, pt, nRadius);
+            GetAiLocation(caller, pt, nRadius);
 
             nId = caller->GetArea()->sub_46DAE0(pt.x,
                 pt.y,
@@ -1047,9 +1047,9 @@ LONG CAIObjectType::sub_40CED0(CGameAIBase* caller, BOOL checkBackList) const
 }
 
 // 0x40D050
-CGameObject* CAIObjectType::sub_40D050(CGameAIBase* caller, BYTE type, BOOL checkBackList) const
+CGameObject* CAIObjectType::GetObjectTypeChecked(CGameAIBase* caller, BYTE type, BOOL checkBackList) const
 {
-    CGameObject* pObject = sub_40D0F0(caller, checkBackList);
+    CGameObject* pObject = GetObjectFromId(caller, checkBackList);
 
     if ((pObject->GetObjectType() != type
             && type != CGameObject::TYPE_AIBASE
@@ -1066,7 +1066,7 @@ CGameObject* CAIObjectType::sub_40D050(CGameAIBase* caller, BYTE type, BOOL chec
 }
 
 // 0x40D0F0
-CGameObject* CAIObjectType::sub_40D0F0(CGameAIBase* caller, BOOL checkBackList) const
+CGameObject* CAIObjectType::GetObjectFromId(CGameAIBase* caller, BOOL checkBackList) const
 {
     if (Equal(NOONE)) {
         return NULL;
@@ -1075,7 +1075,7 @@ CGameObject* CAIObjectType::sub_40D0F0(CGameAIBase* caller, BOOL checkBackList) 
     LONG nId = m_nInstance;
     if (nId < 0) {
         // NOTE: Uninline.
-        nId = sub_40CED0(caller, checkBackList);
+        nId = FindObjectId(caller, checkBackList);
     }
 
     CGameObject* pObject;
@@ -1235,7 +1235,7 @@ BOOL CAIObjectType::IsClassValid(BYTE nClass) const
 }
 
 // 0x40D8A0
-BOOL CAIObjectType::sub_40D8A0(const CPoint& pt) const
+BOOL CAIObjectType::IsOverPoint(const CPoint& pt) const
 {
     if (m_ptCenter == pt) {
         return TRUE;
@@ -1251,7 +1251,7 @@ BOOL CAIObjectType::sub_40D8A0(const CPoint& pt) const
 }
 
 // 0x40D900
-BOOL CAIObjectType::sub_40D900(const CPoint& pt) const
+BOOL CAIObjectType::IsOverRect(const CPoint& pt) const
 {
     return PtInRect(m_rect, pt);
 }
@@ -1262,9 +1262,9 @@ BOOL CAIObjectType::IsOver(const CPoint& pt) const
     // NOTE: Jump table at 0x40BA04.
     switch (m_nLocationType) {
     case CAIOBJECTTYPE_LOCATION_TYPE_POINT:
-        return sub_40D8A0(pt);
+        return IsOverPoint(pt);
     case CAIOBJECTTYPE_LOCATION_TYPE_RECT:
-        return sub_40D900(pt);
+        return IsOverRect(pt);
     default:
         return TRUE;
     }

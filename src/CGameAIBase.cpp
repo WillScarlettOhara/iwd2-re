@@ -1819,7 +1819,7 @@ CAIAction& CGameAIBase::GetNextAction(CAIAction& action)
             }
 
             actorType.Decode(this);
-            CGameAIBase* actor = static_cast<CGameAIBase*>(actorType.sub_40CB20(this, CGameObject::TYPE_AIBASE, FALSE));
+            CGameAIBase* actor = static_cast<CGameAIBase*>(actorType.GetObjectWithType(this, CGameObject::TYPE_AIBASE, FALSE));
             if (actor != NULL) {
                 action.m_actorID = CAIObjectType::ANYONE;
                 action.m_internalFlags |= 0x1;

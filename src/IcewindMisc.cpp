@@ -27,7 +27,7 @@ INT IcewindMisc::Roll(INT nRolls, INT nSides)
 // NOTE: Unclear if it returns CPoint or CSize.
 //
 // 0x584610
-CPoint IcewindMisc::sub_584610(INT nDirection)
+CPoint IcewindMisc::DirectionToOffset(INT nDirection)
 {
     switch (nDirection) {
     case 0:
@@ -70,7 +70,7 @@ CPoint IcewindMisc::sub_584610(INT nDirection)
 }
 
 // 0x5847B0
-CPoint IcewindMisc::sub_5847B0(const CPoint& pt, int x, int y, int radius)
+CPoint IcewindMisc::ScaleToCircle(const CPoint& pt, int x, int y, int radius)
 {
     if (x != 0 || y != 0) {
         float v1 = static_cast<float>(sqrt(static_cast<float>(radius * radius) / static_cast<float>(x * x + y * y)));
@@ -493,14 +493,14 @@ BOOLEAN IcewindMisc::IsPC(CGameSprite* pSprite)
 }
 
 // 0x585210
-BOOLEAN IcewindMisc::sub_585210(CGameSprite* pSprite)
+BOOLEAN IcewindMisc::IsDemihuman(CGameSprite* pSprite)
 {
     BYTE nRace = pSprite->GetAIType().m_nRace;
     return nRace > 0 && nRace <= CAIOBJECTTYPE_R_GNOME;
 }
 
 // 0x585230
-BOOLEAN IcewindMisc::sub_585230(CGameSprite* pSprite1, CGameSprite* pSprite2)
+BOOLEAN IcewindMisc::AreAllies(CGameSprite* pSprite1, CGameSprite* pSprite2)
 {
     if (pSprite1->GetAIType().m_nEnemyAlly <= CAIObjectType::EA_CONTROLCUTOFF
         && pSprite2->GetAIType().m_nEnemyAlly <= CAIObjectType::EA_CONTROLCUTOFF) {
@@ -516,7 +516,7 @@ BOOLEAN IcewindMisc::sub_585230(CGameSprite* pSprite1, CGameSprite* pSprite2)
 }
 
 // 0x5852A0
-BOOLEAN IcewindMisc::sub_5852A0(CGameSprite* pSprite1, CGameSprite* pSprite2)
+BOOLEAN IcewindMisc::AreEnemies(CGameSprite* pSprite1, CGameSprite* pSprite2)
 {
     if (pSprite1->GetAIType().m_nEnemyAlly <= CAIObjectType::EA_GOODCUTOFF
         && pSprite2->GetAIType().m_nEnemyAlly >= CAIObjectType::EA_EVILCUTOFF) {
@@ -532,7 +532,7 @@ BOOLEAN IcewindMisc::sub_5852A0(CGameSprite* pSprite1, CGameSprite* pSprite2)
 }
 
 // 0x585310
-BOOLEAN IcewindMisc::sub_585310(CGameSprite* pSprite)
+BOOLEAN IcewindMisc::IsGoodByEA(CGameSprite* pSprite)
 {
     return CAIObjectType::EA_GOODCUTOFF >= pSprite->GetAIType().m_nEnemyAlly;
 }
@@ -550,25 +550,25 @@ BOOLEAN IcewindMisc::IsGoodEvilSame(CGameSprite* pSprite1, CGameSprite* pSprite2
 }
 
 // 0x585380
-CGameEffect* IcewindMisc::sub_585380(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
+CGameEffect* IcewindMisc::CreatePiercingDamageEffect(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
 {
     return CreateEffectDamage(pObject, 0x400000, numDice, diceSize, effectAmount, spellLevel, savingThrow);
 }
 
 // 0x5853B0
-CGameEffect* IcewindMisc::sub_5853B0(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
+CGameEffect* IcewindMisc::CreateCrushingDamageEffect(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
 {
     return CreateEffectDamage(pObject, 0x80000, numDice, diceSize, effectAmount, spellLevel, savingThrow);
 }
 
 // 0x5853E0
-CGameEffect* IcewindMisc::sub_5853E0(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
+CGameEffect* IcewindMisc::CreateSlashingDamageEffect(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
 {
     return CreateEffectDamage(pObject, 0x20000, numDice, diceSize, effectAmount, spellLevel, savingThrow);
 }
 
 // 0x585410
-CGameEffect* IcewindMisc::sub_585410(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
+CGameEffect* IcewindMisc::CreateDamageEffect(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow)
 {
     return CreateEffectDamage(pObject, 0, numDice, diceSize, effectAmount, spellLevel, savingThrow);
 }
@@ -597,7 +597,7 @@ CGameEffect* IcewindMisc::CreateEffectDamage(CGameObject* pObject, DWORD dwFlags
     pEffect->m_sourceID = pObject->GetId();
 
     if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
-        sub_5860F0(static_cast<CGameSprite*>(pObject), pEffect);
+        ApplyDamageModifiers(static_cast<CGameSprite*>(pObject), pEffect);
     }
 
     return pEffect;
@@ -928,13 +928,13 @@ INT IcewindMisc::GetSneakAttackDice()
 }
 
 // 0x585D90
-INT IcewindMisc::sub_585D90()
+INT IcewindMisc::GetMaxFavoredEnemies()
 {
     return 21;
 }
 
 // 0x585DA0
-BOOLEAN IcewindMisc::sub_585DA0(CGameSprite* pSprite)
+BOOLEAN IcewindMisc::CanEvasionApply(CGameSprite* pSprite)
 {
     return (pSprite->GetClassLevel(CAIOBJECTTYPE_C_ROGUE) >= 2
                || pSprite->HasClassLevel(CAIOBJECTTYPE_C_MONK))
@@ -969,7 +969,7 @@ CButtonData* IcewindMisc::CreateButtonData(BYTE* resRef)
 }
 
 // 0x5860F0
-void IcewindMisc::sub_5860F0(CGameSprite* pSprite, CGameEffect* pEffect)
+void IcewindMisc::ApplyDamageModifiers(CGameSprite* pSprite, CGameEffect* pEffect)
 {
     if (pEffect->m_effectID == CGAMEEFFECT_DAMAGE) {
         int nDamageMod;

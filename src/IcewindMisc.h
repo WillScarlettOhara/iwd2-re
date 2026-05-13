@@ -15,8 +15,8 @@ class CGameSprite;
 class IcewindMisc {
 public:
     static INT Roll(INT nRolls, INT nSides);
-    static CPoint sub_584610(INT nDirection);
-    static CPoint sub_5847B0(const CPoint& pt, int x, int y, int radius);
+    static CPoint DirectionToOffset(INT nDirection);
+    static CPoint ScaleToCircle(const CPoint& pt, int x, int y, int radius);
     static void DisplayFeedbackMessage(CGameSprite* pSprite, STRREF strRef, INT nNumber);
     static BOOLEAN IsUndead(CGameSprite* pSprite);
     static BOOLEAN IsImmuneToFire(CGameSprite* pSprite);
@@ -47,16 +47,16 @@ public:
     static BOOLEAN IsChaotic(CGameSprite* pSprite);
     static BOOLEAN IsDead(CGameSprite* pSprite);
     static BOOLEAN IsPC(CGameSprite* pSprite);
-    static BOOLEAN sub_585210(CGameSprite* pSprite);
-    static BOOLEAN sub_585230(CGameSprite* pSprite1, CGameSprite* pSprite2);
-    static BOOLEAN sub_5852A0(CGameSprite* pSprite1, CGameSprite* pSprite2);
-    static BOOLEAN sub_585310(CGameSprite* pSprite);
+    static BOOLEAN IsDemihuman(CGameSprite* pSprite);
+    static BOOLEAN AreAllies(CGameSprite* pSprite1, CGameSprite* pSprite2);
+    static BOOLEAN AreEnemies(CGameSprite* pSprite1, CGameSprite* pSprite2);
+    static BOOLEAN IsGoodByEA(CGameSprite* pSprite);
     static BOOLEAN IsAlignmentSame(CGameSprite* pSprite1, CGameSprite* pSprite2);
     static BOOLEAN IsGoodEvilSame(CGameSprite* pSprite1, CGameSprite* pSprite2);
-    static CGameEffect* sub_585380(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow);
-    static CGameEffect* sub_5853B0(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow);
-    static CGameEffect* sub_5853E0(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow);
-    static CGameEffect* sub_585410(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow);
+    static CGameEffect* CreatePiercingDamageEffect(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow);
+    static CGameEffect* CreateCrushingDamageEffect(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow);
+    static CGameEffect* CreateSlashingDamageEffect(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow);
+    static CGameEffect* CreateDamageEffect(CGameObject* pObject, DWORD numDice, DWORD diceSize, LONG effectAmount, BYTE spellLevel, DWORD savingThrow);
     static CGameEffect* CreateEffectImmunityToBackstab(CGameObject* pObject, DWORD duration);
     static CGameEffect* CreateEffectSTR(CGameObject* pObject, int effectAmount, DWORD duration, BYTE spellLevel);
     static CGameEffect* CreateEffectBerserk(CGameObject* pObject, DWORD duration, BYTE spellLevel, DWORD savingThrow);
@@ -73,10 +73,10 @@ public:
     static CGameEffect* CreateEffectColorGlowDissipate(BYTE a1, BYTE a2, BYTE a3, BYTE a4);
     static INT GetSneakAttackRolls(CGameSprite* pSprite);
     static INT GetSneakAttackDice();
-    static INT sub_585D90();
-    static BOOLEAN sub_585DA0(CGameSprite* pSprite);
+    static INT GetMaxFavoredEnemies();
+    static BOOLEAN CanEvasionApply(CGameSprite* pSprite);
     static CButtonData* CreateButtonData(BYTE* resRef);
-    static void sub_5860F0(CGameSprite* pSprite, CGameEffect* pEffect);
+    static void ApplyDamageModifiers(CGameSprite* pSprite, CGameEffect* pEffect);
 };
 
 #endif /* ICEWINDMISC_H_ */
