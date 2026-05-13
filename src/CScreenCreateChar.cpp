@@ -5726,7 +5726,7 @@ void CScreenCreateChar::SummonPopup(DWORD dwPopupId, CGameSprite* pSprite)
     UpdatePopupPanel(pPanel->m_nID, pSprite);
 
     if (pOldPanel != NULL && pPanel->m_pManager->field_2E == 1) {
-        if (pOldPanel->sub_4D2D20()) {
+        if (pOldPanel->Hide()) {
             m_cUIManager.GetPanel(0)->InvalidateRect(NULL);
         }
     }
