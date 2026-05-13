@@ -104,7 +104,7 @@ BOOLEAN CGameSpriteSpellList::Remove(const UINT& nID, BOOLEAN a2, const unsigned
 }
 
 // 0x725C50
-BOOLEAN CGameSpriteSpellList::sub_725C50(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteSpellList::AddToCurrentCount(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
 {
     UINT nIndex;
 
@@ -135,7 +135,7 @@ BOOLEAN CGameSpriteSpellList::sub_725C50(const UINT& nID, const unsigned int& a2
 }
 
 // 0x725CC0
-BOOLEAN CGameSpriteSpellList::sub_725CC0(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteSpellList::SubtractFromCurrentCount(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3)
 {
     UINT nIndex;
 
@@ -163,7 +163,7 @@ BOOLEAN CGameSpriteSpellList::sub_725CC0(const UINT& nID, const unsigned int& a2
 }
 
 // 0x725D30
-BOOLEAN CGameSpriteSpellList::sub_725D30(const unsigned int& a1, const BOOLEAN& a2)
+BOOLEAN CGameSpriteSpellList::AddToSharedCurrentCount(const unsigned int& a1, const BOOLEAN& a2)
 {
     unsigned int v1 = field_18 + a1;
 
@@ -175,14 +175,14 @@ BOOLEAN CGameSpriteSpellList::sub_725D30(const unsigned int& a1, const BOOLEAN& 
     field_18 = v1;
 
     for (UINT nIndex = 0; nIndex < m_List.size(); nIndex++) {
-        sub_725C50(m_List[nIndex].m_nID, v1 - m_List[nIndex].m_nCurrent, FALSE);
+        AddToCurrentCount(m_List[nIndex].m_nID, v1 - m_List[nIndex].m_nCurrent, FALSE);
     }
 
     return TRUE;
 }
 
 // 0x725DB0
-BOOLEAN CGameSpriteSpellList::sub_725DB0(const unsigned int& a1, const BOOLEAN& a2)
+BOOLEAN CGameSpriteSpellList::SubtractFromSharedCurrentCount(const unsigned int& a1, const BOOLEAN& a2)
 {
     int v1 = field_18 - a1;
 
@@ -195,7 +195,7 @@ BOOLEAN CGameSpriteSpellList::sub_725DB0(const unsigned int& a1, const BOOLEAN& 
 
     for (UINT nIndex = 0; nIndex < m_List.size(); nIndex++) {
         // NOTE: Uninline.
-        sub_725CC0(m_List[nIndex].m_nID, v1 - m_List[nIndex].m_nCurrent, FALSE);
+        SubtractFromCurrentCount(m_List[nIndex].m_nID, v1 - m_List[nIndex].m_nCurrent, FALSE);
     }
 
     return TRUE;
@@ -291,7 +291,7 @@ UINT CGameSpriteGroupedSpellList::GetNumSpells()
 }
 
 // 0x725F00
-UINT CGameSpriteGroupedSpellList::sub_725F00()
+UINT CGameSpriteGroupedSpellList::GetTotalCurrentCount()
 {
     UINT nCount = 0;
 
@@ -345,46 +345,46 @@ BOOLEAN CGameSpriteGroupedSpellList::Remove(const UINT& nID, const UINT& nLevel,
 }
 
 // 0x726060
-BOOLEAN CGameSpriteGroupedSpellList::sub_726060(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
+BOOLEAN CGameSpriteGroupedSpellList::AddToCurrentCountAtLevel(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26822
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
-    return m_lists[nLevel].sub_725C50(nID, a3, a4);
+    return m_lists[nLevel].AddToCurrentCount(nID, a3, a4);
 }
 
 // 0x7260B0
-BOOLEAN CGameSpriteGroupedSpellList::sub_7260B0(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
+BOOLEAN CGameSpriteGroupedSpellList::SubtractFromCurrentCountAtLevel(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26832
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
     // NOTE: Uninline.
-    return m_lists[nLevel].sub_725CC0(nID, a3, a4);
+    return m_lists[nLevel].SubtractFromCurrentCount(nID, a3, a4);
 }
 
 // 0x726150
-BOOLEAN CGameSpriteGroupedSpellList::sub_726150(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteGroupedSpellList::AddToSharedCurrentCountAtLevel(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26842
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
-    m_lists[nLevel].sub_725D30(a2, a3);
+    m_lists[nLevel].AddToSharedCurrentCount(a2, a3);
 
     return TRUE;
 }
 
 // 0x7261A0
-BOOLEAN CGameSpriteGroupedSpellList::sub_7261A0(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
+BOOLEAN CGameSpriteGroupedSpellList::SubtractFromSharedCurrentCountAtLevel(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26852
     UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
 
-    m_lists[nLevel].sub_725DB0(a2, a3);
+    m_lists[nLevel].SubtractFromSharedCurrentCount(a2, a3);
 
     return TRUE;
 }

@@ -26,10 +26,10 @@ public:
     ~CGameSpriteSpellList();
     BOOLEAN Add(const UINT& nID, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
     BOOLEAN Remove(const UINT& nID, BOOLEAN a2, const unsigned& a3, const unsigned& a4);
-    BOOLEAN sub_725C50(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3);
-    BOOLEAN sub_725CC0(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3);
-    BOOLEAN sub_725D30(const unsigned int& a1, const BOOLEAN& a2);
-    BOOLEAN sub_725DB0(const unsigned int& a1, const BOOLEAN& a2);
+    BOOLEAN AddToCurrentCount(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3);
+    BOOLEAN SubtractFromCurrentCount(const UINT& nID, const unsigned int& a2, const BOOLEAN& a3);
+    BOOLEAN AddToSharedCurrentCount(const unsigned int& a1, const BOOLEAN& a2);
+    BOOLEAN SubtractFromSharedCurrentCount(const unsigned int& a1, const BOOLEAN& a2);
     BOOLEAN Find(const UINT& nID, UINT& nIndex);
 
     BOOLEAN CheckF8(UINT nIndex);
@@ -49,13 +49,13 @@ public:
     ~CGameSpriteGroupedSpellList();
     CGameSpriteSpellList* GetSpellsAtLevel(const UINT& nLevel);
     UINT GetNumSpells();
-    UINT sub_725F00();
+    UINT GetTotalCurrentCount();
     BOOLEAN Add(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4, const unsigned int& a5);
     BOOLEAN Remove(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4, const unsigned int& a5);
-    BOOLEAN sub_726060(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4);
-    BOOLEAN sub_7260B0(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4);
-    BOOLEAN sub_726150(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3);
-    BOOLEAN sub_7261A0(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3);
+    BOOLEAN AddToCurrentCountAtLevel(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4);
+    BOOLEAN SubtractFromCurrentCountAtLevel(const UINT& nID, const UINT& nLevel, const unsigned int& a3, const unsigned int& a4);
+    BOOLEAN AddToSharedCurrentCountAtLevel(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3);
+    BOOLEAN SubtractFromSharedCurrentCountAtLevel(const UINT& nLevel, const unsigned int& a2, const BOOLEAN& a3);
     BOOLEAN Find(const UINT& nID, const UINT& nLevel, UINT& nIndex);
 
     void Clear();
