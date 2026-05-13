@@ -13,7 +13,7 @@ Strategy:
 import json, re, os
 from collections import defaultdict, Counter
 
-SRC = "/home/wills/projects/IWD2-RE/iwd2-re/src"
+SRC = "C:/iwd2-re/src"
 
 def build_catalog():
     class_fields = defaultdict(list)

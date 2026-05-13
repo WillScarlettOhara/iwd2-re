@@ -25,16 +25,29 @@ Repo: `github.com/WillScarlettOhara/iwd2-re` (fork of alexbatalov)
 2. Rename `field_XX` in `.h` + all `.cpp` in ONE commit.
 3. Build before push.
 
+## GhidraSQL — Correct Startup
+- **First import / empty DB**: `C:\ghidra_projects\IWD2\analyze_and_host.bat`
+  - Uses `--binary ... --analyze --keep-host`
+- **Later starts**: `C:\ghidra_projects\IWD2\start_ghidrasql.bat`
+  - Uses `--program IWD2.exe --initial-program IWD2.exe --no-analyze`
+- **Sanity gate**: `SELECT COUNT(*) FROM funcs;` must be `> 0`
+  - If `0`: wrong startup or empty project. Re-import + analyze.
+- Never kill process. Always `POST /shutdown`.
+
 ## Key Commands
 ```powershell
 # Decompile
 ghidrasql --url http://127.0.0.1:8081 -q "SELECT text FROM pseudocode WHERE func_addr = 0x5D2DE0;"
 # Save
 ghidrasql --url http://127.0.0.1:8081 -q "SELECT save_database();"
-# Start server
+# First import + analyze
+C:\ghidra_projects\IWD2\analyze_and_host.bat
+# Start existing analyzed program
 C:\ghidra_projects\IWD2\start_ghidrasql.bat
 # Shutdown (never kill process)
 curl -X POST http://127.0.0.1:8081/shutdown
+# Validate DB
+curl -X POST http://127.0.0.1:8081/query --data "SELECT COUNT(*) FROM funcs;"
 # Fix header/cpp mismatches
 python scripts/fix_mismatches.py --apply
 ```

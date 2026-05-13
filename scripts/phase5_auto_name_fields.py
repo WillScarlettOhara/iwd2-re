@@ -7,7 +7,7 @@ which tells us what the field represents.
 import json, re, os
 from collections import defaultdict
 
-SRC = "/home/wills/projects/IWD2-RE/iwd2-re/src"
+SRC = "C:/iwd2-re/src"
 
 def main():
     # Build map: (class, offset) -> suggested_name
