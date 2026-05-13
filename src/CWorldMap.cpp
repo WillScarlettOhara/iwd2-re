@@ -377,16 +377,16 @@ void CWorldMap::EnableArea(DWORD nMap, const CResRef& cResArea, BOOL bEnable)
 }
 
 // 0x55A3A0
-DWORD CWorldMap::sub_55A3A0()
+DWORD CWorldMap::GetCurrentMapIndex()
 {
     CResRef cResArea = g_pBaldurChitin->GetObjectGame()->GetVisibleArea()->m_resRef;
     CString sResArea;
     cResArea.CopyToString(sResArea);
-    return sub_55A450(sResArea);
+    return GetMapIndex(sResArea);
 }
 
 // 0x55A450
-DWORD CWorldMap::sub_55A450(CString sResArea)
+DWORD CWorldMap::GetMapIndex(CString sResArea)
 {
     if (sResArea.GetLength() <= 3
         || sResArea[0] == '\0'

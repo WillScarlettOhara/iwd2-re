@@ -1306,7 +1306,7 @@ SHORT CGameAIBase::RevealAreaOnMap()
     CString sArea = m_curAction.GetString1();
 
     CWorldMap* pWorldMap = g_pBaldurChitin->GetObjectGame()->GetWorldMap(sArea);
-    pWorldMap->EnableArea(pWorldMap->sub_55A3A0(),
+    pWorldMap->EnableArea(pWorldMap->GetCurrentMapIndex(),
         CResRef(sArea),
         TRUE);
 
