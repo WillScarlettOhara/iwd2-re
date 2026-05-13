@@ -281,10 +281,10 @@ public:
     void OnLButtonClick(CPoint pt) override;
 };
 
-class CUIControlButtonConnection604C30 : public CUIControlButton {
+class CUIControlButtonConnectionPreGenerateChar : public CUIControlButton {
 public:
-    CUIControlButtonConnection604C30(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo);
-    ~CUIControlButtonConnection604C30() override;
+    CUIControlButtonConnectionPreGenerateChar(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo);
+    ~CUIControlButtonConnectionPreGenerateChar() override;
     void OnLButtonClick(CPoint pt) override;
 };
 
@@ -316,10 +316,10 @@ public:
     void OnLButtonClick(CPoint pt) override;
 };
 
-class CUIControlButtonConnection605570 : public CUIControlButton {
+class CUIControlButtonConnectionImportConfirm : public CUIControlButton {
 public:
-    CUIControlButtonConnection605570(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo);
-    ~CUIControlButtonConnection605570() override;
+    CUIControlButtonConnectionImportConfirm(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo);
+    ~CUIControlButtonConnectionImportConfirm() override;
     void OnLButtonClick(CPoint pt) override;
 };
 

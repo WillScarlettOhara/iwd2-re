@@ -4809,7 +4809,7 @@ void CUIControlButtonConnectionCreateGameNewGame::OnLButtonClick(CPoint pt)
 // -----------------------------------------------------------------------------
 
 // 0x604C30
-CUIControlButtonConnection604C30::CUIControlButtonConnection604C30(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
+CUIControlButtonConnectionPreGenerateChar::CUIControlButtonConnectionPreGenerateChar(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlButton(panel, controlInfo, LBUTTON, 0)
 {
     STR_RES strRes;
@@ -4818,12 +4818,12 @@ CUIControlButtonConnection604C30::CUIControlButtonConnection604C30(CUIPanel* pan
 }
 
 // 0x604D20
-CUIControlButtonConnection604C30::~CUIControlButtonConnection604C30()
+CUIControlButtonConnectionPreGenerateChar::~CUIControlButtonConnectionPreGenerateChar()
 {
 }
 
 // 0x604DC0
-void CUIControlButtonConnection604C30::OnLButtonClick(CPoint pt)
+void CUIControlButtonConnectionPreGenerateChar::OnLButtonClick(CPoint pt)
 {
     g_pBaldurChitin->m_pEngineCreateChar->StartCreateChar(-1, 4);
 
@@ -5024,7 +5024,7 @@ void CUIControlButtonConnection6052A0::OnLButtonClick(CPoint pt)
 // -----------------------------------------------------------------------------
 
 // 0x605570
-CUIControlButtonConnection605570::CUIControlButtonConnection605570(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
+CUIControlButtonConnectionImportConfirm::CUIControlButtonConnectionImportConfirm(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlButton(panel, controlInfo, LBUTTON, 0)
 {
     STR_RES strRes;
@@ -5048,12 +5048,12 @@ CUIControlButtonConnection605570::CUIControlButtonConnection605570(CUIPanel* pan
 }
 
 // 0x605680
-CUIControlButtonConnection605570::~CUIControlButtonConnection605570()
+CUIControlButtonConnectionImportConfirm::~CUIControlButtonConnectionImportConfirm()
 {
 }
 
 // 0x605720
-void CUIControlButtonConnection605570::OnLButtonClick(CPoint pt)
+void CUIControlButtonConnectionImportConfirm::OnLButtonClick(CPoint pt)
 {
     CScreenConnection* pConnection = g_pBaldurChitin->m_pEngineConnection;
 
