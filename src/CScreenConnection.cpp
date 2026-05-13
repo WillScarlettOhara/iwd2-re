@@ -55,7 +55,7 @@ BOOLEAN CScreenConnection::byte_8F376C;
 // 0x5F9BB0
 CScreenConnection::CScreenConnection()
 {
-    field_106 = 0;
+    m_bLoadGame = 0;
     m_nSerialPort = 0;
     m_nSerialBaudRate = 0;
     m_dwLastSessionRefresh = 0;
@@ -63,8 +63,8 @@ CScreenConnection::CScreenConnection()
     m_nNumErrorButtons = 0;
     m_bAllowInput = FALSE;
     field_FB0 = 0;
-    field_FA8 = 1;
-    field_FA6 = 0;
+    m_bShowIntro = TRUE;
+    m_bNeedCursorUpdate = FALSE;
     m_bIsNight = FALSE;
 
     SetVideoMode(0);
@@ -189,8 +189,8 @@ CScreenConnection::CScreenConnection()
     m_bJoinReturnValue = FALSE;
     m_bExitProgram = FALSE;
     field_FAC = 1;
-    field_FB4 = 1;
-    field_FB8 = 0;
+    m_nSelectedGameMode = 1;
+    m_bImportCharactersAvailable = FALSE;
     m_bPlayEndCredits = FALSE;
 }
 
@@ -300,7 +300,7 @@ void CScreenConnection::EngineActivated()
     // NOTE: Uninline.
     m_vcTorch.SetResRef(CResRef("MMTRCHB"), g_pBaldurChitin->m_bUseNewGui, TRUE, TRUE);
 
-    if (field_FA8) {
+    if (m_bShowIntro) {
         DWORD dwSectorsPerCluster;
         DWORD dwBytesPerSector;
         DWORD dwNumberOfFreeClusters;
@@ -312,7 +312,7 @@ void CScreenConnection::EngineActivated()
                 g_pBaldurChitin->m_dwCloseConfirmationStrId = 10248;
                 g_pBaldurChitin->m_dwCloseConfirmationFlags = 0x10;
                 PostMessageA(g_pBaldurChitin->cWnd.GetSafeHwnd(), WM_CLOSE, 0, 0);
-                field_FA8 = FALSE;
+                m_bShowIntro = FALSE;
                 return;
             }
         }
@@ -606,14 +606,14 @@ void CScreenConnection::TimerAsynchronousUpdate()
         m_bPlayEndCredits = FALSE;
     }
 
-    if (field_FA8) {
+    if (m_bShowIntro) {
         // TODO: Incomplete (detecting/switching CD).
 
         srand(static_cast<unsigned int>(time(NULL)));
         rand();
 
-        field_FA8 = FALSE;
-        field_FA6 = TRUE;
+        m_bShowIntro = FALSE;
+        m_bNeedCursorUpdate = TRUE;
 
         UpdateMainPanel();
         m_cUIManager.InvalidateRect(NULL);
@@ -779,8 +779,8 @@ void CScreenConnection::TimerAsynchronousUpdate()
             }
         }
 
-        if (field_FA6) {
-            field_FA6 = FALSE;
+        if (m_bNeedCursorUpdate) {
+            m_bNeedCursorUpdate = FALSE;
             g_pBaldurChitin->GetObjectCursor()->SetCursor(0, TRUE);
             g_pBaldurChitin->GetObjectCursor()->m_bVisible = TRUE;
         }
@@ -1969,21 +1969,21 @@ void CScreenConnection::OnDoneButtonClick()
         CScreenConnection* pConnection = g_pBaldurChitin->m_pEngineConnection;
 
         if (pConnection->m_nProtocol == 0) {
-            switch (field_FB4) {
+            switch (pConnection->m_nSelectedGameMode) {
             case 1:
-                pConnection->field_106 = 0;
+                pConnection->m_bLoadGame = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
                 g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
                 pConnection->OnNewGameButtonClick();
                 break;
             case 2:
-                pConnection->field_106 = 0;
+                pConnection->m_bLoadGame = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = TRUE;
                 DismissPopup();
                 SummonPopup(25);
                 break;
             case 3:
-                pConnection->field_106 = 1;
+                pConnection->m_bLoadGame = 1;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
                 g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
                 OnLoadGameButtonClick(FALSE);
@@ -1993,23 +1993,23 @@ void CScreenConnection::OnDoneButtonClick()
             CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
             renderLock.Lock(INFINITE);
 
-            switch (field_FB4) {
+            switch (pConnection->m_nSelectedGameMode) {
             case 1:
-                pConnection->field_106 = 0;
+                pConnection->m_bLoadGame = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
                 g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
                 DismissPopup();
                 SummonPopup(6);
                 break;
             case 2:
-                pConnection->field_106 = 0;
+                pConnection->m_bLoadGame = 0;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = TRUE;
                 g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
                 DismissPopup();
                 SummonPopup(6);
                 break;
             case 3:
-                pConnection->field_106 = 1;
+                pConnection->m_bLoadGame = 1;
                 g_pBaldurChitin->GetObjectGame()->m_bExpansion = FALSE;
                 g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
                 DismissPopup();
@@ -2773,7 +2773,7 @@ void CScreenConnection::UpdateMissionPackPanel()
     pButton3->SetEnabled(TRUE);
 
     DWORD dwSelectedButtonID;
-    switch (field_FB4) {
+    switch (m_nSelectedGameMode) {
     case 1:
         UpdateHelp(pPanel->m_nID, 3, 24870);
         dwSelectedButtonID = 4;
@@ -3114,7 +3114,7 @@ void CScreenConnection::ResetMissionPackPanel()
     UTIL_ASSERT(pPanel != NULL);
 
     m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(7));
-    field_FB4 = 1;
+    m_nSelectedGameMode = 1;
 }
 
 // 0x600600
@@ -3139,7 +3139,7 @@ void CScreenConnection::ResetImportPanel()
 
         hFindFile = FindFirstFileA(sPath, &findFileData);
         if (hFindFile != INVALID_HANDLE_VALUE) {
-            field_FB8 = 1;
+            m_bImportCharactersAvailable = TRUE;
             UpdateHelp(pPanel->m_nID, 0, 26318);
 
             // FIXME: Leaking `hFindFile`.
@@ -3147,7 +3147,7 @@ void CScreenConnection::ResetImportPanel()
         }
     }
 
-    field_FB8 = 0;
+    m_bImportCharactersAvailable = FALSE;
     UpdateHelp(pPanel->m_nID, 0, 26317);
 }
 
@@ -4109,7 +4109,7 @@ void CUIControlButtonConnectionNewGame::OnLButtonClick(CPoint pt)
         // __LINE__: 7330
         UTIL_ASSERT(pButton != NULL);
 
-        pConnection->field_106 = 0;
+        pConnection->m_bLoadGame = 0;
 
         g_pBaldurChitin->GetTlkTable().Fetch(13728, strRes);
         pButton->SetText(strRes.szText);
@@ -4199,12 +4199,12 @@ void CUIControlButtonConnectionLoadGame::OnLButtonClick(CPoint pt)
         // __LINE__: 7520
         UTIL_ASSERT(pButton != NULL);
 
-        pConnection->field_106 = 1;
+        pConnection->m_bLoadGame = 1;
 
         g_pBaldurChitin->GetTlkTable().Fetch(13729, strRes);
         pButton->SetText(strRes.szText);
 
-        pConnection->field_106 = m_nID == 7;
+        pConnection->m_bLoadGame = m_nID == 7;
 
         if (pConnection->m_nProtocol != 0) {
             CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
@@ -4799,7 +4799,7 @@ void CUIControlButtonConnectionCreateGameNewGame::OnLButtonClick(CPoint pt)
     // __LINE__: 8691
     UTIL_ASSERT(pConnection != NULL);
 
-    if (pConnection->field_106) {
+    if (pConnection->m_bLoadGame) {
         pConnection->OnLoadGameButtonClick(FALSE);
     } else {
         pConnection->OnNewGameButtonClick();
@@ -5002,13 +5002,13 @@ void CUIControlButtonConnection6052A0::OnLButtonClick(CPoint pt)
 
     switch (m_nID) {
     case 4:
-        pConnection->field_FB4 = 1;
+        pConnection->m_nSelectedGameMode = 1;
         break;
     case 5:
-        pConnection->field_FB4 = 2;
+        pConnection->m_nSelectedGameMode = 2;
         break;
     case 6:
-        pConnection->field_FB4 = 3;
+        pConnection->m_nSelectedGameMode = 3;
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenConnection.cpp
@@ -5066,7 +5066,7 @@ void CUIControlButtonConnection605570::OnLButtonClick(CPoint pt)
 
     switch (m_nID) {
     case 1:
-        if (pConnection->field_FB8) {
+        if (pConnection->m_bImportCharactersAvailable) {
             g_pBaldurChitin->GetObjectGame()->field_4BD6 = TRUE;
             pConnection->OnNewGameButtonClick();
         } else {
@@ -5075,7 +5075,7 @@ void CUIControlButtonConnection605570::OnLButtonClick(CPoint pt)
         }
         break;
     case 2:
-        if (pConnection->field_FB8) {
+        if (pConnection->m_bImportCharactersAvailable) {
             g_pBaldurChitin->GetObjectGame()->field_4BD6 = FALSE;
             pConnection->OnNewGameButtonClick();
         } else {

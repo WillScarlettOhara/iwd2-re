@@ -868,7 +868,7 @@ void CBaldurChitin::Init(HINSTANCE hInstance)
     DBG("Init: all engines created, initializing connection screen path");
 
     // Skip the intro movie/projector path until projector initialization is stable.
-    m_pEngineConnection->field_FA8 = 0;
+    m_pEngineConnection->m_bShowIntro = FALSE;
     m_pEngineConnection->m_bAllowInput = TRUE;
 
     m_pStartingEngine = m_pEngineConnection;
