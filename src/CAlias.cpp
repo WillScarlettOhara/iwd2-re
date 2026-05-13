@@ -21,15 +21,15 @@ BOOL CAlias::ParseRawData(CString& a2)
 {
     CString temp;
 
-    field_4 = FALSE;
+    m_bParsed = FALSE;
 
     int pos = a2.FindOneOf(":=");
     if (pos > 0) {
-        field_8 = a2.Left(pos + 1);
+        m_sAlias = a2.Left(pos + 1);
 
-        field_8 += '\\';
-        if (field_8.GetLength() > 2 && a2.GetLength() > pos + 2) {
-            field_4 = TRUE;
+        m_sAlias += '\\';
+        if (m_sAlias.GetLength() > 2 && a2.GetLength() > pos + 2) {
+            m_bParsed = TRUE;
 
             a2 = a2.Right(a2.GetLength() - pos - 2);
 
@@ -40,7 +40,7 @@ BOOL CAlias::ParseRawData(CString& a2)
                     if (temp.GetAt(temp.GetLength() - 1) != '\\') {
                         temp += "\\";
                     }
-                    field_C.AddTail(temp);
+                    m_lPaths.AddTail(temp);
                     a2 = "";
                 } else {
                     temp = a2.Left(semicolonPos);
@@ -49,7 +49,7 @@ BOOL CAlias::ParseRawData(CString& a2)
                         temp += "\\";
                     }
 
-                    field_C.AddTail(temp);
+                    m_lPaths.AddTail(temp);
 
                     a2 = a2.Right(a2.GetLength() - semicolonPos - 1);
                 }
@@ -57,5 +57,5 @@ BOOL CAlias::ParseRawData(CString& a2)
         }
     }
 
-    return field_4;
+    return m_bParsed;
 }
