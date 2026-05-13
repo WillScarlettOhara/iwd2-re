@@ -24,10 +24,11 @@ Original source code was never released. This project reconstructs it by analyzi
 | **Code** | ~53% (~2M / ~3.8M lines) | Decompiled and organized |
 | **Named Functions** | Ongoing | ~200 `sub_` remaining |
 | **Named Fields** | Ongoing | ~640 `field_` remaining |
-| **UI Screens** | Working | Start, Options, Keymaps, Party Select, Character Editor |
+| **Main Menu** | **Working** | Boots directly to CScreenConnection; mouse cursor visible and clickable |
+| **UI Screens** | Working | Options, Keymaps, Single Player, Party Select, Character Editor |
 | **World Screen** | **Not working** | Current blocker for gameplay |
 
-**Current milestone**: Implement missing functions to reach the World Screen (main gameplay).
+**Current milestone**: Stabilize the World Screen transition so the main gameplay loop can start.
 
 ---
 

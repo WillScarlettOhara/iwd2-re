@@ -2012,12 +2012,17 @@ BOOL CVidInf::RenderPointer(UINT nSurface)
 {
     CSingleLock positionLock(&(g_pChitin->m_csPointerPosition), FALSE);
     CSingleLock renderLock(&m_csRenderPointer);
+    static int s_renderPointerLogCount = 0;
 
     if (g_pChitin->cVideo.m_bIs3dAccelerated) {
         return RenderPointer3d(nSurface);
     }
 
     if (g_pChitin->m_bPointerUpdated) {
+        if (s_renderPointerLogCount < 40) {
+            DBG("CVidInf::RenderPointer skipped updated=1 surface=%u", nSurface);
+            s_renderPointerLogCount++;
+        }
         return FALSE;
     }
 
@@ -2026,6 +2031,10 @@ BOOL CVidInf::RenderPointer(UINT nSurface)
     renderLock.Unlock();
 
     if (!m_bPointerInside || pPointerVidCell == NULL || !m_bPointerEnabled) {
+        if (s_renderPointerLogCount < 40) {
+            DBG("CVidInf::RenderPointer skipped inside=%d ptr=%p enabled=%d surface=%u", (int)m_bPointerInside, pPointerVidCell, (int)m_bPointerEnabled, nSurface);
+            s_renderPointerLogCount++;
+        }
         field_10 = FALSE;
         return FALSE;
     }
@@ -2035,6 +2044,11 @@ BOOL CVidInf::RenderPointer(UINT nSurface)
     positionLock.Lock(INFINITE);
     CPoint pt = g_pChitin->m_ptPointer;
     positionLock.Unlock();
+
+    if (s_renderPointerLogCount < 40) {
+        DBG("CVidInf::RenderPointer draw surface=%u pt=(%d,%d) ptr=%p enabled=%d inside=%d number=%d", nSurface, pt.x, pt.y, pPointerVidCell, (int)m_bPointerEnabled, (int)m_bPointerInside, m_nPointerNumber);
+        s_renderPointerLogCount++;
+    }
 
     CRect rClip(0, 0, CVideo::SCREENWIDTH, CVideo::SCREENHEIGHT);
 

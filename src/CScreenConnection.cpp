@@ -1,5 +1,7 @@
 #include "CScreenConnection.h"
 
+#include "debuglog.h"
+
 #include "CBaldurChitin.h"
 #include "CBaldurProjector.h"
 #include "CInfCursor.h"
@@ -555,6 +557,13 @@ void CScreenConnection::OnLButtonDblClk(CPoint pt)
 // 0x5FB2B0
 void CScreenConnection::OnLButtonDown(CPoint pt)
 {
+    static int s_lbuttonDownLogCount = 0;
+    if (s_lbuttonDownLogCount < 20) {
+        CVidMode* pVidMode = g_pChitin->GetCurrentVideoMode();
+        DBG("CScreenConnection::OnLButtonDown pt=(%d,%d) allow=%d emWaiting=%d ptrEnabled=%d", pt.x, pt.y, (int)m_bAllowInput, (int)m_bEMWaiting, pVidMode != NULL ? (int)pVidMode->m_bPointerEnabled : -1);
+        s_lbuttonDownLogCount++;
+    }
+
     if (m_bAllowInput) {
         if (!m_bEMWaiting) {
             g_pBaldurChitin->GetObjectCursor()->m_nState = 1;
@@ -577,6 +586,13 @@ void CScreenConnection::OnLButtonUp(CPoint pt)
 // 0x5FB330
 void CScreenConnection::OnMouseMove(CPoint pt)
 {
+    static int s_mouseMoveLogCount = 0;
+    if (s_mouseMoveLogCount < 20) {
+        CVidMode* pVidMode = g_pChitin->GetCurrentVideoMode();
+        DBG("CScreenConnection::OnMouseMove pt=(%d,%d) allow=%d emWaiting=%d ptrEnabled=%d", pt.x, pt.y, (int)m_bAllowInput, (int)m_bEMWaiting, pVidMode != NULL ? (int)pVidMode->m_bPointerEnabled : -1);
+        s_mouseMoveLogCount++;
+    }
+
     if (m_bAllowInput) {
         if (!m_bEMWaiting) {
             m_cUIManager.OnMouseMove(pt);

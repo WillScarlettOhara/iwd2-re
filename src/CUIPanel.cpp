@@ -1,5 +1,7 @@
 #include "CUIPanel.h"
 
+#include "debuglog.h"
+
 #include "CBaldurChitin.h"
 #include "CBaldurEngine.h"
 #include "CInfGame.h"
@@ -221,6 +223,7 @@ BOOL CUIPanel::sub_4D2D50()
 // 0x4D2D80
 BOOL CUIPanel::OnLButtonDown(const CPoint& pt)
 {
+    DBG("CUIPanel::OnLButtonDown panel=%d active=%d pt=(%d,%d) origin=(%d,%d) size=(%d,%d)", m_nID, (int)m_bActive, pt.x, pt.y, m_ptOrigin.x, m_ptOrigin.y, m_size.cx, m_size.cy);
     if (!m_bActive) {
         return FALSE;
     }

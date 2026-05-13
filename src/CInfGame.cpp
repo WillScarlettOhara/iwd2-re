@@ -1,5 +1,7 @@
 #include "CInfGame.h"
 
+#include "debuglog.h"
+
 #include <process.h>
 
 #include "CAIScript.h"
@@ -714,6 +716,7 @@ CInfGame::CInfGame()
     // FIXME: m_rgbMasterBitmap init crashes due to packing
     // : m_rgbMasterBitmap(CResRef("MPALETTE"), FALSE, 24)
 {
+    DBG("CInfGame ctor start");
     m_nUniqueAreaID = 0;
     m_nReputation = 0;
     m_nProtagonistId = 0;
@@ -766,15 +769,12 @@ CInfGame::CInfGame()
     m_sSoundsDir = ".\\sounds\\";
     m_sCharactersDir = ".\\characters\\";
 
+    DBG("CInfGame ctor before DirectoryRemoveFiles");
     if (!g_pChitin->cDimm.DirectoryRemoveFiles(m_sTempDir)) {
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
-        // __LINE__: 2608
         UTIL_ASSERT_MSG(FALSE, "Problems removing files from Temp directory, delete the directory and try again");
     }
 
     if (!g_pChitin->cDimm.DirectoryRemoveFiles(m_sTempSaveDir)) {
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
-        // __LINE__: 2608
         UTIL_ASSERT_MSG(FALSE, "Problems removing files from TempSave directory, delete the directory and try again");
     }
 
@@ -797,7 +797,9 @@ CInfGame::CInfGame()
     memset(m_defaultFamiliarResRefs, 0, sizeof(m_defaultFamiliarResRefs));
     field_4204 = 0;
     m_nCharacterOverflowCount = 0;
+    DBG("CInfGame ctor before m_saveObjectList.LoadList");
     m_saveObjectList.LoadList(CResRef(SAVE_OBJECT_LIST_NAME), FALSE);
+    DBG("CInfGame ctor after m_saveObjectList.LoadList");
     m_listGrid = new CPathNode*[CPathSearch::GRID_ACTUALX * CPathSearch::GRID_ACTUALY];
     m_pathSearch = new CPathSearch(m_listGrid);
     m_searchShutdown = FALSE;
@@ -809,12 +811,12 @@ CInfGame::CInfGame()
         m_bSaveScreen = 0;
         m_nAreaFirstObject = 0;
 
+        DBG("CInfGame ctor before m_INISounds.Load");
         m_INISounds.SetFileName(CString("sounds"));
         if (m_INISounds.Load(CString("sounds")) == 0) {
-            // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
-            // __LINE__: 2671
             UTIL_ASSERT_MSG(FALSE, "Problem loading the sounds.ini file!");
         }
+        DBG("CInfGame ctor after m_INISounds.Load");
 
         memset(m_aServerStore, 0, sizeof(m_aServerStore));
         memset(m_nServerStoreDemands, 0, sizeof(m_nServerStoreDemands));
@@ -830,9 +832,12 @@ CInfGame::CInfGame()
         m_bExpansion = FALSE;
         field_4BD6 = FALSE;
 
+        DBG("CInfGame ctor before tSpells.Load");
         C2DArray tSpells;
         tSpells.Load(CResRef(CRuleTables::LISTSPLL));
+        DBG("CInfGame ctor after tSpells.Load");
         m_spells.Load(tSpells, 7);
+        DBG("CInfGame ctor after m_spells.Load");
 
         for (unsigned int spellcasterClassIndex = 0; spellcasterClassIndex < 7; spellcasterClassIndex++) {
             m_spellsByClass[spellcasterClassIndex].Load(tSpells,
@@ -840,6 +845,7 @@ CInfGame::CInfGame()
                 7,
                 NULL);
         }
+        DBG("CInfGame ctor after m_spellsByClass");
 
         C2DArray tDomainSpells;
         tDomainSpells.Load(CResRef(CRuleTables::LISTDOMN));
@@ -850,6 +856,7 @@ CInfGame::CInfGame()
                 9,
                 &m_spells);
         }
+        DBG("CInfGame ctor after m_spellsByDomain");
 
         C2DArray tInnateSpells;
         tInnateSpells.Load(CResRef(CRuleTables::LISTINNT));
@@ -862,9 +869,8 @@ CInfGame::CInfGame()
         C2DArray tShapeshifts;
         tShapeshifts.Load(CResRef(CRuleTables::LISTSHAP));
         m_shapeshifts.Load(tShapeshifts, 0);
+        DBG("CInfGame ctor after innate/songs/shapeshifts");
 
-        // NOTE: The following validation code looks incomplete. Logging stuff
-        // was likely compiled out via debug/release switches.
         CString sError(" ");
         UINT nIndex;
 
@@ -927,6 +933,7 @@ CInfGame::CInfGame()
 
             cSpell.Release();
         }
+        DBG("CInfGame ctor end");
     }
 }
 

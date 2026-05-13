@@ -1,5 +1,7 @@
 #include "CUIControlFactory.h"
 
+#include "debuglog.h"
+
 #include "CBaldurChitin.h"
 #include "CBaldurEngine.h"
 #include "CGameSprite.h"
@@ -4929,13 +4931,16 @@ CUIControlButtonGeneralOptionsFromMainMenu::~CUIControlButtonGeneralOptionsFromM
 void CUIControlButtonGeneralOptionsFromMainMenu::OnLButtonClick(CPoint pt)
 {
     CScreenOptions* pOptions = g_pBaldurChitin->m_pEngineOptions;
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    DBG("CUIControlButtonGeneralOptionsFromMainMenu::OnLButtonClick options=%p game=%p", pOptions, pGame);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\UIControlButtons.cpp
     // __LINE__: 9050
     UTIL_ASSERT(pOptions != NULL);
 
     pOptions->m_bFromMainMenu = TRUE;
-    g_pBaldurChitin->GetObjectGame()->LoadOptions();
+    UTIL_ASSERT(pGame != NULL);
+    pGame->LoadOptions();
     g_pBaldurChitin->m_pEngineConnection->SelectEngine(pOptions);
 }
 

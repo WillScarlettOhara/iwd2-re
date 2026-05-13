@@ -865,9 +865,39 @@ void CBaldurChitin::Init(HINSTANCE hInstance)
     m_pEngineChapter = new CScreenChapter();
     m_pEngineMovies = new CScreenMovies();
     m_pEngineKeymaps = new CScreenKeymaps();
-    DBG("Init: all engines created, initializing connection screen path");
+    DBG("Init: all engines created, initializing menu-only connection path");
 
-    // Skip the intro movie/projector path until projector initialization is stable,
+    // The normal startup path creates the game object up front; menu buttons such as
+    // New Game and Options dereference it immediately from CScreenConnection/UI handlers.
+    m_pObjectGame = new CInfGame();
+    m_pObjectGame->StartSearchThread();
+
+    // Force single-player / null service provider so New Game bypasses DirectPlay.
+    cNetwork.SelectServiceProvider(0);
+
+    AddEngine(m_pEngineDM);
+    AddEngine(m_pEngineProjector);
+    AddEngine(m_pEngineCharacter);
+    AddEngine(m_pEngineCreateChar);
+    AddEngine(m_pEngineInventory);
+    AddEngine(m_pEngineJournal);
+    AddEngine(m_pEngineLoad);
+    AddEngine(m_pEngineMap);
+    AddEngine(m_pEngineOptions);
+    AddEngine(m_pEngineSave);
+    AddEngine(m_pEngineSpellbook);
+    AddEngine(m_pEngineStart);
+    AddEngine(m_pEngineWorld);
+    AddEngine(m_pEngineStore);
+    AddEngine(m_pEngineMultiPlayer);
+    AddEngine(m_pEngineSinglePlayer);
+    AddEngine(m_pEngineConnection);
+    AddEngine(m_pEngineWorldMap);
+    AddEngine(m_pEngineChapter);
+    AddEngine(m_pEngineMovies);
+    AddEngine(m_pEngineKeymaps);
+
+    // Skip the intro movie/projector activation until that path is stable,
     // but still mirror the normal startup path closely enough for UI input/cursor setup.
     m_pObjectCursor->Initialize();
     m_pEngineConnection->m_bShowIntro = FALSE;
@@ -879,9 +909,11 @@ void CBaldurChitin::Init(HINSTANCE hInstance)
     m_pEngineConnection->m_bStartedCountDown = TRUE;
     m_pEngineConnection->m_bAllowInput = TRUE;
 
-    m_pStartingEngine = m_pEngineConnection;
+    // Kick the normal AI/render/input cadence for the menu-only path.
+    m_bAIStale = TRUE;
+    m_bDisplayStale = TRUE;
 
-    AddEngine(m_pEngineConnection);
+    m_pStartingEngine = m_pEngineConnection;
 
     maleURI = "hd0:\\dialog.tlk";
     femaleURI = "hd0:\\dialogf.tlk";
@@ -1037,7 +1069,12 @@ void CBaldurChitin::MainAIThread(void* userInfo)
     SetThreadPriority(m_hMusicThread, nMusicThreadPriority);
 
     int v1 = 0;
+    int vLog = 0;
     while (!m_bExitMainAIThread) {
+        if (vLog < 40) {
+            DBG("CBaldurChitin::MainAIThread loop active=%p aiStale=%d displayStale=%d event=%p", pActiveEngine, (int)g_pChitin->m_bAIStale, (int)g_pChitin->m_bDisplayStale, m_eventTimer);
+            vLog++;
+        }
         if (g_pBaldurChitin->pActiveEngine == g_pBaldurChitin->m_pEngineProjector) {
             if (v1++ == 10) {
                 v1 = 0;
