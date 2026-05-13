@@ -78,7 +78,7 @@ public:
     void OnDoneButtonClick();
     void OnCancelButtonClick();
     void OnJoinGameButtonClick();
-    void sub_5FEB70();
+    void StartProtocolConnection();
     void EnableMainPanel(BOOL bEnable);
     void UpdateMainPanel();
     void UpdateSessionList(CUIPanel* pPanel, DWORD nTextId);

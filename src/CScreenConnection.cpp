@@ -2091,7 +2091,7 @@ void CScreenConnection::OnJoinGameButtonClick()
 }
 
 // 0x5FEB70
-void CScreenConnection::sub_5FEB70()
+void CScreenConnection::StartProtocolConnection()
 {
     CNetwork* pNetwork = &(g_pBaldurChitin->cNetwork);
 
@@ -3200,7 +3200,7 @@ void CScreenConnection::OnErrorButtonClick(INT nButton)
         switch (nButton) {
         case 0:
             DismissPopup();
-            sub_5FEB70();
+            StartProtocolConnection();
             break;
         case 1:
             DismissPopup();
