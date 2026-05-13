@@ -368,10 +368,10 @@ CNamedCreatureVariableHashEntry::CNamedCreatureVariableHashEntry(const CVariable
 }
 
 // 0x550B30
-void CNamedCreatureVariableHashEntry::sub_550B30()
+void CNamedCreatureVariableHashEntry::ClearChain()
 {
     if (m_pNext != NULL) {
-        m_pNext->sub_550B30();
+        m_pNext->ClearChain();
 
         delete m_pNext;
         m_pNext = NULL;
@@ -420,7 +420,7 @@ void CNamedCreatureVariableHash::ClearAll()
         for (int index = 0; index < m_nTableEntries; index++) {
             if (m_hashEntries[index] != NULL) {
                 // NOTE: Uninline.
-                m_hashEntries[index]->sub_550B30();
+                m_hashEntries[index]->ClearChain();
 
                 delete m_hashEntries[index];
                 m_hashEntries[index] = NULL;
@@ -438,7 +438,7 @@ void CNamedCreatureVariableHash::Resize(LONG nSize)
         for (index = nSize; index < m_nTableEntries; index++) {
             if (m_hashEntries[index] != NULL) {
                 // NOTE: Uninline.
-                m_hashEntries[index]->sub_550B30();
+                m_hashEntries[index]->ClearChain();
 
                 delete m_hashEntries[index];
                 m_hashEntries[index] = NULL;
