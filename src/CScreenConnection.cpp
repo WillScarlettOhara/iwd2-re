@@ -319,7 +319,16 @@ void CScreenConnection::EngineActivated()
     }
 
     UpdateMainPanel();
-    g_pBaldurChitin->GetObjectCursor()->SetCursor(0, FALSE);
+    g_pBaldurChitin->GetObjectCursor()->m_bVisible = TRUE;
+    g_pBaldurChitin->GetObjectCursor()->SetCursor(0, TRUE);
+
+    CVidMode* pVidMode = g_pChitin->GetCurrentVideoMode();
+    if (pVidMode != NULL) {
+        pVidMode->m_bPointerEnabled = TRUE;
+        g_pBaldurChitin->m_bPointerUpdated = FALSE;
+        g_pBaldurChitin->GetObjectCursor()->CursorUpdate(pVidMode);
+    }
+
     m_cUIManager.InvalidateRect(NULL);
 
     if (!m_bStartedCountDown && m_nEnumServiceProvidersCountDown == 2) {

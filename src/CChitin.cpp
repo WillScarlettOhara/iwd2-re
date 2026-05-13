@@ -7,6 +7,7 @@
 #include <winver.h>
 
 #include "CAlias.h"
+#include "CBaldurChitin.h"
 #include "CKeyInfo.h"
 #include "CResBinary.h"
 #include "CResBitmap.h"
@@ -154,7 +155,12 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPara
         break;
     case WM_SETCURSOR:
         if (g_pChitin->m_bFullscreen || (LOWORD(lParam) == HTCLIENT && GetFocus())) {
-            SetCursor(NULL);
+            if (g_pBaldurChitin != NULL
+                && g_pBaldurChitin->GetObjectGame() == NULL) {
+                SetCursor(LoadCursorA(NULL, IDC_ARROW));
+            } else {
+                SetCursor(NULL);
+            }
             return 1;
         }
         break;
