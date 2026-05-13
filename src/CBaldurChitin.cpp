@@ -865,38 +865,15 @@ void CBaldurChitin::Init(HINSTANCE hInstance)
     m_pEngineChapter = new CScreenChapter();
     m_pEngineMovies = new CScreenMovies();
     m_pEngineKeymaps = new CScreenKeymaps();
-    DBG("Init: all engines created, returning early");
+    DBG("Init: all engines created, initializing connection screen path");
 
-    // FIXME: Skip remaining Init due to layout issues, but set starting engine
-    m_pStartingEngine = m_pEngineDM;
-    return;
+    // Skip the intro movie/projector path until projector initialization is stable.
+    m_pEngineConnection->field_FA8 = 0;
+    m_pEngineConnection->m_bAllowInput = TRUE;
 
-    m_pObjectGame = new CInfGame();
-    m_pObjectGame->StartSearchThread();
+    m_pStartingEngine = m_pEngineConnection;
 
-    m_pStartingEngine = m_pEngineDM;
-
-    AddEngine(m_pEngineDM);
-    AddEngine(m_pEngineProjector);
-    AddEngine(m_pEngineCharacter);
-    AddEngine(m_pEngineCreateChar);
-    AddEngine(m_pEngineInventory);
-    AddEngine(m_pEngineJournal);
-    AddEngine(m_pEngineLoad);
-    AddEngine(m_pEngineMap);
-    AddEngine(m_pEngineOptions);
-    AddEngine(m_pEngineSave);
-    AddEngine(m_pEngineSpellbook);
-    AddEngine(m_pEngineStart);
-    AddEngine(m_pEngineWorld);
-    AddEngine(m_pEngineStore);
-    AddEngine(m_pEngineMultiPlayer);
-    AddEngine(m_pEngineSinglePlayer);
     AddEngine(m_pEngineConnection);
-    AddEngine(m_pEngineWorldMap);
-    AddEngine(m_pEngineChapter);
-    AddEngine(m_pEngineMovies);
-    AddEngine(m_pEngineKeymaps);
 
     maleURI = "hd0:\\dialog.tlk";
     femaleURI = "hd0:\\dialogf.tlk";

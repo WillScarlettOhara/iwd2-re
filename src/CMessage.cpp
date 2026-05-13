@@ -4960,6 +4960,11 @@ void CMessageHandler::PostAsynchronousUpdate()
         g_pChitin->cGameSpy.sub_4D2210();
     }
 
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    if (pGame == NULL) {
+        return;
+    }
+
     if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
         STRREF strError;
         if (g_pBaldurChitin->GetObjectGame()->m_bAnotherPlayerJoinedGame == TRUE

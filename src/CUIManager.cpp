@@ -158,13 +158,14 @@ void CUIManager::ReorderPanelAfter(DWORD nID1, DWORD nID2)
 void CUIManager::TimerAsynchronousUpdate()
 {
     DWORD nID = -1;
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     if (m_bInitialized) {
         if (field_18) {
             POSITION pos = m_lPanels.GetHeadPosition();
             while (pos != NULL) {
                 CUIPanel* pPanel = m_lPanels.GetNext(pos);
                 if (!pPanel->m_bNeedAsyncUpdate) {
-                    if (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips == INT_MAX && !field_76) {
+                    if (pGame == NULL || (pGame->GetOptions()->m_nTooltips == INT_MAX && !field_76)) {
                         continue;
                     }
 
@@ -232,7 +233,7 @@ void CUIManager::ClearTooltip()
     }
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
-    if (pGame->m_tempCursor == 101) {
+    if (pGame != NULL && pGame->m_tempCursor == 101) {
         pGame->m_tempCursor = 4;
     }
 }
@@ -249,8 +250,9 @@ void CUIManager::OnMouseMove(CPoint pt)
         pCursor->field_A02 = NULL;
     }
 
-    if (g_pBaldurChitin->GetObjectGame()->m_tempCursor == 101) {
-        g_pBaldurChitin->GetObjectGame()->m_tempCursor = 4;
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    if (pGame != NULL && pGame->m_tempCursor == 101) {
+        pGame->m_tempCursor = 4;
     }
 
     if (m_pFocusedControl != NULL && m_nCaptureType != KEYBOARD) {
@@ -457,7 +459,10 @@ void CUIManager::InvalidateCursorRect(const CRect& rect)
 void CUIManager::ForceToolTip()
 {
     field_76 = 1;
-    field_1C = g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nTooltips;
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    if (pGame != NULL) {
+        field_1C = pGame->GetOptions()->m_nTooltips;
+    }
 }
 
 // 0x4D46F0

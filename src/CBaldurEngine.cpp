@@ -558,7 +558,7 @@ void CBaldurEngine::OnPortraitLClick(DWORD nPortrait)
 void CBaldurEngine::UpdateCursorShape(BYTE nCursor)
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
-    g_pBaldurChitin->GetObjectCursor()->SetCursor(pGame->m_tempCursor == 4 ? nCursor : pGame->m_tempCursor, FALSE);
+    g_pBaldurChitin->GetObjectCursor()->SetCursor(pGame == NULL || pGame->m_tempCursor == 4 ? nCursor : pGame->m_tempCursor, FALSE);
 }
 
 // 0x4277C0
