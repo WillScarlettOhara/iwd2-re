@@ -20,7 +20,7 @@ public:
 
     /* 0050 */ RGBQUAD* m_pPalette;
     /* 0054 */ BYTE* m_pTileData;
-    /* 0058 */ CResRef field_58;
+    /* 0058 */ CResRef m_cResRef;
     /* 0060 */ BOOL m_bParsed;
 };
 

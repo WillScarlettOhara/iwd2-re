@@ -73,7 +73,7 @@ int CResTile::Release()
 // 0x5CBD40
 CResRef CResTile::GetResRef()
 {
-    return field_58;
+    return m_cResRef;
 }
 
 // 0x5CBD60
