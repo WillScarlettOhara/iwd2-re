@@ -680,7 +680,7 @@ public:
     BOOLEAN AddInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
     BOOLEAN AddSong(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
     BOOLEAN AddShapeshift(const CResRef& resRef, const unsigned int& a2);
-    BOOLEAN sub_724C40(const unsigned int& a1);
+    BOOLEAN AllocateShapeshiftSlots(const unsigned int& a1);
     BOOLEAN RemoveKnownSpell(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5, const unsigned int& a6);
     BOOLEAN RemoveDomainSpell(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a3, const unsigned int& a4, const unsigned int& a5);
     BOOLEAN RemoveInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
@@ -695,10 +695,10 @@ public:
     BOOLEAN HasInnateSpell(const CResRef& resRef, BOOLEAN a2);
 
     INT GetFeatRank(UINT nFeatNumber);
-    void sub_726330(UINT nFeatNumber, INT nValue);
-    void sub_726570();
+    void SetFeatRank(UINT nFeatNumber, INT nValue);
+    void RefreshCombatFeats();
     INT GetWeaponSlot();
-    void sub_726810(BYTE nWeaponSet);
+    void SetWeaponSet(BYTE nWeaponSet);
     BYTE GetLastSong();
 
     void GetQuickSpell(BYTE buttonNum, CButtonData& buttonData);

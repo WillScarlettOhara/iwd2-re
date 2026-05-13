@@ -106,7 +106,7 @@ public:
     SHORT DetectSecretDoor(CGameDoor* target);
     SHORT FadeToColor();
     SHORT FadeFromColor();
-    SHORT sub_467970();
+    SHORT FadeColorActivate();
     SHORT SpawnPtActivate(CGameSpawning* target);
     SHORT SpawnPtDeactivate(CGameSpawning* target);
     SHORT SpawnPtSpawn(CGameSpawning* target);
@@ -120,15 +120,15 @@ public:
     CAIAction& GetNextAction(CAIAction& action);
     void InsertResponse(CAIResponse& response, BOOL checkCurrentResponse, BOOL clearActions);
 
-    void sub_481890(CRect* r, CArray<CRect*>& ary);
+    void SplitRectIntoGrid(CRect* r, CArray<CRect*>& ary);
     void FireSpell(const CResRef& resRef, CGameObject* target);
     void FireSpellPoint(const CResRef& resRef, const CPoint& ptTarget);
     static CVariable* GetGlobalVariable(const CString& sScope, const CString& sName, int a3);
-    void sub_4530F0(const CAIObjectType& type);
-    void sub_453110(const CAIObjectType& type);
+    void SetAIType342(const CAIObjectType& type);
+    void SetAIType37E(const CAIObjectType& type);
     void SetLastActionReturn(SHORT returnValue);
-    int sub_45B6D0();
-    void sub_45B6E0(const CAIObjectType& type);
+    int GetAICounter58C();
+    void SetAIType3BA(const CAIObjectType& type);
 
     /* 006E */ CAIObjectType m_lAttacker;
     /* 00AA */ LONG m_lAttackStyle;

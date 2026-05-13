@@ -1660,7 +1660,7 @@ SHORT CGameAIBase::FadeFromColor()
 }
 
 // 0x467970
-SHORT CGameAIBase::sub_467970()
+SHORT CGameAIBase::FadeColorActivate()
 {
     CMessageFadeColor* pFadeColor = new CMessageFadeColor(255,
         static_cast<BYTE>(m_curAction.m_dest.x),
@@ -1840,7 +1840,7 @@ CAIAction& CGameAIBase::GetNextAction(CAIAction& action)
 }
 
 // 0x481890
-void CGameAIBase::sub_481890(CRect* r, CArray<CRect*>& ary)
+void CGameAIBase::SplitRectIntoGrid(CRect* r, CArray<CRect*>& ary)
 {
     // TODO: Incomplete.
 }
@@ -1866,13 +1866,13 @@ CVariable* CGameAIBase::GetGlobalVariable(const CString& sScope, const CString& 
 }
 
 // 0x4530F0
-void CGameAIBase::sub_4530F0(const CAIObjectType& type)
+void CGameAIBase::SetAIType342(const CAIObjectType& type)
 {
     field_342.Set(type);
 }
 
 // 0x453110
-void CGameAIBase::sub_453110(const CAIObjectType& type)
+void CGameAIBase::SetAIType37E(const CAIObjectType& type)
 {
     field_37E.Set(type);
 }
@@ -1884,13 +1884,13 @@ void CGameAIBase::SetLastActionReturn(SHORT returnValue)
 }
 
 // 0x45B6D0
-int CGameAIBase::sub_45B6D0()
+int CGameAIBase::GetAICounter58C()
 {
     return field_58C;
 }
 
 // 0x45B6E0
-void CGameAIBase::sub_45B6E0(const CAIObjectType& type)
+void CGameAIBase::SetAIType3BA(const CAIObjectType& type)
 {
     field_3BA.Set(type);
 }

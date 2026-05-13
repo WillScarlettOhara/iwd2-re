@@ -245,8 +245,8 @@ CGameDoor::CGameDoor(CGameArea* pArea, CAreaFileDoorObject* pDoorObject, CAreaPo
         name.m_intValue = m_id;
         pArea->GetNamedCreatures()->AddKey(name);
 
-        sub_481890(&m_rClosedBounding, field_6DA);
-        sub_481890(&m_rOpenBounding, field_6F2);
+        SplitRectIntoGrid(&m_rClosedBounding, field_6DA);
+        SplitRectIntoGrid(&m_rOpenBounding, field_6F2);
 
         field_6EE = NULL;
         field_706 = NULL;

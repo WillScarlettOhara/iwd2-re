@@ -183,7 +183,7 @@ CGameContainer::CGameContainer(CGameArea* pArea, CAreaFileContainer* pContainerO
             pArea->GetNamedCreatures()->AddKey(name);
         }
 
-        sub_481890(&m_rBounding, field_8D6);
+        SplitRectIntoGrid(&m_rBounding, field_8D6);
 
         field_8EA = NULL;
 

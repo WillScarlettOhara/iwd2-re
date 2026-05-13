@@ -1257,7 +1257,7 @@ BOOL CAIObjectType::sub_40D900(const CPoint& pt) const
 }
 
 // 0x40D920
-BOOL CAIObjectType::sub_40D920(const CPoint& pt) const
+BOOL CAIObjectType::IsOver(const CPoint& pt) const
 {
     // NOTE: Jump table at 0x40BA04.
     switch (m_nLocationType) {

@@ -6710,7 +6710,7 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
         field_4C54[nIndex] = pCreature->field_28A[nIndex];
     }
 
-    sub_726570();
+    RefreshCombatFeats();
 
     for (nIndex = 0; nIndex < CGAMESAVECHARACTER_NUM_QUICK_WEAPONS22; nIndex++) {
         InitQuickItemData(pCreature->m_quickWeaponsItemNum[nIndex],
@@ -6888,13 +6888,13 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
         }
     }
 
-    sub_726810(pCreature->m_nWeaponSet);
+    SetWeaponSet(pCreature->m_nWeaponSet);
 
     INT nDruidLevel = m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_DRUID);
     if (nDruidLevel > 0) {
         INT nMaxShapeshifts = pGame->GetRuleTables().GetMaxDruidShapeshifts(m_baseStats, nDruidLevel) - m_shapeshifts.field_14;
         if (nMaxShapeshifts) {
-            sub_724C40(nMaxShapeshifts);
+            AllocateShapeshiftSlots(nMaxShapeshifts);
             m_shapeshifts.AddToSharedCurrentCount(nMaxShapeshifts, FALSE);
         }
     }
@@ -7067,7 +7067,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
         if (m_equipment.m_selectedWeapon >= 43) {
             m_nWeaponSet = (m_equipment.m_selectedWeapon - 43) / 2;
         }
-        sub_726810(m_nWeaponSet);
+        SetWeaponSet(m_nWeaponSet);
     }
 
     for (INT buttonNum = 0; buttonNum < g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetNumQuickWeaponSlots(m_typeAI.m_nClass); buttonNum++) {
@@ -15472,7 +15472,7 @@ BOOLEAN CGameSprite::AddShapeshift(const CResRef& resRef, const unsigned int& a2
 }
 
 // 0x724C40
-BOOLEAN CGameSprite::sub_724C40(const unsigned int& a1)
+BOOLEAN CGameSprite::AllocateShapeshiftSlots(const unsigned int& a1)
 {
     m_shapeshifts.field_14 += a1;
 
@@ -15783,7 +15783,7 @@ INT CGameSprite::GetFeatRank(UINT nFeatNumber)
 }
 
 // 0x726330
-void CGameSprite::sub_726330(UINT nFeatNumber, INT nValue)
+void CGameSprite::SetFeatRank(UINT nFeatNumber, INT nValue)
 {
     if (HasFeat(nFeatNumber)) {
         switch (nFeatNumber) {
@@ -15851,7 +15851,7 @@ void CGameSprite::sub_726330(UINT nFeatNumber, INT nValue)
 }
 
 // 0x726570
-void CGameSprite::sub_726570()
+void CGameSprite::RefreshCombatFeats()
 {
     ITEM_EFFECT effect;
     CGameEffect* pEffect;
@@ -15900,7 +15900,7 @@ INT CGameSprite::GetWeaponSlot()
 }
 
 // 0x726810
-void CGameSprite::sub_726810(BYTE nWeaponSet)
+void CGameSprite::SetWeaponSet(BYTE nWeaponSet)
 {
     // TODO: Incomplete.
 }

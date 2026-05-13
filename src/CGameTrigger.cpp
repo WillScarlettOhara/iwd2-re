@@ -122,7 +122,7 @@ CGameTrigger::CGameTrigger(CGameArea* pArea, CAreaFileTriggerObject* pTriggerObj
             field_628.y = pTriggerObject->field_8C;
         }
 
-        sub_481890(&m_rBounding, field_630);
+        SplitRectIntoGrid(&m_rBounding, field_630);
 
         // FIXME: One assignment is usually enough.
         field_644 = NULL;

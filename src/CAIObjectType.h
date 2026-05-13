@@ -415,7 +415,7 @@ public:
     void AddClass(BYTE nClass);
     BOOL sub_40D8A0(const CPoint& pt) const;
     BOOL sub_40D900(const CPoint& pt) const;
-    BOOL sub_40D920(const CPoint& pt) const;
+    BOOL IsOver(const CPoint& pt) const;
     void SetCenter(const CPoint& pt);
     void SetRadius(int radius);
     void SetRect(const CRect& rect);
