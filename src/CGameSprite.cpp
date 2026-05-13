@@ -1081,7 +1081,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         m_nBounceCounter = 0;
         field_7106 = 0;
 
-        sub_7204C0();
+        LoadSoundEntries();
 
         field_70EE = 0;
         field_7430 = 0;
@@ -9385,7 +9385,7 @@ void CGameSprite::SetModalState(BYTE modalState, BOOL bUpdateToolbar)
 }
 
 // 0x7202E0
-BOOL CGameSprite::sub_7202E0()
+BOOL CGameSprite::CanAct()
 {
     if (g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_cutScene) {
         return FALSE;
@@ -9401,7 +9401,7 @@ void CGameSprite::CheckSequence(BYTE& sequence)
 }
 
 // 0x7204C0
-void CGameSprite::sub_7204C0()
+void CGameSprite::LoadSoundEntries()
 {
     CString animationResRef;
     CMemINI* pINI = &(g_pBaldurChitin->GetObjectGame()->m_INISounds);
@@ -9421,63 +9421,63 @@ void CGameSprite::sub_7204C0()
     pValue = pINI->GetFast(animationResRef, CString("att1"));
     if (pValue != NULL && pValue->GetValue() != "") {
         field_70FB = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att1frame")));
+        ParseSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att1frame")));
 
         pValue = pINI->GetFast(animationResRef, CString("att2"));
         if (pValue != NULL && pValue->GetValue() != "") {
-            sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att2frame")));
+            ParseSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att2frame")));
         }
 
         pValue = pINI->GetFast(animationResRef, CString("att3"));
         if (pValue != NULL && pValue->GetValue() != "") {
-            sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att3frame")));
+            ParseSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att3frame")));
         }
 
         pValue = pINI->GetFast(animationResRef, CString("att4"));
         if (pValue != NULL && pValue->GetValue() != "") {
-            sub_720B50(pValue, pINI->GetFast(animationResRef, CString("att4frame")));
+            ParseSoundEntry(pValue, pINI->GetFast(animationResRef, CString("att4frame")));
         }
     }
 
     pValue = pINI->GetFast(animationResRef, CString("btlcry"));
     if (pValue != NULL && pValue->GetValue() != "") {
         field_70FC = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("btlcryframe")));
+        ParseSoundEntry(pValue, pINI->GetFast(animationResRef, CString("btlcryframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("damage"));
     if (pValue != NULL && pValue->GetValue() != "") {
         field_70FD = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("damageframe")));
+        ParseSoundEntry(pValue, pINI->GetFast(animationResRef, CString("damageframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("death"));
     if (pValue != NULL && pValue->GetValue() != "") {
         field_70FE = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("deathframe")));
+        ParseSoundEntry(pValue, pINI->GetFast(animationResRef, CString("deathframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("fidget"));
     if (pValue != NULL && pValue->GetValue() != "") {
         field_70FF = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("fidgetframe")));
+        ParseSoundEntry(pValue, pINI->GetFast(animationResRef, CString("fidgetframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("selected"));
     if (pValue != NULL && pValue->GetValue() != "") {
         field_7100 = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("selectedframe")));
+        ParseSoundEntry(pValue, pINI->GetFast(animationResRef, CString("selectedframe")));
     }
 
     pValue = pINI->GetFast(animationResRef, CString("fall"));
     if (pValue != NULL && pValue->GetValue() != "") {
         field_7101 = TRUE;
-        sub_720B50(pValue, pINI->GetFast(animationResRef, CString("fallframe")));
+        ParseSoundEntry(pValue, pINI->GetFast(animationResRef, CString("fallframe")));
     }
 }
 
 // 0x720B50
-void CGameSprite::sub_720B50(CMemINIValue* a1, CMemINIValue* a2)
+void CGameSprite::ParseSoundEntry(CMemINIValue* a1, CMemINIValue* a2)
 {
     CString v1;
     CString v2;
@@ -14968,7 +14968,7 @@ CVariableHash* CGameSprite::GetLocalVariables()
 }
 
 // 0x724010
-INT CGameSprite::sub_724010(INT a1)
+INT CGameSprite::GetMaxDexterityBonus(INT a1)
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -14997,7 +14997,7 @@ INT CGameSprite::sub_724010(INT a1)
 }
 
 // 0x7240A0
-INT CGameSprite::sub_7240A0()
+INT CGameSprite::GetArmorCheckPenalty()
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -15063,7 +15063,7 @@ INT CGameSprite::sub_7240A0()
 }
 
 // 0x724170
-INT CGameSprite::sub_724170()
+INT CGameSprite::GetShieldCheckPenalty()
 {
     INT nSlot = 2 * (m_nWeaponSet + 22);
     CItem* pItem = m_equipment.m_items[nSlot];
@@ -15105,7 +15105,7 @@ INT CGameSprite::sub_724170()
 }
 
 // 0x724270
-INT CGameSprite::sub_724270()
+INT CGameSprite::GetShieldSpellFailure()
 {
     INT nSlot = 2 * (m_nWeaponSet + 22);
     CItem* pItem = m_equipment.m_items[nSlot];
@@ -15132,7 +15132,7 @@ INT CGameSprite::sub_724270()
 }
 
 // 0x724360
-INT CGameSprite::sub_724360()
+INT CGameSprite::GetArmorSpellFailure()
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -15163,7 +15163,7 @@ INT CGameSprite::sub_724360()
 // 0x7243F0
 BOOL CGameSprite::CheckAranceFailure(INT nRoll)
 {
-    INT nFailureChance = sub_724430();
+    INT nFailureChance = GetArcaneSpellFailure();
 
     if (nRoll >= nFailureChance) {
         return FALSE;
@@ -15176,7 +15176,7 @@ BOOL CGameSprite::CheckAranceFailure(INT nRoll)
 }
 
 // 0x724430
-int CGameSprite::sub_724430()
+int CGameSprite::GetArcaneSpellFailure()
 {
     INT nMod = 0;
 
@@ -15194,8 +15194,8 @@ int CGameSprite::sub_724430()
 
     INT nFailureChance = m_derivedStats.m_nSpellFailureArcane
         + nMod
-        + sub_724360()
-        + sub_724270();
+        + GetArmorSpellFailure()
+        + GetShieldSpellFailure();
 
     if (HasFeat(CGAMESPRITE_FEAT_ARMORED_ARCANA)) {
         nFailureChance -= 5 * GetFeatValue(CGAMESPRITE_FEAT_ARMORED_ARCANA);
@@ -15245,7 +15245,7 @@ BOOL CGameSprite::CheckDivineFailure(INT nRoll)
 }
 
 // 0x7245D0
-BOOLEAN CGameSprite::sub_7245D0()
+BOOLEAN CGameSprite::IsHelpless()
 {
     return m_derivedStats.m_spellStates[SPLSTATE_HELD]
         || m_derivedStats.m_spellStates[SPLSTATE_HOPELESSNESS]
@@ -15280,7 +15280,7 @@ void CGameSprite::ResetQuickSlots()
 }
 
 // 0x724690
-BOOL CGameSprite::sub_724690(SHORT a1)
+BOOL CGameSprite::HasArmorType(SHORT a1)
 {
     CItem* pItem = m_equipment.m_items[1];
     if (pItem == NULL) {
@@ -15377,7 +15377,7 @@ UINT CGameSprite::GetNumSpells()
 }
 
 // 0x724900
-BOOLEAN CGameSprite::sub_724900()
+BOOLEAN CGameSprite::IsSpellcaster()
 {
     DWORD dwClassMask = GetAIType().m_nClassMask;
 
@@ -15386,7 +15386,7 @@ BOOLEAN CGameSprite::sub_724900()
 }
 
 // 0x724920
-BOOLEAN CGameSprite::sub_724920()
+BOOLEAN CGameSprite::IsBard()
 {
     return (GetAIType().m_nClassMask & CLASSMASK_BARD) != 0;
 }

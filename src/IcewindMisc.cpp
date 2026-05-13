@@ -940,8 +940,8 @@ BOOLEAN IcewindMisc::sub_585DA0(CGameSprite* pSprite)
                || pSprite->HasClassLevel(CAIOBJECTTYPE_C_MONK))
         && (pSprite->GetDerivedStats()->m_generalState & (STATE_DEAD | STATE_HELPLESS | STATE_STUNNED | STATE_SLEEPING)) == 0
         && pSprite->m_nSequence != 5
-        && !pSprite->sub_724690(2)
-        && !pSprite->sub_724690(3);
+        && !pSprite->HasArmorType(2)
+        && !pSprite->HasArmorType(3);
 }
 
 // 0x585E00

@@ -529,10 +529,10 @@ public:
     void DisplayTextRef(STRREF nameRef, STRREF textRef, COLORREF nameColor, COLORREF textColor);
     void GetNumInventoryPersonalSlots(INT& nUsedSlots, INT& nTotalSlots);
     void SetModalState(BYTE modalState, BOOL bUpdateToolbar);
-    BOOL sub_7202E0();
+    BOOL CanAct();
     void CheckSequence(BYTE& sequence);
-    void sub_7204C0();
-    void sub_720B50(CMemINIValue* a1, CMemINIValue* a2);
+    void LoadSoundEntries();
+    void ParseSoundEntry(CMemINIValue* a1, CMemINIValue* a2);
     SHORT FindItemBags(const CString& sName, LONG number, BOOL checkForIdentified);
     SHORT TakeItemBags(const CString& sName, LONG number, SHORT slotNum);
     BOOL HaveUnexportableItems();
@@ -654,18 +654,18 @@ public:
     BOOL GetActive();
     CVariableHash* GetLocalVariables();
 
-    INT sub_724010(INT a1);
-    INT sub_7240A0();
-    INT sub_724170();
-    INT sub_724270();
-    INT sub_724360();
+    INT GetMaxDexterityBonus(INT a1);
+    INT GetArmorCheckPenalty();
+    INT GetShieldCheckPenalty();
+    INT GetShieldSpellFailure();
+    INT GetArmorSpellFailure();
     BOOL CheckAranceFailure(INT nRoll);
-    INT sub_724430();
+    INT GetArcaneSpellFailure();
     BOOL CheckDivineFailure(INT nRoll);
-    BOOLEAN sub_7245D0();
+    BOOLEAN IsHelpless();
     INT GetNextHatedRacesSlot();
     void ResetQuickSlots();
-    BOOL sub_724690(SHORT a1);
+    BOOL HasArmorType(SHORT a1);
 
     // NOTE: See `CGameSpriteSpells` for explanation of the overall ugliness of
     // the following functions.
@@ -673,8 +673,8 @@ public:
     CGameSpriteGroupedSpellList* GetSpells(const BYTE& nClass);
     CGameSpriteSpellList* GetSpellsAtLevel(const BYTE& nClass, const UINT& nLevel);
     UINT GetNumSpells();
-    BOOLEAN sub_724900();
-    BOOLEAN sub_724920();
+    BOOLEAN IsSpellcaster();
+    BOOLEAN IsBard();
     BOOLEAN AddKnownSpell(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5, const unsigned int& a6);
     BOOLEAN AddDomainSpell(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a3, const unsigned int& a4, const unsigned int& a5);
     BOOLEAN AddInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
