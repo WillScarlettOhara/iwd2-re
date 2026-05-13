@@ -37,12 +37,12 @@ public:
     BOOLEAN GetPlayerReady(SHORT nPlayerSlot);
     BOOLEAN GetPlayerReady(PLAYER_ID playerID);
     void SetPlayerReady(PLAYER_ID playerID, BOOLEAN bValue, BOOLEAN bFlush);
-    int sub_518560();
-    void sub_518580(PLAYER_ID playerID, INT characterSlotBeingViewed);
-    void sub_518650();
-    void sub_518660(PLAYER_ID playerID, BOOLEAN a2);
-    void sub_518690();
-    int sub_5186A0();
+    int CountViewedCharacters();
+    void SetViewedCharacter(PLAYER_ID playerID, INT characterSlotBeingViewed);
+    void ClearViewedCharacters();
+    void SetPlayerReady(PLAYER_ID playerID, BOOLEAN a2);
+    void ClearPlayerReady();
+    int CountReadyPlayers();
     INT GetCharacterControlledByPlayer(INT nCharacterSlot);
     void SetCharacterControlledByPlayer(INT nCharacterSlot, INT nPlayerSlot, BOOLEAN bFlush, BOOLEAN bCharacterUpdate);
     BOOLEAN GetCharacterReady(INT nCharacterSlot);

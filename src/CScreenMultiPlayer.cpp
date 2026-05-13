@@ -942,7 +942,7 @@ void CScreenMultiPlayer::DismissPopup()
         g_pChitin->GetWnd();
 
         if (g_pBaldurChitin->cImm.field_128) {
-            g_pBaldurChitin->cImm.sub_7C2E10(g_pChitin->GetWnd()->GetSafeHwnd());
+            g_pBaldurChitin->cImm.DeactivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
         }
     }
 }

@@ -130,7 +130,7 @@ void CUIControlEditMultiLine::KillFocus()
     // FIXME: Unused.
     CWnd* pWnd = g_pChitin->GetWnd();
     if (g_pChitin->cImm.field_128) {
-        g_pChitin->cImm.sub_7C2E10(g_pChitin->GetWnd()->GetSafeHwnd());
+        g_pChitin->cImm.DeactivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
         m_pPanel->InvalidateRect(&(m_pPanel->m_rImeSuggestionsFrame));
         m_pPanel->m_rImeSuggestionsFrame.SetRectEmpty();
         m_pPanel->m_pImeSuggestionsFont = NULL;

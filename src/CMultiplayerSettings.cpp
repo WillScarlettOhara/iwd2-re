@@ -602,7 +602,7 @@ void CMultiplayerSettings::SetPlayerReady(PLAYER_ID playerID, BOOLEAN bValue, BO
 }
 
 // 0x518560
-int CMultiplayerSettings::sub_518560()
+int CMultiplayerSettings::CountViewedCharacters()
 {
     int count = 0;
 
@@ -616,7 +616,7 @@ int CMultiplayerSettings::sub_518560()
 }
 
 // 0x518580
-void CMultiplayerSettings::sub_518580(PLAYER_ID playerID, INT characterSlotBeingViewed)
+void CMultiplayerSettings::SetViewedCharacter(PLAYER_ID playerID, INT characterSlotBeingViewed)
 {
     if (characterSlotBeingViewed != -1) {
         LONG nCharacterId = g_pBaldurChitin->GetObjectGame()->GetCharacterId(characterSlotBeingViewed);
@@ -651,7 +651,7 @@ void CMultiplayerSettings::sub_518580(PLAYER_ID playerID, INT characterSlotBeing
 }
 
 // 0x518650
-void CMultiplayerSettings::sub_518650()
+void CMultiplayerSettings::ClearViewedCharacters()
 {
     for (int index = 0; index < 6; index++) {
         field_AC[index] = -1;
@@ -659,14 +659,14 @@ void CMultiplayerSettings::sub_518650()
 }
 
 // 0x518660
-void CMultiplayerSettings::sub_518660(PLAYER_ID playerID, BOOLEAN a2)
+void CMultiplayerSettings::SetPlayerReady(PLAYER_ID playerID, BOOLEAN a2)
 {
     INT nPlayerSlot = g_pChitin->cNetwork.FindPlayerLocationByID(playerID, TRUE);
     field_B2[nPlayerSlot] = a2;
 }
 
 // 0x518690
-void CMultiplayerSettings::sub_518690()
+void CMultiplayerSettings::ClearPlayerReady()
 {
     for (int index = 0; index < 6; index++) {
         field_B2[index] = FALSE;
@@ -674,7 +674,7 @@ void CMultiplayerSettings::sub_518690()
 }
 
 // 0x5186A0
-int CMultiplayerSettings::sub_5186A0()
+int CMultiplayerSettings::CountReadyPlayers()
 {
     int count = 0;
 
@@ -1014,7 +1014,7 @@ void CMultiplayerSettings::OnDropPlayer(PLAYER_ID idDroppedPlayer)
             }
         }
 
-        sub_518580(idDroppedPlayer, -1);
+        SetViewedCharacter(idDroppedPlayer, -1);
     }
 }
 

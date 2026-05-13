@@ -34,17 +34,17 @@ void CImm::OnComposition(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     if ((lParam & GCS_RESULTSTR) != 0) {
         if ((lParam & GCS_RESULTCLAUSE) != 0) {
-            sub_7C27D0(hWnd, TRUE);
+            ReadResultString(hWnd, TRUE);
         } else {
-            sub_7C27D0(hWnd, FALSE);
+            ReadResultString(hWnd, FALSE);
         }
     } else if ((lParam & GCS_COMPSTR) != 0) {
-        sub_7C2680(hWnd, lParam);
+        ReadCompositionString(hWnd, lParam);
     }
 }
 
 // 0x7C2680
-void CImm::sub_7C2680(HWND hWnd, LPARAM lParam)
+void CImm::ReadCompositionString(HWND hWnd, LPARAM lParam)
 {
     CSingleLock lock(&m_cCriticalSection);
     lock.Lock();
@@ -89,7 +89,7 @@ void CImm::sub_7C2680(HWND hWnd, LPARAM lParam)
 }
 
 // 0x7C27D0
-void CImm::sub_7C27D0(HWND hWnd, BOOL a3)
+void CImm::ReadResultString(HWND hWnd, BOOL a3)
 {
     CSingleLock lock(&m_cCriticalSection);
     lock.Lock();
@@ -237,7 +237,7 @@ CString CImm::ParseCandidateList(LPCANDIDATELIST lpCandidateList)
 }
 
 // 0x7C2CC0
-void CImm::sub_7C2CC0(HWND hWnd)
+void CImm::ActivateNativeIME(HWND hWnd)
 {
     field_12C = FALSE;
 
@@ -293,7 +293,7 @@ void CImm::sub_7C2CC0(HWND hWnd)
 }
 
 // 0x7C2E10
-void CImm::sub_7C2E10(HWND hWnd)
+void CImm::DeactivateNativeIME(HWND hWnd)
 {
     HIMC hImc = ImmGetContext(hWnd);
     if (hImc != NULL) {
@@ -328,7 +328,7 @@ void CImm::sub_7C2E10(HWND hWnd)
 }
 
 // 0x7C2ED0
-CString CImm::sub_7C2ED0(HWND hWnd)
+CString CImm::GetIMEStatusText(HWND hWnd)
 {
     CString sString("");
 
@@ -372,7 +372,7 @@ CString CImm::sub_7C2ED0(HWND hWnd)
 }
 
 // 0x7C3020
-CRect CImm::sub_7C3020(const CPoint& ptPanel, const CSize& panelSize, const CPoint& ptEdit, const CSize& editSize, SHORT nFontHeight)
+CRect CImm::GetCompositionWindowRect(const CPoint& ptPanel, const CSize& panelSize, const CPoint& ptEdit, const CSize& editSize, SHORT nFontHeight)
 {
     // TODO: Incomplete.
 
@@ -380,19 +380,19 @@ CRect CImm::sub_7C3020(const CPoint& ptPanel, const CSize& panelSize, const CPoi
 }
 
 // 0x7C3140
-void CImm::sub_7C3140(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL bDemanded)
+void CImm::DrawCompositionWindow(const CRect& a1, const CRect& a2, CVidFont* pVidFont, BOOL bDemanded)
 {
     // TODO: Incomplete.
 }
 
 // 0x7C34A0
-CString CImm::sub_7C34A0()
+CString CImm::GetCandidateList()
 {
     return m_sCandidateList;
 }
 
 // 0x7C34D0
-CString CImm::sub_7C34D0()
+CString CImm::GetCompositionString()
 {
     return field_134;
 }
@@ -410,7 +410,7 @@ void CImm::CleanUp()
 // NOTE: Odd location.
 //
 // 0x4D89E0
-CString CImm::sub_4D89E0()
+CString CImm::ConsumeResultString()
 {
     CString v1 = field_130;
     field_130 = "";

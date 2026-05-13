@@ -15894,7 +15894,7 @@ void CMessage103::Run()
         // __LINE__: 30572
         UTIL_ASSERT(m_nCharacterPortraitSlotNumber >= -1 && m_nCharacterPortraitSlotNumber < CMultiplayerSettings::MAX_CHARACTERS);
 
-        pGame->GetMultiplayerSettings()->sub_518580(m_idPlayer, m_nCharacterPortraitSlotNumber);
+        pGame->GetMultiplayerSettings()->SetViewedCharacter(m_idPlayer, m_nCharacterPortraitSlotNumber);
     }
 }
 
@@ -16025,7 +16025,7 @@ void CMessage120::Run()
         // __LINE__: 30686
         UTIL_ASSERT(pGame != NULL);
 
-        pGame->GetMultiplayerSettings()->sub_518660(m_idPlayer, field_10);
+        pGame->GetMultiplayerSettings()->SetPlayerReady(m_idPlayer, field_10);
     }
 }
 

@@ -319,7 +319,7 @@ void CScreenInventory::EngineActivated()
             g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
         } else {
             if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
-                g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->sub_518580(g_pChitin->cNetwork.m_idLocalPlayer,
+                g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->SetViewedCharacter(g_pChitin->cNetwork.m_idLocalPlayer,
                     m_nSelectedCharacter);
             }
         }
@@ -366,7 +366,7 @@ void CScreenInventory::EngineDeactivated()
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     } else {
         if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
-            g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->sub_518580(g_pChitin->cNetwork.m_idLocalPlayer,
+            g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->SetViewedCharacter(g_pChitin->cNetwork.m_idLocalPlayer,
                 -1);
         }
     }
@@ -875,7 +875,7 @@ void CScreenInventory::OnPortraitLClick(DWORD nPortrait)
             g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
         } else {
             if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
-                g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->sub_518580(g_pChitin->cNetwork.m_idLocalPlayer,
+                g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->SetViewedCharacter(g_pChitin->cNetwork.m_idLocalPlayer,
                     m_nSelectedCharacter);
             }
         }
