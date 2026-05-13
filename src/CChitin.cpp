@@ -247,7 +247,7 @@ CChitin::CChitin()
 
     InitializeCriticalSection(&field_2FC);
     InitializeCriticalSection(&field_32C);
-    InitializeCriticalSection(&field_314);
+    InitializeCriticalSection(&m_critSectDimm);
     InitializeCriticalSection(&field_344);
     InitializeCriticalSection(&field_C4);
     InitializeCriticalSection(&field_35C);
@@ -322,7 +322,7 @@ CChitin::~CChitin()
 
     DeleteCriticalSection(&field_2FC);
     DeleteCriticalSection(&field_32C);
-    DeleteCriticalSection(&field_314);
+    DeleteCriticalSection(&m_critSectDimm);
     DeleteCriticalSection(&field_C4);
     DeleteCriticalSection(&field_35C);
 

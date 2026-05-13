@@ -511,7 +511,7 @@ void* CDimm::InternalDemand(CRes* pRes)
         return pRes->m_pData;
     }
 
-    EnterCriticalSection(&(g_pChitin->field_314));
+    EnterCriticalSection(&(g_pChitin->m_critSectDimm));
 
     if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x10) != 0) {
         field_0 = 1;
@@ -523,7 +523,7 @@ void* CDimm::InternalDemand(CRes* pRes)
         field_8--;
         field_0 = 0;
         field_4 = 0;
-        LeaveCriticalSection(&(g_pChitin->field_314));
+        LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
 
         EnterCriticalSection(&(g_pChitin->field_2FC));
         if (field_270 == pRes) {
@@ -545,7 +545,7 @@ void* CDimm::InternalDemand(CRes* pRes)
     } else if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0) {
         field_8--;
         field_4 = 0;
-        LeaveCriticalSection(&(g_pChitin->field_314));
+        LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
 
         if (pRes != NULL) {
             if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0
@@ -568,7 +568,7 @@ void* CDimm::InternalDemand(CRes* pRes)
 
         field_8--;
         field_4 = 0;
-        LeaveCriticalSection(&(g_pChitin->field_314));
+        LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
 
         EnterCriticalSection(&(g_pChitin->field_2FC));
         if (field_270 == pRes) {
@@ -1872,9 +1872,9 @@ BOOL CDimm::RemoveFromDirectoryList(const CString& sDirName, BOOL bRescan)
 
     if (m_cKeyTable.m_bInitialized) {
         if (bRescan) {
-            EnterCriticalSection(&(g_pChitin->field_314));
+            EnterCriticalSection(&(g_pChitin->m_critSectDimm));
             m_cKeyTable.RescanEverything();
-            LeaveCriticalSection(&(g_pChitin->field_314));
+            LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
         }
     }
 
@@ -2507,7 +2507,7 @@ void CDimm::Update()
         field_4 = 1;
 
         while (bContinue && !g_pChitin->m_bExitRSThread && !field_0 && !bStop) {
-            EnterCriticalSection(&(g_pChitin->field_314));
+            EnterCriticalSection(&(g_pChitin->m_critSectDimm));
 
             DWORD nBytesRead = 0;
             if (field_CE != NULL) {
@@ -2516,7 +2516,7 @@ void CDimm::Update()
                 nBytesRead = field_D2;
             }
 
-            LeaveCriticalSection(&(g_pChitin->field_314));
+            LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
 
             EnterCriticalSection(&(g_pChitin->field_2FC));
 
@@ -2537,11 +2537,11 @@ void CDimm::Update()
                     pRes = static_cast<CRes*>(m_lRequestedHigh.GetHead());
                     field_274 = pRes;
                     LeaveCriticalSection(&(g_pChitin->field_2FC));
-                    EnterCriticalSection(&(g_pChitin->field_314));
+                    EnterCriticalSection(&(g_pChitin->m_critSectDimm));
                     if (field_274 == pRes) {
                         ServiceRequest(pRes, 310048 - nBytesRead);
                     }
-                    LeaveCriticalSection(&(g_pChitin->field_314));
+                    LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
                     EnterCriticalSection(&(g_pChitin->field_2FC));
                     nBytesRead += field_D2;
                     if (field_274 == pRes) {
@@ -2559,11 +2559,11 @@ void CDimm::Update()
                     pRes = static_cast<CRes*>(m_lRequestedMedium.GetHead());
                     field_274 = pRes;
                     LeaveCriticalSection(&(g_pChitin->field_2FC));
-                    EnterCriticalSection(&(g_pChitin->field_314));
+                    EnterCriticalSection(&(g_pChitin->m_critSectDimm));
                     if (field_274 == pRes) {
                         ServiceRequest(pRes, 310048 - nBytesRead);
                     }
-                    LeaveCriticalSection(&(g_pChitin->field_314));
+                    LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
                     EnterCriticalSection(&(g_pChitin->field_2FC));
                     nBytesRead += field_D2;
                     if (field_274 == pRes) {
@@ -2581,11 +2581,11 @@ void CDimm::Update()
                     pRes = static_cast<CRes*>(m_lRequestedLow.GetHead());
                     field_274 = pRes;
                     LeaveCriticalSection(&(g_pChitin->field_2FC));
-                    EnterCriticalSection(&(g_pChitin->field_314));
+                    EnterCriticalSection(&(g_pChitin->m_critSectDimm));
                     if (field_274 == pRes) {
                         ServiceRequest(pRes, 310048 - nBytesRead);
                     }
-                    LeaveCriticalSection(&(g_pChitin->field_314));
+                    LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
                     EnterCriticalSection(&(g_pChitin->field_2FC));
                     nBytesRead += field_D2;
                     if (field_274 == pRes) {

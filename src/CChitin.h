@@ -215,7 +215,7 @@ public:
     /* 02F4 */ int field_2F4;
     /* 02F8 */ HANDLE m_eventTimer;
     /* 02FC */ CRITICAL_SECTION field_2FC;
-    /* 0314 */ CRITICAL_SECTION field_314;
+    /* 0314 */ CRITICAL_SECTION m_critSectDimm;
     /* 032C */ CRITICAL_SECTION field_32C;
     /* 0344 */ CRITICAL_SECTION field_344;
     /* 035C */ CRITICAL_SECTION field_35C;
