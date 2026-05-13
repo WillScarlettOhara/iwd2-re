@@ -15626,7 +15626,7 @@ BOOLEAN CGameSprite::SubtractFromInnateSpellCount(const CResRef& resRef, const u
 // FIXME: `dwClassMask` should not be reference.
 //
 // 0x725330
-BOOLEAN CGameSprite::sub_725330(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4)
+BOOLEAN CGameSprite::HasSpell(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4)
 {
     BOOLEAN v1 = FALSE;
     UINT nStartLevel = 0;
@@ -15698,7 +15698,7 @@ BOOLEAN CGameSprite::sub_725330(const CResRef& resRef, const DWORD& dwClassMask,
 }
 
 // 0x7256B0
-BOOLEAN CGameSprite::sub_7256B0(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3)
+BOOLEAN CGameSprite::HasDomainSpell(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3)
 {
     BOOLEAN v1 = FALSE;
     UINT nStartLevel = 0;
@@ -15737,7 +15737,7 @@ BOOLEAN CGameSprite::sub_7256B0(const CResRef& resRef, const UINT& nLevel, BOOLE
 }
 
 // 0x725840
-BOOLEAN CGameSprite::sub_725840(const CResRef& resRef, BOOLEAN a2)
+BOOLEAN CGameSprite::HasInnateSpell(const CResRef& resRef, BOOLEAN a2)
 {
     UINT nID;
     if (!g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Find(resRef, nID)) {

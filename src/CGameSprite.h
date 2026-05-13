@@ -690,9 +690,9 @@ public:
     BOOLEAN SubtractFromDomainSpellCount(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5);
     BOOLEAN AddToInnateSpellCount(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3);
     BOOLEAN SubtractFromInnateSpellCount(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3);
-    BOOLEAN sub_725330(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4);
-    BOOLEAN sub_7256B0(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3);
-    BOOLEAN sub_725840(const CResRef& resRef, BOOLEAN a2);
+    BOOLEAN HasSpell(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4);
+    BOOLEAN HasDomainSpell(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3);
+    BOOLEAN HasInnateSpell(const CResRef& resRef, BOOLEAN a2);
 
     INT GetFeatRank(UINT nFeatNumber);
     void sub_726330(UINT nFeatNumber, INT nValue);
