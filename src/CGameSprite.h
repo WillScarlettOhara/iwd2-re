@@ -697,7 +697,7 @@ public:
     INT GetFeatRank(UINT nFeatNumber);
     void sub_726330(UINT nFeatNumber, INT nValue);
     void sub_726570();
-    INT sub_726800();
+    INT GetWeaponSlot();
     void sub_726810(BYTE nWeaponSet);
     BYTE GetLastSong();
 

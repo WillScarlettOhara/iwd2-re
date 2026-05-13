@@ -1941,7 +1941,7 @@ BOOL CGameEffectColorChange::ApplyEffect(CGameSprite* pSprite)
 {
     pSprite->m_hasColorRangeEffects = TRUE;
 
-    if (m_slotNum == pSprite->sub_726800()
+    if (m_slotNum == pSprite->GetWeaponSlot()
         && (m_dwFlags & 0xF0) == CGameAnimationType::RANGE_WEAPON) {
         m_dwFlags &= 0xF;
         m_dwFlags |= CGameAnimationType::RANGE_SHIELD;
@@ -1990,7 +1990,7 @@ CGameEffect* CGameEffectColorGlowSolid::Copy()
 // 0x4A6D30
 BOOL CGameEffectColorGlowSolid::ApplyEffect(CGameSprite* pSprite)
 {
-    if (m_slotNum == pSprite->sub_726800()
+    if (m_slotNum == pSprite->GetWeaponSlot()
         && (m_dwFlags & 0xF0) == CGameAnimationType::RANGE_WEAPON) {
         m_dwFlags &= 0xF;
         m_dwFlags |= CGameAnimationType::RANGE_SHIELD;
@@ -2052,7 +2052,7 @@ BOOL CGameEffectColorGlowPulse::ApplyEffect(CGameSprite* pSprite)
     WORD range = m_dwFlags & 0xFFFF;
     WORD period = (m_dwFlags >> 16) & 0xFFFF;
 
-    if (m_slotNum == pSprite->sub_726800()
+    if (m_slotNum == pSprite->GetWeaponSlot()
         && (range & 0xF0) == CGameAnimationType::RANGE_WEAPON) {
         range &= 0xF;
         range |= CGameAnimationType::RANGE_SHIELD;
@@ -4156,7 +4156,7 @@ CGameEffect* CGameEffectColorTintSolid::Copy()
 // 0x4A7000
 BOOL CGameEffectColorTintSolid::ApplyEffect(CGameSprite* pSprite)
 {
-    if (m_slotNum == pSprite->sub_726800()
+    if (m_slotNum == pSprite->GetWeaponSlot()
         && (m_dwFlags & 0xF0) == CGameAnimationType::RANGE_WEAPON) {
         m_dwFlags &= 0xF;
         m_dwFlags |= CGameAnimationType::RANGE_SHIELD;
@@ -4239,7 +4239,7 @@ CGameEffect* CGameEffectColorLightSolid::Copy()
 // 0x4A71B0
 BOOL CGameEffectColorLightSolid::ApplyEffect(CGameSprite* pSprite)
 {
-    if (m_slotNum == pSprite->sub_726800()
+    if (m_slotNum == pSprite->GetWeaponSlot()
         && (m_dwFlags & 0xF0) == CGameAnimationType::RANGE_WEAPON) {
         m_dwFlags &= 0xF;
         m_dwFlags |= CGameAnimationType::RANGE_SHIELD;

@@ -15894,7 +15894,7 @@ void CGameSprite::sub_726570()
 }
 
 // 0x726800
-INT CGameSprite::sub_726800()
+INT CGameSprite::GetWeaponSlot()
 {
     return 2 * m_nWeaponSet + 44;
 }
