@@ -15561,7 +15561,7 @@ BOOLEAN CGameSprite::RemoveShapeshift(const CResRef& resRef)
 }
 
 // 0x724FD0
-BOOLEAN CGameSprite::sub_724FD0(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
+BOOLEAN CGameSprite::SubtractFromSpellCount(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26177
@@ -15582,7 +15582,7 @@ BOOLEAN CGameSprite::sub_724FD0(const BYTE& nClass, const UINT& nSpellLevel, con
 }
 
 // 0x725110
-BOOLEAN CGameSprite::sub_725110(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
+BOOLEAN CGameSprite::SubtractFromDomainSpellCount(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
     // __LINE__: 26211
@@ -15601,7 +15601,7 @@ BOOLEAN CGameSprite::sub_725110(const UINT& nSpellLevel, const CResRef& resRef, 
 }
 
 // 0x725210
-BOOLEAN CGameSprite::sub_725210(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
+BOOLEAN CGameSprite::AddToInnateSpellCount(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
 {
     UINT nID;
     if (g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Find(resRef, nID) != TRUE) {
@@ -15612,7 +15612,7 @@ BOOLEAN CGameSprite::sub_725210(const CResRef& resRef, const unsigned int& a2, c
 }
 
 // 0x725270
-BOOLEAN CGameSprite::sub_725270(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
+BOOLEAN CGameSprite::SubtractFromInnateSpellCount(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3)
 {
     UINT nID;
     if (g_pBaldurChitin->GetObjectGame()->GetInnateSpells()->Find(resRef, nID) != TRUE) {

@@ -686,10 +686,10 @@ public:
     BOOLEAN RemoveInnateSpell(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
     BOOLEAN RemoveSong(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3, const unsigned int& a4);
     BOOLEAN RemoveShapeshift(const CResRef& resRef);
-    BOOLEAN sub_724FD0(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5);
-    BOOLEAN sub_725110(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5);
-    BOOLEAN sub_725210(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3);
-    BOOLEAN sub_725270(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3);
+    BOOLEAN SubtractFromSpellCount(const BYTE& nClass, const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5);
+    BOOLEAN SubtractFromDomainSpellCount(const UINT& nSpellLevel, const CResRef& resRef, const unsigned int& a4, const unsigned int& a5);
+    BOOLEAN AddToInnateSpellCount(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3);
+    BOOLEAN SubtractFromInnateSpellCount(const CResRef& resRef, const unsigned int& a2, const unsigned int& a3);
     BOOLEAN sub_725330(const CResRef& resRef, const DWORD& dwClassMask, UINT nLevel, BOOLEAN a4);
     BOOLEAN sub_7256B0(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3);
     BOOLEAN sub_725840(const CResRef& resRef, BOOLEAN a2);
