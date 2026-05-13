@@ -10620,7 +10620,7 @@ void CUIControlButtonCharGenFeatsPlusMinus::AdjustValue()
 
                 for (INT nFeat = 0; nFeat < ruleTables.m_tFeats.GetHeight(); nFeat++) {
                     while (pSprite->GetFeatValue(nFeat) > 0) {
-                        if (pSprite->sub_763200(nFeat, 1)) {
+                        if (pSprite->CheckFeatPrerequisites(nFeat, 1)) {
                             break;
                         }
 

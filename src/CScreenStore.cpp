@@ -3103,7 +3103,7 @@ void CScreenStore::StartStore(const CAIObjectType& proprietor, const CAIObjectTy
 
                 if (rc == CGameObjectArray::SUCCESS) {
                     field_5D8 = static_cast<BYTE>(pSprite->GetDerivedStats()->m_nCHR);
-                    field_5D9 = pSprite->sub_763150(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
+                    field_5D9 = pSprite->HasFeat(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
 
                     pGame->GetObjectArray()->ReleaseShare(nCharacterId,
                         CGameObjectArray::THREAD_ASYNCH,
@@ -3128,7 +3128,7 @@ void CScreenStore::StartStore(const CAIObjectType& proprietor, const CAIObjectTy
 
                 if (rc == CGameObjectArray::SUCCESS) {
                     field_5D8 = static_cast<BYTE>(pSprite->GetDerivedStats()->m_nCHR);
-                    field_5D9 = pSprite->sub_763150(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
+                    field_5D9 = pSprite->HasFeat(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND) ? 5 : 0;
 
                     pGame->GetObjectArray()->ReleaseShare(nCharacterId,
                         CGameObjectArray::THREAD_ASYNCH,

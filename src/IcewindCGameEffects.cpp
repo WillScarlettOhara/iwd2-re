@@ -2904,7 +2904,7 @@ CGameEffect* IcewindCGameEffectFeatPowerAttack::Copy()
 // 0x56B790
 BOOL IcewindCGameEffectFeatPowerAttack::ApplyEffect(CGameSprite* pSprite)
 {
-    if (!pSprite->sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)) {
+    if (!pSprite->HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)) {
         return FALSE;
     }
 
@@ -2990,7 +2990,7 @@ CGameEffect* IcewindCGameEffectFeatExpertise::Copy()
 // 0x56B960
 BOOL IcewindCGameEffectFeatExpertise::ApplyEffect(CGameSprite* pSprite)
 {
-    if (!pSprite->sub_763150(CGAMESPRITE_FEAT_EXPERTISE)) {
+    if (!pSprite->HasFeat(CGAMESPRITE_FEAT_EXPERTISE)) {
         return FALSE;
     }
 
@@ -3076,7 +3076,7 @@ CGameEffect* IcewindCGameEffectFeatArterialStrike::Copy()
 // 0x56BB30
 BOOL IcewindCGameEffectFeatArterialStrike::ApplyEffect(CGameSprite* pSprite)
 {
-    if (!pSprite->sub_763150(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
+    if (!pSprite->HasFeat(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
         return FALSE;
     }
 
@@ -3140,7 +3140,7 @@ CGameEffect* IcewindCGameEffectFeatHamstring::Copy()
 // 0x56BC20
 BOOL IcewindCGameEffectFeatHamstring::ApplyEffect(CGameSprite* pSprite)
 {
-    if (!pSprite->sub_763150(CGAMESPRITE_FEAT_HAMSTRING)) {
+    if (!pSprite->HasFeat(CGAMESPRITE_FEAT_HAMSTRING)) {
         return FALSE;
     }
 
@@ -3204,7 +3204,7 @@ CGameEffect* IcewindCGameEffectFeatRapidShot::Copy()
 // 0x56BD10
 BOOL IcewindCGameEffectFeatRapidShot::ApplyEffect(CGameSprite* pSprite)
 {
-    if (!pSprite->sub_763150(CGAMESPRITE_FEAT_RAPID_SHOT)) {
+    if (!pSprite->HasFeat(CGAMESPRITE_FEAT_RAPID_SHOT)) {
         return FALSE;
     }
 

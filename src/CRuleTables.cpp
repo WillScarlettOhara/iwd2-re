@@ -3403,7 +3403,7 @@ INT CRuleTables::GetEncumbranceMod(CGameSprite* pSprite) const
 
     INT nEncMod = atol(m_tEncMod.GetAt(ENCUMBRANCE_MOD_PERCENT, sClass)) + 100;
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_STRONG_BACK)) {
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_STRONG_BACK)) {
         nEncMod += 50;
     }
 

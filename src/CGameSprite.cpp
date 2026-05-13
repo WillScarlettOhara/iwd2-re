@@ -7810,21 +7810,21 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
                 cButtonData.m_bDisplayCount = FALSE;
                 cButtonData.m_count = 0;
 
-                if (!sub_763150(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
+                if (!HasFeat(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
                     cButtonData.m_bDisabled = TRUE;
                 }
             } else if (resRef == CGameSprite::SPIN278) {
                 cButtonData.m_bDisplayCount = FALSE;
                 cButtonData.m_count = 0;
 
-                if (!sub_763150(CGAMESPRITE_FEAT_HAMSTRING)) {
+                if (!HasFeat(CGAMESPRITE_FEAT_HAMSTRING)) {
                     cButtonData.m_bDisabled = TRUE;
                 }
             } else if (resRef == CGameSprite::SPIN279) {
                 cButtonData.m_bDisplayCount = FALSE;
                 cButtonData.m_count = 0;
 
-                if (!sub_763150(CGAMESPRITE_FEAT_RAPID_SHOT)) {
+                if (!HasFeat(CGAMESPRITE_FEAT_RAPID_SHOT)) {
                     cButtonData.m_bDisabled = TRUE;
                 }
             }
@@ -11266,7 +11266,7 @@ void CGameSprite::FeedBack(WORD nFeedBackId, LONG a3, LONG a4, LONG a5, LONG a6,
             CString sText;
             g_pBaldurChitin->GetTlkTable().Fetch(a6, strRes);
             sText.Format(strRes.szText, a3);
-            if (sub_763150(CGAMESPRITE_FEAT_CRIPPLING_STRIKE)) {
+            if (HasFeat(CGAMESPRITE_FEAT_CRIPPLING_STRIKE)) {
                 g_pBaldurChitin->GetTlkTable().Fetch(25070, strRes); // " with Crippling Strike (-1 Str)"
                 sText.Format(strRes.szText, a3);
             }
@@ -11744,7 +11744,7 @@ BOOLEAN CGameSprite::sub_737910(BOOL a1)
 SHORT CGameSprite::GetCriticalHitBonus()
 {
     SHORT nCriticalHitBonus = m_derivedStats.m_nCriticalHitBonus;
-    if (sub_763150(CGAMESPRITE_FEAT_IMPROVED_CRITICAL)) {
+    if (HasFeat(CGAMESPRITE_FEAT_IMPROVED_CRITICAL)) {
         nCriticalHitBonus++;
     }
     return nCriticalHitBonus;
@@ -11946,7 +11946,7 @@ SHORT CGameSprite::sub_73CB10(CItem* curWeapon, const ITEM_ABILITY* curAttack)
     WORD itemType = curWeapon->GetItemType();
     INT mod = cRule.GetAbilityScoreModifier(m_derivedStats.m_nSTR);
 
-    if (sub_763150(CGAMESPRITE_FEAT_WEAPON_FINESSE)
+    if (HasFeat(CGAMESPRITE_FEAT_WEAPON_FINESSE)
         && (itemType == 19 || itemType == 16)) {
         INT nDEXMod = cRule.GetAbilityScoreModifier(m_derivedStats.m_nDEX);
         if (mod < nDEXMod) {
@@ -11954,12 +11954,12 @@ SHORT CGameSprite::sub_73CB10(CItem* curWeapon, const ITEM_ABILITY* curAttack)
         }
     }
 
-    if (sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)
+    if (HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)
         && sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
         mod -= sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK);
     }
 
-    if (sub_763150(CGAMESPRITE_FEAT_EXPERTISE)
+    if (HasFeat(CGAMESPRITE_FEAT_EXPERTISE)
         && sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
         mod -= sub_726270(CGAMESPRITE_FEAT_EXPERTISE);
     }
@@ -13904,7 +13904,7 @@ INT CGameSprite::GetMaxFeatValue(UINT nFeatNumber)
 }
 
 // 0x763150
-BOOL CGameSprite::sub_763150(UINT nFeatNumber)
+BOOL CGameSprite::HasFeat(UINT nFeatNumber)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 29278
@@ -13916,7 +13916,7 @@ BOOL CGameSprite::sub_763150(UINT nFeatNumber)
 
     if (nFeatNumber == CGAMESPRITE_FEAT_CLEAVE) {
         if (m_derivedStats.m_nSTR >= 13) {
-            if (sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)) {
+            if (HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)) {
                 INT nValue = GetFeatValue(CGAMESPRITE_FEAT_CLEAVE);
                 if (nValue == 1 || nValue == 2) {
                     if (m_baseStats.m_attackBase >= 4) {
@@ -13928,11 +13928,11 @@ BOOL CGameSprite::sub_763150(UINT nFeatNumber)
         return FALSE;
     }
 
-    return sub_763200(nFeatNumber, 0);
+    return CheckFeatPrerequisites(nFeatNumber, 0);
 }
 
 // 0x763200
-BOOL CGameSprite::sub_763200(UINT nFeatNumber, INT a2)
+BOOL CGameSprite::CheckFeatPrerequisites(UINT nFeatNumber, INT a2)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 29333
@@ -13994,7 +13994,7 @@ BOOL CGameSprite::sub_763200(UINT nFeatNumber, INT a2)
         return m_typeAI.m_nRace == CAIOBJECTTYPE_R_HUMAN
             || m_typeAI.m_nRace == CAIOBJECTTYPE_R_DWARF;
     case CGAMESPRITE_FEAT_CLEAVE:
-        if (!(nSTR >= 13 && sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK))) {
+        if (!(nSTR >= 13 && HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK))) {
             return FALSE;
         }
 
@@ -14129,106 +14129,106 @@ BOOL CGameSprite::sub_763A40(UINT nFeatNumber, INT a2)
     switch (nFeatNumber) {
     case CGAMESPRITE_FEAT_ARMOR_PROF:
         return m_baseStats.m_featArmorProficiency < CGAMESPRITE_FEAT_MAX_ARMOR_PROFICIENCY_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_ARMORED_ARCANA:
         return m_baseStats.m_featArmoredArcana < CGAMESPRITE_FEAT_MAX_ARMORED_ARCANA_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_CLEAVE:
         return m_baseStats.m_featCleave < CGAMESPRITE_FEAT_MAX_CLEAVE_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXOTIC_BASTARD:
         return m_baseStats.m_featBastardSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_RAGE:
         return m_baseStats.m_featExtraRage < CGAMESPRITE_FEAT_MAX_EXTRA_RAGE_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_SHAPESHIFTING:
         return m_baseStats.m_featExtraShapeshifting < CGAMESPRITE_FEAT_MAX_EXTRA_SHAPESHIFTING_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_SMITING:
         return m_baseStats.m_featExtraSmiting < CGAMESPRITE_FEAT_MAX_EXTRA_SMITING_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_EXTRA_TURNING:
         return m_baseStats.m_featExtraTurning < CGAMESPRITE_FEAT_MAX_EXTRA_TURNING_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_AXE:
         return (m_baseStats.m_featAxe != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featAxe < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_BOW:
         return (m_baseStats.m_featBow != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featBow < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_FLAIL:
         return (m_baseStats.m_featFlail != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featFlail < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_GREATSWORD:
         return (m_baseStats.m_featGreatSword != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featGreatSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_HAMMER:
         return (m_baseStats.m_featHammer != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featHammer < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_LARGESWORD:
         return (m_baseStats.m_featLargeSword != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featLargeSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_POLEARM:
         return (m_baseStats.m_featPolearm != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featPolearm < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_CROSSBOW:
         return (m_baseStats.m_featCrossbow != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featCrossbow < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_MACE:
         return (m_baseStats.m_featMace != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featMace < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_MISSILE:
         return (m_baseStats.m_featMissile != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featMissile < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_QUARTERSTAFF:
         return (m_baseStats.m_featQuarterStaff != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featQuarterStaff < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_SMALLBLADE:
         return (m_baseStats.m_featSmallBlade != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
                    || m_baseStats.m_attackBase >= 4)
             && m_baseStats.m_featSmallBlade < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_ENCHANTMENT:
         return m_baseStats.m_featFocusEnchantment < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_ENCHANTMENT_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_EVOCATION:
         return m_baseStats.m_featFocusEvocation < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_EVOCATION_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_NECROMANCY:
         return m_baseStats.m_featFocusNecromancy < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_NECROMANCY_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_TRANSMUTE:
         return m_baseStats.m_featFocusTransmutation < CGAMESPRITE_FEAT_MAX_SPELL_FOCUS_TRANSMUTATION_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_PENETRATION:
         return m_baseStats.m_featSpellPenetration < CGAMESPRITE_FEAT_MAX_SPELL_PENETRATION_UPGRADE
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_TOUGHNESS:
         return m_baseStats.m_featToughness < CGAMESPRITE_FEAT_TOUGHNESS_MAX_LEVEL
-            && sub_763200(nFeatNumber, 1);
+            && CheckFeatPrerequisites(nFeatNumber, 1);
     }
 
     if ((m_baseStats.m_feats[nFeatNumber >> 5] & (1 << (nFeatNumber & 0x1F))) != 0) {
@@ -14236,7 +14236,7 @@ BOOL CGameSprite::sub_763A40(UINT nFeatNumber, INT a2)
     }
 
     if (a2) {
-        return sub_763200(nFeatNumber, 1);
+        return CheckFeatPrerequisites(nFeatNumber, 1);
     }
 
     return TRUE;
@@ -15197,7 +15197,7 @@ int CGameSprite::sub_724430()
         + sub_724360()
         + sub_724270();
 
-    if (sub_763150(CGAMESPRITE_FEAT_ARMORED_ARCANA)) {
+    if (HasFeat(CGAMESPRITE_FEAT_ARMORED_ARCANA)) {
         nFailureChance -= 5 * GetFeatValue(CGAMESPRITE_FEAT_ARMORED_ARCANA);
     }
 
@@ -15760,7 +15760,7 @@ BOOLEAN CGameSprite::sub_725840(const CResRef& resRef, BOOLEAN a2)
 INT CGameSprite::sub_726270(UINT nFeatNumber)
 {
     INT v1 = 0;
-    if (sub_763150(nFeatNumber)) {
+    if (HasFeat(nFeatNumber)) {
         switch (nFeatNumber) {
         case CGAMESPRITE_FEAT_ARTERIAL_STRIKE:
             v1 = field_4C54[2];
@@ -15785,7 +15785,7 @@ INT CGameSprite::sub_726270(UINT nFeatNumber)
 // 0x726330
 void CGameSprite::sub_726330(UINT nFeatNumber, INT nValue)
 {
-    if (sub_763150(nFeatNumber)) {
+    if (HasFeat(nFeatNumber)) {
         switch (nFeatNumber) {
         case CGAMESPRITE_FEAT_ARTERIAL_STRIKE:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp

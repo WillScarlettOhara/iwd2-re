@@ -5182,7 +5182,7 @@ BOOL CGameEffectBlindness::ApplyEffect(CGameSprite* pSprite)
         AddPortraitIcon(pSprite, 8);
 
         int v1 = -2;
-        if (pSprite->sub_763150(CGAMESPRITE_FEAT_BLIND_FIGHT)) {
+        if (pSprite->HasFeat(CGAMESPRITE_FEAT_BLIND_FIGHT)) {
             v1 = 0;
         }
 

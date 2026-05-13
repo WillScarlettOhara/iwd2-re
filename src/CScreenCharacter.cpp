@@ -2310,12 +2310,12 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
         bHasActiveFeats = TRUE;
     }
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)
         && pDStats->m_spellStates[SPLSTATE_FEAT_ARTERIAL_STRIKE]) {
         UpdateText(pText, "%s", (LPCSTR)FetchString(35774)); // "Arterial Strike"
     }
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_EXPERTISE)
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_EXPERTISE)
         && pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
         UpdateText(pText,
             "%s %d",
@@ -2323,12 +2323,12 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
             pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE));
     }
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_HAMSTRING)
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_HAMSTRING)
         && pDStats->m_spellStates[SPLSTATE_FEAT_HAMSTRING]) {
         UpdateText(pText, "%s", (LPCSTR)FetchString(35787)); // "Hamstring"
     }
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_POWER_ATTACK)
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)
         && pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
         UpdateText(pText,
             "%s %d",
@@ -2336,7 +2336,7 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
             pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK));
     }
 
-    if (pSprite->sub_763150(CGAMESPRITE_FEAT_RAPID_SHOT)
+    if (pSprite->HasFeat(CGAMESPRITE_FEAT_RAPID_SHOT)
         && pDStats->m_spellStates[SPLSTATE_FEAT_RAPID_SHOT]) {
         UpdateText(pText, "%s", (LPCSTR)FetchString(35796)); // "Rapid Shot"
     }
@@ -4717,7 +4717,7 @@ void CScreenCharacter::sub_5F89B0(CGameSprite* pSprite)
     for (INT nFeat = 0; nFeat < ruleTables.m_tFeats.GetHeight(); nFeat++) {
         if (m_storedFeats[nFeat] < pSprite->GetFeatValue(nFeat)) {
             while (pSprite->GetFeatValue(nFeat) > 0) {
-                if (pSprite->sub_763200(nFeat, 1)) {
+                if (pSprite->CheckFeatPrerequisites(nFeat, 1)) {
                     break;
                 }
 
