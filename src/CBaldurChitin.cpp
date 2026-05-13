@@ -873,7 +873,11 @@ void CBaldurChitin::Init(HINSTANCE hInstance)
     m_pObjectGame->StartSearchThread();
 
     // Force single-player / null service provider so New Game bypasses DirectPlay.
-    cNetwork.SelectServiceProvider(0);
+    // SelectServiceProvider(0) fails because m_bServiceProviderEnumerated is FALSE;
+    // set the fields directly so CreateDirectPlayAddress passes in InitializeConnectionToServiceProvider.
+    cNetwork.m_bServiceProviderEnumerated = TRUE;
+    cNetwork.m_bServiceProviderSelected = TRUE;
+    cNetwork.m_nServiceProvider = 0;
 
     AddEngine(m_pEngineDM);
     AddEngine(m_pEngineProjector);

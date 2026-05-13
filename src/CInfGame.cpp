@@ -713,9 +713,9 @@ int CInfGame::dword_8E52F0;
 
 // 0x59CC30
 CInfGame::CInfGame()
-    // FIXME: m_rgbMasterBitmap init crashes due to packing
-    // : m_rgbMasterBitmap(CResRef("MPALETTE"), FALSE, 24)
+    : m_rgbMasterBitmap(CResRef("MPALETTE"), FALSE, 24)
 {
+    DBG("CInfGame ctor start");
     DBG("CInfGame ctor start");
     m_nUniqueAreaID = 0;
     m_nReputation = 0;
@@ -993,7 +993,9 @@ void CInfGame::StartSearchThread()
 // 0x59F540
 void CInfGame::InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace)
 {
+    DBG("InitGame: start");
     m_cVRamPool.AttachSurfaces(g_pBaldurChitin->GetCurrentVideoMode());
+    DBG("InitGame: after AttachSurfaces");
 
     if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
         m_singlePlayerPermissions.SetSinglePermission(CGamePermission::AREA_TRANSITION, TRUE);
@@ -1010,24 +1012,32 @@ void CInfGame::InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
         m_singlePlayerPermissions.SetSinglePermission(CGamePermission::LEADER, TRUE);
     }
 
+    DBG("InitGame: before LoadKeymap");
     LoadKeymap();
+    DBG("InitGame: before LoadOptions");
     LoadOptions();
-
+    DBG("InitGame: before EnginesGameInit");
     g_pBaldurChitin->EnginesGameInit();
+    DBG("InitGame: after EnginesGameInit");
 
     m_cButtonArray.SetState(CInfButtonArray::STATE_NONE, 0);
+    DBG("InitGame: after ButtonArray");
 
     g_pBaldurChitin->GetCurrentVideoMode()->rgbGlobalTint = RGB(255, 255, 255);
+    DBG("InitGame: after rgbGlobalTint");
 
     m_worldTime.m_gameTime = CTimerWorld::TIME_DAY + 1;
     m_worldTime.CheckForTriggerEventPast();
+    DBG("InitGame: after CheckForTriggerEventPast");
 
     g_pBaldurChitin->GetTlkTable().Fetch(16484, m_soundNeedParty);
     g_pBaldurChitin->GetTlkTable().Fetch(15307, m_soundAreaTransitionRefused);
+    DBG("InitGame: after Fetch sounds");
 
     for (BYTE nIndex = 0; nIndex < 6; nIndex++) {
         EnablePortrait(nIndex, FALSE);
     }
+    DBG("InitGame: after EnablePortrait");
 
     m_gameSave.field_1B0 = 0;
     memset(m_gameSave.m_groupInventory, 0, sizeof(m_gameSave.m_groupInventory));
@@ -1043,6 +1053,7 @@ void CInfGame::InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     m_bShowAreaNotes = TRUE;
     m_bTriggerOutline = 0;
     m_bGameLoaded = TRUE;
+    DBG("InitGame: after bGameLoaded");
 
     m_allies.RemoveAll();
     m_familiars.RemoveAll();
@@ -1052,27 +1063,34 @@ void CInfGame::InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     field_4204 = 0;
 
     m_cJournal.ClearAllEntries();
+    DBG("InitGame: after ClearAllEntries");
 
     m_variables.Resize(2048);
     m_namedCreatures.Resize(2048);
     m_variables.ClearAll();
     m_namedCreatures.ClearAll();
+    DBG("InitGame: after variables cleanup");
 
     m_entanglePalette.SetType(CVidPalette::TYPE_RANGE);
     m_entanglePalette.SetRange(0, 54, m_rgbMasterBitmap);
+    DBG("InitGame: after entanglePalette");
 
     m_webHoldPalette.SetType(CVidPalette::TYPE_RANGE);
     m_webHoldPalette.SetRange(0, 65, m_rgbMasterBitmap);
+    DBG("InitGame: after webHoldPalette");
 
     sub_5A0160();
+    DBG("InitGame: after sub_5A0160");
 
     m_nCharacterTerminationSequenceDelay = 0;
 
     m_cMoveList.ClearAll();
     m_cLimboList.ClearAll();
+    DBG("InitGame: after ClearAll lists");
 
     CGameAIGame* pAIGame = new CGameAIGame();
     CAIScript* pScript = new CAIScript(CResRef("BALDUR"));
+    DBG("InitGame: after new CAIScript");
 
     // NOTE: Uninline.
     pAIGame->SetDefaultScript(pScript);
@@ -1080,22 +1098,26 @@ void CInfGame::InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     m_nAIIndex = pAIGame->m_id;
     m_nTimeStop = 0;
     m_nTimeStopCaster = -1;
+    DBG("InitGame: after AI setup");
 
     if (!g_pChitin->cDimm.DirectoryRemoveFiles(m_sTempDir)) {
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
         // __LINE__: 3213
         UTIL_ASSERT_MSG(FALSE, "Could not clean out Temp directory");
     }
+    DBG("InitGame: after DirectoryRemoveFiles temp");
 
     if (!g_pChitin->cDimm.DirectoryRemoveFiles(m_sTempSaveDir)) {
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
         // __LINE__: 3215
         UTIL_ASSERT_MSG(FALSE, "Could not clean out TempSave directory");
     }
+    DBG("InitGame: after DirectoryRemoveFiles tempsave");
 
     // TODO: Use loop.
     memset(m_aServerStore, 0, sizeof(m_aServerStore));
     memset(m_nServerStoreDemands, 0, sizeof(m_nServerStoreDemands));
+    DBG("InitGame: end");
 
     dword_8E752C = 0;
 
@@ -2821,8 +2843,11 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
 // 0x5ABA20
 void CInfGame::NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace)
 {
+    DBG("NewGame: START");
     if (!bProgressBarInPlace && bProgressBarRequired == TRUE) {
+        DBG("NewGame: before WaitForEngine");
         WaitForEngine(TRUE);
+        DBG("NewGame: after WaitForEngine");
 
         g_pChitin->SetProgressBar(TRUE,
             9889,
@@ -2859,15 +2884,21 @@ void CInfGame::NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace
         g_pChitin->cDimm.m_cKeyTable.RescanEverything();
     }
 
+    DBG("NewGame: before InitGame");
     InitGame(FALSE, FALSE);
+    DBG("NewGame: after InitGame");
 
     if (bProgressBarInPlace || bProgressBarRequired) {
+        DBG("NewGame: before ProgressBarCallback 1");
         ProgressBarCallback(156250, FALSE);
+        DBG("NewGame: after ProgressBarCallback 1");
     }
 
+    DBG("NewGame: before chapter variable");
     CVariable chapter;
     chapter.SetName(CHAPTER_GLOBAL);
     m_variables.AddKey(chapter);
+    DBG("NewGame: after chapter variable");
 
     m_bFromNewGame = TRUE;
 
@@ -2880,17 +2911,24 @@ void CInfGame::NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace
     g_pBaldurChitin->GetTlkTable().OpenOverride(CString("temp/default.toh"), CString("temp/default.tot"));
 
     if (bProgressBarInPlace || bProgressBarRequired) {
+        DBG("NewGame: before ProgressBarCallback 2");
         ProgressBarCallback(156250, FALSE);
+        DBG("NewGame: after ProgressBarCallback 2");
     }
 
+    DBG("NewGame: before WorldMap SetResRef");
     m_cWorldMap.SetResRef(CResRef("WORLDMAP"));
+    DBG("NewGame: after WorldMap SetResRef");
 
+    DBG("NewGame: before CGameFile");
     CGameFile cGameFile;
     cGameFile.SetResRef(CResRef("ICEWIND2"), TRUE, TRUE);
+    DBG("NewGame: before Unmarshal data=%p size=%d", cGameFile.GetData(), cGameFile.GetDataSize());
 
     Unmarshal(cGameFile.GetData(),
         cGameFile.GetDataSize(),
         bProgressBarInPlace | bProgressBarRequired);
+    DBG("NewGame: after Unmarshal");
 
     m_cOptions.m_nNightmareMode = GetPrivateProfileIntA("Game Options",
         "Nightmare Mode",
