@@ -150,17 +150,23 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPara
             return 0;
         }
 
-        SetCursor(NULL);
+        if (g_pBaldurChitin != NULL
+            && g_pBaldurChitin->GetObjectGame() == NULL) {
+            SetCursor(LoadCursorA(NULL, IDC_ARROW));
+        } else {
+            SetCursor(NULL);
+        }
         g_pChitin->OnAltTab(hWnd, wParam);
         break;
     case WM_SETCURSOR:
+        if (g_pBaldurChitin != NULL
+            && g_pBaldurChitin->GetObjectGame() == NULL) {
+            SetCursor(LoadCursorA(NULL, IDC_ARROW));
+            return 1;
+        }
+
         if (g_pChitin->m_bFullscreen || (LOWORD(lParam) == HTCLIENT && GetFocus())) {
-            if (g_pBaldurChitin != NULL
-                && g_pBaldurChitin->GetObjectGame() == NULL) {
-                SetCursor(LoadCursorA(NULL, IDC_ARROW));
-            } else {
-                SetCursor(NULL);
-            }
+            SetCursor(NULL);
             return 1;
         }
         break;
@@ -971,7 +977,11 @@ BOOL CChitin::InitGraphics()
     DBG("InitGraphics: success");
 
     UpdateWindow(hWnd);
-    SetCursor(NULL);
+    if (g_pBaldurChitin != NULL && g_pBaldurChitin->GetObjectGame() == NULL) {
+        SetCursor(LoadCursorA(NULL, IDC_ARROW));
+    } else {
+        SetCursor(NULL);
+    }
 
     return TRUE;
 }
