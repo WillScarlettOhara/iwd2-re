@@ -379,7 +379,7 @@ void CNamedCreatureVariableHashEntry::ClearChain()
 }
 
 // 0x550CF0
-CNamedCreatureVariableHashEntry* CNamedCreatureVariableHashEntry::sub_550CF0()
+CNamedCreatureVariableHashEntry* CNamedCreatureVariableHashEntry::GetTail()
 {
     CNamedCreatureVariableHashEntry* var = this;
 
@@ -464,7 +464,7 @@ void CNamedCreatureVariableHash::Resize(LONG nSize)
 
                 int hash = Hash(pCurr->m_variable.GetName());
                 if (m_hashEntries[hash] != NULL) {
-                    m_hashEntries[hash]->sub_550CF0()->m_pNext = pCurr;
+                    m_hashEntries[hash]->GetTail()->m_pNext = pCurr;
                 } else {
                     m_hashEntries[hash] = pCurr;
                 }
@@ -509,7 +509,7 @@ BOOL CNamedCreatureVariableHash::AddKey(CVariable& var)
 
     CNamedCreatureVariableHashEntry* pVar = new CNamedCreatureVariableHashEntry(var);
     if (m_hashEntries[hash] != NULL) {
-        m_hashEntries[hash]->sub_550CF0()->m_pNext = pVar;
+        m_hashEntries[hash]->GetTail()->m_pNext = pVar;
     } else {
         m_hashEntries[hash] = pVar;
     }

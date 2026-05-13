@@ -57,7 +57,7 @@ public:
     CNamedCreatureVariableHashEntry(const CVariable& var);
 
     void ClearChain();
-    CNamedCreatureVariableHashEntry* sub_550CF0();
+    CNamedCreatureVariableHashEntry* GetTail();
 
     /* 0000 */ CVariable m_variable;
     /* 0054 */ CNamedCreatureVariableHashEntry* m_pNext;
