@@ -459,7 +459,7 @@ void CScreenSinglePlayer::TimerAsynchronousUpdate()
             renderLock.Unlock();
 
             g_pChitin->m_bDisplayStale = TRUE;
-            pGame->sub_59FA00(TRUE);
+            pGame->WaitForEngine(TRUE);
 
             renderLock.Lock(INFINITE);
 
@@ -1363,7 +1363,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
             }
 
             pGame->m_nTravelScreenImageToUse = rand() % 5;
-            pGame->sub_59FA00(TRUE);
+            pGame->WaitForEngine(TRUE);
 
             LONG nActionTarget = CInfGame::PROGRESSBAR_CACHING_ADDITIONAL
                 + 2 * CInfGame::PROGRESSBAR_GAME_ADDITIONAL;
@@ -1464,7 +1464,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                 g_pChitin->cProgressBar.m_nActionProgress = g_pChitin->cProgressBar.m_nActionTarget - 1;
                 g_pChitin->m_bDisplayStale = TRUE;
 
-                pGame->sub_59FA00(TRUE);
+                pGame->WaitForEngine(TRUE);
 
                 g_pChitin->cProgressBar.m_bTimeoutVisible = TRUE;
                 g_pChitin->cProgressBar.m_nSecondsToTimeout = pMessage->m_dwSignalSecondsToTimeout;
@@ -1569,7 +1569,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                     g_pChitin->cProgressBar.m_nActionProgress = g_pChitin->cProgressBar.m_nActionTarget - 1;
                     g_pChitin->m_bDisplayStale = TRUE;
 
-                    pGame->sub_59FA00(TRUE);
+                    pGame->WaitForEngine(TRUE);
 
                     if (g_pChitin->cNetwork.GetSessionOpen() == TRUE) {
                         pMessage->SendProgressBarStatus(g_pChitin->cProgressBar.m_nActionProgress,
@@ -1628,7 +1628,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                 Sleep(200);
             }
 
-            pGame->sub_59FA00(TRUE);
+            pGame->WaitForEngine(TRUE);
 
             g_pChitin->cProgressBar.m_bTimeoutVisible = FALSE;
             g_pChitin->SetProgressBar(FALSE,

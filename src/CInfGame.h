@@ -129,7 +129,7 @@ public:
     void InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
     void BeginListManipulation(CGameArea* pArea);
     INT EndListManipulation(CGameArea* pArea);
-    void sub_59FA00(BOOL a1);
+    void WaitForEngine(BOOL a1);
     void DestroyGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
     void sub_5A0160();
     LONG CachingRequirements(const CString& areaName);

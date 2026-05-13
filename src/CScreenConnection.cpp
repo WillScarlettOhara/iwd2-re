@@ -1756,7 +1756,7 @@ void CScreenConnection::OnDoneButtonClick()
                 }
 
                 g_pChitin->m_bDisplayStale = TRUE;
-                g_pBaldurChitin->GetObjectGame()->sub_59FA00(TRUE);
+                g_pBaldurChitin->GetObjectGame()->WaitForEngine(TRUE);
 
                 renderLock.Lock(INFINITE);
 
@@ -1919,7 +1919,7 @@ void CScreenConnection::OnDoneButtonClick()
         renderLock.Unlock();
 
         g_pChitin->m_bDisplayStale = TRUE;
-        g_pBaldurChitin->GetObjectGame()->sub_59FA00(TRUE);
+        g_pBaldurChitin->GetObjectGame()->WaitForEngine(TRUE);
 
         OnJoinGameButtonClick();
     } else if (pPanel->m_nID == 12) {
@@ -1935,7 +1935,7 @@ void CScreenConnection::OnDoneButtonClick()
         renderLock.Unlock();
 
         g_pChitin->m_bDisplayStale = TRUE;
-        g_pBaldurChitin->GetObjectGame()->sub_59FA00(TRUE);
+        g_pBaldurChitin->GetObjectGame()->WaitForEngine(TRUE);
 
         renderLock.Lock(INFINITE);
 
@@ -3664,7 +3664,7 @@ void CScreenConnection::AutoStartConnect()
 
         g_pChitin->m_bDisplayStale = TRUE;
 
-        g_pBaldurChitin->GetObjectGame()->sub_59FA00(TRUE);
+        g_pBaldurChitin->GetObjectGame()->WaitForEngine(TRUE);
 
         renderLock.Lock();
         if (pNetwork->m_bConnectionInitialized == TRUE) {
@@ -3716,7 +3716,7 @@ void CScreenConnection::AutoStartDirectPlayLobby()
 
         g_pChitin->m_bDisplayStale = TRUE;
 
-        g_pBaldurChitin->GetObjectGame()->sub_59FA00(TRUE);
+        g_pBaldurChitin->GetObjectGame()->WaitForEngine(TRUE);
 
         CMultiplayerSettings* pSettings = g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings();
         pSettings->InitializeSettings();

@@ -1118,7 +1118,7 @@ INT CInfGame::EndListManipulation(CGameArea* pArea)
 }
 
 // 0x59FA00
-void CInfGame::sub_59FA00(BOOL a1)
+void CInfGame::WaitForEngine(BOOL a1)
 {
     CGameArea* pArea = GetVisibleArea();
     if (pArea != NULL) {
@@ -1173,7 +1173,7 @@ void CInfGame::DestroyGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInP
 
     if (!bProgressBarInPlace) {
         if (bProgressBarRequired == TRUE) {
-            sub_59FA00(TRUE);
+            WaitForEngine(TRUE);
             g_pChitin->SetProgressBar(TRUE,
                 11831,
                 0,
@@ -1337,7 +1337,7 @@ void CInfGame::DestroyGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInP
         g_pChitin->cProgressBar.m_nActionProgress = g_pChitin->cProgressBar.m_nActionTarget;
         g_pChitin->cProgressBar.m_bDisableMinibars = TRUE;
         g_pChitin->m_bDisplayStale = TRUE;
-        sub_59FA00(TRUE);
+        WaitForEngine(TRUE);
         g_pChitin->SetProgressBar(FALSE,
             0,
             0,
@@ -1495,7 +1495,7 @@ CGameArea* CInfGame::LoadArea(CString areaName, BYTE nTravelScreenImageToUse, BO
     }
 
     g_pChitin->m_bDisplayStale = TRUE;
-    sub_59FA00(TRUE);
+    WaitForEngine(TRUE);
 
     nTotalCachingRequirements = CachingRequirements(areaName);
     if (bProgressBarRequired == TRUE || nTotalCachingRequirements > 0) {
@@ -1606,7 +1606,7 @@ CGameArea* CInfGame::LoadArea(CString areaName, BYTE nTravelScreenImageToUse, BO
         }
     }
 
-    sub_59FA00(TRUE);
+    WaitForEngine(TRUE);
 
     m_bInLoadArea = TRUE;
 
@@ -1718,7 +1718,7 @@ CGameArea* CInfGame::LoadArea(CString areaName, BYTE nTravelScreenImageToUse, BO
             g_pChitin->cProgressBar.m_nActionProgress = g_pChitin->cProgressBar.m_nActionTarget;
             g_pChitin->cProgressBar.m_bDisableMinibars = TRUE;
             g_pChitin->m_bDisplayStale = TRUE;
-            sub_59FA00(TRUE);
+            WaitForEngine(TRUE);
             g_pChitin->SetProgressBar(FALSE,
                 0,
                 0,
@@ -1890,7 +1890,7 @@ void CInfGame::ProgressBarCallback(DWORD dwSize, BOOLEAN bInitialize)
         g_pChitin->cDimm.field_4 = 1;
         SleepEx(25, TRUE);
 
-        sub_59FA00(FALSE);
+        WaitForEngine(FALSE);
     }
 }
 
@@ -2641,7 +2641,7 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     dword_8E52F0 = 0;
 
     if (!bProgressBarInPlace && bProgressBarRequired == TRUE) {
-        sub_59FA00(TRUE);
+        WaitForEngine(TRUE);
         g_pChitin->SetProgressBar(TRUE,
             9888,
             0,
@@ -2791,7 +2791,7 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
         g_pChitin->cProgressBar.m_bDisableMinibars = TRUE;
 
         g_pChitin->m_bDisplayStale = TRUE;
-        sub_59FA00(TRUE);
+        WaitForEngine(TRUE);
 
         g_pChitin->SetProgressBar(FALSE,
             0,
@@ -2815,7 +2815,7 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
 void CInfGame::NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace)
 {
     if (!bProgressBarInPlace && bProgressBarRequired == TRUE) {
-        sub_59FA00(TRUE);
+        WaitForEngine(TRUE);
 
         g_pChitin->SetProgressBar(TRUE,
             9889,
@@ -2918,7 +2918,7 @@ void CInfGame::NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace
         g_pChitin->cProgressBar.m_bDisableMinibars = TRUE;
         g_pChitin->m_bDisplayStale = TRUE;
 
-        sub_59FA00(TRUE);
+        WaitForEngine(TRUE);
 
         g_pChitin->SetProgressBar(FALSE,
             0,

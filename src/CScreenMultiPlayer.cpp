@@ -543,7 +543,7 @@ void CScreenMultiPlayer::TimerAsynchronousUpdate()
             renderLock.Unlock();
 
             g_pChitin->m_bDisplayStale = TRUE;
-            pGame->sub_59FA00(TRUE);
+            pGame->WaitForEngine(TRUE);
 
             renderLock.Lock(INFINITE);
 
