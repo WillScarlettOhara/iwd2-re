@@ -609,7 +609,7 @@ public:
     INT GetMaxFeatValue(UINT nFeatNumber);
     BOOL HasFeat(UINT nFeatNumber);
     BOOL CheckFeatPrerequisites(UINT nFeatNumber, INT a2);
-    BOOL sub_763A40(UINT nFeatNumber, INT a2);
+    BOOL CanSelectFeat(UINT nFeatNumber, INT a2);
     int GetExtraFeats(BYTE nClass);
     int GetExtraSkillPoints(BYTE nClass);
     void SetSkillValue(UINT iSkillNumber, INT iSkillValue);

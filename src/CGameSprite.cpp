@@ -14120,7 +14120,7 @@ BOOL CGameSprite::CheckFeatPrerequisites(UINT nFeatNumber, INT a2)
 }
 
 // 0x763A40
-BOOL CGameSprite::sub_763A40(UINT nFeatNumber, INT a2)
+BOOL CGameSprite::CanSelectFeat(UINT nFeatNumber, INT a2)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 29873

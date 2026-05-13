@@ -2354,7 +2354,7 @@ void CScreenCreateChar::ResetFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
     }
 
     for (m_nTopFeat = 0; m_nTopFeat < CGAMESPRITE_FEAT_NUMFEATS; m_nTopFeat++) {
-        if (pSprite->sub_763A40(m_nTopFeat, 1)) {
+        if (pSprite->CanSelectFeat(m_nTopFeat, 1)) {
             break;
         }
     }
@@ -2365,7 +2365,7 @@ void CScreenCreateChar::ResetFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
 
         UINT nFeatNumber = ruleTables.GetFeatId(nSlot);
 
-        BOOL bEnabled = pSprite->sub_763A40(nFeatNumber, 1);
+        BOOL bEnabled = pSprite->CanSelectFeat(nFeatNumber, 1);
 
         pButton = static_cast<CUIControlButton*>(pPanel->GetControl(nButtonId - 1));
 
@@ -2914,7 +2914,7 @@ void CScreenCreateChar::UpdateFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
         DWORD id = ruleTables.GetFeatId(m_nTopFeat + index);
         CUIControlButton* pButton;
 
-        BOOL bPlusEnabled = pSprite->sub_763A40(id, 1) && m_nExtraFeats > 0;
+        BOOL bPlusEnabled = pSprite->CanSelectFeat(id, 1) && m_nExtraFeats > 0;
 
         pButton = static_cast<CUIControlButton*>(pPanel->GetControl(dwButtonId - 1));
 
@@ -10607,7 +10607,7 @@ void CUIControlButtonCharGenFeatsPlusMinus::AdjustValue()
         INT nValue = pSprite->GetFeatValue(id);
 
         if (bInc) {
-            if (pSprite->sub_763A40(id, 1) && pCreateChar->m_nExtraFeats > 0) {
+            if (pSprite->CanSelectFeat(id, 1) && pCreateChar->m_nExtraFeats > 0) {
                 pSprite->SetFeatValue(id, nValue + 1);
                 pCreateChar->m_nExtraFeats--;
             }
@@ -10793,7 +10793,7 @@ BOOL CUIControlButtonCharGenFeatsCircle::Render(BOOL bForce)
     INT nMaxValue = pSprite->GetMaxFeatValue(nFeatNumber);
     INT nKnobValue = nFirstID - m_nID + 4;
 
-    if ((nValue > 0 || pSprite->sub_763A40(nFeatNumber, 1))
+    if ((nValue > 0 || pSprite->CanSelectFeat(nFeatNumber, 1))
         && nKnobValue < nMaxValue) {
         CRect rControlRect(m_pPanel->m_ptOrigin + m_ptOrigin,
             m_size);

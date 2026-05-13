@@ -6896,7 +6896,7 @@ void CUIControlButtonCharacterFeatsPlusMinus::AdjustValue()
         INT nValue = pSprite->GetFeatValue(id);
 
         if (bInc) {
-            if (pSprite->sub_763A40(id, 1) && pCharacter->m_nExtraFeats > 0) {
+            if (pSprite->CanSelectFeat(id, 1) && pCharacter->m_nExtraFeats > 0) {
                 pSprite->SetFeatValue(id, nValue + 1);
                 pCharacter->m_nExtraFeats--;
             }
@@ -7054,7 +7054,7 @@ BOOL CUIControlButtonCharacterFeatsCircle::Render(BOOL bForce)
     INT nMaxValue = pSprite->GetMaxFeatValue(nFeatNumber);
     INT nKnobValue = nFirstID - m_nID + 4;
 
-    if ((nValue > 0 || pSprite->sub_763A40(nFeatNumber, 1))
+    if ((nValue > 0 || pSprite->CanSelectFeat(nFeatNumber, 1))
         && nKnobValue < nMaxValue) {
         CRect rControlRect(m_pPanel->m_ptOrigin + m_ptOrigin,
             m_size);
