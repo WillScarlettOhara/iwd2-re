@@ -694,7 +694,7 @@ public:
     BOOLEAN sub_7256B0(const CResRef& resRef, const UINT& nLevel, BOOLEAN a3);
     BOOLEAN sub_725840(const CResRef& resRef, BOOLEAN a2);
 
-    INT sub_726270(UINT nFeatNumber);
+    INT GetFeatRank(UINT nFeatNumber);
     void sub_726330(UINT nFeatNumber, INT nValue);
     void sub_726570();
     INT sub_726800();

@@ -2299,9 +2299,9 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
 
     BOOL bHasActiveFeats = FALSE;
     if (pDStats->m_spellStates[SPLSTATE_FEAT_ARTERIAL_STRIKE]
-        || pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0
+        || pSprite->GetFeatRank(CGAMESPRITE_FEAT_EXPERTISE) > 0
         || pDStats->m_spellStates[SPLSTATE_FEAT_HAMSTRING]
-        || pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0
+        || pSprite->GetFeatRank(CGAMESPRITE_FEAT_POWER_ATTACK) > 0
         || pDStats->m_spellStates[SPLSTATE_FEAT_RAPID_SHOT]) {
         UpdateTextForceColor(pText,
             RGB(200, 200, 0),
@@ -2316,11 +2316,11 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
     }
 
     if (pSprite->HasFeat(CGAMESPRITE_FEAT_EXPERTISE)
-        && pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
+        && pSprite->GetFeatRank(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
         UpdateText(pText,
             "%s %d",
             (LPCSTR)FetchString(35785), // "Expertise"
-            pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE));
+            pSprite->GetFeatRank(CGAMESPRITE_FEAT_EXPERTISE));
     }
 
     if (pSprite->HasFeat(CGAMESPRITE_FEAT_HAMSTRING)
@@ -2329,11 +2329,11 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
     }
 
     if (pSprite->HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)
-        && pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
+        && pSprite->GetFeatRank(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
         UpdateText(pText,
             "%s %d",
             (LPCSTR)FetchString(35794), // "Power Attack"
-            pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK));
+            pSprite->GetFeatRank(CGAMESPRITE_FEAT_POWER_ATTACK));
     }
 
     if (pSprite->HasFeat(CGAMESPRITE_FEAT_RAPID_SHOT)

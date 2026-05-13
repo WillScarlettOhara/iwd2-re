@@ -11955,13 +11955,13 @@ SHORT CGameSprite::sub_73CB10(CItem* curWeapon, const ITEM_ABILITY* curAttack)
     }
 
     if (HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)
-        && sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
-        mod -= sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK);
+        && GetFeatRank(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
+        mod -= GetFeatRank(CGAMESPRITE_FEAT_POWER_ATTACK);
     }
 
     if (HasFeat(CGAMESPRITE_FEAT_EXPERTISE)
-        && sub_726270(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
-        mod -= sub_726270(CGAMESPRITE_FEAT_EXPERTISE);
+        && GetFeatRank(CGAMESPRITE_FEAT_EXPERTISE) > 0) {
+        mod -= GetFeatRank(CGAMESPRITE_FEAT_EXPERTISE);
     }
 
     return static_cast<SHORT>(mod);
@@ -15757,7 +15757,7 @@ BOOLEAN CGameSprite::sub_725840(const CResRef& resRef, BOOLEAN a2)
 }
 
 // 0x726270
-INT CGameSprite::sub_726270(UINT nFeatNumber)
+INT CGameSprite::GetFeatRank(UINT nFeatNumber)
 {
     INT v1 = 0;
     if (HasFeat(nFeatNumber)) {

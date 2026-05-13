@@ -2908,7 +2908,7 @@ BOOL IcewindCGameEffectFeatPowerAttack::ApplyEffect(CGameSprite* pSprite)
         return FALSE;
     }
 
-    INT nRank = pSprite->sub_726270(CGAMESPRITE_FEAT_POWER_ATTACK);
+    INT nRank = pSprite->GetFeatRank(CGAMESPRITE_FEAT_POWER_ATTACK);
 
     // NOTE: Using `set` (with bounds check).
     pSprite->GetDerivedStats()->m_spellStates.set(SPLSTATE_FEAT_POWER_ATTACK_1, nRank == 1);
@@ -2994,7 +2994,7 @@ BOOL IcewindCGameEffectFeatExpertise::ApplyEffect(CGameSprite* pSprite)
         return FALSE;
     }
 
-    INT nRank = pSprite->sub_726270(CGAMESPRITE_FEAT_EXPERTISE);
+    INT nRank = pSprite->GetFeatRank(CGAMESPRITE_FEAT_EXPERTISE);
 
     // NOTE: Using `set` (with bounds check).
     pSprite->GetDerivedStats()->m_spellStates.set(SPLSTATE_FEAT_EXPERTISE_1, nRank == 1);
@@ -3080,7 +3080,7 @@ BOOL IcewindCGameEffectFeatArterialStrike::ApplyEffect(CGameSprite* pSprite)
         return FALSE;
     }
 
-    INT nRank = pSprite->sub_726270(CGAMESPRITE_FEAT_ARTERIAL_STRIKE);
+    INT nRank = pSprite->GetFeatRank(CGAMESPRITE_FEAT_ARTERIAL_STRIKE);
     if (nRank > 0) {
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_FEAT_ARTERIAL_STRIKE] = true;
         if (m_secondaryType != 0) {
@@ -3144,7 +3144,7 @@ BOOL IcewindCGameEffectFeatHamstring::ApplyEffect(CGameSprite* pSprite)
         return FALSE;
     }
 
-    INT nRank = pSprite->sub_726270(CGAMESPRITE_FEAT_HAMSTRING);
+    INT nRank = pSprite->GetFeatRank(CGAMESPRITE_FEAT_HAMSTRING);
     if (nRank > 0) {
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_FEAT_HAMSTRING] = true;
         if (m_secondaryType != 0) {
@@ -3208,7 +3208,7 @@ BOOL IcewindCGameEffectFeatRapidShot::ApplyEffect(CGameSprite* pSprite)
         return FALSE;
     }
 
-    INT nRank = pSprite->sub_726270(CGAMESPRITE_FEAT_RAPID_SHOT);
+    INT nRank = pSprite->GetFeatRank(CGAMESPRITE_FEAT_RAPID_SHOT);
     if (nRank > 0) {
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_FEAT_RAPID_SHOT] = true;
         if (m_secondaryType != 0) {
