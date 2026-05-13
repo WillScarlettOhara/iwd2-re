@@ -873,6 +873,12 @@ void CBaldurChitin::Init(HINSTANCE hInstance)
     m_pEngineConnection->m_bShowIntro = FALSE;
     m_pEngineConnection->StartConnection(FALSE);
 
+    // Menu-only bootstrap: skip the normal async service-provider countdown/popup,
+    // otherwise the cursor gets hidden/disabled before the menu becomes interactive.
+    m_pEngineConnection->m_nEnumServiceProvidersCountDown = -1;
+    m_pEngineConnection->m_bStartedCountDown = TRUE;
+    m_pEngineConnection->m_bAllowInput = TRUE;
+
     m_pStartingEngine = m_pEngineConnection;
 
     AddEngine(m_pEngineConnection);
