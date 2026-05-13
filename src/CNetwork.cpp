@@ -2109,7 +2109,7 @@ void CNetwork::SetJoinEnabled(BOOLEAN bJoinEnabled)
     if (m_bAllowNewConnections != bJoinEnabled) {
         m_bAllowNewConnections = bJoinEnabled;
 
-        g_pChitin->cGameSpy.sub_4D1EC0(TRUE);
+        g_pChitin->cGameSpy.SendHeartbeat(TRUE);
     }
 }
 

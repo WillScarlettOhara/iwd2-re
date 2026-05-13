@@ -75,7 +75,7 @@ public:
     BOOL Render3d(INT nTile, INT nStencilTile, const CRect& rDest, INT x, INT y, const TILE_CODE& tileCode, DWORD dwFlags, BYTE nDualTileCode, int a9);
     BOOL ReadyTexture(INT nTextureId, INT nTile, INT nStencilTile, const TILE_CODE& tileCode, BYTE nDualTileCode, int a9, DWORD dwFlags);
     void RenderTexture(INT nTextureId, const CRect& rDest, INT x, INT y, const TILE_CODE& tileCode, DWORD dwFlags);
-    static void sub_5D2DE0();
+    static void RenderFogOfWar();
 
     void Invalidate();
 

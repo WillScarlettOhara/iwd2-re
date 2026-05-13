@@ -1932,8 +1932,8 @@ void CBaldurChitin::SetCDSwitchStatus(BOOLEAN a1, BOOLEAN a2, BYTE a3, const CSt
 // 0x425840
 void CBaldurChitin::OnMultiplayerSessionClose()
 {
-    g_pChitin->cGameSpy.sub_4D1EC0(1);
-    g_pChitin->cGameSpy.sub_4D2310();
+    g_pChitin->cGameSpy.SendHeartbeat(1);
+    g_pChitin->cGameSpy.CloseSockets();
 
     BOOL bEnabled = GetPrivateProfileIntA("RogerWilco",
         "Enabled",
@@ -1970,7 +1970,7 @@ void CBaldurChitin::OnMultiplayerSessionOpen(CString& sJoinedGame, CString& sDro
                 0,
                 g_pBaldurChitin->GetIniFileName());
             if (bGameSpyEnabled) {
-                g_pBaldurChitin->cGameSpy.sub_4D2060();
+                g_pBaldurChitin->cGameSpy.OpenSockets();
             }
         }
     }

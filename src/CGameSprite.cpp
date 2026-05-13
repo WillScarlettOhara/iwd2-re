@@ -4265,7 +4265,7 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
             }
 
             IcewindCVisualEffect vfx;
-            vfx.sub_586A90(TRUE);
+            vfx.SetCopyFromBack(TRUE);
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_GREASE]) {
                 RenderSpriteCover(pVidMode,
@@ -4572,8 +4572,8 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_DEATH_ARMOR]) {
-                vfx.sub_586A90(FALSE);
-                vfx.sub_586AC0(TRUE, 192);
+                vfx.SetCopyFromBack(FALSE);
+                vfx.SetTransparency(TRUE, 192);
                 RenderSpriteCover(pVidMode,
                     nSurface,
                     &(field_7548[IWD_VFX_DEATH_ARMOR]),

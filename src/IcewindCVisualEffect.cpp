@@ -12,7 +12,7 @@ IcewindCVisualEffect::IcewindCVisualEffect()
 }
 
 // 0x586A60
-void IcewindCVisualEffect::sub_586A60(BOOLEAN a1)
+void IcewindCVisualEffect::SetTintFromFlags(BOOLEAN a1)
 {
     if (a1 == TRUE) {
         field_0 = TRUE;
@@ -24,7 +24,7 @@ void IcewindCVisualEffect::sub_586A60(BOOLEAN a1)
 }
 
 // 0x586A90
-void IcewindCVisualEffect::sub_586A90(BOOLEAN a1)
+void IcewindCVisualEffect::SetCopyFromBack(BOOLEAN a1)
 {
     if (a1 == TRUE) {
         field_1 = TRUE;
@@ -36,7 +36,7 @@ void IcewindCVisualEffect::sub_586A90(BOOLEAN a1)
 }
 
 // 0x586AC0
-void IcewindCVisualEffect::sub_586AC0(BOOLEAN a1, INT nTransValue)
+void IcewindCVisualEffect::SetTransparency(BOOLEAN a1, INT nTransValue)
 {
     if (a1 == TRUE) {
         field_3 = TRUE;

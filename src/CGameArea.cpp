@@ -3610,7 +3610,7 @@ void CGameArea::Render(CVidMode* pVidMode, INT nSurface)
         m_cInfinity.PostRender(pVidMode, nSurface, &m_search);
 
         if (g_pChitin->cVideo.Is3dAccelerated()) {
-            CInfTileSet::sub_5D2DE0();
+            CInfTileSet::RenderFogOfWar();
         }
 
         switch (m_pGame->GetState()) {

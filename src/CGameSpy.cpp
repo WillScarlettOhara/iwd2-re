@@ -30,7 +30,7 @@ CGameSpy::~CGameSpy()
 }
 
 // 0x4D1EC0
-BOOLEAN CGameSpy::sub_4D1EC0(BOOL a1)
+BOOLEAN CGameSpy::SendHeartbeat(BOOL a1)
 {
     // TODO: Incomplete.
 
@@ -38,13 +38,13 @@ BOOLEAN CGameSpy::sub_4D1EC0(BOOL a1)
 }
 
 // 0x4D2060
-void CGameSpy::sub_4D2060()
+void CGameSpy::OpenSockets()
 {
     // TODO: Incomplete.
 }
 
 // 0x4D2210
-BOOLEAN CGameSpy::sub_4D2210()
+BOOLEAN CGameSpy::Update()
 {
     // TODO: Incomplete.
 
@@ -52,7 +52,7 @@ BOOLEAN CGameSpy::sub_4D2210()
 }
 
 // 0x4D2310
-BOOLEAN CGameSpy::sub_4D2310()
+BOOLEAN CGameSpy::CloseSockets()
 {
     // TODO: Incomplete.
 

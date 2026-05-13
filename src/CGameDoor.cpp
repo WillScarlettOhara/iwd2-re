@@ -769,7 +769,7 @@ void CGameDoor::SetFlags(DWORD dwFlags)
 }
 
 // 0x45B700
-BOOL CGameDoor::sub_45B700()
+BOOL CGameDoor::IsOpen()
 {
     return m_dwFlags & 0x1;
 }

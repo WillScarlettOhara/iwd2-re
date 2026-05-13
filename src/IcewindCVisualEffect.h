@@ -6,9 +6,9 @@
 class IcewindCVisualEffect {
 public:
     IcewindCVisualEffect();
-    void sub_586A60(BOOLEAN a1);
-    void sub_586A90(BOOLEAN a1);
-    void sub_586AC0(BOOLEAN a1, INT nTransValue);
+    void SetTintFromFlags(BOOLEAN a1);
+    void SetCopyFromBack(BOOLEAN a1);
+    void SetTransparency(BOOLEAN a1, INT nTransValue);
 
     /* 0000 */ BOOLEAN field_0;
     /* 0001 */ BOOLEAN field_1;

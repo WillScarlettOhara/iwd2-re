@@ -4957,7 +4957,7 @@ void CMessageHandler::PostAsynchronousUpdate()
     }
 
     if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
-        g_pChitin->cGameSpy.sub_4D2210();
+        g_pChitin->cGameSpy.Update();
     }
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();

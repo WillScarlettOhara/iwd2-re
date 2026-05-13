@@ -728,7 +728,7 @@ void CInfTileSet::RenderTexture(INT nTextureId, const CRect& rDest, INT x, INT y
 }
 
 // 0x5D2DE0
-void CInfTileSet::sub_5D2DE0()
+void CInfTileSet::RenderFogOfWar()
 {
     INT x;
     INT y;
