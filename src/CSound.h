@@ -53,7 +53,7 @@ public:
     /* 0030 */ int m_nZCoordinate;
     /* 0034 */ int m_nPan;
     /* 0038 */ int m_nVolume;
-    /* 003C */ int field_3C;
+    /* 003C */ int m_bFrequencySet;
     /* 0040 */ int m_nChannel; // #guess
     /* 0044 */ int m_nPriority; // #guess
     /* 0048 */ int m_nLooping; // #guess
