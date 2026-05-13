@@ -867,9 +867,11 @@ void CBaldurChitin::Init(HINSTANCE hInstance)
     m_pEngineKeymaps = new CScreenKeymaps();
     DBG("Init: all engines created, initializing connection screen path");
 
-    // Skip the intro movie/projector path until projector initialization is stable.
+    // Skip the intro movie/projector path until projector initialization is stable,
+    // but still mirror the normal startup path closely enough for UI input/cursor setup.
+    m_pObjectCursor->Initialize();
     m_pEngineConnection->m_bShowIntro = FALSE;
-    m_pEngineConnection->m_bAllowInput = TRUE;
+    m_pEngineConnection->StartConnection(FALSE);
 
     m_pStartingEngine = m_pEngineConnection;
 
