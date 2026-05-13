@@ -288,10 +288,10 @@ public:
     void OnLButtonClick(CPoint pt) override;
 };
 
-class CUIControlTextDisplayConnection604E90 : public CUIControlTextDisplay {
+class CUIControlTextDisplayConnectionSessions : public CUIControlTextDisplay {
 public:
-    CUIControlTextDisplayConnection604E90(CUIPanel* panel, UI_CONTROL_TEXTDISPLAY* controlInfo);
-    ~CUIControlTextDisplayConnection604E90() override;
+    CUIControlTextDisplayConnectionSessions(CUIPanel* panel, UI_CONTROL_TEXTDISPLAY* controlInfo);
+    ~CUIControlTextDisplayConnectionSessions() override;
     void OnItemSelected(LONG lMarker) override;
 };
 
@@ -309,10 +309,10 @@ public:
     void OnLButtonClick(CPoint pt) override;
 };
 
-class CUIControlButtonConnection6052A0 : public CUIControlButton3State {
+class CUIControlButtonConnectionGameMode3State : public CUIControlButton3State {
 public:
-    CUIControlButtonConnection6052A0(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo);
-    ~CUIControlButtonConnection6052A0() override;
+    CUIControlButtonConnectionGameMode3State(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo);
+    ~CUIControlButtonConnectionGameMode3State() override;
     void OnLButtonClick(CPoint pt) override;
 };
 

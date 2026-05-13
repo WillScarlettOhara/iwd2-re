@@ -4836,7 +4836,7 @@ void CUIControlButtonConnectionPreGenerateChar::OnLButtonClick(CPoint pt)
 // -----------------------------------------------------------------------------
 
 // 0x604E90
-CUIControlTextDisplayConnection604E90::CUIControlTextDisplayConnection604E90(CUIPanel* panel, UI_CONTROL_TEXTDISPLAY* controlInfo)
+CUIControlTextDisplayConnectionSessions::CUIControlTextDisplayConnectionSessions(CUIPanel* panel, UI_CONTROL_TEXTDISPLAY* controlInfo)
     : CUIControlTextDisplay(panel, controlInfo, TRUE)
 {
     // NOTE: Uninline.
@@ -4844,12 +4844,12 @@ CUIControlTextDisplayConnection604E90::CUIControlTextDisplayConnection604E90(CUI
 }
 
 // 0x621470
-CUIControlTextDisplayConnection604E90::~CUIControlTextDisplayConnection604E90()
+CUIControlTextDisplayConnectionSessions::~CUIControlTextDisplayConnectionSessions()
 {
 }
 
 // 0x604EC0
-void CUIControlTextDisplayConnection604E90::OnItemSelected(LONG lMarker)
+void CUIControlTextDisplayConnectionSessions::OnItemSelected(LONG lMarker)
 {
     CScreenConnection* pConnection = g_pBaldurChitin->m_pEngineConnection;
 
@@ -4954,7 +4954,7 @@ void CUIControlButtonConnectionLobbyMenu::OnLButtonClick(CPoint pt)
 // -----------------------------------------------------------------------------
 
 // 0x6052A0
-CUIControlButtonConnection6052A0::CUIControlButtonConnection6052A0(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
+CUIControlButtonConnectionGameMode3State::CUIControlButtonConnectionGameMode3State(CUIPanel* panel, UI_CONTROL_BUTTON* controlInfo)
     : CUIControlButton3State(panel, controlInfo, LBUTTON, 0)
 {
     STR_RES strRes;
@@ -4984,12 +4984,12 @@ CUIControlButtonConnection6052A0::CUIControlButtonConnection6052A0(CUIPanel* pan
 }
 
 // 0x6053D0
-CUIControlButtonConnection6052A0::~CUIControlButtonConnection6052A0()
+CUIControlButtonConnectionGameMode3State::~CUIControlButtonConnectionGameMode3State()
 {
 }
 
 // 0x605470
-void CUIControlButtonConnection6052A0::OnLButtonClick(CPoint pt)
+void CUIControlButtonConnectionGameMode3State::OnLButtonClick(CPoint pt)
 {
     CScreenConnection* pConnection = g_pBaldurChitin->m_pEngineConnection;
 
