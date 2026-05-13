@@ -18,7 +18,7 @@ CUIControlSlider::CUIControlSlider(CUIPanel* panel, UI_CONTROL_SLIDER* controlIn
     UTIL_ASSERT(panel != NULL && controlInfo != NULL);
 
     m_bValueChanged = 0;
-    field_212 = 0;
+    m_nDragOffset = 0;
     m_nSequence = controlInfo->nSequence;
     m_nKnobFrame = controlInfo->nKnobFrame;
     m_nActiveKnobFrame = controlInfo->nActiveKnobFrame;
@@ -79,8 +79,8 @@ void CUIControlSlider::OnMouseMove(CPoint pt)
     }
 
     SHORT nValue;
-    if (field_212 + pt.x - m_ptOrigin.x < m_rTrack.right) {
-        nValue = max((field_212 + pt.x - m_ptOrigin.x + m_nKnobJumpWidth / 2 - m_rTrack.left) / m_nKnobJumpWidth, 0);
+    if (m_nDragOffset + pt.x - m_ptOrigin.x < m_rTrack.right) {
+        nValue = max((m_nDragOffset + pt.x - m_ptOrigin.x + m_nKnobJumpWidth / 2 - m_rTrack.left) / m_nKnobJumpWidth, 0);
     } else {
         nValue = m_nKnobJumpCount - 1;
     }
@@ -132,7 +132,7 @@ BOOL CUIControlSlider::OnLButtonDown(CPoint pt)
         m_pPanel->m_pManager->SetCapture(this, CUIManager::MOUSELBUTTON);
 
         m_bValueChanged = FALSE;
-        field_212 = ptKnob.x + frameSize.cx / 2 - x;
+        m_nDragOffset = ptKnob.x + frameSize.cx / 2 - x;
     } else if (x >= m_rTrack.left && x <= m_rTrack.right
         && y >= m_rTrack.top && y <= m_rTrack.bottom) {
         SHORT nValue = (x + m_nKnobJumpWidth / 2 - m_rTrack.left) / m_nKnobJumpWidth;

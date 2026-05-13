@@ -37,7 +37,7 @@ public:
     /* 0208 */ SHORT m_nValue;
     /* 020A */ BOOL m_bTracking;
     /* 020E */ BOOL m_bValueChanged;
-    /* 0212 */ int field_212;
+    /* 0212 */ int m_nDragOffset;
 };
 
 #endif /* CUICONTROLSLIDER_H_ */
