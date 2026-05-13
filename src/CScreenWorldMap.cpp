@@ -624,7 +624,7 @@ void CScreenWorldMap::SetMapView(const CPoint& ptMapView)
 
     CWorldMap* pWorldMap = pGame->GetWorldMap(sArea);
 
-    if (pGame->sub_5C79C0(sArea)) {
+    if (pGame->IsSpecialArea(sArea)) {
         CSize cViewSize = m_pMapControl->m_size;
         cViewSize.cx += 1;
         cViewSize.cy += 1;

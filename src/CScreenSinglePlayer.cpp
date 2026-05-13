@@ -1540,7 +1540,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                     pGame->DestroyGame(FALSE, TRUE);
                 }
 
-                CString v3 = pGame->sub_5C0B30();
+                CString v3 = pGame->GetSaveGameDirectory();
 
                 if (!g_pChitin->cDimm.DirectoryRemoveFiles(v3)) {
                     // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp

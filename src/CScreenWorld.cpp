@@ -902,7 +902,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
                 INFINITE);
         }
 
-        pGame->sub_5AC0D0();
+        pGame->UpdateAreaSaveStatus();
 
         for (INT nArea = 0; nArea < CINFGAME_MAX_AREAS; nArea++) {
             CGameArea* pArea = pGame->GetArea(nArea);
@@ -1422,11 +1422,11 @@ void CScreenWorld::TimerSynchronousUpdate()
             SHORT nPortrait;
 
             for (nPortrait = 0; nPortrait <= 5; nPortrait++) {
-                pGame->sub_5AF420(nPortrait, 1);
+                pGame->ProcessPortraitAction(nPortrait, 1);
             }
 
             for (nPortrait = 50; nPortrait <= 55; nPortrait++) {
-                pGame->sub_5AF420(nPortrait, 1);
+                pGame->ProcessPortraitAction(nPortrait, 1);
             }
         }
 

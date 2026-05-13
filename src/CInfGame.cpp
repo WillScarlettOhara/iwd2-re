@@ -1820,7 +1820,7 @@ BOOLEAN CInfGame::CanSaveGame(STRREF& strError, BOOLEAN bInRestGame, BOOLEAN bIn
 
     if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL
         && !bInRestGame
-        && sub_5C93E0() > 0) {
+        && CountNPCs() > 0) {
         // "Cannot save while someone is in the Store Screen."
         strError = 10841;
         return FALSE;
@@ -1924,7 +1924,7 @@ void CInfGame::ProgressBarCallback(DWORD dwSize, BOOLEAN bInitialize)
 }
 
 // 0x5A9780
-char CInfGame::sub_5A9780(BYTE nKey)
+char CInfGame::VirtualKeyToChar(BYTE nKey)
 {
     if (nKey >= 'A' && nKey <= 'Z') {
         return static_cast<char>(nKey);
@@ -1944,7 +1944,7 @@ char CInfGame::sub_5A9780(BYTE nKey)
 }
 
 // 0x5A97D0
-BYTE CInfGame::sub_5A97D0(char ch)
+BYTE CInfGame::CharToVirtualKey(char ch)
 {
     if (ch >= 'a' && ch <= 'z') {
         return static_cast<BYTE>(ch - 32);
@@ -1968,7 +1968,7 @@ BYTE CInfGame::sub_5A97D0(char ch)
 }
 
 // 0x5A9830
-BYTE CInfGame::sub_5A9830(int index)
+BYTE CInfGame::GetKeyBinding(int index)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
     // __LINE__: 7779
@@ -1979,7 +1979,7 @@ BYTE CInfGame::sub_5A9830(int index)
     }
 
     // NOTE: Uninline.
-    return sub_5A97D0(off_8AFD24[index][0]);
+    return CharToVirtualKey(off_8AFD24[index][0]);
 }
 
 // 0x5A98F0
@@ -2982,7 +2982,7 @@ void CInfGame::NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace
 }
 
 // 0x5AC0A0
-BOOLEAN CInfGame::sub_5AC0A0(CGameArea* pArea)
+BOOLEAN CInfGame::IsAreaSaveAllowed(CGameArea* pArea)
 {
     if (!m_bInLoadGame
         && pArea != NULL
@@ -2994,7 +2994,7 @@ BOOLEAN CInfGame::sub_5AC0A0(CGameArea* pArea)
 }
 
 // 0x5AC0D0
-void CInfGame::sub_5AC0D0()
+void CInfGame::UpdateAreaSaveStatus()
 {
     STRREF strError;
 
@@ -3395,7 +3395,7 @@ void CInfGame::UpdatePortrait(SHORT nPortrait, DWORD dwPanelId)
 }
 
 // 0x5AF420
-void CInfGame::sub_5AF420(SHORT nPortrait, DWORD dwPanelId)
+void CInfGame::ProcessPortraitAction(SHORT nPortrait, DWORD dwPanelId)
 {
     if (nPortrait != -1) {
         CBaldurEngine* pEngine = g_pBaldurChitin->GetActiveEngine();
@@ -5801,7 +5801,7 @@ CString CInfGame::GetDirSave()
 // TODO: Somehow its different from function above. Figure out.
 //
 // 0x5C0B30
-CString CInfGame::sub_5C0B30()
+CString CInfGame::GetSaveGameDirectory()
 {
     return m_sMultiplayerSaveDir + m_sSaveGame + "\\";
 }
@@ -6456,7 +6456,7 @@ CStringList* CInfGame::GetSounds()
 }
 
 // 0x5C3770
-STRREF CInfGame::sub_5C3770(CString a1)
+STRREF CInfGame::GetAreaStrRef(CString a1)
 {
     return 9885;
 }
@@ -6609,7 +6609,7 @@ CWorldMap* CInfGame::GetWorldMap(CString sArea)
 }
 
 // 0x5C79C0
-BOOL CInfGame::sub_5C79C0(CString sArea)
+BOOL CInfGame::IsSpecialArea(CString sArea)
 {
     CString v1;
 
@@ -6818,7 +6818,7 @@ SHORT CInfGame::TakeItemFromStore(const CResRef& cResStore, const CResRef& cResI
 }
 
 // 0x5C93E0
-INT CInfGame::sub_5C93E0()
+INT CInfGame::CountNPCs()
 {
     INT nCount = 0;
 
@@ -7265,7 +7265,7 @@ INT CInfGame::GetSpellLevel(const CResRef& resRef, BYTE nClass, DWORD nSpecializ
 }
 
 // 0x5CADF0
-void CInfGame::sub_5CADF0()
+void CInfGame::MarkAliveCharacters()
 {
     // FIXME: What for?
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();

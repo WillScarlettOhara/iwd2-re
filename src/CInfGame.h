@@ -143,9 +143,9 @@ public:
     BOOL SaveGame(unsigned char a1, unsigned char a2, unsigned char a3);
     BOOL Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace);
     void ProgressBarCallback(DWORD dwSize, BOOLEAN bInitialize);
-    char sub_5A9780(BYTE nKey);
-    BYTE sub_5A97D0(char ch);
-    BYTE sub_5A9830(int index);
+    char VirtualKeyToChar(BYTE nKey);
+    BYTE CharToVirtualKey(char ch);
+    BYTE GetKeyBinding(int index);
     void LoadKeymap();
     void LoadKey(const CString& sKey, SHORT index);
     void SetKey(INT nIndex, BYTE nKey, BYTE nKeyFlag);
@@ -155,8 +155,8 @@ public:
     void SaveMultiPlayerPermissions();
     void LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
     void NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);
-    BOOLEAN sub_5AC0A0(CGameArea* pArea);
-    void sub_5AC0D0();
+    BOOLEAN IsAreaSaveAllowed(CGameArea* pArea);
+    void UpdateAreaSaveStatus();
     void SelectAll(BOOLEAN bPlaySound);
     void UnselectAll();
     BOOL SelectCharacter(LONG characterId, BOOLEAN bPlaySelectSound);
@@ -166,7 +166,7 @@ public:
     CStore* GetServerStore(const CResRef& store);
     void SwapCharacters(DWORD pos1, DWORD pos2);
     void UpdatePortrait(SHORT nPortrait, DWORD dwPanelId);
-    void sub_5AF420(SHORT nPortrait, DWORD dwPanelId);
+    void ProcessPortraitAction(SHORT nPortrait, DWORD dwPanelId);
     SHORT GetCharacterPortraitNum(LONG nCharacterId);
     SHORT GetFixedOrderCharacterPortraitNum(LONG nCharacterId);
     void RemoveFamiliarResRef(const CResRef& resRef, BYTE nAlignment, BYTE nLevel);
@@ -225,7 +225,7 @@ public:
     CStringList* GetSaveGames();
     CString GetDirSaveRoot();
     CString GetDirSave();
-    CString sub_5C0B30();
+    CString GetSaveGameDirectory();
     BOOL CanEnterStore(STRREF& strError);
     BOOL AddCharacterToOverflow(LONG id);
     CStringList* GetScripts();
@@ -242,16 +242,16 @@ public:
     CStringList* GetPortraits();
     CStringList* GetImportCharacters();
     CStringList* GetSounds();
-    STRREF sub_5C3770(CString a1);
+    STRREF GetAreaStrRef(CString a1);
     void ChangeBiography(BYTE nFixedPartyId, CString szBiography);
     BOOLEAN GetGameSpyCharacterInformation(INT nCharacterSlot, CString& sName, CString& sRace, CString& sClass, CString& sLevel);
     void MultiplayerSetCharacterCreationLocation();
     BOOL IsItemExclusive(CGameSprite* pSprite, INT slotNum, CItem* pItem, STRREF& strError);
     CWorldMap* GetWorldMap(CString sArea);
-    BOOL sub_5C79C0(CString sArea);
+    BOOL IsSpecialArea(CString sArea);
     DWORD FindItemInStore(const CResRef& cResStore, const CResRef& cResItem, BOOL checkForIdentified);
     SHORT TakeItemFromStore(const CResRef& cResStore, const CResRef& cResItem, LONG number);
-    INT sub_5C93E0();
+    INT CountNPCs();
     void ResetMultiPlayerPermissions();
     INT GetNumberOfItemsInBag(const CResRef& storeResRef, CString a2);
     LONG GetAveragePartyLevel();
@@ -263,7 +263,7 @@ public:
     DWORD GetClassMask(const BYTE& nClass);
     BYTE GetSpellType(const CResRef& resRef);
     INT GetSpellLevel(const CResRef& resRef, BYTE nClass, DWORD nSpecialization);
-    void sub_5CADF0();
+    void MarkAliveCharacters();
 
     INT GetCurrentChapter();
     void SetCurrentChapter(INT nChapter);

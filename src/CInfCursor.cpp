@@ -266,7 +266,7 @@ void CInfCursor::SetToolTip(const STRREF& nStrRef, CUIControlBase* pControl, SHO
             // NOTE: Uninline.
             char nKey = g_pBaldurChitin->GetObjectGame()->GetKeymap(nHotKeyIndex1);
 
-            ch = g_pBaldurChitin->GetObjectGame()->sub_5A9780(nKey);
+            ch = g_pBaldurChitin->GetObjectGame()->VirtualKeyToChar(nKey);
 
             if (ch != '\0' && ch != ' ') {
                 sKey = CString(ch);
