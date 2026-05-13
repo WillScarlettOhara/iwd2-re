@@ -81,7 +81,7 @@ CPoint IcewindMisc::sub_5847B0(const CPoint& pt, int x, int y, int radius)
 }
 
 // 0x584880
-void IcewindMisc::sub_584880(CGameSprite* pSprite, STRREF strRef, INT nNumber)
+void IcewindMisc::DisplayFeedbackMessage(CGameSprite* pSprite, STRREF strRef, INT nNumber)
 {
     if (strRef != -1 && (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nEffectTextLevel & 0x8) != 0) {
         if (nNumber != 0) {
