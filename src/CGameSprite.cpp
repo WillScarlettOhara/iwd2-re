@@ -1339,7 +1339,7 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
     }
 
     if (!m_baseStats.field_2E2) {
-        sub_75F240();
+        SavePositionToBaseStats();
         m_baseStats.field_2E2 = TRUE;
     }
 
@@ -11718,7 +11718,7 @@ void CGameSprite::FeedBack(WORD nFeedBackId, LONG a3, LONG a4, LONG a5, LONG a6,
 }
 
 // 0x737910
-BOOLEAN CGameSprite::sub_737910(BOOL a1)
+BOOLEAN CGameSprite::CheckWeaponUsability(BOOL a1)
 {
     if (!a1
         && m_equipment.m_items[m_equipment.m_selectedWeapon] != NULL
@@ -11751,7 +11751,7 @@ SHORT CGameSprite::GetCriticalHitBonus()
 }
 
 // 0x73C6A0
-SHORT CGameSprite::sub_73C6A0(CGameSprite* target, CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::GetDamageTypeACMod(CGameSprite* target, CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 9840
@@ -11803,7 +11803,7 @@ SHORT CGameSprite::sub_73C6A0(CGameSprite* target, CItem* curWeapon, const ITEM_
 }
 
 // 0x73C7E0
-SHORT CGameSprite::sub_73C7E0()
+SHORT CGameSprite::GetRacialAttackPenalty()
 {
     SHORT mod = 0;
 
@@ -11833,7 +11833,7 @@ SHORT CGameSprite::sub_73C7E0()
 }
 
 // 0x73C8C0
-SHORT CGameSprite::sub_73C8C0(CGameSprite* target)
+SHORT CGameSprite::GetRacialTargetBonus(CGameSprite* target)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 9925
@@ -11881,7 +11881,7 @@ SHORT CGameSprite::sub_73C8C0(CGameSprite* target)
 }
 
 // 0x73CA20
-SHORT CGameSprite::sub_73CA20(CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::GetHalflingSlingBonus(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 9988
@@ -11911,13 +11911,13 @@ SHORT CGameSprite::sub_73CA20(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 }
 
 // 0x73CAD0
-SHORT CGameSprite::sub_73CAD0()
+SHORT CGameSprite::GetFlankingBonus()
 {
     return 0;
 }
 
 // 0x73CAE0
-SHORT CGameSprite::sub_73CAE0(CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::GetWeaponStyleBonus(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 10073
@@ -11927,7 +11927,7 @@ SHORT CGameSprite::sub_73CAE0(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 }
 
 // 0x73CB10
-SHORT CGameSprite::sub_73CB10(CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::GetAbilityHitBonus(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 10083
@@ -11968,7 +11968,7 @@ SHORT CGameSprite::sub_73CB10(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 }
 
 // 0x73CC40
-SHORT CGameSprite::sub_73CC40(CItem* curWeapon, const ITEM_ABILITY* curAttack)
+SHORT CGameSprite::GetTHAC0Bonuses(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
     // __LINE__: 10144
@@ -12003,7 +12003,7 @@ SHORT CGameSprite::sub_73CC40(CItem* curWeapon, const ITEM_ABILITY* curAttack)
 }
 
 // 0x73D420
-SHORT CGameSprite::sub_73D420()
+SHORT CGameSprite::GetTHAC0()
 {
     SHORT mod = 0;
 
@@ -12017,7 +12017,7 @@ SHORT CGameSprite::sub_73D420()
 }
 
 // 0x73D440
-SHORT CGameSprite::sub_73D440(CItem* curWeapon)
+SHORT CGameSprite::GetProficiencyTHAC0Bonus(CItem* curWeapon)
 {
     SHORT mod = 0;
     switch (curWeapon->GetItemType()) {
@@ -12670,7 +12670,7 @@ SHORT CGameSprite::GetCasterLevel(CSpell* pSpell, BYTE nClass, DWORD nSpecializa
 }
 
 // 0x75F240
-SHORT CGameSprite::sub_75F240()
+SHORT CGameSprite::SavePositionToBaseStats()
 {
     m_baseStats.field_2E4 = static_cast<SHORT>(m_pos.x);
     m_baseStats.field_2E6 = static_cast<SHORT>(m_pos.y);
@@ -13429,7 +13429,7 @@ SHORT CGameSprite::ForceHide(CGameSprite* pSprite)
 }
 
 // 0x7615F0
-SHORT CGameSprite::sub_7615F0(int a1)
+SHORT CGameSprite::SetExplorationRange(int a1)
 {
     if (a1 == 0) {
         m_pArea->m_visibility.SetAreaVisible(FALSE);
@@ -13484,7 +13484,7 @@ SHORT CGameSprite::DropItem(CItem* pItem)
 }
 
 // 0x761990
-void CGameSprite::sub_761990()
+void CGameSprite::ReapplyEquipmentEffects()
 {
     m_timedEffectList.RemoveAllEffectsIgnoreMoreThenPermanent(NULL, FALSE, FALSE, 0, 0);
     UnequipAll(FALSE);

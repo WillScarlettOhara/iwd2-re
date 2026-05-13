@@ -3757,7 +3757,7 @@ void CScreenInventory::SwapWithWeaponSet(UINT nIndex)
     if (rc == CGameObjectArray::SUCCESS) {
         BOOLEAN bInControl = pSprite->InControl();
         if (bInControl == TRUE) {
-            if (pSprite->sub_737910(FALSE) == TRUE) {
+            if (pSprite->CheckWeaponUsability(FALSE) == TRUE) {
                 if (pSprite->GetEquipment()->m_items[42] == NULL) {
                     pSprite->SetWeaponSet(nIndex);
                 } else {
