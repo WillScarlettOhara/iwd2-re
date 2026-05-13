@@ -286,7 +286,7 @@ CScreenConnection::~CScreenConnection()
 // 0x5FA9B0
 void CScreenConnection::EngineActivated()
 {
-    g_pBaldurChitin->GetObjectGame()->field_366E = 0;
+    g_pBaldurChitin->GetObjectGame()->m_bSaveScreen = 0;
 
     m_preLoadFontRealms.SetResRef(CResRef("REALMS"), FALSE, TRUE);
     m_preLoadFontRealms.RegisterFont();

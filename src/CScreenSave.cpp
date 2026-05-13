@@ -758,7 +758,7 @@ void CScreenSave::OnDoneButtonClick()
                 if (bSave) {
                     if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
                         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
-                        pGame->field_366E = 1;
+                        pGame->m_bSaveScreen = 1;
                         pGame->field_50DC = 0;
 
                         if (!g_pChitin->cVideo.Is3dAccelerated()) {

@@ -1526,7 +1526,7 @@ void CScreenOptions::OnErrorButtonClick(INT nButton)
                 lock.Unlock();
 
                 if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
-                    pGame->field_366E = 1;
+                    pGame->m_bSaveScreen = 1;
                     pGame->field_50DC = 0;
 
                     if (!g_pChitin->cVideo.m_bIs3dAccelerated) {
@@ -2505,7 +2505,7 @@ void CUIControlButtonOptionsGameCommand::OnLButtonClick(CPoint pt)
         case 6:
             if (pGame->CanSaveGame(dwStrId, FALSE, FALSE)) {
                 if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
-                    pGame->field_366E = 1;
+                    pGame->m_bSaveScreen = 1;
                     pGame->field_50DC = 0;
 
                     if (!g_pChitin->cVideo.m_bIs3dAccelerated) {

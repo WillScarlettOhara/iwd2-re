@@ -806,7 +806,7 @@ CInfGame::CInfGame()
         m_nTravelScreenImageToUse = 0;
         m_bPlayerScriptStyle = FALSE;
         field_4B38 = 0;
-        field_366E = 0;
+        m_bSaveScreen = 0;
         m_nAreaFirstObject = 0;
 
         m_INISounds.SetFileName(CString("sounds"));
@@ -1015,8 +1015,8 @@ void CInfGame::InitGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     m_worldTime.m_gameTime = CTimerWorld::TIME_DAY + 1;
     m_worldTime.CheckForTriggerEventPast();
 
-    g_pBaldurChitin->GetTlkTable().Fetch(16484, field_4814);
-    g_pBaldurChitin->GetTlkTable().Fetch(15307, field_487C);
+    g_pBaldurChitin->GetTlkTable().Fetch(16484, m_soundNeedParty);
+    g_pBaldurChitin->GetTlkTable().Fetch(15307, m_soundAreaTransitionRefused);
 
     for (BYTE nIndex = 0; nIndex < 6; nIndex++) {
         EnablePortrait(nIndex, FALSE);

@@ -381,7 +381,7 @@ public:
     /* 1BB2 */ CMultiplayerSettings m_multiplayerSettings;
     /* 1C78 */ CInfButtonArray m_cButtonArray;
     /* 3662 */ CVRamPool m_cVRamPool;
-    /* 366E */ int field_366E;
+    /* 366E */ int m_bSaveScreen;
     /* 3672 */ CVidBitmap m_rgbMasterBitmap;
     /* 372C */ CGameObjectArray m_cObjectArray;
     /* 375A */ CGameRemoteObjectArray m_cRemoteObjectArray;
@@ -423,8 +423,8 @@ public:
     /* 4688 */ BOOLEAN m_pKeymapFlags[CINFGAME_KEYMAP_SIZE];
     /* 47FC */ CVariableHash m_variables;
     /* 4808 */ CNamedCreatureVariableHash m_namedCreatures;
-    /* 4814 */ STR_RES field_4814;
-    /* 487C */ STR_RES field_487C;
+    /* 4814 */ STR_RES m_soundNeedParty;
+    /* 487C */ STR_RES m_soundAreaTransitionRefused;
     /* 48E4 */ BOOLEAN m_bForceDither;
     /* 48E6 */ CVidCell m_vcLocator;
     /* 49C0 */ CTypedPtrList<CPtrList, CSearchRequest*> m_searchRequests;
