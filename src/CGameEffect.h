@@ -309,8 +309,8 @@ public:
     void CopyFromBase(CGameEffectBase* pBase);
     void SetEffectID(WORD effectID);
     void SetDWFlags(DWORD dwFlags);
-    void sub_493400(BOOL a1);
-    void sub_594020(BOOL bEnabled);
+    void SetPermanentFlag(BOOL a1);
+    void SetEnabled(BOOL bEnabled);
     void SetSource(const CPoint& pt);
     void SetSourceId(LONG sourceID);
 
@@ -330,7 +330,7 @@ public:
     void SetSpellState(CGameSprite* pSprite, DWORD dwSpellState);
     static void FeedBackImmuneToResource(CGameSprite* pSprite, const CResRef& res);
     static void ClearItemEffect(ITEM_EFFECT* itemEffect, WORD newEffectId);
-    static void sub_4B8730(CGameSprite* pSprite, INT slotNum);
+    static void StripItemSlot(CGameSprite* pSprite, INT slotNum);
 
     /* 010C */ LONG m_sourceID;
     /* 0110 */ BOOL m_done;
@@ -442,7 +442,7 @@ public:
     CGameEffectDamage(ITEM_EFFECT* effect, const CPoint& source, LONG sourceID, CPoint target);
     CGameEffect* Copy() override;
 
-    void sub_4A7750(CGameSprite* pSprite);
+    void WakeOnDamage(CGameSprite* pSprite);
 };
 
 class CGameEffectDeath : public CGameEffect {
@@ -659,7 +659,7 @@ public:
     CGameEffect* Copy() override;
     BOOL ApplyEffect(CGameSprite* pSprite) override;
 
-    BOOL sub_4B2680(CGameSprite* pSprite);
+    BOOL CheckStunRemove(CGameSprite* pSprite);
 };
 
 class CGameEffectUnstun : public CGameEffect {
@@ -905,10 +905,10 @@ public:
     CGameEffect* Copy() override;
     BOOL ApplyEffect(CGameSprite* pSprite) override;
 
-    void sub_4B5BF0(CGameSprite* pSprite);
-    void sub_4B5D90(CGameSprite* pSprite);
-    void sub_4B5E50(CGameSprite* pSprite);
-    void sub_4B5FF0(CGameSprite* pSprite);
+    void ApplyDiseaseBlindness(CGameSprite* pSprite);
+    void ApplyDiseaseSlow(CGameSprite* pSprite);
+    void ApplyDiseaseMoldTouch(CGameSprite* pSprite);
+    void ApplyDiseaseSpawn(CGameSprite* pSprite);
 };
 
 class CGameEffectCureDisease : public CGameEffect {

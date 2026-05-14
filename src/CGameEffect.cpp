@@ -919,7 +919,7 @@ CGameEffect* CGameEffect::DecodeEffect(ITEM_EFFECT* effect, const CPoint& source
     case ICEWIND_CGAMEEFFECT_APPLYEFFECTSLIST:
         if (1) {
             IcewindCGameEffectApplyEffectsList* pEffect = new IcewindCGameEffectApplyEffectsList(effect, source, sourceID, target);
-            pEffect->sub_493400(TRUE);
+            pEffect->SetPermanentFlag(TRUE);
             return pEffect;
         }
     case ICEWIND_CGAMEEFFECT_ARMOROFFAITH:
@@ -1381,7 +1381,7 @@ void CGameEffect::SetDWFlags(DWORD dwFlags)
 }
 
 // 0x493400
-void CGameEffect::sub_493400(BOOL a1)
+void CGameEffect::SetPermanentFlag(BOOL a1)
 {
     if (a1) {
         m_flags |= 0x2;
@@ -1391,7 +1391,7 @@ void CGameEffect::sub_493400(BOOL a1)
 }
 
 // 0x594020
-void CGameEffect::sub_594020(BOOL bEnabled)
+void CGameEffect::SetEnabled(BOOL bEnabled)
 {
     if (bEnabled) {
         m_flags |= 0x1;
@@ -1619,7 +1619,7 @@ void CGameEffect::ClearItemEffect(ITEM_EFFECT* itemEffect, WORD newEffectId)
 }
 
 // 0x4B8730
-void CGameEffect::sub_4B8730(CGameSprite* pSprite, INT slotNum)
+void CGameEffect::StripItemSlot(CGameSprite* pSprite, INT slotNum)
 {
     CItem* pItem = pSprite->GetEquipment()->m_items[slotNum];
     if (pItem != NULL) {
@@ -2221,7 +2221,7 @@ CGameEffect* CGameEffectDamage::Copy()
 }
 
 // 0x4A7750
-void CGameEffectDamage::sub_4A7750(CGameSprite* pSprite)
+void CGameEffectDamage::WakeOnDamage(CGameSprite* pSprite)
 {
     if ((pSprite->GetBaseStats()->m_generalState & STATE_DEAD) == 0) {
         if ((pSprite->GetBaseStats()->m_generalState & STATE_SLEEPING) != 0
@@ -3833,7 +3833,7 @@ CGameEffect* CGameEffectStun::Copy()
 BOOL CGameEffectStun::ApplyEffect(CGameSprite* pSprite)
 {
     if (m_dwFlags == 2) {
-        return sub_4B2680(pSprite);
+        return CheckStunRemove(pSprite);
     }
 
     if (m_dwFlags == 1) {
@@ -3862,7 +3862,7 @@ BOOL CGameEffectStun::ApplyEffect(CGameSprite* pSprite)
 }
 
 // 0x4B2680
-BOOL CGameEffectStun::sub_4B2680(CGameSprite* pSprite)
+BOOL CGameEffectStun::CheckStunRemove(CGameSprite* pSprite)
 {
     INT nHealth = pSprite->GetBaseStats()->m_hitPoints;
     int v1 = 0;
@@ -4531,7 +4531,7 @@ BOOL CGameEffectDispelEffects::ApplyEffect(CGameSprite* pSprite)
     }
 
     pSprite->UnequipAll(TRUE);
-    sub_4B8730(pSprite, 42);
+    StripItemSlot(pSprite, 42);
     pSprite->EquipAll(TRUE);
     pSprite->m_hasColorEffects = TRUE;
     pSprite->m_hasColorRangeEffects = TRUE;
@@ -5436,10 +5436,10 @@ BOOL CGameEffectDisease::ApplyEffect(CGameSprite* pSprite)
         AddSlowEffect(pSprite);
         return TRUE;
     case 11:
-        sub_4B5E50(pSprite);
+        ApplyDiseaseMoldTouch(pSprite);
         return TRUE;
     case 12:
-        sub_4B5FF0(pSprite);
+        ApplyDiseaseSpawn(pSprite);
         return TRUE;
     case 13:
         pSprite->m_bonusStats.m_nSTR -= 2;
@@ -5448,10 +5448,10 @@ BOOL CGameEffectDisease::ApplyEffect(CGameSprite* pSprite)
         AddSlowEffect(pSprite);
         return TRUE;
     case 14:
-        sub_4B5BF0(pSprite);
+        ApplyDiseaseBlindness(pSprite);
         return TRUE;
     case 15:
-        sub_4B5D90(pSprite);
+        ApplyDiseaseSlow(pSprite);
         return TRUE;
     }
 
@@ -5498,7 +5498,7 @@ BOOL CGameEffectDisease::ApplyEffect(CGameSprite* pSprite)
 }
 
 // 0x4B5BF0
-void CGameEffectDisease::sub_4B5BF0(CGameSprite* pSprite)
+void CGameEffectDisease::ApplyDiseaseBlindness(CGameSprite* pSprite)
 {
     pSprite->m_bonusStats.m_nSTR -= 3;
     pSprite->m_bonusStats.m_nDEX -= 3;
@@ -5542,7 +5542,7 @@ void CGameEffectDisease::sub_4B5BF0(CGameSprite* pSprite)
 }
 
 // 0x4B5D90
-void CGameEffectDisease::sub_4B5D90(CGameSprite* pSprite)
+void CGameEffectDisease::ApplyDiseaseSlow(CGameSprite* pSprite)
 {
     AddSlowEffect(pSprite);
 
@@ -5561,7 +5561,7 @@ void CGameEffectDisease::sub_4B5D90(CGameSprite* pSprite)
 }
 
 // 0x4B5E50
-void CGameEffectDisease::sub_4B5E50(CGameSprite* pSprite)
+void CGameEffectDisease::ApplyDiseaseMoldTouch(CGameSprite* pSprite)
 {
     if (IcewindMisc::IsDead(pSprite) != TRUE
         && !pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_MOLD_TOUCH]) {
@@ -5589,7 +5589,7 @@ void CGameEffectDisease::sub_4B5E50(CGameSprite* pSprite)
 }
 
 // 0x4B5FF0
-void CGameEffectDisease::sub_4B5FF0(CGameSprite* pSprite)
+void CGameEffectDisease::ApplyDiseaseSpawn(CGameSprite* pSprite)
 {
     if (IcewindMisc::IsDead(pSprite) != TRUE) {
         for (int index = 0; index < m_effectAmount; index += 7) {
