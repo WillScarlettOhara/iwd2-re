@@ -1327,7 +1327,7 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
 
     if (m_baseStats.field_294) {
         m_baseStats.field_294 = FALSE;
-        sub_75F3D0(1);
+        SetStealthState(1);
         if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL) {
             CMessage* message = new CMessage90(m_id, m_id, 1);
             g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
@@ -12679,7 +12679,7 @@ SHORT CGameSprite::SavePositionToBaseStats()
 }
 
 // 0x75F3D0
-SHORT CGameSprite::sub_75F3D0(int a1)
+SHORT CGameSprite::SetStealthState(int a1)
 {
     // TODO: Incomplete.
 

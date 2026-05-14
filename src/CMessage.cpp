@@ -13356,7 +13356,7 @@ void CMessage90::Run()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
-            static_cast<CGameSprite*>(pObject)->sub_75F3D0(field_C);
+            static_cast<CGameSprite*>(pObject)->SetStealthState(field_C);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
