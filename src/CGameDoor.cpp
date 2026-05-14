@@ -245,32 +245,32 @@ CGameDoor::CGameDoor(CGameArea* pArea, CAreaFileDoorObject* pDoorObject, CAreaPo
         name.m_intValue = m_id;
         pArea->GetNamedCreatures()->AddKey(name);
 
-        SplitRectIntoGrid(&m_rClosedBounding, field_6DA);
-        SplitRectIntoGrid(&m_rOpenBounding, field_6F2);
+        SplitRectIntoGrid(&m_rClosedBounding, m_closedBoundingGrid);
+        SplitRectIntoGrid(&m_rOpenBounding, m_openBoundingGrid);
 
-        field_6EE = NULL;
-        field_706 = NULL;
+        m_pClosedPolygonPoints = NULL;
+        m_pOpenPolygonPoints = NULL;
 
         if (m_nClosedPolygon != 0) {
-            field_6EE = new CAreaPoint[m_nClosedPolygon];
+            m_pClosedPolygonPoints = new CAreaPoint[m_nClosedPolygon];
 
             for (WORD cnt = 0; cnt < m_nClosedPolygon; cnt++) {
-                field_6EE[cnt].m_xPos = static_cast<WORD>(m_pClosedPolygon[cnt].x);
-                field_6EE[cnt].m_yPos = static_cast<WORD>(m_pClosedPolygon[cnt].y);
+                m_pClosedPolygonPoints[cnt].m_xPos = static_cast<WORD>(m_pClosedPolygon[cnt].x);
+                m_pClosedPolygonPoints[cnt].m_yPos = static_cast<WORD>(m_pClosedPolygon[cnt].y);
             }
         } else {
-            field_6EE = NULL;
+            m_pClosedPolygonPoints = NULL;
         }
 
         if (m_nOpenPolygon != 0) {
-            field_706 = new CAreaPoint[m_nOpenPolygon];
+            m_pOpenPolygonPoints = new CAreaPoint[m_nOpenPolygon];
 
             for (WORD cnt = 0; cnt < m_nOpenPolygon; cnt++) {
-                field_706[cnt].m_xPos = static_cast<WORD>(m_pOpenPolygon[cnt].x);
-                field_706[cnt].m_yPos = static_cast<WORD>(m_pOpenPolygon[cnt].y);
+                m_pOpenPolygonPoints[cnt].m_xPos = static_cast<WORD>(m_pOpenPolygon[cnt].x);
+                m_pOpenPolygonPoints[cnt].m_yPos = static_cast<WORD>(m_pOpenPolygon[cnt].y);
             }
         } else {
-            field_706 = NULL;
+            m_pOpenPolygonPoints = NULL;
         }
 
         m_nAICounter = 0;
@@ -298,33 +298,33 @@ CGameDoor::~CGameDoor()
         delete m_pClosedSearch;
     }
 
-    if (field_6EE != NULL) {
-        delete field_6EE;
-        field_6EE = NULL;
+    if (m_pClosedPolygonPoints != NULL) {
+        delete m_pClosedPolygonPoints;
+        m_pClosedPolygonPoints = NULL;
     }
 
     // When there is only one element its an unowned pointer to
     // `m_rClosedBounding`.
-    if (field_6DA.GetCount() > 1) {
-        for (INT nIndex = 0; nIndex < field_6DA.GetCount(); nIndex++) {
-            delete field_6DA[nIndex];
+    if (m_closedBoundingGrid.GetCount() > 1) {
+        for (INT nIndex = 0; nIndex < m_closedBoundingGrid.GetCount(); nIndex++) {
+            delete m_closedBoundingGrid[nIndex];
         }
     }
-    field_6DA.SetSize(0);
+    m_closedBoundingGrid.SetSize(0);
 
-    if (field_706 != NULL) {
-        delete field_706;
-        field_706 = NULL;
+    if (m_pOpenPolygonPoints != NULL) {
+        delete m_pOpenPolygonPoints;
+        m_pOpenPolygonPoints = NULL;
     }
 
     // When there is only one element its an unowned pointer to
     // `m_rOpenBounding`.
-    if (field_6F2.GetCount() > 1) {
-        for (INT nIndex = 0; nIndex < field_6F2.GetCount(); nIndex++) {
-            delete field_6F2[nIndex];
+    if (m_openBoundingGrid.GetCount() > 1) {
+        for (INT nIndex = 0; nIndex < m_openBoundingGrid.GetCount(); nIndex++) {
+            delete m_openBoundingGrid[nIndex];
         }
     }
-    field_6F2.SetSize(0);
+    m_openBoundingGrid.SetSize(0);
 }
 
 // 0x487460

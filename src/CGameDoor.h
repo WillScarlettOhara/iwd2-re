@@ -59,10 +59,10 @@ public:
     /* 0664 */ SHORT m_drawPoly;
     /* 0666 */ CPoint m_ptOpenDest;
     /* 066E */ CPoint m_ptClosedDest;
-    /* 06DA */ CArray<CRect*> field_6DA;
-    /* 06EE */ CAreaPoint* field_6EE;
-    /* 06F2 */ CArray<CRect*> field_6F2;
-    /* 0706 */ CAreaPoint* field_706;
+    /* 06DA */ CArray<CRect*> m_closedBoundingGrid;
+    /* 06EE */ CAreaPoint* m_pClosedPolygonPoints;
+    /* 06F2 */ CArray<CRect*> m_openBoundingGrid;
+    /* 0706 */ CAreaPoint* m_pOpenPolygonPoints;
     /* 070A */ int m_nAICounter;
 };
 

@@ -65,10 +65,10 @@ public:
     /* 08A4 */ SCRIPTNAME m_ownedBy;
     /* 08C4 */ CResRef m_keyType;
     /* 08CC */ DWORD m_breakDifficulty;
-    /* 08EA */ CAreaPoint* field_8EA;
+    /* 08EA */ CAreaPoint* m_pPolygonPoints;
     /* 08D0 */ SHORT m_drawPoly;
     /* 08D2 */ int field_8D2;
-    /* 08D6 */ CArray<CRect*> field_8D6;
+    /* 08D6 */ CArray<CRect*> m_boundingGrid;
 };
 
 #endif /* CGAMECONTAINER_H_ */

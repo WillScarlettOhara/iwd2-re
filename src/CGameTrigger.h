@@ -43,9 +43,9 @@ public:
     /* 0616 */ CPoint m_posTrapOrigin;
     /* 061E */ CResRef m_keyType;
     /* 0626 */ SHORT m_drawPoly;
-    /* 0628 */ CPoint field_628;
-    /* 0630 */ CArray<CRect*> field_630;
-    /* 0644 */ CAreaPoint* field_644;
+    /* 0628 */ CPoint m_ptUsePoint;
+    /* 0630 */ CArray<CRect*> m_boundingGrid;
+    /* 0644 */ CAreaPoint* m_pPolygonPoints;
 };
 
 #endif /* CGAMETRIGGER_H_ */

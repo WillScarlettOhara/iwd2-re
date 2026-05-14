@@ -183,19 +183,19 @@ CGameContainer::CGameContainer(CGameArea* pArea, CAreaFileContainer* pContainerO
             pArea->GetNamedCreatures()->AddKey(name);
         }
 
-        SplitRectIntoGrid(&m_rBounding, field_8D6);
+        SplitRectIntoGrid(&m_rBounding, m_boundingGrid);
 
-        field_8EA = NULL;
+        m_pPolygonPoints = NULL;
 
         if (m_nPolygon != 0) {
-            field_8EA = new CAreaPoint[m_nPolygon];
+            m_pPolygonPoints = new CAreaPoint[m_nPolygon];
 
             for (WORD cnt = 0; cnt < m_nPolygon; cnt++) {
-                field_8EA[cnt].m_xPos = static_cast<WORD>(m_pPolygon[cnt].x);
-                field_8EA[cnt].m_yPos = static_cast<WORD>(m_pPolygon[cnt].y);
+                m_pPolygonPoints[cnt].m_xPos = static_cast<WORD>(m_pPolygon[cnt].x);
+                m_pPolygonPoints[cnt].m_yPos = static_cast<WORD>(m_pPolygon[cnt].y);
             }
         } else {
-            field_8EA = NULL;
+            m_pPolygonPoints = NULL;
         }
 
         field_8D2 = 0;
@@ -242,7 +242,7 @@ CGameContainer::CGameContainer(CGameArea* pArea, const CRect& rBound)
 
         AddToArea(pArea, m_ptWalkToUse, 0, LIST_BACK);
         m_bDeleteMe = FALSE;
-        field_8EA = NULL;
+        m_pPolygonPoints = NULL;
         field_8D2 = 0;
     } else {
         delete this;
@@ -265,18 +265,18 @@ CGameContainer::~CGameContainer()
         delete m_pPolygon;
     }
 
-    if (field_8EA != NULL) {
-        delete field_8EA;
-        field_8EA = NULL;
+    if (m_pPolygonPoints != NULL) {
+        delete m_pPolygonPoints;
+        m_pPolygonPoints = NULL;
     }
 
     // When there is only one element its an unowned pointer to `m_rBounding`.
-    if (field_8D6.GetCount() > 1) {
-        for (INT nIndex = 0; nIndex < field_8D6.GetCount(); nIndex++) {
-            delete field_8D6[nIndex];
+    if (m_boundingGrid.GetCount() > 1) {
+        for (INT nIndex = 0; nIndex < m_boundingGrid.GetCount(); nIndex++) {
+            delete m_boundingGrid[nIndex];
         }
     }
-    field_8D6.SetSize(0);
+    m_boundingGrid.SetSize(0);
 }
 
 // 0x47D7F0
