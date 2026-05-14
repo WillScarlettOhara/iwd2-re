@@ -5783,19 +5783,21 @@ void CInfGame::SetupCharacters(BOOLEAN bProgressBarInPlace)
                 WORD nFacing = static_cast<WORD>(GetRuleTables().GetStartRotation(nPortrait));
                 pSprite->SetFacing(nFacing);
                 pSprite->AddToArea(pArea, ptStart, 0, CGAMEOBJECT_LIST_FRONT);
+                pSprite->SetIdleSequence();
                 pSprite->m_canBeSeen = 4 * (CGameObject::VISIBLE_DELAY + 1);
-                DBG("SetupCharacters: sprite flags active=%d activeAI=%d activeImprisonment=%d animType=%d state=0x%X canBeSeen=%d",
+                DBG("SetupCharacters: sprite flags active=%d activeAI=%d activeImprisonment=%d animType=%d state=0x%X canBeSeen=%d seq=%d",
                     pSprite->m_active,
                     pSprite->m_activeAI,
                     pSprite->m_activeImprisonment,
                     pSprite->m_baseStats.m_animationType,
                     pSprite->m_derivedStats.m_generalState,
-                    pSprite->m_canBeSeen);
+                    pSprite->m_canBeSeen,
+                    pSprite->m_nSequence);
                 m_cObjectArray.ReleaseDeny(nCharacterId,
                     CGameObjectArray::THREAD_ASYNCH,
                     INFINITE);
-                DBG("SetupCharacters: added char %ld at (%d,%d) facing %d",
-                    nCharacterId, ptStart.x, ptStart.y, nFacing);
+                DBG("SetupCharacters: added char %ld at (%d,%d) facing %d seq=%d",
+                    nCharacterId, ptStart.x, ptStart.y, nFacing, pSprite->m_nSequence);
             }
         }
     }
