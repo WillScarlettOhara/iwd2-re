@@ -314,7 +314,7 @@ void CSoundMixer::Initialize(CWnd* pWnd, int nNewMaxVoices, int nNewMaxChannels)
         m_dwEAXProperties |= CSOUNDPROPERTIES_EAX_SUPPORTS_ENVIRONMENT;
     } else {
         if (field_144.IsReady()) {
-            field_144.sub_7C25B0();
+            field_144.CleanUp();
             field_178 = FALSE;
         } else {
             field_178 = TRUE;

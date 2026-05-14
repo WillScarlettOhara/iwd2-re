@@ -15,7 +15,7 @@ CUnknown2::CUnknown2()
 CUnknown2::~CUnknown2()
 {
     // NOTE: Uninline.
-    sub_7C25B0();
+    CleanUp();
 }
 
 // 0x799C90
@@ -25,7 +25,7 @@ BOOL CUnknown2::IsReady()
 }
 
 // 0x7C25B0
-void CUnknown2::sub_7C25B0()
+void CUnknown2::CleanUp()
 {
     // TODO: Incomplete.
 }

@@ -9,7 +9,7 @@ public:
     CUnknown2();
     ~CUnknown2();
     BOOL IsReady();
-    void sub_7C25B0();
+    void CleanUp();
 
     int field_0;
     int field_4;
