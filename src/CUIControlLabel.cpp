@@ -41,7 +41,11 @@ CUIControlLabel::CUIControlLabel(CUIPanel* pPanel, UI_CONTROL_LABEL* pControlInf
         m_nTextFlags |= 0x4;
     }
 
-    g_pBaldurChitin->GetTlkTable().Fetch(pControlInfo->nText, strRes);
+    if (pControlInfo->nText != 0) {
+        g_pBaldurChitin->GetTlkTable().Fetch(pControlInfo->nText, strRes);
+    } else {
+        strRes.szText = "";
+    }
 
     SHORT nLineHeight = m_cVidFont.GetFontHeight(FALSE);
     if (nLineHeight > m_size.cy) {

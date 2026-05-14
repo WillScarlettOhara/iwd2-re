@@ -1667,8 +1667,8 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                     && !bStartupSaveGameSucceeded) {
                     pGame->SelectAll(FALSE);
                     pGame->SelectToolbar();
-                    pGame->SetCurrentChapter(1);
-                    g_pBaldurChitin->m_pEngineChapter->StartChapter(CResRef("CHPTXT0"));
+                    pGame->SetCurrentChapter(0);
+                    g_pBaldurChitin->m_pEngineChapter->StartChapter(CResRef("CHAPTERS"));
                     SelectEngine(g_pBaldurChitin->m_pEngineChapter);
                 } else {
                     SelectEngine(g_pBaldurChitin->m_pEngineWorld);

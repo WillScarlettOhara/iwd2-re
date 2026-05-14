@@ -28,13 +28,13 @@ Observed after BIFC fix:
 
 Temporary fix:
 - In local single-player (`SERV_PROV_NULL`) only, when startup `SaveGame` returns `FALSE`, skip `DestroyGame/LoadGame` and keep `SetupCharacters()` state.
-- Then select all party chars, select toolbar, start `CScreenChapter` with `CHPTXT0` and select chapter engine. This restores first prologue screen path until full `SaveGame`/`Unmarshal` implementation.
+- Then select all party chars, select toolbar, set current chapter to `0`, start `CScreenChapter` with `CHAPTERS`, and select chapter engine. This restores first prologue screen path until full `SaveGame`/`Unmarshal` implementation.
 
 ## Prologue/chapter text
 
-- First new-game text resource: `CHPTXT0.2DA`.
-- `CScreenChapter::StartChapter(CResRef("CHPTXT0"))` calls `CRuleTables::GetChapterText()` and uses current `CHAPTER` global.
-- Original `NewGame()` initializes `CHAPTER` global `m_intValue = -1` (confirmed from decomp at 0x5ABA20). First chapter transition sets chapter to `1`, then `CHPTXT0` row `DEFAULT` gives title/text strrefs (`16202`, `15879`, ...).
+- First new-game text resource is `CHAPTERS.2DA`, row `0`: title `16202` (`Prologue`) and narration `14454` (`NARR00P`).
+- `CHPTXT0.2DA` contains unused BG1/Candlekeep text in this install; do not use for IWD2 startup prologue.
+- Original `NewGame()` initializes `CHAPTER` global `m_intValue = -1` (confirmed from decomp at 0x5ABA20). Normal transition path later sets chapter to `0` before starting `CHAPTERS`.
 
 ## GetTintColor Analysis (0x470F10)
 

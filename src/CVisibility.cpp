@@ -135,7 +135,7 @@ BOOL CVisibilityMap::AddCharacter(const CPoint& pos, LONG charId, const BYTE* pV
     for (SHORT nIndex = 0; nIndex < 6; nIndex++) {
         if (m_aCharacterIds[nIndex] == CGameObjectArray::INVALID_INDEX) {
             m_aCharacterIds[nIndex] = charId;
-            PrivateAddCharacter(charId, 1 << nIndex, pVisibleTerrainTable);
+            PrivateAddCharacter(pos, 1 << nIndex, pVisibleTerrainTable);
             return TRUE;
         }
     }
@@ -513,7 +513,7 @@ void CVisibilityMap::UpDate(const CPoint& ptOldPos, const CPoint& ptNewPos, LONG
     if (visId != -1) {
         sub_553440(pt, visId);
         sub_5535D0(pt, visId);
-        PrivateAddCharacter(charId, visId, pVisibleTerrainTable);
+        PrivateAddCharacter(ptNewPos, visId, pVisibleTerrainTable);
     }
 }
 
