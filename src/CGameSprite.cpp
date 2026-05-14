@@ -7007,7 +7007,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
         int v1;
         int v2;
         int v3;
-        g_pBaldurChitin->GetObjectGame()->GetRuleTables().sub_546B60(this,
+        g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetBaseCombatValues(this,
             v1,
             v2,
             v3,
@@ -7019,7 +7019,7 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
         int v1;
         int v2;
         int v3;
-        g_pBaldurChitin->GetObjectGame()->GetRuleTables().sub_546B60(this,
+        g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetBaseCombatValues(this,
             v1,
             v2,
             v3,

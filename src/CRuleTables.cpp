@@ -3411,7 +3411,7 @@ INT CRuleTables::GetEncumbranceMod(CGameSprite* pSprite) const
 }
 
 // 0x546B60
-void CRuleTables::sub_546B60(CGameSprite* pSprite, int& a2, int& a3, int& a4, BOOL a5) const
+void CRuleTables::GetBaseCombatValues(CGameSprite* pSprite, int& a2, int& a3, int& a4, BOOL a5) const
 {
     // TODO: Incomplete.
 }

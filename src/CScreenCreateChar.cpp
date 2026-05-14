@@ -4131,7 +4131,7 @@ void CScreenCreateChar::UpdateCharacterStats(CGameSprite* pSprite)
     int v1;
     int v2;
     int v3;
-    ruleTables.sub_546B60(pSprite, v1, v2, v3, FALSE);
+    ruleTables.GetBaseCombatValues(pSprite, v1, v2, v3, FALSE);
 
     pSprite->GetBaseStats()->m_attackBase = v1;
     pSprite->GetDerivedStats()->m_nLayOnHandsAmount = ruleTables.GetLayOnHandsAmount(typeAI, *pSprite->GetDerivedStats());
