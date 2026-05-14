@@ -3102,7 +3102,7 @@ void CScreenCharacter::OnCustomizeBiographyButtonClick()
 }
 
 // 0x5E4A20
-void CScreenCharacter::sub_5E4A20()
+void CScreenCharacter::OnPanel52Click()
 {
     CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
@@ -3138,7 +3138,7 @@ void CScreenCharacter::sub_5E4A20()
 }
 
 // 0x5E4B30
-void CScreenCharacter::sub_5E4B30()
+void CScreenCharacter::OnPanel53Click()
 {
     CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
     renderLock.Lock(INFINITE);
@@ -4710,7 +4710,7 @@ void CScreenCharacter::ResetSkillsPanel(CUIPanel* pPanel, CGameSprite* pSprite, 
 }
 
 // 0x5F89B0
-void CScreenCharacter::sub_5F89B0(CGameSprite* pSprite)
+void CScreenCharacter::RestoreFeatSelection(CGameSprite* pSprite)
 {
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
@@ -5492,7 +5492,7 @@ void CUIControlButtonCharacter5EA7D0::OnLButtonClick(CPoint pt)
     // __LINE__: 12235
     UTIL_ASSERT(pCharacter != NULL);
 
-    pCharacter->sub_5E4A20();
+    pCharacter->OnPanel52Click();
 }
 
 // -----------------------------------------------------------------------------
@@ -5517,7 +5517,7 @@ void CUIControlButtonCharacter5EA900::OnLButtonClick(CPoint pt)
     // __LINE__: 12289
     UTIL_ASSERT(pCharacter != NULL);
 
-    pCharacter->sub_5E4B30();
+    pCharacter->OnPanel53Click();
 }
 
 // -----------------------------------------------------------------------------
@@ -6904,7 +6904,7 @@ void CUIControlButtonCharacterFeatsPlusMinus::AdjustValue()
             if (nValue > 0 && pCharacter->m_storedFeats[id] < pSprite->GetFeatValue(id)) {
                 pSprite->SetFeatValue(id, nValue - 1);
                 pCharacter->m_nExtraFeats++;
-                pCharacter->sub_5F89B0(pSprite);
+                pCharacter->RestoreFeatSelection(pSprite);
             }
         }
 

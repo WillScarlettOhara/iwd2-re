@@ -114,8 +114,8 @@ public:
     void OnInformationButtonClick();
     void OnBiographyButtonClick();
     void OnCustomizeBiographyButtonClick();
-    void sub_5E4A20();
-    void sub_5E4B30();
+    void OnPanel52Click();
+    void OnPanel53Click();
     void OnScriptButtonClick();
     void OnExportButtonClick();
     void OnLevelUpButtonClick();
@@ -146,7 +146,7 @@ public:
     void OnSoundItemSelect(INT nItem);
     void ResetCustomizeBiographyPanel(CUIPanel* pPanel, CGameSprite* pSprite);
     void ResetSkillsPanel(CUIPanel* pPanel, CGameSprite* pSprite, int a3);
-    void sub_5F89B0(CGameSprite* pSprite);
+    void RestoreFeatSelection(CGameSprite* pSprite);
     void sub_5F8C90(int a1);
     void sub_5F91F0(int a1);
 
