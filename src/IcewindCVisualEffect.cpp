@@ -3,10 +3,10 @@
 // 0x586A40
 IcewindCVisualEffect::IcewindCVisualEffect()
 {
-    field_0 = FALSE;
-    field_1 = TRUE;
+    m_bTintEnabled = FALSE;
+    m_bCopyFromBack = TRUE;
     field_2 = FALSE;
-    field_3 = FALSE;
+    m_bTransparent = FALSE;
     m_nTransValue = 0;
     m_dwFlags = 0x20000;
 }
@@ -15,10 +15,10 @@ IcewindCVisualEffect::IcewindCVisualEffect()
 void IcewindCVisualEffect::SetTintFromFlags(BOOLEAN a1)
 {
     if (a1 == TRUE) {
-        field_0 = TRUE;
+        m_bTintEnabled = TRUE;
         m_dwFlags |= 0x10000;
     } else {
-        field_0 = FALSE;
+        m_bTintEnabled = FALSE;
         m_dwFlags &= ~0x10000;
     }
 }
@@ -27,10 +27,10 @@ void IcewindCVisualEffect::SetTintFromFlags(BOOLEAN a1)
 void IcewindCVisualEffect::SetCopyFromBack(BOOLEAN a1)
 {
     if (a1 == TRUE) {
-        field_1 = TRUE;
+        m_bCopyFromBack = TRUE;
         m_dwFlags |= 0x200;
     } else {
-        field_1 = FALSE;
+        m_bCopyFromBack = FALSE;
         m_dwFlags &= ~0x200;
     }
 }
@@ -39,11 +39,11 @@ void IcewindCVisualEffect::SetCopyFromBack(BOOLEAN a1)
 void IcewindCVisualEffect::SetTransparency(BOOLEAN a1, INT nTransValue)
 {
     if (a1 == TRUE) {
-        field_3 = TRUE;
+        m_bTransparent = TRUE;
         m_nTransValue = nTransValue;
         m_dwFlags |= 0x2;
     } else {
-        field_3 = FALSE;
+        m_bTransparent = FALSE;
         m_nTransValue = 0;
         m_dwFlags &= ~0x2;
     }

@@ -44,8 +44,8 @@ public:
     /* 079C */ SHORT m_currentBamDirection;
     /* 079E */ BOOL m_falseColor;
     /* 07A2 */ BOOL m_translucent;
-    /* 07A6 */ BOOL field_7A6;
-    /* 07AA */ CVidBitmap field_7AA;
+    /* 07A6 */ BOOL m_bHasOverlay;
+    /* 07AA */ CVidBitmap m_overlayBitmap;
     /* 0864 */ BOOLEAN m_bDetectedByInfravision;
     /* 0865 */ BYTE m_extendDirectionTest;
 };

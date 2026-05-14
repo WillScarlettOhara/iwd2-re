@@ -6053,7 +6053,7 @@ void CGameSprite::RenderSpriteCover(CVidMode* pVidMode, INT nSurface, CVidCell* 
     newPos.x = m_pos.x;
     newPos.y = m_pArea->GetHeightOffset(m_pos, m_listType) + m_pos.y + 1;
 
-    if (vfx.field_1 == TRUE || vfx.field_3 == TRUE) {
+    if (vfx.m_bCopyFromBack == TRUE || vfx.m_bTransparent == TRUE) {
         dwRenderFlags |= CInfinity::FXPREP_COPYFROMBACK | 0x2;
     } else {
         dwRenderFlags |= CInfinity::FXPREP_CLEARFILL | 0x1;

@@ -10,10 +10,10 @@ public:
     void SetCopyFromBack(BOOLEAN a1);
     void SetTransparency(BOOLEAN a1, INT nTransValue);
 
-    /* 0000 */ BOOLEAN field_0;
-    /* 0001 */ BOOLEAN field_1;
+    /* 0000 */ BOOLEAN m_bTintEnabled;
+    /* 0001 */ BOOLEAN m_bCopyFromBack;
     /* 0002 */ BOOLEAN field_2;
-    /* 0003 */ BOOLEAN field_3;
+    /* 0003 */ BOOLEAN m_bTransparent;
     /* 0004 */ INT m_nTransValue;
     /* 0008 */ DWORD m_dwFlags;
 };

@@ -7799,7 +7799,7 @@ void CMessageExitDialogMode::Run()
 {
     g_pBaldurChitin->m_pEngineWorld->field_1150 = 0;
     g_pBaldurChitin->m_pEngineWorld->EndDialog(1, 1);
-    g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.field_54 = 0;
+    g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.m_bDialogActive = 0;
 }
 
 // -----------------------------------------------------------------------------

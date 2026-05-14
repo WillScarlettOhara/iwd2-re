@@ -5631,7 +5631,7 @@ void CInfGame::SetProtagonist(LONG nId)
 {
     STR_RES strRes;
 
-    if (g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.field_54) {
+    if (g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.m_bDialogActive) {
         nId = g_pBaldurChitin->m_pEngineWorld->m_internalLoadedDialog.m_characterIndex;
     }
 

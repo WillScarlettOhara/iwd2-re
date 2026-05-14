@@ -1466,7 +1466,7 @@ char* CGameAnimationTypeCharacter::GetSndArmor()
         szTemp[6] = ch;
         szTemp[7] = '\0';
         szTemp[8] = '\0';
-        if (strcmp(szTemp, field_3F2) == 0) {
+        if (strcmp(szTemp, m_lastWalkSoundRef) == 0) {
             if (szTemp[6] - '1' == cnt - 1) {
                 szTemp[6] = '1';
             } else {
@@ -1476,7 +1476,7 @@ char* CGameAnimationTypeCharacter::GetSndArmor()
     } else {
         szTemp[7] = ch;
         szTemp[8] = '\0';
-        if (strcmp(szTemp, field_3F2) == 0) {
+        if (strcmp(szTemp, m_lastWalkSoundRef) == 0) {
             if (szTemp[7] - '1' == cnt - 1) {
                 szTemp[7] = '1';
             } else {
@@ -1485,7 +1485,7 @@ char* CGameAnimationTypeCharacter::GetSndArmor()
         }
     }
 
-    memcpy(field_3F2, szTemp, 9);
+    memcpy(m_lastWalkSoundRef, szTemp, 9);
 
     return szTemp;
 }
