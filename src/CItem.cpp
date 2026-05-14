@@ -859,7 +859,7 @@ BYTE CItem::GetMinCHRRequired()
 }
 
 // 0x4EA580
-void CItem::sub_4EA580(CUIControlTextDisplay* pText, COLORREF rgbColor)
+void CItem::FormatItemDescription(CUIControlTextDisplay* pText, COLORREF rgbColor)
 {
     // TODO: Incomplete.
 }

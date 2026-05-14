@@ -2968,7 +2968,7 @@ void CScreenInventory::UpdateHistoryPanel(BOOL a1)
                 CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(pPanel->GetControl(5));
                 if (pText != NULL) {
                     pText->RemoveAll();
-                    pItem->sub_4EA580(pText, RGB(200, 200, 0));
+                    pItem->FormatItemDescription(pText, RGB(200, 200, 0));
                     pText->SetTopString(pText->m_plstStrings->FindIndex(0));
                 }
             }
