@@ -16,6 +16,7 @@
 #include "CUIControlTextDisplay.h"
 #include "CUIPanel.h"
 #include "CUtil.h"
+#include "debuglog.h"
 
 // 0x85A1EC
 const LONG CScreenWorld::BORED_TIME = 3000;
@@ -387,6 +388,7 @@ int CScreenWorld::GetSelectedCharacter()
 // 0x6869C0
 void CScreenWorld::EngineActivated()
 {
+    DBG("CScreenWorld::EngineActivated: enter");
     if (CChitin::byte_8FB950
         && g_pChitin->cNetwork.GetSessionOpen() == TRUE
         && g_pChitin->cNetwork.GetSessionHosting() == TRUE

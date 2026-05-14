@@ -2768,6 +2768,7 @@ void CInfGame::SaveMultiPlayerPermissions()
 // 0x5AB190
 void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace)
 {
+    DBG("LoadGame: enter save=%s", static_cast<LPCSTR>(m_sSaveGame));
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
     // __LINE__: 8447
     UTIL_ASSERT(m_sSaveGame != "");
@@ -3285,6 +3286,7 @@ void CInfGame::UnselectAll()
 // 0x5AD8A0
 BOOL CInfGame::SelectCharacter(LONG characterId, BOOLEAN bPlaySelectSound)
 {
+    DBG("SelectCharacter: id=%ld", characterId);
     CGameSprite* pSprite;
     BYTE rc;
     SHORT nPortrait = GetCharacterPortraitNum(characterId);
@@ -3373,6 +3375,7 @@ BOOL CInfGame::SelectCharacter(LONG characterId, BOOLEAN bPlaySelectSound)
 // 0x5ADAE0
 void CInfGame::SelectToolbar()
 {
+    DBG("SelectToolbar: enter");
     // TODO: Incomplete.
 }
 
@@ -3611,11 +3614,16 @@ void CInfGame::RenderPortrait(DWORD portraitId, const CPoint& cpRenderPosition, 
 // 0x5AF7F0
 void CInfGame::WorldEngineActivated(CVidMode* pVidMode)
 {
+    DBG("WorldEngineActivated: enter visibleArea=%d", m_visibleArea);
     m_nState = 0;
     m_cButtonArray.m_nSelectedButton = 100;
     m_cVRamPool.DetachSurfaces();
     m_cVRamPool.AttachSurfaces(pVidMode);
-    m_gameAreas[m_visibleArea]->OnActivation();
+    if (m_visibleArea >= 0 && m_visibleArea < CINFGAME_MAX_AREAS && m_gameAreas[m_visibleArea] != NULL) {
+        m_gameAreas[m_visibleArea]->OnActivation();
+    } else {
+        DBG("WorldEngineActivated: SKIPPING OnActivation, area missing or invalid");
+    }
     m_cButtonArray.ResetState();
 }
 
@@ -5726,12 +5734,14 @@ void CInfGame::AddPartyGold(LONG dwAddPartyGold)
 // 0x5BF6A0
 void CInfGame::SetupCharacters(BOOLEAN bProgressBarInPlace)
 {
+    DBG("SetupCharacters: enter");
     // TODO: Incomplete.
 }
 
 // 0x5BFC40
 LONG CInfGame::GetProtagonist()
 {
+    DBG("GetProtagonist: enter");
     // TODO: Incomplete.
 
     return CGameObjectArray::INVALID_INDEX;

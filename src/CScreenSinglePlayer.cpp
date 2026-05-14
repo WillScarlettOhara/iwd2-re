@@ -16,6 +16,7 @@
 #include "CUIControlTextDisplay.h"
 #include "CUIPanel.h"
 #include "CUtil.h"
+#include "debuglog.h"
 
 // 0x8F7500
 const CString CScreenSinglePlayer::TOKEN_GOLD("GOLD");
@@ -1331,6 +1332,8 @@ void CScreenSinglePlayer::UpdateModifyCharacterPanel()
 // 0x6629E0
 void CScreenSinglePlayer::OnMainDoneButtonClick()
 {
+    DBG("OnMainDoneButtonClick: enter");
+
     CString sDefault;
     INT nMsgFrom;
     DWORD dwSize;
@@ -2041,6 +2044,8 @@ void CScreenSinglePlayer::UpdatePartySelectionPanel()
 // 0x6642C0
 void CScreenSinglePlayer::OnPartySelectionDoneButtonClick()
 {
+    DBG("OnPartySelectionDoneButtonClick: enter");
+
     CUIPanel* pPanel = m_cUIManager.GetPanel(10);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp

@@ -26,6 +26,7 @@
 #include "CTiledObject.h"
 #include "CUtil.h"
 #include "CVidPoly.h"
+#include "debuglog.h"
 
 // 0x8D212C
 INT CGameArea::dword_8D212C;
@@ -2558,6 +2559,7 @@ void CGameArea::SetListenPosition()
 // 0x4750E0
 void CGameArea::OnActivation()
 {
+    DBG("CGameArea::OnActivation: area=%d", m_id);
     SetListenPosition();
 
     m_ptMousePos = g_pChitin->m_ptPointer;

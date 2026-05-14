@@ -127,8 +127,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     DBG("MAIN: Init returned");
     int rc = baldurChitin.WinMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
     DBG("MAIN: WinMain returned");
-    MessageBoxA(NULL, "MAIN: WinMain returned", "DBG", MB_OK);
-
     CloseHandle(mutexHandle);
     return rc;
 }
