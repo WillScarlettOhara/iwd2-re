@@ -846,8 +846,8 @@ void CGameAnimationTypeCharacter::EquipArmor(CHAR armorLevel, BYTE* colorRangeVa
 
     m_armorCode = armorLevel;
 
-    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
-    m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
+    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
+    m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
 
     if (m_weaponCode == 4) {
         m_a1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "A1"), field_1444, TRUE, TRUE);
@@ -2185,7 +2185,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         if (field_1448 != 0) {
             field_144C = '9';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
         }
         break;
     case 2:
@@ -2201,28 +2201,28 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
             m_currentBamSequence = 1;
             if (field_1448 != 0) {
                 field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
             break;
         case 1:
             m_currentBamSequence = 3;
             if (field_1448 != 0) {
                 field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
             break;
         case 2:
             m_currentBamSequence = 5;
             if (field_1448 != 0) {
                 field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
             break;
         case 3:
             m_currentBamSequence = 7;
             if (field_1448 != 0) {
                 field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
             break;
         default:
@@ -2244,28 +2244,28 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
             m_currentBamSequence = 0;
             if (field_1448 != 0) {
                 field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
             break;
         case 1:
             m_currentBamSequence = 2;
             if (field_1448 != 0) {
                 field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
             break;
         case 2:
             m_currentBamSequence = 4;
             if (field_1448 != 0) {
                 field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
             break;
         case 3:
             m_currentBamSequence = 6;
             if (field_1448 != 0) {
                 field_144C = 0;
-                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + field_144C), field_1444, TRUE, TRUE);
+                m_caVidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "CA" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
             break;
         default:
@@ -2293,7 +2293,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         if (field_1448 != 0) {
             field_144C = '4';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
         }
         break;
     case 5:
@@ -2305,7 +2305,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         if (field_1448 != 0) {
             field_144C = '5';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
         }
         break;
     case 6:
@@ -2323,21 +2323,21 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
                 if (field_1448 != 0) {
                     field_144C = '2';
-                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
                 }
             } else if (nChance < 97) {
                 m_currentBamSequence = 7;
 
                 if (field_1448 != 0) {
                     field_144C = '7';
-                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
                 }
             } else {
                 m_currentBamSequence = 0;
 
                 if (field_1448 != 0) {
                     field_144C = '8';
-                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+                    m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
                 }
             }
 
@@ -2367,7 +2367,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
             if (field_1448 != 0) {
                 field_144C = '3';
-                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
 
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
@@ -2383,7 +2383,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
             if (field_1448 != 0) {
                 field_144C = 0;
-                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
 
             if (m_currentVidCellShield != NULL) {
@@ -2431,7 +2431,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         if (field_1448 != 0) {
             field_144C = '6';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
         }
         break;
     case 10:
@@ -2453,7 +2453,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         if (field_1448 != 0) {
             field_144C = '1';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
         }
         break;
     case 11:
@@ -2536,7 +2536,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
             if (field_1448 != 0) {
                 field_144C = '3';
-                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
 
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjAnimation.cpp
@@ -2552,7 +2552,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
             if (field_1448 != 0) {
                 field_144C = 0;
-                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+                m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
             }
 
             if (m_currentVidCellShield != NULL) {
@@ -2589,7 +2589,7 @@ SHORT CGameAnimationTypeCharacter::SetSequence(SHORT nSequence)
 
         if (field_1448 != 0) {
             field_144C = '9';
-            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + field_144C), field_1444, TRUE, TRUE);
+            m_g1VidCellBase.SetResRef(CResRef(m_resRef + m_armorCode + "G1" + CString((char)field_144C, 1)), field_1444, TRUE, TRUE);
         }
         break;
     default:
