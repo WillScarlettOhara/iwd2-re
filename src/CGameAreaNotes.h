@@ -44,8 +44,8 @@ public:
     /* 0080 */ CResRef m_rArea;
     /* 0088 */ CString m_szBuffer;
     /* 008C */ unsigned char field_8C;
-    /* 008D */ unsigned char field_8D;
-    /* 008E */ unsigned char field_8E;
+    /* 008D */ BYTE m_nNumNotes;
+    /* 008E */ BOOLEAN m_bNeedsRefresh;
 };
 
 #endif /* CGAMEAREANOTES_H_ */

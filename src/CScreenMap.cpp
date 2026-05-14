@@ -1031,7 +1031,7 @@ void CScreenMap::ResetAreaNotePanel(CUIPanel* pPanel)
         pButton->SetSelected(nButtonID - 4 == nSequence);
     }
 
-    static_cast<CUIControlButtonMapAreaMap*>(GetManager()->GetPanel(2)->GetControl(2))->m_pArea->m_cGameAreaNotes.field_8D = min(static_cast<BYTE>(nSequence), 7);
+    static_cast<CUIControlButtonMapAreaMap*>(GetManager()->GetPanel(2)->GetControl(2))->m_pArea->m_cGameAreaNotes.m_nNumNotes = min(static_cast<BYTE>(nSequence), 7);
 }
 
 // 0x642130
@@ -2412,7 +2412,7 @@ void CUIControlButtonMapNoteFlagChoice::OnLButtonClick(CPoint pt)
         CScreenMap* pMap = g_pBaldurChitin->m_pEngineMap;
         CUIPanel* pPanel = pMap->GetManager()->GetPanel(2);
         CUIControlButtonMapAreaMap* pMapControl = static_cast<CUIControlButtonMapAreaMap*>(pPanel->GetControl(2));
-        pMapControl->m_pArea->m_cGameAreaNotes.field_8D = min(static_cast<BYTE>(nSequence), 7);
+        pMapControl->m_pArea->m_cGameAreaNotes.m_nNumNotes = min(static_cast<BYTE>(nSequence), 7);
     }
 
     for (DWORD nButtonID = 4; nButtonID < 12; nButtonID++) {
