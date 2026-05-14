@@ -243,7 +243,7 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
     }
 
     if (!output.Open(sDstFileName, CFile::OpenFlags::modeWrite | CFile::OpenFlags::modeCreate | CFile::OpenFlags::typeBinary, NULL)) {
-        delete pBuffer;
+        delete[] pBuffer;
         input.Close();
         return FALSE;
     }
@@ -271,13 +271,13 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
                 DWORD nCompressedChunkSize = chunkHeader[1];
 
                 if (nBufferSize < nUncompressedChunkSize) {
-                    delete pBuffer;
+                    delete[] pBuffer;
 
                     nBufferSize = nUncompressedChunkSize;
                     pBuffer = new BYTE[nBufferSize];
                     if (pBuffer == NULL) {
                         if (pCompressedBuffer != NULL) {
-                            delete pCompressedBuffer;
+                            delete[] pCompressedBuffer;
                         }
                         return FALSE;
                     }
@@ -285,13 +285,13 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
 
                 if (nCompressedBufferSize < nCompressedChunkSize) {
                     if (pCompressedBuffer != NULL) {
-                        delete pCompressedBuffer;
+                        delete[] pCompressedBuffer;
                     }
 
                     nCompressedBufferSize = max(nCompressedChunkSize, 1024);
                     pCompressedBuffer = new BYTE[nCompressedBufferSize];
-                    if (pBuffer == NULL) {
-                        delete pBuffer;
+                    if (pCompressedBuffer == NULL) {
+                        delete[] pBuffer;
                         return FALSE;
                     }
                 }
@@ -300,8 +300,8 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
                 if (nBytesRead != nCompressedChunkSize) {
                     field_118 = 1;
 
-                    delete pCompressedBuffer;
-                    delete pBuffer;
+                    delete[] pCompressedBuffer;
+                    delete[] pBuffer;
 
                     return FALSE;
                 }
@@ -347,10 +347,10 @@ BOOL CResCache::CopyFile(UINT nIndex, const CString& sName, const CString& sSrcF
     output.Close();
 
     if (pCompressedBuffer != NULL) {
-        delete pCompressedBuffer;
+        delete[] pCompressedBuffer;
     }
 
-    delete pBuffer;
+    delete[] pBuffer;
 
     if (field_118 == 1) {
         CFile::Remove(sDstFileName);

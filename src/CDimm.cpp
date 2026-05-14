@@ -2706,7 +2706,7 @@ BOOL CDimm::WriteSetUp(const CString& sFileName, CString& sResolvedFileName)
 {
     CString sResolvedFileNameTemp;
     CString sDirName;
-    CString sTemp;
+    CString sPartialDir;
 
     char path[MAX_PATH];
     _getcwd(path, MAX_PATH);
@@ -2725,23 +2725,24 @@ BOOL CDimm::WriteSetUp(const CString& sFileName, CString& sResolvedFileName)
     sDirName = sResolvedFileNameTemp.Left(nSlash);
 
     if (_chdir(sDirName) != 0) {
-        for (INT nPos = 2; nPos < sDirName.GetLength(); nPos++) {
-            if (sDirName[nPos - 1] == '\\'
-                && sDirName[nPos - 2] != '\\'
-                && sDirName[nPos] != '\\') {
-                sTemp = sDirName[nPos - 1];
+        for (INT nPos = 0; nPos < sDirName.GetLength(); nPos++) {
+            if (sDirName[nPos] != '\\') {
+                continue;
+            }
 
-                if (_chdir(sTemp) != 0) {
-                    if (_mkdir(sTemp) != 0) {
-                        _chdir(path);
-                        return FALSE;
-                    }
-                }
+            sPartialDir = sDirName.Left(nPos);
+            if (sPartialDir.GetLength() == 0 || sPartialDir.Right(1).Compare(":") == 0) {
+                continue;
+            }
+
+            if (_chdir(sPartialDir) != 0 && _mkdir(sPartialDir) != 0) {
+                _chdir(path);
+                return FALSE;
             }
         }
 
         // Last path component (without trailing slash).
-        if (_mkdir(sDirName) != 0) {
+        if (_chdir(sDirName) != 0 && _mkdir(sDirName) != 0) {
             _chdir(path);
             return FALSE;
         }
