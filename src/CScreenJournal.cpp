@@ -17,7 +17,7 @@ CScreenJournal::CScreenJournal()
     m_nChapter = 0;
     m_dwErrorState = 0;
     m_nNumErrorButtons = 0;
-    field_E9C = 0;
+    m_nJournalEntryIndex = 0;
 
     SetVideoMode(0);
 
@@ -117,7 +117,7 @@ CScreenJournal::CScreenJournal()
     field_483 = 0;
     field_48C = "";
     field_484 = "";
-    field_EA0 = 0;
+    m_bNewEntry = 0;
     m_bShiftKeyDown = FALSE;
     m_bCtrlKeyDown = FALSE;
     m_bCapsLockKeyOn = FALSE;
@@ -819,10 +819,10 @@ void CScreenJournal::ResetAnnotatePanel()
     CUIPanel* pPanel = m_cUIManager.GetPanel(9);
 
     CUIControlEditMultiLineJournalAnnotation* pEdit = static_cast<CUIControlEditMultiLineJournalAnnotation*>(pPanel->GetControl(0));
-    if (field_EA0) {
+    if (m_bNewEntry) {
         pEdit->SetText(CString("New Entry"));
     } else {
-        pEdit->SetText(g_pBaldurChitin->GetObjectGame()->GetJournal()->GetEntryText(field_E9C));
+        pEdit->SetText(g_pBaldurChitin->GetObjectGame()->GetJournal()->GetEntryText(m_nJournalEntryIndex));
     }
 
     CUIControlButton* pBtDone = static_cast<CUIControlButton*>(pPanel->GetControl(1));
@@ -856,8 +856,8 @@ void CScreenJournal::ResetAnnotatePanel()
     pBtDelete->SetEnabled(TRUE);
     pBtRevert->SetEnabled(TRUE);
 
-    if (!field_EA0) {
-        switch (g_pBaldurChitin->GetObjectGame()->GetJournal()->GetEntryType(field_E9C)) {
+    if (!m_bNewEntry) {
+        switch (g_pBaldurChitin->GetObjectGame()->GetJournal()->GetEntryType(m_nJournalEntryIndex)) {
         case 0:
             pBtRevert->SetEnabled(FALSE);
             break;
@@ -866,7 +866,7 @@ void CScreenJournal::ResetAnnotatePanel()
             // FALLTHROUGH
         case 2:
         case 4:
-            if (!g_pBaldurChitin->GetObjectGame()->GetJournal()->IsEntryChanged(field_E9C)) {
+            if (!g_pBaldurChitin->GetObjectGame()->GetJournal()->IsEntryChanged(m_nJournalEntryIndex)) {
                 pBtRevert->SetEnabled(FALSE);
             }
             break;
@@ -1083,20 +1083,20 @@ void CUIControlButtonJournalAnnotate::OnLButtonClick(CPoint pt)
         switch (m_nID) {
         case 1:
             sText = static_cast<CUIControlEditMultiLineJournalAnnotation*>(m_pPanel->GetControl(0))->GetText();
-            if (!pScreen->field_EA0) {
-                pJournal->ChangeEntry(pScreen->field_E9C, sText);
+            if (!pScreen->m_bNewEntry) {
+                pJournal->ChangeEntry(pScreen->m_nJournalEntryIndex, sText);
             } else {
-                pJournal->InsertEntryAfter(sText, pScreen->field_E9C, 0);
+                pJournal->InsertEntryAfter(sText, pScreen->m_nJournalEntryIndex, 0);
             }
             break;
         case 3:
-            if (!pScreen->field_EA0) {
-                pJournal->RevertEntry(pScreen->field_E9C);
+            if (!pScreen->m_bNewEntry) {
+                pJournal->RevertEntry(pScreen->m_nJournalEntryIndex);
             }
             break;
         case 4:
-            if (!pScreen->field_EA0) {
-                pJournal->ChangeEntry(pScreen->field_E9C, CString(""));
+            if (!pScreen->m_bNewEntry) {
+                pJournal->ChangeEntry(pScreen->m_nJournalEntryIndex, CString(""));
             }
             break;
         }

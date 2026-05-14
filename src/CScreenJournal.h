@@ -78,8 +78,8 @@ public:
     /* 048C */ CResRef field_48C;
     /* 049C */ CVidFont m_preLoadFontRealms;
     /* 099C */ CVidFont m_preLoadFontTool;
-    /* 0E9C */ int field_E9C;
-    /* 0EA0 */ unsigned char field_EA0;
+    /* 0E9C */ int m_nJournalEntryIndex;
+    /* 0EA0 */ unsigned char m_bNewEntry;
 };
 
 class CUIControlButtonJournalScroll : public CUIControlButton {
