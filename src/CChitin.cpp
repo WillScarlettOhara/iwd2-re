@@ -477,8 +477,7 @@ BOOL CChitin::InitializeServices(HWND hWnd)
 
     if (initialized) {
         DBG("InitServices: about to init SoundMixer");
-        // FIXME: SoundMixer.Initialize may crash
-        // cSoundMixer.Initialize(&cWnd, 16, GetNumberSoundChannels());
+        cSoundMixer.Initialize(&cWnd, 16, GetNumberSoundChannels());
         field_142 = 1;
     }
     DBG("InitServices: returning %d", initialized);
