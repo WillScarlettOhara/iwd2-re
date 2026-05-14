@@ -14804,14 +14804,8 @@ CGameSpriteSpellList* CGameSprite::GetShapeshifts()
     return &m_shapeshifts;
 }
 
-// 0x5940D0
-DWORD CGameSprite::sub_5940D0()
-{
-    return m_baseStats.m_specialization;
-}
-
 // 0x5940E0
-INT CGameSprite::sub_5940E0(BYTE buttonNum)
+INT CGameSprite::GetCustomButtonValue(BYTE buttonNum)
 {
     // __FILE__: .\Include\ObjCreature.h
     // __LINE__: 2028
@@ -14821,7 +14815,7 @@ INT CGameSprite::sub_5940E0(BYTE buttonNum)
 }
 
 // 0x594120
-void CGameSprite::sub_594120(BYTE buttonNum, int a2)
+void CGameSprite::SetCustomButtonValue(BYTE buttonNum, int a2)
 {
     // __FILE__: .\Include\ObjCreature.h
     // __LINE__: 2036

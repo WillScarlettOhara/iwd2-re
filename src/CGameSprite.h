@@ -639,9 +639,8 @@ public:
     CGameSpriteSpellList* GetInnateSpells();
     CGameSpriteSpellList* GetSongs();
     CGameSpriteSpellList* GetShapeshifts();
-    DWORD sub_5940D0();
-    INT sub_5940E0(BYTE buttonNum);
-    void sub_594120(BYTE buttonNum, int a2);
+    INT GetCustomButtonValue(BYTE buttonNum);
+    void SetCustomButtonValue(BYTE buttonNum, int a2);
     BYTE GetModalState();
 
     int sub_45B710();
