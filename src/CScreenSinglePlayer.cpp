@@ -2089,7 +2089,7 @@ void CScreenSinglePlayer::OnPartySelectionDoneButtonClick()
 
     delete pCharacters;
 
-    if (m_nParty == 10 && nCharacters > 0) {
+    if (field_139E == 10 && nCharacters > 0) {
         OnMainDoneButtonClick();
     }
 }

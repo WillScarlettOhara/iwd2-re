@@ -1421,9 +1421,120 @@ void CInfGame::CacheResFileWithResource(const CString& areaName)
 // 0x5A0F50
 LONG CInfGame::ImportCharacter(const CString& sFileName, INT nIndex)
 {
-    // TODO: Incomplete.
+    CString sPath = sFileName;
+    if (sPath.Right(4).CompareNoCase(".chr") != 0) {
+        sPath += ".chr";
+    }
 
-    return 0;
+    FILE* stream = fopen(GetDirCharacters() + sPath, "rb");
+    if (stream == NULL) {
+        stream = fopen(sPath, "rb");
+    }
+
+    if (stream == NULL) {
+        DBG("ImportCharacter: failed to open %s", static_cast<LPCSTR>(sFileName));
+        return 0;
+    }
+
+    fseek(stream, 0, SEEK_END);
+    LONG nChrSize = ftell(stream);
+    fseek(stream, 0, SEEK_SET);
+
+    if (nChrSize <= 0) {
+        fclose(stream);
+        return 0;
+    }
+
+    BYTE* pChrData = new BYTE[nChrSize];
+    size_t nRead = fread(pChrData, 1, nChrSize, stream);
+    fclose(stream);
+
+    if (nRead != static_cast<size_t>(nChrSize)) {
+        delete[] pChrData;
+        return 0;
+    }
+
+    if (nChrSize < 0x30 || memcmp(pChrData, "CHR V2.2", 8) != 0) {
+        DBG("ImportCharacter: invalid CHR header in %s", static_cast<LPCSTR>(sFileName));
+        delete[] pChrData;
+        return 0;
+    }
+
+    DWORD nCreatureOffset = *reinterpret_cast<DWORD*>(pChrData + 0x28);
+    DWORD nCreatureSize = *reinterpret_cast<DWORD*>(pChrData + 0x2C);
+
+    if (nCreatureOffset == 0 || nCreatureSize == 0 || nCreatureOffset + nCreatureSize > static_cast<DWORD>(nChrSize)) {
+        if (nChrSize > 0x224) {
+            nCreatureOffset = 0x224;
+            nCreatureSize = nChrSize - 0x224;
+        } else {
+            DBG("ImportCharacter: invalid embedded CRE range in %s", static_cast<LPCSTR>(sFileName));
+            delete[] pChrData;
+            return 0;
+        }
+    }
+
+    if (nCreatureSize < 8 || memcmp(pChrData + nCreatureOffset, "CRE V2.2", 8) != 0) {
+        DBG("ImportCharacter: invalid embedded CRE in %s", static_cast<LPCSTR>(sFileName));
+        delete[] pChrData;
+        return 0;
+    }
+
+    CGameSprite* pSprite = new CGameSprite(pChrData + nCreatureOffset,
+        nCreatureSize,
+        0,
+        0,
+        -1,
+        0,
+        0,
+        INT_MAX,
+        CPoint(-1, -1),
+        0);
+
+    if (pSprite == NULL) {
+        delete[] pChrData;
+        return 0;
+    }
+
+    char szName[33];
+    memcpy(szName, pChrData + 0x8, 32);
+    szName[32] = '\0';
+    for (INT nIndex = 31; nIndex >= 0; nIndex--) {
+        if (szName[nIndex] == '\0' || szName[nIndex] == ' ') {
+            szName[nIndex] = '\0';
+        } else {
+            break;
+        }
+    }
+
+    if (pSprite->m_baseStats.m_name == -1 && szName[0] != '\0') {
+        pSprite->m_sName = szName;
+    }
+
+    if (nChrSize >= 0x164) {
+        memcpy(pSprite->field_3D14, pChrData + 0x13E, sizeof(pSprite->field_3D14));
+        pSprite->m_nLastSpellbookClassIndex = pChrData[0x162];
+        pSprite->m_nLastSpellbookSpellLevel = pChrData[0x163];
+    }
+
+    if (nChrSize >= 0x1A4) {
+        pSprite->m_secondarySounds = CResRef(pChrData + 0x17C);
+        memcpy(pSprite->field_725A, pChrData + 0x184, sizeof(pSprite->field_725A));
+        pSprite->field_725A[sizeof(pSprite->field_725A) - 1] = '\0';
+    }
+
+    pSprite->m_bGlobal = TRUE;
+    pSprite->SetResRef(CResRef(sFileName));
+    pSprite->AddKnownDivineSpells(CAIObjectType::C_CLERIC);
+    pSprite->AddKnownDivineSpells(CAIObjectType::C_DRUID);
+    pSprite->AddKnownDivineSpells(CAIObjectType::C_PALADIN);
+    pSprite->AddKnownDivineSpells(CAIObjectType::C_RANGER);
+    AddPartyGold(GetRuleTables().GetStartingGold(pSprite));
+
+    LONG nCharacterId = pSprite->m_id;
+    delete[] pChrData;
+
+    return nCharacterId;
 }
 
 // 0x5A1A80
