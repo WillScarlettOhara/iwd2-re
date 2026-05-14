@@ -15,8 +15,8 @@ public:
     CImm()
     {
         m_dwState = 0;
-        field_12C = FALSE;
-        field_128 = 0;
+        m_bKatakanaMode = FALSE;
+        m_bIMEActive = 0;
         m_hKeyboardLayout = NULL;
         field_13C = 0;
     }
@@ -46,10 +46,10 @@ public:
     /* 0000 */ DWORD m_dwState;
     /* 0104 */ HKL m_hKeyboardLayout;
     /* 0108 */ CCriticalSection m_cCriticalSection;
-    /* 0128 */ int field_128;
-    /* 012C */ BOOL field_12C;
-    /* 0130 */ CString field_130;
-    /* 0134 */ CString field_134;
+    /* 0128 */ int m_bIMEActive;
+    /* 012C */ BOOL m_bKatakanaMode;
+    /* 0130 */ CString m_sResultString;
+    /* 0134 */ CString m_sCompositionString;
     /* 0138 */ CString m_sCandidateList;
     /* 013C */ CVidMosaic* field_13C;
 };

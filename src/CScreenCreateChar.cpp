@@ -522,7 +522,7 @@ void CScreenCreateChar::OnKeyDown(SHORT nKeysFlags)
                     if (g_pBaldurChitin->field_1A0) {
                         // FIXME: Unused.
                         g_pChitin->GetWnd();
-                        if (g_pBaldurChitin->cImm.field_128) {
+                        if (g_pBaldurChitin->cImm.m_bIMEActive) {
                             m_cUIManager.OnKeyDown(VK_RETURN);
                         } else {
                             OnDoneButtonClick();
@@ -5772,7 +5772,7 @@ void CScreenCreateChar::DismissPopup(CGameSprite* pSprite)
     if (g_pBaldurChitin->field_1A0) {
         // FIXME: Unused.
         g_pChitin->GetWnd();
-        if (g_pBaldurChitin->cImm.field_128) {
+        if (g_pBaldurChitin->cImm.m_bIMEActive) {
             g_pBaldurChitin->cImm.DeactivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
         }
     }

@@ -390,7 +390,7 @@ void CScreenSave::OnKeyDown(SHORT nKeysFlags)
             if (m_pVirtualKeysFlags[nKeyFlag] == VK_RETURN) {
                 // NOTE: Unused.
                 g_pChitin->GetWnd();
-                if (g_pChitin->cImm.field_128 == 0
+                if (g_pChitin->cImm.m_bIMEActive == 0
                     || PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_KOREAN) {
                     if (GetTopPopup() != NULL) {
                         OnDoneButtonClick();

@@ -436,7 +436,7 @@ void CUIControlButton::SetEnabled(BOOL bEnabled)
         } else {
             // NOTE: Result is unused.
             g_pChitin->GetWnd();
-            if (g_pChitin->cImm.field_128 == 0) {
+            if (g_pChitin->cImm.m_bIMEActive == 0) {
                 InvalidateRect();
             }
         }

@@ -62,7 +62,7 @@ void CImm::ReadCompositionString(HWND hWnd, LPARAM lParam)
             ImmGetCompositionStringA(hImc, GCS_COMPSTR, lpCompStr, nCompStrLength);
             lpCompStr[nCompStrLength] = '\0';
 
-            field_134 = lpCompStr;
+            m_sCompositionString = lpCompStr;
 
             delete lpCompStr;
 
@@ -107,7 +107,7 @@ void CImm::ReadResultString(HWND hWnd, BOOL a3)
             ImmGetCompositionStringA(hImc, GCS_COMPSTR, lpResultStr, nResultStrLength);
             lpResultStr[nResultStrLength] = '\0';
 
-            field_130 = lpResultStr;
+            m_sResultString = lpResultStr;
 
             delete lpResultStr;
 
@@ -123,11 +123,11 @@ void CImm::ReadResultString(HWND hWnd, BOOL a3)
                     ImmGetCompositionStringA(hImc, GCS_RESULTCLAUSE, lpResultCls, nResultClsLength);
                     lpResultCls[nResultClsLength] = '\0';
 
-                    field_130 += CString(lpResultCls);
+                    m_sResultString += CString(lpResultCls);
 
                     delete lpResultCls;
 
-                    field_134 = "";
+                    m_sCompositionString = "";
                     m_sCandidateList = "";
 
                     g_pChitin->pActiveEngine->OnKeyDown(1);
@@ -239,7 +239,7 @@ CString CImm::ParseCandidateList(LPCANDIDATELIST lpCandidateList)
 // 0x7C2CC0
 void CImm::ActivateNativeIME(HWND hWnd)
 {
-    field_12C = FALSE;
+    m_bKatakanaMode = FALSE;
 
     HIMC hImc = ImmGetContext(hWnd);
     if (hImc != NULL) {
@@ -269,26 +269,26 @@ void CImm::ActivateNativeIME(HWND hWnd)
 
             ImmSetOpenStatus(hImc, TRUE);
 
-            if (field_12C) {
-                field_12C = FALSE;
+            if (m_bKatakanaMode) {
+                m_bKatakanaMode = FALSE;
                 fdwConversion &= ~IME_CMODE_KATAKANA;
                 fdwConversion |= IME_CMODE_FULLSHAPE;
             } else {
                 fdwConversion |= IME_CMODE_KATAKANA;
                 fdwConversion |= IME_CMODE_FULLSHAPE;
-                field_12C = TRUE;
+                m_bKatakanaMode = TRUE;
             }
         }
 
         ImmSetConversionStatus(hImc, fdwConversion, fdwSentense);
 
-        field_128 = 1;
+        m_bIMEActive = 1;
 
         ImmReleaseContext(hWnd, hImc);
 
         m_sCandidateList = "";
-        field_134 = "";
-        field_130 = "";
+        m_sCompositionString = "";
+        m_sResultString = "";
     }
 }
 
@@ -322,8 +322,8 @@ void CImm::DeactivateNativeIME(HWND hWnd)
         ImmReleaseContext(hWnd, hImc);
 
         m_sCandidateList = "";
-        field_134 = "";
-        field_130 = "";
+        m_sCompositionString = "";
+        m_sResultString = "";
     }
 }
 
@@ -394,7 +394,7 @@ CString CImm::GetCandidateList()
 // 0x7C34D0
 CString CImm::GetCompositionString()
 {
-    return field_134;
+    return m_sCompositionString;
 }
 
 // NOTE: Probably inlined in `CChitin::DestroyServices`.
@@ -412,7 +412,7 @@ void CImm::CleanUp()
 // 0x4D89E0
 CString CImm::ConsumeResultString()
 {
-    CString v1 = field_130;
-    field_130 = "";
+    CString v1 = m_sResultString;
+    m_sResultString = "";
     return v1;
 }

@@ -89,7 +89,7 @@ void CUIControlEdit::KillFocus()
 {
     // FIXME: Unused.
     CWnd* pWnd = g_pChitin->GetWnd();
-    if (g_pChitin->cImm.field_128) {
+    if (g_pChitin->cImm.m_bIMEActive) {
         g_pChitin->cImm.DeactivateNativeIME(g_pChitin->GetWnd()->GetSafeHwnd());
         m_pPanel->InvalidateRect(&(m_pPanel->m_rImeSuggestionsFrame));
         m_pPanel->m_rImeSuggestionsFrame.SetRectEmpty();
@@ -424,7 +424,7 @@ void CUIControlEdit::OnKeyDown(SHORT nKey)
 
             // FIXME: Unused.
             g_pChitin->GetWnd();
-            if (g_pChitin->cImm.field_128) {
+            if (g_pChitin->cImm.m_bIMEActive) {
                 CRect r = g_pChitin->cImm.GetCompositionWindowRect(
                     m_pPanel->m_ptOrigin,
                     m_pPanel->m_size,
