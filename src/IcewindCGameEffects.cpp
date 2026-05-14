@@ -1539,7 +1539,7 @@ BOOL IcewindCGameEffectProtectionFromEvil::ApplyEffect(CGameSprite* pSprite)
         AddPortraitIcon(pSprite, 9);
 
         pSprite->GetDerivedStats()->m_naturalImmunities.insert(ICEWIND_CGAMEEFFECT_CHARM);
-        sub_4C3F30(pSprite, 2);
+        SetMinNaturalAC(pSprite, 2);
         pSprite->GetDerivedStats()->m_nSaveVSFortitude += 2;
         pSprite->GetDerivedStats()->m_nSaveVSReflex += 2;
         pSprite->GetDerivedStats()->m_nSaveVSWill += 2;
@@ -1949,11 +1949,11 @@ BOOL IcewindCGameEffectBarkskin::ApplyEffect(CGameSprite* pSprite)
         AddPortraitIcon(pSprite, 20);
 
         if (m_casterLevel < 6) {
-            pSprite->GetDerivedStats()->field_C += 3;
+            pSprite->GetDerivedStats()->m_nACDodgeBonus += 3;
         } else if (m_casterLevel < 12) {
-            pSprite->GetDerivedStats()->field_C += 4;
+            pSprite->GetDerivedStats()->m_nACDodgeBonus += 4;
         } else {
-            pSprite->GetDerivedStats()->field_C += 5;
+            pSprite->GetDerivedStats()->m_nACDodgeBonus += 5;
         }
 
         pSprite->SetColorRange(2);
@@ -2145,7 +2145,7 @@ BOOL IcewindCGameEffectEntropyShield::ApplyEffect(CGameSprite* pSprite)
 
         pSprite->GetDerivedStats()->m_visualEffects.set(IWD_VFX_ENTROPY_SHIELD, true);
         AddColorEffect(pSprite, 64, 192, 64, 30);
-        sub_4C3F30(pSprite, 6);
+        SetMinNaturalAC(pSprite, 6);
 
         pSprite->m_bonusStats.m_nResistFire += 10;
         pSprite->m_bonusStats.m_nResistCold += 10;
@@ -2643,7 +2643,7 @@ BOOL IcewindCGameEffectTensersTransformation::ApplyEffect(CGameSprite* pSprite)
         pSprite->GetDerivedStats()->m_nDEX += static_cast<SHORT>(m_effectAmount4);
         pSprite->GetDerivedStats()->m_nTHAC0 += static_cast<BYTE>(m_casterLevel) / 2;
         pSprite->GetDerivedStats()->m_nSaveVSFortitude += 5;
-        pSprite->GetDerivedStats()->field_C += 4;
+        pSprite->GetDerivedStats()->m_nACDodgeBonus += 4;
         pSprite->GetDerivedStats()->m_disabledSpellTypes[0] = TRUE;
         pSprite->GetDerivedStats()->m_disabledSpellTypes[1] = TRUE;
     }
@@ -2726,7 +2726,7 @@ BOOL IcewindCGameEffectAlicornLanceGlow::ApplyEffect(CGameSprite* pSprite)
 
     if (!pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_ALICORN_LANCE]) {
         pSprite->GetDerivedStats()->m_spellStates[SPLSTATE_ALICORN_LANCE] = true;
-        pSprite->GetDerivedStats()->field_C -= 2;
+        pSprite->GetDerivedStats()->m_nACDodgeBonus -= 2;
         AddColorEffect(pSprite, 185, 185, 185);
         m_done = FALSE;
     }

@@ -32,10 +32,10 @@ void CDerivedStats::Reload(CGameSprite* pSprite, CCreatureFileHeader* pCreature,
 
     m_generalState = pCreature->m_generalState;
     m_nMaxHitPoints = pCreature->m_maxHitPointsBase;
-    field_6 = 0;
-    field_8 = 0;
-    field_A = 0;
-    field_C = pCreature->field_3E;
+    m_nACArmorBonus = 0;
+    m_nACNaturalBonus = 0;
+    m_nACDeflectionBonus = 0;
+    m_nACDodgeBonus = pCreature->field_3E;
     m_nACCrushingMod = pCreature->m_armorClassCrushingAdjustment;
     m_nACMissileMod = pCreature->m_armorClassMissileAdjustment;
     m_nACPiercingMod = pCreature->m_armorClassPiercingAdjustment;
@@ -215,10 +215,10 @@ CDerivedStats& CDerivedStats::operator=(const CDerivedStats& other)
 {
     m_generalState = other.m_generalState;
     m_nMaxHitPoints = other.m_nMaxHitPoints;
-    field_6 = other.field_6;
-    field_8 = other.field_8;
-    field_A = other.field_A;
-    field_C = other.field_C;
+    m_nACArmorBonus = other.m_nACArmorBonus;
+    m_nACNaturalBonus = other.m_nACNaturalBonus;
+    m_nACDeflectionBonus = other.m_nACDeflectionBonus;
+    m_nACDodgeBonus = other.m_nACDodgeBonus;
     m_nACCrushingMod = other.m_nACCrushingMod;
     m_nACMissileMod = other.m_nACMissileMod;
     m_nACPiercingMod = other.m_nACPiercingMod;
@@ -349,7 +349,7 @@ CDerivedStats& CDerivedStats::operator=(const CDerivedStats& other)
     memcpy(m_nSkills, other.m_nSkills, sizeof(m_nSkills));
 
     // field_5AC = other.field_5AC;
-    // field_CAC = other.field_CAC;
+    // m_nACDodgeBonusAC = other.m_nACDodgeBonusAC;
 
     // NOTE: Original code uses loop.
     memcpy(m_disabledButtons, other.m_disabledButtons, sizeof(m_disabledButtons));
@@ -367,10 +367,10 @@ void CDerivedStats::BonusInit()
 
     m_generalState = 0;
     m_nMaxHitPoints = 0;
-    field_6 = 0;
-    field_8 = 0;
-    field_A = 0;
-    field_C = 0;
+    m_nACArmorBonus = 0;
+    m_nACNaturalBonus = 0;
+    m_nACDeflectionBonus = 0;
+    m_nACDodgeBonus = 0;
     m_nACCrushingMod = 0;
     m_nACMissileMod = 0;
     m_nACPiercingMod = 0;
@@ -500,10 +500,10 @@ CDerivedStats& CDerivedStats::operator+=(const CDerivedStats& other)
     int index;
 
     m_nMaxHitPoints += other.m_nMaxHitPoints;
-    field_6 += other.field_6;
-    field_8 += other.field_8;
-    field_A += other.field_A;
-    field_C += other.field_C;
+    m_nACArmorBonus += other.m_nACArmorBonus;
+    m_nACNaturalBonus += other.m_nACNaturalBonus;
+    m_nACDeflectionBonus += other.m_nACDeflectionBonus;
+    m_nACDodgeBonus += other.m_nACDodgeBonus;
     m_nACCrushingMod += other.m_nACCrushingMod;
     m_nACMissileMod += other.m_nACMissileMod;
     m_nACPiercingMod += other.m_nACPiercingMod;
@@ -895,10 +895,10 @@ void CDerivedStats::Unmarshal(BYTE* pStats, LONG nStats)
 
     m_generalState = pTemplate->m_generalState;
     m_nMaxHitPoints = pTemplate->m_nMaxHitPoints;
-    field_6 = pTemplate->field_6;
-    field_8 = pTemplate->field_8;
-    field_A = pTemplate->field_A;
-    field_C = pTemplate->field_C;
+    m_nACArmorBonus = pTemplate->m_nACArmorBonus;
+    m_nACNaturalBonus = pTemplate->m_nACNaturalBonus;
+    m_nACDeflectionBonus = pTemplate->m_nACDeflectionBonus;
+    m_nACDodgeBonus = pTemplate->m_nACDodgeBonus;
     m_nACCrushingMod = pTemplate->m_nACCrushingMod;
     m_nACMissileMod = pTemplate->m_nACMissileMod;
     m_nACPiercingMod = pTemplate->m_nACPiercingMod;

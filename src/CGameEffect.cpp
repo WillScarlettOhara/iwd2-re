@@ -1413,9 +1413,9 @@ void CGameEffect::SetSourceId(LONG sourceID)
 }
 
 // 0x4C3F30
-void CGameEffect::sub_4C3F30(CGameSprite* pSprite, INT nValue)
+void CGameEffect::SetMinNaturalAC(CGameSprite* pSprite, INT nValue)
 {
-    pSprite->GetDerivedStats()->field_8 = max(pSprite->GetDerivedStats()->field_8, nValue);
+    pSprite->GetDerivedStats()->m_nACNaturalBonus = max(pSprite->GetDerivedStats()->m_nACNaturalBonus, nValue);
 }
 
 // 0x4C3F60
@@ -1513,7 +1513,7 @@ void CGameEffect::AddSlowEffect(CGameSprite* pSprite)
     }
 
     pSprite->GetDerivedStats()->m_generalState |= STATE_SLOWED;
-    pSprite->GetDerivedStats()->field_C -= 2;
+    pSprite->GetDerivedStats()->m_nACDodgeBonus -= 2;
     pSprite->GetDerivedStats()->m_nTHAC0 -= 2;
     pSprite->GetDerivedStats()->m_nSaveVSReflex -= 2;
     pSprite->m_bonusStats.m_nDamageBonus -= 2;
@@ -1664,16 +1664,16 @@ BOOL CGameEffectAC::ApplyEffect(CGameSprite* pSprite)
 {
     switch (m_dwFlags) {
     case 0:
-        pSprite->GetDerivedStats()->field_C += static_cast<SHORT>(m_effectAmount);
+        pSprite->GetDerivedStats()->m_nACDodgeBonus += static_cast<SHORT>(m_effectAmount);
         break;
     case 1:
-        pSprite->GetDerivedStats()->field_6 = max(pSprite->GetDerivedStats()->field_6, static_cast<SHORT>(m_effectAmount));
+        pSprite->GetDerivedStats()->m_nACArmorBonus = max(pSprite->GetDerivedStats()->m_nACArmorBonus, static_cast<SHORT>(m_effectAmount));
         break;
     case 2:
-        pSprite->GetDerivedStats()->field_8 = max(pSprite->GetDerivedStats()->field_8, static_cast<SHORT>(m_effectAmount));
+        pSprite->GetDerivedStats()->m_nACNaturalBonus = max(pSprite->GetDerivedStats()->m_nACNaturalBonus, static_cast<SHORT>(m_effectAmount));
         break;
     case 3:
-        pSprite->GetDerivedStats()->field_A = max(pSprite->GetDerivedStats()->field_A, static_cast<SHORT>(m_effectAmount));
+        pSprite->GetDerivedStats()->m_nACDeflectionBonus = max(pSprite->GetDerivedStats()->m_nACDeflectionBonus, static_cast<SHORT>(m_effectAmount));
         break;
     case 4:
         pSprite->GetDerivedStats()->m_nACCrushingMod += static_cast<SHORT>(m_effectAmount);
@@ -2466,7 +2466,7 @@ BOOL CGameEffectHaste::ApplyEffect(CGameSprite* pSprite)
             pSprite->GetDerivedStats()->m_nNumberOfAttacks += 1;
         }
 
-        pSprite->m_derivedStats.field_C += 4;
+        pSprite->m_derivedStats.m_nACDodgeBonus += 4;
 
         if (pSprite->GetAnimation()->GetMoveScale() != 0) {
             pSprite->GetAnimation()->SetMoveScale(pSprite->GetAnimation()->GetMoveScaleDefault() * 2);
@@ -5186,7 +5186,7 @@ BOOL CGameEffectBlindness::ApplyEffect(CGameSprite* pSprite)
             v1 = 0;
         }
 
-        pSprite->GetDerivedStats()->field_C += v1;
+        pSprite->GetDerivedStats()->m_nACDodgeBonus += v1;
     }
 
     return TRUE;
@@ -5513,7 +5513,7 @@ void CGameEffectDisease::sub_4B5BF0(CGameSprite* pSprite)
     // NOTE: Uninline.
     AddPortraitIcon(pSprite, 8);
 
-    pSprite->GetDerivedStats()->field_C -= 4;
+    pSprite->GetDerivedStats()->m_nACDodgeBonus -= 4;
     pSprite->GetDerivedStats()->m_nTHAC0 -= 4;
 
     if (m_secondaryType != 0) {

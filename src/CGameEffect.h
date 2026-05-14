@@ -314,7 +314,7 @@ public:
     void SetSource(const CPoint& pt);
     void SetSourceId(LONG sourceID);
 
-    void sub_4C3F30(CGameSprite* pSprite, INT nValue);
+    void SetMinNaturalAC(CGameSprite* pSprite, INT nValue);
     void AdjustResistMagic(CGameSprite* pSprite, SHORT nValue);
     void AdjustTHAC0(CGameSprite* pSprite, SHORT nValue);
     void AdjustSTR(CGameSprite* pSprite, INT nValue);

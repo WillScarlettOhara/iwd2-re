@@ -11020,10 +11020,10 @@ CMessageSpriteUpdate::CMessageSpriteUpdate(CGameSprite* pSprite, LONG caller, LO
         m_nHitPoints = pSprite->GetBaseStats()->m_hitPoints;
         m_nMaxHitPoints = pSprite->GetDerivedStats()->m_nMaxHitPoints;
         field_60 = pSprite->GetBaseStats()->m_flags;
-        field_64 = pSprite->GetDerivedStats()->field_6;
-        field_66 = pSprite->GetDerivedStats()->field_8;
-        field_68 = pSprite->GetDerivedStats()->field_A;
-        field_6A = pSprite->GetDerivedStats()->field_C;
+        field_64 = pSprite->GetDerivedStats()->m_nACArmorBonus;
+        field_66 = pSprite->GetDerivedStats()->m_nACNaturalBonus;
+        field_68 = pSprite->GetDerivedStats()->m_nACDeflectionBonus;
+        field_6A = pSprite->GetDerivedStats()->m_nACDodgeBonus;
         m_nACCrushingMod = pSprite->GetDerivedStats()->m_nACCrushingMod;
         m_nACMissileMod = pSprite->GetDerivedStats()->m_nACMissileMod;
         m_nACPiercingMod = pSprite->GetDerivedStats()->m_nACPiercingMod;

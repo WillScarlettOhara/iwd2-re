@@ -395,10 +395,10 @@ class CDerivedStatsTemplate {
 public:
     /* 0000 */ DWORD m_generalState;
     /* 0004 */ SHORT m_nMaxHitPoints;
-    /* 0006 */ short field_6;
-    /* 0008 */ short field_8;
-    /* 000A */ short field_A;
-    /* 000C */ short field_C;
+    /* 0006 */ short m_nACArmorBonus;
+    /* 0008 */ short m_nACNaturalBonus;
+    /* 000A */ short m_nACDeflectionBonus;
+    /* 000C */ short m_nACDodgeBonus;
     /* 000E */ SHORT m_nACCrushingMod;
     /* 0010 */ SHORT m_nACMissileMod;
     /* 0012 */ SHORT m_nACPiercingMod;
