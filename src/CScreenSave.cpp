@@ -34,7 +34,7 @@ CScreenSaveGameSlot::CScreenSaveGameSlot()
     m_nTime = 0;
     m_nChapter = 0;
     m_sChapter = "";
-    field_314 = "";
+    m_sGameTime = "";
 }
 
 // 0x65BC00
@@ -562,7 +562,7 @@ void CScreenSave::UpdateMainPanel()
                 UpdateLabel(pPanel,
                     0x1000000F + nSlot,
                     "%s",
-                    (LPCSTR)m_aGameSlots[nGameSlot]->field_314);
+                    (LPCSTR)m_aGameSlots[nGameSlot]->m_sGameTime);
             } else {
                 UpdateLabel(pPanel,
                     0x10000005 + nSlot,
