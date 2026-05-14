@@ -4386,7 +4386,7 @@ BYTE CGameArea::GetId()
 }
 
 // 0x47A060
-void CGameArea::sub_47A060()
+void CGameArea::LoadLocalVariables()
 {
     CMemINISection* pSection = INIFile.GetSection(CString("locals"));
     if (pSection != NULL && pSection->GetCount() > 0) {
@@ -4426,7 +4426,7 @@ int CGameArea::EnterSpawn()
 }
 
 // 0x47A190
-void CGameArea::sub_47A190()
+void CGameArea::SaveMusicPosition()
 {
     g_pBaldurChitin->AddMusicPosition(m_resRef, g_pBaldurChitin->cSoundMixer.m_nCurrentSong);
 }

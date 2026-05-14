@@ -209,10 +209,10 @@ public:
     BOOL SetSong(SHORT slot, BYTE song);
     BYTE GetSong(SHORT slot);
     void PlaySong(SHORT slot, DWORD flags);
-    void sub_47A060();
+    void LoadLocalVariables();
     int ExitSpawn();
     int EnterSpawn();
-    void sub_47A190();
+    void SaveMusicPosition();
 
     CAreaFileHeader* GetHeader();
     CInfinity* GetInfinity();

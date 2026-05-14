@@ -1015,10 +1015,10 @@ void CScreenStore::ResetPopupPanel(DWORD dwPanelId)
         ResetErrorPanel(pPanel);
         break;
     case 12:
-        sub_6734F0(pPanel);
+        UpdateItemPanel(pPanel);
         break;
     case 14:
-        sub_673740(pPanel);
+        UpdateSpellPanel(pPanel);
         break;
     case 20:
         break;
@@ -1172,7 +1172,7 @@ void CScreenStore::ResetErrorPanel(CUIPanel* pPanel)
 }
 
 // 0x6734F0
-void CScreenStore::sub_6734F0(CUIPanel* pPanel)
+void CScreenStore::UpdateItemPanel(CUIPanel* pPanel)
 {
     // FIXME: Unused.
     CString v1;
@@ -1236,7 +1236,7 @@ void CScreenStore::sub_6734F0(CUIPanel* pPanel)
 }
 
 // 0x673740
-void CScreenStore::sub_673740(CUIPanel* pPanel)
+void CScreenStore::UpdateSpellPanel(CUIPanel* pPanel)
 {
     m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(4));
 
@@ -2169,13 +2169,13 @@ void CScreenStore::OnSellItemButtonClick()
     renderLock.Lock(INFINITE);
     if (IsSellItemButtonClickable()) {
         if (m_pStore->GetType() == 4 && m_pBag != NULL) {
-            sub_67B030();
+            SellBagItemsExt();
         } else if (m_pStore->GetType() == 4) {
-            sub_67ABF0();
+            SellPersonalItemsExt();
         } else if (m_pBag != NULL) {
-            sub_67A5B0();
+            SellBagItems();
         } else {
-            sub_67A130();
+            SellPersonalItems();
         }
         // FIXME: Wrong placement for explicit unlock, should be outside of
         // this condition.
@@ -2184,7 +2184,7 @@ void CScreenStore::OnSellItemButtonClick()
 }
 
 // 0x67A130
-void CScreenStore::sub_67A130()
+void CScreenStore::SellPersonalItems()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -2312,7 +2312,7 @@ void CScreenStore::sub_67A130()
 }
 
 // 0x67A5B0
-void CScreenStore::sub_67A5B0()
+void CScreenStore::SellBagItems()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -2461,7 +2461,7 @@ void CScreenStore::sub_67A5B0()
 }
 
 // 0x67ABF0
-void CScreenStore::sub_67ABF0()
+void CScreenStore::SellPersonalItemsExt()
 {
     INT nIndex = 0;
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -2577,7 +2577,7 @@ void CScreenStore::sub_67ABF0()
 }
 
 // 0x67B030
-void CScreenStore::sub_67B030()
+void CScreenStore::SellBagItemsExt()
 {
     INT nIndex = 0;
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();

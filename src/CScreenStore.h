@@ -116,8 +116,8 @@ public:
     void SummonPopup(DWORD dwPopupId);
     void DismissPopup();
     void ResetErrorPanel(CUIPanel* pPanel);
-    void sub_6734F0(CUIPanel* pPanel);
-    void sub_673740(CUIPanel* pPanel);
+    void UpdateItemPanel(CUIPanel* pPanel);
+    void UpdateSpellPanel(CUIPanel* pPanel);
     BOOL IsCharacterAlive(SHORT nPortraitNum);
     void CheckEnableButtonBar();
     void SwitchMainPanel(DWORD dwMainPanelId);
@@ -158,10 +158,10 @@ public:
     void OnBuyItemButtonClick();
     BOOL IsSellItemButtonClickable();
     void OnSellItemButtonClick();
-    void sub_67A130();
-    void sub_67A5B0();
-    void sub_67ABF0();
-    void sub_67B030();
+    void SellPersonalItems();
+    void SellBagItems();
+    void SellPersonalItemsExt();
+    void SellBagItemsExt();
     void OnIdentifyItemButtonClick();
     void OnBuySpellButtonClick();
     void OnRentRoomButtonClick();

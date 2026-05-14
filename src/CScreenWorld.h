@@ -110,20 +110,20 @@ public:
     void SetPendingRest(INT nHP, BOOLEAN bRenting, BOOLEAN bMovie);
     void StartRestMultiplayerHost(INT nHP, BOOLEAN bRenting, BOOLEAN bMovie);
     void CheckEndOfHardPause();
-    void sub_693710();
+    void SetChatKeyboardFocus();
     void CheckEndOfMultiplayerSynch();
     void DeleteAreaMultiplayer();
     void DeleteArea(CGameArea* pArea);
     void CopyChatEditBox(CUIPanel* pFrom, CUIPanel* pTo);
     void LeaveAreaLuaPanic(CPoint ptLocation, SHORT nDirection, CString sAreaName, CString sParchment);
     void SetDialogTokens(CGameSprite* pCharacter);
-    void sub_695570(BOOL bActive, BOOL bInvalidate);
-    void sub_695650(BOOL bEnable);
+    void SetActionPanelActive(BOOL bActive, BOOL bInvalidate);
+    void SetActionPanelEnabled(BOOL bEnable);
     void EnableKeyRepeat();
     void DisableKeyRepeat();
     void SetLeaveAreaLuaPanicData(CPoint ptValue, SHORT nValue, CString sValue1, CString sValue2);
-    BOOL sub_453780();
-    void sub_453790(BOOL bEnabled);
+    BOOL IsInterfaceAutoHidden();
+    void SetInterfaceAutoHide(BOOL bEnabled);
     CGameDialogSprite* GetInternalLoadedDialog();
 
     void CompressTime(DWORD deltaTime) { m_deltaTime = deltaTime; }
