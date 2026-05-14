@@ -1085,7 +1085,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
 
         field_70EE = 0;
         field_7430 = 0;
-        field_70F2 = 0;
+        m_bInvisible = 0;
         if (IcewindMisc::IsLarge(this) == TRUE) {
             field_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheB"), FALSE, TRUE, TRUE);
         }
@@ -10127,7 +10127,7 @@ void CGameSpriteLastUpdate::Initialize(BOOL bFullUpdateRequired)
 }
 
 // 0x723BF0
-void CGameSprite::sub_723BF0(BOOLEAN a1, BOOLEAN a2)
+void CGameSprite::SetHideState(BOOLEAN a1, BOOLEAN a2)
 {
     // TODO: Incomplete.
 }
@@ -10141,7 +10141,7 @@ INT CGameSprite::GetAC()
 }
 
 // 0x723F60
-INT CGameSprite::sub_723F60()
+INT CGameSprite::GetAttacksPerRound()
 {
     // TODO: Incomplete.
 
@@ -14831,9 +14831,9 @@ BYTE CGameSprite::GetModalState()
 }
 
 // 0x45B710
-int CGameSprite::sub_45B710()
+int CGameSprite::GetHideState()
 {
-    return field_70F2;
+    return m_bInvisible;
 }
 
 // 0x706D50

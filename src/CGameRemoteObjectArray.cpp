@@ -547,7 +547,7 @@ BOOL CGameRemoteObjectArray::RemovePlayer(DWORD removedPlayerID)
                 LONG remoteObjectID = pObject->m_remoteObjectID;
 
                 if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE
-                    && static_cast<CGameSprite*>(pObject)->field_70F2 == 1) {
+                    && static_cast<CGameSprite*>(pObject)->m_bInvisible == 1) {
                     CMessage* message = new CMessage101(FALSE,
                         pObject->GetId(),
                         pObject->GetId(),

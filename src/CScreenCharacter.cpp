@@ -2388,7 +2388,7 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
     }
 
     if (pSprite->HasClassLevel(CAIOBJECTTYPE_C_MONK)) {
-        sValue.Format("%+d", pSprite->sub_723F60());
+        sValue.Format("%+d", pSprite->GetAttacksPerRound());
         tlk.SetToken(TOKEN_NUMBER, sValue);
 
         UpdateText(pText,

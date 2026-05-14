@@ -538,9 +538,9 @@ public:
     BOOL HaveUnexportableItems();
     void SetMonkAbilities();
     LONG GetLevel();
-    void sub_723BF0(BOOLEAN a1, BOOLEAN a2);
+    void SetHideState(BOOLEAN a1, BOOLEAN a2);
     INT GetAC();
-    INT sub_723F60();
+    INT GetAttacksPerRound();
     void sub_72DE60();
     void sub_71E760(CDerivedStats& DStats, int a2);
     int GetBaseMovementRate();
@@ -643,7 +643,7 @@ public:
     void SetCustomButtonValue(BYTE buttonNum, int a2);
     BYTE GetModalState();
 
-    int sub_45B710();
+    int GetHideState();
     SHORT GetDirection(const CPoint& target);
     SHORT GetDirection();
     static SHORT GetDirection(const CPoint& ptStart, const CPoint& ptTarget);
@@ -908,7 +908,7 @@ public:
     /* 56DC */ CResRef m_dialog;
     /* 56EE */ STR_RES m_speech[64];
     /* 70EE */ int field_70EE;
-    /* 70F2 */ int field_70F2;
+    /* 70F2 */ int m_bInvisible;
     /* 70F6 */ BYTE field_70F6;
     /* 70F7 */ BYTE field_70F7;
     /* 70F8 */ BYTE field_70F8;

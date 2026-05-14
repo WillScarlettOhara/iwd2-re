@@ -735,7 +735,7 @@ void CMultiplayerSettings::SetCharacterControlledByPlayer(INT nCharacterSlot, IN
                         } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
                         if (rc == CGameObjectArray::SUCCESS) {
-                            pSprite->sub_723BF0(FALSE, FALSE);
+                            pSprite->SetHideState(FALSE, FALSE);
                             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(nCharacterId,
                                 CGameObjectArray::THREAD_ASYNCH,
                                 INFINITE);

@@ -15591,7 +15591,7 @@ void CMessage101::Run()
     if (rc == CGameObjectArray::SUCCESS) {
         if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
             CGameSprite* pSprite = static_cast<CGameSprite*>(pObject);
-            pSprite->sub_723BF0(field_C, field_D);
+            pSprite->SetHideState(field_C, field_D);
         }
 
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,

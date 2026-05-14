@@ -6836,7 +6836,7 @@ INT CInfGame::CountNPCs()
         } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
         if (rc == CGameObjectArray::SUCCESS) {
-            if (pSprite->field_70F2 == 1) {
+            if (pSprite->m_bHiding == 1) {
                 nCount++;
             }
 
