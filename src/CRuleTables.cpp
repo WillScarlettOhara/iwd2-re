@@ -2258,7 +2258,7 @@ int CRuleTables::GetStartRotation(INT nCharacterSlot) const
 }
 
 // 0x543C80
-CList<STRREF, STRREF>* CRuleTables::GetChapterText(const CResRef& cResText, BYTE nChapter) const
+CList<STRREF, STRREF>* CRuleTables::GetChapterText(const CResRef& cResText, int nChapter) const
 {
     C2DArray tText;
     tText.Load(cResText);
@@ -2270,8 +2270,11 @@ CList<STRREF, STRREF>* CRuleTables::GetChapterText(const CResRef& cResText, BYTE
         nChapter = g_pBaldurChitin->GetObjectGame()->GetCurrentChapter();
     }
 
-    pTextList->AddTail(tText.GetAtLong(CPoint(0, nChapter + 1)));
-    pTextList->AddTail(tText.GetAtLong(CPoint(1, nChapter + 1)));
+    LONG val0 = tText.GetAtLong(CPoint(0, nChapter + 1));
+    LONG val1 = tText.GetAtLong(CPoint(1, nChapter + 1));
+
+    pTextList->AddTail(val0);
+    pTextList->AddTail(val1);
 
     return pTextList;
 }

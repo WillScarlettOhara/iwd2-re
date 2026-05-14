@@ -221,7 +221,7 @@ BOOL CTlkTable::OpenFile(BYTE a2, BYTE a3)
         return TRUE;
     }
 
-    if (!pFile->Open(pFile->GetFilePath(), CFile::OpenFlags::modeRead | CFile::OpenFlags::shareDenyWrite)) {
+    if (!pFile->Open(pFile->GetFilePath(), CFile::OpenFlags::modeRead | CFile::OpenFlags::typeBinary | CFile::OpenFlags::shareDenyWrite)) {
         return FALSE;
     }
 

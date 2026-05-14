@@ -395,7 +395,7 @@ public:
     void GetStartArea(CResRef& cResArea, CPoint& ptView) const;
     CPoint GetStartPoint(INT nCharacterSlot) const;
     int GetStartRotation(INT nCharacterSlot) const;
-    CList<STRREF, STRREF>* GetChapterText(const CResRef& cResText, BYTE nChapter) const;
+    CList<STRREF, STRREF>* GetChapterText(const CResRef& cResText, int nChapter) const;
     void GetClassStringLower(BYTE nClass, DWORD a2, DWORD a3, CString& sClass, int a5) const;
     void GetClassStringMixed(BYTE nClass, DWORD nSpecialist, DWORD dwFlags, CString& sClass, int a5) const;
     void GetScriptDescription(const CString& sScript, CString& sTitle, CString& sDescription) const;
