@@ -1104,6 +1104,7 @@ BOOL CVidInf::FXBltToBack(CRect& rFXRect, INT x, INT y, INT nRefPointX, INT nRef
     }
 
     DDBLTFX fx;
+    fx.dwSize = sizeof(fx);
     fx.dwDDFX = 0;
 
     if ((dwFlags & 0x20) != 0) {
