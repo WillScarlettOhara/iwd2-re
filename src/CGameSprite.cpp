@@ -1343,7 +1343,7 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
         m_baseStats.field_2E2 = TRUE;
     }
 
-    Icewind586B70::Instance()->sub_586FC0(this);
+    Icewind586B70::Instance()->RestoreSummonLinks(this);
 }
 
 // 0x6F47F0

@@ -32,7 +32,7 @@ void Icewind586B70::Destroy()
 }
 
 // 0x586CA0
-bool Icewind586B70::sub_586CA0(CGameSprite* sprite)
+bool Icewind586B70::CanJoinParty(CGameSprite* sprite)
 {
     if (!IcewindMisc::IsPC(sprite)) {
         return true;
@@ -43,7 +43,7 @@ bool Icewind586B70::sub_586CA0(CGameSprite* sprite)
 }
 
 // 0x586CF0
-bool Icewind586B70::sub_586CF0(CGameSprite* sprite1, CGameSprite* sprite2)
+bool Icewind586B70::CanAddSummoned(CGameSprite* sprite1, CGameSprite* sprite2)
 {
     if (!IcewindMisc::IsPC(sprite1)) {
         return true;
@@ -66,7 +66,7 @@ bool Icewind586B70::sub_586CF0(CGameSprite* sprite1, CGameSprite* sprite2)
 }
 
 // 0x586D60
-void Icewind586B70::sub_586D60(CGameSprite* sprite1, CGameSprite* sprite2)
+void Icewind586B70::AddSummoned(CGameSprite* sprite1, CGameSprite* sprite2)
 {
     if (!IcewindMisc::IsPC(sprite1)) {
         return;
@@ -85,7 +85,7 @@ void Icewind586B70::sub_586D60(CGameSprite* sprite1, CGameSprite* sprite2)
 }
 
 // 0x586F20
-void Icewind586B70::sub_586F20(CGameSprite* sprite1, CGameSprite* sprite2)
+void Icewind586B70::AddDismissedSummoned(CGameSprite* sprite1, CGameSprite* sprite2)
 {
     if (!IcewindMisc::IsPC(sprite1)) {
         return;
@@ -116,7 +116,7 @@ void Icewind586B70::Remove(CGameSprite* sprite)
 }
 
 // 0x586FC0
-void Icewind586B70::sub_586FC0(CGameSprite* sprite)
+void Icewind586B70::RestoreSummonLinks(CGameSprite* sprite)
 {
     if (sprite->GetBaseStats()->field_2E9) {
         mEntries[sprite->GetBaseStats()->field_2E9].field_0 = sprite->GetId();
@@ -151,7 +151,7 @@ void Icewind586B70::sub_586FC0(CGameSprite* sprite)
 }
 
 // 0x587190
-void Icewind586B70::sub_587190()
+void Icewind586B70::SaveSummonLinks()
 {
     CGameSprite* sprite;
     BYTE rc;
