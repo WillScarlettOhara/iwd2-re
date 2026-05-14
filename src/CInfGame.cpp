@@ -5530,7 +5530,7 @@ DWORD CInfGame::GetScrollSpeed()
 }
 
 // 0x5BDBA0
-void CInfGame::sub_5BDBA0(int a1, BOOL a2)
+void CInfGame::SetReputation(int a1, BOOL a2)
 {
     // TODO: Incomplete.
 }

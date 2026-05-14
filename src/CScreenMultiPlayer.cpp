@@ -3280,7 +3280,7 @@ void CUIControlButtonMultiPlayerModifyCharacterDelete::OnLButtonClick(CPoint pt)
             pMultiPlayer->OnDoneButtonClick();
 
             if (nCharacterSlot == 0) {
-                pGame->sub_5BDBA0(-1, FALSE);
+                pGame->SetReputation(-1, FALSE);
             }
 
             CGameSprite* pSprite;
