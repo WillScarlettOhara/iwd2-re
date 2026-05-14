@@ -5624,12 +5624,12 @@ void CScreenCreateChar::OnMainCancelButtonClick()
             // set earlier. It calls `StartMultiPlayer` which seems to be binary
             // identical to `StartSinglePlayer`.
             if (g_pChitin->cNetwork.m_nServiceProvider == CNetwork::SERV_PROV_NULL) {
-                g_pBaldurChitin->m_pEngineSinglePlayer->field_45C = 1;
+                g_pBaldurChitin->m_pEngineSinglePlayer->m_nLobbyMode = 1;
                 g_pBaldurChitin->m_pEngineSinglePlayer->StartSinglePlayer(1);
                 g_pBaldurChitin->m_pEngineSinglePlayer->field_138E = 1;
                 SelectEngine(g_pBaldurChitin->m_pEngineSinglePlayer);
             } else {
-                g_pBaldurChitin->m_pEngineMultiPlayer->field_45C = 1;
+                g_pBaldurChitin->m_pEngineMultiPlayer->m_nLobbyMode = 1;
                 g_pBaldurChitin->m_pEngineMultiPlayer->StartMultiPlayer(1);
                 g_pBaldurChitin->m_pEngineMultiPlayer->field_138E = 1;
                 SelectEngine(g_pBaldurChitin->m_pEngineMultiPlayer);
@@ -6141,11 +6141,11 @@ void CUIControlButtonCharGenAccept::OnLButtonClick(CPoint pt)
         pCreateChar->StopCreateChar();
 
         if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
-            g_pBaldurChitin->m_pEngineSinglePlayer->field_45C = 1;
+            g_pBaldurChitin->m_pEngineSinglePlayer->m_nLobbyMode = 1;
             g_pBaldurChitin->m_pEngineSinglePlayer->StartSinglePlayer(1);
             pCreateChar->SelectEngine(g_pBaldurChitin->m_pEngineSinglePlayer);
         } else {
-            g_pBaldurChitin->m_pEngineMultiPlayer->field_45C = 1;
+            g_pBaldurChitin->m_pEngineMultiPlayer->m_nLobbyMode = 1;
             g_pBaldurChitin->m_pEngineMultiPlayer->StartMultiPlayer(1);
             pCreateChar->SelectEngine(g_pBaldurChitin->m_pEngineMultiPlayer);
         }

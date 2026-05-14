@@ -149,7 +149,7 @@ CScreenSinglePlayer::CScreenSinglePlayer()
     m_bShiftKeyDown = FALSE;
     m_bCapsLockKeyOn = FALSE;
     field_458 = -1;
-    field_45C = 0;
+    m_nLobbyMode = 0;
     field_460 = 0;
     m_nPartyCount = 0;
     m_nTopParty = 0;
@@ -306,7 +306,7 @@ void CScreenSinglePlayer::EngineActivated()
     g_pBaldurChitin->GetObjectCursor()->SetCursor(0, FALSE);
     m_cUIManager.InvalidateRect(NULL);
 
-    if (field_45C == 1) {
+    if (m_nLobbyMode == 1) {
         if (!field_138E) {
             sprintf(byte_8F64C0, "%s %i", (LPCSTR)PARTY, 0);
             if (GetPrivateProfileStringA(byte_8F64C0, NAME, "", byte_8F64E0, sizeof(byte_8F64E0), ".\\Party.ini")) {
@@ -404,7 +404,7 @@ void CScreenSinglePlayer::OnKeyDown(SHORT nKeysFlags)
                     if (GetTopPopup() != NULL) {
                         OnCancelButtonClick();
                     } else {
-                        if (field_45C != 1 && field_45C != 2) {
+                        if (m_nLobbyMode != 1 && m_nLobbyMode != 2) {
                             // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
                             // __LINE__: 2626
                             UTIL_ASSERT(FALSE);
@@ -439,7 +439,7 @@ void CScreenSinglePlayer::TimerAsynchronousUpdate()
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
-    if (field_45C == 2) {
+    if (m_nLobbyMode == 2) {
         g_pBaldurChitin->m_pEngineWorld->AsynchronousUpdate(FALSE);
     } else {
         m_bLastLockAllowInput = pGame->GetMultiplayerSettings()->m_bArbitrationLockAllowInput;
@@ -581,7 +581,7 @@ void CScreenSinglePlayer::TimerAsynchronousUpdate()
 
         if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
             && !g_pChitin->cNetwork.GetSessionHosting()
-            && field_45C == 1
+            && m_nLobbyMode == 1
             && IsMainDoneButtonClickable()) {
             while (GetTopPopup() != NULL) {
                 OnCancelButtonClick();
@@ -594,20 +594,20 @@ void CScreenSinglePlayer::TimerAsynchronousUpdate()
 
         if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
             && !g_pChitin->cNetwork.GetSessionHosting()
-            && field_45C == 1
+            && m_nLobbyMode == 1
             && IsMainDoneButtonClickable()) {
             bDoMainButtonClick = TRUE;
         }
     }
 
     if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
-        && field_45C == 2
+        && m_nLobbyMode == 2
         && pGame->GetMultiplayerSettings()->m_bArbitrationLockStatus == TRUE) {
         if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
             pGame->MultiplayerSetCharacterCreationLocation();
         }
 
-        field_45C = 1;
+        m_nLobbyMode = 1;
         StartSinglePlayer(1);
     }
 
@@ -838,7 +838,7 @@ BOOL CScreenSinglePlayer::IsMainDoneButtonClickable()
     UTIL_ASSERT(pSettings != NULL);
 
     BOOL bResult;
-    if (field_45C == 1) {
+    if (m_nLobbyMode == 1) {
         BOOL v1 = pSettings->m_bFirstConnected == FALSE;
 
         for (INT nPlayer = 0; nPlayer < 6; nPlayer++) {
@@ -870,7 +870,7 @@ BOOL CScreenSinglePlayer::IsMainDoneButtonClickable()
         } else {
             bResult = v1;
         }
-    } else if (field_45C == 2) {
+    } else if (m_nLobbyMode == 2) {
         bResult = TRUE;
     } else {
         // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
@@ -1091,7 +1091,7 @@ void CScreenSinglePlayer::CheckCharacterButtons(INT nCharacterSlot, BOOL& bReady
 
     BOOL bIsLocalPlayer = idPlayer != 0 && idPlayer == pNetwork->m_idLocalPlayer;
 
-    switch (field_45C) {
+    switch (m_nLobbyMode) {
     case 1:
         bReadyActive = bIsLocalPlayer
             && bSlotFull
@@ -1309,7 +1309,7 @@ void CScreenSinglePlayer::UpdateModifyCharacterPanel()
     }
 
     BOOL v5 = CMultiplayerSettings::CHARSTATUS_NO_CHARACTER == pSettings->GetCharacterStatus(nCharacterSlot);
-    BOOL v6 = field_45C == 1 && v3 == pSettings->GetCharacterControlledByPlayer(nCharacterSlot);
+    BOOL v6 = m_nLobbyMode == 1 && v3 == pSettings->GetCharacterControlledByPlayer(nCharacterSlot);
 
     pButton = static_cast<CUIControlButton*>(pPanel->GetControl(0));
 
@@ -1353,7 +1353,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
     CString sSaveGame = pGame->GetSaveGame();
 
     if (IsMainDoneButtonClickable()) {
-        if (field_45C == 1) {
+        if (m_nLobbyMode == 1) {
             sDefault = "default";
             pGame->m_sSaveGame = sDefault;
             CScreenCharacter::SAVE_NAME = sDefault;
@@ -1667,7 +1667,7 @@ void CScreenSinglePlayer::OnMainDoneButtonClick()
                     pGame->DestroyGame(TRUE, FALSE);
                 }
             }
-        } else if (field_45C == 2) {
+        } else if (m_nLobbyMode == 2) {
             SelectEngine(g_pBaldurChitin->m_pEngineWorld);
         } else {
             // __FILE__: C:\Projects\Icewind2\src\Baldur\infscreensingleplayer.cpp
@@ -1689,7 +1689,7 @@ BOOL CScreenSinglePlayer::IsModifyButtonClickable()
     return !pGame->GetMultiplayerSettings()->m_bFirstConnected
         && (g_pBaldurChitin->cNetwork.FindPlayerLocationByID(g_pBaldurChitin->cNetwork.m_idLocalPlayer, FALSE) != -1
             || g_pBaldurChitin->cNetwork.GetSessionHosting())
-        && field_45C == 2
+        && m_nLobbyMode == 2
         && pGame->GetMultiplayerSettings()->m_bArbitrationLockAllowInput;
 }
 
@@ -2554,7 +2554,7 @@ void CUIControlButtonSinglePlayerCharacter::OnLButtonClick(CPoint pt)
 
     pSinglePlayer->field_458 = m_nID - 18;
 
-    if (pSinglePlayer->field_45C == 1
+    if (pSinglePlayer->m_nLobbyMode == 1
         && g_pBaldurChitin->cNetwork.m_nLocalPlayer == pSettings->GetCharacterControlledByPlayer(pSinglePlayer->field_458)
         && CMultiplayerSettings::CHARSTATUS_NO_CHARACTER == pSettings->GetCharacterStatus(pSinglePlayer->field_458)) {
         CUIPanel* pPanel = pSinglePlayer->GetManager()->GetPanel(3);

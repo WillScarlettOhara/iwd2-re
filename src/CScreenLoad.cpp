@@ -606,12 +606,12 @@ void CScreenLoad::LoadGame(INT nSlot)
 
                 if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
                     CScreenSinglePlayer* pSinglePlayer = g_pBaldurChitin->m_pEngineSinglePlayer;
-                    pSinglePlayer->field_45C = 1;
+                    pSinglePlayer->m_nLobbyMode = 1;
                     pSinglePlayer->StartSinglePlayer(1);
                     SelectEngine(pSinglePlayer);
                 } else {
                     CScreenMultiPlayer* pMultiPlayer = g_pBaldurChitin->m_pEngineMultiPlayer;
-                    pMultiPlayer->field_45C = 1;
+                    pMultiPlayer->m_nLobbyMode = 1;
                     pMultiPlayer->StartMultiPlayer(1);
                     SelectEngine(pMultiPlayer);
                 }

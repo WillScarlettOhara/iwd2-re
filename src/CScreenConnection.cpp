@@ -1492,12 +1492,12 @@ void CScreenConnection::OnNewGameButtonClick()
                 if (g_pChitin->cNetwork.m_nServiceProvider == CNetwork::SERV_PROV_NULL) {
                     DBG("OnNewGameButtonClick: switching to SinglePlayer");
                     CScreenSinglePlayer* pSinglePlayer = g_pBaldurChitin->m_pEngineSinglePlayer;
-                    pSinglePlayer->field_45C = 1;
+                    pSinglePlayer->m_nLobbyMode = 1;
                     pSinglePlayer->StartSinglePlayer(1);
                     SelectEngine(pSinglePlayer);
                 } else {
                     CScreenMultiPlayer* pMultiPlayer = g_pBaldurChitin->m_pEngineMultiPlayer;
-                    pMultiPlayer->field_45C = 1;
+                    pMultiPlayer->m_nLobbyMode = 1;
                     pMultiPlayer->StartMultiPlayer(1);
                     SelectEngine(pMultiPlayer);
                 }
@@ -1912,12 +1912,12 @@ void CScreenConnection::OnDoneButtonClick()
 
             if (pNetwork->GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
                 CScreenSinglePlayer* pSinglePlayer = g_pBaldurChitin->m_pEngineSinglePlayer;
-                pSinglePlayer->field_45C = 1;
+                pSinglePlayer->m_nLobbyMode = 1;
                 pSinglePlayer->StartSinglePlayer(1);
                 SelectEngine(pSinglePlayer);
             } else {
                 CScreenMultiPlayer* pMultiPlayer = g_pBaldurChitin->m_pEngineMultiPlayer;
-                pMultiPlayer->field_45C = 1;
+                pMultiPlayer->m_nLobbyMode = 1;
                 pMultiPlayer->StartMultiPlayer(1);
                 SelectEngine(pMultiPlayer);
             }
@@ -3449,12 +3449,12 @@ void CScreenConnection::HandleEMEvent(BYTE nEvent, BYTE nEventStage)
 
                     if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
                         CScreenSinglePlayer* pSinglePlayer = g_pBaldurChitin->m_pEngineSinglePlayer;
-                        pSinglePlayer->field_45C = 1;
+                        pSinglePlayer->m_nLobbyMode = 1;
                         pSinglePlayer->StartSinglePlayer(1);
                         SelectEngine(pSinglePlayer);
                     } else {
                         CScreenMultiPlayer* pMultiPlayer = g_pBaldurChitin->m_pEngineMultiPlayer;
-                        pMultiPlayer->field_45C = 1;
+                        pMultiPlayer->m_nLobbyMode = 1;
                         pMultiPlayer->StartMultiPlayer(1);
                         SelectEngine(pMultiPlayer);
                     }
@@ -3767,7 +3767,7 @@ void CScreenConnection::AutoStartDirectPlayLobby()
 
         g_pBaldurChitin->GetObjectGame()->NewGame(TRUE, FALSE);
 
-        g_pBaldurChitin->m_pEngineMultiPlayer->field_45C = 1;
+        g_pBaldurChitin->m_pEngineMultiPlayer->m_nLobbyMode = 1;
         g_pBaldurChitin->m_pEngineMultiPlayer->StartMultiPlayer(1);
         SelectEngine(g_pBaldurChitin->m_pEngineMultiPlayer);
     }
@@ -3957,11 +3957,11 @@ void CScreenConnection::OnLobbyNewGameButtonClick()
     g_pBaldurChitin->GetObjectGame()->LoadMultiPlayerPermissions();
 
     if (g_pBaldurChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
-        g_pBaldurChitin->m_pEngineSinglePlayer->field_45C = 1;
+        g_pBaldurChitin->m_pEngineSinglePlayer->m_nLobbyMode = 1;
         g_pBaldurChitin->m_pEngineSinglePlayer->StartSinglePlayer(1);
         SelectEngine(g_pBaldurChitin->m_pEngineSinglePlayer);
     } else {
-        g_pBaldurChitin->m_pEngineMultiPlayer->field_45C = 1;
+        g_pBaldurChitin->m_pEngineMultiPlayer->m_nLobbyMode = 1;
         g_pBaldurChitin->m_pEngineMultiPlayer->StartMultiPlayer(1);
         SelectEngine(g_pBaldurChitin->m_pEngineMultiPlayer);
     }

@@ -103,7 +103,7 @@ public:
     /* 0438 */ BOOL m_bCapsLockKeyOn;
     /* 043C */ CTypedPtrList<CPtrList, CUIPanel*> m_lPopupStack;
     /* 0458 */ int field_458;
-    /* 045C */ int field_45C;
+    /* 045C */ int m_nLobbyMode;
     /* 0460 */ int field_460;
     /* 0460 */ int field_464;
     /* 0468 */ INT m_nErrorState;

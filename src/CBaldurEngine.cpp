@@ -816,13 +816,13 @@ void CBaldurEngine::OnLeftPanelButtonClick(DWORD dwButtonId)
     case 13:
         if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) {
             if (g_pBaldurChitin->m_pEngineSinglePlayer != g_pBaldurChitin->GetActiveEngine()) {
-                g_pBaldurChitin->m_pEngineSinglePlayer->field_45C = 2;
+                g_pBaldurChitin->m_pEngineSinglePlayer->m_nLobbyMode = 2;
                 g_pBaldurChitin->m_pEngineSinglePlayer->StartSinglePlayer(2);
                 g_pBaldurChitin->GetActiveEngine()->SelectEngine(g_pBaldurChitin->m_pEngineSinglePlayer);
             }
         } else {
             if (g_pBaldurChitin->m_pEngineMultiPlayer != g_pBaldurChitin->GetActiveEngine()) {
-                g_pBaldurChitin->m_pEngineMultiPlayer->field_45C = 2;
+                g_pBaldurChitin->m_pEngineMultiPlayer->m_nLobbyMode = 2;
                 g_pBaldurChitin->m_pEngineMultiPlayer->StartMultiPlayer(2);
                 g_pBaldurChitin->GetActiveEngine()->SelectEngine(g_pBaldurChitin->m_pEngineMultiPlayer);
             }
