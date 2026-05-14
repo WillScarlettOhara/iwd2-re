@@ -95,7 +95,7 @@ void CMultiplayerSettings::InitializeSettings()
     for (INT nPlayerSlot = 0; nPlayerSlot < MAX_PLAYERS; nPlayerSlot++) {
         m_pbCharacterReady[nPlayerSlot] = FALSE;
         m_pnCharacterStatus[nPlayerSlot] = FALSE;
-        field_AC[nPlayerSlot] = -1;
+        m_pnViewedCharacterSlot[nPlayerSlot] = -1;
 
         if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
             m_pnCharacterControlledByPlayer[nPlayerSlot] = g_pChitin->cNetwork.m_idLocalPlayer;
@@ -607,7 +607,7 @@ int CMultiplayerSettings::CountViewedCharacters()
     int count = 0;
 
     for (int index = 0; index < 6; index++) {
-        if (field_AC[index] != -1) {
+        if (m_pnViewedCharacterSlot[index] != -1) {
             count++;
         }
     }
@@ -647,14 +647,14 @@ void CMultiplayerSettings::SetViewedCharacter(PLAYER_ID playerID, INT characterS
     UTIL_ASSERT(characterSlotBeingViewed >= -1 && characterSlotBeingViewed < MAX_CHARACTERS);
 
     INT nPlayerSlot = g_pChitin->cNetwork.FindPlayerLocationByID(playerID, TRUE);
-    field_AC[nPlayerSlot] = characterSlotBeingViewed;
+    m_pnViewedCharacterSlot[nPlayerSlot] = characterSlotBeingViewed;
 }
 
 // 0x518650
 void CMultiplayerSettings::ClearViewedCharacters()
 {
     for (int index = 0; index < 6; index++) {
-        field_AC[index] = -1;
+        m_pnViewedCharacterSlot[index] = -1;
     }
 }
 
@@ -662,14 +662,14 @@ void CMultiplayerSettings::ClearViewedCharacters()
 void CMultiplayerSettings::SetPlayerReady(PLAYER_ID playerID, BOOLEAN a2)
 {
     INT nPlayerSlot = g_pChitin->cNetwork.FindPlayerLocationByID(playerID, TRUE);
-    field_B2[nPlayerSlot] = a2;
+    m_pbPlayerReady[nPlayerSlot] = a2;
 }
 
 // 0x518690
 void CMultiplayerSettings::ClearPlayerReady()
 {
     for (int index = 0; index < 6; index++) {
-        field_B2[index] = FALSE;
+        m_pbPlayerReady[index] = FALSE;
     }
 }
 
@@ -679,7 +679,7 @@ int CMultiplayerSettings::CountReadyPlayers()
     int count = 0;
 
     for (int index = 0; index < 6; index++) {
-        if (field_B2[index]) {
+        if (m_pbPlayerReady[index]) {
             count++;
         }
     }

@@ -82,8 +82,8 @@ public:
     /* 00A6 */ BOOLEAN m_bHostPermittedDialog;
     /* 00A7 */ BOOLEAN m_bHostPermittedStore;
     /* 00A8 */ PLAYER_ID m_idHostPermittedStore;
-    /* 00AC */ unsigned char field_AC[6];
-    /* 00B2 */ BOOLEAN field_B2[6];
+    /* 00AC */ unsigned char m_pnViewedCharacterSlot[6];
+    /* 00B2 */ BOOLEAN m_pbPlayerReady[6];
     /* 00B8 */ BOOLEAN m_bFirstConnected;
     /* 00BA */ DWORD m_nDifficultyLevel;
     /* 00BE */ LONG m_nDifficultyMultiplier;
