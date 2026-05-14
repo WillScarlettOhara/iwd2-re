@@ -113,7 +113,7 @@ CVisibilityMap::CVisibilityMap()
     field_16 = 0;
     field_E = 14;
     field_10 = 10;
-    sub_5518A0();
+    UpdateVisibilityEllipses();
     m_bOutDoor = FALSE;
 }
 
@@ -143,7 +143,7 @@ BOOL CVisibilityMap::AddCharacter(const CPoint& pos, LONG charId, const BYTE* pV
 }
 
 // 0x5518A0
-void CVisibilityMap::sub_5518A0()
+void CVisibilityMap::UpdateVisibilityEllipses()
 {
     if (field_12 != NULL) {
         delete field_12;

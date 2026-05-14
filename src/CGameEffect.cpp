@@ -939,13 +939,13 @@ CGameEffect* CGameEffect::DecodeEffect(ITEM_EFFECT* effect, const CPoint& source
     case ICEWIND_CGAMEEFFECT_SUMMONALLY:
         if (1) {
             IcewindCGameEffectSummon* pEffect = new IcewindCGameEffectSummon(effect, source, sourceID, target);
-            pEffect->sub_49DB60(1);
+            pEffect->SetSummonDelay(1);
             return pEffect;
         }
     case ICEWIND_CGAMEEFFECT_SUMMONENEMY:
         if (1) {
             IcewindCGameEffectSummon* pEffect = new IcewindCGameEffectSummon(effect, source, sourceID, target);
-            pEffect->sub_49DB60(2);
+            pEffect->SetSummonDelay(2);
             return pEffect;
         }
     case ICEWIND_CGAMEEFFECT_CHARM:

@@ -437,7 +437,7 @@ public:
     void AIUpdateWalk();
     void SetPath(LONG* pPath, SHORT nPath);
     BOOL ClearBumpPath(const CPoint& start, const CPoint& goal);
-    BOOL sub_6FB440();
+    BOOL CanAnimate();
     void AIUpdateFly();
     void ChangeDirection();
     void CheckIfVisible();
@@ -504,8 +504,8 @@ public:
     void ReadySpell(SHORT buttonNum, INT nType, BOOLEAN firstCall);
     void ReadyItem(SHORT buttonNum, BOOLEAN firstCall);
     void ReadyOffInternalList(CButtonData buttonData, BOOLEAN firstCall);
-    void sub_71A0E0(CButtonData buttonData, BOOLEAN firstCall);
-    void sub_71A550(CButtonData buttonData, BOOLEAN firstCall);
+    void UseButtonAction(CButtonData buttonData, BOOLEAN firstCall);
+    void UseButtonItem(CButtonData buttonData, BOOLEAN firstCall);
     void CheckToolTipItem(BYTE buttonNum);
     CItem* GetQuickItem(BYTE buttonNum);
     void UnequipAll(BOOL a1);
@@ -543,7 +543,7 @@ public:
     INT sub_723F60();
     void sub_72DE60();
     void sub_71E760(CDerivedStats& DStats, int a2);
-    int sub_71F6E0();
+    int GetBaseMovementRate();
     const CString& GetName();
     STRREF GetNameRef();
     void PlaySound(const CResRef& res);
@@ -625,12 +625,12 @@ public:
     void MoveOntoArea(CGameArea* pArea, const CPoint& dest, SHORT facingDirection);
 
     void SetResRef(const CResRef& resRef);
-    void sub_453160(int a1);
-    int sub_453170();
+    void SetHiding(int a1);
+    int GetHiding();
     SHORT GetSequence();
     CCreatureFileHeader* GetBaseStats();
     CDerivedStats* GetDerivedStats();
-    void sub_4531B0();
+    void MarkRenderDirty();
     CGameEffectList* GetEquipedEffectList();
     CGameEffectList* GetTimedEffectList();
     void SetStealthGreyOut(LONG greyOut);

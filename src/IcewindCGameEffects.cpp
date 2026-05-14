@@ -296,13 +296,13 @@ BOOL IcewindCGameEffectSavingThrowChange::ApplyEffect(CGameSprite* pSprite)
 {
     switch (m_dwFlags) {
     case 0:
-        sub_55ED90(pSprite);
+        ApplyBonusToAllSaves(pSprite);
         break;
     case 1:
-        sub_55EE70(pSprite);
+        SetAllSaves(pSprite);
         break;
     case 2:
-        sub_55EFB0(pSprite);
+        ApplyPercentToAllSaves(pSprite);
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\Baldur\IcewindCGameEffects.cpp
@@ -314,7 +314,7 @@ BOOL IcewindCGameEffectSavingThrowChange::ApplyEffect(CGameSprite* pSprite)
 }
 
 // 0x55ED90
-void IcewindCGameEffectSavingThrowChange::sub_55ED90(CGameSprite* pSprite)
+void IcewindCGameEffectSavingThrowChange::ApplyBonusToAllSaves(CGameSprite* pSprite)
 {
     if (m_durationType == 1) {
         CCreatureFileHeader* pBStats = pSprite->GetBaseStats();
@@ -352,7 +352,7 @@ void IcewindCGameEffectSavingThrowChange::sub_55ED90(CGameSprite* pSprite)
 }
 
 // 0x55EE70
-void IcewindCGameEffectSavingThrowChange::sub_55EE70(CGameSprite* pSprite)
+void IcewindCGameEffectSavingThrowChange::SetAllSaves(CGameSprite* pSprite)
 {
     if (m_durationType == 1) {
         CCreatureFileHeader* pBStats = pSprite->GetBaseStats();
@@ -411,7 +411,7 @@ void IcewindCGameEffectSavingThrowChange::sub_55EE70(CGameSprite* pSprite)
 }
 
 // 0x55EFB0
-void IcewindCGameEffectSavingThrowChange::sub_55EFB0(CGameSprite* pSprite)
+void IcewindCGameEffectSavingThrowChange::ApplyPercentToAllSaves(CGameSprite* pSprite)
 {
     if (m_durationType == 1) {
         CCreatureFileHeader* pBStats = pSprite->GetBaseStats();
@@ -599,7 +599,7 @@ CGameEffect* IcewindCGameEffectSummon::Copy()
 }
 
 // 0x49DB60
-void IcewindCGameEffectSummon::sub_49DB60(int a1)
+void IcewindCGameEffectSummon::SetSummonDelay(int a1)
 {
     field_190 = a1;
 }

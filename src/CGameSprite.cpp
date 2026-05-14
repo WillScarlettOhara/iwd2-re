@@ -1962,7 +1962,7 @@ void CGameSprite::AIUpdate()
         return;
     }
 
-    BOOL v1 = sub_6FB440();
+    BOOL v1 = CanAnimate();
     if (v1 != field_54A8
         && Animate()
         && !m_baseStats.field_294) {
@@ -3038,7 +3038,7 @@ BOOL CGameSprite::ClearBumpPath(const CPoint& start, const CPoint& goal)
 }
 
 // 0x6FB440
-BOOL CGameSprite::sub_6FB440()
+BOOL CGameSprite::CanAnimate()
 {
     if (!InControl()) {
         return FALSE;
@@ -8459,7 +8459,7 @@ void CGameSprite::ReadyOffInternalList(CButtonData buttonData, BOOLEAN firstCall
 // FIXME: `buttonData` should be reference.
 //
 // 0x71A0E0
-void CGameSprite::sub_71A0E0(CButtonData buttonData, BOOLEAN firstCall)
+void CGameSprite::UseButtonAction(CButtonData buttonData, BOOLEAN firstCall)
 {
     m_currentUseButton = buttonData;
 
@@ -8502,7 +8502,7 @@ void CGameSprite::sub_71A0E0(CButtonData buttonData, BOOLEAN firstCall)
 // FIXME: `buttonData` should be reference.
 //
 // 0x71A550
-void CGameSprite::sub_71A550(CButtonData buttonData, BOOLEAN firstCall)
+void CGameSprite::UseButtonItem(CButtonData buttonData, BOOLEAN firstCall)
 {
     m_currentUseButton = buttonData;
 
@@ -10161,7 +10161,7 @@ void CGameSprite::sub_71E760(CDerivedStats& DStats, int a2)
 }
 
 // 0x71F6E0
-int CGameSprite::sub_71F6E0()
+int CGameSprite::GetBaseMovementRate()
 {
     int v1;
 
@@ -13438,7 +13438,7 @@ SHORT CGameSprite::SetExplorationRange(int a1)
 
     m_pArea->m_visibility.field_E = static_cast<short>(a1);
     m_pArea->m_visibility.field_10 = static_cast<short>(3 * a1 / 4);
-    m_pArea->m_visibility.sub_5518A0();
+    m_pArea->m_visibility.UpdateVisibilityEllipses();
 
     return ACTION_DONE;
 }
@@ -14716,13 +14716,13 @@ void CGameSprite::SetResRef(const CResRef& resRef)
 }
 
 // 0x453160
-void CGameSprite::sub_453160(int a1)
+void CGameSprite::SetHiding(int a1)
 {
     m_bHiding = a1;
 }
 
 // 0x453170
-int CGameSprite::sub_453170()
+int CGameSprite::GetHiding()
 {
     return m_bHiding;
 }
@@ -14746,7 +14746,7 @@ CDerivedStats* CGameSprite::GetDerivedStats()
 }
 
 // 0x4531B0
-void CGameSprite::sub_4531B0()
+void CGameSprite::MarkRenderDirty()
 {
     field_562C = 1;
 }
