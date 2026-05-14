@@ -1842,7 +1842,45 @@ CAIAction& CGameAIBase::GetNextAction(CAIAction& action)
 // 0x481890
 void CGameAIBase::SplitRectIntoGrid(CRect* r, CArray<CRect*>& ary)
 {
-    // TODO: Incomplete.
+    const INT width = r->right - r->left;
+    const INT height = r->bottom - r->top;
+
+    INT xCount = 1;
+    INT yCount = 1;
+    if (width > 512) {
+        xCount = width / 512 + 1;
+    }
+    if (height > 512) {
+        yCount = height / 512 + 1;
+    }
+
+    if (width <= 512 && height <= 512) {
+        ary.SetSize(0, -1);
+        ary.Add(r);
+        return;
+    }
+
+    ary.SetSize(0, 4);
+    for (INT y = 0; y < yCount; y++) {
+        const INT top = r->top + 512 * y;
+        if (top > r->bottom) {
+            return;
+        }
+
+        for (INT x = 0; x < xCount; x++) {
+            const INT left = r->left + 512 * x;
+            if (left > r->right) {
+                break;
+            }
+
+            CRect* pRect = new CRect();
+            pRect->left = left;
+            pRect->top = top;
+            pRect->right = left + min(r->right - left, 512);
+            pRect->bottom = top + min(r->bottom - top, 512);
+            ary.Add(pRect);
+        }
+    }
 }
 
 // 0x467C50

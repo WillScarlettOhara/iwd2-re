@@ -224,13 +224,76 @@ BYTE CSearchBitmap::GetMobileCost(const CPoint& point, const BYTE* terrainTable,
 // 0x5488C0
 void CSearchBitmap::SnapshotRemoveObject(CPoint point, BYTE personalSpaceRange, BOOL bBumpable)
 {
-    // TODO: Incomplete.
+    if (personalSpaceRange == 0) {
+        return;
+    }
+
+    if (point.x < 0 || point.y < 0 || point.x >= 320 || point.y >= 320) {
+        return;
+    }
+
+    int radius = (personalSpaceRange - 1) / 2;
+    int minX = max(point.x - radius, 0);
+    int maxX = min(point.x + radius, m_GridSquareDimensions.cx - 1);
+    int minY = max(point.y - radius, 0);
+    int maxY = min(point.y + radius, m_GridSquareDimensions.cy - 1);
+
+    for (int y = minY; y <= maxY; y++) {
+        for (int x = minX; x <= maxX; x++) {
+            BYTE& dynamicCost = m_snapshotDynamicCost[y * m_GridSquareDimensions.cx + x];
+            if (bBumpable) {
+                dynamicCost = (dynamicCost & ~0xE) | ((dynamicCost - 2) & 0xE);
+            } else {
+                dynamicCost = (dynamicCost & ~0x70) | ((dynamicCost - 16) & 0x70);
+            }
+        }
+    }
 }
 
 // 0x5489E0
 void CSearchBitmap::SnapshotAddObjectDiagonals(CPoint point, BYTE personalSpaceRange, BOOL bBumpable)
 {
-    // TODO: Incomplete.
+    if (point.x < 0 || point.y < 0 || point.x >= 320 || point.y >= 320) {
+        return;
+    }
+
+    int radius = (personalSpaceRange - 1) / 2;
+    int x1 = point.x - radius;
+    int x2 = point.x + radius;
+    int y1 = point.y - radius;
+    int y2 = point.y + radius;
+
+    if (x1 >= 0) {
+        if (y1 >= 0) {
+            BYTE& dynamicCost = m_snapshotDynamicCost[y1 * m_GridSquareDimensions.cx + x1];
+            dynamicCost = bBumpable
+                ? (dynamicCost & ~0xE) | ((dynamicCost + 2) & 0xE)
+                : (dynamicCost & ~0x70) | ((dynamicCost + 16) & 0x70);
+        }
+
+        if (y2 < m_GridSquareDimensions.cy) {
+            BYTE& dynamicCost = m_snapshotDynamicCost[y2 * m_GridSquareDimensions.cx + x1];
+            dynamicCost = bBumpable
+                ? (dynamicCost & ~0xE) | ((dynamicCost + 2) & 0xE)
+                : (dynamicCost & ~0x70) | ((dynamicCost + 16) & 0x70);
+        }
+    }
+
+    if (x2 < m_GridSquareDimensions.cx) {
+        if (y1 >= 0) {
+            BYTE& dynamicCost = m_snapshotDynamicCost[y1 * m_GridSquareDimensions.cx + x2];
+            dynamicCost = bBumpable
+                ? (dynamicCost & ~0xE) | ((dynamicCost + 2) & 0xE)
+                : (dynamicCost & ~0x70) | ((dynamicCost + 16) & 0x70);
+        }
+
+        if (y2 < m_GridSquareDimensions.cy) {
+            BYTE& dynamicCost = m_snapshotDynamicCost[y2 * m_GridSquareDimensions.cx + x2];
+            dynamicCost = bBumpable
+                ? (dynamicCost & ~0xE) | ((dynamicCost + 2) & 0xE)
+                : (dynamicCost & ~0x70) | ((dynamicCost + 16) & 0x70);
+        }
+    }
 }
 
 // 0x547E60

@@ -33,7 +33,24 @@ POSITION CGameEffectList::GetPosCurrent()
 // 0x4C08E0
 void CGameEffectList::RemoveAllOfType(CGameSprite* pSprite, WORD effectID, POSITION posLeave, LONG effectAmount)
 {
-    // TODO: Incomplete.
+    POSITION pos = GetHeadPosition();
+    while (pos != NULL) {
+        POSITION posOld = pos;
+        CGameEffect* pEffect = GetNext(pos);
+        if (posOld != posLeave
+            && pEffect->m_effectID == effectID
+            && (effectAmount == -1 || pEffect->m_effectAmount == effectAmount)) {
+            if (m_posNext == posOld) {
+                m_posNext = pos;
+            }
+            if (m_posCurrent == posOld) {
+                m_posCurrent = NULL;
+            }
+            RemoveAt(posOld);
+            pEffect->OnRemove(pSprite);
+            delete pEffect;
+        }
+    }
 }
 
 // 0x4C0990

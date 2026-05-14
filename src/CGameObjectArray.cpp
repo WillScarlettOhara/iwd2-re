@@ -459,16 +459,20 @@ BYTE CGameObjectArray::Delete(LONG index, BYTE threadNum, CGameObject** ptr, DWO
         }
     }
 
-    // TODO: Incomplete.
+    if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
+        && g_pBaldurChitin->GetBaldurMessage()->m_bInOnObjectDelete == FALSE) {
+        // TODO: Broadcast object delete in multiplayer.
+    }
 
     if (ptr != NULL) {
         *ptr = m_pArray[arrayIndex].m_objectPtr;
     }
 
+    m_pArray[arrayIndex].m_objectId = -1;
     m_pArray[arrayIndex].m_nextDeletedArrayIndex = m_deletedListHead;
     m_deletedListHead = arrayIndex;
 
-    // TODO: Incomplete.
+    g_pBaldurChitin->GetObjectGame()->GetRemoteObjectArray()->Delete(index);
 
     return SUCCESS;
 }
