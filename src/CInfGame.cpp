@@ -784,7 +784,7 @@ CInfGame::CInfGame()
     g_pChitin->cDimm.AddToDirectoryList(m_sCharactersDir, TRUE);
 
     m_gameSave.m_curFormation = TRUE;
-    m_gameSave.field_1AC = FALSE;
+    m_gameSave.m_bSequenceMode = FALSE;
 
     m_zoomLevel = 48;
     m_zoomEnabled = 48;
@@ -5962,7 +5962,7 @@ void CInfGame::StartCharacterTerminationSequence()
 // 0x5C2570
 void CInfGame::ReadyCharacterTerminationSequence(int a1, int a2)
 {
-    if (!m_gameSave.field_1AC) {
+    if (!m_gameSave.m_bSequenceMode) {
         // FIXME: What for (this function is not static as
         // `StartCharacterTerminationSequence`).
         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();

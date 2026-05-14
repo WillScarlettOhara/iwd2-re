@@ -17,7 +17,7 @@ public:
     /* 0010 */ SHORT m_curFormation;
     /* 0012 */ SHORT m_quickFormations[5];
     /* 001C */ CItem* m_groupInventory[100];
-    /* 01AC */ int field_1AC;
+    /* 01AC */ int m_bSequenceMode;
     /* 01B0 */ short field_1B0;
     /* 01B2 */ int field_1B2;
     /* 01B6 */ DWORD m_mode;
