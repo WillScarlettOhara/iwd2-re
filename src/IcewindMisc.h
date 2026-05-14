@@ -47,7 +47,7 @@ public:
     static BOOLEAN IsChaotic(CGameSprite* pSprite);
     static BOOLEAN IsDead(CGameSprite* pSprite);
     static BOOLEAN IsPC(CGameSprite* pSprite);
-    static BOOLEAN IsDemihuman(CGameSprite* pSprite);
+    static BOOLEAN IsStandardRace(CGameSprite* pSprite);
     static BOOLEAN AreAllies(CGameSprite* pSprite1, CGameSprite* pSprite2);
     static BOOLEAN AreEnemies(CGameSprite* pSprite1, CGameSprite* pSprite2);
     static BOOLEAN IsGoodByEA(CGameSprite* pSprite);

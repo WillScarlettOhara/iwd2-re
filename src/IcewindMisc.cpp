@@ -493,7 +493,7 @@ BOOLEAN IcewindMisc::IsPC(CGameSprite* pSprite)
 }
 
 // 0x585210
-BOOLEAN IcewindMisc::IsDemihuman(CGameSprite* pSprite)
+BOOLEAN IcewindMisc::IsStandardRace(CGameSprite* pSprite)
 {
     BYTE nRace = pSprite->GetAIType().m_nRace;
     return nRace > 0 && nRace <= CAIOBJECTTYPE_R_GNOME;
