@@ -72,7 +72,7 @@ public:
     /* 064A */ HBINK m_hBink; // #guess
     /* 064E */ CString m_sCurrentMovieFileName;
     /* 0652 */ CResRef m_currentMovieResRef;
-    /* 065A */ int field_65A;
+    /* 065A */ int m_nFadeInFrames;
     /* 065E */ BinkOpen* m_pfnBinkOpen; // #guess
     /* 0662 */ BinkDDSurfaceType* m_pfnBinkDDSurfaceType; // #guess
     /* 0666 */ BinkDoFrame* m_pfnBinkDoFrame; // #guess

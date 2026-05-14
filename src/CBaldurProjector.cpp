@@ -26,8 +26,8 @@ void CBaldurProjector::RenderBinkFrame(HBINK bnk)
     int nDestY = (CVideo::SCREENHEIGHT - bnk->height) / 2;
 
     if (nDestX >= 0 && nDestY >= 0) {
-        if (field_65A > 0) {
-            field_65A--;
+        if (m_nFadeInFrames > 0) {
+            m_nFadeInFrames--;
             g_pChitin->pActiveEngine->pVidMode->EraseScreen(CVIDINF_SURFACE_BACK, RGB(0, 0, 0));
         }
 
@@ -96,7 +96,7 @@ CBaldurProjector::CBaldurProjector()
 
     m_hBink = NULL;
     m_currentMovieResRef = "";
-    field_65A = 4;
+    m_nFadeInFrames = 4;
 
     m_pfnBinkOpen = NULL;
     m_pfnBinkDDSurfaceType = NULL;
@@ -285,7 +285,7 @@ void CBaldurProjector::EngineActivated()
 
     pDimm->Suspend();
     pVidMode->m_bPointerEnabled = FALSE;
-    field_65A = 4;
+    m_nFadeInFrames = 4;
     g_pChitin->pActiveEngine->pVidMode->EraseScreen(CVIDINF_SURFACE_BACK, RGB(0, 0, 0));
 
     LeaveCriticalSection(&(g_pChitin->field_3AC));
