@@ -125,8 +125,8 @@ CScreenMultiPlayer::CScreenMultiPlayer()
     m_bCtrlKeyDown = FALSE;
     m_bShiftKeyDown = FALSE;
     m_bCapsLockKeyOn = FALSE;
-    field_458 = -1;
-    field_45C = 0;
+    m_nSelectedSlot = -1;
+    m_nLobbyMode = 0;
     m_nChatMessageCount = 0;
     m_nPermissionsChatMessageCount = 0;
     m_bMultiplayerStartup = 0;
@@ -452,7 +452,7 @@ void CScreenMultiPlayer::OnKeyDown(SHORT nKeysFlags)
                     if (GetTopPopup() != NULL) {
                         OnCancelButtonClick();
                     } else {
-                        switch (field_45C) {
+                        switch (m_nLobbyMode) {
                         case 1:
                             break;
                         case 2:
@@ -502,7 +502,7 @@ void CScreenMultiPlayer::TimerAsynchronousUpdate()
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     CMultiplayerSettings* pSettings = pGame->GetMultiplayerSettings();
 
-    if (field_45C == 2) {
+    if (m_nLobbyMode == 2) {
         g_pBaldurChitin->m_pEngineWorld->AsynchronousUpdate(FALSE);
     } else {
         if (pSettings->m_bArbitrationLockAllowInput && !m_bLastLockAllowInput) {
@@ -669,7 +669,7 @@ void CScreenMultiPlayer::TimerAsynchronousUpdate()
 
         if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
             && !g_pChitin->cNetwork.GetSessionHosting()
-            && field_45C == 1
+            && m_nLobbyMode == 1
             && IsMainDoneButtonClickable()) {
             while (GetTopPopup() != NULL) {
                 OnCancelButtonClick();
@@ -682,20 +682,20 @@ void CScreenMultiPlayer::TimerAsynchronousUpdate()
 
         if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
             && !g_pChitin->cNetwork.GetSessionHosting()
-            && field_45C == 1
+            && m_nLobbyMode == 1
             && IsMainDoneButtonClickable()) {
             bDoMainButtonClick = TRUE;
         }
     }
 
     if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
-        && field_45C == 2
+        && m_nLobbyMode == 2
         && pGame->GetMultiplayerSettings()->m_bArbitrationLockStatus == TRUE) {
         if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
             pGame->MultiplayerSetCharacterCreationLocation();
         }
 
-        field_45C = 1;
+        m_nLobbyMode = 1;
         StartMultiPlayer(1);
     }
 
@@ -963,7 +963,7 @@ BOOL CScreenMultiPlayer::IsMainDoneButtonClickable()
     UTIL_ASSERT(pSettings != NULL);
 
     BOOL bResult;
-    switch (field_45C) {
+    switch (m_nLobbyMode) {
     case 1:
         bResult = !pSettings->m_bFirstConnected;
 
@@ -1316,7 +1316,7 @@ void CScreenMultiPlayer::CheckCharacterButtons(INT nCharacterSlot, BOOL& bReadyA
     BOOLEAN bCharacterReady = pSettings->GetCharacterReady(nCharacterSlot);
     BOOL bIsLocalPlayer = idPlayer != 0 && idPlayer == pNetwork->m_idLocalPlayer;
 
-    switch (field_45C) {
+    switch (m_nLobbyMode) {
     case 1:
         bReadyActive = bIsLocalPlayer
             && bSlotFull
@@ -1749,7 +1749,7 @@ void CScreenMultiPlayer::UpdateModifyCharacterPanel()
     // __LINE__: 2623
     UTIL_ASSERT(pSettings != NULL);
 
-    INT nCharacterSlot = field_458;
+    INT nCharacterSlot = m_nSelectedSlot;
     BYTE nLocalPlayer = static_cast<BYTE>(g_pBaldurChitin->cNetwork.m_nLocalPlayer);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenMultiPlayer.cpp
@@ -1769,7 +1769,7 @@ void CScreenMultiPlayer::UpdateModifyCharacterPanel()
     // __LINE__: 2638
     UTIL_ASSERT(pButton != NULL);
 
-    pButton->SetEnabled(field_45C == 1
+    pButton->SetEnabled(m_nLobbyMode == 1
         && bModifyChars
         && bIsLocalPlayer
         && bSlotFree);
@@ -1780,7 +1780,7 @@ void CScreenMultiPlayer::UpdateModifyCharacterPanel()
     // __LINE__: 2642
     UTIL_ASSERT(pButton != NULL);
 
-    pButton->SetEnabled(field_45C == 1
+    pButton->SetEnabled(m_nLobbyMode == 1
         && bModifyChars
         && bIsLocalPlayer
         && bSlotFull);
@@ -1846,7 +1846,7 @@ BOOL CScreenMultiPlayer::IsModifyButtonClickable()
         return FALSE;
     }
 
-    if (field_45C != 2) {
+    if (m_nLobbyMode != 2) {
         return FALSE;
     }
 
@@ -2533,7 +2533,7 @@ void CUIControlButtonMultiPlayerPlayer::OnLButtonClick(CPoint pt)
     CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    pMultiPlayer->field_458 = m_nID - 12;
+    pMultiPlayer->m_nSelectedSlot = m_nID - 12;
     pMultiPlayer->SummonPopup(4);
 
     renderLock.Unlock();
@@ -2566,7 +2566,7 @@ void CUIControlButtonMultiPlayerCharacter::OnLButtonClick(CPoint pt)
     CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    pMultiPlayer->field_458 = m_nID - 18;
+    pMultiPlayer->m_nSelectedSlot = m_nID - 18;
     pMultiPlayer->SummonPopup(3);
 
     renderLock.Unlock();
@@ -3127,7 +3127,7 @@ void CUIControlButtonMultiPlayerModifyCharacterCreate::OnLButtonClick(CPoint pt)
     CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    INT nCharacterSlot = pMultiPlayer->field_458;
+    INT nCharacterSlot = pMultiPlayer->m_nSelectedSlot;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenMultiPlayer.cpp
     // __LINE__: 6101
@@ -3227,7 +3227,7 @@ void CUIControlButtonMultiPlayerModifyCharacterDelete::OnLButtonClick(CPoint pt)
     CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
     renderLock.Lock(INFINITE);
 
-    INT nCharacterSlot = pMultiPlayer->field_458;
+    INT nCharacterSlot = pMultiPlayer->m_nSelectedSlot;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenMultiPlayer.cpp
     // __LINE__: 6226
@@ -3394,10 +3394,10 @@ void CUIControlButtonMultiPlayerModifyPlayerPlayer::OnLButtonClick(CPoint pt)
     // __LINE__: 6443
     UTIL_ASSERT(pSettings != NULL);
 
-    pSettings->SetCharacterControlledByPlayer(pMultiPlayer->field_458,
+    pSettings->SetCharacterControlledByPlayer(pMultiPlayer->m_nSelectedSlot,
         m_nID,
         TRUE,
-        pMultiPlayer->field_45C != 1);
+        pMultiPlayer->m_nLobbyMode != 1);
 
     pMultiPlayer->OnDoneButtonClick();
 }
