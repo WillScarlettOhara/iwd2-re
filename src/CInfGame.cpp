@@ -3009,6 +3009,7 @@ void CInfGame::NewGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace
     DBG("NewGame: before chapter variable");
     CVariable chapter;
     chapter.SetName(CHAPTER_GLOBAL);
+    chapter.m_intValue = -1;
     m_variables.AddKey(chapter);
     DBG("NewGame: after chapter variable");
 
