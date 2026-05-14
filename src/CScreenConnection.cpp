@@ -49,7 +49,7 @@ BOOLEAN CScreenConnection::byte_8B3341 = TRUE;
 BOOLEAN CScreenConnection::byte_8B3342 = TRUE;
 
 // 0x8F3768
-int CScreenConnection::dword_8F3768;
+int CScreenConnection::dword_8F3768 = 1;
 
 // 0x8F376C
 BOOLEAN CScreenConnection::byte_8F376C;
