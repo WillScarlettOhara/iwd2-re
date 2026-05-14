@@ -8,7 +8,7 @@ class CUnknown2 {
 public:
     CUnknown2();
     ~CUnknown2();
-    BOOL sub_799C90();
+    BOOL IsReady();
     void sub_7C25B0();
 
     int field_0;

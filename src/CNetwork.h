@@ -154,7 +154,7 @@ public:
     void OnCloseSession();
     BOOLEAN CheckSessionStatus(BOOLEAN bInThreadLoop);
     BOOLEAN EnumerateSessions(BOOLEAN a1, BOOLEAN a2);
-    BOOLEAN sub_7A61D0();
+    BOOLEAN IsServiceProviderReady();
     BOOLEAN GetPasswordRequiredForSelectedSession();
     BOOLEAN GetSessionName(INT nSession, CString& sSessionName);
     BOOLEAN GetSessionGUID(INT nSession, GUID& sessionGuid);
@@ -178,7 +178,7 @@ public:
     PLAYER_ID FindPlayerIDByName(const CString& sPlayerName, BOOLEAN bInvisible);
     INT FindPlayerLocationByID(PLAYER_ID playerID, BOOLEAN bInvisible);
     INT FindPlayerLocationByName(const CString& sPlayerName, BOOLEAN bInvisible);
-    void sub_7A73D0(CString& a1);
+    void GetLocalPlayerAddress(CString& a1);
     INT ThreadLoop();
     void SlidingWindowReceive();
     void SlidingWindowTimeouts();

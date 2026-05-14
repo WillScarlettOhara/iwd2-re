@@ -34,14 +34,14 @@ public:
 
     void UpdateMainPanel();
     void OnQuitButtonClick();
-    void sub_66F990();
+    void CompleteAutoStart();
     void EnableMainPanel(BOOL bEnabled);
     void SummonPopup(DWORD nID);
     void DismissPopup();
     void ResetErrorPanel(CUIPanel* pPanel);
     void OnErrorButtonClick(DWORD nID);
     void ResetVersionMismatchPanel(CUIPanel* pPanel);
-    void sub_6702C0();
+    void DismissPopup4();
 
     void SetPopupEnabled(DWORD nID, BOOL bEnabled);
     void ResetPopupPanel(DWORD nID);

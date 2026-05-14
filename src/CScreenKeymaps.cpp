@@ -478,11 +478,11 @@ void CScreenKeymaps::HandleKeyDown(BYTE nKey)
     switch (nKey) {
     case VK_ESCAPE:
         if (GetTopPopup() != NULL) {
-            sub_639E70();
+            DismissTopPopup();
         } else {
             if (m_nSelectedKeymapIndex >= 0) {
                 SelectKeymap(-1);
-                sub_63A660(g_pBaldurChitin->m_ptPointer);
+                OnKeymapListClick(g_pBaldurChitin->m_ptPointer);
             } else {
                 // NOTE: Uninline.
                 OnCancelButtonClick();
@@ -493,7 +493,7 @@ void CScreenKeymaps::HandleKeyDown(BYTE nKey)
         if (GetTopPopup() == NULL) {
             if (m_nSelectedKeymapIndex >= 0) {
                 SelectKeymap(-1);
-                sub_63A660(g_pBaldurChitin->m_ptPointer);
+                OnKeymapListClick(g_pBaldurChitin->m_ptPointer);
             } else {
                 // NOTE: Uninline.
                 OnDoneButtonClick();
@@ -597,7 +597,7 @@ void CScreenKeymaps::HandleKeyDown(BYTE nKey)
     if (conflict == -1) {
         SetKeymap(m_nPage, m_nSelectedKeymapIndex, nKey, m_bSystemKeyCtrl);
         SelectKeymap(-1);
-        sub_63A660(g_pBaldurChitin->m_ptPointer);
+        OnKeymapListClick(g_pBaldurChitin->m_ptPointer);
         return;
     }
 
@@ -653,7 +653,7 @@ void CScreenKeymaps::OnLButtonDown(CPoint pt)
             }
         }
 
-        sub_63A7A0(pt);
+        OnKeymapSelected(pt);
     }
 }
 
@@ -663,7 +663,7 @@ void CScreenKeymaps::OnMouseMove(CPoint pt)
     m_cUIManager.OnMouseMove(pt);
 
     CUIPanel* pPanel = m_cUIManager.GetPanel(0);
-    sub_63A7A0(pt - pPanel->m_ptOrigin);
+    OnKeymapSelected(pt - pPanel->m_ptOrigin);
 }
 
 // 0x639980
@@ -746,7 +746,7 @@ void CScreenKeymaps::UpdateMainPanel()
         }
     }
 
-    sub_63A660(g_pBaldurChitin->m_ptPointer);
+    OnKeymapListClick(g_pBaldurChitin->m_ptPointer);
 }
 
 // 0x639DC0
@@ -764,7 +764,7 @@ void CScreenKeymaps::StartKeymaps()
 }
 
 // 0x639E70
-void CScreenKeymaps::sub_639E70()
+void CScreenKeymaps::DismissTopPopup()
 {
     CSingleLock lock(&(GetManager()->field_36), FALSE);
     lock.Lock(INFINITE);
@@ -1118,7 +1118,7 @@ void CScreenKeymaps::OnErrorButtonClick(INT nButton)
     lock.Unlock();
 
     SelectKeymap(-1);
-    sub_63A660(g_pBaldurChitin->m_ptPointer);
+    OnKeymapListClick(g_pBaldurChitin->m_ptPointer);
 }
 
 // 0x63A640
@@ -1131,7 +1131,7 @@ void CScreenKeymaps::CancelEngine()
 }
 
 // 0x63A660
-void CScreenKeymaps::sub_63A660(CPoint pt)
+void CScreenKeymaps::OnKeymapListClick(CPoint pt)
 {
     if (GetTopPopup() != NULL) {
         return;
@@ -1166,7 +1166,7 @@ void CScreenKeymaps::sub_63A660(CPoint pt)
 }
 
 // 0x63A7A0
-void CScreenKeymaps::sub_63A7A0(CPoint pt)
+void CScreenKeymaps::OnKeymapSelected(CPoint pt)
 {
     if (GetTopPopup() != NULL) {
         return;

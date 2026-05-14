@@ -2479,7 +2479,7 @@ BOOLEAN CNetwork::EnumerateSessions(BOOLEAN a1, BOOLEAN a2)
 }
 
 // 0x7A61D0
-BOOLEAN CNetwork::sub_7A61D0()
+BOOLEAN CNetwork::IsServiceProviderReady()
 {
     return TRUE;
 }
@@ -3221,7 +3221,7 @@ static BOOL CALLBACK CNetworkLobbyEnumAddressCallback(REFGUID guidDataType, DWOR
 }
 
 // 0x7A73D0
-void CNetwork::sub_7A73D0(CString& a1)
+void CNetwork::GetLocalPlayerAddress(CString& a1)
 {
     HRESULT hr;
     DWORD dwSize;

@@ -46,7 +46,7 @@ public:
     /* 0104 */ void CancelEngine() override;
 
     void sub_669830(DWORD nPortrait);
-    int sub_66A010(DWORD nIndex);
+    int GetClassSpellCount(DWORD nIndex);
     void SetSpellLevel(INT nLevel);
     void SetClassIndex(DWORD nNewClassIndex);
     void UpdateFlash();

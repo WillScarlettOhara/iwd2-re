@@ -80,9 +80,9 @@ public:
     void SummonPopup(DWORD dwPopupId);
     void DismissPopup();
     void ResetErrorPanel(CUIPanel* pPanel);
-    void sub_63E150(CUIPanel* pPanel);
+    void ShowErrorPopup(CUIPanel* pPanel);
     void OnErrorButtonClick(INT nButton);
-    void sub_63E440(INT nButton);
+    void OnErrorPopupDismiss(INT nButton);
     void DeleteGame(INT nGameSlot);
     void OnCancelButtonClick();
 

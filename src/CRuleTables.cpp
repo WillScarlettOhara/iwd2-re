@@ -1815,7 +1815,7 @@ INT CRuleTables::GetAbilityScoreModifier(INT nScore) const
 }
 
 // 0x542560
-int CRuleTables::sub_542560(unsigned short a1, unsigned short a2) const
+int CRuleTables::GetMoncRate(unsigned short a1, unsigned short a2) const
 {
     if (a1 == 0) {
         return 0;

@@ -44,7 +44,7 @@ public:
     CString GetEntryText(DWORD nIndex);
     WORD GetEntryType(DWORD nIndex);
     void DeleteEntry(STRREF strRef);
-    static void sub_4C7600(FILE* stream, const CString& sString);
+    static void WriteFormattedLine(FILE* stream, const CString& sString);
     void SaveAll();
     void Save(INT iChapter);
 

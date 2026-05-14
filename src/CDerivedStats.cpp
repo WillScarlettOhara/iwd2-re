@@ -1096,7 +1096,7 @@ INT CDerivedStats::GetBestClass()
 // FIXME: `nClass` should not be reference.
 //
 // 0x447B00
-CGameSpriteGroupedSpellList* CDerivedStats::sub_447B00(const BYTE& nClass)
+CGameSpriteGroupedSpellList* CDerivedStats::GetSpellsByClass(const BYTE& nClass)
 {
     BYTE nClassIndex = g_pBaldurChitin->GetObjectGame()->GetSpellcasterIndex(nClass);
 

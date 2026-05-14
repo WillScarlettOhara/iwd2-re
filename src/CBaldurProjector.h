@@ -56,7 +56,7 @@ public:
     BOOL ResolveMovieFileName(const CResRef& cResRef, CString& sMovieFileName);
     void PlayMovieInternal(const CResRef& cResRef, BOOL bAsynchThread);
     void PlayMovieNext(const CResRef& cResRef);
-    void sub_43E300(HBINK bnk);
+    void RenderBinkFrame(HBINK bnk);
 
     /* 0106 */ int field_106;
     /* 010A */ int field_10A;

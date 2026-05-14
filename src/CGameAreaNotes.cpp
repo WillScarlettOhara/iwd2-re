@@ -245,18 +245,18 @@ void CGameAreaNotes::Add()
         m_cAreaNote.m_startX,
         m_cAreaNote.m_startY,
         m_szBuffer,
-        sub_47B140() << 16,
+        GetNumNotes() << 16,
         -1);
 }
 
 // 0x47B140
-BYTE CGameAreaNotes::sub_47B140()
+BYTE CGameAreaNotes::GetNumNotes()
 {
     return field_8D;
 }
 
 // 0x47B150
-BOOL CGameAreaNotes::sub_47B150(WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef)
+BOOL CGameAreaNotes::UpdateAreaNote(WORD startX, WORD startY, CString szNote, DWORD dwFlags, STRREF strRef)
 {
     STR_RES strRes;
 

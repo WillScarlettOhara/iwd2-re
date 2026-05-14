@@ -538,7 +538,7 @@ public:
     void SetClassLevel(INT iClassType, INT nLevel);
     BOOL HasClass(INT iClassType);
     INT GetBestClass();
-    CGameSpriteGroupedSpellList* sub_447B00(const BYTE& nClass);
+    CGameSpriteGroupedSpellList* GetSpellsByClass(const BYTE& nClass);
 
     /* 0188 */ CImmunitiesProjectile m_cImmunitiesProjectile;
     /* 01A4 */ CImmunitiesEffect m_cImmunitiesEffect;

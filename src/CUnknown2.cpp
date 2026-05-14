@@ -19,7 +19,7 @@ CUnknown2::~CUnknown2()
 }
 
 // 0x799C90
-BOOL CUnknown2::sub_799C90()
+BOOL CUnknown2::IsReady()
 {
     return TRUE;
 }

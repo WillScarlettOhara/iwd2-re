@@ -1984,7 +1984,7 @@ void CBaldurChitin::OnMultiplayerSessionOpen(CString& sJoinedGame, CString& sDro
         if (nServiceProviderType == CNetwork::SERV_PROV_TCP_IP
             && g_pChitin->cNetwork.GetSessionHosting() != TRUE) {
             CString v1;
-            g_pChitin->cNetwork.sub_7A73D0(v1);
+            g_pChitin->cNetwork.GetLocalPlayerAddress(v1);
             if (v1 != "") {
                 // NOTE: Unused.
             }

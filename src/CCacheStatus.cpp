@@ -468,7 +468,7 @@ void CCacheStatus::Update(BOOLEAN bEnabled, LONG nProgressBarCaption, INT nBytes
                 g_pBaldurChitin->cSoundMixer.m_nActiveArea = reinterpret_cast<DWORD>(g_pBaldurChitin->GetObjectGame()->GetVisibleArea());
                 g_pBaldurChitin->cSoundMixer.UpdateSoundList();
                 g_pBaldurChitin->m_pEngineWorld->m_weather.OnAreaChange(FALSE);
-                if (g_pBaldurChitin->cSoundMixer.sub_7ACA10()) {
+                if (g_pBaldurChitin->cSoundMixer.IsSongLoading()) {
                     CGameArea* pArea = g_pBaldurChitin->GetObjectGame()->GetVisibleArea();
                     pArea->m_startedMusicCounter = 10;
                     pArea->m_startedMusic = FALSE;

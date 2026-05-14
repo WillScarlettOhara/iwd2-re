@@ -472,7 +472,7 @@ void CScreenSpellbook::sub_669830(DWORD nPortrait)
 }
 
 // 0x66A010
-int CScreenSpellbook::sub_66A010(DWORD nIndex)
+int CScreenSpellbook::GetClassSpellCount(DWORD nIndex)
 {
     // __FILE__: .\Include\InfScreenSpellbook.h
     // __LINE__: 76

@@ -51,7 +51,7 @@ public:
     void EnableMainPanel(BOOL bEnable);
     void UpdateMainPanel();
     void StartKeymaps();
-    void sub_639E70();
+    void DismissTopPopup();
     CUIPanel* GetTopPopup();
     void ShowPopupPanel(DWORD dwPanelId, BOOL bShow);
     void EnablePopupPanel(DWORD dwPanelId, BOOL bEnable);
@@ -65,8 +65,8 @@ public:
     void OnDoneButtonClick();
     void OnCancelButtonClick();
     void OnErrorButtonClick(INT nButton);
-    void sub_63A660(CPoint pt);
-    void sub_63A7A0(CPoint pt);
+    void OnKeymapListClick(CPoint pt);
+    void OnKeymapSelected(CPoint pt);
     void SetKeymap(INT nMode, INT nIndex, BYTE nKey, BYTE nKeyFlag);
     void SelectKeymap(INT nIndex);
 

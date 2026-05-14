@@ -650,7 +650,7 @@ void CScreenMap::TimerAsynchronousUpdate()
                 }
 
                 if (pSprite->GetArea() == pMapControl->m_pArea
-                    && pMapControl->sub_642C90(pSprite, g_pChitin->m_ptPointer)) {
+                    && pMapControl->IsValidMapTarget(pSprite, g_pChitin->m_ptPointer)) {
                     SetPickedCharacter(nPortrait);
                     nPicked = nPortrait;
 
@@ -1287,7 +1287,7 @@ CUIControlButtonMapAreaMap::~CUIControlButtonMapAreaMap()
 }
 
 // 0x642C90
-BOOLEAN CUIControlButtonMapAreaMap::sub_642C90(CGameSprite* pSprite, const CPoint& pt)
+BOOLEAN CUIControlButtonMapAreaMap::IsValidMapTarget(CGameSprite* pSprite, const CPoint& pt)
 {
     if (!field_71E) {
         return FALSE;

@@ -86,7 +86,7 @@ void CScreenStart::OnKeyDown(SHORT nKeyFlags)
                         OnErrorButtonClick(0);
                         break;
                     case 4:
-                        sub_6702C0();
+                        DismissPopup4();
                         break;
                     }
                 }
@@ -103,7 +103,7 @@ void CScreenStart::OnKeyDown(SHORT nKeyFlags)
                         break;
                     case 4:
                         m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(m_cUIManager.GetPanel(4)->GetControl(1));
-                        sub_6702C0();
+                        DismissPopup4();
                         break;
                     }
                 } else {
@@ -251,7 +251,7 @@ void CScreenStart::OnQuitButtonClick()
 }
 
 // 0x66F990
-void CScreenStart::sub_66F990()
+void CScreenStart::CompleteAutoStart()
 {
     // NOTE: Uninline.
     m_cUIManager.KillCapture();
@@ -525,7 +525,7 @@ void CScreenStart::ResetVersionMismatchPanel(CUIPanel* pPanel)
 }
 
 // 0x6702C0
-void CScreenStart::sub_6702C0()
+void CScreenStart::DismissPopup4()
 {
     CSingleLock lock(&(m_cUIManager.field_36), TRUE);
 
@@ -719,7 +719,7 @@ void CUIControlButtonStartMenu::OnLButtonClick(CPoint pt)
             pStart->OnPreGenerateButtonClick();
             break;
         case 1:
-            pStart->sub_66F990();
+            pStart->CompleteAutoStart();
             break;
         case 2:
             pStart->m_nEngineState = 0;
@@ -760,5 +760,5 @@ void CUIControlButtonStart670770::OnLButtonClick(CPoint pt)
     // __LINE__: 2010
     UTIL_ASSERT(pStart != NULL);
 
-    pStart->sub_6702C0();
+    pStart->DismissPopup4();
 }

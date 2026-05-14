@@ -2601,7 +2601,7 @@ void CGameArea::OnActivation()
         }
 
         if (m_nCurrentSong != -1) {
-            if (!g_pBaldurChitin->cSoundMixer.sub_7ACA30()) {
+            if (!g_pBaldurChitin->cSoundMixer.GetChannelStatus()) {
                 PlaySong(m_nCurrentSong, 5);
             }
         }

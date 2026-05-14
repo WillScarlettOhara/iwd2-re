@@ -117,7 +117,7 @@ public:
     /* 0068 */ void OnLButtonClick(CPoint pt) override;
     /* 0070 */ void OnRButtonClick(CPoint pt) override;
 
-    BOOLEAN sub_642C90(CGameSprite* pSprite, const CPoint& pt);
+    BOOLEAN IsValidMapTarget(CGameSprite* pSprite, const CPoint& pt);
     CPoint ConvertScreenToWorldCoords(CPoint pt);
     void CenterViewPort(const CPoint& pt);
     void SetRenderCharacter(SHORT nPortrait, WORD nVisualRange);

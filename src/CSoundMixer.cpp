@@ -313,7 +313,7 @@ void CSoundMixer::Initialize(CWnd* pWnd, int nNewMaxVoices, int nNewMaxChannels)
     if (field_178) {
         m_dwEAXProperties |= CSOUNDPROPERTIES_EAX_SUPPORTS_ENVIRONMENT;
     } else {
-        if (field_144.sub_799C90()) {
+        if (field_144.IsReady()) {
             field_144.sub_7C25B0();
             field_178 = FALSE;
         } else {
@@ -945,7 +945,7 @@ int CSoundMixer::GetMusicPosition()
 }
 
 // 0x7ACA10
-BOOL CSoundMixer::sub_7ACA10()
+BOOL CSoundMixer::IsSongLoading()
 {
     return musicGetSong() < 0;
 }
@@ -957,7 +957,7 @@ int CSoundMixer::GetSongPlaying()
 }
 
 // 0x7ACA30
-int CSoundMixer::sub_7ACA30()
+int CSoundMixer::GetChannelStatus()
 {
     return (field_C0 << 30) >> 31;
 }
