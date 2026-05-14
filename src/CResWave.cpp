@@ -119,8 +119,8 @@ BOOL CResWave::ParseNormalWave(void* pData)
     }
 
     BYTE* pCurr = pBytes + 12;
-    BYTE* pEnd = pBytes + *reinterpret_cast<DWORD*>(pBytes + 4);
-    while (pCurr < pEnd) {
+    BYTE* pEnd = pBytes + 8 + *reinterpret_cast<DWORD*>(pBytes + 4);
+    while (pCurr + 8 <= pEnd) {
         DWORD dwType = *reinterpret_cast<DWORD*>(pCurr);
         DWORD dwLength = *reinterpret_cast<DWORD*>(pCurr + 4);
         if (memcmp(&dwType, "data", 4) == 0) {
@@ -147,8 +147,7 @@ BOOL CResWave::ParseNormalWave(void* pData)
             }
         }
 
-        // TODO: Unclear.
-        pCurr += (dwLength + 1) & ~1;
+        pCurr += 8 + ((dwLength + 1) & ~1);
     }
 
     return FALSE;
@@ -229,6 +228,7 @@ int CResWave::CopyWaveData(BYTE* pWaveData)
         }
     } else {
         memcpy(pWaveData, m_pWaveData, m_nWaveNormalSize);
+        nBytesRead = m_nWaveNormalSize;
     }
 
     return nBytesRead;

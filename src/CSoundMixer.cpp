@@ -7,6 +7,7 @@
 #include "CSoundChannel.h"
 #include "CUtil.h"
 #include "CVoice.h"
+#include "debuglog.h"
 #include "music/music.h"
 #include "music/sound.h"
 
@@ -290,6 +291,8 @@ void CSoundMixer::Initialize(CWnd* pWnd, int nNewMaxVoices, int nNewMaxChannels)
         }
     }
 
+    DBG("CSoundMixer::Initialize mixer=%d music=%d", m_bMixerInitialized, m_bMusicInitialized);
+
     if (m_bMusicInitialized) {
         g_pChitin->OnMixerInitialize();
     }
@@ -321,6 +324,8 @@ void CSoundMixer::Initialize(CWnd* pWnd, int nNewMaxVoices, int nNewMaxChannels)
             m_dwEAXProperties |= CSOUNDPROPERTIES_EAX_SUPPORTS_ENVIRONMENT;
         }
     }
+
+    DBG("CSoundMixer::Initialize complete");
 }
 
 // 0x7AB6B0
@@ -770,6 +775,7 @@ void CSoundMixer::StartSong(INT nSong, DWORD dwFlags)
 // 0x7AC510
 void CSoundMixer::StartSong(INT nSong, INT nSection, INT nPosition, DWORD dwFlags)
 {
+    DBG("CSoundMixer::StartSong nSong=%d nSection=%d nPosition=%d dwFlags=%d musicInit=%d", nSong, nSection, nPosition, dwFlags, m_bMusicInitialized);
     if ((field_C0 & 0x2) != 0) {
         BOOL bFadeIn = TRUE;
 

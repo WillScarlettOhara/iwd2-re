@@ -654,7 +654,7 @@ BOOL CSound::Play(BOOL bReplay)
 // 0x7A9DB0
 BOOL CSound::Play(int nNewXCoordinate, int nNewYCoordinate, int nNewZCoordinate, BOOL bReplay)
 {
-    if (m_pSoundMixer->m_bMixerInitialized) {
+    if (!m_pSoundMixer->m_bMixerInitialized) {
         return FALSE;
     }
 
