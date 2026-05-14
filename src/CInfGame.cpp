@@ -5557,7 +5557,21 @@ INT CInfGame::GetCharacterSlotFromId(LONG nCharacterId)
 // 0x5BD6B0
 void CInfGame::UpdateCharacterSlots()
 {
-    // TODO: Incomplete.
+    DBG("UpdateCharacterSlots: enter");
+    for (SHORT nPortrait = 0; nPortrait < CINFGAME_MAXCHARACTERS; nPortrait++) {
+        if (m_characterPortraits[nPortrait] != -1) {
+            EnablePortrait(nPortrait, FALSE);
+            m_characterPortraits[nPortrait] = -1;
+        }
+    }
+    m_nCharacters = 0;
+    for (SHORT nSlot = 0; nSlot < CINFGAME_MAXCHARACTERS; nSlot++) {
+        LONG nCharacterId = m_characters[nSlot];
+        if (nCharacterId != -1) {
+            AddCharacterToParty(nCharacterId, -1);
+        }
+    }
+    DBG("UpdateCharacterSlots: done nCharacters=%d", m_nCharacters);
 }
 
 // 0x5BD9D0
@@ -5735,15 +5749,58 @@ void CInfGame::AddPartyGold(LONG dwAddPartyGold)
 void CInfGame::SetupCharacters(BOOLEAN bProgressBarInPlace)
 {
     DBG("SetupCharacters: enter");
-    // TODO: Incomplete.
+
+    CResRef cResArea;
+    CPoint ptView;
+    GetRuleTables().GetStartArea(cResArea, ptView);
+
+    CString sAreaName;
+    cResArea.CopyToString(sAreaName);
+    DBG("SetupCharacters: loading area %s", static_cast<LPCSTR>(sAreaName));
+
+    CGameArea* pArea = LoadArea(sAreaName, -1, TRUE, bProgressBarInPlace);
+    if (pArea == NULL) {
+        DBG("SetupCharacters: LoadArea returned NULL!");
+        return;
+    }
+
+    m_visibleArea = pArea->m_id;
+    DBG("SetupCharacters: visibleArea set to %d", m_visibleArea);
+
+    for (SHORT nPortrait = 0; nPortrait < m_nCharacters; nPortrait++) {
+        LONG nCharacterId = m_characterPortraits[nPortrait];
+        if (nCharacterId != CGameObjectArray::INVALID_INDEX) {
+            CGameSprite* pSprite;
+            BYTE rc = m_cObjectArray.GetDeny(nCharacterId,
+                CGameObjectArray::THREAD_ASYNCH,
+                reinterpret_cast<CGameObject**>(&pSprite),
+                INFINITE);
+            if (rc == CGameObjectArray::SUCCESS) {
+                CPoint ptStart = GetRuleTables().GetStartPoint(nPortrait);
+                WORD nFacing = static_cast<WORD>(GetRuleTables().GetStartRotation(nPortrait));
+                pSprite->SetFacing(nFacing);
+                pSprite->AddToArea(pArea, ptStart, 0, CGAMEOBJECT_LIST_FRONT);
+                m_cObjectArray.ReleaseDeny(nCharacterId,
+                    CGameObjectArray::THREAD_ASYNCH,
+                    INFINITE);
+                DBG("SetupCharacters: added char %ld at (%d,%d) facing %d",
+                    nCharacterId, ptStart.x, ptStart.y, nFacing);
+            }
+        }
+    }
+
+    DBG("SetupCharacters: done");
 }
 
 // 0x5BFC40
 LONG CInfGame::GetProtagonist()
 {
     DBG("GetProtagonist: enter");
-    // TODO: Incomplete.
-
+    if (m_nCharacters > 0) {
+        DBG("GetProtagonist: returning first character %ld", m_characterPortraits[0]);
+        return m_characterPortraits[0];
+    }
+    DBG("GetProtagonist: no characters, returning INVALID_INDEX");
     return CGameObjectArray::INVALID_INDEX;
 }
 
