@@ -108,7 +108,7 @@ void CUIControlEdit::KillFocus()
 void CUIControlEdit::SetFocus()
 {
     m_bFocused = TRUE;
-    field_868 = m_sText;
+    m_sOriginalText = m_sText;
     m_nCursorIndex = m_sText.GetLength();
     m_nVisibleIndex = 0;
     AdjustVisibleIndex();
@@ -138,7 +138,7 @@ BOOL CUIControlEdit::OnLButtonDown(CPoint pt)
     if (x < 0 || x >= size.cx || y < 0 || y >= size.cy) {
         if (m_bFocused == TRUE) {
             if (field_89C) {
-                m_sText = field_868;
+                m_sText = m_sOriginalText;
             }
 
             // NOTE: Uninline.
@@ -201,7 +201,7 @@ BOOL CUIControlEdit::OnRButtonDown(CPoint pt)
     if (x < 0 || x >= size.cx || y < 0 || y >= size.cy) {
         if (m_bFocused == TRUE) {
             if (field_89C) {
-                m_sText = field_868;
+                m_sText = m_sOriginalText;
             }
 
             // NOTE: Uninline.
@@ -776,7 +776,7 @@ void CUIControlEdit::AdjustVisibleIndex()
 // 0x4D9360
 void CUIControlEdit::SetText(CString sText)
 {
-    field_868 = sText;
+    m_sOriginalText = sText;
     if (sText != m_sText) {
         m_sText = sText;
         if (m_bFocused) {

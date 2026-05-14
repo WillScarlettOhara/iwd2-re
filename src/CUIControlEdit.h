@@ -39,7 +39,7 @@ public:
     /* 085E */ SHORT m_nRenderCount;
     /* 0860 */ BOOL m_bFocused;
     /* 0864 */ CString m_sText;
-    /* 0868 */ CString field_868;
+    /* 0868 */ CString m_sOriginalText;
     /* 086C */ SHORT m_nCursorIndex;
     /* 086E */ int m_nVisibleIndex;
     /* 0872 */ unsigned char field_872;

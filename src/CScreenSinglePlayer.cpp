@@ -2647,7 +2647,7 @@ CUIControlEditSinglePlayerChat::~CUIControlEditSinglePlayerChat()
 void CUIControlEditSinglePlayerChat::OnEditReturn(CString sText)
 {
     g_pBaldurChitin->GetBaldurMessage()->SendChatMessage(sText);
-    field_868 = "";
+    m_sOriginalText = "";
     SetText(CString(""));
 }
 

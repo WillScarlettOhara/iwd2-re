@@ -2679,7 +2679,7 @@ CUIControlEditMultiPlayerChat::~CUIControlEditMultiPlayerChat()
 void CUIControlEditMultiPlayerChat::OnEditReturn(CString sText)
 {
     g_pBaldurChitin->GetBaldurMessage()->SendChatMessage(sText);
-    field_868 = sText;
+    m_sOriginalText = sText;
     SetText(CString(""));
 }
 
