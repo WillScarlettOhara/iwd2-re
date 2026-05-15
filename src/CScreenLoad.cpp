@@ -821,11 +821,18 @@ void CScreenLoad::RefreshGameSlots()
 
     FreeGameSlots();
 
+    DBG("RefreshGameSlots: after FreeGameSlots");
+
     INT nGameSlotsCapacity = pGames->GetCount();
+    DBG("RefreshGameSlots: GetCount=%d", nGameSlotsCapacity);
+
     m_aGameSlots.SetSize(nGameSlotsCapacity);
+    DBG("RefreshGameSlots: after SetSize(%d)", nGameSlotsCapacity);
+
     for (INT nSlot = 0; nSlot < nGameSlotsCapacity; nSlot++) {
         m_aGameSlots[nSlot] = NULL;
     }
+    DBG("RefreshGameSlots: after NULL init");
     m_nNumGameSlots = 0;
 
     m_nMaxSlotNumber = -1;
