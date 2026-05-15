@@ -13,6 +13,7 @@
 #include "CResBitmap.h"
 #include "CResCell.h"
 #include "CResCellHeader.h"
+#include "CScreenLoad.h"
 #include "CResMosaic.h"
 #include "CResPLT.h"
 #include "CResTile.h"
@@ -2157,6 +2158,35 @@ void CChitin::ShutDown(int nLineNumber, const char* szFileName, const char* text
 // 0x790B70
 void CChitin::SynchronousUpdate()
 {
+    // Auto-test: bypass main menu, directly load first save
+    static int s_autoPhase = 0;
+    static DWORD s_autoFrames = 0;
+    if (s_autoPhase >= 0) {
+        s_autoFrames++;
+        if (GetFileAttributesA("C:\\iwd2-re\\auto_test") != INVALID_FILE_ATTRIBUTES) {
+            if (s_autoPhase == 0 && s_autoFrames > 180) {
+                CScreenLoad* pLoad = g_pBaldurChitin->m_pEngineLoad;
+                if (pLoad != NULL) {
+                    DBG("AutoTest: phase0 - StartLoad(1)");
+                    pLoad->StartLoad(1);
+                    s_autoPhase = 1;
+                    s_autoFrames = 0;
+                }
+            } else if (s_autoPhase == 1 && s_autoFrames > 300) {
+                CScreenLoad* pLoad = g_pBaldurChitin->m_pEngineLoad;
+                if (pLoad != NULL && pLoad->m_nNumGameSlots > 0) {
+                    DBG("AutoTest: phase1 - LoadGame(0)");
+                    pLoad->LoadGame(0);
+                    s_autoPhase = -1;
+                } else {
+                    DBG("AutoTest: phase1 - no saves yet (num=%d)", pLoad ? pLoad->m_nNumGameSlots : -1);
+                    s_autoFrames = 250;
+                }
+            }
+        } else {
+            s_autoPhase = -2;
+        }
+    }
     if (!cVideo.Is3dAccelerated()) {
         if (m_nNextFullscreen != m_bFullscreen) {
             if (cVideo.m_nNextBpp != cVideo.m_nBpp) {

@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
-"""IWD2 auto-test: build, launch (auto-clicks Load Game via code hook), captures log."""
+"""IWD2 auto-test: build, create auto_test trigger, launch, capture log.
+The game's CChitin::SynchronousUpdate detects auto_test and auto-loads the first save."""
 import subprocess, sys, os, time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 DEBUG_LOG = REPO / "debug.log"
+AUTO_TEST = REPO / "auto_test"
 EXE = REPO / "build" / "Debug" / "iwd2-re.exe"
 GAME_DIR = "C:/GOG Games/Icewind Dale 2"
-AUTO_TEST = REPO / "auto_test"
 
 def main():
-    # 0. Kill old instance
+    # 0. Kill old
     os.system("taskkill -f -im iwd2-re.exe 2>nul")
+    os.system("taskkill -f -im AutoHotkey*.exe 2>nul")
     time.sleep(1)
 
     # 1. Build
@@ -24,48 +26,43 @@ def main():
             return 1
         print("Build OK")
 
-    # 2. Clear log
+    # 2. Clear log and create trigger
     if DEBUG_LOG.exists():
         DEBUG_LOG.unlink()
-
-    # 3. Create trigger file (code hook auto-clicks Load Game)
     AUTO_TEST.write_text("1")
+    print(f"Created {AUTO_TEST}")
 
-    # 4. Launch
+    # 3. Launch game (the code hook handles everything)
     os.chdir(GAME_DIR)
     proc = subprocess.Popen([str(EXE)], cwd=GAME_DIR,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    print(f"PID: {proc.pid} — waiting 20s...")
+    print(f"Game PID: {proc.pid} — waiting 40s...")
 
-    # 5. Wait for load to complete
-    time.sleep(30)
+    # 4. Wait
+    time.sleep(40)
 
-    # 6. Check
+    # 5. Check
     if proc.poll() is not None:
-        print(f"Game exited with code {proc.returncode}")
+        print(f"Game exited with code 0x{proc.returncode:08X}")
     else:
-        print("Game still running")
-
-    # 7. Kill
-    proc.kill()
+        print("Game still running — killing")
+        proc.kill()
     time.sleep(1)
 
-    # 8. Cleanup
+    # 6. Cleanup
     if AUTO_TEST.exists():
         AUTO_TEST.unlink()
 
-    # 9. Show log
+    # 7. Show log
     if DEBUG_LOG.exists():
         txt = DEBUG_LOG.read_text(errors='replace')
-        key_lines = [l for l in txt.splitlines() 
-                     if any(k in l for k in ["Unmarshal", "sprite", "member[", 
-                                             "LoadGame:", "SetupChar", "CRE header",
-                                             "OnLoadGameButtonClick", "ERROR", "ASSERT"])]
-        if key_lines:
-            print("\n=== KEY LOGS ===")
-            for l in key_lines[-50:]:
-                print(l)
-        print(f"\n=== LAST 5 LINES ===")
+        for tag in ["AutoTest", "Unmarshal", "sprite", "member[", "LoadGame:", "SetupChar", "CRE header", "ERROR", "ASSERT"]:
+            lines = [l for l in txt.splitlines() if tag in l]
+            if lines:
+                print(f"\n--- {tag} ---")
+                for l in lines[-20:]:
+                    print(l)
+        print(f"\n=== LAST 5 ===")
         for l in txt.splitlines()[-5:]:
             print(l)
     else:
