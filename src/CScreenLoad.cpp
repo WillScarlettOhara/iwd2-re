@@ -834,11 +834,9 @@ void CScreenLoad::RefreshGameSlots()
     int loopCount = 0;
     while (pos != NULL) {
         loopCount++;
-        if (loopCount <= 3 || loopCount % 10 == 0) {
-            char buf[64];
-            sprintf(buf, "SL:RGS loop %d\n", loopCount);
-            OutputDebugStringA(buf);
-        }
+        char buf[64];
+        sprintf(buf, "SL:RGS loop %d\n", loopCount);
+        OutputDebugStringA(buf);
         sFileName = pGames->GetAt(pos);
         if (sFileName != "default") {
             m_aGameSlots[nIndex] = new CScreenLoadGameSlot();
