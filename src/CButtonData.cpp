@@ -8,7 +8,7 @@ CAbilityId::CAbilityId()
     m_abilityNum = -1;
     m_res = "";
     m_targetType = 0;
-    field_10 = -1;
+    m_strDescription = -1;
     field_14 = -1;
     field_18 = -1;
     m_nClass = 0;
@@ -24,7 +24,7 @@ CAbilityId& CAbilityId::operator=(const CAbilityId& other)
     m_abilityNum = other.m_abilityNum;
     m_res = other.m_res;
     m_targetType = other.m_targetType;
-    field_10 = other.field_10;
+    m_strDescription = other.m_strDescription;
     field_14 = other.field_14;
     field_18 = other.field_18;
     m_nClass = other.m_nClass;

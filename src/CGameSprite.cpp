@@ -7575,7 +7575,7 @@ void CGameSprite::GetSelectedWeaponButton(CButtonData& cButtonData)
     cButtonData.m_abilityId.m_itemType = 2;
     cButtonData.m_abilityId.m_itemNum = 10;
     cButtonData.m_abilityId.m_abilityNum = 1;
-    cButtonData.m_abilityId.field_10 = -1;
+    cButtonData.m_abilityId.m_strDescription = -1;
 
     CItem* pItem = m_equipment.m_items[m_nTempSelectedWeapon];
     if (pItem != NULL) {
@@ -7586,10 +7586,10 @@ void CGameSprite::GetSelectedWeaponButton(CButtonData& cButtonData)
             cButtonData.m_abilityId.m_itemNum = m_nTempSelectedWeapon;
             cButtonData.m_abilityId.m_itemType = 2;
             cButtonData.m_abilityId.m_abilityNum = m_nTempSelectedWeaponAbility;
-            cButtonData.m_abilityId.field_10 = rule.GetItemAbilityDescription(pItem->cResRef,
+            cButtonData.m_abilityId.m_strDescription = rule.GetItemAbilityDescription(pItem->cResRef,
                 m_nTempSelectedWeaponAbility);
-            if (cButtonData.m_abilityId.field_10 == -1) {
-                cButtonData.m_abilityId.field_10 = pItem->GetGenericName();
+            if (cButtonData.m_abilityId.m_strDescription == -1) {
+                cButtonData.m_abilityId.m_strDescription = pItem->GetGenericName();
             }
 
             cButtonData.m_count = 0;
@@ -7615,7 +7615,7 @@ void CGameSprite::GetWeaponButton(BYTE nButtonNum, CButtonData& cButtonData)
     cButtonData.m_abilityId.m_itemType = 2;
     cButtonData.m_abilityId.m_itemNum = 10;
     cButtonData.m_abilityId.m_abilityNum = 1;
-    cButtonData.m_abilityId.field_10 = -1;
+    cButtonData.m_abilityId.m_strDescription = -1;
 
     CItem* pItem = m_equipment.m_items[nButtonNum + 43];
     if (pItem != NULL) {
@@ -7626,10 +7626,10 @@ void CGameSprite::GetWeaponButton(BYTE nButtonNum, CButtonData& cButtonData)
             cButtonData.m_abilityId.m_itemType = 2;
             cButtonData.m_abilityId.m_itemNum = nButtonNum + 43;
             cButtonData.m_abilityId.m_abilityNum = field_3D3A[nButtonNum];
-            cButtonData.m_abilityId.field_10 = rule.GetItemAbilityDescription(pItem->cResRef,
+            cButtonData.m_abilityId.m_strDescription = rule.GetItemAbilityDescription(pItem->cResRef,
                 field_3D3A[nButtonNum]);
-            if (cButtonData.m_abilityId.field_10 == -1) {
-                cButtonData.m_abilityId.field_10 = pItem->GetGenericName();
+            if (cButtonData.m_abilityId.m_strDescription == -1) {
+                cButtonData.m_abilityId.m_strDescription = pItem->GetGenericName();
             }
 
             cButtonData.m_count = 0;
@@ -7797,7 +7797,7 @@ void CGameSprite::InitQuickSpellData(CResRef resRef, BYTE type, CButtonData& cBu
         cButtonData.m_abilityId.field_1D = a5;
         cButtonData.m_abilityId.m_nClass = nClass;
         cButtonData.m_abilityId.field_1E = nKitIndex;
-        cButtonData.m_abilityId.field_10 = cSpell.GetGenericName();
+        cButtonData.m_abilityId.m_strDescription = cSpell.GetGenericName();
 
         if (type == 1) {
             cButtonData.m_abilityId.field_18 = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassSuffixStringRef(nClass);
@@ -7861,9 +7861,9 @@ void CGameSprite::InitQuickItemData(SHORT itemNum, SHORT abilityNum, int a3, CBu
                     cButtonData.m_abilityId.m_itemNum = itemNum;
                     cButtonData.m_abilityId.m_abilityNum = abilityNum;
                     cButtonData.m_abilityId.m_targetType = ability->actionType;
-                    cButtonData.m_abilityId.field_10 = cRule.GetItemAbilityDescription(pItem->GetResRef(), abilityNum);
-                    if (cButtonData.m_abilityId.field_10 == -1) {
-                        cButtonData.m_abilityId.field_10 = pItem->GetGenericName();
+                    cButtonData.m_abilityId.m_strDescription = cRule.GetItemAbilityDescription(pItem->GetResRef(), abilityNum);
+                    if (cButtonData.m_abilityId.m_strDescription == -1) {
+                        cButtonData.m_abilityId.m_strDescription = pItem->GetGenericName();
                     }
                     cButtonData.m_count = 0;
                     if (pItem->GetMaxStackable() > 1
@@ -8035,9 +8035,9 @@ CGameButtonList* CGameSprite::GetItemUsages(SHORT slotNum, WORD buttonType, SHOR
                 pButtonData->m_abilityId.m_itemNum = slotNum;
                 pButtonData->m_abilityId.m_abilityNum = nAbility;
                 pButtonData->m_abilityId.m_targetType = curAbility->actionType;
-                pButtonData->m_abilityId.field_10 = cRule.GetItemAbilityDescription(pItem->GetResRef(), nAbility);
-                if (pButtonData->m_abilityId.field_10 == -1) {
-                    pButtonData->m_abilityId.field_10 = pItem->GetGenericName();
+                pButtonData->m_abilityId.m_strDescription = cRule.GetItemAbilityDescription(pItem->GetResRef(), nAbility);
+                if (pButtonData->m_abilityId.m_strDescription == -1) {
+                    pButtonData->m_abilityId.m_strDescription = pItem->GetGenericName();
                 }
                 pButtonData->m_count = 0;
                 if (pItem->GetMaxStackable() > 1 || pItem->GetMaxUsageCount(nAbility) > 0) {
@@ -8080,9 +8080,9 @@ CGameButtonList* CGameSprite::GetItemUsages(SHORT slotNum, WORD buttonType, SHOR
                             if (curAmmoAbility->maxUsageCount == 0) {
                                 pButtonData->m_bDisplayCount = FALSE;
                             }
-                            pButtonData->m_abilityId.field_10 = cRule.GetItemAbilityDescription(pAmmo->GetResRef(), nAmmoAbility);
-                            if (pButtonData->m_abilityId.field_10 == -1) {
-                                pButtonData->m_abilityId.field_10 = pAmmo->GetGenericName();
+                            pButtonData->m_abilityId.m_strDescription = cRule.GetItemAbilityDescription(pAmmo->GetResRef(), nAmmoAbility);
+                            if (pButtonData->m_abilityId.m_strDescription == -1) {
+                                pButtonData->m_abilityId.m_strDescription = pAmmo->GetGenericName();
                             }
                             pButtonData->m_launcherIcon = pItem->GetItemIcon();
                             pButtonData->m_launcherName = pItem->GetGenericName();
@@ -8582,7 +8582,7 @@ void CGameSprite::CheckToolTipItem(BYTE buttonNum)
         if (pItem != NULL) {
             // FIXME: Calls `GetGenericName` twice.
             m_quickItems[nItemNum].m_name = pItem->GetGenericName();
-            m_quickItems[nItemNum].m_abilityId.field_10 = pItem->GetGenericName();
+            m_quickItems[nItemNum].m_abilityId.m_strDescription = pItem->GetGenericName();
         }
     }
 }
@@ -9035,7 +9035,7 @@ void CGameSprite::GetQuickWeapon(BYTE buttonNum, CButtonData& buttonData)
                 buttonData.m_abilityId.m_itemType = 2;
                 buttonData.m_abilityId.m_itemNum = buttonNum + 43;
                 buttonData.m_abilityId.m_targetType = -1;
-                buttonData.m_abilityId.field_10 = pItem->GetGenericName();
+                buttonData.m_abilityId.m_strDescription = pItem->GetGenericName();
             }
         }
     }

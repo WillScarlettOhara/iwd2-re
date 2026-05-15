@@ -3048,7 +3048,7 @@ void CScreenInventory::UpdateAbilitiesPanel()
 
                 UpdateLabel(pPanel, 0x10000003 + nIndex,
                     "%s",
-                    FetchString(pButtonData->m_abilityId.field_10));
+                    FetchString(pButtonData->m_abilityId.m_strDescription));
 
                 m_pAbilities->GetNext(pos);
             } else {

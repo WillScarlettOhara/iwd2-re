@@ -14,7 +14,7 @@ public:
     /* 0004 */ SHORT m_abilityNum;
     /* 0006 */ CResRef m_res;
     /* 000E */ short m_targetType;
-    /* 0010 */ int field_10;
+    /* 0010 */ int m_strDescription;
     /* 0014 */ int field_14;
     /* 0018 */ int field_18;
     /* 001C */ BYTE m_nClass;
