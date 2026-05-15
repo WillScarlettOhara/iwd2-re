@@ -849,6 +849,7 @@ void CScreenLoad::RefreshGameSlots()
             DBG("RGS: slot created");
             pSlot->m_sFileName = sFileName;
             DBG("RGS: filename set");
+            OutputDebugStringA("RGS: before StringOps\n");
 
             cResPortrait = "";
             sName = "";
@@ -857,11 +858,17 @@ void CScreenLoad::RefreshGameSlots()
             sChapter = "";
             nNameRef = -1;
 
-            CString sNumber = sFileName.SpanIncluding("0123456789");
-            if (sFileName[sNumber.GetLength()] == '-') {
-                pSlot->m_sSlotName = sFileName.Right(sFileName.GetLength() - sNumber.GetLength() - 1);
+            // Use raw C string ops to rule out MFC CString corruption
+            const char* szFileName = static_cast<LPCSTR>(sFileName);
+            int nFileNameLen = strlen(szFileName);
+            int nLeadingDigits = strspn(szFileName, "0123456789");
+            if (nLeadingDigits < nFileNameLen && szFileName[nLeadingDigits] == '-') {
+                pSlot->m_sSlotName = CString(szFileName + nLeadingDigits + 1);
 
-                INT nNumber = atol(sNumber);
+                char numBuf[32];
+                memcpy(numBuf, szFileName, nLeadingDigits);
+                numBuf[nLeadingDigits] = 0;
+                INT nNumber = atol(numBuf);
                 if (nNumber > m_nMaxSlotNumber) {
                     m_nMaxSlotNumber = nNumber;
                 }
@@ -869,6 +876,7 @@ void CScreenLoad::RefreshGameSlots()
                 pSlot->m_sSlotName = sFileName;
             }
 
+            OutputDebugStringA("RGS: after StringOps, building sDirName\n");
             sDirName = pGame->GetDirSaveRoot() + pSlot->m_sFileName + "\\";
 
             OutputDebugStringA("RGS: before ServiceFromFile\n");
