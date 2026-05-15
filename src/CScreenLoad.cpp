@@ -821,11 +821,14 @@ void CScreenLoad::RefreshGameSlots()
     OutputDebugStringA("SL:RGS after SetSize\n");
 
     m_nMaxSlotNumber = -1;
+    OutputDebugStringA("SL:RGS after maxslot\n");
     m_nTopGameSlot = max(min(m_nTopGameSlot, m_nNumGameSlots - GAME_SLOTS), 0);
+    OutputDebugStringA("SL:RGS after top\n");
 
     INT nIndex = 0;
 
     POSITION pos = pGames->GetHeadPosition();
+    OutputDebugStringA("SL:RGS got pos\n");
     while (pos != NULL) {
         sFileName = pGames->GetAt(pos);
         if (sFileName != "default") {
