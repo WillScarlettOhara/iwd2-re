@@ -2143,34 +2143,24 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
 
                 // Only create sprites if CRE data has correct signature
                 if (memcmp(pCreData, "CRE V2.2", 8) == 0) {
-                    DBG("Unmarshal: creating sprite for slot %d (NOT adding to array)", slotIndex);
                     CGameSprite* pSprite = new CGameSprite(pCreData, creSize, 0,
                         CGameObject::TYPE_SPRITE, -1, 0, 0, 0,
                         CPoint(posX, posY), facing);
 
-                    if (pSprite != NULL) {
-                        DBG("Unmarshal: sprite created OK, deleting immediately");
-                        delete pSprite;
-                    }
-#if 0
-                    if (pSprite != NULL) {
-                        LONG nIndex;
-                        BYTE rc = m_cObjectArray.Add(&nIndex, pSprite, INFINITE);
-                        if (rc == CGameObjectArray::SUCCESS) {
-                            if (slotIndex >= 0 && slotIndex < 6) {
-                                m_characters[slotIndex] = nIndex;
-                                m_characterPortraits[slotIndex] = nIndex;
-                                if (static_cast<SHORT>(slotIndex + 1) > m_nCharacters) {
-                                    m_nCharacters = static_cast<SHORT>(slotIndex + 1);
-                                }
+                    if (pSprite != NULL && pSprite->m_id != CGameObjectArray::INVALID_INDEX) {
+                        // Constructor already added to m_cObjectArray via Add(&m_id, this, ...)
+                        LONG nIndex = pSprite->m_id;
+                        if (slotIndex >= 0 && slotIndex < 6) {
+                            m_characters[slotIndex] = nIndex;
+                            m_characterPortraits[slotIndex] = nIndex;
+                            if (static_cast<SHORT>(slotIndex + 1) > m_nCharacters) {
+                                m_nCharacters = static_cast<SHORT>(slotIndex + 1);
                             }
-                            DBG("Unmarshal: sprite id=%ld for slot %d", nIndex, slotIndex);
-                        } else {
-                            DBG("Unmarshal: Add to object array failed rc=%d", rc);
-                            delete pSprite;
                         }
+                        DBG("Unmarshal: sprite id=%ld for slot %d", nIndex, slotIndex);
+                    } else {
+                        DBG("Unmarshal: sprite creation failed");
                     }
-#endif
                 } else {
                     DBG("Unmarshal: CRE signature mismatch, skipping sprite");
                 }
