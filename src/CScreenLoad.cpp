@@ -894,6 +894,13 @@ void CScreenLoad::RefreshGameSlots()
 
                 // Use raw byte offset instead of struct pointer to rule out alignment issues
                 BYTE* pCreatureRaw = pGameData + pSavedGameHeader->m_partyCreatureTableOffset;
+                {
+                    char buf2[128];
+                    sprintf(buf2, "RGS: pCreatureRaw=0x%p pGameData=0x%p fileOffset=0x%X\n", pCreatureRaw, pGameData, pSavedGameHeader->m_partyCreatureTableOffset);
+                    OutputDebugStringA(buf2);
+                    sprintf(buf2, "RGS: attempt read at 0x%p\n", pCreatureRaw + 0x0C);
+                    OutputDebugStringA(buf2);
+                }
                 BYTE resRefFirstByte = pCreatureRaw[0x0C];
                 OutputDebugStringA("RGS: resRefFirstByte read OK\n");
                 if (resRefFirstByte != '\0') {
