@@ -885,7 +885,9 @@ void CScreenLoad::RefreshGameSlots()
             sDirName = szDirName;
             DBG("RGS: sDirName = %s", szDirName);
 
-            if (g_pChitin->cDimm.ServiceFromFile(&cResGame, CString(szDirName) + "ICEWIND2.GAM")) {
+            char szGamPath[512];
+            sprintf(szGamPath, "%sICEWIND2.GAM", szDirName);
+            if (g_pChitin->cDimm.ServiceFromFile(&cResGame, CString(szGamPath))) {
                 BYTE* pGameData = reinterpret_cast<BYTE*>(cResGame.m_pData);
                 CSavedGameHeader* pSavedGameHeader = reinterpret_cast<CSavedGameHeader*>(pGameData + 8);
 
