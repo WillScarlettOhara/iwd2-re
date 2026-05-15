@@ -889,7 +889,17 @@ void CScreenLoad::RefreshGameSlots()
             char szGamPath[512];
             sprintf(szGamPath, "%sICEWIND2.GAM", szDirName);
             if (g_pChitin->cDimm.ServiceFromFile(&cResGame, CString(szGamPath))) {
-                // Just free, don't parse yet
+                BYTE* pGameData = reinterpret_cast<BYTE*>(cResGame.m_pData);
+                CSavedGameHeader* pSavedGameHeader = reinterpret_cast<CSavedGameHeader*>(pGameData + 8);
+
+                // Just read header fields, no creature parsing
+                nGameTime = pSavedGameHeader->m_worldTime * CTimerWorld::TIMESCALE_MSEC_PER_SEC;
+
+                CFileStatus cFileStatus;
+                if (g_pChitin->cDimm.LocalGetFileStatus(szGamPath, cFileStatus)) {
+                    pSlot->m_sFileTime = cFileStatus.m_mtime.Format("%a, %b %d, %Y - %I:%M %p");
+                }
+
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
             }
