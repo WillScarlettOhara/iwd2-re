@@ -981,7 +981,7 @@ BOOL CScreenLoad::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rCl
     } else {
         vbScreenShot.SetResRef(CResRef("ICEWIND2"), TRUE, TRUE);
         vbScreenShot.m_bDoubleSize = g_pBaldurChitin->m_bUseNewGui;
-        bResult = vbScreenShot.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
+        bResult = vbScreenShot.RenderDirect(0, rArea.left, rArea.top, rClip, 0, FALSE);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
         // __LINE__: 1599
