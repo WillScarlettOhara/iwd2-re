@@ -28,8 +28,8 @@ Original source code was never released. This project reconstructs it by analyzi
 | **Main Menu** | **Working** | Boots to CScreenConnection; mouse cursor visible and clickable |
 | **UI Screens** | Working | Options, Keymaps, Single Player, Party Select, Character Creation |
 | **Load Game** | **Working** | Save list + preview thumbnails fixed |
-| **World Screen** | **Working** | Renders area + sprites; no AI, no dialogue |
-| **AI / Dialogue** | **Not working** | `ProcessAI`, `ExecuteAction`, `EvaluateStatusTrigger` stubbed |
+| **World Screen** | **Partial** | Loads from menu; blocked on AI/dialogue pipeline |
+| **Gameplay** | **Not working** | Requires `ProcessAI` / `ExecuteAction` implementation |
 
 **Current milestone**: Reconstruct the AI and dialogue runtime (`CGameAIBase::ProcessAI`, `ExecuteAction`, `EvaluateStatusTrigger`).
 
