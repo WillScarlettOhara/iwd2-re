@@ -788,6 +788,7 @@ void CScreenLoad::RefreshGameSlots()
     CString sFileName;
     ULONG nGameTime;
     INT nChapter;
+    STRREF nNameRef;
     BYTE nSex; // NOTE: Unused.
 
     FreeGameSlots();
@@ -807,6 +808,13 @@ void CScreenLoad::RefreshGameSlots()
             m_aGameSlots[nIndex] = new CScreenLoadGameSlot();
             m_aGameSlots[nIndex]->m_sFileName = sFileName;
 
+            cResPortrait = "";
+            sName = "";
+            nGameTime = 0;
+            nChapter = 0;
+            sChapter = "";
+            nNameRef = -1;
+
             CString sNumber = sFileName.SpanIncluding("0123456789");
             if (sFileName[sNumber.GetLength()] == '-') {
                 m_aGameSlots[nIndex]->m_sSlotName = sFileName.Right(sFileName.GetLength() - sNumber.GetLength() - 1);
@@ -825,7 +833,6 @@ void CScreenLoad::RefreshGameSlots()
                 BYTE* pGameData = reinterpret_cast<BYTE*>(cResGame.m_pData);
                 CSavedGameHeader* pSavedGameHeader = reinterpret_cast<CSavedGameHeader*>(pGameData + 8);
                 CSavedGamePartyCreature* pCreature = reinterpret_cast<CSavedGamePartyCreature*>(pGameData + pSavedGameHeader->m_partyCreatureTableOffset);
-                CCreatureFileHeader* pCreatureFileHeader;
                 if (pCreature->m_creatureResRef[0] != '\0') {
                     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
                     // __LINE__: 1419
@@ -834,19 +841,24 @@ void CScreenLoad::RefreshGameSlots()
                     CCreatureFile cCreatureFile;
                     cCreatureFile.SetResRef(pCreature->m_creatureResRef, TRUE, TRUE);
 
-                    pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(cCreatureFile.GetData() + 8);
-                    cResPortrait = pCreatureFileHeader->m_portraitSmall;
-                    nSex = pCreatureFileHeader->m_sex;
+                    BYTE* pCreatureData = cCreatureFile.GetData();
+                    if (pCreatureData != NULL) {
+                        CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pCreatureData + 8);
+                        nNameRef = pCreatureFileHeader->m_name;
+                        cResPortrait = pCreatureFileHeader->m_portraitSmall;
+                        nSex = pCreatureFileHeader->m_sex;
+                    }
 
                     cCreatureFile.ReleaseData();
                 } else {
-                    pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pGameData + pCreature->m_creatureOffset + 8);
+                    CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pGameData + pCreature->m_creatureOffset + 8);
+                    nNameRef = pCreatureFileHeader->m_name;
                     cResPortrait = pCreatureFileHeader->m_portraitSmall;
                     nSex = pCreatureFileHeader->m_sex;
                 }
 
-                if (pCreatureFileHeader->m_name != -1) {
-                    sName = FetchString(pCreatureFileHeader->m_name);
+                if (nNameRef != -1) {
+                    sName = FetchString(nNameRef);
                 } else {
                     sName = pCreature->m_name;
                 }
