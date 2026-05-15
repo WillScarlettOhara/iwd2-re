@@ -292,9 +292,9 @@ void CGameAIBase::DoAction()
 // 0x44DC10
 SHORT CGameAIBase::ExecuteAction()
 {
-    // TODO: Incomplete.
-
-    return ACTION_ERROR;
+    // Minimal implementation: return ACTION_DONE to consume pending actions
+    // TODO: Implement full action execution (movement, attack, spell, etc.)
+    return ACTION_DONE;
 }
 
 // 0x45C300
@@ -334,7 +334,10 @@ void CGameAIBase::InsertResponse(CAIResponse& response, BOOL checkCurrentRespons
 // 0x45C730
 void CGameAIBase::ProcessAI()
 {
-    // TODO: Incomplete.
+    // Minimal implementation: process action queue
+    if (m_curAction.m_actionID != CAIAction::NO_ACTION) {
+        DoAction();
+    }
 }
 
 // 0x45D130
