@@ -871,13 +871,18 @@ void CScreenLoad::RefreshGameSlots()
 
             sDirName = pGame->GetDirSaveRoot() + pSlot->m_sFileName + "\\";
 
-            DBG("RGS: before ServiceFromFile");
+            OutputDebugStringA("RGS: before ServiceFromFile\n");
             if (g_pChitin->cDimm.ServiceFromFile(&cResGame, sDirName + "ICEWIND2.GAM")) {
-                DBG("RGS: after ServiceFromFile OK");
+                OutputDebugStringA("RGS: after ServiceFromFile OK\n");
                 BYTE* pGameData = reinterpret_cast<BYTE*>(cResGame.m_pData);
                 CSavedGameHeader* pSavedGameHeader = reinterpret_cast<CSavedGameHeader*>(pGameData + 8);
                 CSavedGamePartyCreature* pCreature = reinterpret_cast<CSavedGamePartyCreature*>(pGameData + pSavedGameHeader->m_partyCreatureTableOffset);
-                DBG("RGS: pCreature=0x%p offset=0x%X", pCreature, pSavedGameHeader->m_partyCreatureTableOffset);
+                {
+                    char buf[128];
+                    sprintf(buf, "RGS: pCreature=0x%p offset=0x%X\n", pCreature, pSavedGameHeader->m_partyCreatureTableOffset);
+                    OutputDebugStringA(buf);
+                }
+                OutputDebugStringA("RGS: about to read pCreature->m_creatureResRef[0]\n");
                 if (pCreature->m_creatureResRef[0] != '\0') {
                     if (pCreature->m_creatureSize != 0) {
                         // Corrupted save - skip this character
