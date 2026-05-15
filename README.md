@@ -20,16 +20,28 @@ Original source code was never released. This project reconstructs it by analyzi
 
 | Metric | Progress | Details |
 |--------|----------|---------|
-| **Functions** | ~80% (~8,200 / ~10,000) | Most core systems identified |
+| **Functions** | **88%** (24,883 / 28,024) | Ghidra DB sync'd with C++ source |
 | **Code** | ~53% (~2M / ~3.8M lines) | Decompiled and organized |
-| **Named Functions** | Ongoing | ~200 `sub_` remaining |
-| **Named Fields** | Ongoing | ~640 `field_` remaining |
-| **Main Menu** | **Working** | Boots directly to CScreenConnection; mouse cursor visible and clickable |
-| **UI Screens** | Working | Options, Keymaps, Single Player, Party Select, **Character Creation** |
-| **World Screen** | **Partial** | Loads from menu but crashes during level transition |
-| **Gameplay** | **Not working** | Blocked by World Screen load crash |
+| **Unnamed Functions** | 3,141 remaining | Stubs in `NewDiscovered.h`, not yet RE'd |
+| **Unnamed Fields** | ~1,880 unique | Class-scoped rename in progress |
+| **TODO / FIXME** | 889 in source | 716 synced as Ghidra bookmarks |
+| **Main Menu** | **Working** | Boots to CScreenConnection; mouse cursor visible and clickable |
+| **UI Screens** | Working | Options, Keymaps, Single Player, Party Select, Character Creation |
+| **Load Game** | **Working** | Save list + preview thumbnails fixed |
+| **World Screen** | **Working** | Renders area + sprites; no AI, no dialogue |
+| **AI / Dialogue** | **Not working** | `ProcessAI`, `ExecuteAction`, `EvaluateStatusTrigger` stubbed |
 
-**Current milestone**: Debug the World Screen level-load crash so the main gameplay loop can start.
+**Current milestone**: Reconstruct the AI and dialogue runtime (`CGameAIBase::ProcessAI`, `ExecuteAction`, `EvaluateStatusTrigger`).
+
+### Recent Progress
+
+| Date | Achievement |
+|------|------------|
+| May 2026 | **Ghidra DB**: 4,963 functions renamed (88% named), 716 TODO/FIXME bookmarks imported |
+| May 2026 | **Tooling**: `scripts/ghidra_re.py` for rename/annotate; batch SQL via `ghidrasql -f` |
+| May 2026 | **Fields**: 26 `field_XXX` renamed across 10 classes (CRes, CChitin, CDimm, CUIManager, CNetwork, etc.) |
+| May 2026 | **Load Game**: Save list + preview thumbnails fixed |
+| May 2026 | **Critical sections**: Named and documented across CUIManager, CNetwork, CChitin |
 
 ---
 
@@ -115,6 +127,10 @@ We use **MFC Hungarian notation**:
 - `b` — boolean
 - `w` — WORD/short
 - `dw` — DWORD
+- `s` — string
+- `c` — class instance
+- `l` — list
+- `h` — handle
 
 Address comments mark original binary locations:
 ```cpp
@@ -123,6 +139,41 @@ int CGameSprite::GetDerivedStats() {
     return m_pDerivedStats;
 }
 ```
+
+### Rename / Annotate Ghidra
+
+Use `scripts/ghidra_re.py` to rename functions, annotate locals, add comments, and sync bookmarks:
+
+```powershell
+# Inspect before renaming
+python scripts/ghidra_re.py decomp 0x5D2DE0
+python scripts/ghidra_re.py locals 0x5D2DE0
+python scripts/ghidra_re.py params 0x5D2DE0
+
+# Rename function + set signature
+python scripts/ghidra_re.py func 0x5D2DE0 RenderFogOfWar --signature "void RenderFogOfWar(CVidMode*)"
+
+# Rename local variable or parameter
+python scripts/ghidra_re.py local 0x5D2DE0 local_8 --name pArea --type "CGameArea *"
+python scripts/ghidra_re.py param 0x5D2DE0 0 --name pVidMode --type "CVidMode *"
+
+# Add comment or bookmark
+python scripts/ghidra_re.py comment 0x5D2DE0 plate "Renders fog of war overlay." --replace
+python scripts/ghidra_re.py bookmark 0x5D2DE0 review "Check blend flags."
+
+# Import all source TODO/FIXME as Ghidra bookmarks
+python scripts/ghidra_re.py source-notes --replace
+```
+
+For large batches (>200 renames), shut down the HTTP server and use the CLI directly:
+
+```powershell
+curl -X POST http://127.0.0.1:8081/shutdown
+ghidrasql --ghidra "$env:GHIDRA_INSTALL_DIR" --project C:\ghidra_projects\IWD2 --project-name IWD2 --program IWD2.exe --no-analyze -f rename_batch.sql
+C:\ghidra_projects\IWD2\start_ghidrasql.bat
+```
+
+Full workflow: [decomp_ref/ghidra_rename_annotate.md](decomp_ref/ghidra_rename_annotate.md)
 
 ---
 
@@ -166,6 +217,7 @@ Run `data/restore.ps1` after clone to extract to `C:\projects\` and `C:\ghidra_p
 ## Documentation
 
 - **[AGENTS.md](AGENTS.md)** — Full workflow guide: GhidraSQL queries, rename strategy, build safety rules
+- **[decomp_ref/ghidra_rename_annotate.md](decomp_ref/ghidra_rename_annotate.md)** — Ghidra rename / annotate workflow and tool usage
 - **[decomp_ref/](decomp_ref/)** — Memory nodes per subsystem with field mappings and discoveries
 
 ---
