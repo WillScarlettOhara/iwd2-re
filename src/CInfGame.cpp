@@ -2141,14 +2141,14 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
                     pCreData[0], pCreData[1], pCreData[2], pCreData[3],
                     pCreData[4], pCreData[5], pCreData[6], pCreData[7], creSize);
 
-                // Only create sprites if CRE data has correct signature
-                if (memcmp(pCreData, "CRE V2.2", 8) == 0) {
+                // Only create first sprite to test
+                if (memcmp(pCreData, "CRE V2.2", 8) == 0 && i == 0) {
+                    DBG("Unmarshal: creating sprite for slot %d ONLY", slotIndex);
                     CGameSprite* pSprite = new CGameSprite(pCreData, creSize, 0,
                         CGameObject::TYPE_SPRITE, -1, 0, 0, 0,
                         CPoint(posX, posY), facing);
 
                     if (pSprite != NULL && pSprite->m_id != CGameObjectArray::INVALID_INDEX) {
-                        // Constructor already added to m_cObjectArray via Add(&m_id, this, ...)
                         LONG nIndex = pSprite->m_id;
                         if (slotIndex >= 0 && slotIndex < 6) {
                             m_characters[slotIndex] = nIndex;
