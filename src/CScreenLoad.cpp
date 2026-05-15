@@ -724,42 +724,47 @@ void CScreenLoad::StartLoad(INT nEngineState)
 void CScreenLoad::FreeGameSlots()
 {
     for (INT nSlot = 0; nSlot < m_nNumGameSlots; nSlot++) {
-        if (m_aGameSlots[nSlot]->m_cResScreenShot.m_pData != 0) {
-            free(m_aGameSlots[nSlot]->m_cResScreenShot.m_pData);
-            m_aGameSlots[nSlot]->m_cResScreenShot.m_pData = NULL;
+        CScreenLoadGameSlot* pSlot = m_aGameSlots[nSlot];
+        if (pSlot == NULL) {
+            continue;
+        }
+        if (pSlot->m_cResScreenShot.m_pData != 0) {
+            free(pSlot->m_cResScreenShot.m_pData);
+            pSlot->m_cResScreenShot.m_pData = NULL;
         }
 
-        if (m_aGameSlots[nSlot]->m_cBmpResPortrait0.m_pData != 0) {
-            free(m_aGameSlots[nSlot]->m_cBmpResPortrait0.m_pData);
-            m_aGameSlots[nSlot]->m_cBmpResPortrait0.m_pData = NULL;
+        if (pSlot->m_cBmpResPortrait0.m_pData != 0) {
+            free(pSlot->m_cBmpResPortrait0.m_pData);
+            pSlot->m_cBmpResPortrait0.m_pData = NULL;
         }
 
-        if (m_aGameSlots[nSlot]->m_cBmpResPortrait1.m_pData != 0) {
-            free(m_aGameSlots[nSlot]->m_cBmpResPortrait1.m_pData);
-            m_aGameSlots[nSlot]->m_cBmpResPortrait1.m_pData = NULL;
+        if (pSlot->m_cBmpResPortrait1.m_pData != 0) {
+            free(pSlot->m_cBmpResPortrait1.m_pData);
+            pSlot->m_cBmpResPortrait1.m_pData = NULL;
         }
 
-        if (m_aGameSlots[nSlot]->m_cBmpResPortrait2.m_pData != 0) {
-            free(m_aGameSlots[nSlot]->m_cBmpResPortrait2.m_pData);
-            m_aGameSlots[nSlot]->m_cBmpResPortrait2.m_pData = NULL;
+        if (pSlot->m_cBmpResPortrait2.m_pData != 0) {
+            free(pSlot->m_cBmpResPortrait2.m_pData);
+            pSlot->m_cBmpResPortrait2.m_pData = NULL;
         }
 
-        if (m_aGameSlots[nSlot]->m_cBmpResPortrait3.m_pData != 0) {
-            free(m_aGameSlots[nSlot]->m_cBmpResPortrait3.m_pData);
-            m_aGameSlots[nSlot]->m_cBmpResPortrait3.m_pData = NULL;
+        if (pSlot->m_cBmpResPortrait3.m_pData != 0) {
+            free(pSlot->m_cBmpResPortrait3.m_pData);
+            pSlot->m_cBmpResPortrait3.m_pData = NULL;
         }
 
-        if (m_aGameSlots[nSlot]->m_cBmpResPortrait4.m_pData != 0) {
-            free(m_aGameSlots[nSlot]->m_cBmpResPortrait4.m_pData);
-            m_aGameSlots[nSlot]->m_cBmpResPortrait4.m_pData = NULL;
+        if (pSlot->m_cBmpResPortrait4.m_pData != 0) {
+            free(pSlot->m_cBmpResPortrait4.m_pData);
+            pSlot->m_cBmpResPortrait4.m_pData = NULL;
         }
 
-        if (m_aGameSlots[nSlot]->m_cBmpResPortrait5.m_pData != 0) {
-            free(m_aGameSlots[nSlot]->m_cBmpResPortrait5.m_pData);
-            m_aGameSlots[nSlot]->m_cBmpResPortrait5.m_pData = NULL;
+        if (pSlot->m_cBmpResPortrait5.m_pData != 0) {
+            free(pSlot->m_cBmpResPortrait5.m_pData);
+            pSlot->m_cBmpResPortrait5.m_pData = NULL;
         }
 
-        delete m_aGameSlots[nSlot];
+        delete pSlot;
+        m_aGameSlots[nSlot] = NULL;
     }
 
     m_nNumGameSlots = 0;
