@@ -911,7 +911,6 @@ void CScreenLoad::RefreshGameSlots()
                 // NOTE: Looks unsafe.
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
-            } else {
             }
 
             if (!g_pChitin->cDimm.ServiceFromFile(&(m_aGameSlots[nIndex]->m_cResScreenShot), sDirName + "ICEWIND2.BMP")) {
