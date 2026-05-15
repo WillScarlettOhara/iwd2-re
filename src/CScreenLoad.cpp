@@ -885,99 +885,11 @@ void CScreenLoad::RefreshGameSlots()
             sDirName = szDirName;
 
             // SKIP GAM parsing — just load BMPs for now
-#if 0
+#if 1
             char szGamPath[512];
             sprintf(szGamPath, "%sICEWIND2.GAM", szDirName);
             if (g_pChitin->cDimm.ServiceFromFile(&cResGame, CString(szGamPath))) {
-                BYTE* pGameData = reinterpret_cast<BYTE*>(cResGame.m_pData);
-                CSavedGameHeader* pSavedGameHeader = reinterpret_cast<CSavedGameHeader*>(pGameData + 8);
-
-                BYTE* pCreatureRaw = pGameData + pSavedGameHeader->m_partyCreatureTableOffset;
-
-                if (IsBadReadPtr(pCreatureRaw + 0x0C, 1)) {
-                    free(cResGame.m_pData);
-                    cResGame.m_pData = NULL;
-                    pGames->GetNext(pos);
-                    continue;
-                }
-                BYTE resRefFirstByte = pCreatureRaw[0x0C];
-                if (resRefFirstByte != '\0') {
-                    if (*reinterpret_cast<DWORD*>(pCreatureRaw + 0x08) != 0) {
-                        // Corrupted save - skip this character
-                        nNameRef = -1;
-                    } else {
-                        CCreatureFile cCreatureFile;
-                        cCreatureFile.SetResRef(CResRef(reinterpret_cast<char*>(pCreatureRaw + 0x0C)), TRUE, TRUE);
-
-                        BYTE* pCreatureData = cCreatureFile.GetData();
-                        if (pCreatureData != NULL) {
-                            CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pCreatureData + 8);
-                            nNameRef = pCreatureFileHeader->m_name;
-                            cResPortrait = pCreatureFileHeader->m_portraitSmall;
-                            nSex = pCreatureFileHeader->m_sex;
-                        }
-
-                        cCreatureFile.ReleaseData();
-                    }
-                } else {
-                    CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pGameData + (*reinterpret_cast<DWORD*>(pCreatureRaw + 0x04)) + 8);
-                    nNameRef = pCreatureFileHeader->m_name;
-                    cResPortrait = pCreatureFileHeader->m_portraitSmall;
-                    nSex = pCreatureFileHeader->m_sex;
-                }
-
-                if (nNameRef != -1) {
-                    sName = FetchString(nNameRef);
-                } else {
-                    sName = reinterpret_cast<char*>(pCreatureRaw + 0x01BE);  // m_name
-                }
-
-                nGameTime = pSavedGameHeader->m_worldTime * CTimerWorld::TIMESCALE_MSEC_PER_SEC;
-
-                CFileStatus cFileStatus;
-                if (g_pChitin->cDimm.LocalGetFileStatus(sDirName + "ICEWIND2.GAM", cFileStatus)) {
-                    pSlot->m_sFileTime = cFileStatus.m_mtime.Format("%a, %b %d, %Y - %I:%M %p");
-                }
-
-                nChapter = -1;
-                for (DWORD nVariable = 0; nVariable < pSavedGameHeader->m_globalVariablesCount; nVariable++) {
-                    CAreaVariable* pAreaVariable = reinterpret_cast<CAreaVariable*>(pGameData + pSavedGameHeader->m_globalVariablesOffset) + nVariable;
-
-                    // NOTE: Looks odd, probably inlined assignment.
-                    if (&cVariable != pAreaVariable) {
-                        strncpy(cVariable.m_name, pAreaVariable->m_name, SCRIPTNAME_SIZE);
-                        cVariable.m_type = pAreaVariable->m_type;
-                        cVariable.m_resRefType = pAreaVariable->m_resRefType;
-                        cVariable.m_dwValue = pAreaVariable->m_dwValue;
-                        cVariable.m_intValue = pAreaVariable->m_intValue;
-                        cVariable.m_floatValue = pAreaVariable->m_floatValue;
-                        strncpy(cVariable.m_stringValue, pAreaVariable->m_stringValue, SCRIPTNAME_SIZE);
-                    }
-
-                    if (cVariable.GetName() == CInfGame::CHAPTER_GLOBAL) {
-                        nChapter = cVariable.m_intValue;
-                    }
-                }
-
-                if (nChapter < 0) {
-                    nChapter = 0;
-                }
-
-                sResText = "chapters";
-
-                CList<STRREF, STRREF>* pList = rule.GetChapterText(CResRef(sResText), nChapter);
-
-                // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-                // __LINE__: 1485
-                UTIL_ASSERT(pList != NULL);
-
-                if (pList->GetCount() > 0) {
-                    sChapter = FetchString(pList->GetHead());
-                }
-
-                delete pList;
-
-                // NOTE: Looks unsafe.
+                // Just free, don't parse yet
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
             }
