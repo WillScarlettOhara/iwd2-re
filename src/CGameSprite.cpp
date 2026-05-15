@@ -1119,7 +1119,7 @@ BOOL CGameSprite::IsOver(const CPoint& pt)
         && m_activeAI
         && m_activeImprisonment
         && Animate()
-        && m_baseStats.field_294 == 0
+        && m_baseStats.m_bStealthMode == 0
         && (m_typeAI.GetEnemyAlly() <= CAIObjectType::EA_GOODCUTOFF
             || (m_derivedStats.m_generalState & STATE_INVISIBLE) == 0
             || (m_baseStats.field_2FC & 0x1) != 0)) {
@@ -1325,8 +1325,8 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
         }
     }
 
-    if (m_baseStats.field_294) {
-        m_baseStats.field_294 = FALSE;
+    if (m_baseStats.m_bStealthMode) {
+        m_baseStats.m_bStealthMode = FALSE;
         SetStealthState(1);
         if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL) {
             CMessage* message = new CMessage90(m_id, m_id, 1);
@@ -1334,7 +1334,7 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
         }
     }
 
-    if (m_baseStats.field_2F8) {
+    if (m_baseStats.m_bRemoveFromArea) {
         m_removeFromArea = TRUE;
     }
 
@@ -1771,7 +1771,7 @@ void CGameSprite::AIUpdate()
 
                     switch (m_listType) {
                     case CGAMEOBJECT_LIST_FRONT:
-                        if (m_baseStats.field_294 != TRUE) {
+                        if (m_baseStats.m_bStealthMode != TRUE) {
                             if ((m_derivedStats.m_generalState & STATE_DEAD) == 0) {
                                 // NOTE: Uninline.
                                 m_pArea->AddToMarkers(m_id);
@@ -1788,7 +1788,7 @@ void CGameSprite::AIUpdate()
                         }
                         break;
                     case CGAMEOBJECT_LIST_BACK:
-                        if (m_baseStats.field_294 != TRUE) {
+                        if (m_baseStats.m_bStealthMode != TRUE) {
                             if ((m_derivedStats.m_generalState & STATE_SLEEPING) != 0) {
                                 m_pArea->m_search.AddObject(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
                                                                 m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
@@ -1889,7 +1889,7 @@ void CGameSprite::AIUpdate()
         return;
     }
 
-    if (m_pArea == NULL || m_baseStats.field_294 == TRUE) {
+    if (m_pArea == NULL || m_baseStats.m_bStealthMode == TRUE) {
         return;
     }
 
@@ -1965,7 +1965,7 @@ void CGameSprite::AIUpdate()
     BOOL v1 = CanAnimate();
     if (v1 != m_bBumpable
         && Animate()
-        && !m_baseStats.field_294) {
+        && !m_baseStats.m_bStealthMode) {
         if (!v1) {
             m_bBumped = FALSE;
             m_ptBumpedFrom.x = -1;
@@ -1989,7 +1989,7 @@ void CGameSprite::AIUpdate()
             m_bOnSearchMap);
     }
 
-    if (m_bBumped && !m_baseStats.field_294) {
+    if (m_bBumped && !m_baseStats.m_bStealthMode) {
         m_pArea->m_search.RemoveObject(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
                                            m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
             m_typeAI.GetEnemyAlly(),
@@ -2012,7 +2012,7 @@ void CGameSprite::AIUpdate()
             m_ptBumpedFrom.x = -1;
             m_ptBumpedFrom.y = -1;
         } else {
-            if (!m_baseStats.field_294) {
+            if (!m_baseStats.m_bStealthMode) {
                 m_pArea->m_search.AddObject(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
                                                 m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
@@ -2327,7 +2327,7 @@ void CGameSprite::AIUpdate()
                         && field_70FF
                         && m_animation.GetCurrentFrame() == field_7424
                         && m_nSequence == CGAMESPRITE_SEQ_HEAD_TURN
-                        && !m_baseStats.field_294) {
+                        && !m_baseStats.m_bStealthMode) {
                         if (m_animation.GetCurrentFrame() == field_740C) {
                             CSound cSound;
                             cSound.SetResRef(field_7420, TRUE, TRUE);
@@ -2885,7 +2885,7 @@ void CGameSprite::AIUpdateWalk()
         if (InControl()
             && m_pArea->m_search.GetMobileCost(ptSearch, m_terrainTable, m_animation.GetPersonalSpace(), TRUE) == CPathSearch::COST_IMPASSABLE
             && !ClearBumpPath(ptOldSearch, ptSearch)) {
-            if (!m_baseStats.field_294) {
+            if (!m_baseStats.m_bStealthMode) {
                 m_pArea->m_search.AddObject(ptOldSearch,
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
@@ -2930,7 +2930,7 @@ void CGameSprite::AIUpdateWalk()
                 }
             }
         } else {
-            if (!m_baseStats.field_294) {
+            if (!m_baseStats.m_bStealthMode) {
                 m_pArea->m_search.AddObject(ptSearch,
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
@@ -3257,7 +3257,7 @@ void CGameSprite::CheckIfVisible()
                     && m_typeAI.GetEnemyAlly() >= CAIObjectType::EA_EVILCUTOFF
                     && Animate()
                     && ((m_derivedStats.m_generalState & STATE_INVISIBLE) == 0 || (m_baseStats.field_2FC & 0x1) != 0)
-                    && !m_baseStats.field_294
+                    && !m_baseStats.m_bStealthMode
                     && (m_baseStats.m_flags & 0x8000) == 0) {
                     if (m_pArea->m_nVisibleMonster == 0) {
                         AutoPause(0x200);
@@ -4083,7 +4083,7 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
         && m_pArea == pArea
         && (m_typeAI.GetEnemyAlly() <= CAIObjectType::EA_CONTROLCUTOFF
             || (m_derivedStats.m_generalState & STATE_INVISIBLE) == 0)
-        && m_baseStats.field_294 != 1
+        && m_baseStats.m_bStealthMode != 1
         && m_baseStats.m_animationType != 0) {
         pSearch = &(m_pArea->m_search);
         pVisibility = &(m_pArea->m_visibility);
@@ -4614,7 +4614,7 @@ void CGameSprite::RenderMarkers(CVidMode* pVidMode, INT nSurface)
         && (m_typeAI.m_nEnemyAlly <= CAIObjectType::EA_CONTROLCUTOFF
             || (m_derivedStats.m_generalState & STATE_INVISIBLE) == 0
             || (m_baseStats.field_2FC & 0x1) != 0)
-        && m_baseStats.field_294 != 1) {
+        && m_baseStats.m_bStealthMode != 1) {
         DWORD level = g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nGuiFeedbackLevel;
         if (g_pBaldurChitin->GetScreenWorld()->field_14A) {
             level = 5;
@@ -13401,11 +13401,11 @@ SHORT CGameSprite::ForceHide(CGameSprite* pSprite)
     SetModalState(3, TRUE);
     g_pBaldurChitin->GetObjectGame()->GetButtonArray()->SetSelectedButton(5);
 
-    if (!m_bHiding && !m_baseStats.field_294) {
+    if (!m_bHiding && !m_baseStats.m_bStealthMode) {
         PlaySound(CResRef("ACT_07"));
     }
 
-    if (!m_baseStats.field_294) {
+    if (!m_baseStats.m_bStealthMode) {
         FeedBack(FEEDBACK_HIDESUCCEEDED,
             0,
             0,

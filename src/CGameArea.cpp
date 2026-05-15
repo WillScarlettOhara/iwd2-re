@@ -525,7 +525,7 @@ void CGameArea::GetAllInRange(const CPoint& center, const CAIObjectType& type, S
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
             if (pObject->GetObjectType() != CGameObject::TYPE_SPRITE
-                || static_cast<CGameSprite*>(pObject)->GetBaseStats()->field_294 != 1) {
+                || static_cast<CGameSprite*>(pObject)->GetBaseStats()->m_bStealthMode != 1) {
                 const CPoint& ptObject = pObject->GetPos();
                 if (abs(pt.y - 4 * ptObject.y / 3) <= range
                     && (4 * ptObject.y / 3 - pt.y) * (4 * ptObject.y / 3 - pt.y) + (ptObject.x - pt.x) * (ptObject.x - pt.x) <= range * range
@@ -634,7 +634,7 @@ void CGameArea::GetAllInRangeBack(const CPoint& center, const CAIObjectType& typ
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
             if (pObject->GetObjectType() != CGameObject::TYPE_SPRITE
-                || static_cast<CGameSprite*>(pObject)->GetBaseStats()->field_294 != 1) {
+                || static_cast<CGameSprite*>(pObject)->GetBaseStats()->m_bStealthMode != 1) {
                 const CPoint& ptObject = pObject->GetPos();
                 if (abs(pt.y - 4 * ptObject.y / 3) <= range
                     && (4 * ptObject.y / 3 - pt.y) * (4 * ptObject.y / 3 - pt.y) + (ptObject.x - pt.x) * (ptObject.x - pt.x) <= range * range
@@ -681,7 +681,7 @@ void CGameArea::GetAllInPoly(const CRect& rBounding, CPoint* pPoly, SHORT nPoly,
             INFINITE);
         if (rc == CGameObjectArray::SUCCESS) {
             if ((pObject->GetObjectType() != CGameObject::TYPE_SPRITE
-                    || static_cast<CGameSprite*>(pObject)->GetBaseStats()->field_294 != 1)
+                    || static_cast<CGameSprite*>(pObject)->GetBaseStats()->m_bStealthMode != 1)
                 && rBounding.PtInRect(pObject->GetPos())
                 && CVidPoly::IsPtInPoly(pPoly, nPoly, pObject->GetPos())
                 && (pObject->GetObjectType() != CGameObject::TYPE_SPRITE
@@ -711,7 +711,7 @@ void CGameArea::GetAllInPoly(const CRect& rBounding, CPoint* pPoly, SHORT nPoly,
                 INFINITE);
             if (rc == CGameObjectArray::SUCCESS) {
                 if ((pObject->GetObjectType() != CGameObject::TYPE_SPRITE
-                        || static_cast<CGameSprite*>(pObject)->GetBaseStats()->field_294 != 1)
+                        || static_cast<CGameSprite*>(pObject)->GetBaseStats()->m_bStealthMode != 1)
                     && rBounding.PtInRect(pObject->GetPos())
                     && CVidPoly::IsPtInPoly(pPoly, nPoly, pObject->GetPos())
                     && (pObject->GetObjectType() != CGameObject::TYPE_SPRITE
