@@ -2113,54 +2113,52 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
 
         BYTE* pMember = pGame + partyOffset;
         for (int i = 0; i < nPartyMembers && i < 6; i++) {
-            // Dump raw bytes to find correct offsets
-            DBG("Unmarshal: member[%d] RAW +0x00: %02X %02X %02X %02X  +0x04: %02X %02X %02X %02X  +0x08: %02X %02X %02X %02X  +0x0C: %02X %02X %02X %02X",
-                i,
-                pMember[0], pMember[1], pMember[2], pMember[3],
-                pMember[4], pMember[5], pMember[6], pMember[7],
-                pMember[8], pMember[9], pMember[10], pMember[11],
-                pMember[12], pMember[13], pMember[14], pMember[15]);
-            DBG("Unmarshal: member[%d] RAW +0x10: %02X %02X %02X %02X  +0x14: %02X %02X %02X %02X  +0x18: %02X %02X %02X %02X  +0x1C: %02X %02X %02X %02X",
-                i,
-                pMember[16], pMember[17], pMember[18], pMember[19],
-                pMember[20], pMember[21], pMember[22], pMember[23],
-                pMember[24], pMember[25], pMember[26], pMember[27],
-                pMember[28], pMember[29], pMember[30], pMember[31]);
-            DBG("Unmarshal: member[%d] RAW +0x20: %02X %02X %02X %02X  +0x24: %02X %02X %02X %02X  +0x28: %02X %02X %02X %02X  +0x2C: %02X %02X %02X %02X",
-                i,
-                pMember[32], pMember[33], pMember[34], pMember[35],
-                pMember[36], pMember[37], pMember[38], pMember[39],
-                pMember[40], pMember[41], pMember[42], pMember[43],
-                pMember[44], pMember[45], pMember[46], pMember[47]);
+            // Verified offsets from hex dump:
+            // +0x00: u16 selectionState, +0x02: u16 slotIndex (0-based)
+            // +0x04: u32 creOffset, +0x08: u32 creSize
+            // +0x14: u32 facing, +0x18: char[8] areaRef
+            // +0x20: u16 posX, +0x22: u16 posY
 
-            // Verified from RAW hex dump:
-            // +0x00: u16 selectionState (1=selected)
-            // +0x02: u16 slotIndex (0-based: 0..5)
-            // +0x04: u32 creOffset — offset of CRE data in file
-            // +0x08: u32 creSize — size of embedded CRE data
-            // +0x0C: u32 (zero)
-            // +0x10: u32 (zero)
-            // +0x14: u32 facing — orientation (12=East)
-            // +0x18: char[8] areaRef — RESREF (e.g. "AR1000")
-            // +0x20: u16 posX — X coordinate
-            // +0x22: u16 posY — Y coordinate
-            // +0x24: u16 viewportX
-            // +0x26: u16 viewportY
-
-            int slotIndex = *reinterpret_cast<unsigned short*>(pMember + 2);  // +0x02
-            int creOffset = *reinterpret_cast<int*>(pMember + 4);              // +0x04 u32
-            int creSize   = *reinterpret_cast<int*>(pMember + 8);              // +0x08 u32
-            short facing  = static_cast<short>(*reinterpret_cast<int*>(pMember + 0x14)); // +0x14 u32
+            int slotIndex = *reinterpret_cast<unsigned short*>(pMember + 2);
+            int creOffset = *reinterpret_cast<int*>(pMember + 4);
+            int creSize   = *reinterpret_cast<int*>(pMember + 8);
+            short facing  = static_cast<short>(*reinterpret_cast<int*>(pMember + 0x14));
 
             char areaRef[9];
-            memcpy(areaRef, pMember + 0x18, 8);  // +0x18
+            memcpy(areaRef, pMember + 0x18, 8);
             areaRef[8] = 0;
 
-            short posX = *reinterpret_cast<short*>(pMember + 0x20);  // +0x20 u16
-            short posY = *reinterpret_cast<short*>(pMember + 0x22);  // +0x22 u16
+            short posX = *reinterpret_cast<short*>(pMember + 0x20);
+            short posY = *reinterpret_cast<short*>(pMember + 0x22);
 
             DBG("Unmarshal: member[%d] slot=%d creOff=0x%X creSize=%d area=%s pos=(%d,%d) facing=%d",
                 i, slotIndex, creOffset, creSize, areaRef, posX, posY, facing);
+
+            // Create CGameSprite from embedded CRE data
+            if (creOffset > 0 && creSize > 0 && creOffset + creSize <= nGame) {
+                BYTE* pCreData = pGame + creOffset;
+                CGameSprite* pSprite = new CGameSprite(pCreData, creSize, 0,
+                    CGameObject::TYPE_SPRITE, -1, 0, 0, 0,
+                    CPoint(posX, posY), facing);
+
+                if (pSprite != NULL) {
+                    LONG nIndex;
+                    BYTE rc = m_cObjectArray.Add(&nIndex, pSprite, INFINITE);
+                    if (rc == CGameObjectArray::SUCCESS) {
+                        if (slotIndex >= 0 && slotIndex < 6) {
+                            m_characters[slotIndex] = nIndex;
+                            m_characterPortraits[slotIndex] = nIndex;
+                            if (static_cast<SHORT>(slotIndex + 1) > m_nCharacters) {
+                                m_nCharacters = static_cast<SHORT>(slotIndex + 1);
+                            }
+                        }
+                        DBG("Unmarshal: sprite id=%ld for slot %d", nIndex, slotIndex);
+                    } else {
+                        DBG("Unmarshal: Add to object array failed rc=%d", rc);
+                        delete pSprite;
+                    }
+                }
+            }
 
             pMember += memberSize;
         }
