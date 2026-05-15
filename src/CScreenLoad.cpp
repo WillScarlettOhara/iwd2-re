@@ -934,20 +934,17 @@ void CScreenLoad::RefreshGameSlots()
                 }
 
                 // Parse chapter from global variables
+                // Use raw byte offsets (CAreaVariable has alignment padding mismatch)
                 nChapter = -1;
-                for (DWORD nVariable = 0; nVariable < pSavedGameHeader->m_globalVariablesCount; nVariable++) {
-                    CAreaVariable* pAreaVariable = reinterpret_cast<CAreaVariable*>(pGameData + pSavedGameHeader->m_globalVariablesOffset) + nVariable;
-                    if (&cVariable != pAreaVariable) {
-                        strncpy(cVariable.m_name, pAreaVariable->m_name, SCRIPTNAME_SIZE);
-                        cVariable.m_type = pAreaVariable->m_type;
-                        cVariable.m_resRefType = pAreaVariable->m_resRefType;
-                        cVariable.m_dwValue = pAreaVariable->m_dwValue;
-                        cVariable.m_intValue = pAreaVariable->m_intValue;
-                        cVariable.m_floatValue = pAreaVariable->m_floatValue;
-                        strncpy(cVariable.m_stringValue, pAreaVariable->m_stringValue, SCRIPTNAME_SIZE);
-                    }
-                    if (cVariable.GetName() == CInfGame::CHAPTER_GLOBAL) {
-                        nChapter = cVariable.m_intValue;
+                DWORD varOffset = pSavedGameHeader->m_globalVariablesOffset;
+                DWORD varCount = pSavedGameHeader->m_globalVariablesCount;
+                for (DWORD nVariable = 0; nVariable < varCount; nVariable++) {
+                    BYTE* pVar = pGameData + varOffset + nVariable * (32 + 2 + 2 + 4 + 4 + 8 + 32);
+                    // Check if this is the CHAPTER_GLOBAL variable
+                    // Name is at pVar + 0, SCRIPTNAME_SIZE = 32
+                    if (memcmp(pVar, "CHAPTER", 7) == 0 && pVar[7] == '\0') {
+                        // m_intValue is at offset 32+2+2+4 = 40
+                        nChapter = *reinterpret_cast<LONG*>(pVar + 40);
                     }
                 }
 
