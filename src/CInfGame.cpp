@@ -2141,12 +2141,20 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
                     pCreData[0], pCreData[1], pCreData[2], pCreData[3],
                     pCreData[4], pCreData[5], pCreData[6], pCreData[7], creSize);
 
-                // Only create first sprite to test
+                // Only create first sprite to test — COPY the CRE data first
                 if (memcmp(pCreData, "CRE V2.2", 8) == 0 && i == 0) {
-                    DBG("Unmarshal: creating sprite for slot %d ONLY", slotIndex);
-                    CGameSprite* pSprite = new CGameSprite(pCreData, creSize, 0,
+                    // Allocate a persistent copy so it outlives cGameFile
+                    BYTE* pCreCopy = new BYTE[creSize];
+                    memcpy(pCreCopy, pCreData, creSize);
+
+                    DBG("Unmarshal: creating sprite for slot %d (copied %d bytes)", slotIndex, creSize);
+                    CGameSprite* pSprite = new CGameSprite(pCreCopy, creSize, 0,
                         CGameObject::TYPE_SPRITE, -1, 0, 0, 0,
                         CPoint(posX, posY), facing);
+
+                    // The sprite copies what it needs from pCreCopy during Unmarshal.
+                    // We can free the copy afterwards.
+                    delete[] pCreCopy;
 
                     if (pSprite != NULL && pSprite->m_id != CGameObjectArray::INVALID_INDEX) {
                         LONG nIndex = pSprite->m_id;
@@ -3090,8 +3098,10 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     DBG("LoadGame: After Unmarshal");
 
     g_pBaldurChitin->cSoundMixer.StartSong(-1, 0x1 | 0x2);
+    DBG("LoadGame: after StartSong");
     SleepEx(500, FALSE);
     g_pBaldurChitin->cSoundMixer.StopMusic(TRUE);
+    DBG("LoadGame: after StopMusic");
 
     cGameFile.Release();
 
