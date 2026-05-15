@@ -812,6 +812,8 @@ void CScreenLoad::RefreshGameSlots()
     OutputDebugStringA("SL:RGS after FreeGameSlots\n");
 
     m_nNumGameSlots = pGames->GetCount();
+    // Force clean state before SetSize
+    m_aGameSlots.RemoveAll();
     {
         char buf[64];
         sprintf(buf, "SL:RGS count=%d\n", m_nNumGameSlots);
