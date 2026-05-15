@@ -843,6 +843,7 @@ void CScreenLoad::RefreshGameSlots()
     POSITION pos = pGames->GetHeadPosition();
     while (pos != NULL) {
         sFileName = pGames->GetAt(pos);
+        DBG("RefreshGameSlots: processing save %s", static_cast<LPCSTR>(sFileName));
         if (sFileName != "default") {
             CScreenLoadGameSlot* pSlot = new CScreenLoadGameSlot();
             pSlot->m_sFileName = sFileName;
