@@ -223,13 +223,13 @@ BOOLEAN CNetworkWindow::CheckIncomingQueue()
         return FALSE;
     }
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     POSITION pos = m_lQueueIncomingMessages.GetHeadPosition();
     BYTE* pData = m_lQueueIncomingMessages.GetAt(pos)->pData;
 
     if (memcmp(pData + CNetwork::dword_85E698, (LPCSTR)CNetwork::MG, CNetwork::dword_85E69C) == 0) {
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
         return TRUE;
     }
 
@@ -244,11 +244,11 @@ BOOLEAN CNetworkWindow::CheckIncomingQueue()
             cnt--;
         }
 
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
         return cnt == 0;
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     CString v1;
     CString v2;
@@ -288,7 +288,7 @@ BOOLEAN CNetworkWindow::CheckIncomingQueue()
 // 0x7A2370
 BOOLEAN CNetworkWindow::CheckIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nSpecMsgSubType)
 {
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     if (!m_lQueueIncomingMessages.IsEmpty()) {
         POSITION pos = m_lQueueIncomingMessages.GetHeadPosition();
@@ -300,7 +300,7 @@ BOOLEAN CNetworkWindow::CheckIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nSpec
                 if (pData[CNetwork::SPEC_MSG_FLAG] == CNetwork::SPEC_MSG_FLAG_ENABLED
                     && pData[CNetwork::SPEC_MSG_TYPE] == nSpecMsgType
                     && pData[CNetwork::SPEC_MSG_SUBTYPE] == nSpecMsgSubType) {
-                    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+                    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
                     return TRUE;
                 }
             }
@@ -320,14 +320,14 @@ BOOLEAN CNetworkWindow::CheckIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nSpec
                         cnt--;
                     }
 
-                    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+                    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
                     return cnt == 0;
                 }
             }
         }
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
     return FALSE;
 }
 
@@ -475,7 +475,7 @@ void CNetworkWindow::ShutDown()
 
     SHORT nServerLocation = g_pChitin->cNetwork.FindPlayerLocationByID(nServerID, TRUE);
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     // NOTE: Lots of jumps and conditions, probably wrong.
     while (m_nAckExpected != m_nNextFrameToSend) {
@@ -592,7 +592,7 @@ void CNetworkWindow::ShutDown()
         delete node;
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     RemoveFromAllQueues();
 
@@ -641,7 +641,7 @@ void CNetworkWindow::RemoveFromAllQueues()
         m_pIncomingBuffers[0].dwSize = 0;
     }
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     pos = m_lQueueIncomingMessages.GetHeadPosition();
     while (pos != NULL) {
@@ -660,16 +660,16 @@ void CNetworkWindow::RemoveFromAllQueues()
     }
 
     m_bInitialized = FALSE;
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 }
 
 // 0x7A2DE0
 BYTE* CNetworkWindow::RemoveFromIncomingQueue(PLAYER_ID& idDPFrom, PLAYER_ID& idDPTo, DWORD& dwDataSize, BOOLEAN& bCompressed)
 {
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     if (m_lQueueIncomingMessages.IsEmpty()) {
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
         return NULL;
     }
 
@@ -689,7 +689,7 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueue(PLAYER_ID& idDPFrom, PLAYER_ID& id
             delete node;
         }
 
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
         return pData;
     }
 
@@ -786,11 +786,11 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueue(PLAYER_ID& idDPFrom, PLAYER_ID& id
                 }
             }
 
-            LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+            LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
             return pMessage;
         }
 
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
         return NULL;
     }
 
@@ -830,17 +830,17 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueue(PLAYER_ID& idDPFrom, PLAYER_ID& id
         UTIL_ASSERT_MSG(FALSE, (LPCSTR)v5);
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
     return NULL;
 }
 
 // 0x7A3380
 BYTE* CNetworkWindow::RemoveFromIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nSpecMsgSubType, PLAYER_ID& idDPFrom, PLAYER_ID& idDPTo, DWORD& dwDataSize, BOOLEAN& bCompressed)
 {
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     if (m_lQueueIncomingMessages.IsEmpty()) {
-        LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+        LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
         return NULL;
     }
 
@@ -867,7 +867,7 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nS
                     delete node;
                 }
 
-                LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+                LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
                 return pMessage;
             }
         }
@@ -972,11 +972,11 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nS
                         }
                     }
 
-                    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+                    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
                     return pMessage;
                 }
 
-                LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+                LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
                 return NULL;
             } else {
                 while (cnt - 1 > 0) {
@@ -989,7 +989,7 @@ BYTE* CNetworkWindow::RemoveFromIncomingQueueSpecific(BYTE nSpecMsgType, BYTE nS
         m_lQueueIncomingMessages.GetNext(pos);
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
     return NULL;
 }
 
@@ -1002,7 +1002,7 @@ void CNetworkWindow::SendCall()
         return;
     }
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     while (!m_lQueueOutgoingMessages.IsEmpty() && m_nNumBuffered == 0) {
         CNETWORKWINDOW_QUEUEENTRY* node = m_lQueueOutgoingMessages.RemoveHead();
@@ -1085,7 +1085,7 @@ void CNetworkWindow::SendCall()
         }
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 }
 
 // 0x7A3B50
@@ -1093,7 +1093,7 @@ void CNetworkWindow::ReceiveCall(BYTE* pData, DWORD dwSize)
 {
     BOOLEAN v1 = FALSE;
 
-    EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    EnterCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     BOOLEAN v2 = TRUE;
     m_bSomethingHappened = TRUE;
@@ -1170,7 +1170,7 @@ void CNetworkWindow::ReceiveCall(BYTE* pData, DWORD dwSize)
         v2 = v1;
     }
 
-    LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+    LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
     // NOTE: Uninline.
     SetPlayerTimeout();
@@ -1277,7 +1277,7 @@ CNetwork::CNetwork()
     field_9E = 0;
     m_bDirectPlayAddressCreated = FALSE;
     field_796 = 0;
-    InitializeCriticalSection(&field_F52);
+    InitializeCriticalSection(&m_critSectQueue);
     InitializeCriticalSection(&m_critSect);
     m_lpDirectPlay = NULL;
     m_lpDirectPlayLobby = NULL;
@@ -1402,7 +1402,7 @@ CNetwork::~CNetwork()
     }
 
     DeleteCriticalSection(&m_critSect);
-    DeleteCriticalSection(&field_F52);
+    DeleteCriticalSection(&m_critSectQueue);
 
 #if DPLAY_COMPAT
     FreeDirectPlay();
@@ -3537,7 +3537,7 @@ void CNetwork::AddMessageToWindow(PLAYER_ID idTo, DWORD dwFlags, BYTE* pData, DW
                 TRUE,
                 0);
 
-            EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+            EnterCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
             CNETWORKWINDOW_QUEUEENTRY* pEntry = new CNETWORKWINDOW_QUEUEENTRY();
             pEntry->idFrom = m_idLocalPlayer;
@@ -3546,7 +3546,7 @@ void CNetwork::AddMessageToWindow(PLAYER_ID idTo, DWORD dwFlags, BYTE* pData, DW
             pEntry->dwSize = dwChunkSize + 12;
             m_pSlidingWindow[nPlayer].m_lQueueOutgoingMessages.AddTail(pEntry);
 
-            LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+            LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
         } else {
             BYTE* pMessage = CreateCopyMessage(pData + dwOffset,
                 dwChunkSize,
@@ -3554,7 +3554,7 @@ void CNetwork::AddMessageToWindow(PLAYER_ID idTo, DWORD dwFlags, BYTE* pData, DW
                 TRUE,
                 nPackets);
 
-            EnterCriticalSection(&(g_pChitin->cNetwork.field_F52));
+            EnterCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
 
             CNETWORKWINDOW_QUEUEENTRY* pEntry = new CNETWORKWINDOW_QUEUEENTRY();
             pEntry->idFrom = m_idLocalPlayer;
@@ -3563,7 +3563,7 @@ void CNetwork::AddMessageToWindow(PLAYER_ID idTo, DWORD dwFlags, BYTE* pData, DW
             pEntry->dwSize = dwChunkSize + 16;
             m_pSlidingWindow[nPlayer].m_lQueueOutgoingMessages.AddTail(pEntry);
 
-            LeaveCriticalSection(&(g_pChitin->cNetwork.field_F52));
+            LeaveCriticalSection(&(g_pChitin->cNetwork.m_critSectQueue));
         }
 
         dwOffset += dwChunkSize;
