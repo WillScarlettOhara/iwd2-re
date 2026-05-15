@@ -1123,7 +1123,6 @@ void CScreenConnection::DismissPopup()
 // 0x5FCA00
 void CScreenConnection::OnLoadGameButtonClick(BOOL bQuick)
 {
-    DBG("CScreenConnection::OnLoadGameButtonClick: bQuick=%d", bQuick);
     CUIControlEdit* pEdit;
     CString sSessionName;
     CString sPassword;
