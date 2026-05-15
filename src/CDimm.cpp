@@ -23,10 +23,10 @@ CDimm::CDimm()
     field_4 = 0;
     field_8 = 0;
     field_DA = 0;
-    field_CE = NULL;
-    field_274 = NULL;
-    field_270 = NULL;
-    field_D2 = 0;
+    m_pCurrentRes = NULL;
+    m_pLastRes = NULL;
+    m_pNextRes = NULL;
+    m_nServiceOffset = 0;
     field_E6 = 0;
 
     GlobalMemoryStatus(&memoryStatus);
@@ -424,12 +424,12 @@ void* CDimm::Demand(CRes* pRes)
     void* pData = InternalDemand(pRes);
 
     int v1 = 5;
-    while (field_CE == pRes) {
+    while (m_pCurrentRes == pRes) {
         Release(pRes);
         Dump(pRes, 1, 0);
         pData = InternalDemand(pRes);
 
-        if (field_CE != pRes) {
+        if (m_pCurrentRes != pRes) {
             break;
         }
 
@@ -496,7 +496,7 @@ void* CDimm::InternalDemand(CRes* pRes)
     }
 
     if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0
-        && pRes != field_CE
+        && pRes != m_pCurrentRes
         && (pRes->dwFlags & CRes::Flags::RES_FLAG_0x10) != 0) {
         if (pRes != NULL) {
             if ((pRes->dwFlags & (CRes::Flags::RES_FLAG_0x20 | CRes::Flags::RES_FLAG_0x40)) == 0) {
@@ -515,9 +515,9 @@ void* CDimm::InternalDemand(CRes* pRes)
 
     if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x10) != 0) {
         field_0 = 1;
-        if (pRes == field_CE) {
-            field_270 = field_CE;
-            PartialServiceRequest(field_CE, field_CE->nSize);
+        if (pRes == m_pCurrentRes) {
+            m_pNextRes = m_pCurrentRes;
+            PartialServiceRequest(m_pCurrentRes, m_pCurrentRes->nSize);
         }
 
         field_8--;
@@ -526,7 +526,7 @@ void* CDimm::InternalDemand(CRes* pRes)
         LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
 
         EnterCriticalSection(&(g_pChitin->m_critSectService));
-        if (field_270 == pRes) {
+        if (m_pNextRes == pRes) {
             if (pRes != NULL) {
                 if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0
                     && (pRes->dwFlags & (CRes::Flags::RES_FLAG_0x20 | CRes::Flags::RES_FLAG_0x40)) == 0) {
@@ -563,7 +563,7 @@ void* CDimm::InternalDemand(CRes* pRes)
 
         return pRes->m_pData;
     } else {
-        field_270 = pRes;
+        m_pNextRes = pRes;
         ServiceRequest(pRes);
 
         field_8--;
@@ -571,7 +571,7 @@ void* CDimm::InternalDemand(CRes* pRes)
         LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
 
         EnterCriticalSection(&(g_pChitin->m_critSectService));
-        if (field_270 == pRes) {
+        if (m_pNextRes == pRes) {
             if (pRes != NULL) {
                 if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0
                     && (pRes->dwFlags & (CRes::Flags::RES_FLAG_0x20 | CRes::Flags::RES_FLAG_0x40)) == 0) {
@@ -925,21 +925,21 @@ int CDimm::Dump(CRes* pRes, int a2, int a3)
 
     EnterCriticalSection(&(g_pChitin->m_critSectService));
 
-    if (field_274 == pRes) {
+    if (m_pLastRes == pRes) {
         EnterCriticalSection(&(g_pChitin->field_32C));
-        field_274 = NULL;
+        m_pLastRes = NULL;
         LeaveCriticalSection(&(g_pChitin->field_32C));
     }
 
-    if (field_270 == pRes) {
+    if (m_pNextRes == pRes) {
         EnterCriticalSection(&(g_pChitin->field_32C));
-        field_270 = 0;
+        m_pNextRes = 0;
         LeaveCriticalSection(&(g_pChitin->field_32C));
     }
 
     if ((pRes->dwFlags & CRes::RES_FLAG_0x10) != 0) {
-        field_D2 = 0;
-        field_CE = NULL;
+        m_nServiceOffset = 0;
+        m_pCurrentRes = NULL;
     }
 
     if ((pRes->dwFlags & (CRes::RES_FLAG_0x10 | CRes::RES_FLAG_0x04)) != 0) {
@@ -971,8 +971,8 @@ int CDimm::Dump(CRes* pRes, int a2, int a3)
             }
         } else {
             if ((pRes->dwFlags & CRes::RES_FLAG_0x10) != 0) {
-                field_D2 = 0;
-                field_CE = NULL;
+                m_nServiceOffset = 0;
+                m_pCurrentRes = NULL;
             }
 
             if (pRes->m_pCurrentListPos != NULL) {
@@ -1648,35 +1648,35 @@ void CDimm::PartialServiceRequest(CRes* pRes, DWORD nBytesToRead)
 {
     EnterCriticalSection(&(g_pChitin->field_32C));
 
-    if (field_274 != NULL) {
+    if (m_pLastRes != NULL) {
         RESID nResID = pRes->GetID();
         if ((nResID >> 20) < m_nResFiles || (nResID & 0xFFF00000) >= 0xFC000000) {
             DWORD nResSize = (nResID & 0xFFF00000) < 0xFC000000
                 ? m_ppResFiles[nResID >> 20]->GetFileSize(pRes->GetID())
                 : LocalGetResourceSize(pRes);
-            DWORD nRemaining = nResSize - field_D2;
-            if (nResSize != field_D2) {
+            DWORD nRemaining = nResSize - m_nServiceOffset;
+            if (nResSize != m_nServiceOffset) {
                 if (nBytesToRead < nRemaining) {
                     UINT nBytesRead = (nResID & 0xFFF00000) < 0xFC000000
-                        ? m_ppResFiles[nResID >> 20]->ReadResource(nResID, pRes->m_pData, nBytesToRead, field_D2)
-                        : LocalReadResource(pRes, nBytesToRead, field_D2);
-                    if (field_CE == pRes || field_CE == NULL) {
-                        field_CE = pRes;
-                        field_D2 += nBytesRead;
+                        ? m_ppResFiles[nResID >> 20]->ReadResource(nResID, pRes->m_pData, nBytesToRead, m_nServiceOffset)
+                        : LocalReadResource(pRes, nBytesToRead, m_nServiceOffset);
+                    if (m_pCurrentRes == pRes || m_pCurrentRes == NULL) {
+                        m_pCurrentRes = pRes;
+                        m_nServiceOffset += nBytesRead;
                     }
                 } else {
                     UINT nBytesRead = (nResID & 0xFFF00000) < 0xFC000000
-                        ? m_ppResFiles[nResID >> 20]->ReadResource(nResID, pRes->m_pData, nRemaining, field_D2)
-                        : LocalReadResource(pRes, nRemaining, field_D2);
+                        ? m_ppResFiles[nResID >> 20]->ReadResource(nResID, pRes->m_pData, nRemaining, m_nServiceOffset)
+                        : LocalReadResource(pRes, nRemaining, m_nServiceOffset);
                     if (nBytesRead < nRemaining) {
-                        if (field_CE == pRes || field_CE == NULL) {
-                            field_CE = pRes;
-                            field_D2 += nBytesRead;
+                        if (m_pCurrentRes == pRes || m_pCurrentRes == NULL) {
+                            m_pCurrentRes = pRes;
+                            m_nServiceOffset += nBytesRead;
                         }
                     } else {
-                        if (field_CE == pRes || field_CE == NULL) {
-                            field_CE = NULL;
-                            field_D2 = nRemaining;
+                        if (m_pCurrentRes == pRes || m_pCurrentRes == NULL) {
+                            m_pCurrentRes = NULL;
+                            m_nServiceOffset = nRemaining;
 
                             pRes->dwFlags &= ~CRes::Flags::RES_FLAG_0x10;
                             pRes->dwFlags |= CRes::Flags::RES_FLAG_0x04;
@@ -2133,20 +2133,20 @@ BOOL CDimm::ServiceFromFile(CRes* pRes, CString a3)
 // 0x788480
 void CDimm::ServiceRequest(CRes* pRes, DWORD nBytesToRead)
 {
-    if (field_274 == NULL) {
+    if (m_pLastRes == NULL) {
         return;
     }
 
     if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) == 0) {
         EnterCriticalSection(&(g_pChitin->m_critSectService));
 
-        if (field_274 != NULL) {
+        if (m_pLastRes != NULL) {
             RESID nResID = pRes->GetID();
             if ((nResID >> 20) >= m_nResFiles
                 && ((nResID & 0xFFF00000) < 0xFC000000
                     || (pRes->dwFlags & (CRes::Flags::RES_FLAG_0x04 | CRes::Flags::RES_FLAG_0x10)) != 0)) {
                 pRes->dwFlags &= ~CRes::Flags::RES_FLAG_0x10;
-                field_274 = NULL;
+                m_pLastRes = NULL;
             } else {
                 DWORD nSize = (nResID & 0xFFF00000) < 0xFC000000
                     ? m_ppResFiles[nResID >> 20]->GetFileSize(pRes->GetID())
@@ -2181,14 +2181,14 @@ void CDimm::ServiceRequest(CRes* pRes, DWORD nBytesToRead)
                         LeaveCriticalSection(&(g_pChitin->m_critSectService));
 
                         EnterCriticalSection(&(g_pChitin->field_32C));
-                        if (field_274 != NULL) {
+                        if (m_pLastRes != NULL) {
                             if (nBytesToRead < pRes->nSize) {
                                 UINT nBytesRead = (nResID & 0xFFF00000) < 0xFC000000
                                     ? m_ppResFiles[nResID >> 20]->ReadResource(nResID, pRes->m_pData, nBytesToRead, 0)
                                     : LocalReadResource(pRes, nBytesToRead, 0);
-                                if (field_CE == pRes || field_CE == NULL) {
-                                    field_CE = pRes;
-                                    field_D2 = nBytesRead;
+                                if (m_pCurrentRes == pRes || m_pCurrentRes == NULL) {
+                                    m_pCurrentRes = pRes;
+                                    m_nServiceOffset = nBytesRead;
                                 } else {
                                     if (nBytesRead < pRes->nSize) {
                                         if ((nResID & 0xFFF00000) < 0xFC000000) {
@@ -2206,9 +2206,9 @@ void CDimm::ServiceRequest(CRes* pRes, DWORD nBytesToRead)
                                     ? m_ppResFiles[nResID >> 20]->ReadResource(nResID, pRes->m_pData, pRes->nSize, 0)
                                     : LocalReadResource(pRes, pRes->nSize, 0);
                                 if (nBytesRead < pRes->nSize) {
-                                    if (field_CE == pRes || field_CE == NULL) {
-                                        field_CE = pRes;
-                                        field_D2 = nBytesRead;
+                                    if (m_pCurrentRes == pRes || m_pCurrentRes == NULL) {
+                                        m_pCurrentRes = pRes;
+                                        m_nServiceOffset = nBytesRead;
                                     } else {
                                         UINT nMoreBytesRead = (nResID & 0xFFF00000) < 0xFC000000
                                             ? m_ppResFiles[nResID >> 20]->ReadResource(nResID, pRes->m_pData, pRes->nSize - nBytesRead, 0)
@@ -2217,9 +2217,9 @@ void CDimm::ServiceRequest(CRes* pRes, DWORD nBytesToRead)
                                         pRes->dwFlags |= CRes::Flags::RES_FLAG_0x04;
                                     }
                                 } else {
-                                    if (field_CE == pRes || field_CE == NULL) {
-                                        field_CE = NULL;
-                                        field_D2 = nBytesRead;
+                                    if (m_pCurrentRes == pRes || m_pCurrentRes == NULL) {
+                                        m_pCurrentRes = NULL;
+                                        m_nServiceOffset = nBytesRead;
                                         pRes->dwFlags &= ~CRes::Flags::RES_FLAG_0x10;
                                         pRes->dwFlags |= CRes::Flags::RES_FLAG_0x04;
                                     }
@@ -2240,7 +2240,7 @@ void CDimm::ServiceRequest(CRes* pRes, DWORD nBytesToRead)
             || pRes->m_pCurrentList == &m_lRequestedLow) {
             EnterCriticalSection(&(g_pChitin->m_critSectService));
 
-            if (field_274 != NULL) {
+            if (m_pLastRes != NULL) {
                 if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0) {
                     if (pRes->m_pData != NULL) {
                         if (pRes->m_pCurrentList == &m_lRequestedLow
@@ -2279,14 +2279,14 @@ void CDimm::ServiceRequest(CRes* pRes, DWORD nBytesToRead)
 // 0x788860
 void CDimm::ServiceRequest(CRes* pRes)
 {
-    if (field_270 == NULL) {
+    if (m_pNextRes == NULL) {
         return;
     }
 
     if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) == 0) {
         EnterCriticalSection(&(g_pChitin->m_critSectService));
 
-        if (field_270 == NULL) {
+        if (m_pNextRes == NULL) {
             LeaveCriticalSection(&(g_pChitin->m_critSectService));
             return;
         }
@@ -2302,7 +2302,7 @@ void CDimm::ServiceRequest(CRes* pRes)
             }
 
             LeaveCriticalSection(&(g_pChitin->m_critSectService));
-            field_270 = NULL;
+            m_pNextRes = NULL;
             return;
         }
 
@@ -2312,7 +2312,7 @@ void CDimm::ServiceRequest(CRes* pRes)
 
         if (pRes->nSize == 0 || !Alloc(pRes, pRes->nSize)) {
             LeaveCriticalSection(&(g_pChitin->m_critSectService));
-            field_270 = NULL;
+            m_pNextRes = NULL;
             return;
         }
 
@@ -2342,14 +2342,14 @@ void CDimm::ServiceRequest(CRes* pRes)
         LeaveCriticalSection(&(g_pChitin->m_critSectService));
 
         EnterCriticalSection(&(g_pChitin->field_32C));
-        if (field_270 != NULL) {
+        if (m_pNextRes != NULL) {
             UINT nBytesRead = (nResID & 0xFFF00000) < 0xFC000000
                 ? m_ppResFiles[nResID >> 20]->ReadResource(nResID, pRes->m_pData, pRes->nSize, 0)
                 : LocalReadResource(pRes, pRes->nSize, 0);
             if (nBytesRead < pRes->nSize) {
-                if (field_CE == pRes || field_CE == NULL) {
-                    field_CE = pRes;
-                    field_D2 = nBytesRead;
+                if (m_pCurrentRes == pRes || m_pCurrentRes == NULL) {
+                    m_pCurrentRes = pRes;
+                    m_nServiceOffset = nBytesRead;
                 } else {
                     UINT nMoreBytesRead = (nResID & 0xFFF00000) < 0xFC000000
                         ? m_ppResFiles[nResID >> 20]->ReadResource(nResID, pRes->m_pData, pRes->nSize - nBytesRead, 0)
@@ -2358,9 +2358,9 @@ void CDimm::ServiceRequest(CRes* pRes)
                     pRes->dwFlags |= CRes::Flags::RES_FLAG_0x04;
                 }
             } else {
-                if (field_CE == pRes || field_CE == NULL) {
-                    field_CE = NULL;
-                    field_D2 = nBytesRead;
+                if (m_pCurrentRes == pRes || m_pCurrentRes == NULL) {
+                    m_pCurrentRes = NULL;
+                    m_nServiceOffset = nBytesRead;
                     pRes->dwFlags &= ~CRes::Flags::RES_FLAG_0x10;
                     pRes->dwFlags |= CRes::Flags::RES_FLAG_0x04;
                 }
@@ -2373,7 +2373,7 @@ void CDimm::ServiceRequest(CRes* pRes)
             || pRes->m_pCurrentList == &m_lRequestedLow) {
             EnterCriticalSection(&(g_pChitin->m_critSectService));
 
-            if (field_270 != NULL) {
+            if (m_pNextRes != NULL) {
                 if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0) {
                     if (pRes->m_pData != NULL) {
                         if (pRes->m_pCurrentList == &m_lRequestedLow
@@ -2510,17 +2510,17 @@ void CDimm::Update()
             EnterCriticalSection(&(g_pChitin->m_critSectDimm));
 
             DWORD nBytesRead = 0;
-            if (field_CE != NULL) {
-                field_274 = pRes;
-                PartialServiceRequest(field_CE, 310048);
-                nBytesRead = field_D2;
+            if (m_pCurrentRes != NULL) {
+                m_pLastRes = pRes;
+                PartialServiceRequest(m_pCurrentRes, 310048);
+                nBytesRead = m_nServiceOffset;
             }
 
             LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
 
             EnterCriticalSection(&(g_pChitin->m_critSectService));
 
-            if (field_274 == pRes) {
+            if (m_pLastRes == pRes) {
                 if (pRes != NULL) {
                     if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0
                         && (pRes->dwFlags & (CRes::Flags::RES_FLAG_0x20 | CRes::Flags::RES_FLAG_0x40)) == 0) {
@@ -2535,16 +2535,16 @@ void CDimm::Update()
             while (nBytesRead < 30000 && !g_pChitin->m_bExitRSThread && !field_0 && field_DA < field_D6) {
                 if (!m_lRequestedHigh.IsEmpty()) {
                     pRes = static_cast<CRes*>(m_lRequestedHigh.GetHead());
-                    field_274 = pRes;
+                    m_pLastRes = pRes;
                     LeaveCriticalSection(&(g_pChitin->m_critSectService));
                     EnterCriticalSection(&(g_pChitin->m_critSectDimm));
-                    if (field_274 == pRes) {
+                    if (m_pLastRes == pRes) {
                         ServiceRequest(pRes, 310048 - nBytesRead);
                     }
                     LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
                     EnterCriticalSection(&(g_pChitin->m_critSectService));
-                    nBytesRead += field_D2;
-                    if (field_274 == pRes) {
+                    nBytesRead += m_nServiceOffset;
+                    if (m_pLastRes == pRes) {
                         if (pRes != NULL) {
                             if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0
                                 && (pRes->dwFlags & (CRes::Flags::RES_FLAG_0x20 | CRes::Flags::RES_FLAG_0x40)) == 0) {
@@ -2557,16 +2557,16 @@ void CDimm::Update()
                     }
                 } else if (!m_lRequestedMedium.IsEmpty()) {
                     pRes = static_cast<CRes*>(m_lRequestedMedium.GetHead());
-                    field_274 = pRes;
+                    m_pLastRes = pRes;
                     LeaveCriticalSection(&(g_pChitin->m_critSectService));
                     EnterCriticalSection(&(g_pChitin->m_critSectDimm));
-                    if (field_274 == pRes) {
+                    if (m_pLastRes == pRes) {
                         ServiceRequest(pRes, 310048 - nBytesRead);
                     }
                     LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
                     EnterCriticalSection(&(g_pChitin->m_critSectService));
-                    nBytesRead += field_D2;
-                    if (field_274 == pRes) {
+                    nBytesRead += m_nServiceOffset;
+                    if (m_pLastRes == pRes) {
                         if (pRes != NULL) {
                             if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0
                                 && (pRes->dwFlags & (CRes::Flags::RES_FLAG_0x20 | CRes::Flags::RES_FLAG_0x40)) == 0) {
@@ -2579,16 +2579,16 @@ void CDimm::Update()
                     }
                 } else if (!m_lRequestedLow.IsEmpty()) {
                     pRes = static_cast<CRes*>(m_lRequestedLow.GetHead());
-                    field_274 = pRes;
+                    m_pLastRes = pRes;
                     LeaveCriticalSection(&(g_pChitin->m_critSectService));
                     EnterCriticalSection(&(g_pChitin->m_critSectDimm));
-                    if (field_274 == pRes) {
+                    if (m_pLastRes == pRes) {
                         ServiceRequest(pRes, 310048 - nBytesRead);
                     }
                     LeaveCriticalSection(&(g_pChitin->m_critSectDimm));
                     EnterCriticalSection(&(g_pChitin->m_critSectService));
-                    nBytesRead += field_D2;
-                    if (field_274 == pRes) {
+                    nBytesRead += m_nServiceOffset;
+                    if (m_pLastRes == pRes) {
                         if (pRes != NULL) {
                             if ((pRes->dwFlags & CRes::Flags::RES_FLAG_0x04) != 0
                                 && (pRes->dwFlags & (CRes::Flags::RES_FLAG_0x20 | CRes::Flags::RES_FLAG_0x40)) == 0) {

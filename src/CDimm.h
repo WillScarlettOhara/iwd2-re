@@ -91,8 +91,8 @@ public:
     /* 007A */ CObList m_lRequestedMedium; // #guess
     /* 0096 */ CObList m_lRequestedHigh; // #guess
     /* 00B2 */ CObList m_lFreed; // #guess
-    /* 00CE */ CRes* field_CE;
-    /* 00D2 */ int field_D2;
+    /* 00CE */ CRes* m_pCurrentRes;
+    /* 00D2 */ int m_nServiceOffset;
     /* 00D6 */ unsigned int field_D6;
     /* 00DA */ unsigned int field_DA;
     /* 00DE */ DWORD dwTotalPhysicalMemory; // #guess
@@ -102,8 +102,8 @@ public:
     /* 00EC */ CResFile** m_ppResFiles;
     /* 00F0 */ CResCache cResCache; // #guess
     /* 024C */ CDimmKeyTable m_cKeyTable; // #guess
-    /* 0270 */ CRes* field_270;
-    /* 0274 */ CRes* field_274;
+    /* 0270 */ CRes* m_pNextRes;
+    /* 0274 */ CRes* m_pLastRes;
     /* 0278 */ CList<CString, CString> m_lDirectories; // #guess
     /* 0294 */ BOOLEAN m_bCDSwitchActivated;
     /* 0295 */ BOOLEAN field_295;
