@@ -1994,11 +1994,118 @@ BOOL CInfGame::SaveGame(unsigned char a1, unsigned char a2, unsigned char a3)
 // 0x5A7E40
 BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
 {
-    DBG("Unmarshal: STUBBED - pGame=0x%p nGame=%d bProgress=%d", pGame, nGame, bProgressBarInPlace);
-    DBG("Unmarshal: Returning FALSE - no game state loaded!");
-    // TODO: Incomplete.
+    DBG("Unmarshal: pGame=0x%p nGame=%d bProgress=%d", pGame, nGame, bProgressBarInPlace);
 
-    return FALSE;
+    if (pGame == NULL || nGame < 1) {
+        DBG("Unmarshal: invalid input");
+        return FALSE;
+    }
+
+    // GAM V2.0 header:
+    // 0x00: Signature "GAME" (4 bytes)
+    // 0x04: Version "V2.0" (4 bytes)
+    // 0x08: Elapsed game time in seconds (4 bytes)
+    // 0x0C: Selected formation (2 bytes)
+    // 0x0E: Formation buttons 1-5 (5 x 2 = 10 bytes)
+    // 0x18: Party gold (4 bytes)
+    // 0x1C: View area of party member (2 bytes)
+    // 0x1E: Weather (2 bytes)
+    // 0x20: Party members offset (4 bytes)
+    // 0x24: Number of party members (4 bytes)
+    // 0x28: Party inventory offset (4 bytes)
+    // 0x2C: Number of party inventory items (4 bytes)
+    // 0x30: Non-party characters offset (4 bytes)
+    // 0x34: Number of non-party characters (4 bytes)
+    // 0x38: Global variables offset (4 bytes)
+    // 0x3C: Number of global variables (4 bytes)
+    // 0x40: World area RESREF (8 bytes)
+    // 0x48: Current link (4 bytes)
+    // 0x4C: Number of journal entries (4 bytes)
+    // 0x50: Journal entries offset (4 bytes)
+    // 0x54: Reputation (4 bytes)
+    // 0x58: Master area RESREF (8 bytes)
+    // 0x60: Configuration (4 bytes)
+    // 0x64: Unknown section count (4 bytes)
+    // 0x68: Unknown section offset (4 bytes)
+    // 0x6C: Nightmare mode (4 bytes)
+    // 0x70: Unknown (68 bytes)
+    // Total header: 0xB4 bytes
+
+    if (nGame < 0xB4) {
+        DBG("Unmarshal: file too small (%d < 180)", nGame);
+        return FALSE;
+    }
+
+    int* pData = reinterpret_cast<int*>(pGame);
+
+    // Validate signature
+    if (memcmp(pGame, "GAME", 4) != 0) {
+        DBG("Unmarshal: bad signature");
+        return FALSE;
+    }
+
+    // Version check
+    if (memcmp(pGame + 4, "V2.0", 4) != 0) {
+        DBG("Unmarshal: unsupported version");
+        return FALSE;
+    }
+
+    // Game time: pData[2] is elapsed seconds, convert to game ticks (*15)
+    m_worldTime.m_gameTime = pData[2] * 15;
+    DBG("Unmarshal: gameTime=%d seconds -> %d ticks", pData[2], m_worldTime.m_gameTime);
+
+    // Selected formation (offset 0x0C, word)
+    // Formation buttons 1-5 (offset 0x0E-0x16)
+    // Party gold (offset 0x18)
+    // View area of party member (offset 0x1C)
+
+    // Weather (offset 0x1E)
+
+    if (bProgressBarInPlace) {
+        ProgressBarCallback(312500, FALSE);
+    }
+
+    // Weather Unmarshal
+    // CWeather::Unmarshal(pGame + data);
+
+    if (bProgressBarInPlace && pData[9] > 1) {
+        // ProgressBarCallback for each area
+    }
+
+    // Number of party members (offset 0x24)
+    int nPartyMembers = pData[9]; // offset 0x24 / 4 = index 9
+    int partyOffset = pData[8];   // offset 0x20 / 4 = index 8
+    DBG("Unmarshal: partyMembers=%d partyOffset=0x%X", nPartyMembers, partyOffset);
+
+    // Number of non-party characters (offset 0x34)
+    int nNonParty = pData[13]; // offset 0x34 / 4 = index 13
+    DBG("Unmarshal: nonParty=%d", nNonParty);
+
+    // World area (offset 0x40, 8 bytes RESREF)
+    char areaResRef[9];
+    memcpy(areaResRef, pGame + 0x40, 8);
+    areaResRef[8] = 0;
+    DBG("Unmarshal: worldArea=%s", areaResRef);
+
+    // Reputation (offset 0x54)
+    m_nReputation = static_cast<SHORT>(pData[21]); // offset 0x54 / 4 = 21
+    DBG("Unmarshal: reputation=%d", m_nReputation);
+
+    // Master area (offset 0x58, 8 bytes)
+    // Current link (offset 0x48)
+
+    if (bProgressBarInPlace) {
+        ProgressBarCallback(312500, FALSE);
+    }
+
+    // TODO: Load party members from partyOffset with CCreatureFile::Unmarshal
+    // TODO: Load non-party characters
+    // TODO: Load global variables
+    // TODO: Load journal
+    // TODO: Load inventory
+
+    DBG("Unmarshal: done (partial)");
+    return TRUE;
 }
 
 // 0x5A9680
