@@ -2133,17 +2133,31 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
                 pMember[40], pMember[41], pMember[42], pMember[43],
                 pMember[44], pMember[45], pMember[46], pMember[47]);
 
-            int slotIndex = *reinterpret_cast<unsigned short*>(pMember + 4); // +0x04
-            int creOffset = *reinterpret_cast<int*>(pMember + 6);              // +0x06
-            int creSize   = *reinterpret_cast<int*>(pMember + 0x0A);           // +0x0A
-            short facing  = *reinterpret_cast<short*>(pMember + 0x14);         // +0x14
+            // Verified from RAW hex dump:
+            // +0x00: u16 selectionState (1=selected)
+            // +0x02: u16 slotIndex (0-based: 0..5)
+            // +0x04: u32 creOffset — offset of CRE data in file
+            // +0x08: u32 creSize — size of embedded CRE data
+            // +0x0C: u32 (zero)
+            // +0x10: u32 (zero)
+            // +0x14: u32 facing — orientation (12=East)
+            // +0x18: char[8] areaRef — RESREF (e.g. "AR1000")
+            // +0x20: u16 posX — X coordinate
+            // +0x22: u16 posY — Y coordinate
+            // +0x24: u16 viewportX
+            // +0x26: u16 viewportY
+
+            int slotIndex = *reinterpret_cast<unsigned short*>(pMember + 2);  // +0x02
+            int creOffset = *reinterpret_cast<int*>(pMember + 4);              // +0x04 u32
+            int creSize   = *reinterpret_cast<int*>(pMember + 8);              // +0x08 u32
+            short facing  = static_cast<short>(*reinterpret_cast<int*>(pMember + 0x14)); // +0x14 u32
 
             char areaRef[9];
-            memcpy(areaRef, pMember + 0x16, 8);
+            memcpy(areaRef, pMember + 0x18, 8);  // +0x18
             areaRef[8] = 0;
 
-            short posX = *reinterpret_cast<short*>(pMember + 0x1E);
-            short posY = *reinterpret_cast<short*>(pMember + 0x20);
+            short posX = *reinterpret_cast<short*>(pMember + 0x20);  // +0x20 u16
+            short posY = *reinterpret_cast<short*>(pMember + 0x22);  // +0x22 u16
 
             DBG("Unmarshal: member[%d] slot=%d creOff=0x%X creSize=%d area=%s pos=(%d,%d) facing=%d",
                 i, slotIndex, creOffset, creSize, areaRef, posX, posY, facing);
