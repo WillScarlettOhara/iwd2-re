@@ -572,7 +572,7 @@ public:
     /* 02F9 */ BYTE field_2F9;
     /* 02FA */ BYTE m_fadeSpeed;
     /* 02FB */ unsigned char field_2FB;
-    /* 02FC */ unsigned char field_2FC;
+    /* 02FC */ unsigned char m_critSectService;
     /* 02FF */ unsigned char field_2FF;
 };
 

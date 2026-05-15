@@ -245,12 +245,12 @@ CChitin::CChitin()
         m_nThreads++;
     }
 
-    InitializeCriticalSection(&field_2FC);
+    InitializeCriticalSection(&m_critSectService);
     InitializeCriticalSection(&field_32C);
     InitializeCriticalSection(&m_critSectDimm);
     InitializeCriticalSection(&field_344);
     InitializeCriticalSection(&field_C4);
-    InitializeCriticalSection(&field_35C);
+    InitializeCriticalSection(&m_critSectResCache);
     InitializeCriticalSection(&field_394);
     InitializeCriticalSection(&field_3AC);
     InitializeCriticalSection(&field_1C32);
@@ -320,11 +320,11 @@ CChitin::~CChitin()
     cDimm.DestroyKeyTable();
     cDimm.DumpAll();
 
-    DeleteCriticalSection(&field_2FC);
+    DeleteCriticalSection(&m_critSectService);
     DeleteCriticalSection(&field_32C);
     DeleteCriticalSection(&m_critSectDimm);
     DeleteCriticalSection(&field_C4);
-    DeleteCriticalSection(&field_35C);
+    DeleteCriticalSection(&m_critSectResCache);
 
     if (m_eventTimer != NULL) {
         CloseHandle(m_eventTimer);

@@ -8217,7 +8217,7 @@ BOOL CGameEffectForceVisible::ApplyEffect(CGameSprite* pSprite)
 {
     if ((pSprite->GetBaseStats()->m_generalState & STATE_IMPROVEDINVISIBILITY) != 0
         || (pSprite->GetDerivedStats()->m_generalState & STATE_IMPROVEDINVISIBILITY) != 0) {
-        pSprite->GetBaseStats()->field_2FC |= 0x1;
+        pSprite->GetBaseStats()->m_critSectService |= 0x1;
     } else {
         pSprite->GetBaseStats()->m_generalState &= ~STATE_INVISIBLE;
         pSprite->GetDerivedStats()->m_generalState &= ~STATE_INVISIBLE;

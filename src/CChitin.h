@@ -214,11 +214,11 @@ public:
     /* 02F0 */ HMODULE m_hOpenGL;
     /* 02F4 */ int field_2F4;
     /* 02F8 */ HANDLE m_eventTimer;
-    /* 02FC */ CRITICAL_SECTION field_2FC;
+    /* 02FC */ CRITICAL_SECTION m_critSectService;
     /* 0314 */ CRITICAL_SECTION m_critSectDimm;
     /* 032C */ CRITICAL_SECTION field_32C;
     /* 0344 */ CRITICAL_SECTION field_344;
-    /* 035C */ CRITICAL_SECTION field_35C;
+    /* 035C */ CRITICAL_SECTION m_critSectResCache;
     /* 0374 */ BOOL m_bExitRSThread;
     /* 0378 */ HANDLE m_hRSThread;
     /* 037C */ BOOL m_bExitMessageThread;

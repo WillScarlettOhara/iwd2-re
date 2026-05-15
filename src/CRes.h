@@ -51,8 +51,8 @@ public:
     /* 0018 */ int field_18;
     /* 001C */ DWORD m_nResSizeActual;
     /* 0020 */ CCriticalSection field_20;
-    /* 0040 */ int field_40;
-    /* 0044 */ int field_44;
+    /* 0040 */ int m_nServiceCount;
+    /* 0044 */ int m_nLockCount;
     /* 0048 */ POSITION m_pCurrentListPos; // #guess
     /* 004C */ RESID m_nID;
 };

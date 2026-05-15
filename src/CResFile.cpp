@@ -28,18 +28,18 @@ CResFile::~CResFile()
 // 0x789950
 BOOL CResFile::AddCacheCount()
 {
-    EnterCriticalSection(&(g_pChitin->field_35C));
+    EnterCriticalSection(&(g_pChitin->m_critSectResCache));
 
     while (g_pChitin->cDimm.cResCache.field_110 == 1) {
-        LeaveCriticalSection(&(g_pChitin->field_35C));
+        LeaveCriticalSection(&(g_pChitin->m_critSectResCache));
         while (g_pChitin->cDimm.cResCache.field_110 == 1) {
             SleepEx(50, FALSE);
         }
-        EnterCriticalSection(&(g_pChitin->field_35C));
+        EnterCriticalSection(&(g_pChitin->m_critSectResCache));
     }
 
     if (m_nRefCount != 0) {
-        LeaveCriticalSection(&(g_pChitin->field_35C));
+        LeaveCriticalSection(&(g_pChitin->m_critSectResCache));
         return FALSE;
     }
 
@@ -49,7 +49,7 @@ BOOL CResFile::AddCacheCount()
     m_nCacheCount++;
 
     g_pChitin->cDimm.cResCache.field_110 = 1;
-    LeaveCriticalSection(&(g_pChitin->field_35C));
+    LeaveCriticalSection(&(g_pChitin->m_critSectResCache));
 
     return TRUE;
 }
@@ -327,7 +327,7 @@ UINT CResFile::ReadResource(RESID resID, LPVOID lpBuf, UINT nCount, UINT nOffset
 // 0x78A900
 void CResFile::UnCache()
 {
-    EnterCriticalSection(&(g_pChitin->field_35C));
+    EnterCriticalSection(&(g_pChitin->m_critSectResCache));
 
     if (m_nCacheCount > 1) {
         m_nCacheCount -= 1;
@@ -335,7 +335,7 @@ void CResFile::UnCache()
         m_nCacheCount = 0;
     }
 
-    LeaveCriticalSection(&(g_pChitin->field_35C));
+    LeaveCriticalSection(&(g_pChitin->m_critSectResCache));
 
     g_pChitin->cDimm.cResCache.AccessFileInCache(m_nIndex);
 }

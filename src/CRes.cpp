@@ -8,9 +8,9 @@
 CRes::CRes()
 {
     m_pCurrentListPos = NULL;
-    field_40 = 0;
+    m_nServiceCount = 0;
     m_nID = 0;
-    field_44 = 0;
+    m_nLockCount = 0;
     nSize = 0;
     m_nResSizeActual = 0;
     m_pData = NULL;
@@ -124,7 +124,7 @@ int CRes::Dump(int a2)
 // 0x77E550
 int CRes::GetDemands()
 {
-    return field_40;
+    return m_nServiceCount;
 }
 
 // 0x77E560
