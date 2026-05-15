@@ -2178,7 +2178,7 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
     // TODO: Load journal
     // TODO: Load inventory
 
-    DBG("Unmarshal: done (partial), returning TRUE");
+    DBG("Unmarshal: done (partial), returning TRUE, m_nCharacters=%d", m_nCharacters);
     return TRUE;
 }
 
@@ -5934,7 +5934,7 @@ void CInfGame::AddPartyGold(LONG dwAddPartyGold)
 // 0x5BF6A0
 void CInfGame::SetupCharacters(BOOLEAN bProgressBarInPlace)
 {
-    DBG("SetupCharacters: enter");
+    DBG("SetupCharacters: enter, m_nCharacters=%d", m_nCharacters);
 
     CResRef cResArea;
     CPoint ptView;
