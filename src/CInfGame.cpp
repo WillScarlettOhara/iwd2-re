@@ -2044,11 +2044,13 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
         return FALSE;
     }
 
-    // Version check
-    if (memcmp(pGame + 4, "V2.0", 4) != 0) {
-        DBG("Unmarshal: unsupported version");
+    // Version check — support V2.0, V2.2, etc.
+    if (memcmp(pGame, "V2.", 3) != 0) {
+        DBG("Unmarshal: unsupported version (expected V2.x)");
         return FALSE;
     }
+    BOOL bVersion22 = (memcmp(pGame + 4, "V2.2", 4) == 0);
+    DBG("Unmarshal: version V2.%c", pGame[6]);
 
     // Game time: pData[2] is elapsed seconds, convert to game ticks (*15)
     m_worldTime.m_gameTime = pData[2] * 15;
@@ -2098,7 +2100,39 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
         ProgressBarCallback(312500, FALSE);
     }
 
-    // TODO: Load party members from partyOffset with CCreatureFile::Unmarshal
+    // TODO: Load party members from partyOffset with CCreatureFile
+    // Each party member is 0x340 (832) bytes in V2.2, 0x220 in V2.1, 0x180 in V2.0
+    if (nPartyMembers > 0 && partyOffset > 0) {
+        int memberSize = 0x180; // V2.0 default
+        if (memcmp(pGame + 4, "V2.2", 4) == 0) {
+            memberSize = 0x340;
+        } else if (memcmp(pGame + 4, "V2.1", 4) == 0) {
+            memberSize = 0x220;
+        }
+        DBG("Unmarshal: loading %d party members at 0x%X, size=0x%X each", nPartyMembers, partyOffset, memberSize);
+
+        BYTE* pMember = pGame + partyOffset;
+        for (int i = 0; i < nPartyMembers && i < 6; i++) {
+            int slotIndex = *reinterpret_cast<int*>(pMember);           // +0x00
+            int creOffset = *reinterpret_cast<int*>(pMember + 4);       // +0x04
+            int creSize   = *reinterpret_cast<int*>(pMember + 8);       // +0x08
+
+            // Area (RESREF) at +0x14
+            char areaRef[9];
+            memcpy(areaRef, pMember + 0x14, 8);
+            areaRef[8] = 0;
+
+            // Position at +0x1C
+            short posX = *reinterpret_cast<short*>(pMember + 0x1C);
+            short posY = *reinterpret_cast<short*>(pMember + 0x1E);
+
+            DBG("Unmarshal: member[%d] slot=%d creOff=0x%X creSize=%d area=%s pos=(%d,%d)",
+                i, slotIndex, creOffset, creSize, areaRef, posX, posY);
+
+            pMember += memberSize;
+        }
+    }
+
     // TODO: Load non-party characters
     // TODO: Load global variables
     // TODO: Load journal
