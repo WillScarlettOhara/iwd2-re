@@ -900,6 +900,12 @@ void CScreenLoad::RefreshGameSlots()
                     pSlot->m_sFileTime = cFileStatus.m_mtime.Format("%a, %b %d, %Y - %I:%M %p");
                 }
 
+                // Try accessing creature table offsets (raw only, no deref)
+                BYTE* pCreatureRaw = pGameData + pSavedGameHeader->m_partyCreatureTableOffset;
+                DWORD creOffset = *reinterpret_cast<DWORD*>(pCreatureRaw + 0x04);
+                DWORD creSize = *reinterpret_cast<DWORD*>(pCreatureRaw + 0x08);
+                BYTE resRefFirstByte = pCreatureRaw[0x0C];
+
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
             }
