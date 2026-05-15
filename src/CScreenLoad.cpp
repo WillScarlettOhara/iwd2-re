@@ -849,17 +849,24 @@ void CScreenLoad::RefreshGameSlots()
             DBG("RGS: slot created");
             pSlot->m_sFileName = sFileName;
             DBG("RGS: filename set");
-            OutputDebugStringA("RGS: before StringOps\n");
+            OutputDebugStringA("RGS: 1 before StringOps\n");
 
             cResPortrait = "";
+            OutputDebugStringA("RGS: 2 cResPortrait done\n");
             sName = "";
+            OutputDebugStringA("RGS: 3 sName done\n");
             nGameTime = 0;
+            OutputDebugStringA("RGS: 4 nGameTime done\n");
             nChapter = 0;
+            OutputDebugStringA("RGS: 5 nChapter done\n");
             sChapter = "";
+            OutputDebugStringA("RGS: 6 sChapter done\n");
             nNameRef = -1;
+            OutputDebugStringA("RGS: 7 nNameRef done\n");
 
             // Use raw C string ops to rule out MFC CString corruption
             const char* szFileName = static_cast<LPCSTR>(sFileName);
+            OutputDebugStringA("RGS: 8 szFileName done\n");
             int nFileNameLen = strlen(szFileName);
             int nLeadingDigits = strspn(szFileName, "0123456789");
             if (nLeadingDigits < nFileNameLen && szFileName[nLeadingDigits] == '-') {
