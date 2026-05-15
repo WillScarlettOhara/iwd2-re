@@ -883,13 +883,18 @@ void CScreenLoad::RefreshGameSlots()
                     OutputDebugStringA(buf);
                 }
                 OutputDebugStringA("RGS: about to read pCreature->m_creatureResRef[0]\n");
-                if (pCreature->m_creatureResRef[0] != '\0') {
-                    if (pCreature->m_creatureSize != 0) {
+
+                // Use raw byte offset instead of struct pointer to rule out alignment issues
+                BYTE* pCreatureRaw = pGameData + pSavedGameHeader->m_partyCreatureTableOffset;
+                BYTE resRefFirstByte = pCreatureRaw[0x0C];
+                OutputDebugStringA("RGS: resRefFirstByte read OK\n");
+                if (resRefFirstByte != '\0') {
+                    if (*reinterpret_cast<DWORD*>(pCreatureRaw + 0x08) != 0) {
                         // Corrupted save - skip this character
                         nNameRef = -1;
                     } else {
                         CCreatureFile cCreatureFile;
-                        cCreatureFile.SetResRef(pCreature->m_creatureResRef, TRUE, TRUE);
+                        cCreatureFile.SetResRef(CResRef(reinterpret_cast<char*>(pCreatureRaw + 0x0C)), TRUE, TRUE);
 
                         BYTE* pCreatureData = cCreatureFile.GetData();
                         if (pCreatureData != NULL) {
@@ -902,7 +907,7 @@ void CScreenLoad::RefreshGameSlots()
                         cCreatureFile.ReleaseData();
                     }
                 } else {
-                    CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pGameData + pCreature->m_creatureOffset + 8);
+                    CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pGameData + (*reinterpret_cast<DWORD*>(pCreatureRaw + 0x04)) + 8);
                     nNameRef = pCreatureFileHeader->m_name;
                     cResPortrait = pCreatureFileHeader->m_portraitSmall;
                     nSex = pCreatureFileHeader->m_sex;
@@ -911,7 +916,7 @@ void CScreenLoad::RefreshGameSlots()
                 if (nNameRef != -1) {
                     sName = FetchString(nNameRef);
                 } else {
-                    sName = pCreature->m_name;
+                    sName = reinterpret_cast<char*>(pCreatureRaw + 0x01BE);  // m_name
                 }
 
                 nGameTime = pSavedGameHeader->m_worldTime * CTimerWorld::TIMESCALE_MSEC_PER_SEC;
