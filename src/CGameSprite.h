@@ -832,7 +832,7 @@ public:
     /* 53E6 */ int field_53E6;
     /* 53EA */ CVidBitmap m_vbPortraitSmall;
     /* 54A4 */ BOOL m_bVisibleMonster;
-    /* 54A8 */ int field_54A8;
+    /* 54A8 */ int m_bBumpable;
     /* 54AC */ BOOL m_bBumped;
     /* 54B0 */ CPoint m_ptBumpedFrom;
     /* 54B8 */ int field_54B8;
@@ -996,7 +996,7 @@ public:
     /* 7424 */ int field_7424;
     /* 7428 */ CString field_7428;
     /* 742C */ int field_742C;
-    /* 7430 */ unsigned char field_7430;
+    /* 7430 */ unsigned char m_bOnSearchMap;
     /* 7432 */ CGameSpriteLastUpdate m_cLastSpriteUpdate;
     /* 752E */ BOOL m_bSendSpriteUpdate;
     /* 7532 */ int field_7532;

@@ -876,7 +876,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
     memset(m_nNumberOfTimesInteractedWith, 0, sizeof(m_nNumberOfTimesInteractedWith));
 
     field_54B8 = 0;
-    field_54A8 = 0;
+    m_bBumpable = 0;
     m_bBumped = FALSE;
     m_ptBumpedFrom.x = -1;
     m_ptBumpedFrom.y = -1;
@@ -1084,7 +1084,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         LoadSoundEntries();
 
         field_70EE = 0;
-        field_7430 = 0;
+        m_bOnSearchMap = 0;
         m_bInvisible = 0;
         if (IcewindMisc::IsLarge(this) == TRUE) {
             m_aVfxCells[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheB"), FALSE, TRUE, TRUE);
@@ -1227,8 +1227,8 @@ void CGameSprite::AddToArea(CGameArea* pNewArea, const CPoint& pos, LONG posZ, B
                                             m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                 m_typeAI.GetEnemyAlly(),
                 m_animation.GetPersonalSpace(),
-                field_54A8,
-                field_7430);
+                m_bBumpable,
+                m_bOnSearchMap);
         }
         break;
     case CGAMEOBJECT_LIST_BACK:
@@ -1399,8 +1399,8 @@ void CGameSprite::RemoveReplacementFromArea()
                                                    m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    field_54A8,
-                    field_7430);
+                    m_bBumpable,
+                    m_bOnSearchMap);
             }
             break;
         case CGAMEOBJECT_LIST_BACK:
@@ -1415,8 +1415,8 @@ void CGameSprite::RemoveReplacementFromArea()
                                                        m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                         m_typeAI.GetEnemyAlly(),
                         m_animation.GetPersonalSpace(),
-                        field_54A8,
-                        field_7430);
+                        m_bBumpable,
+                        m_bOnSearchMap);
                 } else {
                     m_pArea->DecrHeightDynamic(m_pos);
                 }
@@ -1529,8 +1529,8 @@ void CGameSprite::RemoveFromArea()
                                                    m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    field_54A8,
-                    field_7430);
+                    m_bBumpable,
+                    m_bOnSearchMap);
             }
             break;
         case CGAMEOBJECT_LIST_BACK:
@@ -1545,8 +1545,8 @@ void CGameSprite::RemoveFromArea()
                                                        m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                         m_typeAI.GetEnemyAlly(),
                         m_animation.GetPersonalSpace(),
-                        field_54A8,
-                        field_7430);
+                        m_bBumpable,
+                        m_bOnSearchMap);
                 } else {
                     m_pArea->DecrHeightDynamic(m_pos);
                 }
@@ -1724,8 +1724,8 @@ void CGameSprite::AIUpdate()
                                                        m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                         m_typeAI.GetEnemyAlly(),
                         m_animation.GetPersonalSpace(),
-                        field_54A8,
-                        field_7430);
+                        m_bBumpable,
+                        m_bOnSearchMap);
                     break;
                 case CGAMEOBJECT_LIST_BACK:
                     if ((m_derivedStats.m_generalState & STATE_SLEEPING) != 0) {
@@ -1736,8 +1736,8 @@ void CGameSprite::AIUpdate()
                                                            m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                             m_typeAI.GetEnemyAlly(),
                             m_animation.GetPersonalSpace(),
-                            field_54A8,
-                            field_7430);
+                            m_bBumpable,
+                            m_bOnSearchMap);
                     } else {
                         m_pArea->IncrHeightDynamic(m_pos);
                     }
@@ -1781,8 +1781,8 @@ void CGameSprite::AIUpdate()
                                                             m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                                 m_typeAI.GetEnemyAlly(),
                                 m_animation.GetPersonalSpace(),
-                                field_54A8,
-                                field_7430);
+                                m_bBumpable,
+                                m_bOnSearchMap);
 
                             JumpToPoint(m_pos, TRUE);
                         }
@@ -1794,8 +1794,8 @@ void CGameSprite::AIUpdate()
                                                                 m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                                     m_typeAI.GetEnemyAlly(),
                                     m_animation.GetPersonalSpace(),
-                                    field_54A8,
-                                    field_7430);
+                                    m_bBumpable,
+                                    m_bOnSearchMap);
 
                                 // NOTE: Uninline.
                                 m_pArea->AddToMarkers(m_id);
@@ -1963,7 +1963,7 @@ void CGameSprite::AIUpdate()
     }
 
     BOOL v1 = CanAnimate();
-    if (v1 != field_54A8
+    if (v1 != m_bBumpable
         && Animate()
         && !m_baseStats.field_294) {
         if (!v1) {
@@ -1976,17 +1976,17 @@ void CGameSprite::AIUpdate()
                                            m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
             m_typeAI.GetEnemyAlly(),
             m_animation.GetPersonalSpace(),
-            field_54A8,
-            field_7430);
+            m_bBumpable,
+            m_bOnSearchMap);
 
-        field_54A8 = v1;
+        m_bBumpable = v1;
 
         m_pArea->m_search.AddObject(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
                                         m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
             m_typeAI.GetEnemyAlly(),
             m_animation.GetPersonalSpace(),
-            field_54A8,
-            field_7430);
+            m_bBumpable,
+            m_bOnSearchMap);
     }
 
     if (m_bBumped && !m_baseStats.field_294) {
@@ -1994,8 +1994,8 @@ void CGameSprite::AIUpdate()
                                            m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
             m_typeAI.GetEnemyAlly(),
             m_animation.GetPersonalSpace(),
-            field_54A8,
-            field_7430);
+            m_bBumpable,
+            m_bOnSearchMap);
 
         SHORT nTableIndex;
         if (m_pArea->m_search.GetCost(m_ptBumpedFrom, GetTerrainTable(), m_animation.GetPersonalSpace(), nTableIndex, TRUE) != CPathSearch::COST_IMPASSABLE) {
@@ -2003,8 +2003,8 @@ void CGameSprite::AIUpdate()
                                             m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                 m_typeAI.GetEnemyAlly(),
                 m_animation.GetPersonalSpace(),
-                field_54A8,
-                field_7430);
+                m_bBumpable,
+                m_bOnSearchMap);
             JumpToPoint(CPoint(m_ptBumpedFrom.x * CPathSearch::GRID_SQUARE_SIZEX + CPathSearch::GRID_SQUARE_SIZEX / 2,
                             m_ptBumpedFrom.y * CPathSearch::GRID_SQUARE_SIZEY + CPathSearch::GRID_SQUARE_SIZEY / 2),
                 TRUE);
@@ -2017,8 +2017,8 @@ void CGameSprite::AIUpdate()
                                                 m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    field_54A8,
-                    field_7430);
+                    m_bBumpable,
+                    m_bOnSearchMap);
             }
         }
     }
@@ -2879,8 +2879,8 @@ void CGameSprite::AIUpdateWalk()
         m_pArea->m_search.RemoveObject(ptOldSearch,
             m_typeAI.GetEnemyAlly(),
             m_animation.GetPersonalSpace(),
-            field_54A8,
-            field_7430);
+            m_bBumpable,
+            m_bOnSearchMap);
 
         if (InControl()
             && m_pArea->m_search.GetMobileCost(ptSearch, m_terrainTable, m_animation.GetPersonalSpace(), TRUE) == CPathSearch::COST_IMPASSABLE
@@ -2889,8 +2889,8 @@ void CGameSprite::AIUpdateWalk()
                 m_pArea->m_search.AddObject(ptOldSearch,
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    field_54A8,
-                    field_7430);
+                    m_bBumpable,
+                    m_bOnSearchMap);
 
                 m_posExact = posExactOld;
                 m_pos = m_posOld;
@@ -2934,8 +2934,8 @@ void CGameSprite::AIUpdateWalk()
                 m_pArea->m_search.AddObject(ptSearch,
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    field_54A8,
-                    field_7430);
+                    m_bBumpable,
+                    m_bOnSearchMap);
             }
 
             char* pSndWalk = m_animation.GetSndWalk(m_pArea->m_search.GetTableIndex(ptOldSearch));
@@ -3341,8 +3341,8 @@ BOOL CGameSprite::MoveToBack()
                                                m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                 m_typeAI.GetEnemyAlly(),
                 m_animation.GetPersonalSpace(),
-                field_54A8,
-                field_7430);
+                m_bBumpable,
+                m_bOnSearchMap);
             m_pArea->IncrHeightDynamic(m_pos);
             m_derivedStats.m_generalState &= ~STATE_SLEEPING;
             return FALSE;
@@ -3360,8 +3360,8 @@ BOOL CGameSprite::MoveToBack()
                                                    m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    field_54A8,
-                    field_7430);
+                    m_bBumpable,
+                    m_bOnSearchMap);
                 m_pArea->IncrHeightDynamic(m_pos);
             }
 
@@ -3405,8 +3405,8 @@ BOOL CGameSprite::MoveToFront()
                                                 m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
                     m_typeAI.GetEnemyAlly(),
                     m_animation.GetPersonalSpace(),
-                    field_54A8,
-                    field_7430);
+                    m_bBumpable,
+                    m_bOnSearchMap);
                 m_pArea->DecrHeightDynamic(m_pos);
             }
 

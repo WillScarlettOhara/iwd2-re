@@ -5315,8 +5315,8 @@ void CMessageAnimationChange::Run()
                                                                   pSprite->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY),
                         pSprite->GetAIType().m_nEnemyAlly,
                         pSprite->GetAnimation()->GetPersonalSpace(),
-                        pSprite->field_54A8,
-                        pSprite->field_7430);
+                        pSprite->m_bBumpable,
+                        pSprite->m_bOnSearchMap);
                 }
             }
             pSprite->GetAnimation()->SetAnimationType(m_animationId,
@@ -5328,8 +5328,8 @@ void CMessageAnimationChange::Run()
                                                                pSprite->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY),
                         pSprite->GetAIType().m_nEnemyAlly,
                         pSprite->GetAnimation()->GetPersonalSpace(),
-                        pSprite->field_54A8,
-                        pSprite->field_7430);
+                        pSprite->m_bBumpable,
+                        pSprite->m_bOnSearchMap);
                 }
             }
             pSprite->EquipAll(TRUE);
