@@ -2135,7 +2135,7 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
                 i, slotIndex, creOffset, creSize, areaRef, posX, posY, facing);
 
             // Create CGameSprite from embedded CRE data
-            if (creOffset > 0 && creSize > 0 && creOffset + creSize <= nGame) {
+            if (FALSE && creOffset > 0 && creSize > 0 && creOffset + creSize <= nGame) {
                 BYTE* pCreData = pGame + creOffset;
                 CGameSprite* pSprite = new CGameSprite(pCreData, creSize, 0,
                     CGameObject::TYPE_SPRITE, -1, 0, 0, 0,
@@ -2169,7 +2169,7 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
     // TODO: Load journal
     // TODO: Load inventory
 
-    DBG("Unmarshal: done (partial)");
+    DBG("Unmarshal: done (partial), returning TRUE");
     return TRUE;
 }
 
