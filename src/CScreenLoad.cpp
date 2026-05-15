@@ -877,9 +877,12 @@ void CScreenLoad::RefreshGameSlots()
             }
 
             DBG("RGS: after StringOps, building sDirName\n");
-            sDirName = pGame->GetDirSaveRoot() + pSlot->m_sFileName + "\\";
+            // Use sprintf to avoid MFC CString concatenation crashes
+            char szDirName[512];
+            sprintf(szDirName, "%s%s\\", static_cast<LPCSTR>(pGame->GetDirSaveRoot()), static_cast<LPCSTR>(pSlot->m_sFileName));
+            sDirName = szDirName;
 
-            if (g_pChitin->cDimm.ServiceFromFile(&cResGame, sDirName + "ICEWIND2.GAM")) {
+            if (g_pChitin->cDimm.ServiceFromFile(&cResGame, CString(szDirName) + "ICEWIND2.GAM")) {
                 BYTE* pGameData = reinterpret_cast<BYTE*>(cResGame.m_pData);
                 CSavedGameHeader* pSavedGameHeader = reinterpret_cast<CSavedGameHeader*>(pGameData + 8);
 
