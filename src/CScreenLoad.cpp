@@ -971,24 +971,23 @@ BOOL CScreenLoad::DrawScreenShot(INT nSlot, const CRect& rArea, const CRect& rCl
     BOOL bResult;
     if (m_aGameSlots[nGameSlot]->m_cResScreenShot.m_pData != NULL) {
         vbScreenShot.SetRes(&(m_aGameSlots[nGameSlot]->m_cResScreenShot));
-        vbScreenShot.pRes->DemandLoadedBitmap();
-        bResult = vbScreenShot.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
+        if (!vbScreenShot.pRes->DemandLoadedBitmap()) {
+            return FALSE;
+        }
+        bResult = vbScreenShot.RenderDirect(0, rArea.left, rArea.top, rClip, 0, TRUE);
         vbScreenShot.pRes->ReleaseLoadedBitmap();
-
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-        // __LINE__: 1592
-        UTIL_ASSERT(bResult);
-    } else {
-        vbScreenShot.SetResRef(CResRef("ICEWIND2"), TRUE, TRUE);
-        vbScreenShot.m_bDoubleSize = g_pBaldurChitin->m_bUseNewGui;
-        bResult = vbScreenShot.RenderDirect(0, rArea.left, rArea.top, rClip, 0, FALSE);
-
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-        // __LINE__: 1599
-        UTIL_ASSERT(bResult);
+        return bResult;
     }
 
-    return TRUE;
+    vbScreenShot.SetResRef(CResRef("ICEWIND2"), TRUE, TRUE);
+    vbScreenShot.m_bDoubleSize = g_pBaldurChitin->m_bUseNewGui;
+    if (vbScreenShot.pRes == NULL || vbScreenShot.pRes->Demand() == NULL) {
+        return FALSE;
+    }
+    bResult = vbScreenShot.RenderDirect(0, rArea.left, rArea.top, rClip, 0, TRUE);
+    vbScreenShot.pRes->Release();
+
+    return bResult;
 }
 
 // 0x63D720
@@ -1001,101 +1000,43 @@ BOOL CScreenLoad::DrawPortrait(USHORT nPortrait, INT nSlot, const CRect& rArea, 
         return FALSE;
     }
 
-    BOOL bResult;
+    CResBitmap* pPortrait = NULL;
     switch (nPortrait) {
     case 0:
-        if (m_aGameSlots[nGameSlot]->m_cBmpResPortrait0.m_pData == NULL) {
-            return FALSE;
-        }
-
-        vbPortrait.SetRes(&(m_aGameSlots[nGameSlot]->m_cBmpResPortrait0));
-        vbPortrait.pRes->DemandLoadedBitmap();
-        bResult = vbPortrait.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
-        vbPortrait.pRes->ReleaseLoadedBitmap();
-
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-        // __LINE__: 1646
-        UTIL_ASSERT(bResult);
-
-        return TRUE;
+        pPortrait = &(m_aGameSlots[nGameSlot]->m_cBmpResPortrait0);
+        break;
     case 1:
-        if (m_aGameSlots[nGameSlot]->m_cBmpResPortrait1.m_pData == NULL) {
-            return FALSE;
-        }
-
-        vbPortrait.SetRes(&(m_aGameSlots[nGameSlot]->m_cBmpResPortrait1));
-        vbPortrait.pRes->DemandLoadedBitmap();
-        bResult = vbPortrait.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
-        vbPortrait.pRes->ReleaseLoadedBitmap();
-
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-        // __LINE__: 1658
-        UTIL_ASSERT(bResult);
-
-        return TRUE;
+        pPortrait = &(m_aGameSlots[nGameSlot]->m_cBmpResPortrait1);
+        break;
     case 2:
-        if (m_aGameSlots[nGameSlot]->m_cBmpResPortrait2.m_pData == NULL) {
-            return FALSE;
-        }
-
-        vbPortrait.SetRes(&(m_aGameSlots[nGameSlot]->m_cBmpResPortrait2));
-        vbPortrait.pRes->DemandLoadedBitmap();
-        bResult = vbPortrait.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
-        vbPortrait.pRes->ReleaseLoadedBitmap();
-
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-        // __LINE__: 1670
-        UTIL_ASSERT(bResult);
-
-        return TRUE;
+        pPortrait = &(m_aGameSlots[nGameSlot]->m_cBmpResPortrait2);
+        break;
     case 3:
-        if (m_aGameSlots[nGameSlot]->m_cBmpResPortrait2.m_pData == NULL) {
-            return FALSE;
-        }
-
-        vbPortrait.SetRes(&(m_aGameSlots[nGameSlot]->m_cBmpResPortrait2));
-        vbPortrait.pRes->DemandLoadedBitmap();
-        bResult = vbPortrait.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
-        vbPortrait.pRes->ReleaseLoadedBitmap();
-
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-        // __LINE__: 1682
-        UTIL_ASSERT(bResult);
-
-        return TRUE;
+        pPortrait = &(m_aGameSlots[nGameSlot]->m_cBmpResPortrait3);
+        break;
     case 4:
-        if (m_aGameSlots[nGameSlot]->m_cBmpResPortrait4.m_pData == NULL) {
-            return FALSE;
-        }
-
-        vbPortrait.SetRes(&(m_aGameSlots[nGameSlot]->m_cBmpResPortrait4));
-        vbPortrait.pRes->DemandLoadedBitmap();
-        bResult = vbPortrait.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
-        vbPortrait.pRes->ReleaseLoadedBitmap();
-
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-        // __LINE__: 1694
-        UTIL_ASSERT(bResult);
-
-        return TRUE;
+        pPortrait = &(m_aGameSlots[nGameSlot]->m_cBmpResPortrait4);
+        break;
     case 5:
-        if (m_aGameSlots[nGameSlot]->m_cBmpResPortrait5.m_pData == NULL) {
-            return FALSE;
-        }
-
-        vbPortrait.SetRes(&(m_aGameSlots[nGameSlot]->m_cBmpResPortrait5));
-        vbPortrait.pRes->DemandLoadedBitmap();
-        bResult = vbPortrait.RenderDirect(0, rArea.left, rArea.top, rClip, 0, 1);
-        vbPortrait.pRes->ReleaseLoadedBitmap();
-
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-        // __LINE__: 1706
-        UTIL_ASSERT(bResult);
-
-        return TRUE;
+        pPortrait = &(m_aGameSlots[nGameSlot]->m_cBmpResPortrait5);
+        break;
+    default:
+        return FALSE;
     }
 
-    return FALSE;
+    if (pPortrait == NULL || pPortrait->m_pData == NULL) {
+        return FALSE;
+    }
+
+    vbPortrait.SetRes(pPortrait);
+    if (!vbPortrait.pRes->DemandLoadedBitmap()) {
+        return FALSE;
+    }
+
+    BOOL bResult = vbPortrait.RenderDirect(0, rArea.left, rArea.top, rClip, 0, TRUE);
+    vbPortrait.pRes->ReleaseLoadedBitmap();
+
+    return bResult;
 }
 
 // 0x63DB40
