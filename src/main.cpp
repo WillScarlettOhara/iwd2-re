@@ -1,6 +1,5 @@
 #include "mfc.h"
 
-#include <crtdbg.h>
 #include <iostream>
 
 #include "CBaldurChitin.h"
@@ -50,7 +49,7 @@ static BOOL IsSupportedOS(DWORD& majorVersion, DWORD& minorVersion)
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     // Enable CRT debug heap checking on every allocation
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
+    
 
     std::cout << std::endl;
     std::cout << "BEGIN LOGGING SESSION";
