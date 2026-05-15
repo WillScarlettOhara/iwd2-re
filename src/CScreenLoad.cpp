@@ -1,5 +1,7 @@
 #include "CScreenLoad.h"
 
+#include <crtdbg.h>
+
 #include "CBaldurChitin.h"
 #include "CCreatureFile.h"
 #include "CInfCursor.h"
@@ -715,13 +717,9 @@ void CScreenLoad::OnMainCancelButtonClick()
 // 0x63C6A0
 void CScreenLoad::StartLoad(INT nEngineState)
 {
-    OutputDebugStringA("SL:StartLoad\n");
     m_nEngineState = nEngineState;
-    OutputDebugStringA("SL:before Refresh\n");
     RefreshGameSlots();
-    OutputDebugStringA("SL:after Refresh\n");
     m_nTopGameSlot = max(m_nNumGameSlots - GAME_SLOTS, 0);
-    OutputDebugStringA("SL:done\n");
 }
 
 // 0x63C6D0
@@ -782,13 +780,15 @@ void CScreenLoad::FreeGameSlots()
 // 0x63C940
 void CScreenLoad::RefreshGameSlots()
 {
-    OutputDebugStringA("SL:RGS begin\n");
+    if (!_CrtCheckMemory()) {
+        OutputDebugStringA("HEAP CORRUPTED before RefreshGameSlots!\n");
+        DebugBreak();
+    }
+
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
-    OutputDebugStringA("SL:RGS got pGame\n");
     const CRuleTables& rule = pGame->GetRuleTables();
 
     CStringList* pGames = pGame->GetSaveGames();
-    OutputDebugStringA("SL:RGS got pGames\n");
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
     // __LINE__: 1344
@@ -809,34 +809,17 @@ void CScreenLoad::RefreshGameSlots()
     BYTE nSex; // NOTE: Unused.
 
     FreeGameSlots();
-    OutputDebugStringA("SL:RGS after FreeGameSlots\n");
 
     m_nNumGameSlots = pGames->GetCount();
-    // Force clean state before SetSize
-    m_aGameSlots.RemoveAll();
-    {
-        char buf[64];
-        sprintf(buf, "SL:RGS count=%d\n", m_nNumGameSlots);
-        OutputDebugStringA(buf);
-    }
     m_aGameSlots.SetSize(m_nNumGameSlots);
-    OutputDebugStringA("SL:RGS after SetSize\n");
 
     m_nMaxSlotNumber = -1;
-    OutputDebugStringA("SL:RGS after maxslot\n");
     m_nTopGameSlot = max(min(m_nTopGameSlot, m_nNumGameSlots - GAME_SLOTS), 0);
-    OutputDebugStringA("SL:RGS after top\n");
 
     INT nIndex = 0;
 
     POSITION pos = pGames->GetHeadPosition();
-    OutputDebugStringA("SL:RGS got pos\n");
-    int loopCount = 0;
     while (pos != NULL) {
-        loopCount++;
-        char buf[64];
-        sprintf(buf, "SL:RGS loop %d\n", loopCount);
-        OutputDebugStringA(buf);
         sFileName = pGames->GetAt(pos);
         if (sFileName != "default") {
             m_aGameSlots[nIndex] = new CScreenLoadGameSlot();
