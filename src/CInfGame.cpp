@@ -3095,8 +3095,9 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     g_pBaldurChitin->cSoundMixer.StopMusic(TRUE);
     DBG("LoadGame: after StopMusic");
 
-    cGameFile.Release();
-    DBG("LoadGame: after cGameFile.Release");
+    // Keep GAM data alive — sprites may reference it
+    // cGameFile.Release();
+    DBG("LoadGame: SKIPPED cGameFile.Release (testing)");
 
     m_bAnotherPlayerJoinedGame = FALSE;
 
