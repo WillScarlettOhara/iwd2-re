@@ -955,13 +955,14 @@ void CScreenLoad::RefreshGameSlots()
                     nChapter = 0;
                 }
 
-#if 0
                 CList<STRREF, STRREF>* pList = rule.GetChapterText(CResRef("chapters"), nChapter);
                 if (pList != NULL && pList->GetCount() > 0) {
                     sChapter = FetchString(pList->GetHead());
+                    DBG("RGS: chapter text for nChapter=%d: %s", nChapter, static_cast<LPCSTR>(sChapter));
+                } else {
+                    DBG("RGS: GetChapterText returned null/empty for nChapter=%d", nChapter);
                 }
                 delete pList;
-#endif
 
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
