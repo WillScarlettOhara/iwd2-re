@@ -782,11 +782,13 @@ void CScreenLoad::FreeGameSlots()
 // 0x63C940
 void CScreenLoad::RefreshGameSlots()
 {
-    OutputDebugStringA("SL:RefreshGameSlots begin\n");
+    OutputDebugStringA("SL:RGS begin\n");
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    OutputDebugStringA("SL:RGS got pGame\n");
     const CRuleTables& rule = pGame->GetRuleTables();
 
     CStringList* pGames = pGame->GetSaveGames();
+    OutputDebugStringA("SL:RGS got pGames\n");
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
     // __LINE__: 1344
@@ -807,8 +809,10 @@ void CScreenLoad::RefreshGameSlots()
     BYTE nSex; // NOTE: Unused.
 
     FreeGameSlots();
+    OutputDebugStringA("SL:RGS after FreeGameSlots\n");
 
     m_nNumGameSlots = pGames->GetCount();
+    OutputDebugStringA("SL:RGS got count\n");
     m_aGameSlots.SetSize(m_nNumGameSlots);
 
     m_nMaxSlotNumber = -1;
