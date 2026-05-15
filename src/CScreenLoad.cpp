@@ -935,6 +935,7 @@ void CScreenLoad::RefreshGameSlots()
 
                 // Parse chapter from global variables
                 nChapter = -1;
+#if 0
                 for (DWORD nVariable = 0; nVariable < pSavedGameHeader->m_globalVariablesCount; nVariable++) {
                     CAreaVariable* pAreaVariable = reinterpret_cast<CAreaVariable*>(pGameData + pSavedGameHeader->m_globalVariablesOffset) + nVariable;
                     if (&cVariable != pAreaVariable) {
@@ -950,16 +951,19 @@ void CScreenLoad::RefreshGameSlots()
                         nChapter = cVariable.m_intValue;
                     }
                 }
+#endif
 
                 if (nChapter < 0) {
                     nChapter = 0;
                 }
 
+#if 0
                 CList<STRREF, STRREF>* pList = rule.GetChapterText(CResRef("chapters"), nChapter);
                 if (pList != NULL && pList->GetCount() > 0) {
                     sChapter = FetchString(pList->GetHead());
                 }
                 delete pList;
+#endif
 
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
