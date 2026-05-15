@@ -683,7 +683,9 @@ void CAIGroup::Sort()
 // 0x4063E0
 void CAIGroup::GroupSetTarget(CPoint target, BOOL additive, SHORT formationType, CPoint cursor)
 {
+    OutputDebugStringA("GroupSetTarget: entry\n");
     if (m_memberList.IsEmpty()) {
+        OutputDebugStringA("GroupSetTarget: empty member list!\n");
         return;
     }
 
