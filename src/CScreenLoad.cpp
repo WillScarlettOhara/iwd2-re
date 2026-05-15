@@ -1,10 +1,5 @@
 #include "CScreenLoad.h"
 
-#include "debuglog.h"
-#ifdef _DEBUG
-#include <crtdbg.h>
-#endif
-
 #include "CBaldurChitin.h"
 #include "CCreatureFile.h"
 #include "CInfCursor.h"
@@ -728,11 +723,6 @@ void CScreenLoad::StartLoad(INT nEngineState)
 // 0x63C6D0
 void CScreenLoad::FreeGameSlots()
 {
-    DBG("FreeGameSlots: entry, n=%d", m_nNumGameSlots);
-#ifdef _DEBUG
-    _CrtCheckMemory();
-#endif
-
     if (m_nNumGameSlots < 0 || m_nNumGameSlots > 1000) {
         m_nNumGameSlots = 0;
         m_aGameSlots.SetSize(0);
@@ -784,20 +774,11 @@ void CScreenLoad::FreeGameSlots()
     }
 
     m_nNumGameSlots = 0;
-    DBG("FreeGameSlots: done");
 }
 
 // 0x63C940
 void CScreenLoad::RefreshGameSlots()
 {
-    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
-    renderLock.Lock(INFINITE);
-
-    DBG("RefreshGameSlots: entry");
-#ifdef _DEBUG
-    _CrtCheckMemory();
-#endif
-
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     const CRuleTables& rule = pGame->GetRuleTables();
 
@@ -824,18 +805,13 @@ void CScreenLoad::RefreshGameSlots()
 
     FreeGameSlots();
 
-    DBG("RefreshGameSlots: after FreeGameSlots");
-
     INT nGameSlotsCapacity = pGames->GetCount();
-    DBG("RefreshGameSlots: GetCount=%d", nGameSlotsCapacity);
 
     m_aGameSlots.SetSize(nGameSlotsCapacity);
-    DBG("RefreshGameSlots: after SetSize(%d)", nGameSlotsCapacity);
 
     for (INT nSlot = 0; nSlot < nGameSlotsCapacity; nSlot++) {
         m_aGameSlots[nSlot] = NULL;
     }
-    DBG("RefreshGameSlots: after NULL init");
     m_nNumGameSlots = 0;
 
     m_nMaxSlotNumber = -1;
@@ -846,10 +822,8 @@ void CScreenLoad::RefreshGameSlots()
     POSITION pos = pGames->GetHeadPosition();
     while (pos != NULL) {
         sFileName = pGames->GetAt(pos);
-        DBG("RefreshGameSlots: processing save %s", static_cast<LPCSTR>(sFileName));
         if (sFileName != "default") {
             CScreenLoadGameSlot* pSlot = new CScreenLoadGameSlot();
-            DBG("RGS: slot created");
             pSlot->m_sFileName = sFileName;
 
             cResPortrait = "";
@@ -876,7 +850,6 @@ void CScreenLoad::RefreshGameSlots()
                 pSlot->m_sSlotName = sFileName;
             }
 
-            DBG("RGS: after StringOps, building sDirName\n");
             // Use sprintf to avoid MFC CString concatenation crashes
             char szDirName[512];
             const char* szSaveRoot = ".\\mpsave\\";
@@ -934,19 +907,14 @@ void CScreenLoad::RefreshGameSlots()
                 }
 
                 // Parse chapter from global variables
-                // Use raw byte offsets (CAreaVariable has alignment padding mismatch)
+                // Use raw byte offsets (CAreaVariable double causes padding mismatch: 88 vs 84)
                 nChapter = -1;
                 DWORD varOffset = pSavedGameHeader->m_globalVariablesOffset;
                 DWORD varCount = pSavedGameHeader->m_globalVariablesCount;
-                DBG("RGS: vars offset=0x%X count=%d", varOffset, varCount);
                 for (DWORD nVariable = 0; nVariable < varCount && nVariable < 5000; nVariable++) {
-                    BYTE* pVar = pGameData + varOffset + nVariable * (32 + 2 + 2 + 4 + 4 + 8 + 32);
-                    // Check if this is the CHAPTER_GLOBAL variable
-                    // Name is at pVar + 0, SCRIPTNAME_SIZE = 32
+                    BYTE* pVar = pGameData + varOffset + nVariable * 84;
                     if (memcmp(pVar, "CHAPTER", 7) == 0 && pVar[7] == '\0') {
-                        // m_intValue is at offset 32+2+2+4 = 40
                         nChapter = *reinterpret_cast<LONG*>(pVar + 40);
-                        DBG("RGS: found CHAPTER, nChapter=%d", nChapter);
                         break;
                     }
                 }
@@ -958,9 +926,6 @@ void CScreenLoad::RefreshGameSlots()
                 CList<STRREF, STRREF>* pList = rule.GetChapterText(CResRef("chapters"), nChapter);
                 if (pList != NULL && pList->GetCount() > 0) {
                     sChapter = FetchString(pList->GetHead());
-                    DBG("RGS: chapter text for nChapter=%d: %s", nChapter, static_cast<LPCSTR>(sChapter));
-                } else {
-                    DBG("RGS: GetChapterText returned null/empty for nChapter=%d", nChapter);
                 }
                 delete pList;
 
