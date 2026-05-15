@@ -292,8 +292,16 @@ void CGameAIBase::DoAction()
 // 0x44DC10
 SHORT CGameAIBase::ExecuteAction()
 {
-    // Minimal implementation: return ACTION_DONE to consume pending actions
-    // TODO: Implement full action execution (movement, attack, spell, etc.)
+    // TODO: Incomplete — only MOVETOPOINT implemented so far
+    if (m_curAction.m_actionID == CAIAction::MOVETOPOINT) {
+        CGameSprite* pSprite = static_cast<CGameSprite*>(this);
+        if (pSprite != NULL) {
+            pSprite->SetTarget(m_curAction.m_dest, FALSE);
+        }
+        return ACTION_DONE;
+    }
+
+    // Other action types return ACTION_DONE to consume them
     return ACTION_DONE;
 }
 
