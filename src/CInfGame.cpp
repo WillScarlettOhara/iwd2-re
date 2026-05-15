@@ -2139,13 +2139,11 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
                 BYTE* pCreData = pGame + creOffset;
 
                 if (memcmp(pCreData, "CRE V2.2", 8) == 0) {
-                    DBG("Unmarshal: creating sprite for slot %d", slotIndex);
                     CGameSprite* pSprite = new CGameSprite(pCreData, creSize, 0,
                         CGameObject::TYPE_SPRITE, -1, 0, 0, 0,
                         CPoint(posX, posY), facing);
 
                     if (pSprite != NULL && pSprite->m_id != CGameObjectArray::INVALID_INDEX) {
-                        // SetResRef is needed for proper sprite initialization
                         pSprite->SetResRef(CResRef(reinterpret_cast<char*>(pCreData + 0x280)));
 
                         LONG nIndex = pSprite->m_id;
@@ -2156,13 +2154,7 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
                                 m_nCharacters = static_cast<SHORT>(slotIndex + 1);
                             }
                         }
-                        DBG("Unmarshal: sprite id=%ld resref=%s for slot %d", nIndex,
-                            reinterpret_cast<char*>(pCreData + 0x280), slotIndex);
-                    } else {
-                        DBG("Unmarshal: sprite creation failed for slot %d", slotIndex);
                     }
-                } else {
-                    DBG("Unmarshal: bad CRE signature at slot %d", slotIndex);
                 }
             }
 
@@ -2175,7 +2167,7 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
     // TODO: Load journal
     // TODO: Load inventory
 
-    DBG("Unmarshal: done (partial), returning TRUE, m_nCharacters=%d", m_nCharacters);
+    DBG("Unmarshal: done (partial)");
     return TRUE;
 }
 
@@ -2948,7 +2940,7 @@ void CInfGame::SaveMultiPlayerPermissions()
 // 0x5AB190
 void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace)
 {
-    DBG("LoadGame: ENTER save=%s bProgress=%d bInPlace=%d", static_cast<LPCSTR>(m_sSaveGame), bProgressBarRequired, bProgressBarInPlace);
+    DBG("LoadGame: enter save=%s", static_cast<LPCSTR>(m_sSaveGame));
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
     // __LINE__: 8447
     UTIL_ASSERT(m_sSaveGame != "");
@@ -3083,21 +3075,15 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     CGameFile cGameFile;
     cGameFile.SetResRef(CResRef("ICEWIND2"), TRUE, TRUE);
 
-    DBG("LoadGame: Before Unmarshal - size=%d", cGameFile.GetDataSize());
     Unmarshal(cGameFile.GetData(),
         cGameFile.GetDataSize(),
         bProgressBarInPlace | bProgressBarRequired);
-    DBG("LoadGame: After Unmarshal");
 
     g_pBaldurChitin->cSoundMixer.StartSong(-1, 0x1 | 0x2);
-    DBG("LoadGame: after StartSong");
     SleepEx(500, FALSE);
     g_pBaldurChitin->cSoundMixer.StopMusic(TRUE);
-    DBG("LoadGame: after StopMusic");
 
-    // Keep GAM data alive — sprites may reference it
-    // cGameFile.Release();
-    DBG("LoadGame: SKIPPED cGameFile.Release (testing)");
+    cGameFile.Release();
 
     m_bAnotherPlayerJoinedGame = FALSE;
 
@@ -3133,12 +3119,9 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
             255);
     }
 
-    DBG("LoadGame: before SelectAll, m_nCharacters=%d", m_nCharacters);
     SelectAll(FALSE);
-    DBG("LoadGame: after SelectAll");
 
     g_pBaldurChitin->GetObjectGame()->m_cButtonArray.UpdateState();
-    DBG("LoadGame: END");
 }
 
 // 0x5ABA20
