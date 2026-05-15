@@ -1,5 +1,9 @@
 #include "CScreenLoad.h"
 
+#ifdef _DEBUG
+#include <crtdbg.h>
+#endif
+
 #include "CBaldurChitin.h"
 #include "CCreatureFile.h"
 #include "CInfCursor.h"
@@ -723,6 +727,10 @@ void CScreenLoad::StartLoad(INT nEngineState)
 // 0x63C6D0
 void CScreenLoad::FreeGameSlots()
 {
+#ifdef _DEBUG
+    _CrtCheckMemory();
+#endif
+
     if (m_nNumGameSlots < 0 || m_nNumGameSlots > 1000) {
         m_nNumGameSlots = 0;
         m_aGameSlots.SetSize(0);
