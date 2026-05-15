@@ -3096,6 +3096,7 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     DBG("LoadGame: after StopMusic");
 
     cGameFile.Release();
+    DBG("LoadGame: after cGameFile.Release");
 
     m_bAnotherPlayerJoinedGame = FALSE;
 
@@ -3131,9 +3132,12 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
             255);
     }
 
+    DBG("LoadGame: before SelectAll, m_nCharacters=%d", m_nCharacters);
     SelectAll(FALSE);
+    DBG("LoadGame: after SelectAll");
 
     g_pBaldurChitin->GetObjectGame()->m_cButtonArray.UpdateState();
+    DBG("LoadGame: END");
 }
 
 // 0x5ABA20

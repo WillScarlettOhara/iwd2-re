@@ -506,7 +506,9 @@ void CScreenLoad::LoadGame(INT nSlot)
                 }
 
                 pGame->LoadGame(TRUE, FALSE);
+                OutputDebugStringA("CSL: after LoadGame\n");
                 FreeGameSlots();
+                OutputDebugStringA("CSL: after FreeGameSlots\n");
                 m_aGameSlots.SetSize(0);
 
                 if (m_cUIManager.m_pFocusedControl != NULL) {
@@ -514,7 +516,9 @@ void CScreenLoad::LoadGame(INT nSlot)
                 }
 
                 pGame->MultiplayerSetCharacterCreationLocation();
+                OutputDebugStringA("CSL: before SetupCharacters\n");
                 pGame->SetupCharacters(FALSE);
+                OutputDebugStringA("CSL: after SetupCharacters\n");
 
                 for (INT nCharacterSlot = 0; nCharacterSlot < CINFGAME_MAXCHARACTERS; nCharacterSlot++) {
                     if (pGame->GetCharacterSlot(nCharacterSlot) != CGameObjectArray::INVALID_INDEX) {
