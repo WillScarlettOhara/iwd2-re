@@ -2045,7 +2045,7 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
     }
 
     // Version check — support V2.0, V2.2, etc.
-    if (memcmp(pGame, "V2.", 3) != 0) {
+    if (memcmp(pGame + 4, "V2.", 3) != 0) {
         DBG("Unmarshal: unsupported version (expected V2.x)");
         return FALSE;
     }
