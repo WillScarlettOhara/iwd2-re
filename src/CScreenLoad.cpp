@@ -812,8 +812,13 @@ void CScreenLoad::RefreshGameSlots()
     OutputDebugStringA("SL:RGS after FreeGameSlots\n");
 
     m_nNumGameSlots = pGames->GetCount();
-    OutputDebugStringA("SL:RGS got count\n");
+    {
+        char buf[64];
+        sprintf(buf, "SL:RGS count=%d\n", m_nNumGameSlots);
+        OutputDebugStringA(buf);
+    }
     m_aGameSlots.SetSize(m_nNumGameSlots);
+    OutputDebugStringA("SL:RGS after SetSize\n");
 
     m_nMaxSlotNumber = -1;
     m_nTopGameSlot = max(min(m_nTopGameSlot, m_nNumGameSlots - GAME_SLOTS), 0);
