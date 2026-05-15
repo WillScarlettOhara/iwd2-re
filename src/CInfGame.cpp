@@ -2141,8 +2141,8 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
                     pCreData[0], pCreData[1], pCreData[2], pCreData[3],
                     pCreData[4], pCreData[5], pCreData[6], pCreData[7], creSize);
 
-                // Only create first sprite to test — COPY the CRE data first
-                if (memcmp(pCreData, "CRE V2.2", 8) == 0 && i == 0) {
+                // SKIP sprite creation completely — just test SetupCharacters
+                if (FALSE && memcmp(pCreData, "CRE V2.2", 8) == 0 && i == 0) {
                     // Allocate a persistent copy so it outlives cGameFile
                     BYTE* pCreCopy = new BYTE[creSize];
                     memcpy(pCreCopy, pCreData, creSize);
