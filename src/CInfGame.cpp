@@ -1994,6 +1994,8 @@ BOOL CInfGame::SaveGame(unsigned char a1, unsigned char a2, unsigned char a3)
 // 0x5A7E40
 BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
 {
+    DBG("Unmarshal: STUBBED - pGame=0x%p nGame=%d bProgress=%d", pGame, nGame, bProgressBarInPlace);
+    DBG("Unmarshal: Returning FALSE - no game state loaded!");
     // TODO: Incomplete.
 
     return FALSE;
@@ -2768,7 +2770,7 @@ void CInfGame::SaveMultiPlayerPermissions()
 // 0x5AB190
 void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace)
 {
-    DBG("LoadGame: enter save=%s", static_cast<LPCSTR>(m_sSaveGame));
+    DBG("LoadGame: ENTER save=%s bProgress=%d bInPlace=%d", static_cast<LPCSTR>(m_sSaveGame), bProgressBarRequired, bProgressBarInPlace);
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
     // __LINE__: 8447
     UTIL_ASSERT(m_sSaveGame != "");
@@ -2903,9 +2905,11 @@ void CInfGame::LoadGame(BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlac
     CGameFile cGameFile;
     cGameFile.SetResRef(CResRef("ICEWIND2"), TRUE, TRUE);
 
+    DBG("LoadGame: Before Unmarshal - size=%d", cGameFile.GetDataSize());
     Unmarshal(cGameFile.GetData(),
         cGameFile.GetDataSize(),
         bProgressBarInPlace | bProgressBarRequired);
+    DBG("LoadGame: After Unmarshal");
 
     g_pBaldurChitin->cSoundMixer.StartSong(-1, 0x1 | 0x2);
     SleepEx(500, FALSE);

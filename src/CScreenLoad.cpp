@@ -14,6 +14,7 @@
 #include "CUIControlTextDisplay.h"
 #include "CUIPanel.h"
 #include "CUtil.h"
+#include "debuglog.h"
 
 #define GAME_SLOTS 5
 
@@ -482,6 +483,7 @@ void CScreenLoad::UpdateMainPanel()
 // 0x63BE80
 void CScreenLoad::LoadGame(INT nSlot)
 {
+    DBG("CScreenLoad::LoadGame: nSlot=%d", nSlot);
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
     // __LINE__: 849
     UTIL_ASSERT(0 <= nSlot && nSlot < GAME_SLOTS);
@@ -571,9 +573,12 @@ void CScreenLoad::LoadGame(INT nSlot)
             // NOTE: Uninline.
             m_cUIManager.KillCapture();
 
+            DBG("CScreenLoad::LoadGame: engineState=%d, switching engine", m_nEngineState);
+
             switch (m_nEngineState) {
             case 0:
             case 2:
+                DBG("CScreenLoad::LoadGame: SelectEngine -> World");
                 SelectEngine(g_pBaldurChitin->m_pEngineWorld);
                 break;
             case 3:
