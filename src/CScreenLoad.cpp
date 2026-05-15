@@ -933,6 +933,34 @@ void CScreenLoad::RefreshGameSlots()
                     sName = reinterpret_cast<char*>(pCreatureRaw + 0x01BE);
                 }
 
+                // Parse chapter from global variables
+                nChapter = -1;
+                for (DWORD nVariable = 0; nVariable < pSavedGameHeader->m_globalVariablesCount; nVariable++) {
+                    CAreaVariable* pAreaVariable = reinterpret_cast<CAreaVariable*>(pGameData + pSavedGameHeader->m_globalVariablesOffset) + nVariable;
+                    if (&cVariable != pAreaVariable) {
+                        strncpy(cVariable.m_name, pAreaVariable->m_name, SCRIPTNAME_SIZE);
+                        cVariable.m_type = pAreaVariable->m_type;
+                        cVariable.m_resRefType = pAreaVariable->m_resRefType;
+                        cVariable.m_dwValue = pAreaVariable->m_dwValue;
+                        cVariable.m_intValue = pAreaVariable->m_intValue;
+                        cVariable.m_floatValue = pAreaVariable->m_floatValue;
+                        strncpy(cVariable.m_stringValue, pAreaVariable->m_stringValue, SCRIPTNAME_SIZE);
+                    }
+                    if (cVariable.GetName() == CInfGame::CHAPTER_GLOBAL) {
+                        nChapter = cVariable.m_intValue;
+                    }
+                }
+
+                if (nChapter < 0) {
+                    nChapter = 0;
+                }
+
+                CList<STRREF, STRREF>* pList = rule.GetChapterText(CResRef("chapters"), nChapter);
+                if (pList != NULL && pList->GetCount() > 0) {
+                    sChapter = FetchString(pList->GetHead());
+                }
+                delete pList;
+
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
             }
