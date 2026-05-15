@@ -1,5 +1,6 @@
 #include "CGameAIBase.h"
 
+#include "debuglog.h"
 #include "CAIResponse.h"
 #include "CAIScript.h"
 #include "CAITrigger.h"
@@ -294,11 +295,11 @@ SHORT CGameAIBase::ExecuteAction()
 {
     // TODO: Incomplete — only MOVETOPOINT implemented so far
     if (m_curAction.m_actionID == CAIAction::MOVETOPOINT) {
-        OutputDebugStringA("ExecuteAction: MOVETOPOINT\n");
+        DBG("ExecuteAction: MOVETOPOINT\n");
         CGameSprite* pSprite = static_cast<CGameSprite*>(this);
         if (pSprite != NULL) {
             pSprite->SetTarget(m_curAction.m_dest, FALSE);
-            OutputDebugStringA("ExecuteAction: SetTarget called\n");
+            DBG("ExecuteAction: SetTarget called\n");
         }
         return ACTION_DONE;
     }
@@ -352,13 +353,13 @@ void CGameAIBase::ProcessAI()
             CAIAction action;
             SetCurrAction(GetNextAction(action));
             ResetCurrResponse();
-            OutputDebugStringA("ProcessAI: dequeued action\n");
+            DBG("ProcessAI: dequeued action\n");
         }
     }
 
     if (m_curAction.m_actionID != CAIAction::NO_ACTION) {
         DoAction();
-        OutputDebugStringA("ProcessAI: DoAction called\n");
+        DBG("ProcessAI: DoAction called\n");
     }
 }
 

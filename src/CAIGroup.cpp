@@ -1,5 +1,6 @@
 #include "CAIGroup.h"
 
+#include "debuglog.h"
 #include "CAITrigger.h"
 #include "CBaldurChitin.h"
 #include "CGameObjectArray.h"
@@ -683,9 +684,9 @@ void CAIGroup::Sort()
 // 0x4063E0
 void CAIGroup::GroupSetTarget(CPoint target, BOOL additive, SHORT formationType, CPoint cursor)
 {
-    OutputDebugStringA("GroupSetTarget: entry\n");
+    DBG("GroupSetTarget: entry\n");
     if (m_memberList.IsEmpty()) {
-        OutputDebugStringA("GroupSetTarget: empty member list!\n");
+        DBG("GroupSetTarget: empty member list!\n");
         return;
     }
 
