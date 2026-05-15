@@ -2113,21 +2113,31 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
 
         BYTE* pMember = pGame + partyOffset;
         for (int i = 0; i < nPartyMembers && i < 6; i++) {
-            int slotIndex = *reinterpret_cast<int*>(pMember);           // +0x00
-            int creOffset = *reinterpret_cast<int*>(pMember + 4);       // +0x04
-            int creSize   = *reinterpret_cast<int*>(pMember + 8);       // +0x08
+            // Corrected from NearInfinity CHR structure:
+            // +0x00: selectionState (u32)
+            // +0x04: partyPosition / slotIndex (u16)
+            // +0x06: creOffset (u32) — offset of CRE data in file
+            // +0x0A: creSize (u32) — size of CRE data
+            // +0x14: orientation (u16) — facing direction
+            // +0x16: areaRef (char[8]) — area RESREF
+            // +0x1E: posX (u16)
+            // +0x20: posY (u16)
+            int slotIndex = *reinterpret_cast<unsigned short*>(pMember + 4); // +0x04
+            int creOffset = *reinterpret_cast<int*>(pMember + 6);              // +0x06
+            int creSize   = *reinterpret_cast<int*>(pMember + 0x0A);           // +0x0A
+            short facing  = *reinterpret_cast<short*>(pMember + 0x14);         // +0x14
 
-            // Area (RESREF) at +0x14
+            // Area (RESREF) at +0x16
             char areaRef[9];
-            memcpy(areaRef, pMember + 0x14, 8);
+            memcpy(areaRef, pMember + 0x16, 8);
             areaRef[8] = 0;
 
-            // Position at +0x1C
-            short posX = *reinterpret_cast<short*>(pMember + 0x1C);
-            short posY = *reinterpret_cast<short*>(pMember + 0x1E);
+            // Position at +0x1E / +0x20
+            short posX = *reinterpret_cast<short*>(pMember + 0x1E);
+            short posY = *reinterpret_cast<short*>(pMember + 0x20);
 
-            DBG("Unmarshal: member[%d] slot=%d creOff=0x%X creSize=%d area=%s pos=(%d,%d)",
-                i, slotIndex, creOffset, creSize, areaRef, posX, posY);
+            DBG("Unmarshal: member[%d] slot=%d creOff=0x%X creSize=%d area=%s pos=(%d,%d) facing=%d",
+                i, slotIndex, creOffset, creSize, areaRef, posX, posY, facing);
 
             pMember += memberSize;
         }
