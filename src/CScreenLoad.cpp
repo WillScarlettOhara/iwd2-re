@@ -1,7 +1,5 @@
 #include "CScreenLoad.h"
 
-#include <crtdbg.h>
-
 #include "CBaldurChitin.h"
 #include "CCreatureFile.h"
 #include "CInfCursor.h"
@@ -780,11 +778,6 @@ void CScreenLoad::FreeGameSlots()
 // 0x63C940
 void CScreenLoad::RefreshGameSlots()
 {
-    if (!_CrtCheckMemory()) {
-        OutputDebugStringA("HEAP CORRUPTED before RefreshGameSlots!\n");
-        DebugBreak();
-    }
-
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     const CRuleTables& rule = pGame->GetRuleTables();
 
