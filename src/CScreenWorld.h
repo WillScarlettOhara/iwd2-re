@@ -159,7 +159,7 @@ public:
     /* 0668 */ CVidFont field_668;
     /* 0B68 */ CKeyInfo m_pVirtualKeys[CSCREENWORLD_VIRTUAL_KEYS];
     /* 0E48 */ BYTE m_pVirtualKeysFlags[CSCREENWORLD_VIRTUAL_KEYS];
-    /* 0EA4 */ int field_EA4;
+    /* 0EA4 */ int m_nPopupState;
     /* 0EA8 */ CUIControlTextDisplay* m_pActiveDialogDisplay;
     /* 0EAC */ CUIControlTextDisplay* m_pActiveChatDisplay;
     /* 0EB0 */ CGameDialogSprite m_internalLoadedDialog;

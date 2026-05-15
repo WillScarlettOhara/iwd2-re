@@ -247,7 +247,7 @@ public:
     /* 15DE */ SHORT m_nTopSkill;
     /* 15E0 */ int field_15E0;
     /* 15E4 */ INT m_storedSkills[16];
-    /* 1624 */ CUIControlScrollBar* field_1624;
+    /* 1624 */ CUIControlScrollBar* m_pActiveScrollBar;
     /* 1628 */ int field_1628;
 };
 

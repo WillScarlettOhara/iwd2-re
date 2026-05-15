@@ -191,7 +191,7 @@ CScreenCreateChar::CScreenCreateChar()
     field_596 = 0;
     field_14A4 = 0;
     field_14A8 = 0;
-    field_1624 = NULL;
+    m_pActiveScrollBar = NULL;
 
     SetVideoMode(0);
 
@@ -601,31 +601,31 @@ void CScreenCreateChar::OnMouseMove(CPoint pt)
         CUIPanel* pPanel = m_cUIManager.GetPanel(15);
         CUIControlBase* pControl = pPanel->GetControl(8);
         if (pControl != NULL && pControl->IsOver(pt - pPanel->m_ptOrigin)) {
-            field_1624 = static_cast<CUIControlScrollBar*>(pPanel->GetControl(9));
-            m_pCurrentScrollBar = field_1624;
+            m_pActiveScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(9));
+            m_pCurrentScrollBar = m_pActiveScrollBar;
         } else {
-            field_1624 = static_cast<CUIControlScrollBar*>(pPanel->GetControl(1));
-            m_pCurrentScrollBar = field_1624;
+            m_pActiveScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(1));
+            m_pCurrentScrollBar = m_pActiveScrollBar;
         }
     } else if (m_cUIManager.GetPanel(20)->m_bActive) {
         CUIPanel* pPanel = m_cUIManager.GetPanel(20);
         CUIControlBase* pControl = pPanel->GetControl(4);
         if (pControl != NULL && pControl->IsOver(pt - pPanel->m_ptOrigin)) {
-            field_1624 = static_cast<CUIControlScrollBar*>(pPanel->GetControl(5));
-            m_pCurrentScrollBar = field_1624;
+            m_pActiveScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(5));
+            m_pCurrentScrollBar = m_pActiveScrollBar;
         } else {
-            field_1624 = static_cast<CUIControlScrollBar*>(pPanel->GetControl(3));
-            m_pCurrentScrollBar = field_1624;
+            m_pActiveScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(3));
+            m_pCurrentScrollBar = m_pActiveScrollBar;
         }
     } else if (m_cUIManager.GetPanel(55)->m_bActive) {
         CUIPanel* pPanel = m_cUIManager.GetPanel(55);
         CUIControlBase* pControl = pPanel->GetControl(92);
         if (pControl != NULL && pControl->IsOver(pt - pPanel->m_ptOrigin)) {
-            field_1624 = static_cast<CUIControlScrollBar*>(pPanel->GetControl(91));
-            m_pCurrentScrollBar = field_1624;
+            m_pActiveScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(91));
+            m_pCurrentScrollBar = m_pActiveScrollBar;
         } else {
-            field_1624 = static_cast<CUIControlScrollBar*>(pPanel->GetControl(104));
-            m_pCurrentScrollBar = field_1624;
+            m_pActiveScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(104));
+            m_pCurrentScrollBar = m_pActiveScrollBar;
         }
     }
 
@@ -2472,11 +2472,11 @@ void CScreenCreateChar::UpdatePopupPanel(DWORD dwPanelId, CGameSprite* pSprite)
         break;
     case 20:
         if (1) {
-            if (field_1624 == NULL) {
-                field_1624 = static_cast<CUIControlScrollBar*>(pPanel->GetControl(3));
+            if (m_pActiveScrollBar == NULL) {
+                m_pActiveScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(3));
             }
 
-            m_pCurrentScrollBar = field_1624;
+            m_pCurrentScrollBar = m_pActiveScrollBar;
 
             CUIControlButton* pButton = static_cast<CUIControlButton*>(pPanel->GetControl(0));
             pButton->SetEnabled(IsDoneButtonClickable(pSprite));
@@ -2861,11 +2861,11 @@ void CScreenCreateChar::UpdateFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
 {
     DWORD dwButtonId;
 
-    if (field_1624 == NULL) {
-        field_1624 = static_cast<CUIControlScrollBar*>(pPanel->GetControl(104));
+    if (m_pActiveScrollBar == NULL) {
+        m_pActiveScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(104));
     }
 
-    m_pCurrentScrollBar = field_1624;
+    m_pCurrentScrollBar = m_pActiveScrollBar;
 
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
@@ -3543,11 +3543,11 @@ void CScreenCreateChar::UpdateClericWizardSpecializationPanel(CUIPanel* pPanel, 
 // 0x610190
 void CScreenCreateChar::UpdateHatedRacePanel(CUIPanel* pPanel, CGameSprite* pSprite)
 {
-    if (field_1624 == NULL) {
-        field_1624 = static_cast<CUIControlScrollBar*>(pPanel->GetControl(1));
+    if (m_pActiveScrollBar == NULL) {
+        m_pActiveScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(1));
     }
 
-    m_pCurrentScrollBar = field_1624;
+    m_pCurrentScrollBar = m_pActiveScrollBar;
 
     for (INT nIndex = 0; nIndex < 11; nIndex++) {
         // NOTE: Uninline.

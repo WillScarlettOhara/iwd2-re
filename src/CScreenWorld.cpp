@@ -171,7 +171,7 @@ CScreenWorld::CScreenWorld()
     m_waitingOnResize = 0;
     field_F44 = 0;
     m_scrollLockId = CGameObjectArray::INVALID_INDEX;
-    field_EA4 = -1;
+    m_nPopupState = -1;
     field_10B2 = -1;
     field_10B4 = 0;
     m_interactionIndex = CGameObjectArray::INVALID_INDEX;
@@ -499,7 +499,7 @@ void CScreenWorld::EngineGameInit()
     m_waitingOnResize = 0;
     field_F44 = 0;
     m_scrollLockId = CGameObjectArray::INVALID_INDEX;
-    field_EA4 = -1;
+    m_nPopupState = -1;
     field_10B2 = -1;
     field_10B4 = 0;
     m_interactionIndex = CGameObjectArray::INVALID_INDEX;
@@ -766,7 +766,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
 
     if (pGame->m_bGameLoaded) {
         if (pGame->GetWorldTimer()->m_active
-            && field_EA4 != 0
+            && m_nPopupState != 0
             && m_nPartySizeCheckStartDelay <= 0
             && pGame->m_characterOverflow.GetCount() > 0) {
             if (!g_pChitin->cNetwork.GetSessionOpen()) {
@@ -1176,7 +1176,7 @@ void CScreenWorld::AsynchronousUpdate(BOOL bActiveEngine)
             m_autoPauseId = CGameObjectArray::INVALID_INDEX;
         }
 
-        if (field_EA4 == 17) {
+        if (m_nPopupState == 17) {
             CUIPanel* pPanel = m_cUIManager.GetPanel(17);
 
             if (m_bHardPaused) {
@@ -1420,7 +1420,7 @@ void CScreenWorld::TimerSynchronousUpdate()
 
     CGameArea* pArea = pGame->GetVisibleArea();
     if (pArea == NULL || pArea->m_firstRender < 2) {
-        if (field_EA4 == 6) {
+        if (m_nPopupState == 6) {
             SHORT nPortrait;
 
             for (nPortrait = 0; nPortrait <= 5; nPortrait++) {
@@ -1689,29 +1689,29 @@ void CScreenWorld::StopContainer()
         HideInterface();
     }
 
-    field_EA4 = -1;
+    m_nPopupState = -1;
 }
 
 // 0x691090
 void CScreenWorld::CancelPopup()
 {
-    switch (field_EA4) {
+    switch (m_nPopupState) {
     case -1:
     case 0:
     case 7:
         break;
     case 6:
         StopCommand();
-        field_EA4 = -1;
+        m_nPopupState = -1;
         break;
     case 8:
         StopContainer();
-        field_EA4 = -1;
+        m_nPopupState = -1;
         break;
     case 15:
     case 17:
         StopDeath();
-        field_EA4 = -1;
+        m_nPopupState = -1;
         break;
     case 19:
     case 21:
@@ -1729,7 +1729,7 @@ void CScreenWorld::StartCommand()
     // NOTE: Uninline.
     CancelPopup();
 
-    field_EA4 = 6;
+    m_nPopupState = 6;
     m_cUIManager.ClearTooltip();
 
     for (INT nId = 6; nId <= 17; nId++) {
@@ -1776,7 +1776,7 @@ void CScreenWorld::StopCommand()
         m_cUIManager.GetPanel(GetPanel_22_0())->InvalidateRect(NULL);
     }
 
-    field_EA4 = -1;
+    m_nPopupState = -1;
 }
 
 // FIXME: `cResStore` should be reference.
@@ -2140,7 +2140,7 @@ void CScreenWorld::StartDeath()
     // NOTE: Uninline.
     CancelPopup();
 
-    field_EA4 = 17;
+    m_nPopupState = 17;
 
     m_cUIManager.ClearTooltip();
     pGame->GetWorldTimer()->StopTime();
@@ -2242,7 +2242,7 @@ void CScreenWorld::StopDeath()
     m_cUIManager.GetPanel(1)->InvalidateRect(NULL);
     m_cUIManager.GetPanel(GetPanel_22_0())->InvalidateRect(NULL);
 
-    field_EA4 = -1;
+    m_nPopupState = -1;
 
     if (m_cUIManager.m_pFocusedControl != NULL) {
         // NOTE: Uninline.
@@ -2559,23 +2559,23 @@ void CScreenWorld::CheckEndOfMultiplayerSynch()
 // 0x693860
 void CScreenWorld::CancelEngine()
 {
-    switch (field_EA4) {
+    switch (m_nPopupState) {
     case -1:
     case 0:
     case 7:
         break;
     case 6:
         StopCommand();
-        field_EA4 = -1;
+        m_nPopupState = -1;
         break;
     case 8:
         StopContainer();
-        field_EA4 = -1;
+        m_nPopupState = -1;
         break;
     case 15:
     case 17:
         StopDeath();
-        field_EA4 = -1;
+        m_nPopupState = -1;
         break;
     case 19:
     case 21:
@@ -2721,11 +2721,11 @@ void CScreenWorld::UpdatePartyGoldStatus()
 {
     CUIPanel* pPanel;
 
-    switch (field_EA4) {
+    switch (m_nPopupState) {
     case 7:
     case 19:
     case 21:
-        pPanel = m_cUIManager.GetPanel(field_EA4);
+        pPanel = m_cUIManager.GetPanel(m_nPopupState);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenWorld.cpp
         // __LINE__: 9851
@@ -2737,7 +2737,7 @@ void CScreenWorld::UpdatePartyGoldStatus()
             g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_nPartyGold);
         break;
     case 8:
-        pPanel = m_cUIManager.GetPanel(field_EA4);
+        pPanel = m_cUIManager.GetPanel(m_nPopupState);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenWorld.cpp
         // __LINE__: 9841
