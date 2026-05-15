@@ -3326,7 +3326,7 @@ void CInfGame::SelectAll(BOOLEAN bPlaySound)
         } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
         if (rc == CGameObjectArray::SUCCESS) {
-            if (pSprite->m_pArea == GetVisibleArea()) {
+            if (GetVisibleArea() != NULL && pSprite->m_pArea == GetVisibleArea()) {
                 if (pSprite->Orderable(FALSE) && !pSprite->m_bSelected) {
                     do {
                         rc = m_cObjectArray.GetDeny(iSprite,
