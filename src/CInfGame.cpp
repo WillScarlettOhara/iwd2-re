@@ -2134,29 +2134,38 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
             DBG("Unmarshal: member[%d] slot=%d creOff=0x%X creSize=%d area=%s pos=(%d,%d) facing=%d",
                 i, slotIndex, creOffset, creSize, areaRef, posX, posY, facing);
 
-            // Create CGameSprite from embedded CRE data
-            if (FALSE && creOffset > 0 && creSize > 0 && creOffset + creSize <= nGame) {
+            // Create CGameSprite from embedded CRE data — test with just logging first
+            if (creOffset > 0 && creSize > 0 && creOffset + creSize <= nGame) {
                 BYTE* pCreData = pGame + creOffset;
-                CGameSprite* pSprite = new CGameSprite(pCreData, creSize, 0,
-                    CGameObject::TYPE_SPRITE, -1, 0, 0, 0,
-                    CPoint(posX, posY), facing);
+                DBG("Unmarshal: CRE header: %02X %02X %02X %02X %02X %02X %02X %02X (size=%d)",
+                    pCreData[0], pCreData[1], pCreData[2], pCreData[3],
+                    pCreData[4], pCreData[5], pCreData[6], pCreData[7], creSize);
 
-                if (pSprite != NULL) {
-                    LONG nIndex;
-                    BYTE rc = m_cObjectArray.Add(&nIndex, pSprite, INFINITE);
-                    if (rc == CGameObjectArray::SUCCESS) {
-                        if (slotIndex >= 0 && slotIndex < 6) {
-                            m_characters[slotIndex] = nIndex;
-                            m_characterPortraits[slotIndex] = nIndex;
-                            if (static_cast<SHORT>(slotIndex + 1) > m_nCharacters) {
-                                m_nCharacters = static_cast<SHORT>(slotIndex + 1);
+                // Only create sprites if CRE data has correct signature
+                if (memcmp(pCreData, "CRE V2.2", 8) == 0) {
+                    CGameSprite* pSprite = new CGameSprite(pCreData, creSize, 0,
+                        CGameObject::TYPE_SPRITE, -1, 0, 0, 0,
+                        CPoint(posX, posY), facing);
+
+                    if (pSprite != NULL) {
+                        LONG nIndex;
+                        BYTE rc = m_cObjectArray.Add(&nIndex, pSprite, INFINITE);
+                        if (rc == CGameObjectArray::SUCCESS) {
+                            if (slotIndex >= 0 && slotIndex < 6) {
+                                m_characters[slotIndex] = nIndex;
+                                m_characterPortraits[slotIndex] = nIndex;
+                                if (static_cast<SHORT>(slotIndex + 1) > m_nCharacters) {
+                                    m_nCharacters = static_cast<SHORT>(slotIndex + 1);
+                                }
                             }
+                            DBG("Unmarshal: sprite id=%ld for slot %d", nIndex, slotIndex);
+                        } else {
+                            DBG("Unmarshal: Add to object array failed rc=%d", rc);
+                            delete pSprite;
                         }
-                        DBG("Unmarshal: sprite id=%ld for slot %d", nIndex, slotIndex);
-                    } else {
-                        DBG("Unmarshal: Add to object array failed rc=%d", rc);
-                        delete pSprite;
                     }
+                } else {
+                    DBG("Unmarshal: CRE signature mismatch, skipping sprite");
                 }
             }
 
