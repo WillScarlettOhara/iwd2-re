@@ -720,9 +720,13 @@ void CScreenLoad::OnMainCancelButtonClick()
 // 0x63C6A0
 void CScreenLoad::StartLoad(INT nEngineState)
 {
+    DBG("CScreenLoad::StartLoad: nEngineState=%d", nEngineState);
     m_nEngineState = nEngineState;
+    DBG("CScreenLoad::StartLoad: before RefreshGameSlots");
     RefreshGameSlots();
+    DBG("CScreenLoad::StartLoad: after RefreshGameSlots, nNumGameSlots=%d", m_nNumGameSlots);
     m_nTopGameSlot = max(m_nNumGameSlots - GAME_SLOTS, 0);
+    DBG("CScreenLoad::StartLoad: done");
 }
 
 // 0x63C6D0
