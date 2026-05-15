@@ -883,8 +883,9 @@ void CScreenLoad::RefreshGameSlots()
             const char* szSlotName = static_cast<LPCSTR>(sFileName);
             sprintf(szDirName, "%s%s\\", szSaveRoot, szSlotName);
             sDirName = szDirName;
-            DBG("RGS: sDirName = %s", szDirName);
 
+            // SKIP GAM parsing — just load BMPs for now
+#if 0
             char szGamPath[512];
             sprintf(szGamPath, "%sICEWIND2.GAM", szDirName);
             if (g_pChitin->cDimm.ServiceFromFile(&cResGame, CString(szGamPath))) {
@@ -980,6 +981,7 @@ void CScreenLoad::RefreshGameSlots()
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
             }
+#endif
 
             if (!g_pChitin->cDimm.ServiceFromFile(&(pSlot->m_cResScreenShot), sDirName + "ICEWIND2.BMP")) {
                 pSlot->m_cResScreenShot.m_pData = NULL;
