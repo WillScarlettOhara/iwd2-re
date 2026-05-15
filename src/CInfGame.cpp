@@ -2126,6 +2126,12 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
                 pMember[20], pMember[21], pMember[22], pMember[23],
                 pMember[24], pMember[25], pMember[26], pMember[27],
                 pMember[28], pMember[29], pMember[30], pMember[31]);
+            DBG("Unmarshal: member[%d] RAW +0x20: %02X %02X %02X %02X  +0x24: %02X %02X %02X %02X  +0x28: %02X %02X %02X %02X  +0x2C: %02X %02X %02X %02X",
+                i,
+                pMember[32], pMember[33], pMember[34], pMember[35],
+                pMember[36], pMember[37], pMember[38], pMember[39],
+                pMember[40], pMember[41], pMember[42], pMember[43],
+                pMember[44], pMember[45], pMember[46], pMember[47]);
 
             int slotIndex = *reinterpret_cast<unsigned short*>(pMember + 4); // +0x04
             int creOffset = *reinterpret_cast<int*>(pMember + 6);              // +0x06
