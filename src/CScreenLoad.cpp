@@ -849,24 +849,24 @@ void CScreenLoad::RefreshGameSlots()
             DBG("RGS: slot created");
             pSlot->m_sFileName = sFileName;
             DBG("RGS: filename set");
-            OutputDebugStringA("RGS: 1 before StringOps\n");
+            DBG("RGS: 1 before StringOps\n");
 
             cResPortrait = "";
-            OutputDebugStringA("RGS: 2 cResPortrait done\n");
+            DBG("RGS: 2 cResPortrait done\n");
             sName = "";
-            OutputDebugStringA("RGS: 3 sName done\n");
+            DBG("RGS: 3 sName done\n");
             nGameTime = 0;
-            OutputDebugStringA("RGS: 4 nGameTime done\n");
+            DBG("RGS: 4 nGameTime done\n");
             nChapter = 0;
-            OutputDebugStringA("RGS: 5 nChapter done\n");
+            DBG("RGS: 5 nChapter done\n");
             sChapter = "";
-            OutputDebugStringA("RGS: 6 sChapter done\n");
+            DBG("RGS: 6 sChapter done\n");
             nNameRef = -1;
-            OutputDebugStringA("RGS: 7 nNameRef done\n");
+            DBG("RGS: 7 nNameRef done\n");
 
             // Use raw C string ops to rule out MFC CString corruption
             const char* szFileName = static_cast<LPCSTR>(sFileName);
-            OutputDebugStringA("RGS: 8 szFileName done\n");
+            DBG("RGS: 8 szFileName done\n");
             int nFileNameLen = strlen(szFileName);
             int nLeadingDigits = strspn(szFileName, "0123456789");
             if (nLeadingDigits < nFileNameLen && szFileName[nLeadingDigits] == '-') {
@@ -883,40 +883,40 @@ void CScreenLoad::RefreshGameSlots()
                 pSlot->m_sSlotName = sFileName;
             }
 
-            OutputDebugStringA("RGS: after StringOps, building sDirName\n");
+            DBG("RGS: after StringOps, building sDirName\n");
             sDirName = pGame->GetDirSaveRoot() + pSlot->m_sFileName + "\\";
 
-            OutputDebugStringA("RGS: before ServiceFromFile\n");
+            DBG("RGS: before ServiceFromFile\n");
             if (g_pChitin->cDimm.ServiceFromFile(&cResGame, sDirName + "ICEWIND2.GAM")) {
-                OutputDebugStringA("RGS: after ServiceFromFile OK\n");
+                DBG("RGS: after ServiceFromFile OK\n");
                 BYTE* pGameData = reinterpret_cast<BYTE*>(cResGame.m_pData);
                 CSavedGameHeader* pSavedGameHeader = reinterpret_cast<CSavedGameHeader*>(pGameData + 8);
                 CSavedGamePartyCreature* pCreature = reinterpret_cast<CSavedGamePartyCreature*>(pGameData + pSavedGameHeader->m_partyCreatureTableOffset);
                 {
                     char buf[128];
                     sprintf(buf, "RGS: pCreature=0x%p offset=0x%X\n", pCreature, pSavedGameHeader->m_partyCreatureTableOffset);
-                    OutputDebugStringA(buf);
+                    DBG("%s", buf);
                 }
-                OutputDebugStringA("RGS: about to read pCreature->m_creatureResRef[0]\n");
+                DBG("RGS: about to read pCreature->m_creatureResRef[0]\n");
 
                 // Use raw byte offset instead of struct pointer to rule out alignment issues
                 BYTE* pCreatureRaw = pGameData + pSavedGameHeader->m_partyCreatureTableOffset;
                 {
                     char buf2[256];
                     sprintf(buf2, "RGS: pCreatureRaw=0x%p pGameData=0x%p offset=0x%X size=%u\n", pCreatureRaw, pGameData, pSavedGameHeader->m_partyCreatureTableOffset, static_cast<unsigned>(cResGame.nSize));
-                    OutputDebugStringA(buf2);
+                    DBG("%s", buf2);
                     sprintf(buf2, "RGS: attempt read at 0x%p (diff=0x%X) isBad=%d\n", pCreatureRaw + 0x0C, (int)(pCreatureRaw + 0x0C - pGameData), IsBadReadPtr(pCreatureRaw + 0x0C, 1));
-                    OutputDebugStringA(buf2);
+                    DBG("%s", buf2);
                 }
                 if (IsBadReadPtr(pCreatureRaw + 0x0C, 1)) {
-                    OutputDebugStringA("RGS: MEMORY NOT READABLE! Skipping\n");
+                    DBG("RGS: MEMORY NOT READABLE! Skipping\n");
                     free(cResGame.m_pData);
                     cResGame.m_pData = NULL;
                     pGames->GetNext(pos);
                     continue;
                 }
                 BYTE resRefFirstByte = pCreatureRaw[0x0C];
-                OutputDebugStringA("RGS: resRefFirstByte read OK\n");
+                DBG("RGS: resRefFirstByte read OK\n");
                 if (resRefFirstByte != '\0') {
                     if (*reinterpret_cast<DWORD*>(pCreatureRaw + 0x08) != 0) {
                         // Corrupted save - skip this character
