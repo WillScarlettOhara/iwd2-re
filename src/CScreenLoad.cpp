@@ -728,7 +728,14 @@ void CScreenLoad::StartLoad(INT nEngineState)
 void CScreenLoad::FreeGameSlots()
 {
     OutputDebugStringA("FreeGameSlots: begin\n");
+    if (m_nNumGameSlots < 0 || m_nNumGameSlots > 1000) {
+        OutputDebugStringA("FreeGameSlots: m_nNumGameSlots is garbage, resetting\n");
+        m_nNumGameSlots = 0;
+        m_aGameSlots.SetSize(0);
+        return;
+    }
     for (INT nSlot = 0; nSlot < m_nNumGameSlots; nSlot++) {
+        OutputDebugStringA("FreeGameSlots: loop\n");
         CScreenLoadGameSlot* pSlot = m_aGameSlots[nSlot];
         if (pSlot == NULL) {
             continue;
@@ -771,8 +778,10 @@ void CScreenLoad::FreeGameSlots()
         delete pSlot;
         m_aGameSlots[nSlot] = NULL;
     }
+    OutputDebugStringA("FreeGameSlots: end loop\n");
 
     m_nNumGameSlots = 0;
+    OutputDebugStringA("FreeGameSlots: done\n");
 }
 
 // 0x63C940
