@@ -902,9 +902,36 @@ void CScreenLoad::RefreshGameSlots()
 
                 // Try accessing creature table offsets (raw only, no deref)
                 BYTE* pCreatureRaw = pGameData + pSavedGameHeader->m_partyCreatureTableOffset;
-                DWORD creOffset = *reinterpret_cast<DWORD*>(pCreatureRaw + 0x04);
-                DWORD creSize = *reinterpret_cast<DWORD*>(pCreatureRaw + 0x08);
                 BYTE resRefFirstByte = pCreatureRaw[0x0C];
+                if (resRefFirstByte != '\0') {
+                    DWORD creSize = *reinterpret_cast<DWORD*>(pCreatureRaw + 0x08);
+                    if (creSize != 0) {
+                        nNameRef = -1;
+                    } else {
+                        CCreatureFile cCreatureFile;
+                        cCreatureFile.SetResRef(CResRef(reinterpret_cast<char*>(pCreatureRaw + 0x0C)), TRUE, TRUE);
+                        BYTE* pCreatureData = cCreatureFile.GetData();
+                        if (pCreatureData != NULL) {
+                            CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pCreatureData + 8);
+                            nNameRef = pCreatureFileHeader->m_name;
+                            cResPortrait = pCreatureFileHeader->m_portraitSmall;
+                            nSex = pCreatureFileHeader->m_sex;
+                        }
+                        cCreatureFile.ReleaseData();
+                    }
+                } else {
+                    DWORD creOffset = *reinterpret_cast<DWORD*>(pCreatureRaw + 0x04);
+                    CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pGameData + creOffset + 8);
+                    nNameRef = pCreatureFileHeader->m_name;
+                    cResPortrait = pCreatureFileHeader->m_portraitSmall;
+                    nSex = pCreatureFileHeader->m_sex;
+                }
+
+                if (nNameRef != -1) {
+                    sName = FetchString(nNameRef);
+                } else {
+                    sName = reinterpret_cast<char*>(pCreatureRaw + 0x01BE);
+                }
 
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
