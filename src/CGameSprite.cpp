@@ -911,50 +911,50 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         field_4C54[4] = 0;
         m_nWeaponSet = 0;
 
-        field_7548[IWD_VFX_SANCTUARY].SetResRef(CResRef("SanctuC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_ENTANGLE].SetResRef(CResRef("EntangC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("MGoInvC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_SHIELD].SetResRef(CResRef("ShieldC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_GREASE].SetResRef(CResRef("GreaseC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_WEB].SetResRef(CResRef("WebC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("GoInvuC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_SHROUD_OF_FLAME].SetResRef(CResRef("SoFlamC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_ANTIMAGIC_MISSILE].SetResRef(CResRef("AMShelC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_PROTECTION_FROM_MISSILES].SetResRef(CResRef("PFNMisC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_CLOAK_OF_FEAR].SetResRef(CResRef("CoFearC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_ENTROPY_SHIELD].SetResRef(CResRef("EShielC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_FIRE_AURA].SetResRef(CResRef("FiAuraC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_FROST_AURA].SetResRef(CResRef("FrAuraC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_INSECT_PLAGUE].SetResRef(CResRef("IPlaguC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_STORM_SHELL].SetResRef(CResRef("SShellC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_SHIELD_OF_LATHANDER].SetResRef(CResRef("SoLatC1"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_SHIELD_OF_LATHANDER_2].SetResRef(CResRef("SoLatC2"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER].SetResRef(CResRef("GSoLaC1"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER_2].SetResRef(CResRef("GSoLaC2"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("SEyesC1"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_SEVEN_EYES_2].SetResRef(CResRef("SEyesC2"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_FIRE_SHIELD_RED].SetResRef(CResRef("FShiRC1"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_28].SetResRef(CResRef("FShiRC1"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_FIRE_SHIELD_BLUE].SetResRef(CResRef("FShiBC1"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_29].SetResRef(CResRef("FShiBC1"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_DEATH_ARMOR].SetResRef(CResRef("DArmorC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_TORTOISE_SHELL].SetResRef(CResRef("TShellC"), FALSE, TRUE, TRUE);
-        field_7548[IWD_VFX_WISP].SetResRef(CResRef("Wisp"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_SANCTUARY].SetResRef(CResRef("SanctuC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_ENTANGLE].SetResRef(CResRef("EntangC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("MGoInvC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_SHIELD].SetResRef(CResRef("ShieldC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_GREASE].SetResRef(CResRef("GreaseC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_WEB].SetResRef(CResRef("WebC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("GoInvuC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_SHROUD_OF_FLAME].SetResRef(CResRef("SoFlamC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_ANTIMAGIC_MISSILE].SetResRef(CResRef("AMShelC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_PROTECTION_FROM_MISSILES].SetResRef(CResRef("PFNMisC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_CLOAK_OF_FEAR].SetResRef(CResRef("CoFearC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_ENTROPY_SHIELD].SetResRef(CResRef("EShielC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_FIRE_AURA].SetResRef(CResRef("FiAuraC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_FROST_AURA].SetResRef(CResRef("FrAuraC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_INSECT_PLAGUE].SetResRef(CResRef("IPlaguC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_STORM_SHELL].SetResRef(CResRef("SShellC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_SHIELD_OF_LATHANDER].SetResRef(CResRef("SoLatC1"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_SHIELD_OF_LATHANDER_2].SetResRef(CResRef("SoLatC2"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_GREATER_SHIELD_OF_LATHANDER].SetResRef(CResRef("GSoLaC1"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_GREATER_SHIELD_OF_LATHANDER_2].SetResRef(CResRef("GSoLaC2"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("SEyesC1"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_SEVEN_EYES_2].SetResRef(CResRef("SEyesC2"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_FIRE_SHIELD_RED].SetResRef(CResRef("FShiRC1"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_28].SetResRef(CResRef("FShiRC1"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_FIRE_SHIELD_BLUE].SetResRef(CResRef("FShiBC1"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_29].SetResRef(CResRef("FShiBC1"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_DEATH_ARMOR].SetResRef(CResRef("DArmorC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_TORTOISE_SHELL].SetResRef(CResRef("TShellC"), FALSE, TRUE, TRUE);
+        m_aVfxCells[IWD_VFX_WISP].SetResRef(CResRef("Wisp"), FALSE, TRUE, TRUE);
 
-        field_9088[IWD_VFX_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("AFT_M05"), TRUE, TRUE);
-        field_9088[IWD_VFX_SHROUD_OF_FLAME].SetResRef(CResRef("MISC_01C"), TRUE, TRUE);
-        field_9088[IWD_VFX_ANTIMAGIC_MISSILE].SetResRef(CResRef("AFT_M04"), TRUE, TRUE);
-        field_9088[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("AFT_M03"), TRUE, TRUE);
-        field_9088[IWD_VFX_PROTECTION_FROM_MISSILES].SetResRef(CResRef("AFT_M01"), TRUE, TRUE);
-        field_9088[IWD_VFX_CLOAK_OF_FEAR].SetResRef(CResRef("AFT_P02"), TRUE, TRUE);
-        field_9088[IWD_VFX_ENTROPY_SHIELD].SetResRef(CResRef("AFT_P03"), TRUE, TRUE);
-        field_9088[IWD_VFX_STORM_SHELL].SetResRef(CResRef("AFT_P25"), TRUE, TRUE);
-        field_9088[IWD_VFX_SHIELD_OF_LATHANDER].SetResRef(CResRef("AFT_P20"), TRUE, TRUE);
-        field_9088[IWD_VFX_GREATER_SHIELD_OF_LATHANDER].SetResRef(CResRef("AFT_P26"), TRUE, TRUE);
-        field_9088[IWD_VFX_SANCTUARY].SetResRef(CResRef("AFT_P01"), TRUE, TRUE);
-        field_9088[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("AFT_M02"), TRUE, TRUE);
-        field_9088[IWD_VFX_SHIELD].SetResRef(CResRef("EFF_M11C"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("AFT_M05"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_SHROUD_OF_FLAME].SetResRef(CResRef("MISC_01C"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_ANTIMAGIC_MISSILE].SetResRef(CResRef("AFT_M04"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("AFT_M03"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_PROTECTION_FROM_MISSILES].SetResRef(CResRef("AFT_M01"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_CLOAK_OF_FEAR].SetResRef(CResRef("AFT_P02"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_ENTROPY_SHIELD].SetResRef(CResRef("AFT_P03"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_STORM_SHELL].SetResRef(CResRef("AFT_P25"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_SHIELD_OF_LATHANDER].SetResRef(CResRef("AFT_P20"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_GREATER_SHIELD_OF_LATHANDER].SetResRef(CResRef("AFT_P26"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_SANCTUARY].SetResRef(CResRef("AFT_P01"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY].SetResRef(CResRef("AFT_M02"), TRUE, TRUE);
+        m_aVfxSounds[IWD_VFX_SHIELD].SetResRef(CResRef("EFF_M11C"), TRUE, TRUE);
 
         m_type = type;
         m_expirationTime = expirationTime;
@@ -1087,7 +1087,7 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         field_7430 = 0;
         m_bInvisible = 0;
         if (IcewindMisc::IsLarge(this) == TRUE) {
-            field_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheB"), FALSE, TRUE, TRUE);
+            m_aVfxCells[IWD_VFX_OTILUKES_RESILIENT_SPHERE].SetResRef(CResRef("ORSpheB"), FALSE, TRUE, TRUE);
         }
 
         field_753A = 0;
@@ -4270,42 +4270,42 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
             if (m_derivedStats.m_visualEffects[IWD_VFX_GREASE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_GREASE]),
+                    &(m_aVfxCells[IWD_VFX_GREASE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SHIELD_OF_LATHANDER_2]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_SHIELD_OF_LATHANDER_2]),
+                    &(m_aVfxCells[IWD_VFX_SHIELD_OF_LATHANDER_2]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_GREATER_SHIELD_OF_LATHANDER_2]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER_2]),
+                    &(m_aVfxCells[IWD_VFX_GREATER_SHIELD_OF_LATHANDER_2]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SEVEN_EYES_2]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_SEVEN_EYES_2]),
+                    &(m_aVfxCells[IWD_VFX_SEVEN_EYES_2]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_28]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_28]),
+                    &(m_aVfxCells[IWD_VFX_28]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_29]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_29]),
+                    &(m_aVfxCells[IWD_VFX_29]),
                     vfx);
             }
 
@@ -4420,154 +4420,154 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
             if (m_derivedStats.m_visualEffects[IWD_VFX_ENTANGLE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_ENTANGLE]),
+                    &(m_aVfxCells[IWD_VFX_ENTANGLE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_WEB]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_WEB]),
+                    &(m_aVfxCells[IWD_VFX_WEB]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SHROUD_OF_FLAME]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_SHROUD_OF_FLAME]),
+                    &(m_aVfxCells[IWD_VFX_SHROUD_OF_FLAME]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_ANTIMAGIC_MISSILE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_ANTIMAGIC_MISSILE]),
+                    &(m_aVfxCells[IWD_VFX_ANTIMAGIC_MISSILE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_OTILUKES_RESILIENT_SPHERE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_OTILUKES_RESILIENT_SPHERE]),
+                    &(m_aVfxCells[IWD_VFX_OTILUKES_RESILIENT_SPHERE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_PROTECTION_FROM_MISSILES]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_PROTECTION_FROM_MISSILES]),
+                    &(m_aVfxCells[IWD_VFX_PROTECTION_FROM_MISSILES]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_CLOAK_OF_FEAR]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_CLOAK_OF_FEAR]),
+                    &(m_aVfxCells[IWD_VFX_CLOAK_OF_FEAR]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_ENTROPY_SHIELD]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_ENTROPY_SHIELD]),
+                    &(m_aVfxCells[IWD_VFX_ENTROPY_SHIELD]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_FIRE_AURA]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_FIRE_AURA]),
+                    &(m_aVfxCells[IWD_VFX_FIRE_AURA]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_FROST_AURA]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_FROST_AURA]),
+                    &(m_aVfxCells[IWD_VFX_FROST_AURA]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SANCTUARY]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_SANCTUARY]),
+                    &(m_aVfxCells[IWD_VFX_SANCTUARY]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_GLOBE_OF_INVULNERABILITY]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_GLOBE_OF_INVULNERABILITY]),
+                    &(m_aVfxCells[IWD_VFX_GLOBE_OF_INVULNERABILITY]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_INSECT_PLAGUE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_INSECT_PLAGUE]),
+                    &(m_aVfxCells[IWD_VFX_INSECT_PLAGUE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_STORM_SHELL]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_STORM_SHELL]),
+                    &(m_aVfxCells[IWD_VFX_STORM_SHELL]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SHIELD_OF_LATHANDER]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_SHIELD_OF_LATHANDER]),
+                    &(m_aVfxCells[IWD_VFX_SHIELD_OF_LATHANDER]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_GREATER_SHIELD_OF_LATHANDER]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_GREATER_SHIELD_OF_LATHANDER]),
+                    &(m_aVfxCells[IWD_VFX_GREATER_SHIELD_OF_LATHANDER]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SEVEN_EYES]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_SEVEN_EYES]),
+                    &(m_aVfxCells[IWD_VFX_SEVEN_EYES]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY]),
+                    &(m_aVfxCells[IWD_VFX_MINOR_GLOBE_OF_INVULNERABILITY]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_SHIELD]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_SHIELD]),
+                    &(m_aVfxCells[IWD_VFX_SHIELD]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_FIRE_SHIELD_RED]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_FIRE_SHIELD_RED]),
+                    &(m_aVfxCells[IWD_VFX_FIRE_SHIELD_RED]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_FIRE_SHIELD_BLUE]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_FIRE_SHIELD_BLUE]),
+                    &(m_aVfxCells[IWD_VFX_FIRE_SHIELD_BLUE]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_TORTOISE_SHELL]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_TORTOISE_SHELL]),
+                    &(m_aVfxCells[IWD_VFX_TORTOISE_SHELL]),
                     vfx);
             }
 
@@ -4576,14 +4576,14 @@ void CGameSprite::Render(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
                 vfx.SetTransparency(TRUE, 192);
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_DEATH_ARMOR]),
+                    &(m_aVfxCells[IWD_VFX_DEATH_ARMOR]),
                     vfx);
             }
 
             if (m_derivedStats.m_visualEffects[IWD_VFX_WISP]) {
                 RenderSpriteCover(pVidMode,
                     nSurface,
-                    &(field_7548[IWD_VFX_WISP]),
+                    &(m_aVfxCells[IWD_VFX_WISP]),
                     vfx);
             }
 
@@ -6118,20 +6118,20 @@ void CGameSprite::UpdateSpriteEffect()
             if (nIndex == IWD_VFX_ENTANGLE
                 || nIndex == IWD_VFX_WEB
                 || nIndex == IWD_VFX_CLOAK_OF_FEAR) {
-                field_7548[nIndex].SequenceSet(0);
-                field_7548[nIndex].FrameSet(0);
+                m_aVfxCells[nIndex].SequenceSet(0);
+                m_aVfxCells[nIndex].FrameSet(0);
             }
 
             if (nIndex == IWD_VFX_FIRE_SHIELD_RED
                 || nIndex == IWD_VFX_FIRE_SHIELD_BLUE) {
-                field_7548[nIndex].SequenceSet(0);
-                field_7548[nIndex].FrameSet(0);
+                m_aVfxCells[nIndex].SequenceSet(0);
+                m_aVfxCells[nIndex].FrameSet(0);
             }
 
             if (nIndex == IWD_VFX_28
                 || nIndex == IWD_VFX_29) {
-                field_7548[nIndex].SequenceSet(1);
-                field_7548[nIndex].FrameSet(0);
+                m_aVfxCells[nIndex].SequenceSet(1);
+                m_aVfxCells[nIndex].FrameSet(0);
             }
         }
 
@@ -6140,50 +6140,50 @@ void CGameSprite::UpdateSpriteEffect()
             && nIndex != IWD_VFX_BLUR) {
             switch (nIndex) {
             case IWD_VFX_SHROUD_OF_FLAME:
-                if (field_7548[nIndex].IsEndOfSequence(FALSE)) {
+                if (m_aVfxCells[nIndex].IsEndOfSequence(FALSE)) {
                     m_sndSpriteEffect.Stop();
                     m_sndSpriteEffect.SetResRef(CResRef("MISC_01C"), TRUE, TRUE);
                     m_sndSpriteEffect.SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
                     m_sndSpriteEffect.Play(m_pos.x, m_pos.y, 0, FALSE);
 
-                    nNumberSequences = field_7548[nIndex].GetNumberSequences(FALSE);
+                    nNumberSequences = m_aVfxCells[nIndex].GetNumberSequences(FALSE);
                     if (nNumberSequences != 0) {
-                        field_7548[nIndex].SequenceSet(rand() % nNumberSequences);
+                        m_aVfxCells[nIndex].SequenceSet(rand() % nNumberSequences);
                     } else {
-                        field_7548[nIndex].SequenceSet(0);
+                        m_aVfxCells[nIndex].SequenceSet(0);
                     }
                 } else {
-                    field_7548[nIndex].FrameAdvance();
+                    m_aVfxCells[nIndex].FrameAdvance();
                 }
                 break;
             case IWD_VFX_FIRE_SHIELD_RED:
             case IWD_VFX_FIRE_SHIELD_BLUE:
-                if (field_7548[nIndex].IsEndOfSequence(FALSE)) {
-                    field_7548[nIndex].SequenceSet(2);
+                if (m_aVfxCells[nIndex].IsEndOfSequence(FALSE)) {
+                    m_aVfxCells[nIndex].SequenceSet(2);
                 } else {
-                    field_7548[nIndex].FrameAdvance();
+                    m_aVfxCells[nIndex].FrameAdvance();
                 }
                 break;
             case IWD_VFX_28:
             case IWD_VFX_29:
-                if (field_7548[nIndex].IsEndOfSequence(FALSE)) {
-                    field_7548[nIndex].SequenceSet(3);
+                if (m_aVfxCells[nIndex].IsEndOfSequence(FALSE)) {
+                    m_aVfxCells[nIndex].SequenceSet(3);
                 } else {
-                    field_7548[nIndex].FrameAdvance();
+                    m_aVfxCells[nIndex].FrameAdvance();
                 }
                 break;
             case IWD_VFX_ENTANGLE:
             case IWD_VFX_WEB:
             case IWD_VFX_CLOAK_OF_FEAR:
-                if (field_7548[nIndex].IsEndOfSequence(FALSE)) {
-                    nSequence = field_7548[nIndex].GetCurrentSequenceId() + 1;
-                    nNumberSequences = field_7548[nIndex].GetNumberSequences(FALSE);
+                if (m_aVfxCells[nIndex].IsEndOfSequence(FALSE)) {
+                    nSequence = m_aVfxCells[nIndex].GetCurrentSequenceId() + 1;
+                    nNumberSequences = m_aVfxCells[nIndex].GetNumberSequences(FALSE);
                     if (nSequence >= nNumberSequences) {
                         nSequence--;
                     }
-                    field_7548[nIndex].SequenceSet(nSequence);
+                    m_aVfxCells[nIndex].SequenceSet(nSequence);
                 } else {
-                    field_7548[nIndex].FrameAdvance();
+                    m_aVfxCells[nIndex].FrameAdvance();
                 }
                 break;
             case IWD_VFX_SEVEN_EYES:
@@ -6209,47 +6209,47 @@ void CGameSprite::UpdateSpriteEffect()
                 if (!m_derivedStats.m_spellStates[SPLSTATE_EYE_OF_STONE]) {
                     nSequence++;
                 }
-                if (!field_9088[IWD_VFX_SEVEN_EYES].IsSoundPlaying()) {
+                if (!m_aVfxSounds[IWD_VFX_SEVEN_EYES].IsSoundPlaying()) {
                     if (nSequence == 7) {
-                        field_9088[IWD_VFX_SEVEN_EYES].Stop();
+                        m_aVfxSounds[IWD_VFX_SEVEN_EYES].Stop();
                     } else {
                         if (nSequence >= 5) {
-                            field_9088[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M17"), TRUE, TRUE);
+                            m_aVfxSounds[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M17"), TRUE, TRUE);
                         } else if (nSequence >= 2) {
-                            field_9088[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M16"), TRUE, TRUE);
+                            m_aVfxSounds[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M16"), TRUE, TRUE);
                         } else {
-                            field_9088[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M15"), TRUE, TRUE);
+                            m_aVfxSounds[IWD_VFX_SEVEN_EYES].SetResRef(CResRef("AFT_M15"), TRUE, TRUE);
                         }
-                        field_9088[IWD_VFX_SEVEN_EYES].SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
-                        field_9088[IWD_VFX_SEVEN_EYES].Play(m_pos.x, m_pos.y, 0, FALSE);
+                        m_aVfxSounds[IWD_VFX_SEVEN_EYES].SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
+                        m_aVfxSounds[IWD_VFX_SEVEN_EYES].Play(m_pos.x, m_pos.y, 0, FALSE);
                     }
                 }
-                field_7548[IWD_VFX_SEVEN_EYES].SequenceSet(nSequence);
-                field_7548[IWD_VFX_SEVEN_EYES_2].SequenceSet(nSequence);
-                if (field_7548[IWD_VFX_SEVEN_EYES].IsEndOfSequence(FALSE)) {
-                    field_7548[IWD_VFX_SEVEN_EYES].FrameSet(0);
-                    field_7548[IWD_VFX_SEVEN_EYES_2].FrameSet(0);
+                m_aVfxCells[IWD_VFX_SEVEN_EYES].SequenceSet(nSequence);
+                m_aVfxCells[IWD_VFX_SEVEN_EYES_2].SequenceSet(nSequence);
+                if (m_aVfxCells[IWD_VFX_SEVEN_EYES].IsEndOfSequence(FALSE)) {
+                    m_aVfxCells[IWD_VFX_SEVEN_EYES].FrameSet(0);
+                    m_aVfxCells[IWD_VFX_SEVEN_EYES_2].FrameSet(0);
                 } else {
-                    field_7548[IWD_VFX_SEVEN_EYES].FrameAdvance();
-                    field_7548[IWD_VFX_SEVEN_EYES_2].FrameAdvance();
+                    m_aVfxCells[IWD_VFX_SEVEN_EYES].FrameAdvance();
+                    m_aVfxCells[IWD_VFX_SEVEN_EYES_2].FrameAdvance();
                 }
                 break;
             case IWD_VFX_SEVEN_EYES_2:
                 break;
             default:
-                if (!field_9088[nIndex].IsSoundPlaying()) {
-                    field_9088[nIndex].SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
-                    field_9088[nIndex].Play(m_pos.x, m_pos.y, 0, FALSE);
+                if (!m_aVfxSounds[nIndex].IsSoundPlaying()) {
+                    m_aVfxSounds[nIndex].SetChannel(14, reinterpret_cast<DWORD>(m_pArea));
+                    m_aVfxSounds[nIndex].Play(m_pos.x, m_pos.y, 0, FALSE);
                 }
-                if (field_7548[nIndex].IsEndOfSequence(FALSE)) {
-                    nNumberSequences = field_7548[nIndex].GetNumberSequences(FALSE);
+                if (m_aVfxCells[nIndex].IsEndOfSequence(FALSE)) {
+                    nNumberSequences = m_aVfxCells[nIndex].GetNumberSequences(FALSE);
                     if (nNumberSequences != 0) {
-                        field_7548[nIndex].SequenceSet(rand() % nNumberSequences);
+                        m_aVfxCells[nIndex].SequenceSet(rand() % nNumberSequences);
                     } else {
-                        field_7548[nIndex].SequenceSet(0);
+                        m_aVfxCells[nIndex].SequenceSet(0);
                     }
                 } else {
-                    field_7548[nIndex].FrameAdvance();
+                    m_aVfxCells[nIndex].FrameAdvance();
                 }
             }
         }

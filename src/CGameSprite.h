@@ -1005,8 +1005,8 @@ public:
     /* 753C */ int field_753C;
     /* 7540 */ int field_7540;
     /* 7544 */ int field_7544;
-    /* 7548 */ CVidCell field_7548[32];
-    /* 9088 */ CSound field_9088[32];
+    /* 7548 */ CVidCell m_aVfxCells[32];
+    /* 9088 */ CSound m_aVfxSounds[32];
     /* 9D08 */ int field_9D08;
     /* 9D0C */ int field_9D0C;
     /* 9D10 */ int field_9D10;
