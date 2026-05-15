@@ -2134,29 +2134,20 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
             DBG("Unmarshal: member[%d] slot=%d creOff=0x%X creSize=%d area=%s pos=(%d,%d) facing=%d",
                 i, slotIndex, creOffset, creSize, areaRef, posX, posY, facing);
 
-            // Create CGameSprite from embedded CRE data — test with just logging first
+            // Create CGameSprite from embedded CRE data
             if (creOffset > 0 && creSize > 0 && creOffset + creSize <= nGame) {
                 BYTE* pCreData = pGame + creOffset;
-                DBG("Unmarshal: CRE header: %02X %02X %02X %02X %02X %02X %02X %02X (size=%d)",
-                    pCreData[0], pCreData[1], pCreData[2], pCreData[3],
-                    pCreData[4], pCreData[5], pCreData[6], pCreData[7], creSize);
 
-                // SKIP sprite creation completely — just test SetupCharacters
-                if (FALSE && memcmp(pCreData, "CRE V2.2", 8) == 0 && i == 0) {
-                    // Allocate a persistent copy so it outlives cGameFile
-                    BYTE* pCreCopy = new BYTE[creSize];
-                    memcpy(pCreCopy, pCreData, creSize);
-
-                    DBG("Unmarshal: creating sprite for slot %d (copied %d bytes)", slotIndex, creSize);
-                    CGameSprite* pSprite = new CGameSprite(pCreCopy, creSize, 0,
+                if (memcmp(pCreData, "CRE V2.2", 8) == 0) {
+                    DBG("Unmarshal: creating sprite for slot %d", slotIndex);
+                    CGameSprite* pSprite = new CGameSprite(pCreData, creSize, 0,
                         CGameObject::TYPE_SPRITE, -1, 0, 0, 0,
                         CPoint(posX, posY), facing);
 
-                    // The sprite copies what it needs from pCreCopy during Unmarshal.
-                    // We can free the copy afterwards.
-                    delete[] pCreCopy;
-
                     if (pSprite != NULL && pSprite->m_id != CGameObjectArray::INVALID_INDEX) {
+                        // SetResRef is needed for proper sprite initialization
+                        pSprite->SetResRef(CResRef(reinterpret_cast<char*>(pCreData + 0x280)));
+
                         LONG nIndex = pSprite->m_id;
                         if (slotIndex >= 0 && slotIndex < 6) {
                             m_characters[slotIndex] = nIndex;
@@ -2165,12 +2156,13 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
                                 m_nCharacters = static_cast<SHORT>(slotIndex + 1);
                             }
                         }
-                        DBG("Unmarshal: sprite id=%ld for slot %d", nIndex, slotIndex);
+                        DBG("Unmarshal: sprite id=%ld resref=%s for slot %d", nIndex,
+                            reinterpret_cast<char*>(pCreData + 0x280), slotIndex);
                     } else {
-                        DBG("Unmarshal: sprite creation failed");
+                        DBG("Unmarshal: sprite creation failed for slot %d", slotIndex);
                     }
                 } else {
-                    DBG("Unmarshal: CRE signature mismatch, skipping sprite");
+                    DBG("Unmarshal: bad CRE signature at slot %d", slotIndex);
                 }
             }
 
