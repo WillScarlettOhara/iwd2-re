@@ -715,9 +715,13 @@ void CScreenLoad::OnMainCancelButtonClick()
 // 0x63C6A0
 void CScreenLoad::StartLoad(INT nEngineState)
 {
+    OutputDebugStringA("SL:StartLoad\n");
     m_nEngineState = nEngineState;
+    OutputDebugStringA("SL:before Refresh\n");
     RefreshGameSlots();
+    OutputDebugStringA("SL:after Refresh\n");
     m_nTopGameSlot = max(m_nNumGameSlots - GAME_SLOTS, 0);
+    OutputDebugStringA("SL:done\n");
 }
 
 // 0x63C6D0
@@ -778,6 +782,7 @@ void CScreenLoad::FreeGameSlots()
 // 0x63C940
 void CScreenLoad::RefreshGameSlots()
 {
+    OutputDebugStringA("SL:RefreshGameSlots begin\n");
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     const CRuleTables& rule = pGame->GetRuleTables();
 
