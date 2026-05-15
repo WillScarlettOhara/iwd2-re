@@ -495,7 +495,7 @@ void CScreenOptions::OnDoneButtonClick()
         return;
     }
 
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     switch (pPanel->m_nID) {
@@ -545,7 +545,7 @@ void CScreenOptions::OnCancelButtonClick()
 {
     CGameOptions* pOptions = g_pBaldurChitin->GetObjectGame()->GetOptions();
 
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     CUIPanel* pPanel = m_lPopupStack.GetTailPosition() != NULL ? m_lPopupStack.GetTail() : NULL;
@@ -1045,7 +1045,7 @@ void CScreenOptions::OnRestButtonClick()
     // __LINE__: 1887
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     STRREF dwErrorTextId;
@@ -1469,7 +1469,7 @@ void CScreenOptions::OnErrorButtonClick(INT nButton)
     // __LINE__: 2454
     UTIL_ASSERT(0 <= nButton && nButton < CSCREENOPTIONS_ERROR_BUTTONS);
 
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.m_critSect), FALSE);
 
     // TODO: Unclear.
     CUIPanel* pPanel = m_lPopupStack.GetTailPosition() != NULL ? m_lPopupStack.GetTail() : NULL;
@@ -2180,7 +2180,7 @@ void CUIControlSliderOptionsSlider::OnThumbFinalChange()
         switch (m_nID) {
         case 3:
             if (1) {
-                CSingleLock lock(&(m_pPanel->m_pManager->field_36), FALSE);
+                CSingleLock lock(&(m_pPanel->m_pManager->m_critSect), FALSE);
                 dwStrId = 17203;
                 dwValue = 40 * m_nValue / (m_nKnobJumpCount - 1);
                 lock.Lock(INFINITE);
@@ -2199,7 +2199,7 @@ void CUIControlSliderOptionsSlider::OnThumbFinalChange()
             break;
         case 22:
             if (1) {
-                CSingleLock lock(&(m_pPanel->m_pManager->field_36), FALSE);
+                CSingleLock lock(&(m_pPanel->m_pManager->m_critSect), FALSE);
                 dwStrId = 17204;
                 dwValue = 5 * m_nValue / (m_nKnobJumpCount - 1);
                 lock.Lock(INFINITE);
@@ -2482,7 +2482,7 @@ void CUIControlButtonOptionsGameCommand::OnLButtonClick(CPoint pt)
     // __LINE__: 3895
     UTIL_ASSERT(pEngine != NULL);
 
-    CSingleLock lock(&(pEngine->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pEngine->GetManager()->m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     CUIManager* pManager = pEngine->GetManager();

@@ -496,7 +496,7 @@ void CScreenMultiPlayer::TimerAsynchronousUpdate()
 
     BOOLEAN bDoMainButtonClick = FALSE;
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -1028,7 +1028,7 @@ void CScreenMultiPlayer::OnDoneButtonClick()
         return;
     }
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (pPanel->m_nID) {
@@ -1063,7 +1063,7 @@ void CScreenMultiPlayer::OnCancelButtonClick()
     // __LINE__: 1702
     UTIL_ASSERT(pPanel != NULL);
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (pPanel->m_nID) {
@@ -1867,7 +1867,7 @@ void CScreenMultiPlayer::OnModifyButtonClick()
     UTIL_ASSERT(pGame != NULL);
 
     if (IsModifyButtonClickable()) {
-        CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         m_nErrorState = 2;
@@ -1878,7 +1878,7 @@ void CScreenMultiPlayer::OnModifyButtonClick()
 
         renderLock.Unlock();
     } else {
-        CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         m_nErrorState = 0;
@@ -1905,7 +1905,7 @@ void CScreenMultiPlayer::OnErrorButtonClick(INT nButton)
     // __LINE__: 3611
     UTIL_ASSERT(0 <= nButton && nButton < CSCREENMULTIPLAYER_ERROR_BUTTONS);
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -2110,7 +2110,7 @@ void CScreenMultiPlayer::FocusChatEditBox()
 // 0x64E0B0
 void CScreenMultiPlayer::OnKickPlayerButtonClick(INT nButton)
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     m_nKickPlayerSlot = nButton;
@@ -2185,7 +2185,7 @@ BOOL CScreenMultiPlayer::IsPortraitButtonClickable(INT nCharacterSlot)
 void CScreenMultiPlayer::OnPortraitButtonClick(INT nButton)
 {
     if (IsPortraitButtonClickable(nButton)) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         m_nCharacterSlot = nButton;
@@ -2198,7 +2198,7 @@ void CScreenMultiPlayer::OnPortraitButtonClick(INT nButton)
 // 0x64F200
 void CScreenMultiPlayer::OnLogoutButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     m_nErrorState = 4;
@@ -2530,7 +2530,7 @@ void CUIControlButtonMultiPlayerPlayer::OnLButtonClick(CPoint pt)
     // __LINE__: 4979
     UTIL_ASSERT(pMultiPlayer != NULL);
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pMultiPlayer->m_nSelectedSlot = m_nID - 12;
@@ -2563,7 +2563,7 @@ void CUIControlButtonMultiPlayerCharacter::OnLButtonClick(CPoint pt)
     // __LINE__: 5044
     UTIL_ASSERT(pMultiPlayer != NULL);
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pMultiPlayer->m_nSelectedSlot = m_nID - 18;
@@ -2625,7 +2625,7 @@ void CUIControlButtonMultiPlayerOptions::OnLButtonClick(CPoint pt)
     // __LINE__: 5165
     UTIL_ASSERT(pMultiPlayer != NULL);
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pMultiPlayer->SummonPopup(1);
@@ -2858,7 +2858,7 @@ void CUIControlButtonMultiPlayerPermissionsOptions::OnLButtonClick(CPoint pt)
     // __LINE__: 5604
     UTIL_ASSERT(pMultiPlayer != NULL);
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pMultiPlayer->SummonPopup(2);
@@ -3124,7 +3124,7 @@ void CUIControlButtonMultiPlayerModifyCharacterCreate::OnLButtonClick(CPoint pt)
 
     CNetwork& cNetwork = g_pBaldurChitin->cNetwork;
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nCharacterSlot = pMultiPlayer->m_nSelectedSlot;
@@ -3224,7 +3224,7 @@ void CUIControlButtonMultiPlayerModifyCharacterDelete::OnLButtonClick(CPoint pt)
     // __LINE__: 6217
     UTIL_ASSERT(pSettings != NULL);
 
-    CSingleLock renderLock(&(pMultiPlayer->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pMultiPlayer->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nCharacterSlot = pMultiPlayer->m_nSelectedSlot;

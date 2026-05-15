@@ -1390,7 +1390,7 @@ void CUIControlButtonWorldMapDone::OnLButtonClick(CPoint pt)
     // __LINE__: 4609
     UTIL_ASSERT(pWorldMap != NULL);
 
-    CSingleLock renderLock(&(pWorldMap->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pWorldMap->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.

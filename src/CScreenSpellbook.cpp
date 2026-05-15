@@ -962,7 +962,7 @@ void CScreenSpellbook::OnDoneButtonClick()
         }
     }
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -996,7 +996,7 @@ void CScreenSpellbook::OnDoneButtonClick()
 // 0x66BB00
 void CScreenSpellbook::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = GetTopPopup();
@@ -1026,7 +1026,7 @@ void CScreenSpellbook::OnRestButtonClick()
     // __LINE__: 2485
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     STRREF strError;
@@ -1166,7 +1166,7 @@ void CScreenSpellbook::OnErrorButtonClick(INT nButton)
     // __LINE__: 2733
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // FIXME: Unncessary access via global var.
@@ -1397,7 +1397,7 @@ void CUIControlButtonSpellbookSpell::OnRButtonClick(CPoint pt)
     // __LINE__: 3730
     UTIL_ASSERT(pSpellbook != NULL);
 
-    CSingleLock renderLock(&(pSpellbook->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pSpellbook->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     if (m_spellResRef != "") {
@@ -1514,7 +1514,7 @@ void CUIControlScrollBarSpellbookKnownSpells::InvalidateItems()
     // __LINE__: 4156
     UTIL_ASSERT(pSpellbook != NULL);
 
-    CSingleLock renderLock(&(pSpellbook->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pSpellbook->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pSpellbook->UpdateMainPanel();

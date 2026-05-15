@@ -336,7 +336,7 @@ void CScreenConnection::EngineActivated()
     if (!m_bStartedCountDown && m_nEnumServiceProvidersCountDown == 2) {
         m_bStartedCountDown = TRUE;
 
-        CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock lock(&(m_cUIManager.m_critSect), FALSE);
         lock.Lock(INFINITE);
 
         if (byte_8B3340) {
@@ -701,7 +701,7 @@ void CScreenConnection::TimerAsynchronousUpdate()
     }
 
     if (m_nEnumServiceProvidersCountDown == 0) {
-        CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock lock(&(m_cUIManager.m_critSect), FALSE);
         lock.Lock(INFINITE);
         if (!byte_8F376C) {
             DismissPopup();
@@ -1128,7 +1128,7 @@ void CScreenConnection::OnLoadGameButtonClick(BOOL bQuick)
     CString sPassword;
     CString sPlayerName;
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = m_cUIManager.GetPanel(6);
@@ -1237,7 +1237,7 @@ void CScreenConnection::OnLoadGameButtonClick(BOOL bQuick)
         if (pNetwork->HostNewSession()) {
             INT nErrorCode;
             if (pNetwork->CreatePlayer(nErrorCode)) {
-                CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+                CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
                 renderLock.Lock(INFINITE);
 
                 if (m_nProtocol != 0) {
@@ -1338,7 +1338,7 @@ void CScreenConnection::OnNewGameButtonClick()
     CString sSessionPassword;
     CString sPlayerName;
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = m_cUIManager.GetPanel(6);
@@ -1455,7 +1455,7 @@ void CScreenConnection::OnNewGameButtonClick()
             INT nErrorCode;
             if (pNetwork->CreatePlayer(nErrorCode)) {
                 DBG("OnNewGameButtonClick: CreatePlayer OK idLocal=%d", g_pChitin->cNetwork.m_idLocalPlayer);
-                CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+                CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
                 renderLock.Lock(INFINITE);
 
                 if (m_nProtocol != 0) {
@@ -1634,7 +1634,7 @@ void CScreenConnection::OnDoneButtonClick()
     CString sAddress;
     CString sPhoneNumber;
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
 
     CMultiplayerSettings* pSettings = g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings();
 
@@ -2028,7 +2028,7 @@ void CScreenConnection::OnDoneButtonClick()
                 break;
             }
         } else {
-            CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
+            CSingleLock renderLock(&(pConnection->GetManager()->m_critSect), FALSE);
             renderLock.Lock(INFINITE);
 
             switch (pConnection->m_nSelectedGameMode) {
@@ -2066,7 +2066,7 @@ void CScreenConnection::OnCancelButtonClick()
     if (GetTopPopup() != NULL) {
         CUIPanel* pPanel = m_lPopupStack.GetTail();
 
-        CSingleLock lock(&(GetManager()->field_36), 0);
+        CSingleLock lock(&(GetManager()->m_critSect), 0);
         lock.Lock(INFINITE);
 
         switch (pPanel->m_nID) {
@@ -2097,7 +2097,7 @@ void CScreenConnection::OnCancelButtonClick()
 // 0x5FEA60
 void CScreenConnection::OnJoinGameButtonClick()
 {
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     CNetwork* pNetwork = &(g_pBaldurChitin->cNetwork);
@@ -2143,12 +2143,12 @@ void CScreenConnection::StartProtocolConnection()
     pNetwork->GetServiceProviderType(nServiceProvider, nServiceProviderType);
 
     if (nServiceProviderType == CNetwork::SERV_PROV_IPX) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
         SummonPopup(11);
         renderLock.Unlock();
     } else if (nServiceProviderType == CNetwork::SERV_PROV_TCP_IP) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
         SummonPopup(5);
         renderLock.Unlock();
@@ -2166,7 +2166,7 @@ void CScreenConnection::StartProtocolConnection()
             OnJoinGameButtonClick();
         }
     } else if (nServiceProviderType == CNetwork::SERV_PROV_MODEM) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
         SummonPopup(12);
         renderLock.Unlock();
@@ -3221,7 +3221,7 @@ void CScreenConnection::OnErrorButtonClick(INT nButton)
     // __LINE__: 5414
     UTIL_ASSERT(0 <= nButton && nButton < CSCREENCONNECTION_ERROR_BUTTONS);
 
-    CSingleLock lock(&(GetManager()->field_36), FALSE);
+    CSingleLock lock(&(GetManager()->m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -3320,7 +3320,7 @@ void CScreenConnection::HandleEMEvent(BYTE nEvent, BYTE nEventStage)
     INT nErrorCode;
     INT nCharacterSlot;
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
 
     switch (nEvent) {
     case 0:
@@ -3552,7 +3552,7 @@ void CScreenConnection::HandleEMEvent(BYTE nEvent, BYTE nEventStage)
 // 0x6014A0
 void CScreenConnection::HandleJoinCompletion(BYTE nEvent)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
 
     if (nEvent == 8) {
         renderLock.Lock(INFINITE);
@@ -3665,7 +3665,7 @@ BOOL CScreenConnection::AutoStartInitialize()
         }
     }
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     m_nErrorState = 6;
@@ -3686,7 +3686,7 @@ void CScreenConnection::AutoStartConnect()
     if (AutoStartInitialize()) {
         g_pBaldurChitin->m_bIsAutoStarting = FALSE;
 
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         CString sStartUpAddress = g_pBaldurChitin->GetStartUpAddress();
@@ -3735,7 +3735,7 @@ void CScreenConnection::AutoStartConnect()
 void CScreenConnection::AutoStartDirectPlayLobby()
 {
     if (g_pChitin->cNetwork.GetSessionHosting() == TRUE) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         SummonPopup(21);
@@ -3743,7 +3743,7 @@ void CScreenConnection::AutoStartDirectPlayLobby()
 
         renderLock.Unlock();
     } else {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         m_nErrorState = 4;
@@ -3929,7 +3929,7 @@ void CScreenConnection::OnLobbyNewGameButtonClick()
 {
     CMultiplayerSettings* pSettings = g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings();
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -3974,7 +3974,7 @@ void CScreenConnection::OnLobbyLoadGameButtonClick()
 {
     CMultiplayerSettings* pSettings = g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings();
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -4005,7 +4005,7 @@ void CScreenConnection::OnLobbyLoadGameButtonClick()
 // 0x6024A0
 void CScreenConnection::OnLobbyExitButtonClick()
 {
-    CSingleLock lock(&(m_cUIManager.field_36));
+    CSingleLock lock(&(m_cUIManager.m_critSect));
     lock.Lock();
     DismissPopup();
     lock.Unlock();
@@ -4057,7 +4057,7 @@ void CUIControlButtonConnectionGameMode::OnLButtonClick(CPoint pt)
     UTIL_ASSERT(pConnection != NULL);
 
     CUIManager* pManager = pConnection->GetManager();
-    CSingleLock lock(&(pManager->field_36), TRUE);
+    CSingleLock lock(&(pManager->m_critSect), TRUE);
     pConnection->SummonPopup(1);
     lock.Unlock();
 }
@@ -4085,7 +4085,7 @@ void CUIControlButtonConnectionQuitGame::OnLButtonClick(CPoint pt)
     // __LINE__: 7237
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock lock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pConnection->GetManager()->m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     g_pBaldurChitin->cNetwork.UnselectSession();
@@ -4094,7 +4094,7 @@ void CUIControlButtonConnectionQuitGame::OnLButtonClick(CPoint pt)
     pConnection->m_bEliminateInitialize = TRUE;
 
     // NOTE: Obtaining same lock twice, likely some inlining.
-    CSingleLock sameLock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock sameLock(&(pConnection->GetManager()->m_critSect), FALSE);
     sameLock.Lock(INFINITE);
     pConnection->m_nErrorState = 9;
     pConnection->m_strErrorText = 19532;
@@ -4153,7 +4153,7 @@ void CUIControlButtonConnectionNewGame::OnLButtonClick(CPoint pt)
         pButton->SetText(strRes.szText);
 
         if (pConnection->m_nProtocol != 0) {
-            CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
+            CSingleLock renderLock(&(pConnection->GetManager()->m_critSect), FALSE);
             renderLock.Lock(INFINITE);
             pConnection->SummonPopup(6);
             renderLock.Unlock();
@@ -4245,7 +4245,7 @@ void CUIControlButtonConnectionLoadGame::OnLButtonClick(CPoint pt)
         pConnection->m_bLoadGame = m_nID == 7;
 
         if (pConnection->m_nProtocol != 0) {
-            CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
+            CSingleLock renderLock(&(pConnection->GetManager()->m_critSect), FALSE);
             renderLock.Lock(INFINITE);
             pConnection->SummonPopup(6);
             renderLock.Unlock();
@@ -4292,7 +4292,7 @@ void CUIControlButtonConnectionJoinGame::OnLButtonClick(CPoint pt)
         pConnection->m_strErrorButtonText[0] = 11973;
         pConnection->SummonPopup(20);
     } else {
-        CSingleLock lock(&(m_pPanel->m_pManager->field_36), TRUE);
+        CSingleLock lock(&(m_pPanel->m_pManager->m_critSect), TRUE);
         pConnection->m_nErrorState = 7;
         pConnection->m_strErrorText = 20624;
         pConnection->m_strErrorButtonText[0] = 20625;
@@ -4447,7 +4447,7 @@ void CUIControlButtonConnectionProtocolProtocol::OnLButtonClick(CPoint pt)
     // __LINE__: 7986
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock lock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pConnection->GetManager()->m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     switch (m_nID) {
@@ -4548,7 +4548,7 @@ void CUIControlButtonConnectionSerialPort::OnLButtonClick(CPoint pt)
     // __LINE__: 8263
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock lock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pConnection->GetManager()->m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     INT nPort;
@@ -4636,7 +4636,7 @@ void CUIControlButtonConnectionSerialBaudRate::OnLButtonClick(CPoint pt)
     // __LINE__: 8399
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock lock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pConnection->GetManager()->m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     INT nBaudRate;
@@ -5035,7 +5035,7 @@ void CUIControlButtonConnectionGameMode3State::OnLButtonClick(CPoint pt)
     // __LINE__: 9106
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pConnection->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nID) {
@@ -5099,7 +5099,7 @@ void CUIControlButtonConnectionImportConfirm::OnLButtonClick(CPoint pt)
     // __LINE__: 9208
     UTIL_ASSERT(pConnection != NULL);
 
-    CSingleLock renderLock(&(pConnection->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pConnection->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nID) {
@@ -5140,7 +5140,7 @@ void CScreenConnection::ReadyEndCredits()
 // 0x605850
 void CScreenConnection::ShowSessionTerminatedMessage()
 {
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     if (g_pBaldurChitin->m_cBaldurMessage.m_bVersionControlShutdown) {

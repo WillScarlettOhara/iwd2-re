@@ -4886,7 +4886,7 @@ BOOL CScreenCreateChar::IsDoneButtonClickable(CGameSprite* pSprite)
 // 0x615F50
 void CScreenCreateChar::OnDoneButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CString sExportName;
@@ -5418,7 +5418,7 @@ INT CScreenCreateChar::GetSpriteId()
 // 0x6171A0
 void CScreenCreateChar::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nGameSprite = m_nGameSprite;
@@ -5944,7 +5944,7 @@ void CUIControlButtonCharGenMenu::OnLButtonClick(CPoint pt)
 {
     CScreenCreateChar* pCreateChar = g_pBaldurChitin->m_pEngineCreateChar;
 
-    CSingleLock renderLock(&(pCreateChar->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCreateChar->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nGameSprite = pCreateChar->GetSpriteId();
@@ -6021,7 +6021,7 @@ CUIControlButtonCharGenAccept::~CUIControlButtonCharGenAccept()
 // 0x614EF0
 void CUIControlButtonCharGenAccept::OnLButtonClick(CPoint pt)
 {
-    CSingleLock renderLock(&(m_pPanel->m_pManager->field_36), FALSE);
+    CSingleLock renderLock(&(m_pPanel->m_pManager->m_critSect), FALSE);
 
     CScreenCreateChar* pCreateChar = g_pBaldurChitin->m_pEngineCreateChar;
 
@@ -6204,7 +6204,7 @@ void CUIControlButtonCharGenImport::OnLButtonClick(CPoint)
 {
     CScreenCreateChar* pCreateChar = g_pBaldurChitin->m_pEngineCreateChar;
 
-    CSingleLock renderLock(&(pCreateChar->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCreateChar->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nGameSprite = pCreateChar->GetSpriteId();
@@ -6841,7 +6841,7 @@ void CUIControlScrollBarCharGenSkills::InvalidateItems()
     // __LINE__: 11445
     UTIL_ASSERT(pCreateChar != NULL);
 
-    CSingleLock renderLock(&(pCreateChar->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCreateChar->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nGameSprite = pCreateChar->GetSpriteId();
@@ -8327,7 +8327,7 @@ void CUIControlButtonCharGenAppearanceCustom::OnLButtonClick(CPoint pt)
     // __LINE__: 13765
     UTIL_ASSERT(pCreateChar != NULL);
 
-    CSingleLock renderLock(&(pCreateChar->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCreateChar->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nGameSprite = pCreateChar->GetSpriteId();
@@ -8527,7 +8527,7 @@ void CUIControlButtonCharGenHairSkinColor::OnLButtonClick(CPoint pt)
         UTIL_ASSERT(FALSE);
     }
 
-    CSingleLock renderLock(&(pCreateChar->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCreateChar->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nGameSprite = pCreateChar->GetSpriteId();
@@ -8693,7 +8693,7 @@ void CUIControlButtonCharGenColorChoice::OnLButtonClick(CPoint pt)
     CScreenCreateChar* pCreateChar = g_pBaldurChitin->m_pEngineCreateChar;
     BOOL v2 = FALSE;
 
-    CSingleLock renderLock(&(pCreateChar->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCreateChar->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nGameSprite = pCreateChar->GetSpriteId();
@@ -9191,7 +9191,7 @@ void CUIControlScrollBarCharGenHatedRace::InvalidateItems()
     // __LINE__: 15404
     UTIL_ASSERT(pCreateChar != NULL);
 
-    CSingleLock renderLock(&(pCreateChar->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCreateChar->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nGameSprite = pCreateChar->GetSpriteId();
@@ -10391,7 +10391,7 @@ void CUIControlScrollBarCharGenFeats::InvalidateItems()
     // __LINE__: 17284
     UTIL_ASSERT(pCreateChar != NULL);
 
-    CSingleLock renderLock(&(pCreateChar->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCreateChar->GetManager()->m_critSect), FALSE);
     renderLock.Lock();
 
     INT nGameSprite = pCreateChar->GetSpriteId();

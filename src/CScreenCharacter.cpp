@@ -3002,7 +3002,7 @@ void CScreenCharacter::OnInformationButtonClick()
     // __LINE__: 8345
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3038,7 +3038,7 @@ void CScreenCharacter::OnBiographyButtonClick()
     // __LINE__: 8403
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3074,7 +3074,7 @@ void CScreenCharacter::OnCustomizeBiographyButtonClick()
     // __LINE__: 8460
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3104,7 +3104,7 @@ void CScreenCharacter::OnCustomizeBiographyButtonClick()
 // 0x5E4A20
 void CScreenCharacter::OnPanel52Click()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -3140,7 +3140,7 @@ void CScreenCharacter::OnPanel52Click()
 // 0x5E4B30
 void CScreenCharacter::OnPanel53Click()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -3176,7 +3176,7 @@ void CScreenCharacter::OnPanel53Click()
 // 0x5E4C40
 void CScreenCharacter::OnScriptButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -3218,7 +3218,7 @@ void CScreenCharacter::OnExportButtonClick()
     // __LINE__: 8728
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3327,7 +3327,7 @@ void CScreenCharacter::OnRestButtonClick()
     // __LINE__: 9743
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -3678,7 +3678,7 @@ void CScreenCharacter::OnScriptItemSelect(INT nItem)
     CString sDescription;
 
     if (nItem >= 0) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         // NOTE: Uninline.
@@ -3774,7 +3774,7 @@ void CScreenCharacter::OnErrorButtonClick(INT nButton)
     // __LINE__: 10278
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -4229,7 +4229,7 @@ void CScreenCharacter::CheckMultiPlayerViewableModifyable()
 // 0x5E9600
 void CScreenCharacter::OnCustomizeButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -4279,7 +4279,7 @@ void CScreenCharacter::OnCustomizeButtonClick()
 // 0x5E9800
 void CScreenCharacter::OnAppearanceButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -4315,7 +4315,7 @@ void CScreenCharacter::OnAppearanceButtonClick()
 // 0x5E9910
 void CScreenCharacter::OnSoundsButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -4477,7 +4477,7 @@ void CScreenCharacter::OnPortraitSmallItemSelect(INT nItem)
 // 0x5E9D80
 void CScreenCharacter::OnCustomPortraitsButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -5339,7 +5339,7 @@ void CUIControlScrollBarCharacterHatedRace::InvalidateItems()
     // __LINE__: 14814
     UTIL_ASSERT(pCharacter != NULL);
 
-    CSingleLock renderLock(&(pCharacter->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCharacter->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nGameSprite = g_pBaldurChitin->GetObjectGame()->GetCharacterId(pCharacter->GetSelectedCharacter());
@@ -5690,7 +5690,7 @@ CUIControlButtonCharacterClassSelection::~CUIControlButtonCharacterClassSelectio
 // 0x5EB5E0
 void CUIControlButtonCharacterClassSelection::OnLButtonClick(CPoint pt)
 {
-    CSingleLock renderLock(&(m_pPanel->m_pManager->field_36), FALSE);
+    CSingleLock renderLock(&(m_pPanel->m_pManager->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;
@@ -6700,7 +6700,7 @@ void CUIControlScrollBarCharacterFeats::InvalidateItems()
     // __LINE__: 17235
     UTIL_ASSERT(pCharacter != NULL);
 
-    CSingleLock renderLock(&(pCharacter->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCharacter->GetManager()->m_critSect), FALSE);
     renderLock.Lock();
 
     INT nGameSprite = pCharacter->field_1840;
@@ -7215,7 +7215,7 @@ void CUIControlScrollBarCharacterSkills::InvalidateItems()
     // __LINE__: 18318
     UTIL_ASSERT(pCharacter != NULL);
 
-    CSingleLock renderLock(&(pCharacter->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pCharacter->GetManager()->m_critSect), FALSE);
     renderLock.Lock();
 
     INT nGameSprite = pCharacter->field_1840;

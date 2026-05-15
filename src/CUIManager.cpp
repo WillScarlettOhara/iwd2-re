@@ -420,7 +420,7 @@ BOOL CUIManager::OnKeyDown(SHORT nKey)
 // 0x4D4540
 void CUIManager::Render()
 {
-    CSingleLock renderLock(&field_36, FALSE);
+    CSingleLock renderLock(&m_critSect, FALSE);
     renderLock.Lock(INFINITE);
 
     if (m_bInitialized) {

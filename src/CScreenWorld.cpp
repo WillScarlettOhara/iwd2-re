@@ -3002,7 +3002,7 @@ void CScreenWorld::SetActionPanelEnabled(BOOL bEnable)
 // 0x6984F0
 void CScreenWorld::OnRestButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -3626,7 +3626,7 @@ void CUIControlButtonWorldContainerClose::OnLButtonClick(CPoint pt)
     // __LINE__: 11471
     UTIL_ASSERT(pWorld != NULL);
 
-    CSingleLock renderLock(&(pWorld->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pWorld->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pWorld->StopContainer();

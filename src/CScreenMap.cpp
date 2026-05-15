@@ -1043,7 +1043,7 @@ void CScreenMap::OnRestButtonClick()
     // __LINE__: 1674
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     STRREF strError;
@@ -1088,7 +1088,7 @@ void CScreenMap::OnErrorButtonClick(INT nButton)
     // __LINE__: 1807
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -1139,7 +1139,7 @@ void CScreenMap::OnErrorButtonClick(INT nButton)
 // 0x642460
 void CScreenMap::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -1225,7 +1225,7 @@ void CUIControlButtonMapWorld::OnLButtonClick(CPoint pt)
     // __LINE__: 2039
     UTIL_ASSERT(pWorldMap != NULL);
 
-    CSingleLock renderLock(&(pMap->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pMap->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pWorldMap->StartWorldMap(0, 8, 0);
@@ -1446,7 +1446,7 @@ void CUIControlButtonMapAreaMap::OnRButtonClick(CPoint pt)
             m_pArea->m_cGameAreaNotes.m_cAreaNote.m_startX = static_cast<WORD>(ptWorld.x);
             m_pArea->m_cGameAreaNotes.m_cAreaNote.m_startY = static_cast<WORD>(ptWorld.y);
 
-            CSingleLock renderLock(&(m_pPanel->m_pManager->field_36), FALSE);
+            CSingleLock renderLock(&(m_pPanel->m_pManager->m_critSect), FALSE);
             renderLock.Lock(INFINITE);
             pMap->SetPickedCharacter(-1);
             pMap->SummonPopup(5);
@@ -2295,7 +2295,7 @@ void CUIControlButtonMapNote::OnRButtonClick(CPoint pt)
         CUIControlButtonMapAreaMap* pMapControl = static_cast<CUIControlButtonMapAreaMap*>(m_pPanel->GetControl(2));
         CGameArea* pArea = pMapControl->m_pArea;
 
-        CSingleLock renderLock(&(m_pPanel->m_pManager->field_36), FALSE);
+        CSingleLock renderLock(&(m_pPanel->m_pManager->m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         pArea->m_cGameAreaNotes.field_70 = 0;

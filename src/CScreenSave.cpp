@@ -586,7 +586,7 @@ void CScreenSave::OnSaveButtonClick(INT nSlot)
     // __LINE__: 920
     UTIL_ASSERT(0 <= nSlot && nSlot < GAME_SLOTS);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
 
     INT nGameSlot = m_nTopGameSlot + nSlot;
     if (nGameSlot < m_nNumGameSlots) {
@@ -608,7 +608,7 @@ void CScreenSave::OnSaveButtonClick(INT nSlot)
 // 0x65B430
 void CScreenSave::OnDeleteButtonClick(INT nSlot)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenSave.cpp
     // __LINE__: 991
@@ -697,7 +697,7 @@ BOOL CScreenSave::IsDoneButtonClickable()
 // 0x65B6A0
 void CScreenSave::OnDoneButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
 
     CUIPanel* pPanel = GetTopPopup();
 
@@ -784,7 +784,7 @@ void CScreenSave::OnDoneButtonClick()
 // 0x65B920
 void CScreenSave::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = GetTopPopup();
@@ -1357,7 +1357,7 @@ void CScreenSave::ResetErrorPanel(CUIPanel* pPanel)
 // 0x65D970
 void CScreenSave::OnErrorButtonClick(INT nButton)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_dwErrorTextId) {
@@ -1976,7 +1976,7 @@ void CUIControlButtonSaveError::OnLButtonClick(CPoint pt)
     // __LINE__: 3617
     UTIL_ASSERT(pSave != NULL);
 
-    CSingleLock renderLock(&(pSave->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pSave->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
     pSave->OnErrorButtonClick(m_nID - 1);
     renderLock.Unlock();

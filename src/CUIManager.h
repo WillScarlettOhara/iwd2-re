@@ -56,7 +56,7 @@ public:
     /* 002E */ unsigned char field_2E;
     /* 002D */ unsigned char field_2D;
     /* 0032 */ int field_32;
-    /* 0036 */ CCriticalSection field_36;
+    /* 0036 */ CCriticalSection m_critSect;
     /* 0056 */ CCriticalSection field_56;
     /* 0076 */ int field_76;
     /* 007A */ CRect field_7A;

@@ -178,7 +178,7 @@ BOOL CUIControlButton::OnLButtonDown(CPoint pt)
 // 0x4D4E10
 void CUIControlButton::OnLButtonUp(CPoint pt)
 {
-    CSingleLock lock(&(m_pPanel->m_pManager->field_36), FALSE);
+    CSingleLock lock(&(m_pPanel->m_pManager->m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     m_cVidCell.FrameSet(m_nNormalFrame);

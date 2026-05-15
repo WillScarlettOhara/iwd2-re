@@ -276,7 +276,7 @@ public:
     /* 0ACA */ CNetworkWindow m_SystemWindow;
     /* 0B52 */ DWORD m_dwCRC32[256];
     /* 0F52 */ CRITICAL_SECTION field_F52;
-    /* 0F6A */ CRITICAL_SECTION field_F6A;
+    /* 0F6A */ CRITICAL_SECTION m_critSect;
 
 #if DPLAY_COMPAT
     typedef HRESULT(WINAPI DirectPlayCreateFunc)(LPGUID, LPDIRECTPLAY*, IUnknown*);

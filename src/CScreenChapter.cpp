@@ -376,7 +376,7 @@ void CScreenChapter::TimerSynchronousUpdate()
 // 0x5D39A0
 void CScreenChapter::SwitchMainPanel(DWORD dwMainPanelId)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     if (m_pMainPanel != NULL) {
@@ -603,7 +603,7 @@ void CScreenChapter::OnDoneButtonClick()
 // NOTE: Inlined.
 void CScreenChapter::OnReplayButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     m_cVoiceSound.Stop();
@@ -782,7 +782,7 @@ void CUIControlButtonChapterDone::OnLButtonClick(CPoint pt)
     // __LINE__: 1680
     UTIL_ASSERT(pChapter != NULL);
 
-    CSingleLock renderLock(&(pChapter->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pChapter->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pChapter->OnDoneButtonClick();
@@ -813,7 +813,7 @@ void CUIControlButtonChapterReplay::OnLButtonClick(CPoint pt)
     // __LINE__: 1744
     UTIL_ASSERT(pChapter != NULL);
 
-    CSingleLock renderLock(&(pChapter->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pChapter->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.

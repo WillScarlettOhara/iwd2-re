@@ -431,7 +431,7 @@ void CScreenSinglePlayer::TimerAsynchronousUpdate()
 
     BOOLEAN bDoMainButtonClick = FALSE;
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     if (pPanel != NULL) {
@@ -903,7 +903,7 @@ void CScreenSinglePlayer::OnDoneButtonClick()
         return;
     }
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (pPanel->m_nID) {
@@ -936,7 +936,7 @@ void CScreenSinglePlayer::OnCancelButtonClick()
     // __LINE__: 1555
     UTIL_ASSERT(pPanel != NULL);
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (pPanel->m_nID) {
@@ -1736,7 +1736,7 @@ void CScreenSinglePlayer::OnModifyButtonClick()
                 pGame->GetMultiplayerSettings()->SetArbitrationLockStatus(TRUE, 0);
             }
         } else {
-            CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+            CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
             renderLock.Lock(INFINITE);
 
             m_nErrorState = 0;
@@ -1767,7 +1767,7 @@ void CScreenSinglePlayer::OnErrorButtonClick(INT nButton)
     // __LINE__: 2884
     UTIL_ASSERT(0 <= nButton && nButton < CSCREENSINGLEPLAYER_ERROR_BUTTONS);
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -2389,7 +2389,7 @@ BOOL CScreenSinglePlayer::IsPortraitButtonClickable(INT nCharacterSlot)
 // 0x665340
 void CScreenSinglePlayer::OnPortraitButtonClick(INT nButton)
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     field_484 = nButton;
@@ -2401,7 +2401,7 @@ void CScreenSinglePlayer::OnPortraitButtonClick(INT nButton)
 // 0x6653D0
 void CScreenSinglePlayer::OnLogoutButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     m_nErrorState = 4;
@@ -2577,7 +2577,7 @@ void CUIControlButtonSinglePlayerCharacter::OnLButtonClick(CPoint pt)
     // __LINE__: 4129
     UTIL_ASSERT(pSettings != NULL);
 
-    CSingleLock renderLock(&(pSinglePlayer->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pSinglePlayer->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pSinglePlayer->field_458 = m_nID - 18;
@@ -2724,7 +2724,7 @@ void CUIControlButtonSinglePlayerModifyCharacterCreate::OnLButtonClick(CPoint pt
 
     CNetwork& cNetwork = g_pBaldurChitin->cNetwork;
 
-    CSingleLock renderLock(&(pSinglePlayer->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pSinglePlayer->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nCharacterSlot = pSinglePlayer->field_458;
@@ -2827,7 +2827,7 @@ void CUIControlButtonSinglePlayerModifyCharacterDelete::OnLButtonClick(CPoint pt
     // __LINE__: 4769
     UTIL_ASSERT(pSettings != NULL);
 
-    CSingleLock renderLock(&(pSinglePlayer->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pSinglePlayer->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nCharacterSlot = pSinglePlayer->field_458;
@@ -3260,7 +3260,7 @@ void CUIControlScrollBarSinglePlayerParties::InvalidateItems()
     // __LINE__: 5469
     UTIL_ASSERT(pSinglePlayer != NULL);
 
-    CSingleLock renderLock(&(pSinglePlayer->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pSinglePlayer->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pSinglePlayer->m_nTopParty = max(min(pSinglePlayer->m_nTopParty, pSinglePlayer->m_nPartyCount - 6), 0);

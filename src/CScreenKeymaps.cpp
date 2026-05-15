@@ -766,7 +766,7 @@ void CScreenKeymaps::StartKeymaps()
 // 0x639E70
 void CScreenKeymaps::DismissTopPopup()
 {
-    CSingleLock lock(&(GetManager()->field_36), FALSE);
+    CSingleLock lock(&(GetManager()->m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     CUIPanel* pPanel = GetTopPopup();
@@ -1066,7 +1066,7 @@ void CScreenKeymaps::OnErrorButtonClick(INT nButton)
 {
     int index;
 
-    CSingleLock lock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock lock(&(m_cUIManager.m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     switch (m_dwErrorTextId) {
@@ -1266,7 +1266,7 @@ void CUIControlButtonKeymap::OnLButtonClick(CPoint pt)
     // __LINE__: 2107
     UTIL_ASSERT(pKeymaps != NULL);
 
-    CSingleLock lock(&(pKeymaps->GetManager()->field_36), FALSE);
+    CSingleLock lock(&(pKeymaps->GetManager()->m_critSect), FALSE);
     lock.Lock(INFINITE);
 
     switch (m_pPanel->m_nID) {

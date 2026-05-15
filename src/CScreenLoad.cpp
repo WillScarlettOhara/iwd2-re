@@ -628,7 +628,7 @@ void CScreenLoad::LoadGame(INT nSlot)
 // 0x63C3E0
 void CScreenLoad::OnDeleteButtonClick(INT nSlot)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
     // __LINE__: 1097
@@ -1288,7 +1288,7 @@ void CScreenLoad::ShowErrorPopup(CUIPanel* pPanel)
 // 0x63E2C0
 void CScreenLoad::OnErrorButtonClick(INT nButton)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_dwErrorTextId) {
@@ -1321,7 +1321,7 @@ void CScreenLoad::OnErrorButtonClick(INT nButton)
 // 0x63E440
 void CScreenLoad::OnErrorPopupDismiss(INT nButton)
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -1347,7 +1347,7 @@ void CScreenLoad::DeleteGame(INT nGameSlot)
 // 0x63E630
 void CScreenLoad::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -1727,7 +1727,7 @@ void CUIControlButtonLoadError::OnLButtonClick(CPoint pt)
     // __LINE__: 3105
     UTIL_ASSERT(pLoad != NULL);
 
-    CSingleLock renderLock(&(pLoad->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pLoad->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = pLoad->GetTopPopup();
@@ -1736,7 +1736,7 @@ void CUIControlButtonLoadError::OnLButtonClick(CPoint pt)
         case 1:
             // NOTE: Inlining.
             if (1) {
-                CSingleLock renderLock(&(pLoad->m_cUIManager.field_36), FALSE);
+                CSingleLock renderLock(&(pLoad->m_cUIManager.m_critSect), FALSE);
                 renderLock.Lock(INFINITE);
                 pLoad->DismissPopup();
                 renderLock.Unlock();

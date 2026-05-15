@@ -2165,7 +2165,7 @@ BOOL CScreenStore::IsSellItemButtonClickable()
 // 0x67A070
 void CScreenStore::OnSellItemButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
     if (IsSellItemButtonClickable()) {
         if (m_pStore->GetType() == 4 && m_pBag != NULL) {
@@ -2720,7 +2720,7 @@ void CScreenStore::OnIdentifyItemButtonClick()
     // __LINE__: 6643
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     DWORD nPartyGold = pGame->GetGameSave()->m_nPartyGold;
@@ -2801,7 +2801,7 @@ void CScreenStore::OnRentRoomButtonClick()
     // NOTE: Uninline.
     DWORD nCost = GetRoomCost();
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     if (m_dwRoomType != 0) {
@@ -2839,7 +2839,7 @@ void CScreenStore::OnBuyDrinkButtonClick(INT nButton)
     // __LINE__: 7302
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     STR_RES strRes;
@@ -2928,7 +2928,7 @@ void CScreenStore::OnDoneButtonClick()
         if (pPanel->m_nID == 10 || pPanel->m_nID == 11) {
             OnErrorButtonClick(0);
         } else {
-            CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+            CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
             renderLock.Lock(INFINITE);
 
             switch (pPanel->m_nID) {
@@ -2982,7 +2982,7 @@ void CScreenStore::OnCancelButtonClick()
 {
     CUIPanel* pPanel = GetTopPopup();
     if (pPanel != NULL) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         if (g_pBaldurChitin->m_pEngineWorld->m_bInControlOfStore
@@ -3547,7 +3547,7 @@ void CScreenStore::OnErrorButtonClick(INT nButton)
     // __LINE__: 8634
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -4115,7 +4115,7 @@ void CUIControlButtonStoreBarPanel::OnLButtonClick(CPoint pt)
     // __LINE__: 9634
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // NOTE: Uninline.
@@ -4408,7 +4408,7 @@ void CUIControlScrollBarStoreBuyDrinksDrink::InvalidateItems()
     // __LINE__: 10231
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->UpdateMainPanel();
@@ -4560,7 +4560,7 @@ void CUIControlScrollBarStoreStore::InvalidateItems()
     // __LINE__: 10507
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->UpdateMainPanel();
@@ -4712,7 +4712,7 @@ void CUIControlScrollBarStoreIdentify::InvalidateItems()
     // __LINE__: 10783
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->UpdateMainPanel();
@@ -4858,7 +4858,7 @@ void CUIControlScrollBarStoreGroup::InvalidateItems()
     // __LINE__: 11057
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->UpdateMainPanel();
@@ -5010,7 +5010,7 @@ void CUIControlScrollBarStoreSpell::InvalidateItems()
     // __LINE__: 11334
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->UpdateMainPanel();
@@ -5088,7 +5088,7 @@ void CUIControlButtonStoreStoreItem::OnLButtonDoubleClick(CPoint pt)
                 pStore->field_14E2 = nIndex;
                 pStore->field_14E6 = 1;
 
-                CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+                CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
                 renderLock.Lock(INFINITE);
 
                 pStore->SummonPopup(20);
@@ -5097,7 +5097,7 @@ void CUIControlButtonStoreStoreItem::OnLButtonDoubleClick(CPoint pt)
             }
         } else {
             if (cItem.m_nStoreCount != -1) {
-                CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+                CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
                 renderLock.Lock(INFINITE);
 
                 pStore->SummonPopup(20);
@@ -5122,7 +5122,7 @@ void CUIControlButtonStoreStoreItem::OnRButtonClick(CPoint pt)
     // __LINE__: 11551
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nIndex;
@@ -5294,7 +5294,7 @@ void CUIControlButtonStoreGroupItem::OnRButtonClick(CPoint pt)
     // __LINE__: 11922
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nIndex;
@@ -5415,7 +5415,7 @@ void CUIControlButtonStoreStoreSpell::OnRButtonClick(CPoint pt)
     // __LINE__: 12252
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     INT nIndex;
@@ -5692,7 +5692,7 @@ void CUIControlButtonStoreBuyDrinksDrink::OnLButtonClick(CPoint pt)
     // __LINE__: 12811
     UTIL_ASSERT(pStore != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenStore.cpp
@@ -6070,7 +6070,7 @@ void CUIControlButtonStoreOpenBag::OnLButtonClick(CPoint pt)
     // __LINE__: 13851
     UTIL_ASSERT(pItem != NULL);
 
-    CSingleLock renderLock(&(pStore->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pStore->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pStore->OpenBag(pItem->GetResRef());

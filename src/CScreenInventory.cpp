@@ -498,7 +498,7 @@ void CScreenInventory::OnKeyDown(SHORT nKeysFlags)
             case VK_ESCAPE:
                 if (GetTopPopup() == NULL) {
                     if (m_animation.m_animation != NULL) {
-                        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+                        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
                         renderLock.Lock(INFINITE);
                         delete m_animation.m_animation;
                         m_animation.m_animation = NULL;
@@ -649,7 +649,7 @@ void CScreenInventory::TimerAsynchronousUpdate()
 
     if (field_524 >= 0) {
         if (field_524 == 0) {
-            CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+            CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
             renderLock.Lock(INFINITE);
 
             CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -790,7 +790,7 @@ void CScreenInventory::TimerSynchronousUpdate()
     pVidMode->Flip(TRUE);
 
     if (g_pBaldurChitin->GetActiveEngine() == g_pBaldurChitin->m_pEngineInventory) {
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         if (g_pBaldurChitin->m_pEngineInventory->GetTopPopup() == NULL) {
@@ -841,7 +841,7 @@ void CScreenInventory::OnPortraitLClick(DWORD nPortrait)
 
         UpdateCursorShape();
 
-        CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+        CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         UpdateMainPanel(TRUE);
@@ -1702,7 +1702,7 @@ void CScreenInventory::OnDoneButtonClick()
 // 0x628D20
 void CScreenInventory::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     CUIPanel* pPanel = GetTopPopup();
@@ -1814,7 +1814,7 @@ void CScreenInventory::OnRestButtonClick()
     // __LINE__: 3222
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     STRREF strError;
@@ -1919,7 +1919,7 @@ BOOL CScreenInventory::IsUseButtonActive()
 // 0x629B90
 void CScreenInventory::OnUseButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -1995,7 +1995,7 @@ void CScreenInventory::OnUseButtonClick()
 // 0x629DB0
 void CScreenInventory::OnAbilitiesButtonClick()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -2115,7 +2115,7 @@ void CScreenInventory::OnErrorButtonClick(INT nButton)
     // __LINE__: 4199
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     if (IsErrorButtonClickable(nButton)) {
@@ -2744,7 +2744,7 @@ void CScreenInventory::CheckMultiPlayerViewable()
 // 0x62CAA0
 void CScreenInventory::UnPauseGame()
 {
-    CSingleLock renderLock(&(GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(GetManager()->m_critSect), FALSE);
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
 
@@ -3603,7 +3603,7 @@ void CScreenInventory::UpdateAppearance()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if ((pSprite->m_derivedStats.m_generalState & STATE_DEAD) == 0) {
-            CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+            CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
             renderLock.Lock(INFINITE);
 
             // NOTE: Uninline.
@@ -3662,7 +3662,7 @@ void CScreenInventory::BeginSwap()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if ((pSprite->m_derivedStats.m_generalState & STATE_DEAD) == 0) {
-            CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+            CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
             renderLock.Lock(INFINITE);
 
             CGameAnimationType* animation = pSprite->m_animation.m_animation;
@@ -3700,7 +3700,7 @@ void CScreenInventory::EndSwap()
 
     if (rc == CGameObjectArray::SUCCESS) {
         if ((pSprite->m_derivedStats.m_generalState & STATE_DEAD) == 0) {
-            CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+            CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
             renderLock.Lock(INFINITE);
 
             CGameAnimationType* animation = pSprite->m_animation.m_animation;
@@ -4025,7 +4025,7 @@ BOOL CUIControlButtonInventorySlot::OnLButtonDblClk(CPoint pt)
         pInventory->m_nRequesterButtonId = m_nID;
         pInventory->m_nRequesterAmount = 1;
 
-        CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(pInventory->GetManager()->m_critSect), FALSE);
         renderLock.Lock(INFINITE);
         pInventory->SummonPopup(4);
         renderLock.Unlock();
@@ -4050,7 +4050,7 @@ void CUIControlButtonInventorySlot::OnRButtonClick(CPoint pt)
     UTIL_ASSERT(pGame != NULL);
 
     if (pInventory->m_bMultiPlayerViewable == TRUE) {
-        CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(pInventory->GetManager()->m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         LONG nCharacterId = pInventory->GetSelectedCharacter();
@@ -4369,7 +4369,7 @@ void CUIControlButtonInventoryColor::OnLButtonClick(CPoint pt)
             UTIL_ASSERT(FALSE);
         }
 
-        CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(pInventory->GetManager()->m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         pInventory->SummonPopup(3);
@@ -4998,7 +4998,7 @@ void CUIControlButtonInventoryRequesterPlusMinus::AdjustValue()
             UTIL_ASSERT(pInventory != NULL);
         }
     } else {
-        CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(pInventory->GetManager()->m_critSect), FALSE);
         renderLock.Lock(INFINITE);
 
         CUIControlButtonPlusMinus::OnLButtonUp(CPoint(0, 0));
@@ -5240,7 +5240,7 @@ void CUIControlButtonInventoryAbilitiesAbility::OnLButtonClick(CPoint pt)
     // __LINE__: 11120
     UTIL_ASSERT(pInventory != NULL);
 
-    CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pInventory->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenInventory.cpp
@@ -5388,7 +5388,7 @@ void CUIControlButtonInventoryHistoryAbilities::OnLButtonClick(CPoint pt)
     // __LINE__: 11508
     UTIL_ASSERT(pInventory != NULL);
 
-    CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pInventory->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pInventory->OnAbilitiesButtonClick();
@@ -5418,7 +5418,7 @@ void CUIControlButtonInventoryHistoryUse::OnLButtonClick(CPoint pt)
     // __LINE__: 11676
     UTIL_ASSERT(pInventory != NULL);
 
-    CSingleLock renderLock(&(pInventory->GetManager()->field_36), FALSE);
+    CSingleLock renderLock(&(pInventory->GetManager()->m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     pInventory->OnUseButtonClick();

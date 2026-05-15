@@ -239,7 +239,7 @@ void CScreenStart::UpdateMainPanel()
 // 0x66F8F0
 void CScreenStart::OnQuitButtonClick()
 {
-    CSingleLock lock(&m_cUIManager.field_36, TRUE);
+    CSingleLock lock(&m_cUIManager.m_critSect, TRUE);
 
     m_nErrorState = 0;
     m_dwErrorTextId = 19532;
@@ -460,7 +460,7 @@ void CScreenStart::OnErrorButtonClick(DWORD nID)
     // __LINE__: 1778
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_nErrorState) {
@@ -527,7 +527,7 @@ void CScreenStart::ResetVersionMismatchPanel(CUIPanel* pPanel)
 // 0x6702C0
 void CScreenStart::DismissPopup4()
 {
-    CSingleLock lock(&(m_cUIManager.field_36), TRUE);
+    CSingleLock lock(&(m_cUIManager.m_critSect), TRUE);
 
     if (m_lPopupStack.GetTailPosition() != NULL) {
         CUIPanel* pPanel = m_lPopupStack.GetTail();

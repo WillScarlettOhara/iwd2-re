@@ -890,7 +890,7 @@ void CScreenJournal::OnRestButtonClick()
     // __LINE__: 1667
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     STRREF strError;
@@ -924,7 +924,7 @@ void CScreenJournal::OnErrorButtonClick(INT nButton)
     // __LINE__: 1731
     UTIL_ASSERT(pGame != NULL);
 
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
 
     switch (m_dwErrorState) {
@@ -975,7 +975,7 @@ void CScreenJournal::OnErrorButtonClick(INT nButton)
 // 0x637B50
 void CScreenJournal::OnCancelButtonClick()
 {
-    CSingleLock renderLock(&(m_cUIManager.field_36), FALSE);
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
     renderLock.Lock(INFINITE);
     DismissPopup();
     renderLock.Unlock();
@@ -1101,7 +1101,7 @@ void CUIControlButtonJournalAnnotate::OnLButtonClick(CPoint pt)
             break;
         }
 
-        CSingleLock renderLock(&(pScreen->GetManager()->field_36), FALSE);
+        CSingleLock renderLock(&(pScreen->GetManager()->m_critSect), FALSE);
         renderLock.Lock(INFINITE);
         pScreen->DismissPopup();
         renderLock.Unlock();
