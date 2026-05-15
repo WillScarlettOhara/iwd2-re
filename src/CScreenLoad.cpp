@@ -938,13 +938,16 @@ void CScreenLoad::RefreshGameSlots()
                 nChapter = -1;
                 DWORD varOffset = pSavedGameHeader->m_globalVariablesOffset;
                 DWORD varCount = pSavedGameHeader->m_globalVariablesCount;
-                for (DWORD nVariable = 0; nVariable < varCount; nVariable++) {
+                DBG("RGS: vars offset=0x%X count=%d", varOffset, varCount);
+                for (DWORD nVariable = 0; nVariable < varCount && nVariable < 5000; nVariable++) {
                     BYTE* pVar = pGameData + varOffset + nVariable * (32 + 2 + 2 + 4 + 4 + 8 + 32);
                     // Check if this is the CHAPTER_GLOBAL variable
                     // Name is at pVar + 0, SCRIPTNAME_SIZE = 32
                     if (memcmp(pVar, "CHAPTER", 7) == 0 && pVar[7] == '\0') {
                         // m_intValue is at offset 32+2+2+4 = 40
                         nChapter = *reinterpret_cast<LONG*>(pVar + 40);
+                        DBG("RGS: found CHAPTER, nChapter=%d", nChapter);
+                        break;
                     }
                 }
 
