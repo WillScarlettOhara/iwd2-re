@@ -723,6 +723,9 @@ void CScreenLoad::StartLoad(INT nEngineState)
 // 0x63C6D0
 void CScreenLoad::FreeGameSlots()
 {
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
+    renderLock.Lock(INFINITE);
+
     if (m_nNumGameSlots < 0 || m_nNumGameSlots > 1000) {
         m_nNumGameSlots = 0;
         m_aGameSlots.SetSize(0);
@@ -779,6 +782,9 @@ void CScreenLoad::FreeGameSlots()
 // 0x63C940
 void CScreenLoad::RefreshGameSlots()
 {
+    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
+    renderLock.Lock(INFINITE);
+
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     const CRuleTables& rule = pGame->GetRuleTables();
 
@@ -928,6 +934,8 @@ void CScreenLoad::RefreshGameSlots()
                 // NOTE: Looks unsafe.
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
+                cResGame.m_nID = -1;
+                cResGame.dwFlags = 0;
             }
 
             if (!g_pChitin->cDimm.ServiceFromFile(&(pSlot->m_cResScreenShot), sDirName + "ICEWIND2.BMP")) {
