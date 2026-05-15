@@ -2075,7 +2075,7 @@ void CScreenCharacter::UpdateMainPanel(BOOL bCharacterChanged)
 
         SHORT nTopString = 0;
         if (!bCharacterChanged) {
-            nTopString = pText->field_5A;
+            nTopString = pText->m_nTopIndex;
         }
 
         CString sNameSeparator;

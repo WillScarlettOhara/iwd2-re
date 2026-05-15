@@ -332,7 +332,7 @@ void CScreenChapter::TimerAsynchronousUpdate()
         }
 
         if (!m_bEnded) {
-            if (m_nLine >= m_pTextControl->m_plstStrings->GetCount() - m_pTextControl->field_A6A) {
+            if (m_nLine >= m_pTextControl->m_plstStrings->GetCount() - m_pTextControl->m_nVisibleLines) {
                 m_nEndTime = GetTickCount();
                 m_bEnded = TRUE;
             }
@@ -427,7 +427,7 @@ void CScreenChapter::ResetMainPanel()
 
     // Add leading empty lines so that the text gracefully slide in from the
     // bottom.
-    for (index = 0; index < m_pTextControl->field_A6A + 1; index++) {
+    for (index = 0; index < m_pTextControl->m_nVisibleLines + 1; index++) {
         UpdateText(m_pTextControl, "");
     }
 
@@ -508,11 +508,11 @@ void CScreenChapter::ResetMainPanel()
 
     // Add trailing empty lines so that the text gracefully slide out at the
     // top.
-    for (index = 0; index < m_pTextControl->field_A6A; index++) {
+    for (index = 0; index < m_pTextControl->m_nVisibleLines; index++) {
         UpdateText(m_pTextControl, "");
     }
 
-    m_nLineDelay = max(m_nTotalPlayTime / max(m_pTextControl->m_plstStrings->GetCount() - 7 * m_pTextControl->field_A6A / 4, 1), 833);
+    m_nLineDelay = max(m_nTotalPlayTime / max(m_pTextControl->m_plstStrings->GetCount() - 7 * m_pTextControl->m_nVisibleLines / 4, 1), 833);
 
     m_pTextControl->SetTopString(m_pTextControl->m_plstStrings->FindIndex(0));
 
@@ -854,12 +854,12 @@ void CUIControlTextDisplayChapter::TimerAsynchronousUpdate(BOOLEAN bInside)
                 nElapsed = nTickCount - nEnd;
             }
 
-            field_A62 = -static_cast<SHORT>((nElapsed * m_nFontHeight) / pChapter->m_nLineDelay);
+            m_nScrollOffsetY = -static_cast<SHORT>((nElapsed * m_nFontHeight) / pChapter->m_nLineDelay);
 
-            if (field_A62 <= -m_nFontHeight) {
-                field_A62 = 0;
+            if (m_nScrollOffsetY <= -m_nFontHeight) {
+                m_nScrollOffsetY = 0;
                 m_plstStrings->GetNext(m_posTopString);
-                field_5A++;
+                m_nTopIndex++;
                 AdjustScrollBar();
                 field_A65--;
                 pChapter->m_nLine++;

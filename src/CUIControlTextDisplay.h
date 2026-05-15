@@ -70,19 +70,19 @@ public:
 
     /* 0052 */ CTypedPtrList<CPtrList, CDisplayString*>* m_plstStrings;
     /* 0056 */ POSITION m_posTopString;
-    /* 005A */ short field_5A;
+    /* 005A */ short m_nTopIndex;
     /* 005C */ short field_5C;
     /* 005E */ SHORT m_nRenderCount;
     /* 0060 */ CVidFont m_textFont;
     /* 0560 */ CVidFont m_labelFont;
     /* 0A60 */ SHORT m_nFontHeight;
-    /* 0A62 */ short field_A62;
+    /* 0A62 */ short m_nScrollOffsetY;
     /* 0A64 */ unsigned char field_A64;
     /* 0A65 */ unsigned char field_A65;
     /* 0A66 */ unsigned char field_A66;
     /* 0A67 */ unsigned char field_A67;
     /* 0A68 */ short field_A68;
-    /* 0A6C */ short field_A6A;
+    /* 0A6C */ short m_nVisibleLines;
     /* 0A6C */ short field_A6C;
     /* 0A6E */ DWORD m_nScrollBarID;
     /* 0A72 */ COLORREF m_rgbLabelColor;

@@ -2334,7 +2334,7 @@ void CScreenConnection::UpdateSessionList(CUIPanel* pPanel, DWORD nTextId)
     // __LINE__: 3973
     UTIL_ASSERT(pText != NULL);
 
-    int v1 = pText->field_5A;
+    int v1 = pText->m_nTopIndex;
 
     pText->RemoveAll();
     pText->m_rgbHighlightColor = CBaldurChitin::TEXTDISPLAY_COLOR_HIGHLIGHT;
@@ -2372,7 +2372,7 @@ void CScreenConnection::UpdateSessionList(CUIPanel* pPanel, DWORD nTextId)
             TRUE);
     }
 
-    INT nNewIndex = max(min(v1, pText->m_plstStrings->GetCount() - pText->field_A6A), 0);
+    INT nNewIndex = max(min(v1, pText->m_plstStrings->GetCount() - pText->m_nVisibleLines), 0);
     pText->SetTopString(pText->m_plstStrings->FindIndex(nNewIndex));
 }
 

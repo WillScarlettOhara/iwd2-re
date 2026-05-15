@@ -194,7 +194,7 @@ void CUIControlScrollBar::OnLButtonUp(CPoint pt)
     if (field_146) {
         if (m_nTextDisplayID != -1) {
             CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(m_pPanel->GetControl(m_nTextDisplayID));
-            if (pText->m_plstStrings->GetCount() <= pText->field_A6A) {
+            if (pText->m_plstStrings->GetCount() <= pText->m_nVisibleLines) {
                 if (field_144 != 0) {
                     field_144 = 0;
                     InvalidateRect();
