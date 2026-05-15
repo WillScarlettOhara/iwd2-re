@@ -7031,18 +7031,15 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
     m_startTypeAI.m_nSubRace = m_baseStats.m_subrace;
     m_liveTypeAI.m_nSubRace = m_baseStats.m_subrace;
 
-    if (m_baseStats.m_effectVersion == 0) {
-        m_timedEffectList.Unmarshal(pCreature + offsets->m_effectListOffset,
-            sizeof(ITEM_EFFECT) * offsets->m_effectListCount,
-            this,
-            0);
-        creatureSize -= sizeof(ITEM_EFFECT) * offsets->m_effectListCount;
+    BYTE* pEffectData = pCreature + offsets->m_effectListOffset;
+    BOOL bEffectListIsBase = offsets->m_effectListCount != 0
+        && (memcmp(pEffectData, "EFF V2.0", 8) == 0
+            || memcmp(pEffectData, "EFF V2.1", 8) == 0
+            || memcmp(pEffectData, "EFF V2.2", 8) == 0);
 
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
-        // __LINE__: 12914
-        UTIL_ASSERT(creatureSize > 0);
-    } else {
-        m_timedEffectList.Unmarshal(pCreature + offsets->m_effectListOffset,
+    if (bEffectListIsBase) {
+        m_baseStats.m_effectVersion = 1;
+        m_timedEffectList.Unmarshal(pEffectData,
             sizeof(CGameEffectBase) * offsets->m_effectListCount,
             this,
             1);
@@ -7050,6 +7047,17 @@ void CGameSprite::Unmarshal(BYTE* pCreature, LONG creatureSize, WORD facing, int
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
         // __LINE__: 12920
+        UTIL_ASSERT(creatureSize > 0);
+    } else {
+        m_baseStats.m_effectVersion = 0;
+        m_timedEffectList.Unmarshal(pEffectData,
+            sizeof(ITEM_EFFECT) * offsets->m_effectListCount,
+            this,
+            0);
+        creatureSize -= sizeof(ITEM_EFFECT) * offsets->m_effectListCount;
+
+        // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
+        // __LINE__: 12914
         UTIL_ASSERT(creatureSize > 0);
     }
 
