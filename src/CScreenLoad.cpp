@@ -728,7 +728,8 @@ void CScreenLoad::FreeGameSlots()
         m_aGameSlots.SetSize(0);
         return;
     }
-    for (INT nSlot = 0; nSlot < m_nNumGameSlots; nSlot++) {
+    INT nSlotsToFree = min(m_nNumGameSlots, static_cast<INT>(m_aGameSlots.GetSize()));
+    for (INT nSlot = 0; nSlot < nSlotsToFree; nSlot++) {
         CScreenLoadGameSlot* pSlot = m_aGameSlots[nSlot];
         if (pSlot == NULL) {
             continue;
@@ -783,9 +784,10 @@ void CScreenLoad::RefreshGameSlots()
 
     CStringList* pGames = pGame->GetSaveGames();
 
-    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-    // __LINE__: 1344
-    UTIL_ASSERT(pGames != NULL);
+    if (pGames == NULL) {
+        FreeGameSlots();
+        return;
+    }
 
     CVariable cVariable;
     CResRef cResPortrait;
@@ -803,11 +805,15 @@ void CScreenLoad::RefreshGameSlots()
 
     FreeGameSlots();
 
-    m_nNumGameSlots = pGames->GetCount();
-    m_aGameSlots.SetSize(m_nNumGameSlots);
+    INT nGameSlotsCapacity = pGames->GetCount();
+    m_aGameSlots.SetSize(nGameSlotsCapacity);
+    for (INT nSlot = 0; nSlot < nGameSlotsCapacity; nSlot++) {
+        m_aGameSlots[nSlot] = NULL;
+    }
+    m_nNumGameSlots = 0;
 
     m_nMaxSlotNumber = -1;
-    m_nTopGameSlot = max(min(m_nTopGameSlot, m_nNumGameSlots - GAME_SLOTS), 0);
+    m_nTopGameSlot = 0;
 
     INT nIndex = 0;
 
@@ -815,8 +821,8 @@ void CScreenLoad::RefreshGameSlots()
     while (pos != NULL) {
         sFileName = pGames->GetAt(pos);
         if (sFileName != "default") {
-            m_aGameSlots[nIndex] = new CScreenLoadGameSlot();
-            m_aGameSlots[nIndex]->m_sFileName = sFileName;
+            CScreenLoadGameSlot* pSlot = new CScreenLoadGameSlot();
+            pSlot->m_sFileName = sFileName;
 
             cResPortrait = "";
             sName = "";
@@ -827,17 +833,17 @@ void CScreenLoad::RefreshGameSlots()
 
             CString sNumber = sFileName.SpanIncluding("0123456789");
             if (sFileName[sNumber.GetLength()] == '-') {
-                m_aGameSlots[nIndex]->m_sSlotName = sFileName.Right(sFileName.GetLength() - sNumber.GetLength() - 1);
+                pSlot->m_sSlotName = sFileName.Right(sFileName.GetLength() - sNumber.GetLength() - 1);
 
                 INT nNumber = atol(sNumber);
                 if (nNumber > m_nMaxSlotNumber) {
                     m_nMaxSlotNumber = nNumber;
                 }
             } else {
-                m_aGameSlots[nIndex]->m_sSlotName = sFileName;
+                pSlot->m_sSlotName = sFileName;
             }
 
-            sDirName = pGame->GetDirSaveRoot() + m_aGameSlots[nIndex]->m_sFileName + "\\";
+            sDirName = pGame->GetDirSaveRoot() + pSlot->m_sFileName + "\\";
 
             if (g_pChitin->cDimm.ServiceFromFile(&cResGame, sDirName + "ICEWIND2.GAM")) {
                 BYTE* pGameData = reinterpret_cast<BYTE*>(cResGame.m_pData);
@@ -878,7 +884,7 @@ void CScreenLoad::RefreshGameSlots()
 
                 CFileStatus cFileStatus;
                 if (g_pChitin->cDimm.LocalGetFileStatus(sDirName + "ICEWIND2.GAM", cFileStatus)) {
-                    m_aGameSlots[nIndex]->m_sFileTime = cFileStatus.m_mtime.Format("%a, %b %d, %Y - %I:%M %p");
+                    pSlot->m_sFileTime = cFileStatus.m_mtime.Format("%a, %b %d, %Y - %I:%M %p");
                 }
 
                 nChapter = -1;
@@ -924,47 +930,50 @@ void CScreenLoad::RefreshGameSlots()
                 cResGame.m_pData = NULL;
             }
 
-            if (!g_pChitin->cDimm.ServiceFromFile(&(m_aGameSlots[nIndex]->m_cResScreenShot), sDirName + "ICEWIND2.BMP")) {
-                m_aGameSlots[nIndex]->m_cResScreenShot.m_pData = NULL;
+            if (!g_pChitin->cDimm.ServiceFromFile(&(pSlot->m_cResScreenShot), sDirName + "ICEWIND2.BMP")) {
+                pSlot->m_cResScreenShot.m_pData = NULL;
             }
 
-            if (!g_pChitin->cDimm.ServiceFromFile(&(m_aGameSlots[nIndex]->m_cBmpResPortrait0), sDirName + "PORTRT0.BMP")) {
-                m_aGameSlots[nIndex]->m_cBmpResPortrait0.m_pData = NULL;
+            if (!g_pChitin->cDimm.ServiceFromFile(&(pSlot->m_cBmpResPortrait0), sDirName + "PORTRT0.BMP")) {
+                pSlot->m_cBmpResPortrait0.m_pData = NULL;
             }
 
-            if (!g_pChitin->cDimm.ServiceFromFile(&(m_aGameSlots[nIndex]->m_cBmpResPortrait1), sDirName + "PORTRT1.BMP")) {
-                m_aGameSlots[nIndex]->m_cBmpResPortrait1.m_pData = NULL;
+            if (!g_pChitin->cDimm.ServiceFromFile(&(pSlot->m_cBmpResPortrait1), sDirName + "PORTRT1.BMP")) {
+                pSlot->m_cBmpResPortrait1.m_pData = NULL;
             }
 
-            if (!g_pChitin->cDimm.ServiceFromFile(&(m_aGameSlots[nIndex]->m_cBmpResPortrait2), sDirName + "PORTRT2.BMP")) {
-                m_aGameSlots[nIndex]->m_cBmpResPortrait2.m_pData = NULL;
+            if (!g_pChitin->cDimm.ServiceFromFile(&(pSlot->m_cBmpResPortrait2), sDirName + "PORTRT2.BMP")) {
+                pSlot->m_cBmpResPortrait2.m_pData = NULL;
             }
 
-            if (!g_pChitin->cDimm.ServiceFromFile(&(m_aGameSlots[nIndex]->m_cBmpResPortrait3), sDirName + "PORTRT3.BMP")) {
-                m_aGameSlots[nIndex]->m_cBmpResPortrait3.m_pData = NULL;
+            if (!g_pChitin->cDimm.ServiceFromFile(&(pSlot->m_cBmpResPortrait3), sDirName + "PORTRT3.BMP")) {
+                pSlot->m_cBmpResPortrait3.m_pData = NULL;
             }
 
-            if (!g_pChitin->cDimm.ServiceFromFile(&(m_aGameSlots[nIndex]->m_cBmpResPortrait4), sDirName + "PORTRT4.BMP")) {
-                m_aGameSlots[nIndex]->m_cBmpResPortrait4.m_pData = NULL;
+            if (!g_pChitin->cDimm.ServiceFromFile(&(pSlot->m_cBmpResPortrait4), sDirName + "PORTRT4.BMP")) {
+                pSlot->m_cBmpResPortrait4.m_pData = NULL;
             }
 
-            if (!g_pChitin->cDimm.ServiceFromFile(&(m_aGameSlots[nIndex]->m_cBmpResPortrait5), sDirName + "PORTRT5.BMP")) {
-                m_aGameSlots[nIndex]->m_cBmpResPortrait5.m_pData = NULL;
+            if (!g_pChitin->cDimm.ServiceFromFile(&(pSlot->m_cBmpResPortrait5), sDirName + "PORTRT5.BMP")) {
+                pSlot->m_cBmpResPortrait5.m_pData = NULL;
             }
 
-            m_aGameSlots[nIndex]->m_cResPortrait = cResPortrait;
-            m_aGameSlots[nIndex]->m_sCharacterName = sName;
-            m_aGameSlots[nIndex]->m_nTime = nGameTime;
-            m_aGameSlots[nIndex]->m_nChapter = nChapter;
-            m_aGameSlots[nIndex]->m_sChapter = sChapter;
+            pSlot->m_cResPortrait = cResPortrait;
+            pSlot->m_sCharacterName = sName;
+            pSlot->m_nTime = nGameTime;
+            pSlot->m_nChapter = nChapter;
+            pSlot->m_sChapter = sChapter;
 
+            m_aGameSlots[nIndex] = pSlot;
             nIndex++;
+            m_nNumGameSlots = nIndex;
         }
 
         pGames->GetNext(pos);
     }
 
     m_nNumGameSlots = nIndex;
+    m_nTopGameSlot = max(min(m_nTopGameSlot, m_nNumGameSlots - GAME_SLOTS), 0);
 
     delete pGames;
 }
