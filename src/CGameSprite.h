@@ -749,7 +749,7 @@ public:
     /* 4C4A */ CResRef m_currentArea;
     /* 4C52 */ BOOLEAN m_bGlobal;
     /* 4C53 */ BYTE m_nModalState;
-    /* 4C54 */ int field_4C54[5];
+    /* 4C54 */ int m_nFeatRanks[5];
     /* 4C68 */ BYTE m_nWeaponSet;
     /* 4C6A */ CSound m_sndWalk[2];
     /* 4D32 */ int m_nSndWalk;

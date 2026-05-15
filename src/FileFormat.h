@@ -132,7 +132,7 @@ public:
     /* 027F */ BYTE m_nLastSpellbookSpellLevel;
     /* 0280 */ BYTE field_280[9];
     /* 0289 */ BYTE m_nWeaponSet;
-    /* 028A */ int field_28A[5];
+    /* 028A */ int m_nFeatRanks[5];
     /* 029E */ unsigned char field_29E[9];
     /* 02A7 */ BYTE field_2A7[8];
     /* 02AF */ BYTE m_nLastSong;

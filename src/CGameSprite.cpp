@@ -904,11 +904,11 @@ CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, 
         field_5304 = 0;
         m_doBounce = 3;
         m_nModalState = 0;
-        field_4C54[0] = 0;
-        field_4C54[1] = 0;
-        field_4C54[2] = 0;
-        field_4C54[3] = 0;
-        field_4C54[4] = 0;
+        m_nFeatRanks[0] = 0;
+        m_nFeatRanks[1] = 0;
+        m_nFeatRanks[2] = 0;
+        m_nFeatRanks[3] = 0;
+        m_nFeatRanks[4] = 0;
         m_nWeaponSet = 0;
 
         m_aVfxCells[IWD_VFX_SANCTUARY].SetResRef(CResRef("SanctuC"), FALSE, TRUE, TRUE);
@@ -6546,7 +6546,7 @@ void CGameSprite::Marshal(CSavedGamePartyCreature& partyCreature, BOOLEAN bNetwo
     partyCreature.m_nModalState = m_nModalState;
 
     for (nIndex = 0; nIndex < 5; nIndex++) {
-        partyCreature.field_28A[nIndex] = field_4C54[nIndex];
+        partyCreature.m_nFeatRanks[nIndex] = m_nFeatRanks[nIndex];
     }
 
     partyCreature.m_nWeaponSet = m_nWeaponSet;
@@ -6707,7 +6707,7 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
     m_nModalState = static_cast<BYTE>(pCreature->m_nModalState);
 
     for (nIndex = 0; nIndex < 5; nIndex++) {
-        field_4C54[nIndex] = pCreature->field_28A[nIndex];
+        m_nFeatRanks[nIndex] = pCreature->m_nFeatRanks[nIndex];
     }
 
     RefreshCombatFeats();
@@ -15765,19 +15765,19 @@ INT CGameSprite::GetFeatRank(UINT nFeatNumber)
     if (HasFeat(nFeatNumber)) {
         switch (nFeatNumber) {
         case CGAMESPRITE_FEAT_ARTERIAL_STRIKE:
-            v1 = field_4C54[2];
+            v1 = m_nFeatRanks[2];
             break;
         case CGAMESPRITE_FEAT_EXPERTISE:
-            v1 = field_4C54[0];
+            v1 = m_nFeatRanks[0];
             break;
         case CGAMESPRITE_FEAT_HAMSTRING:
-            v1 = field_4C54[3];
+            v1 = m_nFeatRanks[3];
             break;
         case CGAMESPRITE_FEAT_POWER_ATTACK:
-            v1 = field_4C54[1];
+            v1 = m_nFeatRanks[1];
             break;
         case CGAMESPRITE_FEAT_RAPID_SHOT:
-            v1 = field_4C54[4];
+            v1 = m_nFeatRanks[4];
             break;
         }
     }
@@ -15798,8 +15798,8 @@ void CGameSprite::SetFeatRank(UINT nFeatNumber, INT nValue)
             // __LINE__: 26977
             UTIL_ASSERT_MSG(nValue <= 1, "Invalid feat level.");
 
-            field_4C54[2] = nValue;
-            field_4C54[3] = 0;
+            m_nFeatRanks[2] = nValue;
+            m_nFeatRanks[3] = 0;
             break;
         case CGAMESPRITE_FEAT_EXPERTISE:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15810,8 +15810,8 @@ void CGameSprite::SetFeatRank(UINT nFeatNumber, INT nValue)
             // __LINE__: 26963
             UTIL_ASSERT_MSG(nValue <= MAX_SELECTABLE_FEAT_USE_LEVELS, "Invalid feat level.");
 
-            field_4C54[0] = nValue;
-            field_4C54[1] = 0;
+            m_nFeatRanks[0] = nValue;
+            m_nFeatRanks[1] = 0;
             break;
         case CGAMESPRITE_FEAT_HAMSTRING:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15822,8 +15822,8 @@ void CGameSprite::SetFeatRank(UINT nFeatNumber, INT nValue)
             // __LINE__: 26984
             UTIL_ASSERT_MSG(nValue <= 1, "Invalid feat level.");
 
-            field_4C54[3] = nValue;
-            field_4C54[2] = 0;
+            m_nFeatRanks[3] = nValue;
+            m_nFeatRanks[2] = 0;
             break;
         case CGAMESPRITE_FEAT_POWER_ATTACK:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15834,8 +15834,8 @@ void CGameSprite::SetFeatRank(UINT nFeatNumber, INT nValue)
             // __LINE__: 26970
             UTIL_ASSERT_MSG(nValue <= MAX_SELECTABLE_FEAT_USE_LEVELS, "Invalid feat level.");
 
-            field_4C54[1] = nValue;
-            field_4C54[0] = 0;
+            m_nFeatRanks[1] = nValue;
+            m_nFeatRanks[0] = 0;
             break;
         case CGAMESPRITE_FEAT_RAPID_SHOT:
             // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -15846,7 +15846,7 @@ void CGameSprite::SetFeatRank(UINT nFeatNumber, INT nValue)
             // __LINE__: 269991
             UTIL_ASSERT_MSG(nValue <= 1, "Invalid feat level.");
 
-            field_4C54[4] = nValue;
+            m_nFeatRanks[4] = nValue;
             break;
         }
     }
@@ -15859,35 +15859,35 @@ void CGameSprite::RefreshCombatFeats()
     CGameEffect* pEffect;
     CMessageAddEffect* pMessage;
 
-    if (field_4C54[1] > 0) {
+    if (m_nFeatRanks[1] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATPOWERATTACK);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (field_4C54[0] > 0) {
+    if (m_nFeatRanks[0] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATEXPERTISE);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (field_4C54[2] > 0) {
+    if (m_nFeatRanks[2] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATARTERIALSTRIKE);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (field_4C54[3] > 0) {
+    if (m_nFeatRanks[3] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATHAMSTRING);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
     }
 
-    if (field_4C54[4] > 0) {
+    if (m_nFeatRanks[4] > 0) {
         CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_FEATRAPIDSHOT);
         pEffect = CGameEffect::DecodeEffect(&effect, m_pos, m_id, CPoint(-1, -1));
         pMessage = new CMessageAddEffect(pEffect, m_id, m_id);
