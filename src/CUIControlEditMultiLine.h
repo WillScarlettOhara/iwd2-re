@@ -45,12 +45,12 @@ public:
     /* 0862 */ CString m_sText;
     /* 0866 */ CString field_866;
     /* 086A */ int field_86A;
-    /* 086E */ int field_86E;
+    /* 086E */ int m_nTopLine;
     /* 0872 */ int field_872;
     /* 0876 */ int field_876;
     /* 0877 */ unsigned char field_877;
-    /* 0878 */ short field_878;
-    /* 087A */ short field_87A;
+    /* 0878 */ short m_nVisibleLines;
+    /* 087A */ short m_nTotalLines;
     /* 087C */ COLORREF m_rgbForegroundColor;
     /* 0880 */ COLORREF m_rgbBackgroundColor;
     /* 0888 */ unsigned char field_888;

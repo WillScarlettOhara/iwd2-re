@@ -512,7 +512,7 @@ void CUIControlEditScrollBar::OnLButtonUp(CPoint pt)
     if (field_146) {
         if (m_nTextDisplayID != -1) {
             CUIControlEditMultiLineScroller* pEdit = static_cast<CUIControlEditMultiLineScroller*>(m_pPanel->GetControl(m_nTextDisplayID));
-            if (pEdit->field_86E == 0) {
+            if (pEdit->m_nTopLine == 0) {
                 if (field_144 != 0) {
                     field_144 = 0;
                     InvalidateRect();

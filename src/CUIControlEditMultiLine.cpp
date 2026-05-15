@@ -32,7 +32,7 @@ CUIControlEditMultiLine::CUIControlEditMultiLine(CUIPanel* panel, UI_CONTROL_EDI
     m_bFocused = FALSE;
     m_sText = controlInfo->initialText;
     field_86A = -1;
-    field_86E = 0;
+    m_nTopLine = 0;
     field_877 = 1;
 
     CResRef cursorResRef(controlInfo->refCursor);
@@ -49,8 +49,8 @@ CUIControlEditMultiLine::CUIControlEditMultiLine(CUIPanel* panel, UI_CONTROL_EDI
     field_872 = a3;
     field_88A = -1;
     field_88E = -1;
-    field_87A = 0;
-    field_878 = 0;
+    m_nTotalLines = 0;
+    m_nVisibleLines = 0;
     field_888 = 0;
     m_rgbForegroundColor = RGB(200, 200, 200);
     m_rgbBackgroundColor = RGB(60, 60, 60);
@@ -241,9 +241,9 @@ void CUIControlEditMultiLine::InvalidateRect()
 // 0x4E1610
 void CUIControlEditMultiLine::AdjustVisibleIndex()
 {
-    if (field_87A > field_878) {
+    if (m_nTotalLines > m_nVisibleLines) {
         if (field_86A == 0) {
-            field_86E = 0;
+            m_nTopLine = 0;
         }
 
         if (field_86A != m_sText.GetLength()) {
@@ -270,28 +270,28 @@ void CUIControlEditMultiLine::AdjustVisibleIndex()
                 } while (end < m_sText.GetLength());
             }
 
-            if (field_86E >= numberOfLines || numberOfLines >= field_86E + field_878) {
-                if (field_86E < numberOfLines) {
-                    field_86E = max(numberOfLines - field_878 + 1, 0);
+            if (m_nTopLine >= numberOfLines || numberOfLines >= m_nTopLine + m_nVisibleLines) {
+                if (m_nTopLine < numberOfLines) {
+                    m_nTopLine = max(numberOfLines - m_nVisibleLines + 1, 0);
                 } else {
-                    field_86E = numberOfLines;
+                    m_nTopLine = numberOfLines;
                 }
             } else {
-                if (field_87A - field_86E < field_878) {
-                    field_86E = field_87A - field_878;
+                if (m_nTotalLines - m_nTopLine < m_nVisibleLines) {
+                    m_nTopLine = m_nTotalLines - m_nVisibleLines;
                 }
 
-                if (field_86E < numberOfLines) {
-                    field_86E = max(numberOfLines - field_878 + 1, 0);
+                if (m_nTopLine < numberOfLines) {
+                    m_nTopLine = max(numberOfLines - m_nVisibleLines + 1, 0);
                 } else {
-                    field_86E = numberOfLines;
+                    m_nTopLine = numberOfLines;
                 }
             }
         } else {
-            field_86E = field_87A - field_878;
+            m_nTopLine = m_nTotalLines - m_nVisibleLines;
         }
     } else {
-        field_86E = 0;
+        m_nTopLine = 0;
     }
 }
 
@@ -336,31 +336,31 @@ void CUIControlEditMultiLineScroller::AdjustVisibleIndex()
         CUIControlScrollBar* pScrollBar = static_cast<CUIControlScrollBar*>(m_pPanel->GetControl(field_892));
 
         // NOTE: Uninline.
-        pScrollBar->AdjustScrollBar(field_878, field_878, field_87A);
+        pScrollBar->AdjustScrollBar(m_nVisibleLines, m_nVisibleLines, m_nTotalLines);
     }
 }
 
 // NOTE: Uninline.
 void CUIControlEditMultiLineScroller::OnScroll(SHORT a1, SHORT a2)
 {
-    if (field_87A < field_878) {
+    if (m_nTotalLines < m_nVisibleLines) {
         return;
     }
 
     // TODO: Check casts.
-    int v1 = static_cast<int>(static_cast<float>(a1) / static_cast<float>(a2) * (field_87A - field_878));
+    int v1 = static_cast<int>(static_cast<float>(a1) / static_cast<float>(a2) * (m_nTotalLines - m_nVisibleLines));
 
-    if (v1 == field_86E || v1 < 0 || v1 > field_87A - field_878) {
+    if (v1 == m_nTopLine || v1 < 0 || v1 > m_nTotalLines - m_nVisibleLines) {
         return;
     }
 
-    field_86E = v1;
+    m_nTopLine = v1;
 
     if (field_892 != -1) {
         CUIControlEditScrollBar* pScrollBar = static_cast<CUIControlEditScrollBar*>(m_pPanel->GetControl(field_892));
 
         // NOTE: Uninline.
-        pScrollBar->AdjustScrollBar(field_86E, field_87A, field_878);
+        pScrollBar->AdjustScrollBar(m_nTopLine, m_nTotalLines, m_nVisibleLines);
     }
 
     InvalidateRect();
@@ -369,16 +369,16 @@ void CUIControlEditMultiLineScroller::OnScroll(SHORT a1, SHORT a2)
 // NOTE: Uninline.
 void CUIControlEditMultiLineScroller::OnScrollUp()
 {
-    field_86E--;
-    if (field_86E < 0) {
-        field_86E = 0;
+    m_nTopLine--;
+    if (m_nTopLine < 0) {
+        m_nTopLine = 0;
     }
 
     if (field_892 != -1) {
         CUIControlEditScrollBar* pScrollBar = static_cast<CUIControlEditScrollBar*>(m_pPanel->GetControl(field_892));
 
         // NOTE: Uninline.
-        pScrollBar->AdjustScrollBar(field_86E, field_87A, field_878);
+        pScrollBar->AdjustScrollBar(m_nTopLine, m_nTotalLines, m_nVisibleLines);
     }
 
     InvalidateRect();
@@ -387,16 +387,16 @@ void CUIControlEditMultiLineScroller::OnScrollUp()
 // NOTE: Uninline.
 void CUIControlEditMultiLineScroller::OnScrollDown()
 {
-    field_86E++;
-    if (field_86E > field_87A - field_878) {
-        field_86E = field_87A - field_878;
+    m_nTopLine++;
+    if (m_nTopLine > m_nTotalLines - m_nVisibleLines) {
+        m_nTopLine = m_nTotalLines - m_nVisibleLines;
     }
 
     if (field_892 != -1) {
         CUIControlEditScrollBar* pScrollBar = static_cast<CUIControlEditScrollBar*>(m_pPanel->GetControl(field_892));
 
         // NOTE: Uninline.
-        pScrollBar->AdjustScrollBar(field_86E, field_87A, field_878);
+        pScrollBar->AdjustScrollBar(m_nTopLine, m_nTotalLines, m_nVisibleLines);
     }
 
     InvalidateRect();
@@ -406,20 +406,20 @@ void CUIControlEditMultiLineScroller::OnScrollDown()
 void CUIControlEditMultiLineScroller::OnPageUp(DWORD nLines)
 {
     SHORT v1 = static_cast<SHORT>(nLines);
-    if (v1 > field_878) {
-        v1 = field_878;
+    if (v1 > m_nVisibleLines) {
+        v1 = m_nVisibleLines;
     }
 
-    field_86E -= v1;
-    if (field_86E < 0) {
-        field_86E = 0;
+    m_nTopLine -= v1;
+    if (m_nTopLine < 0) {
+        m_nTopLine = 0;
     }
 
     if (field_892 != -1) {
         CUIControlEditScrollBar* pScrollBar = static_cast<CUIControlEditScrollBar*>(m_pPanel->GetControl(field_892));
 
         // NOTE: Uninline.
-        pScrollBar->AdjustScrollBar(field_86E, field_87A, field_878);
+        pScrollBar->AdjustScrollBar(m_nTopLine, m_nTotalLines, m_nVisibleLines);
     }
 
     InvalidateRect();
@@ -428,17 +428,17 @@ void CUIControlEditMultiLineScroller::OnPageUp(DWORD nLines)
 // NOTE: Uninline.
 void CUIControlEditMultiLineScroller::OnPageDown(DWORD nLines)
 {
-    if (field_87A < field_878) {
-        field_86E = 0;
+    if (m_nTotalLines < m_nVisibleLines) {
+        m_nTopLine = 0;
     } else {
         SHORT v1 = static_cast<SHORT>(nLines);
-        if (v1 > field_878) {
-            v1 = field_878;
+        if (v1 > m_nVisibleLines) {
+            v1 = m_nVisibleLines;
         }
 
-        field_86E += v1;
-        if (field_86E > field_87A - field_878) {
-            field_86E = field_87A - field_878;
+        m_nTopLine += v1;
+        if (m_nTopLine > m_nTotalLines - m_nVisibleLines) {
+            m_nTopLine = m_nTotalLines - m_nVisibleLines;
         }
     }
 
@@ -446,7 +446,7 @@ void CUIControlEditMultiLineScroller::OnPageDown(DWORD nLines)
         CUIControlEditScrollBar* pScrollBar = static_cast<CUIControlEditScrollBar*>(m_pPanel->GetControl(field_892));
 
         // NOTE: Uninline.
-        pScrollBar->AdjustScrollBar(field_86E, field_87A, field_878);
+        pScrollBar->AdjustScrollBar(m_nTopLine, m_nTotalLines, m_nVisibleLines);
     }
 
     InvalidateRect();
