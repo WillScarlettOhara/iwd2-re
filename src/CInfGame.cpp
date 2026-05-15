@@ -2113,26 +2113,29 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
 
         BYTE* pMember = pGame + partyOffset;
         for (int i = 0; i < nPartyMembers && i < 6; i++) {
-            // Corrected from NearInfinity CHR structure:
-            // +0x00: selectionState (u32)
-            // +0x04: partyPosition / slotIndex (u16)
-            // +0x06: creOffset (u32) — offset of CRE data in file
-            // +0x0A: creSize (u32) — size of CRE data
-            // +0x14: orientation (u16) — facing direction
-            // +0x16: areaRef (char[8]) — area RESREF
-            // +0x1E: posX (u16)
-            // +0x20: posY (u16)
+            // Dump raw bytes to find correct offsets
+            DBG("Unmarshal: member[%d] RAW +0x00: %02X %02X %02X %02X  +0x04: %02X %02X %02X %02X  +0x08: %02X %02X %02X %02X  +0x0C: %02X %02X %02X %02X",
+                i,
+                pMember[0], pMember[1], pMember[2], pMember[3],
+                pMember[4], pMember[5], pMember[6], pMember[7],
+                pMember[8], pMember[9], pMember[10], pMember[11],
+                pMember[12], pMember[13], pMember[14], pMember[15]);
+            DBG("Unmarshal: member[%d] RAW +0x10: %02X %02X %02X %02X  +0x14: %02X %02X %02X %02X  +0x18: %02X %02X %02X %02X  +0x1C: %02X %02X %02X %02X",
+                i,
+                pMember[16], pMember[17], pMember[18], pMember[19],
+                pMember[20], pMember[21], pMember[22], pMember[23],
+                pMember[24], pMember[25], pMember[26], pMember[27],
+                pMember[28], pMember[29], pMember[30], pMember[31]);
+
             int slotIndex = *reinterpret_cast<unsigned short*>(pMember + 4); // +0x04
             int creOffset = *reinterpret_cast<int*>(pMember + 6);              // +0x06
             int creSize   = *reinterpret_cast<int*>(pMember + 0x0A);           // +0x0A
             short facing  = *reinterpret_cast<short*>(pMember + 0x14);         // +0x14
 
-            // Area (RESREF) at +0x16
             char areaRef[9];
             memcpy(areaRef, pMember + 0x16, 8);
             areaRef[8] = 0;
 
-            // Position at +0x1E / +0x20
             short posX = *reinterpret_cast<short*>(pMember + 0x1E);
             short posY = *reinterpret_cast<short*>(pMember + 0x20);
 
