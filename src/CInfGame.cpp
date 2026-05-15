@@ -2143,10 +2143,16 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
 
                 // Only create sprites if CRE data has correct signature
                 if (memcmp(pCreData, "CRE V2.2", 8) == 0) {
+                    DBG("Unmarshal: creating sprite for slot %d (NOT adding to array)", slotIndex);
                     CGameSprite* pSprite = new CGameSprite(pCreData, creSize, 0,
                         CGameObject::TYPE_SPRITE, -1, 0, 0, 0,
                         CPoint(posX, posY), facing);
 
+                    if (pSprite != NULL) {
+                        DBG("Unmarshal: sprite created OK, deleting immediately");
+                        delete pSprite;
+                    }
+#if 0
                     if (pSprite != NULL) {
                         LONG nIndex;
                         BYTE rc = m_cObjectArray.Add(&nIndex, pSprite, INFINITE);
@@ -2164,6 +2170,7 @@ BOOL CInfGame::Unmarshal(BYTE* pGame, LONG nGame, BOOLEAN bProgressBarInPlace)
                             delete pSprite;
                         }
                     }
+#endif
                 } else {
                     DBG("Unmarshal: CRE signature mismatch, skipping sprite");
                 }
