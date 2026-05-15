@@ -715,35 +715,24 @@ void CScreenLoad::OnMainCancelButtonClick()
 // 0x63C6A0
 void CScreenLoad::StartLoad(INT nEngineState)
 {
-    OutputDebugStringA("StartLoad: begin\n");
     m_nEngineState = nEngineState;
-    OutputDebugStringA("StartLoad: before RefreshGameSlots\n");
     RefreshGameSlots();
-    OutputDebugStringA("StartLoad: after RefreshGameSlots\n");
     m_nTopGameSlot = max(m_nNumGameSlots - GAME_SLOTS, 0);
-    OutputDebugStringA("StartLoad: done\n");
 }
 
 // 0x63C6D0
 void CScreenLoad::FreeGameSlots()
 {
-    OutputDebugStringA("FreeGameSlots: begin\n");
     if (m_nNumGameSlots < 0 || m_nNumGameSlots > 1000) {
-        OutputDebugStringA("FreeGameSlots: m_nNumGameSlots is garbage, resetting\n");
         m_nNumGameSlots = 0;
         m_aGameSlots.SetSize(0);
         return;
     }
     for (INT nSlot = 0; nSlot < m_nNumGameSlots; nSlot++) {
-        OutputDebugStringA("FreeGameSlots: loop\n");
         CScreenLoadGameSlot* pSlot = m_aGameSlots[nSlot];
         if (pSlot == NULL) {
-            OutputDebugStringA("FreeGameSlots: NULL slot, skip\n");
             continue;
         }
-        char buf[64];
-        sprintf(buf, "FreeGameSlots: slot %d ptr=0x%p\n", nSlot, pSlot);
-        OutputDebugStringA(buf);
         if (pSlot->m_cResScreenShot.m_pData != 0) {
             free(pSlot->m_cResScreenShot.m_pData);
             pSlot->m_cResScreenShot.m_pData = NULL;
@@ -782,10 +771,8 @@ void CScreenLoad::FreeGameSlots()
         delete pSlot;
         m_aGameSlots[nSlot] = NULL;
     }
-    OutputDebugStringA("FreeGameSlots: end loop\n");
 
     m_nNumGameSlots = 0;
-    OutputDebugStringA("FreeGameSlots: done\n");
 }
 
 // 0x63C940
