@@ -738,8 +738,12 @@ void CScreenLoad::FreeGameSlots()
         OutputDebugStringA("FreeGameSlots: loop\n");
         CScreenLoadGameSlot* pSlot = m_aGameSlots[nSlot];
         if (pSlot == NULL) {
+            OutputDebugStringA("FreeGameSlots: NULL slot, skip\n");
             continue;
         }
+        char buf[64];
+        sprintf(buf, "FreeGameSlots: slot %d ptr=0x%p\n", nSlot, pSlot);
+        OutputDebugStringA(buf);
         if (pSlot->m_cResScreenShot.m_pData != 0) {
             free(pSlot->m_cResScreenShot.m_pData);
             pSlot->m_cResScreenShot.m_pData = NULL;
