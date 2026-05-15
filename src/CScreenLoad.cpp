@@ -895,11 +895,18 @@ void CScreenLoad::RefreshGameSlots()
                 // Use raw byte offset instead of struct pointer to rule out alignment issues
                 BYTE* pCreatureRaw = pGameData + pSavedGameHeader->m_partyCreatureTableOffset;
                 {
-                    char buf2[128];
-                    sprintf(buf2, "RGS: pCreatureRaw=0x%p pGameData=0x%p fileOffset=0x%X\n", pCreatureRaw, pGameData, pSavedGameHeader->m_partyCreatureTableOffset);
+                    char buf2[256];
+                    sprintf(buf2, "RGS: pCreatureRaw=0x%p pGameData=0x%p offset=0x%X size=%u\n", pCreatureRaw, pGameData, pSavedGameHeader->m_partyCreatureTableOffset, static_cast<unsigned>(cResGame.nSize));
                     OutputDebugStringA(buf2);
-                    sprintf(buf2, "RGS: attempt read at 0x%p\n", pCreatureRaw + 0x0C);
+                    sprintf(buf2, "RGS: attempt read at 0x%p (diff=0x%X) isBad=%d\n", pCreatureRaw + 0x0C, (int)(pCreatureRaw + 0x0C - pGameData), IsBadReadPtr(pCreatureRaw + 0x0C, 1));
                     OutputDebugStringA(buf2);
+                }
+                if (IsBadReadPtr(pCreatureRaw + 0x0C, 1)) {
+                    OutputDebugStringA("RGS: MEMORY NOT READABLE! Skipping\n");
+                    free(cResGame.m_pData);
+                    cResGame.m_pData = NULL;
+                    pGames->GetNext(pos);
+                    continue;
                 }
                 BYTE resRefFirstByte = pCreatureRaw[0x0C];
                 OutputDebugStringA("RGS: resRefFirstByte read OK\n");
