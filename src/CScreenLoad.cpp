@@ -1,5 +1,6 @@
 #include "CScreenLoad.h"
 
+#include "debuglog.h"
 #ifdef _DEBUG
 #include <crtdbg.h>
 #endif
@@ -727,6 +728,7 @@ void CScreenLoad::StartLoad(INT nEngineState)
 // 0x63C6D0
 void CScreenLoad::FreeGameSlots()
 {
+    DBG("FreeGameSlots: entry, n=%d", m_nNumGameSlots);
 #ifdef _DEBUG
     _CrtCheckMemory();
 #endif
@@ -782,11 +784,13 @@ void CScreenLoad::FreeGameSlots()
     }
 
     m_nNumGameSlots = 0;
+    DBG("FreeGameSlots: done");
 }
 
 // 0x63C940
 void CScreenLoad::RefreshGameSlots()
 {
+    DBG("RefreshGameSlots: entry");
 #ifdef _DEBUG
     _CrtCheckMemory();
 #endif
