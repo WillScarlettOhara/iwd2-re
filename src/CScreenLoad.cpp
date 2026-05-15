@@ -723,9 +723,6 @@ void CScreenLoad::StartLoad(INT nEngineState)
 // 0x63C6D0
 void CScreenLoad::FreeGameSlots()
 {
-    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
-    renderLock.Lock(INFINITE);
-
     if (m_nNumGameSlots < 0 || m_nNumGameSlots > 1000) {
         m_nNumGameSlots = 0;
         m_aGameSlots.SetSize(0);
@@ -782,8 +779,9 @@ void CScreenLoad::FreeGameSlots()
 // 0x63C940
 void CScreenLoad::RefreshGameSlots()
 {
-    CSingleLock renderLock(&(m_cUIManager.m_critSect), FALSE);
-    renderLock.Lock(INFINITE);
+#ifdef _DEBUG
+    _CrtCheckMemory();
+#endif
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     const CRuleTables& rule = pGame->GetRuleTables();
@@ -854,20 +852,7 @@ void CScreenLoad::RefreshGameSlots()
             if (g_pChitin->cDimm.ServiceFromFile(&cResGame, sDirName + "ICEWIND2.GAM")) {
                 BYTE* pGameData = reinterpret_cast<BYTE*>(cResGame.m_pData);
                 CSavedGameHeader* pSavedGameHeader = reinterpret_cast<CSavedGameHeader*>(pGameData + 8);
-
-                // Bounds-check critical offsets to guard against corrupt saves
-                DWORD dwPartyOffset = pSavedGameHeader->m_partyCreatureTableOffset;
-                if (dwPartyOffset == 0 || dwPartyOffset > 0x100000) {
-                    free(cResGame.m_pData);
-                    cResGame.m_pData = NULL;
-                    cResGame.m_nID = -1;
-                    cResGame.dwFlags = 0;
-                    delete pSlot;
-                    pGames->GetNext(pos);
-                    continue;
-                }
-
-                CSavedGamePartyCreature* pCreature = reinterpret_cast<CSavedGamePartyCreature*>(pGameData + dwPartyOffset);
+                CSavedGamePartyCreature* pCreature = reinterpret_cast<CSavedGamePartyCreature*>(pGameData + pSavedGameHeader->m_partyCreatureTableOffset);
                 if (pCreature->m_creatureResRef[0] != '\0') {
                     if (pCreature->m_creatureSize != 0) {
                         // Corrupted save - skip this character
@@ -887,15 +872,10 @@ void CScreenLoad::RefreshGameSlots()
                         cCreatureFile.ReleaseData();
                     }
                 } else {
-                    DWORD dwCreatureOff = pCreature->m_creatureOffset;
-                    if (dwCreatureOff == 0 || dwCreatureOff > 0x100000) {
-                        nNameRef = -1;
-                    } else {
-                        CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pGameData + dwCreatureOff + 8);
-                        nNameRef = pCreatureFileHeader->m_name;
-                        cResPortrait = pCreatureFileHeader->m_portraitSmall;
-                        nSex = pCreatureFileHeader->m_sex;
-                    }
+                    CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pGameData + pCreature->m_creatureOffset + 8);
+                    nNameRef = pCreatureFileHeader->m_name;
+                    cResPortrait = pCreatureFileHeader->m_portraitSmall;
+                    nSex = pCreatureFileHeader->m_sex;
                 }
 
                 if (nNameRef != -1) {
@@ -912,10 +892,7 @@ void CScreenLoad::RefreshGameSlots()
                 }
 
                 nChapter = -1;
-                DWORD dwVarsOffset = pSavedGameHeader->m_globalVariablesOffset;
-                DWORD dwVarsCount = pSavedGameHeader->m_globalVariablesCount;
-                if (dwVarsOffset > 0 && dwVarsOffset < 0x100000 && dwVarsCount < 10000) {
-                    for (DWORD nVariable = 0; nVariable < dwVarsCount; nVariable++) {
+                for (DWORD nVariable = 0; nVariable < pSavedGameHeader->m_globalVariablesCount; nVariable++) {
                     CAreaVariable* pAreaVariable = reinterpret_cast<CAreaVariable*>(pGameData + pSavedGameHeader->m_globalVariablesOffset) + nVariable;
 
                     // NOTE: Looks odd, probably inlined assignment.
@@ -932,7 +909,6 @@ void CScreenLoad::RefreshGameSlots()
                     if (cVariable.GetName() == CInfGame::CHAPTER_GLOBAL) {
                         nChapter = cVariable.m_intValue;
                     }
-                }
                 }
 
                 if (nChapter < 0) {
@@ -956,8 +932,6 @@ void CScreenLoad::RefreshGameSlots()
                 // NOTE: Looks unsafe.
                 free(cResGame.m_pData);
                 cResGame.m_pData = NULL;
-                cResGame.m_nID = -1;
-                cResGame.dwFlags = 0;
             }
 
             if (!g_pChitin->cDimm.ServiceFromFile(&(pSlot->m_cResScreenShot), sDirName + "ICEWIND2.BMP")) {
@@ -996,7 +970,6 @@ void CScreenLoad::RefreshGameSlots()
 
             m_aGameSlots[nIndex] = pSlot;
             nIndex++;
-            m_nNumGameSlots = nIndex;
         }
 
         pGames->GetNext(pos);
