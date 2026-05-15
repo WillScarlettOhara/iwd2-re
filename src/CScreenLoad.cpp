@@ -715,14 +715,19 @@ void CScreenLoad::OnMainCancelButtonClick()
 // 0x63C6A0
 void CScreenLoad::StartLoad(INT nEngineState)
 {
+    OutputDebugStringA("StartLoad: begin\n");
     m_nEngineState = nEngineState;
+    OutputDebugStringA("StartLoad: before RefreshGameSlots\n");
     RefreshGameSlots();
+    OutputDebugStringA("StartLoad: after RefreshGameSlots\n");
     m_nTopGameSlot = max(m_nNumGameSlots - GAME_SLOTS, 0);
+    OutputDebugStringA("StartLoad: done\n");
 }
 
 // 0x63C6D0
 void CScreenLoad::FreeGameSlots()
 {
+    OutputDebugStringA("FreeGameSlots: begin\n");
     for (INT nSlot = 0; nSlot < m_nNumGameSlots; nSlot++) {
         CScreenLoadGameSlot* pSlot = m_aGameSlots[nSlot];
         if (pSlot == NULL) {
