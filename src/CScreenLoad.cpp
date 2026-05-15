@@ -844,22 +844,23 @@ void CScreenLoad::RefreshGameSlots()
                 CSavedGameHeader* pSavedGameHeader = reinterpret_cast<CSavedGameHeader*>(pGameData + 8);
                 CSavedGamePartyCreature* pCreature = reinterpret_cast<CSavedGamePartyCreature*>(pGameData + pSavedGameHeader->m_partyCreatureTableOffset);
                 if (pCreature->m_creatureResRef[0] != '\0') {
-                    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenLoad.cpp
-                    // __LINE__: 1419
-                    UTIL_ASSERT(pCreature->m_creatureSize == 0);
+                    if (pCreature->m_creatureSize != 0) {
+                        // Corrupted save - skip this character
+                        nNameRef = -1;
+                    } else {
+                        CCreatureFile cCreatureFile;
+                        cCreatureFile.SetResRef(pCreature->m_creatureResRef, TRUE, TRUE);
 
-                    CCreatureFile cCreatureFile;
-                    cCreatureFile.SetResRef(pCreature->m_creatureResRef, TRUE, TRUE);
+                        BYTE* pCreatureData = cCreatureFile.GetData();
+                        if (pCreatureData != NULL) {
+                            CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pCreatureData + 8);
+                            nNameRef = pCreatureFileHeader->m_name;
+                            cResPortrait = pCreatureFileHeader->m_portraitSmall;
+                            nSex = pCreatureFileHeader->m_sex;
+                        }
 
-                    BYTE* pCreatureData = cCreatureFile.GetData();
-                    if (pCreatureData != NULL) {
-                        CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pCreatureData + 8);
-                        nNameRef = pCreatureFileHeader->m_name;
-                        cResPortrait = pCreatureFileHeader->m_portraitSmall;
-                        nSex = pCreatureFileHeader->m_sex;
+                        cCreatureFile.ReleaseData();
                     }
-
-                    cCreatureFile.ReleaseData();
                 } else {
                     CCreatureFileHeader* pCreatureFileHeader = reinterpret_cast<CCreatureFileHeader*>(pGameData + pCreature->m_creatureOffset + 8);
                     nNameRef = pCreatureFileHeader->m_name;
