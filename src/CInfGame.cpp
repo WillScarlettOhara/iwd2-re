@@ -3794,25 +3794,6 @@ void CInfGame::WorldEngineActivated(CVidMode* pVidMode)
     m_cVRamPool.AttachSurfaces(pVidMode);
     if (m_visibleArea >= 0 && m_visibleArea < CINFGAME_MAX_AREAS && m_gameAreas[m_visibleArea] != NULL) {
         m_gameAreas[m_visibleArea]->OnActivation();
-
-        // Center view on party leader
-        if (m_nCharacters > 0) {
-            LONG nLeader = m_characterPortraits[0];
-            CGameSprite* pSprite;
-            BYTE rc = m_cObjectArray.GetShare(nLeader, CGameObjectArray::THREAD_ASYNCH, reinterpret_cast<CGameObject**>(&pSprite), INFINITE);
-            if (rc == CGameObjectArray::SUCCESS && pSprite->m_pArea == m_gameAreas[m_visibleArea]) {
-                CInfinity* pInfinity = m_gameAreas[m_visibleArea]->GetInfinity();
-                CRect rView(pInfinity->rViewPort);
-                INT x = rView.Width() / -2;
-                INT y = rView.Height() / -2;
-                CPoint pos = pSprite->GetPos();
-                pInfinity->SetViewPosition(x + pos.x, y + pos.y, TRUE);
-                DBG("WorldEngineActivated: centered view on leader at (%d,%d)", pos.x, pos.y);
-            }
-            if (rc == CGameObjectArray::SUCCESS) {
-                m_cObjectArray.ReleaseShare(nLeader, CGameObjectArray::THREAD_ASYNCH, INFINITE);
-            }
-        }
     } else {
         DBG("WorldEngineActivated: SKIPPING OnActivation, area missing or invalid");
     }
@@ -5994,6 +5975,11 @@ void CInfGame::SetupCharacters(BOOLEAN bProgressBarInPlace)
     }
 
     DBG("SetupCharacters: done");
+
+    // Center view on start position (matching original Ghidra decomp: CInfinity__SetViewPosition)
+    CInfinity* pInfinity = pArea->GetInfinity();
+    CRect rView(pInfinity->rViewPort);
+    pInfinity->SetViewPosition(ptView.x + rView.Width() / -2, ptView.y + rView.Height() / -2, TRUE);
 }
 
 // 0x5BFC40
