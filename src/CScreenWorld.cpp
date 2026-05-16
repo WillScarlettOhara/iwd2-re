@@ -480,6 +480,17 @@ void CScreenWorld::EngineGameInit()
         CResRef(CString("GUIW") + CBaldurChitin::CHUI_GUIEXT),
         g_pBaldurChitin->field_4A2C);
 
+    // Shift panels to center (all other screens do this in EngineInitialized)
+    CPoint pt;
+    if (g_pBaldurChitin->field_4A2C) {
+        pt.x = CVideo::SCREENWIDTH / 2 - CBaldurChitin::DEFAULT_SCREEN_WIDTH;
+        pt.y = CVideo::SCREENHEIGHT / 2 - CBaldurChitin::DEFAULT_SCREEN_HEIGHT;
+    } else {
+        pt.x = (CVideo::SCREENWIDTH - CBaldurChitin::DEFAULT_SCREEN_WIDTH) / 2;
+        pt.y = (CVideo::SCREENHEIGHT - CBaldurChitin::DEFAULT_SCREEN_HEIGHT) / 2;
+    }
+    m_cUIManager.ShiftPanels(pt);
+
     m_pCurrentScrollBar = NULL;
     m_bored = FALSE;
     m_boredCount = 0;
