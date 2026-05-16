@@ -59,6 +59,7 @@ python scripts/fix_mismatches.py --apply
 - IESDP: `C:/projects/iesdp/`
 
 ## Ghidra Tools
+- **Before starting server**: delete stale lock files first: `rm -f "C:/ghidra_projects/IWD2/IWD2.lock" "C:/ghidra_projects/IWD2/IWD2.lock~"`
 - `bash scripts/ghidra_info.sh 0xADDR` — show func + bookmarks + comments for address
 - `python scripts/ghidra_re.py decomp 0xADDR` — decompile function
 - `python scripts/ghidra_re.py func --address 0xADDR --name ClassName::method` — rename
