@@ -4,6 +4,7 @@
 #include "CBaldurChitin.h"
 #include "CGameObjectArray.h"
 #include "CGameSprite.h"
+#include "CMessage.h"
 #include "CInfGame.h"
 #include "CPathSearch.h"
 #include "CSearchBitmap.h"
@@ -423,7 +424,18 @@ CAIGroup::CAIGroup(SHORT id)
 // 0x404E80
 void CAIGroup::GroupAction(CAIAction action, BOOL override, CAIAction* leaderAction)
 {
-    // TODO: Incomplete.
+    if (m_memberList.IsEmpty()) {
+        return;
+    }
+
+    POSITION pos = m_memberList.GetHeadPosition();
+    while (pos != NULL) {
+        LONG memberId = reinterpret_cast<LONG>(m_memberList.GetNext(pos));
+
+        // Dispatch via message handler
+        CMessageAddAction* pMsg = new CMessageAddAction(action, memberId, memberId);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
+    }
 }
 
 // 0x4052D0
@@ -657,7 +669,27 @@ void CAIGroup::Sort()
 // 0x4063E0
 void CAIGroup::GroupSetTarget(CPoint target, BOOL additive, SHORT formationType, CPoint cursor)
 {
-    // TODO: Incomplete.
+    if (m_memberList.IsEmpty()) {
+        return;
+    }
+
+    // Formation/cursor positioning (simplified — use target directly)
+    if (formationType == 0) {
+        FollowLeader(target, additive);
+        return;
+    }
+
+    POSITION pos = m_memberList.GetHeadPosition();
+    while (pos != NULL) {
+        LONG memberId = reinterpret_cast<LONG>(m_memberList.GetNext(pos));
+
+        // Create MOVETOPOINT action for this member
+        CAIAction move(CAIAction::MOVETOPOINT, target, 0, -1);
+
+        // Dispatch via message handler (original uses CMessageAddAction)
+        CMessageAddAction* pMsg = new CMessageAddAction(move, memberId, memberId);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
+    }
 }
 
 // 0x407280
