@@ -1,4 +1,5 @@
 #include "CInfButtonArray.h"
+#include "debuglog.h"
 
 #include "CBaldurChitin.h"
 #include "CButtonData.h"
@@ -124,7 +125,7 @@ void CInfButtonArray::UpdateState()
     if (pGame != NULL) {
         CAIGroup* pGroup = pGame->GetGroup();
         INT nGroupCount = pGroup->GetCount();
-        OutputDebugStringA("UpdateState called\n");
+        DBG("UpdateState called\n");
         if (nGroupCount > 1) {
             SetState(0x6E, 0);  // Group mode: Guard, Attack, Stop, Formations
         } else if (nGroupCount == 1) {
@@ -210,17 +211,27 @@ void CInfButtonArray::UpdateButtons()
     // Get panel 3 which has 12 button controls (indices 6-17)
     CUIPanel* pPanel = g_pBaldurChitin->GetScreenWorld()->GetManager()->GetPanel(3);
     if (pPanel == NULL) {
-        OutputDebugStringA("UpdateButtons: Panel 3 is NULL\n");
+        DBG("UpdateButtons: Panel 3 is NULL — trying panel 4");
+        pPanel = g_pBaldurChitin->GetScreenWorld()->GetManager()->GetPanel(4);
+    }
+    if (pPanel == NULL) {
+        DBG("UpdateButtons: Panel 4 also NULL");
+        // Try to find which panels exist
+        for (DWORD id = 0; id < 30; id++) {
+            if (g_pBaldurChitin->GetScreenWorld()->GetManager()->GetPanel(id) != NULL) {
+                DBG("UpdateButtons: Panel %d exists", id);
+            }
+        }
         return;
     }
     pPanel->SetActive(TRUE);
 
-    OutputDebugStringA("UpdateButtons: Panel 3 found, setting buttons\n");
+    DBG("UpdateButtons: Panel 3 found, setting buttons\n");
 
     for (int i = 0; i < 12; i++) {
         CUIControlButton* pButton = static_cast<CUIControlButton*>(pPanel->GetControl(6 + i));
         if (pButton == NULL) {
-            OutputDebugStringA("UpdateButtons: button is NULL\n");
+            DBG("UpdateButtons: button is NULL\n");
             continue;
         }
 
