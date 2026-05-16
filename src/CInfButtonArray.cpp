@@ -124,6 +124,7 @@ void CInfButtonArray::UpdateState()
     if (pGame != NULL) {
         CAIGroup* pGroup = pGame->GetGroup();
         INT nGroupCount = pGroup->GetCount();
+        OutputDebugStringA("UpdateState called\n");
         if (nGroupCount > 1) {
             SetState(0x6E, 0);  // Group mode: Guard, Attack, Stop, Formations
         } else if (nGroupCount == 1) {
@@ -208,12 +209,20 @@ void CInfButtonArray::UpdateButtons()
 
     // Get panel 3 which has 12 button controls (indices 6-17)
     CUIPanel* pPanel = g_pBaldurChitin->GetScreenWorld()->GetManager()->GetPanel(3);
-    if (pPanel == NULL) return;
+    if (pPanel == NULL) {
+        OutputDebugStringA("UpdateButtons: Panel 3 is NULL\n");
+        return;
+    }
     pPanel->SetActive(TRUE);
+
+    OutputDebugStringA("UpdateButtons: Panel 3 found, setting buttons\n");
 
     for (int i = 0; i < 12; i++) {
         CUIControlButton* pButton = static_cast<CUIControlButton*>(pPanel->GetControl(6 + i));
-        if (pButton == NULL) continue;
+        if (pButton == NULL) {
+            OutputDebugStringA("UpdateButtons: button is NULL\n");
+            continue;
+        }
 
         int nType = m_buttonTypes[i];
         int nIcon = -1;
@@ -222,16 +231,10 @@ void CInfButtonArray::UpdateButtons()
         case 7:  nIcon = 0;  break;  // Guard
         case 8:  nIcon = 3;  break;  // Attack
         case 0xF: nIcon = 11; break;  // Stop
-        case 0x10: nIcon = 4; break;  // Formation 1 (guess)
-        case 0x11: nIcon = 5; break;  // Formation 2 (guess)
-        case 0x12: nIcon = 6; break;  // Formation 3 (guess)
-        case 0x13: nIcon = 7; break;  // Formation 4 (guess)
-        case 0x14: nIcon = 8; break;  // Formation 5 (guess)
         default: break;
         }
 
         if (nIcon >= 0) {
-            // Set frame for normal and pressed states (4 frames per icon)
             pButton->m_nNormalFrame = nIcon * 4;
             pButton->m_nPressedFrame = nIcon * 4 + 1;
             pButton->SetActive(TRUE);
@@ -240,6 +243,8 @@ void CInfButtonArray::UpdateButtons()
         }
         pButton->InvalidateRect();
     }
+    
+    pPanel->InvalidateRect(NULL);
 }
 
 // 0x452C50
