@@ -1001,6 +1001,7 @@ void SearchThreadMain(void* userInfo)
                                             searchRequest->m_pPath = g_pBaldurChitin->GetObjectGame()->m_pathSearch->GetPath(&(searchRequest->m_nPath));
                                             if (searchRequest->m_serviceState != CSearchRequest::STATE_STALE) {
                                                 searchRequest->m_serviceState = CSearchRequest::STATE_DONE;
+                                            OutputDebugStringA("SearchThread: STATE_DONE\n");
                                             } else {
                                                 delete searchRequest;
                                                 searchLock.Unlock();
@@ -1016,6 +1017,7 @@ void SearchThreadMain(void* userInfo)
 
                                     if (searchRequest->m_serviceState != CSearchRequest::STATE_STALE) {
                                         searchRequest->m_serviceState = CSearchRequest::STATE_NO_TARGET;
+                                        OutputDebugStringA("SearchThread: STATE_NO_TARGET\n");
                                     } else {
                                         delete searchRequest;
                                     }
