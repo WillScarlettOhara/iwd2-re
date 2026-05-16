@@ -4946,7 +4946,14 @@ CMessageHandler::~CMessageHandler()
 // 0x4EE020
 void CMessageHandler::AsynchronousUpdate()
 {
-    // TODO: Incomplete.
+    // Process pending messages — minimal implementation
+    while (!m_messageList.IsEmpty()) {
+        CMessage* pMsg = m_messageList.RemoveHead();
+        if (pMsg != NULL) {
+            pMsg->Run();
+            delete pMsg;
+        }
+    }
 }
 
 // 0x4F7110
