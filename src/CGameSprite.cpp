@@ -2647,6 +2647,7 @@ void CGameSprite::AIUpdateWalk()
     CMessage* message;
 
     if (m_pPath == NULL && m_currentSearchRequest != NULL) {
+        OutputDebugStringA("AIUpdateWalk: waiting for search\n");
         pathLock.Lock(INFINITE);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
