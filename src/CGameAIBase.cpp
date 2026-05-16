@@ -298,7 +298,8 @@ SHORT CGameAIBase::ExecuteAction()
         if (pSprite != NULL) {
             pSprite->m_targetPoint = m_curAction.m_dest;
             pSprite->m_posDest = m_curAction.m_dest;
-            // Set walk animation sequence
+            // Set walk animation sequence and face destination
+            pSprite->SetDirection(m_curAction.m_dest);
             pSprite->SetSequence(CGAMESPRITE_SEQ_WALK);
         }
         return ACTION_DONE;
