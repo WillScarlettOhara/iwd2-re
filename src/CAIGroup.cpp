@@ -6,6 +6,7 @@
 #include "CGameSprite.h"
 #include "CMessage.h"
 #include "CInfGame.h"
+#include "debuglog.h"
 #include "CPathSearch.h"
 #include "CSearchBitmap.h"
 
@@ -669,7 +670,9 @@ void CAIGroup::Sort()
 // 0x4063E0
 void CAIGroup::GroupSetTarget(CPoint target, BOOL additive, SHORT formationType, CPoint cursor)
 {
+    DBG("GroupSetTarget: members=%d target=(%d,%d) formation=%d", m_memberList.GetCount(), target.x, target.y, formationType);
     if (m_memberList.IsEmpty()) {
+        DBG("GroupSetTarget: EMPTY GROUP — no members to move!");
         return;
     }
 

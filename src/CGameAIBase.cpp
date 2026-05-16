@@ -344,7 +344,17 @@ void CGameAIBase::InsertResponse(CAIResponse& response, BOOL checkCurrentRespons
 // 0x45CA10
 void CGameAIBase::ProcessAI()
 {
-    // Minimal implementation: process action queue
+    // TODO: Incomplete.
+
+    // If no current action, try to dequeue one from queue
+    if (m_curAction.m_actionID == CAIAction::NO_ACTION) {
+        if (!m_queuedActions.IsEmpty()) {
+            CAIAction action;
+            SetCurrAction(GetNextAction(action));
+            ResetCurrResponse();
+        }
+    }
+
     if (m_curAction.m_actionID != CAIAction::NO_ACTION) {
         DoAction();
     }
