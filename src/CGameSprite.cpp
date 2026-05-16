@@ -2411,6 +2411,7 @@ void CGameSprite::AIUpdate()
                             g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
                         }
                     } else {
+                        DBG("AIUpdate: WALK case, calling AIUpdateWalk");
                         AIUpdateWalk();
                     }
 
