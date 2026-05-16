@@ -1,5 +1,6 @@
 #include "CGameSprite.h"
 
+#include "debuglog.h"
 #include "CAIScript.h"
 #include "CBaldurChitin.h"
 #include "CBaldurEngine.h"
@@ -2647,7 +2648,7 @@ void CGameSprite::AIUpdateWalk()
     CMessage* message;
 
     if (m_pPath == NULL && m_currentSearchRequest != NULL) {
-        OutputDebugStringA("AIUpdateWalk: waiting for search\n");
+        DBG("AIUpdateWalk: waiting for search");
         pathLock.Lock(INFINITE);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
