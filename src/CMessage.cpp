@@ -5121,9 +5121,11 @@ SHORT CMessageHandler::AddMessage(CMessage* message, BOOL bForcePassThrough, SHO
 // 0x4F7620
 SHORT CMessageHandler::Broadcast(CMessage* message, BOOLEAN bSendMessageToSelf, BOOLEAN bIgnoreObjectControl)
 {
-    // TODO: Incomplete — minimal: process synchronously
+    // TODO: Incomplete — only CMessageAddAction processed for now
     if (message != NULL) {
-        message->Run();
+        if (message->GetMsgSubType() == 0) { // CMessageAddAction type
+            message->Run();
+        }
         delete message;
     }
     return 1;
@@ -5132,9 +5134,11 @@ SHORT CMessageHandler::Broadcast(CMessage* message, BOOLEAN bSendMessageToSelf, 
 // 0x4F7830
 SHORT CMessageHandler::Send(CMessage* message)
 {
-    // TODO: Incomplete — minimal: process synchronously
+    // TODO: Incomplete — only CMessageAddAction processed for now
     if (message != NULL) {
-        message->Run();
+        if (message->GetMsgSubType() == 0) { // CMessageAddAction type
+            message->Run();
+        }
         delete message;
     }
     return 1;
