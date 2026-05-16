@@ -2775,6 +2775,7 @@ void CGameSprite::AIUpdateWalk()
         if (m_pPath == NULL) {
             // Direct movement: walk straight to destination (no pathfinding)
             if (m_posDest.x != 0 || m_posDest.y != 0) {
+                DBG("AIUpdateWalk: direct move from (%d,%d) to (%d,%d)", m_pos.x, m_pos.y, m_posDest.x, m_posDest.y);
                 int dx = m_posDest.x - m_pos.x;
                 int dy = m_posDest.y - m_pos.y;
                 int dist = static_cast<int>(sqrt(static_cast<double>(dx * dx + dy * dy)));
@@ -2782,6 +2783,7 @@ void CGameSprite::AIUpdateWalk()
                     m_pos = m_posDest;
                     m_posDest.SetPoint(0, 0);
                     SetIdleSequence();
+                    DBG("AIUpdateWalk: arrived");
                 } else {
                     int step = 4;
                     m_pos.x += dx * step / dist;
