@@ -300,7 +300,9 @@ SHORT CGameAIBase::ExecuteAction()
         if (pSprite != NULL) {
             pSprite->m_targetPoint = m_curAction.m_dest;
             pSprite->m_posDest = m_curAction.m_dest;
-            DBG("ExecuteAction: posDest set to (%d,%d)", m_curAction.m_dest.x, m_curAction.m_dest.y);
+            // Set walk animation sequence
+            pSprite->SetSequence(CGAMESPRITE_SEQ_WALK);
+            DBG("ExecuteAction: posDest set to (%d,%d), seq=WALK", m_curAction.m_dest.x, m_curAction.m_dest.y);
         }
         return ACTION_DONE;
     }
