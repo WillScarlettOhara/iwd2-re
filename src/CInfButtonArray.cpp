@@ -4,6 +4,8 @@
 #include "CButtonData.h"
 #include "CGameSprite.h"
 #include "CInfGame.h"
+#include "CScreenWorld.h"
+#include "CUIPanel.h"
 
 // 0x851700
 const BYTE CInfButtonArray::STATE_NONE = 0;
@@ -107,8 +109,9 @@ BYTE CInfButtonArray::GetButtonId(INT buttonType)
 // 0x588FF0
 BOOL CInfButtonArray::ResetState()
 {
-    // TODO: Incomplete.
-
+    // Minimal: set to STATE_NONE (no buttons)
+    m_nSelectedButton = 100;
+    SetState(STATE_NONE, 0);
     return TRUE;
 }
 
@@ -121,15 +124,80 @@ void CInfButtonArray::UpdateState()
 // 0x589110
 BOOL CInfButtonArray::SetState(INT nState, int a2)
 {
-    // TODO: Incomplete.
+    // TODO: Incomplete — minimal implementation for group/single states
 
-    return FALSE;
+    // Button type IDs (matching Ghidra decomp)
+    // Group mode (0x6E): Guard, Attack, Stop, Formations 1-5, 4 empty
+    // Single char mode (0x65): Action buttons 0x15-0x20 (21-32)
+
+    switch (nState) {
+    case 0x65: // Single character
+        m_buttonTypes[0] = 0x15;
+        m_buttonTypes[1] = 0x16;
+        m_buttonTypes[2] = 0x17;
+        m_buttonTypes[3] = 0x18;
+        m_buttonTypes[4] = 0x19;
+        m_buttonTypes[5] = 0x1A;
+        m_buttonTypes[6] = 0x1B;
+        m_buttonTypes[7] = 0x1C;
+        m_buttonTypes[8] = 0x1D;
+        m_buttonTypes[9] = 0x1E;
+        m_buttonTypes[10] = 0x1F;
+        m_buttonTypes[11] = 0x20;
+        m_nState = 0x65;
+        break;
+    case 0x6E: // Group selected
+        m_buttonTypes[0] = 7;   // Guard
+        m_buttonTypes[1] = 8;   // Attack
+        m_buttonTypes[2] = 0xF; // Stop
+        m_buttonTypes[3] = 0x10; // Formation 1
+        m_buttonTypes[4] = 0x11; // Formation 2
+        m_buttonTypes[5] = 0x12; // Formation 3
+        m_buttonTypes[6] = 0x13; // Formation 4
+        m_buttonTypes[7] = 0x14; // Formation 5
+        m_buttonTypes[8] = 100;  // Empty
+        m_buttonTypes[9] = 100;  // Empty
+        m_buttonTypes[10] = 100; // Empty
+        m_buttonTypes[11] = 100; // Empty
+        m_nState = 0x6E;
+        break;
+    default:
+        // Unsupported state — set all to empty
+        for (int i = 0; i < 12; i++) {
+            m_buttonTypes[i] = 100;
+        }
+        m_nState = nState;
+        break;
+    }
+
+    UpdateButtons();
+    return TRUE;
 }
 
 // 0x58A340
 void CInfButtonArray::UpdateButtons()
 {
-    // TODO: Incomplete.
+    // TODO: Incomplete — minimal visibility implementation
+    // The 12 button controls are in the CHUI panels (Panel 3: controls 6-17, Panel 4: controls 18-21)
+    // Each button has its frame and BAM defined in the CHUI.
+    // This function just ensures active button types are enabled and empty ones hidden.
+
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    if (pGame == NULL) {
+        return;
+    }
+
+    CUIPanel* pPanel = g_pBaldurChitin->GetScreenWorld()->GetManager()->GetPanel(3);
+    if (pPanel != NULL) {
+        pPanel->SetActive(TRUE);
+        for (int i = 0; i < 12; i++) {
+            CUIControlBase* pControl = pPanel->GetControl(6 + i);
+            if (pControl != NULL) {
+                pControl->SetActive(m_buttonTypes[i] != 100);
+                pControl->InvalidateRect();
+            }
+        }
+    }
 }
 
 // 0x452C50
