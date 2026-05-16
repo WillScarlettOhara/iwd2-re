@@ -384,6 +384,7 @@ void CGameAIBase::RemoveFromArea()
 // 0x44CC70
 void CGameAIBase::AddAction(const CAIAction& action)
 {
+    DBG("AddAction: action=%d dest=(%d,%d) queue=%d", action.m_actionID, action.m_dest.x, action.m_dest.y, m_queuedActions.GetCount());
     CAIAction* copy = new CAIAction();
     copy->m_actionID = action.m_actionID;
     copy->m_specificID = action.m_specificID;
