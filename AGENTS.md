@@ -67,6 +67,7 @@ python scripts/fix_mismatches.py --apply
 - `python scripts/ghidra_re.py comment --source plate 0xADDR "text"` — add comment
 - `curl -X POST http://127.0.0.1:8081/query --data "SELECT save_database();"` — persist changes
 - `curl -X POST http://127.0.0.1:8081/shutdown` — graceful stop
+- **After session**: `bash scripts/ghidra_save.sh` — save DB + zip backup + commit to repo
 
 ## Naming Rules
 - Rename only: source code match OR decomp unambiguous clarity
