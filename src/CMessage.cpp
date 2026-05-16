@@ -5082,25 +5082,62 @@ SHORT CMessageHandler::AddMessage(CMessage* message, BOOL bForcePassThrough)
 // 0x4F7530
 SHORT CMessageHandler::AddMessage(CMessage* message, BOOL bForcePassThrough, SHORT nCommType)
 {
-    // Minimal implementation: always queue for AsynchronousUpdate processing
-    m_messageList.AddTail(message);
-    return 1;
+    switch (nCommType) {
+    case CMessage::SEND:
+        return Send(message);
+    case CMessage::BROADCAST:
+        if (bForcePassThrough) {
+            m_messageList.AddTail(message);
+            return 1;
+        }
+
+        return Broadcast(message, TRUE, FALSE);
+    case CMessage::BROADCAST_OTHERS:
+        if (bForcePassThrough) {
+            m_messageList.AddTail(message);
+            return 1;
+        }
+
+        return Broadcast(message, FALSE, FALSE);
+    case CMessage::BROADCAST_FORCED:
+        if (bForcePassThrough) {
+            m_messageList.AddTail(message);
+            return 1;
+        }
+
+        return Broadcast(message, TRUE, TRUE);
+    case CMessage::BROADCAST_FORCED_OTHERS:
+        if (bForcePassThrough) {
+            m_messageList.AddTail(message);
+            return 1;
+        }
+
+        return Broadcast(message, FALSE, TRUE);
+    default:
+        return -1;
+    }
 }
 
 // 0x4F7620
 SHORT CMessageHandler::Broadcast(CMessage* message, BOOLEAN bSendMessageToSelf, BOOLEAN bIgnoreObjectControl)
 {
-    // TODO: Incomplete.
-
-    return -1;
+    // TODO: Incomplete — minimal: process synchronously
+    if (message != NULL) {
+        message->Run();
+        delete message;
+    }
+    return 1;
 }
 
 // 0x4F7830
 SHORT CMessageHandler::Send(CMessage* message)
 {
-    // TODO: Incomplete.
-
-    return -1;
+    // TODO: Incomplete — minimal: process synchronously
+    if (message != NULL) {
+        message->Run();
+        delete message;
+    }
+    return 1;
 }
 
 // -----------------------------------------------------------------------------
