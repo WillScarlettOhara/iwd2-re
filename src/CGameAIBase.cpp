@@ -295,12 +295,12 @@ SHORT CGameAIBase::ExecuteAction()
 {
     // TODO: Incomplete — only MOVETOPOINT implemented so far
     if (m_curAction.m_actionID == CAIAction::MOVETOPOINT) {
+        DBG("ExecuteAction: MOVETOPOINT to (%d,%d)", m_curAction.m_dest.x, m_curAction.m_dest.y);
         CGameSprite* pSprite = static_cast<CGameSprite*>(this);
         if (pSprite != NULL) {
-            // Set target point for destination marker rendering
             pSprite->m_targetPoint = m_curAction.m_dest;
-            // Direct movement: set destination, AIUpdateWalk will interpolate
             pSprite->m_posDest = m_curAction.m_dest;
+            DBG("ExecuteAction: posDest set to (%d,%d)", m_curAction.m_dest.x, m_curAction.m_dest.y);
         }
         return ACTION_DONE;
     }
@@ -353,10 +353,12 @@ void CGameAIBase::ProcessAI()
             CAIAction action;
             SetCurrAction(GetNextAction(action));
             ResetCurrResponse();
+            DBG("ProcessAI: dequeued action %d to (%d,%d)", m_curAction.m_actionID, m_curAction.m_dest.x, m_curAction.m_dest.y);
         }
     }
 
     if (m_curAction.m_actionID != CAIAction::NO_ACTION) {
+        DBG("ProcessAI: calling DoAction for action %d", m_curAction.m_actionID);
         DoAction();
     }
 }
