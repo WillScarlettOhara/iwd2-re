@@ -212,9 +212,8 @@ BOOL CGameArea::AdjustTarget(CPoint start, POINT* goal, BYTE personalSpace, SHOR
 // 0x46A630
 BOOL CGameArea::SnapshotAdjustTarget(CPoint start, POINT* goal, BOOL bBump, SHORT tolerance)
 {
-    // TODO: Incomplete.
-
-    return FALSE;
+    // TODO: Incomplete — always accept target for now
+    return TRUE;
 }
 
 // 0x46A7B0
