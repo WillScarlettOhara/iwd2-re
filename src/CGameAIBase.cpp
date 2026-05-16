@@ -295,11 +295,10 @@ SHORT CGameAIBase::ExecuteAction()
 {
     // TODO: Incomplete — only MOVETOPOINT implemented so far
     if (m_curAction.m_actionID == CAIAction::MOVETOPOINT) {
-        DBG("ExecuteAction: MOVETOPOINT\n");
         CGameSprite* pSprite = static_cast<CGameSprite*>(this);
         if (pSprite != NULL) {
-            pSprite->SetTarget(m_curAction.m_dest, FALSE);
-            DBG("ExecuteAction: SetTarget called\n");
+            // Simple direct movement without pathfinding
+            pSprite->m_posDest = m_curAction.m_dest;
         }
         return ACTION_DONE;
     }

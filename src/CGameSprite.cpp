@@ -2773,6 +2773,22 @@ void CGameSprite::AIUpdateWalk()
         pathLock.Unlock();
 
         if (m_pPath == NULL) {
+            // Direct movement: no path, walk straight to destination
+            if (m_posDest.x != 0 || m_posDest.y != 0) {
+                // Simple interpolation toward destination
+                int dx = m_posDest.x - m_pos.x;
+                int dy = m_posDest.y - m_pos.y;
+                int dist = static_cast<int>(sqrt(static_cast<double>(dx * dx + dy * dy)));
+                if (dist <= 2) {
+                    m_pos = m_posDest;
+                    m_posDest.SetPoint(0, 0);
+                    SetIdleSequence();
+                } else {
+                    int step = 2;
+                    m_pos.x += dx * step / dist;
+                    m_pos.y += dy * step / dist;
+                }
+            }
             return;
         }
     }
