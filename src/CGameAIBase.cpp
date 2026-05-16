@@ -1,6 +1,5 @@
 #include "CGameAIBase.h"
 
-#include "debuglog.h"
 #include "CAIResponse.h"
 #include "CAIScript.h"
 #include "CAITrigger.h"
@@ -293,17 +292,8 @@ void CGameAIBase::DoAction()
 // 0x44DC10
 SHORT CGameAIBase::ExecuteAction()
 {
-    // TODO: Incomplete — only MOVETOPOINT implemented so far
-    if (m_curAction.m_actionID == CAIAction::MOVETOPOINT) {
-        CGameSprite* pSprite = static_cast<CGameSprite*>(this);
-        if (pSprite != NULL) {
-            // Simple direct movement without pathfinding
-            pSprite->m_posDest = m_curAction.m_dest;
-        }
-        return ACTION_DONE;
-    }
-
-    // Other action types return ACTION_DONE to consume them
+    // Minimal implementation: return ACTION_DONE to consume pending actions
+    // TODO: Implement full action execution (movement, attack, spell, etc.)
     return ACTION_DONE;
 }
 
@@ -344,21 +334,9 @@ void CGameAIBase::InsertResponse(CAIResponse& response, BOOL checkCurrentRespons
 // 0x45C730
 void CGameAIBase::ProcessAI()
 {
-    // TODO: Incomplete.
-
-    // If no current action, try to dequeue one
-    if (m_curAction.m_actionID == CAIAction::NO_ACTION) {
-        if (!m_queuedActions.IsEmpty()) {
-            CAIAction action;
-            SetCurrAction(GetNextAction(action));
-            ResetCurrResponse();
-            DBG("ProcessAI: dequeued action\n");
-        }
-    }
-
+    // Minimal implementation: process action queue
     if (m_curAction.m_actionID != CAIAction::NO_ACTION) {
         DoAction();
-        DBG("ProcessAI: DoAction called\n");
     }
 }
 

@@ -1,6 +1,5 @@
 #include "CAIGroup.h"
 
-#include "debuglog.h"
 #include "CAITrigger.h"
 #include "CBaldurChitin.h"
 #include "CGameObjectArray.h"
@@ -424,33 +423,7 @@ CAIGroup::CAIGroup(SHORT id)
 // 0x404D00
 void CAIGroup::GroupAction(CAIAction action, BOOL override, CAIAction* leaderAction)
 {
-    if (m_memberList.IsEmpty()) {
-        return;
-    }
-
-    POSITION pos = m_memberList.GetHeadPosition();
-    while (pos != NULL) {
-        LONG memberId = reinterpret_cast<LONG>(m_memberList.GetNext(pos));
-        CGameSprite* pSprite;
-
-        BYTE rc;
-        do {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(memberId,
-                CGameObjectArray::THREAD_ASYNCH,
-                reinterpret_cast<CGameObject**>(&pSprite),
-                INFINITE);
-        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
-
-        if (rc == CGameObjectArray::SUCCESS) {
-            if (override) {
-                pSprite->ClearActions(FALSE);
-            }
-            pSprite->AddAction(action);
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(memberId,
-                CGameObjectArray::THREAD_ASYNCH,
-                INFINITE);
-        }
-    }
+    // TODO: Incomplete.
 }
 
 // 0x4052D0
@@ -684,36 +657,7 @@ void CAIGroup::Sort()
 // 0x4063E0
 void CAIGroup::GroupSetTarget(CPoint target, BOOL additive, SHORT formationType, CPoint cursor)
 {
-    DBG("GroupSetTarget: entry\n");
-    if (m_memberList.IsEmpty()) {
-        DBG("GroupSetTarget: empty member list!\n");
-        return;
-    }
-
-    POSITION pos = m_memberList.GetHeadPosition();
-    while (pos != NULL) {
-        LONG memberId = reinterpret_cast<LONG>(m_memberList.GetNext(pos));
-        CGameSprite* pSprite;
-
-        BYTE rc;
-        do {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(memberId,
-                CGameObjectArray::THREAD_ASYNCH,
-                reinterpret_cast<CGameObject**>(&pSprite),
-                INFINITE);
-        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
-
-        if (rc == CGameObjectArray::SUCCESS) {
-            if (!additive) {
-                pSprite->ClearActions(FALSE);
-            }
-            CAIAction move(CAIAction::MOVETOPOINT, target, 0, -1);
-            pSprite->AddAction(move);
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(memberId,
-                CGameObjectArray::THREAD_ASYNCH,
-                INFINITE);
-        }
-    }
+    // TODO: Incomplete.
 }
 
 // 0x407280

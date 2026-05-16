@@ -686,7 +686,6 @@ CSearchRequest::~CSearchRequest()
 // 0x5492E0
 void SearchThreadMain(void* userInfo)
 {
-    OutputDebugStringA("SearchThread: started\n");
     POINT goalPts[15];
     POINT goalRemoveObject[15];
     BYTE goalObjectSpaces[15];
@@ -713,7 +712,6 @@ void SearchThreadMain(void* userInfo)
     g_pBaldurChitin->RegisterThread();
 
     while (WaitForSingleObject(g_pBaldurChitin->GetObjectGame()->m_hSearchThread, INFINITE) == WAIT_OBJECT_0) {
-        OutputDebugStringA("SearchThread: woke up\n");
         searchLock.Lock();
         if (g_pBaldurChitin->GetObjectGame()->m_searchRequests.IsEmpty()
             && g_pBaldurChitin->GetObjectGame()->m_searchRequestsBack.IsEmpty()) {
@@ -723,7 +721,7 @@ void SearchThreadMain(void* userInfo)
 
         searchShutdown = g_pBaldurChitin->GetObjectGame()->m_searchShutdown;
         while (!g_pBaldurChitin->GetObjectGame()->m_searchRequests.IsEmpty()
-            || !g_pBaldurChitin->GetObjectGame()->m_searchRequestsBack.IsEmpty()) {
+            && !g_pBaldurChitin->GetObjectGame()->m_searchRequestsBack.IsEmpty()) {
             if (g_pBaldurChitin->GetObjectGame()->m_searchRequests.IsEmpty()) {
                 searchRequest = g_pBaldurChitin->GetObjectGame()->m_searchRequestsBack.RemoveHead();
             } else {
@@ -731,7 +729,6 @@ void SearchThreadMain(void* userInfo)
             }
 
             if (searchRequest->m_serviceState != CSearchRequest::STATE_STALE) {
-                OutputDebugStringA("SearchThread: processing request\n");
                 if (!g_pBaldurChitin->GetObjectGame()->m_bInDestroyGame) {
                     // __FILE__: C:\Projects\Icewind2\src\Baldur\CSearchBitmap.cpp
                     // __LINE__: 1735
@@ -1001,7 +998,6 @@ void SearchThreadMain(void* userInfo)
                                             searchRequest->m_pPath = g_pBaldurChitin->GetObjectGame()->m_pathSearch->GetPath(&(searchRequest->m_nPath));
                                             if (searchRequest->m_serviceState != CSearchRequest::STATE_STALE) {
                                                 searchRequest->m_serviceState = CSearchRequest::STATE_DONE;
-                                            OutputDebugStringA("SearchThread: STATE_DONE\n");
                                             } else {
                                                 delete searchRequest;
                                                 searchLock.Unlock();
@@ -1017,7 +1013,6 @@ void SearchThreadMain(void* userInfo)
 
                                     if (searchRequest->m_serviceState != CSearchRequest::STATE_STALE) {
                                         searchRequest->m_serviceState = CSearchRequest::STATE_NO_TARGET;
-                                        OutputDebugStringA("SearchThread: STATE_NO_TARGET\n");
                                     } else {
                                         delete searchRequest;
                                     }

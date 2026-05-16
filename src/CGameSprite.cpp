@@ -2647,7 +2647,6 @@ void CGameSprite::AIUpdateWalk()
     CMessage* message;
 
     if (m_pPath == NULL && m_currentSearchRequest != NULL) {
-        OutputDebugStringA("AIUpdateWalk: waiting for search\n");
         pathLock.Lock(INFINITE);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -2701,7 +2700,6 @@ void CGameSprite::AIUpdateWalk()
         }
 
         if (m_currentSearchRequest->m_serviceState == CSearchRequest::STATE_DONE) {
-            OutputDebugStringA("AIUpdateWalk: path found!\n");
             LONG* pPath = m_currentSearchRequest->m_pPath;
             SHORT nPath = m_currentSearchRequest->m_nPath;
 
@@ -2773,22 +2771,6 @@ void CGameSprite::AIUpdateWalk()
         pathLock.Unlock();
 
         if (m_pPath == NULL) {
-            // Direct movement: no path, walk straight to destination
-            if (m_posDest.x != 0 || m_posDest.y != 0) {
-                // Simple interpolation toward destination
-                int dx = m_posDest.x - m_pos.x;
-                int dy = m_posDest.y - m_pos.y;
-                int dist = static_cast<int>(sqrt(static_cast<double>(dx * dx + dy * dy)));
-                if (dist <= 2) {
-                    m_pos = m_posDest;
-                    m_posDest.SetPoint(0, 0);
-                    SetIdleSequence();
-                } else {
-                    int step = 2;
-                    m_pos.x += dx * step / dist;
-                    m_pos.y += dy * step / dist;
-                }
-            }
             return;
         }
     }
@@ -5758,9 +5740,7 @@ void CGameSprite::SetTarget(const CPoint& target, BOOL collisionPath)
         m_currentSearchRequest->m_nTargetPoints = 1;
         m_currentSearchRequest->m_targetPoints = new POINT[m_currentSearchRequest->m_nTargetPoints];
         if (m_currentSearchRequest->m_targetPoints) {
-            // Convert pixel coordinates to grid coordinates
-            m_currentSearchRequest->m_targetPoints[0].x = target.x / CPathSearch::GRID_SQUARE_SIZEX;
-            m_currentSearchRequest->m_targetPoints[0].y = target.y / CPathSearch::GRID_SQUARE_SIZEY;
+            m_currentSearchRequest->m_targetPoints[0] = target;
             if (m_currentSearchRequest->m_collisionDelay == 0) {
                 CSingleLock lock(&(g_pBaldurChitin->GetObjectGame()->field_1B58), TRUE);
                 g_pBaldurChitin->GetObjectGame()->m_searchRequests.AddTail(m_currentSearchRequest);
