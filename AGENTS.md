@@ -58,5 +58,19 @@ python scripts/fix_mismatches.py --apply
 - NearInfinity: `C:/projects/NearInfinity/`
 - IESDP: `C:/projects/iesdp/`
 
+## Ghidra Tools
+- `bash scripts/ghidra_info.sh 0xADDR` — show func + bookmarks + comments for address
+- `python scripts/ghidra_re.py decomp 0xADDR` — decompile function
+- `python scripts/ghidra_re.py func --address 0xADDR --name ClassName::method` — rename
+- `python scripts/ghidra_re.py bookmark --type Note 0xADDR Category "text"` — add bookmark
+- `python scripts/ghidra_re.py comment --source plate 0xADDR "text"` — add comment
+- `curl -X POST http://127.0.0.1:8081/query --data "SELECT save_database();"` — persist changes
+- `curl -X POST http://127.0.0.1:8081/shutdown` — graceful stop
+
+## Naming Rules
+- Rename only: source code match OR decomp unambiguous clarity
+- Speculative → `FUN_` + bookmark with `Analysis` category
+- Search: `SELECT name, printf('0x%X', address) FROM funcs WHERE name LIKE 'FUN_%' AND address >= 0x... AND size >= 50;`
+
 ## Current Milestone
 Phase 2: name remaining `sub_` (~200) and `field_` (~640). Priority: small classes first, `CGameSprite` last.
