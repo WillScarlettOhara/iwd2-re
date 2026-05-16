@@ -1,5 +1,6 @@
 #include "CGameAIBase.h"
 
+#include "debuglog.h"
 #include "CAIResponse.h"
 #include "CAIScript.h"
 #include "CAITrigger.h"
@@ -294,12 +295,14 @@ SHORT CGameAIBase::ExecuteAction()
 {
     // TODO: Incomplete — only MOVETOPOINT implemented so far
     if (m_curAction.m_actionID == CAIAction::MOVETOPOINT) {
+        DBG("ExecuteAction: MOVETOPOINT to (%d,%d)", m_curAction.m_dest.x, m_curAction.m_dest.y);
         CGameSprite* pSprite = static_cast<CGameSprite*>(this);
         if (pSprite != NULL) {
             // Set target point for destination marker rendering
             pSprite->m_targetPoint = m_curAction.m_dest;
             // Initiate pathfinding to destination
             pSprite->SetTarget(m_curAction.m_dest, FALSE);
+            DBG("ExecuteAction: SetTarget called");
         }
         return ACTION_DONE;
     }

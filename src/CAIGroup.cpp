@@ -692,7 +692,9 @@ void CAIGroup::GroupSetTarget(CPoint target, BOOL additive, SHORT formationType,
         // Dispatch via message handler (original uses CMessageAddAction)
         CMessageAddAction* pMsg = new CMessageAddAction(move, memberId, memberId);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
+        DBG("GroupSetTarget: dispatched MOVETOPOINT for member %ld to (%d,%d)", memberId, target.x, target.y);
     }
+    DBG("GroupSetTarget: done dispatching %d members", m_memberList.GetCount());
 }
 
 // 0x407280
