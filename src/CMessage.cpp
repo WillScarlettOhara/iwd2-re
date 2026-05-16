@@ -5082,40 +5082,9 @@ SHORT CMessageHandler::AddMessage(CMessage* message, BOOL bForcePassThrough)
 // 0x4F7530
 SHORT CMessageHandler::AddMessage(CMessage* message, BOOL bForcePassThrough, SHORT nCommType)
 {
-    switch (nCommType) {
-    case CMessage::SEND:
-        return Send(message);
-    case CMessage::BROADCAST:
-        if (bForcePassThrough) {
-            m_messageList.AddTail(message);
-            return 1;
-        }
-
-        return Broadcast(message, TRUE, FALSE);
-    case CMessage::BROADCAST_OTHERS:
-        if (bForcePassThrough) {
-            m_messageList.AddTail(message);
-            return 1;
-        }
-
-        return Broadcast(message, FALSE, FALSE);
-    case CMessage::BROADCAST_FORCED:
-        if (bForcePassThrough) {
-            m_messageList.AddTail(message);
-            return 1;
-        }
-
-        return Broadcast(message, TRUE, TRUE);
-    case CMessage::BROADCAST_FORCED_OTHERS:
-        if (bForcePassThrough) {
-            m_messageList.AddTail(message);
-            return 1;
-        }
-
-        return Broadcast(message, FALSE, TRUE);
-    default:
-        return -1;
-    }
+    // Minimal implementation: always queue for AsynchronousUpdate processing
+    m_messageList.AddTail(message);
+    return 1;
 }
 
 // 0x4F7620
