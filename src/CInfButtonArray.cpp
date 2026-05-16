@@ -6,6 +6,7 @@
 #include "CInfGame.h"
 #include "CScreenWorld.h"
 #include "CUIPanel.h"
+#include "CUIControlButton.h"
 
 // 0x851700
 const BYTE CInfButtonArray::STATE_NONE = 0;
@@ -136,7 +137,13 @@ void CInfButtonArray::UpdateState()
 // 0x589110
 BOOL CInfButtonArray::SetState(INT nState, int a2)
 {
-    // TODO: Incomplete — minimal implementation for group/single states
+    // TODO: Incomplete — minimal implementation
+
+    // Load BAM resources (matching Ghidra decomp: FUN_0078a990 = load BAM)
+    // GUIBTBUT: button backgrounds, GUIBTACT: action icons (240 frames)
+    field_16E8.SetResRef(CResRef("GUIBTBUT"), g_pBaldurChitin->field_4A2C, TRUE, TRUE);
+    field_17C2.SetResRef(CResRef("GUIBTACT"), g_pBaldurChitin->field_4A2C, TRUE, TRUE);
+    field_189C.SetResRef(CResRef("GUIBTBUT"), g_pBaldurChitin->field_4A2C, TRUE, TRUE);
 
     // Button type IDs (matching Ghidra decomp)
     // Group mode (0x6E): Guard, Attack, Stop, Formations 1-5, 4 empty
@@ -189,26 +196,49 @@ BOOL CInfButtonArray::SetState(INT nState, int a2)
 // 0x58A340
 void CInfButtonArray::UpdateButtons()
 {
-    // TODO: Incomplete — minimal visibility implementation
-    // The 12 button controls are in the CHUI panels (Panel 3: controls 6-17, Panel 4: controls 18-21)
-    // Each button has its frame and BAM defined in the CHUI.
-    // This function just ensures active button types are enabled and empty ones hidden.
+    // TODO: Incomplete — sets correct BAM frames for each button type
+    // Icon mapping (GUIBTACT.BAM: 60 icons, 4 frames each):
+    //   Icon 0 (frames 0-3)   = Guard
+    //   Icon 3 (frames 12-15)  = Attack
+    //   Icon 11 (frames 44-47) = Stop
+    //   Icons for formations: TBD
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
-    if (pGame == NULL) {
-        return;
-    }
+    if (pGame == NULL) return;
 
+    // Get panel 3 which has 12 button controls (indices 6-17)
     CUIPanel* pPanel = g_pBaldurChitin->GetScreenWorld()->GetManager()->GetPanel(3);
-    if (pPanel != NULL) {
-        pPanel->SetActive(TRUE);
-        for (int i = 0; i < 12; i++) {
-            CUIControlBase* pControl = pPanel->GetControl(6 + i);
-            if (pControl != NULL) {
-                pControl->SetActive(m_buttonTypes[i] != 100);
-                pControl->InvalidateRect();
-            }
+    if (pPanel == NULL) return;
+    pPanel->SetActive(TRUE);
+
+    for (int i = 0; i < 12; i++) {
+        CUIControlButton* pButton = static_cast<CUIControlButton*>(pPanel->GetControl(6 + i));
+        if (pButton == NULL) continue;
+
+        int nType = m_buttonTypes[i];
+        int nIcon = -1;
+
+        switch (nType) {
+        case 7:  nIcon = 0;  break;  // Guard
+        case 8:  nIcon = 3;  break;  // Attack
+        case 0xF: nIcon = 11; break;  // Stop
+        case 0x10: nIcon = 4; break;  // Formation 1 (guess)
+        case 0x11: nIcon = 5; break;  // Formation 2 (guess)
+        case 0x12: nIcon = 6; break;  // Formation 3 (guess)
+        case 0x13: nIcon = 7; break;  // Formation 4 (guess)
+        case 0x14: nIcon = 8; break;  // Formation 5 (guess)
+        default: break;
         }
+
+        if (nIcon >= 0) {
+            // Set frame for normal and pressed states (4 frames per icon)
+            pButton->m_nNormalFrame = nIcon * 4;
+            pButton->m_nPressedFrame = nIcon * 4 + 1;
+            pButton->SetActive(TRUE);
+        } else {
+            pButton->SetActive(FALSE);
+        }
+        pButton->InvalidateRect();
     }
 }
 
