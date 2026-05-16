@@ -721,7 +721,7 @@ void SearchThreadMain(void* userInfo)
 
         searchShutdown = g_pBaldurChitin->GetObjectGame()->m_searchShutdown;
         while (!g_pBaldurChitin->GetObjectGame()->m_searchRequests.IsEmpty()
-            && !g_pBaldurChitin->GetObjectGame()->m_searchRequestsBack.IsEmpty()) {
+            || !g_pBaldurChitin->GetObjectGame()->m_searchRequestsBack.IsEmpty()) {
             if (g_pBaldurChitin->GetObjectGame()->m_searchRequests.IsEmpty()) {
                 searchRequest = g_pBaldurChitin->GetObjectGame()->m_searchRequestsBack.RemoveHead();
             } else {
