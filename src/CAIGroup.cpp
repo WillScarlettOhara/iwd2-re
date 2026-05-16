@@ -420,7 +420,7 @@ CAIGroup::CAIGroup(SHORT id)
 
 // FIXME: `action` should be reference.
 //
-// 0x404D00
+// 0x404E80
 void CAIGroup::GroupAction(CAIAction action, BOOL override, CAIAction* leaderAction)
 {
     // TODO: Incomplete.
