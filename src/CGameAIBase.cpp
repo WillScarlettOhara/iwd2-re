@@ -331,7 +331,7 @@ void CGameAIBase::InsertResponse(CAIResponse& response, BOOL checkCurrentRespons
     }
 }
 
-// 0x45C730
+// 0x45CA10
 void CGameAIBase::ProcessAI()
 {
     // Minimal implementation: process action queue
