@@ -1,6 +1,5 @@
 #include "CGameSprite.h"
 
-#include "debuglog.h"
 #include "CAIScript.h"
 #include "CBaldurChitin.h"
 #include "CBaldurEngine.h"
@@ -2411,7 +2410,6 @@ void CGameSprite::AIUpdate()
                             g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
                         }
                     } else {
-                        DBG("AIUpdate: WALK case, calling AIUpdateWalk");
                         AIUpdateWalk();
                     }
 
@@ -2668,7 +2666,6 @@ void CGameSprite::AIUpdateWalk()
     }
 
     if (m_pPath == NULL && m_currentSearchRequest != NULL) {
-        DBG("AIUpdateWalk: waiting for search");
         pathLock.Lock(INFINITE);
 
         // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreature.cpp
@@ -2795,7 +2792,6 @@ void CGameSprite::AIUpdateWalk()
         if (m_pPath == NULL) {
             // Direct movement: walk straight to destination (no pathfinding)
             if (m_posDest.x != 0 || m_posDest.y != 0) {
-                DBG("AIUpdateWalk: direct move from (%d,%d) to (%d,%d)", m_pos.x, m_pos.y, m_posDest.x, m_posDest.y);
                 int dx = m_posDest.x - m_pos.x;
                 int dy = m_posDest.y - m_pos.y;
                 int dist = static_cast<int>(sqrt(static_cast<double>(dx * dx + dy * dy)));
@@ -2803,7 +2799,6 @@ void CGameSprite::AIUpdateWalk()
                     m_pos = m_posDest;
                     m_posDest.SetPoint(0, 0);
                     SetIdleSequence();
-                    DBG("AIUpdateWalk: arrived");
                 } else {
                     int step = 4;
                     m_pos.x += dx * step / dist;
@@ -5589,7 +5584,6 @@ void CGameSprite::SetSequence(SHORT nSequence)
     if (nSequence == SEQ_WALK) {
         // NOTE: Uninline.
         if (m_animation.GetMoveScale() == 0) {
-            DBG("SetSequence: WALK blocked — GetMoveScale=0");
             return;
         }
     }

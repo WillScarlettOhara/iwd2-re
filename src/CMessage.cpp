@@ -1,6 +1,5 @@
 #include "CMessage.h"
 
-#include "debuglog.h"
 #include "CBaldurChitin.h"
 #include "CGameAIBase.h"
 #include "CGameArea.h"
@@ -4958,7 +4957,7 @@ void CMessageHandler::AsynchronousUpdate()
         }
     }
     if (nProcessed > 0) {
-        DBG("AsynchronousUpdate: processed %d messages", nProcessed);
+        // Messages processed
     }
 }
 
@@ -5180,7 +5179,6 @@ BYTE CMessageAddAction::GetMsgSubType()
 // 0x4F83C0
 void CMessageAddAction::Run()
 {
-    DBG("CMessageAddAction::Run: action=%d target=%ld", m_action.m_actionID, m_targetId);
     CGameAIBase* pSprite;
 
     BYTE rc;

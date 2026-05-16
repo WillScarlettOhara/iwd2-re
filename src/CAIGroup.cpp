@@ -6,7 +6,6 @@
 #include "CGameSprite.h"
 #include "CMessage.h"
 #include "CInfGame.h"
-#include "debuglog.h"
 #include "CPathSearch.h"
 #include "CSearchBitmap.h"
 
@@ -670,9 +669,7 @@ void CAIGroup::Sort()
 // 0x4063E0
 void CAIGroup::GroupSetTarget(CPoint target, BOOL additive, SHORT formationType, CPoint cursor)
 {
-    DBG("GroupSetTarget: members=%d target=(%d,%d) formation=%d", m_memberList.GetCount(), target.x, target.y, formationType);
     if (m_memberList.IsEmpty()) {
-        DBG("GroupSetTarget: EMPTY GROUP — no members to move!");
         return;
     }
 
@@ -692,9 +689,7 @@ void CAIGroup::GroupSetTarget(CPoint target, BOOL additive, SHORT formationType,
         // Dispatch via message handler (original uses CMessageAddAction)
         CMessageAddAction* pMsg = new CMessageAddAction(move, memberId, memberId);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
-        DBG("GroupSetTarget: dispatched MOVETOPOINT for member %ld to (%d,%d)", memberId, target.x, target.y);
     }
-    DBG("GroupSetTarget: done dispatching %d members", m_memberList.GetCount());
 }
 
 // 0x407280

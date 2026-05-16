@@ -1,6 +1,5 @@
 #include "CGameAIBase.h"
 
-#include "debuglog.h"
 #include "CAIResponse.h"
 #include "CAIScript.h"
 #include "CAITrigger.h"
@@ -295,14 +294,12 @@ SHORT CGameAIBase::ExecuteAction()
 {
     // TODO: Incomplete — only MOVETOPOINT implemented so far
     if (m_curAction.m_actionID == CAIAction::MOVETOPOINT) {
-        DBG("ExecuteAction: MOVETOPOINT to (%d,%d)", m_curAction.m_dest.x, m_curAction.m_dest.y);
         CGameSprite* pSprite = static_cast<CGameSprite*>(this);
         if (pSprite != NULL) {
             pSprite->m_targetPoint = m_curAction.m_dest;
             pSprite->m_posDest = m_curAction.m_dest;
             // Set walk animation sequence
             pSprite->SetSequence(CGAMESPRITE_SEQ_WALK);
-            DBG("ExecuteAction: posDest set to (%d,%d), seq=WALK", m_curAction.m_dest.x, m_curAction.m_dest.y);
         }
         return ACTION_DONE;
     }
@@ -355,12 +352,10 @@ void CGameAIBase::ProcessAI()
             CAIAction action;
             SetCurrAction(GetNextAction(action));
             ResetCurrResponse();
-            DBG("ProcessAI: dequeued action %d to (%d,%d)", m_curAction.m_actionID, m_curAction.m_dest.x, m_curAction.m_dest.y);
         }
     }
 
     if (m_curAction.m_actionID != CAIAction::NO_ACTION) {
-        DBG("ProcessAI: calling DoAction for action %d", m_curAction.m_actionID);
         DoAction();
     }
 }
@@ -386,7 +381,6 @@ void CGameAIBase::RemoveFromArea()
 // 0x44CC70
 void CGameAIBase::AddAction(const CAIAction& action)
 {
-    DBG("AddAction: action=%d dest=(%d,%d) queue=%d", action.m_actionID, action.m_dest.x, action.m_dest.y, m_queuedActions.GetCount());
     CAIAction* copy = new CAIAction();
     copy->m_actionID = action.m_actionID;
     copy->m_specificID = action.m_specificID;
