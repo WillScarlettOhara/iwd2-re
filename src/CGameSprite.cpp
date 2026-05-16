@@ -5569,6 +5569,7 @@ void CGameSprite::SetSequence(SHORT nSequence)
     if (nSequence == SEQ_WALK) {
         // NOTE: Uninline.
         if (m_animation.GetMoveScale() == 0) {
+            DBG("SetSequence: WALK blocked — GetMoveScale=0");
             return;
         }
     }
