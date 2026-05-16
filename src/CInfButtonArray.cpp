@@ -118,7 +118,19 @@ BOOL CInfButtonArray::ResetState()
 // 0x589100
 void CInfButtonArray::UpdateState()
 {
-    SetState(m_nState, 0);
+    // Minimal: determine state from group selection count
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    if (pGame != NULL) {
+        CAIGroup* pGroup = pGame->GetGroup();
+        INT nGroupCount = pGroup->GetCount();
+        if (nGroupCount > 1) {
+            SetState(0x6E, 0);  // Group mode: Guard, Attack, Stop, Formations
+        } else if (nGroupCount == 1) {
+            SetState(0x65, 0);  // Single character mode
+        } else {
+            SetState(STATE_NONE, 0);
+        }
+    }
 }
 
 // 0x589110
