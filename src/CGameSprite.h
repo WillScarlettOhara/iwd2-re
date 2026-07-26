@@ -269,6 +269,7 @@ public:
     static const ITEM_ABILITY DEFAULT_ATTACK;
 
     static const LONG STANDARD_VERBAL_CONSTANT_LENGTH;
+    static const LONG LEAVEAREA_GATHER_RANGE;
 
     static const SHORT FLY_RIGHT;
     static const SHORT FLY_LEFT;
@@ -707,6 +708,7 @@ public:
     void DisplaySkills(CUIControlTextDisplay* pText);
     SHORT JumpToArea(CString areaName, const CPoint& dest, SHORT facingDirection, SHORT delay);
     void MoveOntoArea(CGameArea* pArea, const CPoint& dest, SHORT facingDirection);
+    SHORT LeaveArea();
 
     void SetResRef(const CResRef& resRef);
     void SetHiding(int a1);

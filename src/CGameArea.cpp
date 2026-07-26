@@ -4090,7 +4090,7 @@ void CGameArea::OnActionButtonClickTravel(const CPoint& pt)
     m_pGame->GetGroup()->GroupAction(leave, TRUE, NULL);
 
     CAIAction move(CAIAction::MOVETOPOINT, pt, 0, -1);
-    m_pGame->GetGroup()->GroupAction(leave, TRUE, NULL);
+    m_pGame->GetGroup()->GroupAction(move, TRUE, NULL);
 }
 
 // 0x4765C0

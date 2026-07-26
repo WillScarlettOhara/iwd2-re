@@ -10,6 +10,7 @@
 #include "CGameButtonList.h"
 #include "CGameContainer.h"
 #include "CGameDoor.h"
+#include "CGamePermission.h"
 #include "CGameTimer.h"
 #include "CGameTrigger.h"
 #include "DebugLog.h"
@@ -23,6 +24,8 @@
 #include "CScreenInventory.h"
 #include "CScreenMap.h"
 #include "CScreenWorld.h"
+#include "CScreenWorldMap.h"
+#include "CSoundMixer.h"
 #include "CSpawn.h"
 #include "CSpell.h"
 #include "CUIPanel.h"
@@ -209,6 +212,9 @@ const ITEM_ABILITY CGameSprite::DEFAULT_ATTACK = {
 
 // 0x85BCA0
 const LONG CGameSprite::STANDARD_VERBAL_CONSTANT_LENGTH = 300;
+
+// 0x84C7B8
+const LONG CGameSprite::LEAVEAREA_GATHER_RANGE = 0x10000;
 
 // 0x85C09C
 const SHORT CGameSprite::FLY_RIGHT = -1;
@@ -701,6 +707,10 @@ INT CGameSprite::m_bRollFeedbackEnabled = -1;
 
 // 0x8F9A18
 CAIAction CGameSprite::m_aiDoAction;
+
+// 0x8F9AF4: LeaveArea()'s "already played the no-sound feedback this call"
+// latch, shared by its three "party not ready" message sites.
+static BOOLEAN s_bLeaveAreaMessageShown;
 
 // 0x6EF990
 CGameSprite::CGameSprite(BYTE* pCreature, LONG creatureSize, int a3, WORD type, DWORD expirationTime, WORD huntingRange, WORD followRange, DWORD timeOfDayVisible, CPoint startPos, WORD facing)
@@ -18791,6 +18801,13 @@ SHORT CGameSprite::ExecuteAction()
         return actionReturn;
     }
 
+    // 0x7295D5 (jumptable case 0x28; the index byte at 0x72B520+0x28 routes
+    // action 91 here). LeaveArea(): the map-edge trigger's party-gather +
+    // world-map handoff.
+    if (m_curAction.m_actionID == CAIAction::LEAVEAREA) {
+        return LeaveArea();
+    }
+
     return CGameAIBase::ExecuteAction();
 }
 
@@ -22296,6 +22313,263 @@ SHORT CGameSprite::JumpToArea(CString areaName, const CPoint& dest, SHORT facing
 void CGameSprite::MoveOntoArea(CGameArea* pArea, const CPoint& dest, SHORT facingDirection)
 {
     // TODO: Incomplete.
+}
+
+// 0x74C0D0
+SHORT CGameSprite::LeaveArea()
+{
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    SHORT nMyPortrait = pGame->GetCharacterPortraitNum(m_id);
+    LONG nDestX = m_curAction.m_dest.x;
+    LONG nDestY = m_curAction.m_dest.y;
+    LONG nLeavingEdge = m_curAction.m_specificID;
+    BOOL bAllAtEdge = TRUE;
+
+    if (m_pArea != NULL) {
+        m_pArea->SaveMusicPosition();
+    }
+
+    // Not a viewed character and not a tracked familiar either -- nothing to
+    // gather for this sprite.
+    if (nMyPortrait == -1 && pGame->m_familiars.Find(reinterpret_cast<int*>(m_id)) == NULL) {
+        return ACTION_DONE;
+    }
+
+    if (!Orderable(FALSE)) {
+        return ACTION_DONE;
+    }
+
+    // Am I myself close enough to the leaving edge?
+    {
+        LONG dy = nDestY - m_pos.y;
+        LONG dx = nDestX - m_pos.x;
+        if ((dy * dy * 16) / 9 + dx * dx > LEAVEAREA_GATHER_RANGE) {
+            return ACTION_DONE;
+        }
+    }
+
+    if (!pGame->m_singlePlayerPermissions.GetSinglePermission(CGamePermission::AREA_TRANSITION)) {
+        if (!pGame->m_soundNeedParty.cSound.IsSoundPlaying()) {
+            pGame->m_soundNeedParty.cSound.SetChannel(0, 0);
+            pGame->m_soundNeedParty.cSound.Play(FALSE);
+            g_pBaldurChitin->m_pEngineWorld->DisplayText(CString(""),
+                pGame->m_soundAreaTransitionRefused.szText,
+                -1,
+                FALSE);
+        }
+        return ACTION_DONE;
+    }
+
+    if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL) {
+        // Multiplayer readiness vote: unless every viewer's screen is clear, a
+        // majority of ready players blocks the request; failing that, at
+        // least one live NPC in the party still lets the travel through.
+        if (pGame->m_multiplayerSettings.CountViewedCharacters() < 1) {
+            if (pGame->m_multiplayerSettings.CountReadyPlayers() > 0) {
+                FeedBack(0x5c, 0, 0, 0, -1, 0, 0);
+                return ACTION_DONE;
+            }
+            if (pGame->CountNPCs() < 1) {
+                goto gatherParty;
+            }
+        }
+        FeedBack(0x3b, 0, 0, 0, -1, 0, 0);
+        return ACTION_DONE;
+    }
+
+gatherParty:
+    // Whether *I* am within the tighter RANGE_EDGE trigger radius of the
+    // destination (vs. the broader LEAVEAREA_GATHER_RANGE checked above).
+    {
+        LONG dy = nDestY - m_pos.y;
+        LONG dx = nDestX - m_pos.x;
+        if ((dy * dy * 16) / 9 + dx * dx > CGameTrigger::RANGE_EDGE) {
+            bAllAtEdge = FALSE;
+        }
+    }
+
+    // Sweep the rest of the viewed party: everyone must be in this area,
+    // orderable (or owned by me over the network), and within
+    // LEAVEAREA_GATHER_RANGE of the leaving edge, before the party can travel
+    // together. A member who fails re-queues my own LeaveArea for a retry.
+    for (SHORT nPortrait = 0; nPortrait < pGame->m_nCharacters; nPortrait++) {
+        if (nPortrait == nMyPortrait) {
+            continue;
+        }
+
+        LONG nCharacterId = (nPortrait < pGame->m_nCharacters)
+            ? pGame->m_characterPortraits[nPortrait]
+            : CGameObjectArray::INVALID_INDEX;
+
+        CGameObject* pObject = NULL;
+        BYTE rc = pGame->GetObjectArray()->GetShare(nCharacterId,
+            CGameObjectArray::THREAD_ASYNCH,
+            &pObject,
+            INFINITE);
+        if (rc != CGameObjectArray::SUCCESS) {
+            // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
+            // __LINE__: 17313
+            UTIL_ASSERT_MSG(FALSE, "FALSE");
+            return ACTION_ERROR;
+        }
+        CGameSprite* pMember = static_cast<CGameSprite*>(pObject);
+
+        if (pMember->m_bInvisible != 0) {
+            pGame->GetObjectArray()->ReleaseShare(nCharacterId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            STR_RES strRes;
+            g_pBaldurChitin->GetTlkTable().Fetch(0x66ae, strRes);
+            g_pBaldurChitin->m_pEngineWorld->DisplayText(CString(""), strRes.szText, -1, FALSE);
+            return ACTION_ERROR;
+        }
+
+        CPoint& memberPos = pMember->GetPos();
+        if ((pMember->m_derivedStats.m_generalState & 0x800) == 0) {
+            BOOL bOwnedHere = !Orderable(FALSE)
+                && (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL
+                    || g_pChitin->cNetwork.m_idLocalPlayer == pMember->m_remotePlayerID);
+            LONG dy = nDestY - memberPos.y;
+            LONG dx = nDestX - memberPos.x;
+            LONG distSq = (dy * dy * 16) / 9 + dx * dx;
+
+            if (bOwnedHere || pMember->m_pArea != m_pArea || distSq > LEAVEAREA_GATHER_RANGE) {
+                pGame->GetObjectArray()->ReleaseShare(nCharacterId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+
+                BOOL bStillOwnedHere = !Orderable(FALSE)
+                    && (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL
+                        || g_pChitin->cNetwork.m_idLocalPlayer == pMember->m_remotePlayerID);
+                if ((bStillOwnedHere || pMember->m_pArea != m_pArea || !pMember->m_bSelected)
+                    && !pGame->m_soundNeedParty.cSound.IsSoundPlaying()
+                    && !s_bLeaveAreaMessageShown) {
+                    pGame->m_soundNeedParty.cSound.SetChannel(0, 0);
+                    pGame->m_soundNeedParty.cSound.Play(FALSE);
+                    g_pBaldurChitin->m_pEngineWorld->DisplayText(CString(""),
+                        pGame->m_soundNeedParty.szText,
+                        -1,
+                        FALSE);
+                    s_bLeaveAreaMessageShown = TRUE;
+                }
+
+                AddAction(CAIAction(CAIAction::LEAVEAREA, CPoint(-1, -1), 0, -1));
+                return ACTION_ERROR;
+            }
+
+            if (!bAllAtEdge && distSq <= CGameTrigger::RANGE_EDGE) {
+                bAllAtEdge = TRUE;
+            }
+
+            // 0x5872C0: Icewind586B70's per-summon dismiss/message cleanup for
+            // this now-gathered member -- unrecovered (CGameObjectArray deny-lock
+            // + CMessageHandler flow), not reproduced. Missing better than wrong.
+        }
+
+        pGame->GetObjectArray()->ReleaseShare(nCharacterId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+
+    s_bLeaveAreaMessageShown = FALSE;
+
+    // Third sweep: the familiars list (CInfGame::m_familiars stores character
+    // ids as ints disguised as pointers). Same gather check, but a familiar
+    // never blocks on invisibility and never runs the Icewind586B70 cleanup
+    // done for viewed party members above.
+    for (POSITION pos = pGame->m_familiars.GetHeadPosition(); pos != NULL;) {
+        LONG nFamiliarId = reinterpret_cast<LONG>(pGame->m_familiars.GetNext(pos));
+        if (nFamiliarId == m_id) {
+            continue;
+        }
+
+        CGameObject* pObject = NULL;
+        BYTE rc = pGame->GetObjectArray()->GetShare(nFamiliarId,
+            CGameObjectArray::THREAD_ASYNCH,
+            &pObject,
+            INFINITE);
+        if (rc != CGameObjectArray::SUCCESS) {
+            // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
+            // __LINE__: 17394
+            UTIL_ASSERT_MSG(FALSE, "FALSE");
+            return ACTION_ERROR;
+        }
+        CGameSprite* pFamiliar = static_cast<CGameSprite*>(pObject);
+
+        CPoint& familiarPos = pFamiliar->GetPos();
+        if ((pFamiliar->m_derivedStats.m_generalState & 0x800) == 0) {
+            BOOL bOwnedHere = !Orderable(FALSE)
+                && (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL
+                    || g_pChitin->cNetwork.m_idLocalPlayer == pFamiliar->m_remotePlayerID);
+            LONG dy = nDestY - familiarPos.y;
+            LONG dx = nDestX - familiarPos.x;
+            LONG distSq = (dy * dy * 16) / 9 + dx * dx;
+
+            if (bOwnedHere || pFamiliar->m_pArea != m_pArea || distSq > LEAVEAREA_GATHER_RANGE) {
+                pGame->GetObjectArray()->ReleaseShare(nFamiliarId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+
+                BOOL bStillOwnedHere = !Orderable(FALSE)
+                    && (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL
+                        || g_pChitin->cNetwork.m_idLocalPlayer == pFamiliar->m_remotePlayerID);
+                if ((bStillOwnedHere || pFamiliar->m_pArea != m_pArea || !pFamiliar->m_bSelected)
+                    && !pGame->m_soundNeedParty.cSound.IsSoundPlaying()
+                    && !s_bLeaveAreaMessageShown) {
+                    pGame->m_soundNeedParty.cSound.SetChannel(0, 0);
+                    pGame->m_soundNeedParty.cSound.Play(FALSE);
+                    g_pBaldurChitin->m_pEngineWorld->DisplayText(CString(""),
+                        pGame->m_soundNeedParty.szText,
+                        -1,
+                        FALSE);
+                    s_bLeaveAreaMessageShown = TRUE;
+                }
+
+                AddAction(CAIAction(CAIAction::LEAVEAREA, CPoint(-1, -1), 0, -1));
+                return ACTION_ERROR;
+            }
+
+            if (!bAllAtEdge && distSq <= CGameTrigger::RANGE_EDGE) {
+                bAllAtEdge = TRUE;
+            }
+        }
+
+        pGame->GetObjectArray()->ReleaseShare(nFamiliarId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+
+    s_bLeaveAreaMessageShown = FALSE;
+
+    if (!bAllAtEdge) {
+        // Everyone gathered, but nobody (including me) is within the tighter
+        // RANGE_EDGE trigger radius yet -- keep waiting at the edge.
+        if (!pGame->m_soundNeedParty.cSound.IsSoundPlaying() && !s_bLeaveAreaMessageShown) {
+            pGame->m_soundNeedParty.cSound.SetChannel(0, 0);
+            pGame->m_soundNeedParty.cSound.Play(FALSE);
+            g_pBaldurChitin->m_pEngineWorld->DisplayText(CString(""),
+                pGame->m_soundNeedParty.szText,
+                -1,
+                FALSE);
+            s_bLeaveAreaMessageShown = TRUE;
+        }
+        return ACTION_ERROR;
+    }
+
+    // Whole party gathered and at the edge -- commit to the transition.
+    g_pBaldurChitin->cSoundMixer.StopMusic(FALSE);
+    pGame->UnselectAll();
+
+    if (g_pChitin->cNetwork.m_bConnectionEstablished) {
+        if (!g_pChitin->cNetwork.m_bIsHost) {
+            // 0x435150: MP client -> host area-transition request over
+            // CNetwork::SendSpecificMessage -- unrecovered (single caller,
+            // MP-only). Matches the CGameAIBase::ExecuteAction
+            // MultiPlayerSync precedent (0x466750) of deferring the MP
+            // handshake and using the binary's own SP-observable outcome.
+            return ACTION_DONE;
+        }
+        g_pBaldurChitin->GetBaldurMessage()->SendMapWorldAnnounceStatus(TRUE,
+            g_pChitin->cNetwork.m_idLocalPlayer,
+            static_cast<SHORT>(nLeavingEdge));
+    }
+
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
+    // __LINE__: 17525
+    UTIL_ASSERT_MSG(g_pBaldurChitin->m_pEngineWorldMap != NULL, "pWorldMap != NULL");
+    g_pBaldurChitin->m_pEngineWorldMap->StartWorldMap(TRUE, static_cast<SHORT>(nLeavingEdge), TRUE);
+    g_pChitin->pActiveEngine->SelectEngine(g_pBaldurChitin->m_pEngineWorldMap);
+    return ACTION_DONE;
 }
 
 // 0x42FDC0
