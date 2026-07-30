@@ -428,28 +428,74 @@ CAIGroup::CAIGroup(SHORT id)
 
 // FIXME: `action` should be reference.
 //
-// 0x404E80
+// 0x404D00
+//
+// Per member: GetDeny-lock it, optionally interrupt its current action
+// (`override`), reset its user-command pause and clear any pending
+// travel-trigger tag, then queue either the leader's action (first member
+// only, when `leaderAction` is given) or the primary `action` -- unless that
+// action is MOVETOPOINT and the member is too encumbered to move
+// (`m_derivedStats.m_nEncumberance == 2`), in which case it gets a feedback
+// beep instead of a queued move. The leader additionally gets a
+// "command accepted" sound when `override` is set, for any action other than
+// GROUPATTACK (which already has its own feedback elsewhere).
 void CAIGroup::GroupAction(CAIAction action, BOOL override, CAIAction* leaderAction)
 {
-    if (m_memberList.IsEmpty()) {
-        return;
-    }
-
     BOOL bLeader = TRUE;
     POSITION pos = m_memberList.GetHeadPosition();
     while (pos != NULL) {
         LONG memberId = reinterpret_cast<LONG>(m_memberList.GetNext(pos));
 
-        // The first member is the group leader and receives leaderAction (the
-        // "then" action, e.g. PLAYERDIALOG); the remaining members receive the
-        // primary action.
-        CAIAction& memberAction =
-            (bLeader && leaderAction != NULL) ? *leaderAction : action;
+        CGameSprite* pMember;
+        BYTE rc;
+        do {
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(memberId,
+                CGameObjectArray::THREAD_ASYNCH,
+                reinterpret_cast<CGameObject**>(&pMember),
+                INFINITE);
+        } while (rc == CGameObjectArray::SHARED);
 
-        CMessageAddAction* pMsg = new CMessageAddAction(memberAction, memberId, memberId);
-        g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
+        if (rc != CGameObjectArray::SUCCESS) {
+            continue;
+        }
 
-        bLeader = FALSE;
+        if (override) {
+            pMember->ClearActions(FALSE);
+            pMember->m_interrupt = TRUE;
+        }
+        pMember->m_userCommandPause = 75;
+        pMember->m_triggerId = CGameObjectArray::INVALID_INDEX;
+
+        BOOL bEncumberedMoveBlocked = (action.GetActionID() == CAIAction::MOVETOPOINT)
+            && (pMember->GetDerivedStats()->m_nEncumberance == 2);
+
+        if (bLeader && leaderAction != NULL) {
+            if (leaderAction->GetActionID() != CAIAction::MOVETOPOINT
+                || pMember->GetDerivedStats()->m_nEncumberance != 2) {
+                CMessageAddAction* pMsg = new CMessageAddAction(*leaderAction, memberId, memberId);
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
+            } else {
+                pMember->FeedBack(15, 1, 0, 0, -1, 0, 0);
+            }
+        } else if (bEncumberedMoveBlocked) {
+            pMember->FeedBack(15, 1, 0, 0, -1, 0, 0);
+        } else {
+            CMessageAddAction* pMsg = new CMessageAddAction(action, memberId, memberId);
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
+        }
+
+        if (bLeader) {
+            if (override && action.GetActionID() != CAIAction::GROUPATTACK) {
+                pMember->PlaySound(11, TRUE, FALSE, FALSE);
+            }
+            bLeader = FALSE;
+        }
+
+        pMember->m_inFormation = TRUE;
+
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(memberId,
+            CGameObjectArray::THREAD_ASYNCH,
+            INFINITE);
     }
 }
 

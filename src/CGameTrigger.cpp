@@ -704,10 +704,18 @@ void CGameTrigger::OnActionButton(const CPoint& pt)
         if (m_triggerType == 2) {
             // Travel region: walk the whole party onto the trigger, then move
             // them to the trigger's destination point.
+            // travelAction.m_specificID = m_id (this trigger's own object id)
+            // -- live Frida trace against the original exe (a hook on
+            // CGameSprite::ArriveAtTravelTrigger, the confirmed action-93
+            // handler, reading this.returnAddress + m_curAction.m_specificID
+            // during a real staircase click) shows m_specificID equal to the
+            // clicked trigger's id at the moment this action executes.
+            // ArriveAtTravelTrigger resolves the CGameTrigger via exactly this
+            // field, so it must carry m_id, not 0.
             CAIObjectType travelType(0, 0, 0, 0, 0, 0, 0, 0, m_id, 0, 0);
             CAIAction travelAction(93 /* 0x84782E: travel action, not in ACTION.IDS */,
                 travelType,
-                0,
+                m_id,
                 0,
                 0);
             pGroup->GroupAction(travelAction, TRUE, NULL);

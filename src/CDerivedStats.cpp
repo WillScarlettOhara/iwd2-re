@@ -10,6 +10,7 @@
 // The effect-opcode trees at CDerivedStats+0x470/0x480 must be 16 bytes each so
 // m_naturalImmunities stays at +0x490 and the rest of the class does not shift.
 static_assert(sizeof(CEffectOpcodeSet) == 16, "CEffectOpcodeSet must be 16 bytes");
+static_assert(sizeof(CSpellImmunitySet) == 16, "CSpellImmunitySet must be 16 bytes");
 
 namespace {
 

@@ -15,13 +15,19 @@
 class CGameSprite;
 class CGameEffect;
 
-// Ordering functor for the effect-opcode tree at CDerivedStats+0x480.
-// The binary's tree is 16 bytes (vs a plain 12-byte std::set<int>) because its
-// comparator carries a 4-byte, comparison-irrelevant payload; the extra word is
-// reproduced here so the member keeps the binary's footprint and CDerivedStats'
-// layout is preserved. operator() is a plain ascending compare.
+// Ordering functor for the effect-opcode tree at CDerivedStats+0x480. The
+// binary's tree is 16 bytes; the comparator's job here is purely to pad
+// std::set<int, ..> up to that footprint. The padding is *computed*, not a
+// fixed 4-byte word: std::set's own non-comparator overhead (head pointer +
+// size, plus an extra debug-iterator proxy pointer under
+// _ITERATOR_DEBUG_LEVEL != 0) differs between Debug and Release builds (12
+// vs 8 bytes on x86, verified empirically) -- a fixed-size payload only
+// reaches 16 bytes in Debug and silently undershoots to 12 in Release. Sizing
+// off sizeof(std::set<int>) (the same container, default comparator, so same
+// non-comparator overhead) keeps the total at exactly 16 in any config.
+// operator() is a plain ascending compare.
 struct EffectOpcodeCompare {
-    LONG m_unused;
+    BYTE m_unused[16 - sizeof(std::set<int>)];
     bool operator()(int lhs, int rhs) const { return lhs < rhs; }
 };
 
@@ -32,10 +38,11 @@ typedef std::set<int, EffectOpcodeCompare> CEffectOpcodeSet;
 
 // Ordering functor for the spell-resref tree at CDerivedStats+0x470.  Keys are
 // TStrings (resrefs); the binary orders them with the memcmp+length-tiebreak
-// TString::Compare (0x4C5ED0).  Same 4-byte payload trick as EffectOpcodeCompare
-// so std::set<TString, ..> keeps the binary's 16-byte footprint.
+// TString::Compare (0x4C5ED0). Same computed-padding trick as
+// EffectOpcodeCompare (see its comment) so std::set<TString, ..> keeps the
+// binary's 16-byte footprint in both Debug and Release.
 struct TStringResRefCompare {
-    LONG m_unused;
+    BYTE m_unused[16 - sizeof(std::set<TString>)];
     bool operator()(const TString& lhs, const TString& rhs) const
     {
         return lhs.Compare(0, lhs.Length(), rhs.Data(), rhs.Length()) < 0;
