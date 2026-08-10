@@ -19851,6 +19851,17 @@ SHORT CGameSprite::ExecuteAction()
         return actionReturn;
     }
 
+    // 0x72A976 (jumptable case 0x5B; the index byte at 0x72B520+0xE1 routes
+    // action 225 here).  MoveBetweenAreas(S:Area*,P:Point*,I:Face*DIR): hand
+    // the whole thing to JumpToArea with a zero delay, so the sprite leaves its
+    // area and is placed on the destination in the same tick.
+    if (m_curAction.m_actionID == 225) {
+        return JumpToArea(m_curAction.GetString1(),
+            m_curAction.GetDest(),
+            static_cast<SHORT>(m_curAction.GetSpecifics()),
+            0);
+    }
+
     return CGameAIBase::ExecuteAction();
 }
 
@@ -23413,15 +23424,93 @@ void CGameSprite::DisplaySkills(CUIControlTextDisplay* pText)
 // 0x766140
 SHORT CGameSprite::JumpToArea(CString areaName, const CPoint& dest, SHORT facingDirection, SHORT delay)
 {
-    // TODO: Incomplete.
+    if (m_bGlobal) {
+        CMessage* message = new CMessageMoveGlobal(areaName, dest, m_id, m_id);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
+    }
 
-    return ACTION_ERROR;
+    if (m_pArea == NULL) {
+        return ACTION_ERROR;
+    }
+
+    if (delay < 1) {
+        CGameArea* pArea = g_pBaldurChitin->GetObjectGame()->GetArea(areaName);
+        if (pArea != NULL) {
+            m_clearAIOnRemoveFromArea = FALSE;
+            m_bDeleteOnRemove = FALSE;
+            RemoveFromArea();
+            m_bDeleteOnRemove = TRUE;
+            MoveOntoArea(pArea, dest, facingDirection);
+            return ACTION_DONE;
+        }
+
+        CMoveListEntry* pEntry = new CMoveListEntry();
+        pEntry->m_nFacing = static_cast<BYTE>(facingDirection);
+        pEntry->m_nDelay = 0;
+        pEntry->m_nSpriteId = m_id;
+        pEntry->m_ptDestination = dest;
+        pEntry->m_areaResRef = areaName;
+        g_pBaldurChitin->GetObjectGame()->m_cMoveList.AddTail(pEntry);
+    } else {
+        // A delayed jump is parked on the limbo list, not the move list
+        // (0x766261: lea ecx, [eax + 0x4b1c] -- m_cLimboList at CInfGame+0x4B1C,
+        // where the immediate path a few instructions later takes +0x4B00).
+        CMoveListEntry* pEntry = new CMoveListEntry();
+        pEntry->m_nDelay = delay;
+        pEntry->m_nFacing = static_cast<BYTE>(facingDirection);
+        pEntry->m_nSpriteId = m_id;
+        pEntry->m_ptDestination = dest;
+        pEntry->m_areaResRef = areaName;
+        g_pBaldurChitin->GetObjectGame()->m_cLimboList.AddTail(pEntry);
+    }
+
+    m_bDeleteOnRemove = FALSE;
+    RemoveFromArea();
+    m_bDeleteOnRemove = TRUE;
+
+    return ACTION_DONE;
 }
 
 // 0x766380
 void CGameSprite::MoveOntoArea(CGameArea* pArea, const CPoint& dest, SHORT facingDirection)
 {
-    // TODO: Incomplete.
+    // The requested landing spot is snapped to the search map: converted to
+    // grid squares, nudged to the nearest passable square, then converted back
+    // to the centre of that square (0x766438-0x76645e: size * index + size / 2).
+    CPoint ptPassable;
+    pArea->m_search.FindNearbyPassablePoint(&ptPassable,
+        dest.x / CPathSearch::GRID_SQUARE_SIZEX,
+        dest.y / CPathSearch::GRID_SQUARE_SIZEY,
+        GetTerrainTable(),
+        m_animation.GetPersonalSpace(),
+        facingDirection);
+
+    AddToArea(pArea,
+        CPoint(CPathSearch::GRID_SQUARE_SIZEX * ptPassable.x + CPathSearch::GRID_SQUARE_SIZEX / 2,
+            CPathSearch::GRID_SQUARE_SIZEY * ptPassable.y + CPathSearch::GRID_SQUARE_SIZEY / 2),
+        0,
+        LIST_FRONT);
+    SetFacing(facingDirection);
+
+    // Broadcast the new placement to the other peers, but only for a sprite
+    // that actually landed somewhere and that this host owns.
+    CPoint& pos = GetPos();
+    if ((pos.x != -1 || pos.y != -1 || m_pArea != NULL)
+        && (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL
+            || g_pChitin->cNetwork.m_idLocalPlayer == m_remotePlayerID)) {
+        CMessage* message = new CMessageSpriteUpdate(this, m_id, m_id);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
+    }
+
+    // Re-register under the destination area's named-creature table so scripts
+    // there can resolve this sprite by script name (0x766574 dispatches slot 0
+    // of CVariableHashBase, AddKey).
+    CVariable var;
+    var.SetName(GetScriptName());
+    var.m_intValue = m_id;
+    pArea->m_namedCreatures.AddKey(var);
+
+    m_posStart = m_pos;
 }
 
 // 0x42FDC0

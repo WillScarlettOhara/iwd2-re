@@ -7,6 +7,11 @@
 
 class CGameArea;
 
+// IE packs binary-mirror classes to 2 (see CLAUDE.md); without it m_nDelay
+// would silently 4-align to 0x18 instead of the binary's 0x16.
+#pragma pack(push)
+#pragma pack(2)
+
 class CMoveListEntry {
 public:
     CMoveListEntry();
@@ -17,6 +22,8 @@ public:
     /* 0014 */ BYTE m_nFacing;
     /* 0016 */ LONG m_nDelay;
 };
+
+#pragma pack(pop)
 
 class CMoveList : public CTypedPtrList<CPtrList, CMoveListEntry*> {
 public:
