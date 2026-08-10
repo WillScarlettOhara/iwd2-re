@@ -55,7 +55,12 @@ public:
     /* 0058 */ DWORD m_dwFlags;
     /* 005C */ DWORD m_versionNumber;
     /* 0060 */ DWORD m_familiarsOffset;
-    /* 0064 */ DWORD m_storedLocationsOffset;
+    // GAM +0x6C.  CInfGame::Marshal (0x5A3BE8) stores m_cOptions.m_nNightmareMode
+    // here and Unmarshal (0x5A803E) reads it straight back into that member --
+    // this slot is not a stored-locations offset.  The stored-locations section
+    // carries no header offset at all: it is written last and located by the
+    // running size accumulator, at pGame + cnt.
+    /* 0064 */ DWORD m_nNightmareMode;
     /* 0068 */ DWORD m_storedLocationsCount;
     /* 006C */ DWORD m_gameTime;
     /* 0070 */ DWORD m_storedLocationsOffsetPocketPlane;

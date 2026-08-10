@@ -2361,6 +2361,28 @@ void CInfGame::Marshal(BYTE** pGame, DWORD* nGame, BOOLEAN bProgressBarInPlace)
     nGameSize += nVariables * sizeof(CVariable);
     nGameSize += nJournalEntries * sizeof(CSavedGameJournalEntry);
 
+    // Familiars (0x5A35AD): a fixed 0x190 block -- 9 default resrefs (0x48), the
+    // packed-data offset (0x04) and the 81 per-list counts (0x144) -- plus eight
+    // bytes for every resref held in the 9x9 lists.  The block is unconditional:
+    // an empty game still writes the fixed part, which is why a GAM the original
+    // engine wrote always carries a non-zero familiars offset.
+    nGameSize += 0x190;
+    for (int nAlignment = 0; nAlignment < 9; nAlignment++) {
+        for (int nLevel = 0; nLevel < 9; nLevel++) {
+            nGameSize += m_familiarResRefs[nAlignment][nLevel].GetCount() * 8;
+        }
+    }
+
+    // Pocket-plane stored locations (0x5A35F8): the count dword plus, per record,
+    // the 0x1C-byte fixed header and the area name's bytes.  Also unconditional --
+    // Unmarshal's final `cnt == nGame` assert requires the trailing dword even
+    // when the list is empty.
+    DWORD nStoredLocationsSize = 4;
+    for (POSITION pos = field_4BDC.GetHeadPosition(); pos != NULL;) {
+        CSavedGameStoredLocation* pLocation = field_4BDC.GetNext(pos);
+        nStoredLocationsSize += 0x1C + pLocation->m_areaName.GetLength();
+    }
+    nGameSize += nStoredLocationsSize;
 
     *pGame = new BYTE[nGameSize];
     *nGame = nGameSize;
@@ -2416,13 +2438,71 @@ void CInfGame::Marshal(BYTE** pGame, DWORD* nGame, BOOLEAN bProgressBarInPlace)
 
     delete[] pVariables;
 
-    if (nJournalEntries != 0) {
-        pHeader->m_journalEntriesOffset = nOffset;
-        pHeader->m_journalEntriesCount = nJournalEntries;
-        m_cJournal.Marshal(reinterpret_cast<CSavedGameJournalEntry*>(*pGame + nOffset));
-        nOffset += nJournalEntries * sizeof(CSavedGameJournalEntry);
+    // The journal offset and count are written unconditionally (0x5A3BAA): the
+    // binary stores the running offset, then asks the journal for its entry count
+    // and marshals into the block.  An empty journal still records the offset.
+    pHeader->m_journalEntriesOffset = nOffset;
+    pHeader->m_journalEntriesCount = nJournalEntries;
+    m_cJournal.Marshal(reinterpret_cast<CSavedGameJournalEntry*>(*pGame + nOffset));
+    nOffset += nJournalEntries * sizeof(CSavedGameJournalEntry);
+
+    // --- Familiars (0x5A3BDA) ------------------------------------------------
+    // The nightmare flag shares this stretch of the header and is stored first.
+    pHeader->m_nNightmareMode = m_cOptions.m_nNightmareMode;
+    pHeader->m_familiarsOffset = nOffset;
+
+    BYTE* pFamiliars = *pGame + nOffset;
+    memcpy(pFamiliars, m_defaultFamiliarResRefs, sizeof(m_defaultFamiliarResRefs));
+
+    // The packed resref data begins after the fixed 0x190 block, and the offset
+    // stored at +0x48 is measured from the start of the buffer.
+    nOffset += 0x190;
+    *reinterpret_cast<DWORD*>(pFamiliars + 0x48) = nOffset;
+
+    DWORD* pCounts = reinterpret_cast<DWORD*>(pFamiliars + 0x4C);
+    for (int nAlignment = 0; nAlignment < 9; nAlignment++) {
+        for (int nLevel = 0; nLevel < 9; nLevel++) {
+            *pCounts = m_familiarResRefs[nAlignment][nLevel].GetCount();
+
+            for (POSITION pos = m_familiarResRefs[nAlignment][nLevel].GetHeadPosition(); pos != NULL;) {
+                CResRef* pResRef = m_familiarResRefs[nAlignment][nLevel].GetNext(pos);
+                memcpy(*pGame + nOffset, pResRef->GetResRef(), 8);
+                nOffset += 8;
+            }
+
+            pCounts++;
+        }
     }
 
+    UTIL_ASSERT(nOffset <= nGameSize);
+
+    // --- Pocket-plane stored locations (0x5A3CA1) ----------------------------
+    // Written last and carrying no header offset: Unmarshal finds the section by
+    // its own size accumulator.  Each record is the total size, the name length,
+    // the packed fields, then the raw area-name bytes.
+    BYTE* pStored = *pGame + nOffset;
+    *reinterpret_cast<DWORD*>(pStored) = field_4BDC.GetCount();
+
+    BYTE* pRecord = pStored + 4;
+    for (POSITION pos = field_4BDC.GetHeadPosition(); pos != NULL;) {
+        CSavedGameStoredLocation* pLocation = field_4BDC.GetNext(pos);
+        int nNameLen = pLocation->m_areaName.GetLength();
+
+        *reinterpret_cast<DWORD*>(pRecord + 0x00) = 0x18 + nNameLen;
+        *reinterpret_cast<DWORD*>(pRecord + 0x04) = nNameLen;
+        *reinterpret_cast<DWORD*>(pRecord + 0x08) = pLocation->m_flags;
+        *reinterpret_cast<DWORD*>(pRecord + 0x0C) = pLocation->m_value;
+        *reinterpret_cast<DWORD*>(pRecord + 0x0D) = pLocation->field_9;
+        *reinterpret_cast<DWORD*>(pRecord + 0x11) = pLocation->field_D;
+        *reinterpret_cast<DWORD*>(pRecord + 0x15) = pLocation->field_11;
+        *reinterpret_cast<WORD*>(pRecord + 0x19) = pLocation->field_15;
+        pRecord[0x1B] = pLocation->field_17;
+        memcpy(pRecord + 0x1C, static_cast<const char*>(pLocation->m_areaName), nNameLen);
+
+        pRecord += 0x1C + nNameLen;
+    }
+
+    nOffset += nStoredLocationsSize;
 
     UTIL_ASSERT(nOffset == nGameSize);
 }
