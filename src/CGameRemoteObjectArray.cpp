@@ -801,6 +801,7 @@ void CGameRemoteObjectArray::Clean()
             delete node;
             node = next;
         }
+        m_pArray[nIndex] = NULL;
     }
 
     // NOTE: Uninline.

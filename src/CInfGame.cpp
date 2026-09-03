@@ -2361,6 +2361,22 @@ void CInfGame::Marshal(BYTE** pGame, DWORD* nGame, BOOLEAN bProgressBarInPlace)
     nGameSize += nVariables * sizeof(CVariable);
     nGameSize += nJournalEntries * sizeof(CSavedGameJournalEntry);
 
+    // The V2.2 familiar header and stored-location count are present even when
+    // their lists are empty (0x5A35AD and 0x5A35F8).
+    const DWORD nFamiliarHeaderSize = 0x190;
+    const DWORD nStoredLocationHeaderSize = 0x1C;
+    nGameSize += nFamiliarHeaderSize;
+    for (int nAlignment = 0; nAlignment < 9; nAlignment++) {
+        for (int nLevel = 0; nLevel < 9; nLevel++) {
+            nGameSize += static_cast<DWORD>(m_familiarResRefs[nAlignment][nLevel].GetCount()) * RESREF_SIZE;
+        }
+    }
+
+    nGameSize += sizeof(DWORD);
+    for (POSITION pos = field_4BDC.GetHeadPosition(); pos != NULL; ) {
+        CSavedGameStoredLocation* pLocation = field_4BDC.GetNext(pos);
+        nGameSize += nStoredLocationHeaderSize + pLocation->m_areaName.GetLength();
+    }
 
     *pGame = new BYTE[nGameSize];
     *nGame = nGameSize;
@@ -2423,6 +2439,44 @@ void CInfGame::Marshal(BYTE** pGame, DWORD* nGame, BOOLEAN bProgressBarInPlace)
         nOffset += nJournalEntries * sizeof(CSavedGameJournalEntry);
     }
 
+    // 0x5A3BEB: defaults, absolute resref-data offset, 81 counts, then packed refs.
+    pHeader->m_familiarsOffset = nOffset;
+    BYTE* pFamiliars = *pGame + nOffset;
+    memcpy(pFamiliars, m_defaultFamiliarResRefs, sizeof(m_defaultFamiliarResRefs));
+    nOffset += nFamiliarHeaderSize;
+    *reinterpret_cast<DWORD*>(pFamiliars + 0x48) = nOffset;
+    DWORD* pCounts = reinterpret_cast<DWORD*>(pFamiliars + 0x4C);
+    for (int nAlignment = 0; nAlignment < 9; nAlignment++) {
+        for (int nLevel = 0; nLevel < 9; nLevel++) {
+            CTypedPtrList<CPtrList, CResRef*>& resRefs = m_familiarResRefs[nAlignment][nLevel];
+            *pCounts++ = static_cast<DWORD>(resRefs.GetCount());
+            for (POSITION pos = resRefs.GetHeadPosition(); pos != NULL; ) {
+                CResRef* pResRef = resRefs.GetNext(pos);
+                memcpy(*pGame + nOffset, pResRef->GetResRef(), RESREF_SIZE);
+                nOffset += RESREF_SIZE;
+            }
+        }
+    }
+
+    // 0x5A3CA7: count followed by packed, length-prefixed stored locations.
+    *reinterpret_cast<DWORD*>(*pGame + nOffset) = static_cast<DWORD>(field_4BDC.GetCount());
+    nOffset += sizeof(DWORD);
+    for (POSITION pos = field_4BDC.GetHeadPosition(); pos != NULL; ) {
+        CSavedGameStoredLocation* pLocation = field_4BDC.GetNext(pos);
+        DWORD nNameLength = pLocation->m_areaName.GetLength();
+        BYTE* pRecord = *pGame + nOffset;
+        *reinterpret_cast<DWORD*>(pRecord + 0x00) = nStoredLocationHeaderSize - sizeof(DWORD) + nNameLength;
+        *reinterpret_cast<DWORD*>(pRecord + 0x04) = nNameLength;
+        *reinterpret_cast<DWORD*>(pRecord + 0x08) = pLocation->m_flags;
+        pRecord[0x0C] = pLocation->m_value;
+        *reinterpret_cast<DWORD*>(pRecord + 0x0D) = pLocation->field_9;
+        *reinterpret_cast<DWORD*>(pRecord + 0x11) = pLocation->field_D;
+        *reinterpret_cast<DWORD*>(pRecord + 0x15) = pLocation->field_11;
+        *reinterpret_cast<WORD*>(pRecord + 0x19) = pLocation->field_15;
+        pRecord[0x1B] = pLocation->field_17;
+        memcpy(pRecord + nStoredLocationHeaderSize, static_cast<LPCTSTR>(pLocation->m_areaName), nNameLength);
+        nOffset += nStoredLocationHeaderSize + nNameLength;
+    }
 
     UTIL_ASSERT(nOffset == nGameSize);
 }

@@ -1,0 +1,25 @@
+# Regression: create a party, pass the prologue, then reload in the same process.
+# Launch with IWD2_RE_AUTO_ACTION=newgame and IWD2_RE_AUTO_PARTY=1.
+# Set IWD2_RE_UI_SCRIPT to this file and IWD2_RE_UI_GO to the observer's marker.
+# Use a test save directory where slot 0 is the newly generated prologue autosave.
+# This exercises Marshal -> Unmarshal and repeated remote-object cleanup.
+waitgo 3000
+wait chapter 3000
+key 13
+wait world 3000
+sleep 60
+expect screen world
+ground
+goto options
+sleep 60
+click 2 5
+sleep 60
+expect control 4 0
+click 4 0
+wait load 3000
+sleep 60
+expect control 0 55
+click 0 55
+wait world 3000
+ground
+expect controls 1 12
