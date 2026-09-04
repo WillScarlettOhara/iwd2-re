@@ -36,7 +36,7 @@ Exit / output contract (parsed by vm.sh smoke):
                               on teardown, because vm.sh kills this process and
                               a teardown handler would never run.
 """
-import frida, sys, os, time
+import frida, sys, os, time, json
 
 CRASH_TAG = "########## EXCEPTION"
 DETACH_TAG = "########## DETACHED"
@@ -111,12 +111,15 @@ WANTED.forEach(function(name){
     return;
   }
   counts[name] = 0;
+  var attached = 0;
   addrs.forEach(function(a){
     try {
       Interceptor.attach(a, { onEnter: function(){ counts[name]++; } });
+      attached++;
     } catch(e){ }
   });
-  send({tag:"SYM", name:name, n:addrs.length});
+  if (attached) send({tag:"SYM", name:name, n:attached});
+  else send({tag:"NOSYM", name:name});
 });
 
 // Re-emit on a timer rather than at teardown: vm.sh kills this process, so an
@@ -126,6 +129,7 @@ setInterval(function(){
     send({tag:"HITS", name:k, n:counts[k]});
   });
 }, 2000);
+rpc.exports.getcounts = function(){ return counts; };
 """
 
 
@@ -170,7 +174,7 @@ def main():
     script.load()
     if symbols:
         counter = session.create_script(
-            COUNT_JS.replace("%SYMS%", repr(symbols).replace("'", '"')))
+            COUNT_JS.replace("%SYMS%", json.dumps(symbols)))
         counter.on("message", on_message)
         counter.load()
     out("ARMED; drive the recovered path now (cast the spell). Waiting for a crash...")

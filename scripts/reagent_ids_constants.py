@@ -34,9 +34,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+from runtime_paths import venv_tool
+
 REPO = Path(__file__).resolve().parent.parent
 DEFAULT_IDS_DIR = REPO / "data" / "near_infinity_export" / "IDS"
-DEFAULT_BRIDGE = REPO / ".venv-reagent" / "bin" / "ghidra-bridge"
+DEFAULT_BRIDGE = venv_tool("ghidra-bridge")
 DEFAULT_CONFIG = REPO / "ghidra-bridge.host.yaml"
 
 # A data row: VALUE (dec or 0xhex) then whitespace then a SYMBOL. The header lines

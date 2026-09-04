@@ -5,6 +5,7 @@ from pathlib import Path
 
 from re_agent.config.schema import ProjectProfile
 from re_agent.parity.source_indexer import SourceIndexer
+from re_agent.utils.address import normalize_address
 
 
 def test_find_function_body(tmp_path: Path) -> None:
@@ -132,6 +133,30 @@ def test_find_by_address_unknown_returns_none(tmp_path: Path) -> None:
     assert indexer.find_by_address("0xDEADBEEF") is None
 
 
+def test_find_by_address_selects_the_marked_overload(tmp_path: Path) -> None:
+    src = tmp_path / "CTrain.cpp"
+    src.write_text('''\
+// 0x401000
+void CTrain::Marshal(int value) {
+    FirstOverload(value);
+}
+
+// 0x402000
+void CTrain::Marshal(char* value) {
+    CorrectOverload(value);
+}
+''')
+    indexer = SourceIndexer(tmp_path)
+
+    first = indexer.find_by_address("0x401000")
+    second = indexer.find_by_address("0x402000")
+    assert first is not None
+    assert second is not None
+    assert "FirstOverload" in first.body
+    assert "CorrectOverload" in second.body
+    assert first.line != second.line
+
+
 def test_hook_address_index_extracts_class_name(tmp_path: Path) -> None:
     """Verify that _build_index reads RH_ScopedClass for class names."""
     src = tmp_path / "CTrain.cpp"
@@ -145,6 +170,6 @@ void CTrain::ProcessControl() {
 ''')
     profile = _make_profile(source_root=str(tmp_path))
     indexer = SourceIndexer(tmp_path, profile)
-    entry = indexer.hook_address_index.get("0x6f86a0")
+    entry = indexer.hook_address_index.get(normalize_address("0x6f86a0"))
     assert entry is not None
     assert entry == ("CTrain", "ProcessControl")

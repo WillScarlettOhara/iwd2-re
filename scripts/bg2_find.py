@@ -5,9 +5,10 @@ BG2EE and IWD2 share the Infinity engine; class/method/member NAMES carry over
 (~70%) but OFFSETS DIFFER. Output is for *naming* recovered IWD2 code -- every
 offset printed is BG2's, never IWD2's.
 
-First run builds a SQLite index from ``data/pdb/Baldur.pdb`` via llvm-pdbutil
-(~30 s, one-time). Queries afterwards are instant and emit a handful of lines
-instead of a 45 MB grep.
+First run builds a SQLite index from ``data/pdb/Baldur.pdb`` via llvm-pdbutil,
+or from the bundled ``bg2_pdb_extracted.zip`` / ``extracted/`` text dumps when
+the PDB or LLVM is unavailable (~30 s, one-time). Queries afterwards are instant
+and emit a handful of lines instead of a 45 MB grep.
 
 Usage::
 
@@ -22,10 +23,14 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import io
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
+import zipfile
+from contextlib import ExitStack
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -55,6 +60,39 @@ def is_noise(name: str) -> bool:
 
 
 # ---------------------------------------------------------------- build
+
+def dump_lines(pdb: Path, stream: str):
+    """Read an LLVM stream on either host, including the checked-in UTF-16 dump."""
+    llvm = shutil.which("llvm-pdbutil")
+    if pdb.is_file() and llvm:
+        with subprocess.Popen(
+                [llvm, "dump", "-" + stream, str(pdb)],
+                stdout=subprocess.PIPE, text=True, encoding="utf-8",
+                errors="replace", bufsize=1 << 20) as proc:
+            yield from proc.stdout
+            if proc.wait():
+                raise subprocess.CalledProcessError(proc.returncode, proc.args)
+        return
+
+    # The symbols dump also contains the module headers emitted by -modules.
+    name = f"bg2_pdb_{'symbols' if stream == 'modules' else stream}.txt"
+    extracted = pdb.parent / "extracted" / name
+    archive = pdb.parent / "bg2_pdb_extracted.zip"
+    with ExitStack() as stack:
+        if extracted.is_file():
+            raw = stack.enter_context(extracted.open("rb"))
+        elif archive.is_file():
+            zipped = stack.enter_context(zipfile.ZipFile(archive))
+            raw = stack.enter_context(zipped.open(name))
+        else:
+            raise FileNotFoundError(
+                f"need {pdb} and llvm-pdbutil, or {extracted}, or {archive}")
+        bom = raw.read(2)
+        raw.seek(0)
+        encoding = "utf-16" if bom in (b"\xff\xfe", b"\xfe\xff") else "utf-8-sig"
+        text = stack.enter_context(io.TextIOWrapper(raw, encoding=encoding))
+        yield from text
+
 
 RE_RECORD = re.compile(r"^\s+(0x[0-9A-F]+) \| (LF_\w+)(?: \[size = \d+\])?(?: `(.*)`)?\s*$")
 RE_MEMBER = re.compile(
@@ -89,10 +127,6 @@ def parse_types(pdb: Path):
     bitfields = {}   # ti -> (base_ti, bits, bitoff)
     prims = dict(PRIMS)
 
-    proc = subprocess.Popen(
-        ["llvm-pdbutil", "dump", "-types", str(pdb)],
-        stdout=subprocess.PIPE, text=True, errors="replace", bufsize=1 << 20)
-
     kind = None
     ti = 0
     name = None
@@ -100,7 +134,7 @@ def parse_types(pdb: Path):
     cur_list = None  # active fieldlist/methodlist accumulator
     cur_class = None  # dict being filled from continuation lines
 
-    for line in proc.stdout:
+    for line in dump_lines(pdb, "types"):
         m = RE_RECORD.match(line)
         if m:
             ti, kind, name = int(m.group(1), 16), m.group(2), m.group(3)
@@ -226,8 +260,6 @@ def parse_types(pdb: Path):
             pending = "\x00base"
             continue
 
-    proc.wait()
-
     # opportunistic primitive names seen inline anywhere are already in PRIMS;
     # pointer-to-primitive CV indices (0x04XX/0x06XX) resolve via low byte
     def resolve(t, depth=0):
@@ -317,11 +349,8 @@ RE_SYM = re.compile(r"^\s+\d+ \| (S_\w+) \[size = \d+\] `(.*)`\s*$")
 
 def parse_globals(pdb: Path, modules: dict):
     funcs, globs = [], []
-    proc = subprocess.Popen(
-        ["llvm-pdbutil", "dump", "-globals", str(pdb)],
-        stdout=subprocess.PIPE, text=True, errors="replace", bufsize=1 << 20)
     skind = sname = None
-    for line in proc.stdout:
+    for line in dump_lines(pdb, "globals"):
         m = RE_SYM.match(line)
         if m:
             skind, sname = m.group(1), m.group(2)
@@ -343,23 +372,20 @@ def parse_globals(pdb: Path, modules: dict):
             if m:
                 globs.append((sname, m.group(1), m.group(2).strip(), "const"))
                 skind = None
-    proc.wait()
     return funcs, globs
 
 
 def parse_modules(pdb: Path) -> dict:
     out = {}
-    txt = subprocess.run(["llvm-pdbutil", "dump", "-modules", str(pdb)],
-                         capture_output=True, text=True, errors="replace").stdout
-    for m in re.finditer(r"Mod (\d+) \| `(.*?)`", txt):
-        stem = Path(m.group(2).replace("\\", "/")).stem
-        out[int(m.group(1))] = stem
+    for line in dump_lines(pdb, "modules"):
+        m = re.search(r"Mod (\d+) \| `(.*?)`", line)
+        if m:
+            stem = Path(m.group(2).replace("\\", "/")).stem
+            out[int(m.group(1))] = stem
     return out
 
 
 def build_db():
-    if not PDB.exists():
-        sys.exit(f"missing {PDB} -- unzip Baldur.zip there first")
     print("parsing types stream (~30 s)...", file=sys.stderr)
     classrows, bases, members, methods, enumvals = parse_types(PDB)
     print(f"  {len(classrows)} classes, {len(members)} members, "
@@ -517,7 +543,7 @@ def class_scoped(con, cname, sub, limit):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("query", nargs="?", help="NAME | Class:: | Class::sub")
-    ap.add_argument("--build", action="store_true", help="rebuild index from Baldur.pdb")
+    ap.add_argument("--build", action="store_true", help="rebuild index from PDB or bundled dumps")
     ap.add_argument("--enum", help="enum values by enum-name substring")
     ap.add_argument("-l", type=int, default=25, metavar="N",
                     help="line cap per section (0 = unlimited, default 25)")

@@ -54,6 +54,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+from runtime_paths import venv_tool
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from reagent_resolve_symbols import (  # noqa: E402
     load_names, load_vtable_map, lookup_class, slots_for_class, virtual_placement,
@@ -65,7 +67,7 @@ DEFAULT_MAP = REPO / ".ghidra-exports" / "address_map.json"
 DEFAULT_INDEX = REPO / ".ghidra-exports" / "_index.json"
 DEFAULT_GLOBALS = REPO / ".ghidra-exports" / "_globals.json"
 DEFAULT_VTABLE = REPO / ".ghidra-exports" / "vtable_map.json"
-DEFAULT_BRIDGE = REPO / ".venv-reagent" / "bin" / "ghidra-bridge"
+DEFAULT_BRIDGE = venv_tool("ghidra-bridge")
 DEFAULT_CONFIG = REPO / "ghidra-bridge.host.yaml"
 
 # A disassembly line: ``00403334 CALL <operand>``.

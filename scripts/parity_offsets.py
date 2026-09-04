@@ -40,6 +40,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from runtime_paths import python_executable
+
 REPO = Path(__file__).resolve().parents[1]
 SRC = REPO / "src"
 SYM = REPO / "scripts" / "sym.py"
@@ -63,7 +65,7 @@ def run(cmd: list[str]) -> str:
 
 
 def disasm(addr: int, count: int) -> list[str]:
-    out = run([str(REPO / ".venv-reagent/bin/python"), str(SYM), "disasm", hex(addr), str(count)])
+    out = run([python_executable(), str(SYM), "disasm", hex(addr), str(count)])
     return out.splitlines()
 
 

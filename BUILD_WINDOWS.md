@@ -1,53 +1,84 @@
-# Build & Run IWD2-RE on Windows 11
+# Build and run on native Windows
+
+The Windows workflow runs the compiler, game and analysis tools on the same
+machine. Linux + Windows VM remains supported through `scripts/vm.sh`.
+For parity, callers/callees, Ghidra, Frida and setup reproduction, see
+[Windows native workflow](docs/windows-native-workflow.md). Read `CLAUDE.md`
+explicitly if `AGENTS.md` appears as a one-line symlink target on Windows.
 
 ## Prerequisites
 
-1. **Visual Studio 2019 Community** (free)
-    - Download (under *older downloads*): https://visualstudio.microsoft.com/vs/older-downloads/
-    - During install, check **"Desktop development with C++"**
-    - In "Individual components" tab, find and check **"MFC for v142 build tools"** (Microsoft Foundation Classes for C++) — v142 is the VS2019 toolset
+- Visual Studio 2019 or its Build Tools, with **MSVC v142 C++ x64/x86 tools**,
+  **ATL v142**, **MFC v142**, and a Windows SDK. ATL/MFC alone does not install
+  the compiler. The build target is **Win32/x86**.
+- CMake, Git and Python; the analysis workflow uses `.venv-reagent`.
+- Original game assets, currently `C:\Games\Icewind Dale 2`.
 
-2. **Git** — https://git-scm.com/
+Clone with the reference/tool submodules when setting up another checkout:
+
+```powershell
+git clone --recurse-submodules https://github.com/WillScarlettOhara/iwd2-re.git
+Set-Location iwd2-re
+```
+
+For an existing checkout, run `git submodule update --init --recursive`.
 
 ## Build
 
-Open **Developer PowerShell** (Start → "Developer PowerShell for VS 2019"):
+From the repository root, with the venv from the workflow guide installed:
 
 ```powershell
-# Clone
-git clone https://github.com/WillScarlettOhara/iwd2-re.git
-cd iwd2-re
-
-# Configure and build (Win32, not x64)
-mkdir build; cd build
-cmake .. -G "Visual Studio 16 2019" -A Win32
-cmake --build . --config Debug
+$py = '.\.venv-reagent\Scripts\python.exe'
+& $py scripts/native.py build
 ```
 
-## Run
+This configures VS2019/v142, builds `build/Debug/iwd2-re.exe`, and performs a
+clean rebuild when header state changes. Full output is in `tmp_native_build.log`.
+It never stops a running game. If the linker reports a locked executable, close
+that instance or run `& $py scripts/native.py kill ours`, then rebuild.
+
+The equivalent initial CMake commands are:
 
 ```powershell
-# Copy executable to your IWD2 game folder
-cp Debug/iwd2-re.exe "C:\GOG Games\Icewind Dale 2\"
-
-# Run from game folder (needs game assets: chitin.key, data/, etc.)
-cd "C:\GOG Games\Icewind Dale 2"
-.\iwd2-re.exe
+cmake -S . -B build -G 'Visual Studio 16 2019' -A Win32 -T v142
+cmake --build build --config Debug --parallel 4
 ```
 
-## Troubleshooting
+Use a fresh build directory if its CMake cache selects a different generator or
+architecture. `IWD2_BUILD_DIR` and `IWD2_CMAKE` override local build/tool paths.
 
-### d3dx9_43.dll missing
+## Run and observe
 
 ```powershell
-winget install Microsoft.DirectX
+$env:IWD2_GAME_DIR = 'C:\Games\Icewind Dale 2'
+& $py scripts/native.py run --new-game --party 0
+# Or auto-load an existing visible slot:
+& $py scripts/native.py run 3
+# Guard a loaded game and require a function to execute:
+& $py scripts/native.py smoke 3 60 --hit 'CGameSprite::Render'
 ```
 
-### MSVCP140.dll / VCRUNTIME140.dll missing
+`run` keeps the game open; `smoke` closes its process after observation. Use
+`--save NAME` for an exact MPSave directory or `--new-game --party 0` when testing
+creation. Both commands launch the build with the game directory as its working
+directory; there is no need to copy it into the installation. Native build and
+launch also copy the installation's DirectDraw compatibility DLLs beside the
+executable when present. This matters on Windows: the game CWD alone does not
+make its `ddraw.dll` take precedence over the system DLL. Existing different
+DLLs are preserved and reported as a conflict. `IWD2_SKIP_RUNTIME_COMPANIONS=1`
+opts out when deliberately testing another graphics runtime.
 
-Install the Microsoft Visual C++ x86 redistributable (game is Win32, not x64; the 2015–2022 runtime is unified and works for v142):
-https://aka.ms/vs/17/release/vc_redist.x86.exe
+To open the normal menus without AutoLoad, double-click `run-game.bat`, or run:
 
-### Game crashes at startup
+```powershell
+& $py scripts/native.py menu
+```
 
-Make sure you're running from the IWD2 game folder. The executable needs `chitin.key`, `data/`, sound files, and other game assets to be present.
+`RESULT: CLEAN` checks loading/crashes over the observation interval. It does
+not establish behavioral parity; use `--hit`, an AutoUI scenario and matched
+original/recovered observations for the affected path.
+
+For startup failures, first check the game CWD contains `chitin.key`, `data/`
+and the remaining installed assets. Debug runtime DLLs come from the Visual
+Studio C++ installation; installing only a release redistributable does not
+provide the Debug runtime.

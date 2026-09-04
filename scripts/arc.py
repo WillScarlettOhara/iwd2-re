@@ -45,6 +45,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+from runtime_paths import WINDOWS, cppcheck_executable, python_executable, runtime_command, utf8_stdio, venv_tool
+
 REPO = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO / "scripts"
 ARCDIR = REPO / ".arc"
@@ -54,8 +56,7 @@ EXPORTS = REPO / ".ghidra-exports"
 SCHEMA = 1
 
 # Children that import pefile / re_agent need the project venv; arc itself does not.
-_VENV_PY = REPO / ".venv-reagent" / "bin" / "python"
-PY = str(_VENV_PY) if _VENV_PY.exists() else sys.executable
+PY = python_executable()
 
 # Touching one of these means the change is visible on screen, and per project
 # policy only the user's eye can sign that off -- arc must never claim otherwise.
@@ -216,24 +217,37 @@ class Caps:
         if name == "src":
             return (REPO / "src").is_dir(), "src/ missing"
         if name == "exe":
-            if not (REPO / ".bin" / "iwd2.exe").exists():
+            if not Path(os.environ.get("IWD2_EXE", str(REPO / ".bin" / "iwd2.exe"))).exists():
                 return False, ".bin/iwd2.exe missing"
             rc = subprocess.run([PY, "-c", "import pefile"],
                                 capture_output=True).returncode
             return rc == 0, "pefile not importable (need .venv-reagent)"
         if name == "exports":
             return (EXPORTS / "_index.json").exists(), ".ghidra-exports/ missing"
+        if name == "cppcheck":
+            return bool(cppcheck_executable()), "cppcheck missing (PATH, IWD2_CPPCHECK, or .tools/cppcheck)"
         if name == "ghidra":
             if not (REPO / "re-agent.host.yaml").exists():
                 return False, "re-agent.host.yaml missing"
             # The bridge exports headlessly against the same project the GUI
             # locks. Probing here is what keeps arc from ever racing it.
-            gui = subprocess.run(["pgrep", "-f", "ghidra.GhidraRun|ghidraRun"],
-                                 capture_output=True)
+            if WINDOWS:
+                from native import powershell
+                gui = powershell("$p = Get-CimInstance Win32_Process -Filter \"Name='java.exe' OR Name='javaw.exe'\" | "
+                                 "Where-Object { $_.CommandLine -match 'ghidra.GhidraRun|ghidraRun' }; "
+                                 "if ($p) { exit 0 } else { exit 1 }")
+            else:
+                gui = subprocess.run(["pgrep", "-f", "ghidra.GhidraRun|ghidraRun"],
+                                     capture_output=True)
             if gui.returncode == 0:
                 return False, "Ghidra GUI is open (close it first)"
+            if not venv_tool("re-agent").is_file():
+                return False, "re-agent is not installed in .venv-reagent"
             return True, ""
         if name == "vm":
+            if WINDOWS:
+                # Historical --require vm now means the local runtime adapter.
+                return (SCRIPTS / "native.py").is_file(), "native Windows adapter missing"
             # The VM's default ssh shell is PowerShell, so `true` is not a
             # command there -- probing with it reports every VM as unreachable.
             rc = subprocess.run(
@@ -270,7 +284,7 @@ class Caps:
 # lines beneath. One adapter covers all seven. The line number is optional:
 # a whole-file finding (an unbalanced pack at EOF) has no single line to blame.
 HIT_RE = re.compile(
-    r"^(?P<file>(?:src|scripts|refs)/\S+?)(?::(?P<line>\d+))?:\s*(?P<msg>\S.*)$")
+    r"^(?P<file>(?:src|scripts|refs)[\\/]\S+?)(?::(?P<line>\d+))?:\s*(?P<msg>\S.*)$")
 RE_LINT_CODE_RE = re.compile(r"^(?P<code>RE\d{3}):\s*(?P<msg>.*)$")
 
 
@@ -286,7 +300,7 @@ def parse_lint(tool: str, rc: int, out: str, err: str) -> Report:
         if cm:
             code, msg = cm["code"], cm["msg"]
         rep.findings.append(Finding(
-            severity="fail", message=msg, file=m["file"], code=code,
+            severity="fail", message=msg, file=m["file"].replace("\\", "/"), code=code,
             line=int(m["line"]) if m["line"] else None))
     if rc != 0 and not rep.findings:
         # Exited non-zero with nothing parseable: a crash, not a finding.
@@ -594,7 +608,7 @@ class Runner:
         t0 = time.monotonic()
         try:
             proc = subprocess.run(step.argv, cwd=step.cwd, capture_output=True,
-                                  text=True, timeout=step.timeout)
+                                  encoding="utf-8", errors="replace", timeout=step.timeout)
             rc, out, err = proc.returncode, proc.stdout, proc.stderr
         except subprocess.TimeoutExpired:
             rep = Report(tool=step.id, status="error", label=step.label,
@@ -749,9 +763,14 @@ def lint_steps(scope_file: str | None, mode: str) -> list[Step]:
     not a gate.
     """
     def s(sid, label, args, advisory=False):
+        needs = ("src",)
+        if sid == "lint_uninit_member":
+            needs += ("cppcheck",)
+        elif sid == "lint_address_markers":
+            needs += ("exports",)
         return Step(id=sid, label=label, parse=lambda rc, o, e, t=sid: parse_lint(t, rc, o, e),
                     argv=[PY, str(SCRIPTS / f"{sid}.py")] + args,
-                    needs=("src",), timeout=600, advisory=advisory)
+                    needs=needs, timeout=600, advisory=advisory)
 
     if mode == "file" and scope_file:
         # re_lint and lint_uninit_member stay on the CHANGED LINES even here.
@@ -991,7 +1010,7 @@ def cmd_verify(args) -> int:
     # phase 3 -- parity, strictly serial (one PyGhidra per project)
     if not args.no_parity:
         pj = rundir / "parity.json"
-        pargv = [str(REPO / ".venv-reagent" / "bin" / "re-agent"),
+        pargv = [str(venv_tool("re-agent")),
                  "--config", str(REPO / "re-agent.host.yaml"),
                  "parity", "--address", addr, "--output", str(pj)]
         reports.append(runner.run(Step(
@@ -1006,7 +1025,7 @@ def cmd_verify(args) -> int:
     if not args.no_build:
         build_rep = runner.run(Step(id="build", label="build", needs=("vm",),
                                     timeout=1200, parse=parse_build,
-                                    argv=[str(SCRIPTS / "vm.sh"), "build"]))
+                                    argv=runtime_command("build")))
         reports.append(build_rep)
 
     # phase 6 -- smoke; meaningless if the build failed
@@ -1015,8 +1034,11 @@ def cmd_verify(args) -> int:
             reports.append(Report(tool="smoke", status="skip", label="smoke",
                                   summary="build failed -- smoke would prove nothing"))
         else:
-            smoke_argv = [str(SCRIPTS / "vm.sh"), "smoke", str(args.slot),
-                          str(args.hold)]
+            smoke_argv = runtime_command("smoke", str(args.slot), str(args.hold))
+            if WINDOWS and args.new_game:
+                smoke_argv += ["--new-game", "--party", args.party]
+            if args.save:
+                smoke_argv += ["--save", args.save]
             if args.ui:
                 smoke_argv += ["--ui", args.ui]
             hit = args.hit or sym
@@ -1090,9 +1112,14 @@ def fold(reports: list[Report], tool: str, summary: str) -> Report:
         out.notes.extend(r.notes)
         if STATUS_ORDER[r.status] < STATUS_ORDER[out.status]:
             out.status = r.status
+        if r.status in ("skip", "error"):
+            out.notes.append(f"{r.tool}: {r.summary}")
     out.elapsed_s = max((r.elapsed_s for r in reports), default=0.0)
     live = [f for f in out.findings if not f.baselined]
     out.summary = f"{summary}, {len(live)} hit(s)" if live else f"{summary}, 0 hits"
+    skipped = sum(r.status == "skip" for r in reports)
+    if skipped:
+        out.summary += f", {skipped} skipped"
     return out
 
 
@@ -1353,6 +1380,7 @@ def cmd_hooks(args) -> int:
 # --------------------------------------------------------------------------
 
 def main(argv: list[str]) -> int:
+    utf8_stdio()
     ap = argparse.ArgumentParser(
         prog="arc", description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -1363,7 +1391,7 @@ def main(argv: list[str]) -> int:
         p.add_argument("--strict", action="store_true", help="promote warn to fail")
         p.add_argument("--max-findings", type=int, default=10)
         p.add_argument("--require", action="append",
-                       help="capability that must be present (exe/vm/ghidra/exports)")
+                       help="capability that must be present (exe/vm/ghidra/exports/cppcheck)")
 
     c = sub.add_parser("check", help="host-only source lints (the commit gate)")
     c.add_argument("--staged", action="store_true", default=True)
@@ -1376,6 +1404,9 @@ def main(argv: list[str]) -> int:
     v.add_argument("address")
     v.add_argument("--slot", type=int, default=3)
     v.add_argument("--hold", type=int, default=90)
+    v.add_argument("--save", help="exact MPSave directory name instead of a shifting slot")
+    v.add_argument("--new-game", action="store_true", help="native Windows: start a premade new game")
+    v.add_argument("--party", default="0", help="native Windows: premade party index/name")
     v.add_argument("--hit", help="symbol the smoke must observe executing")
     v.add_argument("--ui", metavar="SCRIPT",
                    help="AutoUI scenario the smoke replays, so a UI-reachable "

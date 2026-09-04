@@ -705,9 +705,9 @@ BOOL CVidInf::FullScreenFlip(BOOL bRenderCursor)
     if (bRenderCursor) {
         if (field_14) {
             if (bPointerRendered
-                && rOldPointerStorage.Width() > 0
-                && rOldPointerStorage.Height() > 0) {
-                m_pPointerVidCell->RestoreBackground(CVIDINF_SURFACE_4, CVIDINF_SURFACE_BACK, rOldPointerStorage);
+                && m_rPointerStorage.Width() > 0
+                && m_rPointerStorage.Height() > 0) {
+                m_pPointerVidCell->RestoreBackground(CVIDINF_SURFACE_4, CVIDINF_SURFACE_BACK, m_rPointerStorage);
             }
         } else {
             if (bPointerRendered
@@ -2137,6 +2137,7 @@ BOOL CVidInf::RenderPointer()
 
     g_pChitin->m_bPointerUpdated = TRUE;
 
+    INT nPointerNumber = m_nPointerNumber;
     positionLock.Lock(INFINITE);
     CPoint pt = g_pChitin->m_ptPointer;
     positionLock.Unlock();
@@ -2158,11 +2159,11 @@ BOOL CVidInf::RenderPointer()
         pt.y,
         g_pChitin->field_E8,
         m_rPointerStorage,
-        m_nPointerNumber > 0);
+        nPointerNumber > 0);
     g_pChitin->GetWnd()->ScreenToClient(&m_rPointerStorage);
     RenderPointerImage(pPointerVidCell,
         CVIDINF_SURFACE_FRONT,
-        m_nPointerNumber,
+        nPointerNumber,
         pt.x,
         pt.y,
         g_pChitin->field_E8);
@@ -2236,6 +2237,7 @@ BOOL CVidInf::RenderPointer(UINT nSurface)
 
     g_pChitin->m_bPointerUpdated = TRUE;
 
+    INT nPointerNumber = m_nPointerNumber;
     positionLock.Lock(INFINITE);
     CPoint pt = g_pChitin->m_ptPointer;
     positionLock.Unlock();
@@ -2259,8 +2261,8 @@ BOOL CVidInf::RenderPointer(UINT nSurface)
         pt.y,
         rClip,
         m_rPointerStorage,
-        m_nPointerNumber > 0);
-    RenderPointerImage(pPointerVidCell, nSurface, m_nPointerNumber, pt.x, pt.y, rClip);
+        nPointerNumber > 0);
+    RenderPointerImage(pPointerVidCell, nSurface, nPointerNumber, pt.x, pt.y, rClip);
     renderLock.Unlock();
 
     return TRUE;

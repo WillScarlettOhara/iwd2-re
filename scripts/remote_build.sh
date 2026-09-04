@@ -38,6 +38,7 @@ echo "==> sync source host -> VM (scp -rp keeps mtimes => incremental compile)"
 scp -rpq "$HOST_REPO/src" "$HOST_REPO/CMakeLists.txt" "$VM:$VM_REPO/"
 scp -q  "$HOST_REPO/scripts/vm_build.cmd" "$HOST_REPO/scripts/vm_s1.cmd" \
         "$HOST_REPO/scripts/vm_s1_payload.cmd" "$HOST_REPO/scripts/auto_start_game.py" \
+        "$HOST_REPO/scripts/runtime_paths.py" \
         "$VM:$VM_REPO/scripts/"
 
 echo "==> build on VM (VsDevCmd x86 + cmake --build, Debug)"

@@ -176,7 +176,7 @@ case "$cmd" in
       "$loadargs" "$uiargs" > "$HERE/vm_s1_payload.cmd"
     # Ship the launcher too: remote_build.sh syncs it, but only on a build, so a
     # smoke right after editing it would silently run the VM's stale copy.
-    scp -q "$HERE/vm_s1_payload.cmd" "$HERE/auto_start_game.py" "$VM:$VM_REPO/scripts/"
+    scp -q "$HERE/vm_s1_payload.cmd" "$HERE/auto_start_game.py" "$HERE/runtime_paths.py" "$VM:$VM_REPO/scripts/"
     ssh "$VM" 'cmd /c "taskkill /im iwd2-re.exe /f >nul 2>&1 & exit 0"' >/dev/null || true
     clear_log   # fresh capture each launch (exe is down -> log unlocked)
     ssh "$VM" "cmd /c $VM_REPO/scripts/vm_s1.cmd"
@@ -408,7 +408,7 @@ case "$cmd" in
     ssh "$VM" 'powershell -NoProfile -Command "Stop-Process -Name python -Force -ErrorAction SilentlyContinue"' >/dev/null 2>&1 || true
     ssh "$VM" 'cmd /c "taskkill /im IWD2.exe /f >nul 2>&1 & exit 0"' >/dev/null 2>&1 || true
     clean_frida_temp >/dev/null 2>&1 || true
-    scp -q "$HERE/frida_orig.py" "$HERE/frida_hooks.py" "$hooks" "$VM:$VM_REPO/scripts/"
+    scp -q "$HERE/frida_orig.py" "$HERE/frida_hooks.py" "$HERE/runtime_paths.py" "$hooks" "$VM:$VM_REPO/scripts/"
     ssh "$VM" "cmd /c \"del /q C:\\iwd2-re\\$outname C:\\iwd2-re\\$status >nul 2>&1 & exit 0\"" >/dev/null 2>&1 || true
 
     hitargs=""
@@ -466,7 +466,7 @@ case "$cmd" in
     script="${1:?vm.sh frida <script.py> [args...]}"; shift
     base="$(basename "$script")"
     clean_frida_temp   # reap stale frida-<hash> temp dirs before this session adds another
-    scp -q "$script" "$VM:$VM_REPO/scripts/"
+    scp -q "$script" "$HERE/runtime_paths.py" "$VM:$VM_REPO/scripts/"
     printf '@echo off\r\ncd /d C:\\iwd2-re\r\npython scripts\\%s %s > C:\\iwd2-re\\vm_s1_out.txt 2>&1\r\n' \
       "$base" "$*" > /tmp/vm_s1_payload.cmd
     scp -q /tmp/vm_s1_payload.cmd "$VM:$VM_REPO/scripts/"

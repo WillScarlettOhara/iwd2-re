@@ -199,13 +199,11 @@ def run_parity(
             })
             continue
 
-        # Try address-based lookup first (uses hook_patterns index),
-        # then fall back to class::fn_name lookup.
-        source = None
-        if entry.fn_name:
+        # Address markers identify the exact body, including an overload. Fall
+        # back to class::fn_name only for registries without source markers.
+        source = indexer.find_by_address(entry.address)
+        if source is None and entry.fn_name:
             source = indexer.find(entry.class_name, entry.fn_name)
-        if source is None:
-            source = indexer.find_by_address(entry.address)
 
         # Resolve Ghidra data: pre-fetched map > live backend > None
         ghidra: GhidraData | None = None

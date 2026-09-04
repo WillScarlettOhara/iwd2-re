@@ -58,6 +58,8 @@ import sys
 import time
 from pathlib import Path
 
+from runtime_paths import REPO, game_directory
+
 import frida
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -71,7 +73,7 @@ from frida_hooks import (  # noqa: E402
     install_dump_js,
 )
 
-GAME_DIR = r"C:\GOG Games\Icewind Dale 2"
+GAME_DIR = str(game_directory())
 ORIG_EXE = os.path.join(GAME_DIR, "IWD2.exe")
 
 # The load driver's call sites, all resolved from our source's // 0xADDR markers.
@@ -121,6 +123,40 @@ Interceptor.replace(ptr(%(play_movie)#x), new NativeCallback(function (thiz, res
 
 # Hooking onLeave, never mid-function: Frida's 5-byte x86 trampoline corrupts a
 # branch cluster and takes the game down with it (docs/frida-differential-tracing.md:101).
+# Pure helpers are also exercised under Node by test_frida_calibration.py.
+CURSOR_CALIBRATION_JS = """
+function fitCursorMap(first, second) {
+  const dx = second.desktop[0] - first.desktop[0];
+  const dy = second.desktop[1] - first.desktop[1];
+  if (dx <= 0 || dy <= 0) return null;
+  if (first.game.concat(second.game).some(v => !Number.isFinite(v) || v < 0)) return null;
+  const ax = (second.game[0] - first.game[0]) / dx;
+  const ay = (second.game[1] - first.game[1]) / dy;
+  // A stale first sample produced a NEGATIVE X scale on native Windows.
+  // Neither negative, zero, nor implausibly large scales can describe a client.
+  if (!(ax > 0 && ay > 0 && ax <= 16 && ay <= 16)) return null;
+  return {ax: ax, ay: ay, bx: first.game[0] - ax * first.desktop[0],
+          by: first.game[1] - ay * first.desktop[1]};
+}
+function mapMatchesSample(map, sample, tolerance) {
+  return Math.abs(map.ax * sample.desktop[0] + map.bx - sample.game[0]) <= tolerance &&
+         Math.abs(map.ay * sample.desktop[1] + map.by - sample.game[1]) <= tolerance;
+}
+function stableCursorSample(state, point, desktopReady, now) {
+  state.polls++;
+  if (!desktopReady || point.some(v => !Number.isFinite(v) || v < 0) ||
+      state.polls < 4 || now - state.started < 150) {
+    state.stable = 0; state.last = null;
+    return null;
+  }
+  if (state.last && Math.abs(point[0] - state.last[0]) <= 1 && Math.abs(point[1] - state.last[1]) <= 1) {
+    state.stable++;
+  } else state.stable = 1;
+  state.last = point;
+  return state.stable >= 3 ? point : null;
+}
+"""
+
 DRIVER_JS = """
 const LOAD_SLOT = %(slot)d;
 const SETTLE = %(settle)d;
@@ -160,36 +196,132 @@ const mouse_event = new NativeFunction(user32.getExportByName('mouse_event'), 'v
                                        ['uint32', 'uint32', 'uint32', 'uint32', 'pointer'],
                                        'stdcall');
 const MOUSEEVENTF_LEFTDOWN = 0x0002, MOUSEEVENTF_LEFTUP = 0x0004;
+const EnumWindows = new NativeFunction(user32.getExportByName('EnumWindows'), 'int', ['pointer', 'pointer'], 'stdcall');
+const GetWindowThreadProcessId = new NativeFunction(user32.getExportByName('GetWindowThreadProcessId'), 'uint32', ['pointer', 'pointer'], 'stdcall');
+const IsWindowVisible = new NativeFunction(user32.getExportByName('IsWindowVisible'), 'int', ['pointer'], 'stdcall');
+const GetClientRect = new NativeFunction(user32.getExportByName('GetClientRect'), 'int', ['pointer', 'pointer'], 'stdcall');
+const ClientToScreen = new NativeFunction(user32.getExportByName('ClientToScreen'), 'int', ['pointer', 'pointer'], 'stdcall');
+const GetCursorPos = new NativeFunction(user32.getExportByName('GetCursorPos'), 'int', ['pointer'], 'stdcall');
+const SetForegroundWindow = new NativeFunction(user32.getExportByName('SetForegroundWindow'), 'int', ['pointer'], 'stdcall');
+// IWD2 is x86: POINT is two 32-bit integers passed by value on the stack.
+const WindowFromPoint = new NativeFunction(user32.getExportByName('WindowFromPoint'), 'pointer', ['int', 'int'], 'stdcall');
+let driveFailed = false, gameWindow = null;
 
 function readPointer() {
   const c = ptr(0x8CF6D8).readPointer().add(%(ptpointer)#x);
   return [c.readS32(), c.add(4).readS32()];
 }
 
-// SetCursorPos speaks desktop pixels; the engine works in 800x600 game space and
-// rescales what it reads (CChitin.cpp:1453-1474). The factor depends on the
-// desktop mode, so measure it rather than assume: two probe positions give the
-// linear map per axis, which inverts to the desktop point that puts m_ptPointer
-// exactly on a control. Aiming blind lands elsewhere -- the first run put
-// (645,295) at game (402,205) and the click hit no control at all.
-let calibrated = false, calStep = 0, g1x = 0, g1y = 0;
-let mapAx = 1, mapBx = 0, mapAy = 1, mapBy = 0;
+function desktopPointer() {
+  const point = Memory.alloc(8);
+  if (!GetCursorPos(point)) return null;
+  return [point.readS32(), point.add(4).readS32()];
+}
+function ownedPoint(point) {
+  if (!point) return false;
+  const hwnd = WindowFromPoint(point[0], point[1]);
+  if (hwnd.isNull()) return false;
+  const pid = Memory.alloc(4);
+  GetWindowThreadProcessId(hwnd, pid);
+  return pid.readU32() === Process.id;
+}
+function clientBounds(hwnd) {
+  const rect = Memory.alloc(16), origin = Memory.alloc(8), pid = Memory.alloc(4);
+  GetWindowThreadProcessId(hwnd, pid);
+  if (pid.readU32() !== Process.id || !IsWindowVisible(hwnd) || !GetClientRect(hwnd, rect)) return null;
+  const width = rect.add(8).readS32() - rect.readS32();
+  const height = rect.add(12).readS32() - rect.add(4).readS32();
+  if (width < 100 || height < 100) return null;
+  origin.writeS32(0); origin.add(4).writeS32(0);
+  if (!ClientToScreen(hwnd, origin)) return null;
+  return {hwnd: hwnd, left: origin.readS32(), top: origin.add(4).readS32(), width: width, height: height};
+}
+function findGameWindow() {
+  let best = null;
+  const callback = new NativeCallback(function(hwnd, unused) {
+    const rect = clientBounds(hwnd);
+    if (rect && (!best || rect.width * rect.height > best.width * best.height)) best = rect;
+    return 1;
+  }, 'int', ['pointer', 'pointer'], 'stdcall');
+  EnumWindows(callback, ptr(0));
+  return best;
+}
+function insideClient(point) {
+  const rect = gameWindow ? clientBounds(gameWindow.hwnd) : null;
+  return rect && point[0] >= rect.left && point[0] < rect.left + rect.width &&
+         point[1] >= rect.top && point[1] < rect.top + rect.height;
+}
+function newSample() { return {started: Date.now(), polls: 0, stable: 0, last: null}; }
+function pollSample(state, target) {
+  const desktop = desktopPointer();
+  const ready = desktop && Math.abs(desktop[0] - target[0]) <= 1 &&
+                Math.abs(desktop[1] - target[1]) <= 1 && ownedPoint(desktop) && insideClient(desktop);
+  return stableCursorSample(state, readPointer(), ready, Date.now());
+}
 
+// Probe actual client-relative interior points only after inputReady. Each
+// position settles for >=150ms/four polls and three stable engine samples.
+// A third point validates the fitted map; no negative/stale map reaches a click.
+let calibrated = false, calStep = 0, calAttempts = 0, calPoints = [], calSamples = [], calSample = null;
+let mapAx = 1, mapBx = 0, mapAy = 1, mapBy = 0;
+function calibrationFailed(why) {
+  send({tag: 'drive', step: 'calibrationRetry', attempt: ++calAttempts, why: why});
+  calStep = 0;
+  if (calAttempts >= 3) {
+    driveFailed = true;
+    send({tag: 'drive', step: 'clickFailed', why: 'cursor calibration failed: ' + why});
+  }
+  return false;
+}
 function calibrate() {
-  if (calStep === 0) { SetCursorPos(200, 200); calStep = 1; return false; }
-  const g = readPointer();
-  if (calStep === 1) { g1x = g[0]; g1y = g[1]; SetCursorPos(600, 400); calStep = 2; return false; }
-  const ax = (g[0] - g1x) / 400.0, ay = (g[1] - g1y) / 200.0;
-  if (ax === 0 || ay === 0) { send({ tag: 'drive', step: 'clickFailed', why: 'cursor map is degenerate' }); return null; }
-  mapAx = ax; mapBx = g1x - ax * 200;
-  mapAy = ay; mapBy = g1y - ay * 200;
+  if (calStep === 0) {
+    gameWindow = findGameWindow();
+    if (!gameWindow) return calibrationFailed('no visible client belonging to original PID');
+    SetForegroundWindow(gameWindow.hwnd);
+    calPoints = [0.25, 0.75, 0.5].map(fraction =>
+      [gameWindow.left + Math.round(gameWindow.width * fraction),
+       gameWindow.top + Math.round(gameWindow.height * fraction)]);
+    calSamples = []; calSample = newSample(); calStep = 1;
+    send({tag: 'drive', step: 'calibrationWindow', pid: Process.id, hwnd: gameWindow.hwnd.toString(),
+          left: gameWindow.left, top: gameWindow.top, width: gameWindow.width, height: gameWindow.height});
+    // DDrawCompat 0.5.4 reports FALSE from the process-local SetCursorPos hook
+    // even when its virtual cursor moves. The stable GetCursorPos, HWND-owner,
+    // and engine m_ptPointer checks below are the authoritative result.
+    SetCursorPos(calPoints[0][0], calPoints[0][1]);
+    return false;
+  }
+  const g = pollSample(calSample, calPoints[calStep - 1]);
+  if (!g) {
+    if (Date.now() - calSample.started > 3000) return calibrationFailed('cursor/client sample never stabilized');
+    return false;
+  }
+  const sample = {desktop: calPoints[calStep - 1], game: g};
+  calSamples.push(sample);
+  send({tag: 'drive', step: 'calibrationSample', sample: calStep, desktop: sample.desktop, game: sample.game});
+  if (calStep < 3) {
+    const next = calPoints[calStep++];
+    calSample = newSample();
+    SetCursorPos(next[0], next[1]);
+    return false;
+  }
+  const map = fitCursorMap(calSamples[0], calSamples[1]);
+  if (!map || !mapMatchesSample(map, calSamples[2], 2)) return calibrationFailed('nonpositive or inconsistent cursor map');
+  mapAx = map.ax; mapBx = map.bx; mapAy = map.ay; mapBy = map.by;
   calibrated = true;
   send({ tag: 'drive', step: 'calibrated', ax: mapAx, bx: mapBx, ay: mapAy, by: mapBy });
   return false;
 }
 function aimAt(x, y, dx, dy) {
-  SetCursorPos(Math.round((x - mapBx) / mapAx) + (dx | 0),
-               Math.round((y - mapBy) / mapAy) + (dy | 0));
+  const point = [Math.round((x - mapBx) / mapAx), Math.round((y - mapBy) / mapAy)];
+  if (dx || dy) {
+    const current = desktopPointer();
+    if (!current) return null;
+    point[0] = Math.round(current[0] + dx / mapAx);
+    point[1] = Math.round(current[1] + dy / mapAy);
+  }
+  if (!insideClient(point)) return null;
+  SetCursorPos(point[0], point[1]);
+  return point;
 }
 
 // One click job at a time: {thiz, panel, ctrl, label}. The manager update of the
@@ -218,19 +350,27 @@ function runJob() {
     job.y = panel.add(%(panel_origin)#x + 4).readS32()
           + ctrl.add(%(ctrl_origin)#x + 4).readS32()
           + (ctrl.add(%(ctrl_size)#x + 4).readS32() >> 1);
-    aimAt(job.x, job.y, 0, 0);
+    job.desktop = aimAt(job.x, job.y, 0, 0);
+    if (!job.desktop) { finishJob('target maps outside the game client'); return; }
+    job.sample = newSample();
     job.state = 'aim';
     send({ tag: 'drive', step: 'aim', target: job.label, x: job.x, y: job.y });
     return;
   }
 
   if (job.state === 'aim') {
-    const at = readPointer();
+    const at = pollSample(job.sample, job.desktop);
+    if (!at) {
+      if (Date.now() - job.sample.started > 3000) finishJob('cursor aim never stabilized inside the game');
+      return;
+    }
     if (Math.abs(at[0] - job.x) > 2 || Math.abs(at[1] - job.y) > 2) {
       // Linear map, so one correction is normally enough; retry a few times to
       // absorb rounding and a cursor the desktop clamped.
       if (++job.aimTries > 4) { finishJob('cursor never reached the control'); return; }
-      aimAt(job.x, job.y, job.x - at[0], job.y - at[1]);
+      job.desktop = aimAt(job.x, job.y, job.x - at[0], job.y - at[1]);
+      if (!job.desktop) { finishJob('corrected aim lies outside the game client'); return; }
+      job.sample = newSample();
       return;
     }
     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, NULL);
@@ -250,6 +390,7 @@ function runJob() {
 }
 
 function finishJob(why) {
+  if (why && job && job.state === 'press') mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, NULL);
   if (why) send({ tag: 'drive', step: 'clickFailed', target: job.label, why: why });
   job = null;
 }
@@ -294,25 +435,22 @@ Interceptor.attach(ptr(%(mp_activated)#x), {
 Interceptor.attach(ptr(%(uimgr_update)#x), {
   onEnter() { this.mgr = this.context.ecx; },
   onLeave() {
-    if (LOAD_SLOT < 0) return;
-    if (!calibrated) {
-      // Calibration only needs a screen that is ticking; the connection screen is
-      // the first one up.
-      if (connThis === null || !this.mgr.equals(connThis.add(%(uimgr_off)#x))) return;
-      if (calibrate() === null) { job = null; }
+    if (LOAD_SLOT < 0 || driveFailed) return;
+    if (dismissed) {
+      if (job === null || !this.mgr.equals(job.thiz.add(%(uimgr_off)#x))) return;
+      if (!calibrated) calibrate();
+      else runJob();
       return;
     }
-    if (job !== null) {
-      if (!this.mgr.equals(job.thiz.add(%(uimgr_off)#x))) return;
-      runJob();
-      return;
-    }
-    if (dismissed || connThis === null) return;
-    if (!this.mgr.equals(connThis.add(%(uimgr_off)#x))) return;
+    if (connThis === null || !this.mgr.equals(connThis.add(%(uimgr_off)#x))) return;
     // FALLBACK_TICKS keeps a config that never reaches AutoSelectServiceProvider
     // from hanging here forever; it is a backstop, not the normal path.
-    if (!inputReady && ticks < FALLBACK_TICKS) return;
-    if (++settled < SETTLE) return;
+    if (!inputReady && ticks >= FALLBACK_TICKS && connThis.add(%(allow_input)#x).readU32() !== 0) {
+      inputReady = true;
+      send({tag: 'drive', step: 'inputReadyField', ticks: ticks});
+    }
+    if (!inputReady || connThis.add(%(allow_input)#x).readU32() === 0) { settled = 0; return; }
+    if (++settled < Math.max(4, SETTLE)) return;
     // Popup 19 has to go before the click. The engine dismisses it itself only
     // when byte_8F376C is clear, and that flag is set the moment the intro movies
     // are QUEUED (CScreenConnection.cpp:688), not when they finish -- so skipping
@@ -365,9 +503,13 @@ class Trace:
         self.loaded = False
         self.loaded_detail = ""
         self.crash = None
+        self.detached = False
+        self.errors = []
         self.counts: dict[str, int] = {}
 
     def _write(self, fp, line: str) -> None:
+        if fp.closed:
+            return
         fp.write(line + "\n")
         fp.flush()
         os.fsync(fp.fileno())   # gotcha 3: a crash is the interesting case
@@ -382,6 +524,7 @@ class Trace:
 
     def on_message(self, message, data) -> None:
         if message["type"] != "send":
+            self.errors.append(message)
             self.record({"tag": "ERROR", "message": message})
             return
         payload = message["payload"]
@@ -407,6 +550,10 @@ class Trace:
             for frame in c.get("frames") or []:
                 self.say(f"  frame {frame}")
             verdict, rc = "CRASH", 1
+        elif self.detached:
+            verdict, rc = "PROCESS-EXITED", 1
+        elif self.errors:
+            verdict, rc = "OBSERVER-ERROR", 2
         elif drove and not self.loaded:
             verdict, rc = "NOT-LOADED", 2
         elif hit and self.counts.get(hit, 0) < hit_min:
@@ -427,7 +574,7 @@ class Trace:
 
 def build_js(spec: dict, slot: int, settle: int, skip_movies: bool = True) -> str:
     hooks = spec["hooks"]
-    blocks = ["'use strict';", PRELUDE, CRASH_JS]
+    blocks = ["'use strict';", PRELUDE, CRASH_JS, CURSOR_CALIBRATION_JS]
     if skip_movies:
         blocks.append(SKIP_MOVIES_JS % {"play_movie": PLAY_MOVIE_INT})
     # Always installed: with --load-slot -1 the driving halves self-gate, but the
@@ -460,7 +607,7 @@ def build_js(spec: dict, slot: int, settle: int, skip_movies: bool = True) -> st
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--hooks", required=True, help="hook spec JSON (schema: frida_hooks.py)")
-    ap.add_argument("--out", default=r"C:\iwd2-re\tmp_orig_trace.jsonl")
+    ap.add_argument("--out", default=str(REPO / "tmp_orig_trace.jsonl"))
     ap.add_argument("--status", help="verdict file (default: <out>.status)")
     ap.add_argument("--load-slot", type=int, default=3,
                     help="visible load-screen row to load; -1 leaves the game at the menu")
@@ -474,6 +621,7 @@ def main() -> int:
     ap.add_argument("--no-skip-movies", dest="skip_movies", action="store_false",
                     help="let the intro movies play (they block the menu -- see SKIP_MOVIES_JS)")
     ap.add_argument("--exe", default=ORIG_EXE)
+    ap.add_argument("--game-dir", default=GAME_DIR, help="asset directory/CWD (or IWD2_GAME_DIR)")
     ns = ap.parse_args()
 
     spec = json.loads(Path(ns.hooks).read_text())
@@ -482,35 +630,43 @@ def main() -> int:
     trace = Trace(out, status)
     trace.say(f"=== spawning {ns.exe} (slot {ns.load_slot}, {len(spec['hooks'])} hooks) ===")
 
-    pid = frida.spawn(ns.exe, cwd=GAME_DIR)
-    session = frida.attach(pid)
-    script = session.create_script(
-        build_js(spec, ns.load_slot, ns.settle_ticks, ns.skip_movies))
-    script.on("message", trace.on_message)
-    script.load()
-    frida.resume(pid)
-    trace.say(f"ARMED pid={pid}")
-
-    deadline = time.monotonic() + ns.timeout
-    load_deadline = None
-    while time.monotonic() < deadline:
-        if trace.crash is not None:
-            break
-        if trace.loaded and load_deadline is None:
-            load_deadline = time.monotonic() + ns.post_load
-        if load_deadline is not None and time.monotonic() >= load_deadline:
-            break
-        time.sleep(0.5)     # gotcha 1: there is no stdin to block on
-
-    rc = trace.finish(drove=ns.load_slot >= 0, hit=ns.hit, hit_min=ns.hit_min)
-
-    # Kill policy: the original is fair to kill once the trace is done -- leaving
-    # it idle burns VM CPU for nothing.
+    pid = frida.spawn(ns.exe, cwd=ns.game_dir)
+    session = None
     try:
-        frida.kill(pid)
-    except Exception:
-        pass
-    return rc
+        session = frida.attach(pid)
+        session.on("detached", lambda *_: setattr(trace, "detached", True))
+        script = session.create_script(
+            build_js(spec, ns.load_slot, ns.settle_ticks, ns.skip_movies))
+        script.on("message", trace.on_message)
+        script.load()
+        frida.resume(pid)
+        trace.say(f"ARMED pid={pid}")
+
+        deadline = time.monotonic() + ns.timeout
+        load_deadline = None
+        while time.monotonic() < deadline:
+            if trace.crash is not None or trace.detached:
+                break
+            if trace.loaded and load_deadline is None:
+                load_deadline = time.monotonic() + ns.post_load
+            if load_deadline is not None and time.monotonic() >= load_deadline:
+                break
+            time.sleep(0.5)
+
+        return trace.finish(drove=ns.load_slot >= 0, hit=ns.hit, hit_min=ns.hit_min)
+    finally:
+        # This trace owns only its spawned original, including setup failures.
+        try:
+            frida.kill(pid)
+        except Exception:
+            pass
+        if session is not None:
+            try:
+                session.detach()
+            except Exception:
+                pass
+        trace.out.close()
+        trace.status.close()
 
 
 if __name__ == "__main__":

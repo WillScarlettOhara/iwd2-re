@@ -23,7 +23,9 @@ import sys
 import os
 import json
 
-GAME_DIR = r"C:\GOG Games\Icewind Dale 2"
+from runtime_paths import game_directory
+
+GAME_DIR = str(game_directory())
 EXE = os.path.join(GAME_DIR, "IWD2.exe")
 LOG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    "tmp_frida_formation.log")

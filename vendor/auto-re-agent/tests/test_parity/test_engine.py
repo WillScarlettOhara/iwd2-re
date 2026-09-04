@@ -77,3 +77,31 @@ def test_address_only_hook_no_match_is_red(tmp_path: Path) -> None:
     results = run_parity([hook], tmp_path, config)
     assert len(results) == 1
     assert results[0]["status"] == ParityStatus.RED
+
+
+def test_named_hook_uses_address_to_disambiguate_overload(tmp_path: Path) -> None:
+    src = tmp_path / "CTrain.cpp"
+    src.write_text('''\
+// 0x401000
+void CTrain::Marshal(int value) {
+    FirstOverload(value);
+}
+
+// 0x402000
+void CTrain::Marshal(char* value) {
+    CorrectOverload(value);
+}
+''')
+    config = _make_config(str(tmp_path))
+    hook = HookEntry(
+        class_path="CTrain",
+        fn_name="Marshal",
+        address="0x402000",
+        reversed=True,
+        locked=False,
+        is_virtual=False,
+    )
+
+    results = run_parity([hook], tmp_path, config)
+    assert results[0]["source"] is not None
+    assert "CorrectOverload" in results[0]["source"].body

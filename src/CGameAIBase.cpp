@@ -242,6 +242,26 @@ BOOL CGameAIBase::EvaluateStatusTrigger(const CAITrigger& trigger)
     case CAITRIGGER_FALSE:
         return FALSE;
 
+    case CAITRIGGER_ALLEGIANCE: {
+        CAITrigger cause(trigger);
+        cause.Decode(this);
+        return cause.GetCause().GetEnemyAlly() == cause.GetSpecifics();
+    }
+
+    case CAITRIGGER_EXISTS: {
+        CAITrigger cause(trigger);
+        cause.Decode(this);
+        CGameObject* pObject = cause.GetCause().GetObjectFromId(this, TRUE);
+        if (pObject == NULL) {
+            return FALSE;
+        }
+
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(pObject->GetId(),
+            CGameObjectArray::THREAD_ASYNCH,
+            INFINITE);
+        return TRUE;
+    }
+
     case CAITRIGGER_GLOBAL:
     case CAITRIGGER_GLOBALGT:
     case CAITRIGGER_GLOBALLT: {

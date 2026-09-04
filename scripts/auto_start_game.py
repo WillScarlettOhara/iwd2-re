@@ -11,9 +11,11 @@ import time
 import uuid
 from pathlib import Path
 
+from runtime_paths import build_directory, game_directory, stage_runtime_companions
+
 REPO = Path(__file__).resolve().parents[1]
-GAME_DIR = Path(r"C:\GOG Games\Icewind Dale 2")
-EXE = REPO / "build" / "Debug" / "iwd2-re.exe"
+GAME_DIR = game_directory()
+EXE = build_directory() / "Debug" / "iwd2-re.exe"
 PARTY_INI = GAME_DIR / "Party.ini"
 
 
@@ -26,14 +28,14 @@ def read_result(path: Path) -> dict[str, str]:
     return values
 
 
-def resolve_party(value: str) -> int:
+def resolve_party(value: str, party_ini: Path = PARTY_INI) -> int:
     try:
         return int(value)
     except ValueError:
         pass
 
     parser = configparser.RawConfigParser()
-    parser.read(PARTY_INI)
+    parser.read(party_ini)
 
     wanted = value.strip().lower()
     for section in parser.sections():
@@ -43,11 +45,10 @@ def resolve_party(value: str) -> int:
         if name == wanted:
             return int(section.split()[1])
 
-    raise SystemExit(f"party not found in {PARTY_INI}: {value!r}")
+    raise SystemExit(f"party not found in {party_ini}: {value!r}")
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
+def add_launch_arguments(ap: argparse.ArgumentParser) -> None:
     ap.add_argument("--no-launch", action="store_true", help="attach to an already launched process is not implemented")
     ap.add_argument("--slot", type=int, default=0, help="visible load-screen slot to load, 0-4")
     ap.add_argument("--save-name", help="exact MPSave directory name to load")
@@ -56,24 +57,23 @@ def main() -> int:
     ap.add_argument("--timeout", type=float, default=120.0, help="seconds to wait for world activation")
     ap.add_argument("--no-wait", action="store_true", help="launch and return without waiting for the result")
     ap.add_argument("--exe", default=str(EXE), help="iwd2-re.exe to launch (default: build/Debug; lets the scratch build+smoke gate point at an isolated exe)")
+    ap.add_argument("--game-dir", type=Path, default=GAME_DIR, help="game assets/CWD (or IWD2_GAME_DIR)")
     ap.add_argument("--kill-after", action="store_true", help="terminate the launched process before returning (build+smoke gate use; interactive launches omit it to keep the window open)")
     ap.add_argument("--ui-script", help="AutoUI script to replay once the game is up (see src/AutoUI.h)")
     ap.add_argument("--ui-result", help="where AutoUI writes its JSONL (default: alongside the script)")
     ap.add_argument("--ui-go", help="gate file a `waitgo` step blocks on, so the scenario cannot act before the observer is attached")
-    args = ap.parse_args()
 
-    if args.no_launch:
-        raise SystemExit("--no-launch not implemented yet")
 
-    result_path = Path(tempfile.gettempdir()) / f"iwd2-re-auto-{uuid.uuid4().hex}.txt"
-    if result_path.exists():
-        result_path.unlink()
-
+def launch_environment(args: argparse.Namespace, result_path: Path) -> tuple[dict, str]:
+    """Prepare the same AutoLoad/AutoUI environment for normal and guarded runs."""
     env = os.environ.copy()
+    for key in list(env):
+        if key.startswith(("IWD2_RE_AUTO_", "IWD2_RE_UI_")):
+            del env[key]
     env["IWD2_RE_AUTO_RESULT"] = str(result_path)
     if args.new_game:
         env["IWD2_RE_AUTO_ACTION"] = "newgame"
-        env["IWD2_RE_AUTO_PARTY"] = str(resolve_party(args.party))
+        env["IWD2_RE_AUTO_PARTY"] = str(resolve_party(args.party, args.game_dir / "Party.ini"))
         description = f"new game with party {args.party!r}"
     else:
         env["IWD2_RE_AUTO_ACTION"] = "load"
@@ -98,7 +98,24 @@ def main() -> int:
             env["IWD2_RE_UI_GO"] = str(Path(args.ui_go).resolve())
         description += f"; ui script {ui_script.name}"
 
-    proc = subprocess.Popen([args.exe], cwd=str(GAME_DIR), env=env)
+    return env, description
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    add_launch_arguments(ap)
+    args = ap.parse_args()
+    if args.no_launch:
+        raise SystemExit("--no-launch not implemented yet")
+    result_path = Path(tempfile.gettempdir()) / f"iwd2-re-auto-{uuid.uuid4().hex}.txt"
+    env, description = launch_environment(args, result_path)
+
+    try:
+        stage_runtime_companions(Path(args.exe), args.game_dir)
+    except (OSError, RuntimeError) as exc:
+        print(f"LAUNCH ERROR: {exc}")
+        return 2
+    proc = subprocess.Popen([str(Path(args.exe).resolve())], cwd=str(args.game_dir), env=env)
     print(f"pid={proc.pid}; auto {description}")
     if args.ui_script:
         print(f"ui_result={env['IWD2_RE_UI_RESULT']}")

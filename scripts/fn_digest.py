@@ -16,6 +16,8 @@ import re
 import sys
 from pathlib import Path
 
+from runtime_paths import utf8_stdio
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from reagent_resolve_symbols import (  # noqa: E402
     load_names, resolve, annotate_vcalls, load_vtable_map, lookup_class, virtual_placement,
@@ -58,7 +60,7 @@ def template_smell(n_lines: int, n_callers: int, callee_names: list[str]) -> str
 
 
 def name_to_addr(query: str) -> int | None:
-    raw = json.loads(ADDR_MAP.read_text())
+    raw = json.loads(ADDR_MAP.read_text(encoding="utf-8"))
     for k, v in raw.items():
         if isinstance(v, dict) and (v.get("full_name") == query or v.get("name") == query):
             return int(k, 16)
@@ -79,6 +81,7 @@ def src_line(full_name: str) -> str | None:
 
 
 def main() -> int:
+    utf8_stdio()
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     full = "--full" in sys.argv
     if not args:
@@ -150,7 +153,8 @@ def main() -> int:
         callee_names = out
     callers = exp.get("callers") or []
     if callers:
-        cn = [c.get("name", "?") for c in callers]
+        cn = [names.get(int(c["addr"], 16), c.get("name", "?"))
+              if c.get("addr") else c.get("name", "?") for c in callers]
         print(f"callers ({len(cn)}): " + ", ".join(cn[:12]) + (" ..." if len(cn) > 12 else ""))
     else:
         print("callers: none exported (virtual-only or root)")

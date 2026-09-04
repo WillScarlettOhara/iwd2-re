@@ -434,6 +434,8 @@ FodyWeavers.xsd
 
 # re-agent workflow (branch re-agent-workflow): generated artifacts, do not commit
 /.venv-reagent/
+/.tools/
+/ghidra-projects/
 /.ghidra-exports/
 /.cache/
 /reports/re-agent/
@@ -450,3 +452,4 @@ data/ghidra/IWD2_rep.zip
 
 # vm.sh build header-change guard stamp (see remote_build.sh)
 .vm_build_stamp
+/.codex/config.toml

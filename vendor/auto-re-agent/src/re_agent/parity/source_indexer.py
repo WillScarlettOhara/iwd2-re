@@ -72,7 +72,12 @@ class SourceIndexer:
         self.token_index: dict[tuple[str, str], list[tuple[Path, int]]] = defaultdict(list)
         # Maps address -> (class_name, fn_name) discovered via hook patterns
         self.hook_address_index: dict[str, tuple[str, str]] = {}
+        # Exact source definition for an adjacent ``// 0xADDR`` marker.  Keep
+        # this separately from the name index so overloaded methods resolve to
+        # the body carrying the requested address instead of the first overload.
+        self.address_definition_index: dict[str, tuple[Path, int, str, str]] = {}
         self.lookup_cache: dict[tuple[str, str], SourceMatch | None] = {}
+        self.address_lookup_cache: dict[str, SourceMatch | None] = {}
         self.free_lookup_cache: dict[str, SourceMatch | None] = {}
         self._build_index()
 
@@ -90,8 +95,11 @@ class SourceIndexer:
                 self.token_index[(m.group(1), m.group(2))].append((path, m.start()))
             # `// 0xADDR` markers above a definition: address -> (class, fn).
             for am in ADDR_MARKER_RE.finditer(txt):
-                self.hook_address_index.setdefault(
-                    normalize_address(am.group(1)), (am.group(2), am.group(3))
+                address = normalize_address(am.group(1))
+                cls, fn = am.group(2), am.group(3)
+                self.hook_address_index.setdefault(address, (cls, fn))
+                self.address_definition_index.setdefault(
+                    address, (path, am.start(2), cls, fn)
                 )
             # Scan hook-install macros to map addresses to function names.
             # Pattern capture groups: group(1) = func_name, group(2) = address.
@@ -407,17 +415,38 @@ class SourceIndexer:
     def find_by_address(self, address: str) -> SourceMatch | None:
         """Look up a source function body by its hook address.
 
-        Uses the ``hook_address_index`` built from hook-install macros to
-        resolve *address* → *(class_name, fn_name)* and then delegates to
-        :meth:`find`.  Returns ``None`` if the address is not in the index.
+        An adjacent ``// 0xADDR`` marker resolves directly to its definition,
+        which disambiguates overloads. Hook-install entries fall back to the
+        name index. Returns ``None`` if the address is not indexed.
         """
-        entry = self.hook_address_index.get(normalize_address(address))
+        normalized = normalize_address(address)
+        if normalized in self.address_lookup_cache:
+            return self.address_lookup_cache[normalized]
+
+        definition = self.address_definition_index.get(normalized)
+        if definition is not None:
+            path, idx, cls, fn = definition
+            txt = self._read_text(path)
+            fn_start = idx + len(cls) + 2
+            open_brace = self._find_function_body_open(txt, fn_start, fn)
+            if open_brace is not None:
+                close_brace = self._find_matching_brace(txt, open_brace)
+                if close_brace is not None:
+                    match = self._make_source_match(path, txt, idx, open_brace, close_brace)
+                    self.address_lookup_cache[normalized] = match
+                    return match
+
+        entry = self.hook_address_index.get(normalized)
         if entry is None:
+            self.address_lookup_cache[normalized] = None
             return None
         cls, fn = entry
         if not fn:
+            self.address_lookup_cache[normalized] = None
             return None
-        return self.find(cls, fn)
+        match = self.find(cls, fn)
+        self.address_lookup_cache[normalized] = match
+        return match
 
     def _find_free_function(self, fn_name: str) -> SourceMatch | None:
         if not fn_name:

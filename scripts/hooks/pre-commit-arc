@@ -15,7 +15,9 @@
 set -e
 ROOT="$(git rev-parse --show-toplevel)"
 PY="$ROOT/.venv-reagent/bin/python"
+[ -x "$ROOT/.venv-reagent/Scripts/python.exe" ] && PY="$ROOT/.venv-reagent/Scripts/python.exe"
 [ -x "$PY" ] || PY="$(command -v python3 || true)"
+[ -n "$PY" ] || PY="$(command -v python || true)"
 # No python at all -> never block a commit. The gate is a safety net, not a
 # dependency of committing.
 [ -n "$PY" ] || exit 0

@@ -37,19 +37,29 @@ USAGE
     Exit 1 = >=1 actionable or out-of-order break, 0 = clean / benign-only,
     2 = harness/parse error.
 
-    The dump is produced on the VM (MSVC) via vm_build.cmd with the CL env var;
-    the source TU is touched to force its recompile. Header + source are scp'd
-    first so the compiled layout matches the comments under audit.
+    Windows: compile only the selected TU using the configured VS2019/v142
+    Debug Win32 project, into a separate temporary intermediate directory.
+    No link, source timestamp change, or game stop is needed. Configure/build
+    once with native.py first. --build-dir / IWD2_BUILD_DIR selects the project.
+    Linux: keep the VM route; sync header/source, then force a TU recompile.
 """
 import argparse
+import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+
+from runtime_paths import WINDOWS, build_directory, utf8_stdio
 
 VM = "win11vm"
 VM_REPO = "C:/iwd2-re"
 HOST_REPO = Path(__file__).resolve().parent.parent
+
+
+class AuditError(RuntimeError):
+    """The compiler did not produce usable layout evidence."""
 
 # Header member with an offset comment, e.g.  "/* 053C */ LONG m_visual2MaxSpawn;"
 # or "/* 04C4 */ std::map<LONG, int> m_miniA;" or "BYTE _pad[8];".
@@ -99,14 +109,14 @@ _DUMP_MEMBER = re.compile(r"^\s*(\d+)\s*\|\s+(?!\||\+)(.*\b)([A-Za-z_]\w*)\s*$")
 
 def parse_header(header: Path, cls: str):
     """Ordered [(member, comment_offset, type)] for the direct members of `cls`."""
-    text = header.read_text(errors="replace").splitlines()
+    text = header.read_text(encoding="utf-8", errors="replace").splitlines()
     # Find the class body and walk it at brace-depth 1 (skip nested structs).
     # The class *definition* (name then ':' base-list, a '/*..*/' tag, or '{') --
     # not a forward declaration ("class X;").
     start = next((i for i, ln in enumerate(text)
                   if re.search(rf"\bclass\s+{re.escape(cls)}\b\s*(:|/\*|\{{)", ln)), None)
     if start is None:
-        sys.exit(f"[audit] class {cls} not found in {header}")
+        raise AuditError(f"class {cls} not found in {header}")
     members, depth, seen = [], 0, False
     for ln in text[start:]:
         opens, closes = ln.count("{"), ln.count("}")
@@ -124,8 +134,69 @@ def parse_header(header: Path, cls: str):
     return members
 
 
-def run_layout_dump(cls: str, source_rel: str) -> str:
-    """Force-recompile `source_rel` on the VM with the layout flag; return stdout."""
+def native_msbuild(build_dir: Path) -> Path:
+    """Use the same VS2019 instance and Win32 project as the normal build."""
+    cache_path = build_dir / "CMakeCache.txt"
+    if not cache_path.is_file() or not (build_dir / "iwd2-re.vcxproj").is_file():
+        raise AuditError("configure the native build first: python scripts/native.py build")
+    cache = cache_path.read_text(encoding="utf-8", errors="replace")
+    if "CMAKE_GENERATOR:INTERNAL=Visual Studio 16 2019" not in cache or \
+            "CMAKE_GENERATOR_PLATFORM:INTERNAL=Win32" not in cache:
+        raise AuditError("layout audit requires a Visual Studio 16 2019 / Win32 build directory")
+    instance = re.search(r"^CMAKE_GENERATOR_INSTANCE:INTERNAL=(.+)$", cache, re.M)
+    if instance and instance[1].strip():
+        installation = instance[1].strip()
+    else:
+        vswhere = Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / \
+            "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+        found = subprocess.run(
+            [str(vswhere), "-latest", "-products", "*", "-version", "[16.0,17.0)",
+             "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+             "-property", "installationPath"],
+            check=True, capture_output=True, text=True, encoding="utf-8", timeout=30)
+        installation = found.stdout.strip()
+    msbuild = Path(installation) / "MSBuild" / "Current" / "Bin" / "MSBuild.exe"
+    if not installation or not msbuild.is_file():
+        raise AuditError("VS2019 MSBuild not found; install the v142 C++ and MFC components")
+    return msbuild
+
+
+def native_compile_command(msbuild: Path, project: Path, source: Path, scratch: Path) -> list[str]:
+    """Compile one TU with the project's real flags, without touching its normal outputs."""
+    return [str(msbuild), str(project), "/nologo", "/v:normal", "/t:ClCompile",
+            "/p:Configuration=Debug", "/p:Platform=Win32", "/p:BuildProjectReferences=false",
+            f"/p:SelectedFiles={source}", f"/p:IntDir={scratch}{os.sep}",
+            "/p:TrackFileAccess=false", "/p:UseMultiToolTask=false"]
+
+
+def run_native_layout_dump(cls: str, source_rel: str, build_dir: Path) -> str:
+    msbuild = native_msbuild(build_dir)
+    source = (HOST_REPO / source_rel).resolve()
+    if not source.is_file():
+        raise AuditError(f"source TU missing: {source}")
+    logs = HOST_REPO / ".arc" / "layout"
+    logs.mkdir(parents=True, exist_ok=True)
+    log = logs / f"{cls.replace('::', '_')}.log"
+    env = os.environ.copy()
+    env["CL"] = f"{env.get('CL', '')} /d1reportSingleClassLayout{cls}".strip()
+    with tempfile.TemporaryDirectory(prefix="compile-", dir=logs) as scratch:
+        command = native_compile_command(msbuild, build_dir / "iwd2-re.vcxproj",
+                                         source, Path(scratch))
+        result = subprocess.run(command, cwd=build_dir, env=env, capture_output=True,
+                                encoding="utf-8", errors="replace", timeout=600)
+        output = result.stdout + result.stderr
+        log.write_text(output, encoding="utf-8")
+    if result.returncode:
+        raise AuditError(f"native MSVC compile failed ({result.returncode}); see {log}")
+    print(f"[audit] native compiler output: {log}")
+    return output
+
+
+def run_layout_dump(cls: str, source_rel: str, build_dir: Path | None = None) -> str:
+    """Return a real compiler layout using the current host's runtime route."""
+    if WINDOWS:
+        return run_native_layout_dump(cls, source_rel, (build_dir or build_directory()).resolve())
+    # Linux/VM: force-recompile the synced TU with the layout flag.
     src_vm = f"{VM_REPO}/{source_rel}".replace("/", "\\")
     build_vm = f"{VM_REPO}/scripts/vm_build.cmd".replace("/", "\\")
     # Sent verbatim to PowerShell on the VM (subprocess list -> no local shell, so
@@ -138,6 +209,9 @@ def run_layout_dump(cls: str, source_rel: str) -> str:
     )
     out = subprocess.run(["ssh", VM, ps],
                          capture_output=True, text=True, timeout=600)
+    if out.returncode:
+        raise AuditError(f"VM layout compile failed ({out.returncode}): "
+                         + (out.stderr.strip() or out.stdout.strip())[-1000:])
     return out.stdout + out.stderr
 
 
@@ -147,8 +221,8 @@ def parse_dump(dump: str, cls: str):
     start = next((i for i, ln in enumerate(lines)
                   if re.match(rf"^\s*class\s+{re.escape(cls)}\s+size\(", ln)), None)
     if start is None:
-        sys.exit(f"[audit] no '/d1reportSingleClassLayout{cls}' block in build output "
-                 f"(did the TU recompile? is MSVC on the VM?)")
+        raise AuditError(f"no '/d1reportSingleClassLayout{cls}' block in compiler output "
+                         "(check the selected TU and compiler log)")
     offsets = {}
     for ln in lines[start + 1:]:
         if re.match(r"^\s*class\s", ln):        # next class block -> end
@@ -160,11 +234,16 @@ def parse_dump(dump: str, cls: str):
 
 
 def main():
+    utf8_stdio()
     ap = argparse.ArgumentParser(description="Audit a binary-mirror class for layout drift.")
     ap.add_argument("cls", help="class name, e.g. CProjectile")
     ap.add_argument("--header", help="header file (default: src/<cls>.h)")
     ap.add_argument("--source", help="TU that defines the class (default: src/<cls>.cpp)")
+    ap.add_argument("--build-dir", type=Path, default=build_directory(),
+                    help="native CMake build directory (or IWD2_BUILD_DIR)")
     args = ap.parse_args()
+    if not re.fullmatch(r"[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*", args.cls):
+        raise AuditError("class must be a C++ identifier, optionally namespace-qualified")
 
     header = Path(args.header) if args.header else HOST_REPO / "src" / f"{args.cls}.h"
     source_rel = args.source or f"src/{args.cls}.cpp"
@@ -173,20 +252,21 @@ def main():
 
     hdr = parse_header(header, args.cls)
     if not hdr:
-        sys.exit(f"[audit] no /* 0xNNN */ member comments for {args.cls} in {header}")
+        raise AuditError(f"no /* 0xNNN */ member comments for {args.cls} in {header}")
 
     # Sync the files under audit so the compiled layout matches the comments.
-    for rel in {f"src/{header.name}", source_rel}:
-        subprocess.run(["scp", "-q", str(HOST_REPO / rel), f"{VM}:{VM_REPO}/{rel}"],
-                       check=False)
+    if not WINDOWS:
+        for rel in {f"src/{header.name}", source_rel}:
+            subprocess.run(["scp", "-q", str(HOST_REPO / rel), f"{VM}:{VM_REPO}/{rel}"],
+                           check=True, timeout=120)
 
-    dump = run_layout_dump(args.cls, source_rel)
+    dump = run_layout_dump(args.cls, source_rel, args.build_dir)
     compiled = parse_dump(dump, args.cls)
 
     common = [(m, off, typ) for m, off, typ in hdr if m in compiled]
     if len(common) < 2:
-        sys.exit(f"[audit] only {len(common)} member(s) matched between header and dump "
-                 f"-- cannot diff spacing")
+        raise AuditError(f"only {len(common)} member(s) matched between header and dump "
+                         "-- cannot diff spacing")
 
     # Adjacent-member spacing: a uniform base/STL size shift (e.g. our CGameObject
     # 0x78 vs the binary's 0x6E, or a wider STL node) cancels out, so only a genuine
@@ -256,4 +336,8 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except (AuditError, OSError, subprocess.SubprocessError) as exc:
+        print(f"[audit] ERROR: {exc}", file=sys.stderr)
+        sys.exit(2)

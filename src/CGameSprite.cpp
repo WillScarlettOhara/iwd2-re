@@ -1881,6 +1881,7 @@ void CGameSprite::AIUpdate()
                 if (InControl() && !m_timedEffectList.IsTypeOnList(ICEWIND_CGAMEEFFECT_DAYBLINDNESS)) {
                     ITEM_EFFECT effect;
                     CGameEffect::ClearItemEffect(&effect, ICEWIND_CGAMEEFFECT_DAYBLINDNESS);
+                    effect.durationType = 1;
 
                     CGameEffect* pEffect = CGameEffect::DecodeEffect(&effect,
                         GetPos(),
@@ -2509,6 +2510,7 @@ void CGameSprite::AIUpdate()
                             && (m_baseStats.m_generalState & STATE_NONDETECTION) == 0) {
                             ITEM_EFFECT effect;
                             CGameEffect::ClearItemEffect(&effect, CGAMEEFFECT_NONDETECTION);
+                            effect.durationType = 1;
 
                             CGameEffect* pEffect = CGameEffect::DecodeEffect(&effect,
                                 GetPos(),
@@ -7627,6 +7629,11 @@ void CGameSprite::Marshal(CAreaFileCreature** pCreature)
 void CGameSprite::Marshal(BYTE** pCreature, LONG* creatureSize, WORD* facing, BOOLEAN a4, BOOLEAN a5)
 {
     UTIL_ASSERT(pCreature != NULL && creatureSize != NULL && facing != NULL);
+
+    // CRE V2.2 stores CGameEffectBase records. The original sets this byte at
+    // 0x70B354 before copying m_baseStats into the file header; without it the
+    // original loader interprets each 0x108-byte record as ITEM_EFFECT data.
+    m_baseStats.m_effectVersion = 1;
 
     const DWORD CRE_V22_HEADER_SIZE = 0x37C;
     const DWORD CRE_V22_OFFSETS_OFFSET = 8 + CRE_V22_HEADER_SIZE;

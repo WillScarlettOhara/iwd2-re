@@ -23,6 +23,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Iterable
 
+from runtime_paths import game_directory
+
 
 REPO = Path(__file__).resolve().parent.parent
 DEFAULT_ASSETS = REPO / "data" / "near_infinity_export"
@@ -164,6 +166,7 @@ def default_tlk_candidates() -> list[Path]:
     candidates.extend(
         [
             DEFAULT_ASSETS / "dialog.tlk",
+            game_directory() / "dialog.tlk",
             Path.home() / "Games" / "Heroic" / "Icewind Dale 2" / "dialog.tlk",
             Path.home() / "Games" / "Heroic" / "Icewind Dale 2.backup" / "dialog.tlk",
         ]

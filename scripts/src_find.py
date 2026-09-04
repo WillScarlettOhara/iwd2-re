@@ -44,7 +44,7 @@ def parse_file(path):
             lines = f.readlines()
     except OSError:
         return []
-    rel = os.path.relpath(path, REPO)
+    rel = os.path.relpath(path, REPO).replace("\\", "/")
     is_header = path.endswith(".h")
     syms = []
     pending_addr = None
@@ -152,7 +152,7 @@ def load_index(force=False):
         for fn in files:
             if fn.endswith((".cpp", ".h")):
                 p = os.path.join(root, fn)
-                current[os.path.relpath(p, REPO)] = os.path.getmtime(p)
+                current[os.path.relpath(p, REPO).replace("\\", "/")] = os.path.getmtime(p)
     dirty = False
     # drop deleted files
     for rel in list(cache["files"]):
@@ -216,6 +216,7 @@ def main():
     matches = []
     if args.file:
         rel = os.path.relpath(os.path.abspath(args.file), REPO) if os.path.isabs(args.file) else args.file
+        rel = rel.replace("\\", "/")
         matches = list(cache["syms"].get(rel, []))
     elif args.query:
         q = args.query

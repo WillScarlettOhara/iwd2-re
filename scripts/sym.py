@@ -30,6 +30,8 @@ import string
 import struct
 import sys
 
+from runtime_paths import WINDOWS, game_directory
+
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Canonical = the binary Ghidra imported (md5 below = the VM's pristine
 # C:\GOG Games\Icewind Dale 2\IWD2.exe), vendored at REPO/.bin/iwd2.exe. The host
@@ -39,6 +41,7 @@ CANONICAL_MD5 = "25cb3d8aa2ec648e94e328d8c467973e"
 _REPO_EXE = os.path.join(REPO, ".bin", "iwd2.exe")
 EXE = os.environ.get("IWD2_EXE") or (
     _REPO_EXE if os.path.exists(_REPO_EXE)
+    else str(game_directory() / "IWD2.exe") if WINDOWS
     else "/home/wills/Games/Heroic/Icewind Dale 2/IWD2.exe")
 ADDR_MAP = os.path.join(REPO, ".ghidra-exports", "address_map.json")
 SRC_INDEX = os.path.join(REPO, ".ghidra-exports", "src_index.json")

@@ -2458,7 +2458,7 @@ void CInfGame::Marshal(BYTE** pGame, DWORD* nGame, BOOLEAN bProgressBarInPlace)
         }
     }
 
-    // 0x5A3CA7: count followed by packed, length-prefixed stored locations.
+    // Stored locations at 0x5A3CA7: count followed by packed, length-prefixed records.
     *reinterpret_cast<DWORD*>(*pGame + nOffset) = static_cast<DWORD>(field_4BDC.GetCount());
     nOffset += sizeof(DWORD);
     for (POSITION pos = field_4BDC.GetHeadPosition(); pos != NULL; ) {

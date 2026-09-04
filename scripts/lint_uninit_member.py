@@ -34,6 +34,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from runtime_paths import cppcheck_executable
+
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 
@@ -100,7 +102,7 @@ def _cppcheck(files: list[Path]) -> list[tuple[Path, int, str]]:
 
     proc = subprocess.run(
         [
-            "cppcheck", "--enable=warning", "--std=c++17", "--quiet",
+            cppcheck_executable(), "--enable=warning", "--std=c++17", "--quiet",
             f"-j{os.cpu_count() or 1}", f"-I{SRC}", *[str(f) for f in files],
         ],
         cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
@@ -121,7 +123,7 @@ def main() -> int:
     ap.add_argument("paths", nargs="*", help="explicit files (default: changed src/ lines)")
     args = ap.parse_args()
 
-    if shutil.which("cppcheck") is None:
+    if cppcheck_executable() is None:
         print("cppcheck not found on PATH -- install it to run this lint.", file=sys.stderr)
         return 0  # absent tool must not break a commit hook
 
