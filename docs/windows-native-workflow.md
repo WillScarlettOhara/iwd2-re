@@ -240,6 +240,8 @@ No global user configuration is needed. Read `CLAUDE.md` explicitly when
 & $py scripts/native.py log 'REGEX' -n 50
 & $py scripts/arc.py check
 & $py scripts/arc.py verify 0xADDR --new-game --party 0 --hold 60 --require exe,vm
+& $py scripts/arc.py batch 0xADDR 0xADDR --new-game --party 0 --hold 60 `
+    --ui scripts/scenarios/newgame-reload.txt --require exe,vm
 ```
 
 Choose an existing hook table and its hook name for `trace`; `--load-slot -1`
@@ -273,6 +275,14 @@ sessions, run `& $graph update --repo .` after edits.
 it does not connect to a VM on Windows. `--static` skips build/runtime,
 `--no-parity` skips parity, and `.arc/<run>/` stores full gate output accessible
 through `arc.py explain`. A skipped gate is not completed validation.
+
+Use `arc batch` for 2–10 functions reached by the same save and AutoUI scenario.
+It preserves the static result of each address in `targets[]`, deduplicates
+class-wide work, compiles once, and launches one smoke. Its default hit list is
+all resolved source symbols; the smoke passes only when every symbol executes.
+Repeat `--hit` to select representative hooks when the scenario cannot exercise
+all targets. Windows and the Linux/VM adapter share the same comma-separated
+multi-symbol counter contract.
 
 Smoke exit 0 is CLEAN, 1 is failure, and 2 means unavailable/unproven (including
 harness errors or a symbol never hit). Static GREEN, successful export, a built

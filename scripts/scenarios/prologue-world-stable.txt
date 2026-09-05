@@ -1,0 +1,14 @@
+# Fast new-game regression: dismiss the prologue and observe a settled world.
+# Launch with --new-game --party 1. This is the cheap per-batch gate; use
+# newgame-reload.txt when a change touches CRE/GAM serialization or ownership.
+#
+# The final delay leaves the crash guard and optional --hit counter armed while
+# Hedron's scripts, timed effects, audio and cursor updates run in the world.
+waitgo 3000
+wait chapter 3000
+key 13
+wait world 3000
+sleep 300
+expect screen world
+expect controls 1 12
+ground

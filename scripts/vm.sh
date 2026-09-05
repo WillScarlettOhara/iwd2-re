@@ -292,25 +292,37 @@ case "$cmd" in
     # code is correct" from "the recovered code never ran". Exit 2 is that third
     # state -- ran clean, proved nothing -- and callers must not read it as a pass.
     if [ -n "$hit" ]; then
-      if grep -q "^NOT_INSTRUMENTED " "$glog" 2>/dev/null; then
+      IFS=',' read -r -a hit_symbols <<< "$hit"
+      missing=""; under=""; hit_summary=""
+      for symbol in "${hit_symbols[@]}"; do
+        symbol="${symbol#${symbol%%[![:space:]]*}}"
+        symbol="${symbol%${symbol##*[![:space:]]}}"
+        [ -z "$symbol" ] && continue
+        if grep -Fxq "NOT_INSTRUMENTED $symbol" "$glog" 2>/dev/null; then
+          missing="${missing:+$missing, }$symbol"
+          continue
+        fi
+        n=$(grep -F "HITS $symbol " "$glog" 2>/dev/null | tail -1 | awk '{print $NF}')
+        n="${n:-0}"
+        hit_summary="${hit_summary:+$hit_summary; }$symbol hit x$n"
+        if [ "$n" -lt "$hit_min" ]; then
+          under="${under:+$under, }$symbol=$n"
+        fi
+      done
+      if [ -n "$missing" ]; then
         echo "================= RESULT: NOT-INSTRUMENTED ================="
-        echo "symbol '$hit' resolved to no address in our build."
+        echo "symbol(s) '$missing' resolved to no address in our build."
         echo "inlined, folded by /OPT:ICF, or the wrong name -- this smoke proves nothing."
         exit 2
       fi
-      n=$(grep "^HITS $hit " "$glog" 2>/dev/null | tail -1 | awk '{print $NF}')
-      n="${n:-0}"
-      if [ "$n" -lt "$hit_min" ]; then
+      if [ -n "$under" ]; then
         echo "=================== RESULT: NOT-EXERCISED =================="
-        echo "'$hit' was entered $n time(s) in ${hold:-the session}s, need >= $hit_min."
-        if [ "$n" = 0 ]; then
-          echo "the build did not crash -- but the recovered path never ran, so this proves nothing."
-        else
-          echo "the build did not crash, but the path ran fewer times than the gate requires."
-        fi
+        echo "symbol counts below $hit_min in ${hold:-the session}s: $under"
+        echo "the build did not crash, but every requested path must reach the gate."
+        [ -n "$hit_summary" ] && echo "observed: $hit_summary"
         exit 2
       fi
-      echo "RESULT: CLEAN  ($hit hit x$n; guard log: tmp_smoke_guard.log)"
+      echo "RESULT: CLEAN  ($hit_summary; guard log: tmp_smoke_guard.log)"
       exit 0
     fi
 

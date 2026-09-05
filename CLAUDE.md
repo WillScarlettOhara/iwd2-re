@@ -23,9 +23,16 @@ PowerShell needs `&` before an executable path. See [Windows setup and commands]
 
 ## Lookup routing — cheapest tool first
 
+Use [small recovery campaigns](docs/economical-recovery.md) for sustained work.
+Default to related batches and compact continuation notes. Local checks need no
+LLM API; external-provider calls and usage-reset redemption require explicit user
+authorization. Compare JSONL captures with `scripts/frida_trace_diff.py compare`;
+see [trace comparison](docs/frida-trace-comparison.md) for evidence limits.
+
 | Want | Tool |
 |------|------|
 | **Verify a recovered fn (the whole sequence, one verdict)** | `scripts/arc.py verify 0xADDR` — see "arc" below. Don't run the 9 steps by hand |
+| **Verify 2–10 related recovered fns economically** | `scripts/arc.py batch 0xADDR 0xADDR ...` — individual static evidence, shared lints/class audits, one build and one multi-symbol smoke |
 | **What to work on next** | `scripts/arc.py targets` (= `scripts/next_targets.py`); tracked top-40 in `docs/next-targets.md` |
 | **Drive/inspect the UI yourself (menus, action bar, ground)** | `python scripts/native.py smoke <slot> <secs> --ui scripts/scenarios/<s>.txt` on Windows; `scripts/vm.sh smoke ...` on Linux — see "AutoUI" below |
 | Find fn/class/global in src (file:line, 0xADDR, exact body) | `python scripts/src_find.py NAME` / `Class::Method --body` / `0xADDR` / `Class:: -l` / `--file f.cpp` |
@@ -45,7 +52,7 @@ PowerShell needs `&` before an executable path. See [Windows setup and commands]
 - Run scripts via the repository venv (pefile/capstone/ghidra deps live there).
 - Raw `gb decompile` only when the digest is insufficient. Recovery = full bundle (below), unchanged.
 - Grep/Read on `src/` only after `src_find.py` misses. Start graph queries with one bare identifier; if ambiguous, retry the returned `qualified_name` for the intended definition. Header declarations and overloads can be separate nodes. Unresolved calls and impact-radius omissions are not evidence of binary parity.
-- Exploration estimated >5 tool calls or >3 files → spawn `caveman:cavecrew-investigator` (compressed output). Mechanical 1-2-file edit late in a long session → `caveman:cavecrew-builder`. Else inline.
+- Work with one agent by default. Delegate only a bounded, independent investigation that can run alongside useful local work; send a compact evidence packet and request a compact result. Tool-call count alone is not a reason to delegate.
 - Batch independent tool calls in one message. `/clear` between recovery arcs. Memory arc files ≤4K.
 
 ## Build & run
@@ -180,6 +187,7 @@ Bundle = resolved decompile (our names, vtable-slot-annotated vcalls) + REQUIRED
 
 ```powershell
 & $py scripts/arc.py verify 0xADDR  # resolve → lint → binary oracles → parity → layout → build → smoke
+& $py scripts/arc.py batch 0xADDR 0xADDR --ui scripts/scenarios/<s>.txt  # one build/smoke for a related batch
 & $py scripts/arc.py check         # source lints; pre-commit gate
 & $py scripts/arc.py sweep         # whole-codebase auditors; --deep adds assembly sweep
 & $py scripts/arc.py status        # metrics + freshness nags
@@ -191,6 +199,15 @@ Bundle = resolved decompile (our names, vtable-slot-annotated vcalls) + REQUIRED
 with `.venv-reagent/bin/python`.
 
 `verify` runs everything the bullets below describe, in cheap→expensive order, and prints ~10 lines. **Read those 10 lines, not 9 tool outputs** — every step's full stdout is captured under `.arc/<run>/` and is one `arc explain` away. It chooses native Windows or Linux/VM automatically. Flags: `--static` (no build/runtime), `--no-parity`, `--slot N --hold S --hit SYM`, `--save NAME`, `--new-game --party 0` (native), `--ui scripts/scenarios/<s>.txt`, `--json`, `--strict` (warn→fail), `--require exe,vm` (turn required-capability skips into failures). The legacy capability name `vm` means the native adapter on Windows; it does not require SSH there.
+
+`batch` accepts related recovered addresses and keeps `parity_offsets`,
+`arg_provenance`, and parity evidence separate for every target. Source lints and
+class/layout audits are deduplicated, then one build and one smoke cover the lot.
+By default the smoke counts every resolved source symbol and requires every one
+to execute; repeat `--hit` to provide a smaller explicit hook set when one
+scenario cannot reach the whole batch. The JSON envelope keeps full `targets[]`
+evidence and `shared_steps[]`. Keep batches behaviorally cohesive and around
+2–10 functions so one scenario remains meaningful.
 
 - Exit **0** = no failure · **1** = a failure · **2** = harness error (or address not recovered).
 - A missing optional capability (runtime unavailable, no `.ghidra-exports/`, **Ghidra GUI open**) is a `skip`; require it explicitly to fail the gate instead.
@@ -216,7 +233,7 @@ Run a bullet below directly only when you need that one tool in isolation.
   - Ops: `wait <screen> [ticks]` · **`waitgo`** · `dump` · `screen` · `click <panel> <ctrl>` · `clickxy <x> <y>` · `key <vk>` · `goto <screen>` · `expect screen|controls|control` · `sleep <ticks>`.
   - **Always `waitgo` before the first action**, then wait for the intended screen. This synchronizes with the observer on both routes; native smoke arms before process resume, while the VM guard attaches later.
   - `dump` is the diagnostic: it answers "does this screen actually have controls, and are they active" without reading pixels. That is how the empty save menu was traced to `CScreenSave::RefreshGameSlots`.
-- **A bare `RESULT: CLEAN` does NOT prove the recovered code ran.** Add `--hit Class::Method` to the selected smoke command: it counts entries via PDB symbols and exits **2** on `NOT-EXERCISED` or `NOT-INSTRUMENTED`. `--expect REGEX` checks the fresh debug log for deliberate `Iwd2DebugLog` instrumentation. `arc verify` supplies the resolved symbol automatically. Exit 2, including harness errors, is unproven and must never become a plain PASS.
+- **A bare `RESULT: CLEAN` does NOT prove the recovered code ran.** Add `--hit Class::Method` to the selected smoke command: it counts entries via PDB symbols and exits **2** on `NOT-EXERCISED` or `NOT-INSTRUMENTED`. A comma-separated native/VM hit list requires every symbol to reach `--hit-min`. `--expect REGEX` checks the fresh debug log for deliberate `Iwd2DebugLog` instrumentation. `arc verify` supplies one resolved symbol; `arc batch` supplies all resolved symbols automatically. Exit 2, including harness errors, is unproven and must never become a plain PASS.
 - End every recover session by recommending the next function(s): `scripts/arc.py targets` (ranked; `--near CClass` for one class), then refresh `docs/next-targets.md` with `scripts/next_targets.py --write`. **Real remaining scope is ~1.6k functions, not ~18k** — `_index.json`'s 29,664 entries include ~19.6k `Unwind@`/`Catch@` SEH funclets, so the ~37% in README/`project_status.py` is measured against a denominator that is two thirds compiler plumbing. `arc status` prints both.
 
 ## No hacks

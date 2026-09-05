@@ -32,15 +32,22 @@ ranking can be audited rather than trusted):
    +8 log2(1+num_callers)        global hub-ness, as a tiebreak
   -10 log2(1+unrecovered_callees) drags in N new stubs; prefer near-leaves
 
+Caller scores use unique caller functions. Ghidra exports one entry per call
+site, so treating their length as a function count made helpers called several
+times by one constructor look like global hubs.
+
 There is no placeholder penalty: a FUN_ target is not a worse recovery target,
 it is a different task, so it gets its own bucket instead of a fudge weight.
-(A flat -12 was meaningless anyway against a +40*log2(585) caller term.)
 
-Three buckets, never blended, because they are three kinds of work:
+Five target buckets, plus incomplete source sites, because they are different
+kinds of work:
 
-  Recover   a NAMED function with no `// 0xADDR` marker in src/
-  Identify  a FUN_/sub_ placeholder -- you cannot recover what you have not
-            identified, so this is a Ghidra naming pass first
+  Recover   a NAMED game-owned function with no `// 0xADDR` marker in src/
+  Identify  a FUN_/sub_ placeholder tied to a game class by vtable or caller
+            evidence. It still needs a naming pass first.
+  Triage    code whose ownership is not established yet
+  Support   likely inline/template/resource plumbing, held for a cheap audit
+  Excluded  named MFC/ATL, CRT, STL, or compiler code, with a reason code
   Complete  a `// TODO: Incomplete.` / `// PARTIAL:` site: a lie already in the
             tree, relevance guaranteed, but completing is not creating
 
@@ -68,6 +75,7 @@ EXPORTS = REPO / ".ghidra-exports"
 INDEX = EXPORTS / "_index.json"
 VTABLE_MAP = EXPORTS / "vtable_map.json"
 CALLGRAPH = EXPORTS / "_callgraph.json"
+ADDR_MAP = EXPORTS / "address_map.json"
 OUT_MD = REPO / "docs" / "next-targets.md"
 OUT_JSON = EXPORTS / "next_targets.json"
 
@@ -77,6 +85,7 @@ W_CLASS_COMPLETION = 15
 W_SIZE_BAND = 10
 W_CALLERS = 8
 W_UNRECOVERED_CALLEES = -10
+W_CLASS_EVIDENCE = 12
 
 # A class counts as "mostly done" -- and therefore its remaining slots as holes
 # worth filling -- above this recovered-slot ratio.
@@ -85,10 +94,43 @@ VTABLE_HOLE_MIN_COMPLETION = 0.60
 # Unwind@/Catch@ are SEH funclets and thunk_ is a jump stub: compiler output,
 # not code anyone recovers. They are 19,639 of the 29,664 index entries, so
 # leaving them in makes the backlog look twelve times larger than it is.
-SKIP_NAME_RE = re.compile(
-    r"^(thunk_|_|__|\?\?_|std::|operator new|operator delete|"
-    r"FID_|Catch|Unwind|__Init|_Init)")
 MIN_SIZE = 16
+
+# These rules only classify symbols that already carry a meaningful name. They
+# never rename FUN_/sub_ placeholders. Keep them ordered from narrowest to
+# broadest so each exclusion has one stable, auditable reason code.
+NAMED_EXCLUSION_RULES = (
+    ("compiler", "compiler-funclet", re.compile(
+        r"^(?:thunk_|FID_|Catch|Unwind|__Init|_Init|\?\?_|__|_)")),
+    ("stl", "stl-symbol", re.compile(
+        r"^(?:std::|ATL::|_?basic_(?:string|ostream|istream)|allocator<)")),
+    ("crt", "crt-symbol", re.compile(
+        r"^(?:operator (?:new|delete)|mem(?:cpy|move|set|cmp)|"
+        r"str(?:cmp|cpy|ncpy|len|chr)|wcs(?:cmp|cpy|len)|"
+        r"malloc|calloc|realloc|free|qsort|bsearch|atexit|abort)$")),
+    ("mfc", "mfc-symbol", re.compile(
+        r"^(?:Afx\w*|NormalizeRect|~?(?:CCmdUI|CWnd|CFrameWnd|CView|CWinApp|CDocument|"
+        r"CDocTemplate|CArchive|CFile|CFileFind|CException|CMemoryException|"
+        r"CNotSupportedException|CObject|CRuntimeClass|CString|CPoint|CRect|"
+        r"CSize|CMapPtrToPtr|CMapStringToPtr|CPtrArray|CPtrList|CObArray|"
+        r"CObList|CTypedPtr|CCriticalSection|CSingleLock|CEvent|CMutex|"
+        r"CSemaphore|CSyncObject))(?:$|::)")),
+)
+
+# A high-fan-in, short placeholder whose only callees are these helpers is much
+# more likely to be an emitted inline/template body than missing game logic.
+# This is intentionally a review bucket, not a hard exclusion.
+SUPPORT_CALLEE_RE = re.compile(
+    r"^(?:operator|CRes(?:::|$)|CResRef(?:::|$)|CDimm(?:::|$)|GetResObject|"
+    r"CTypedPtr|CObArray|CObList|CString|CPtrList|std::|ATL::|_+|"
+    r"mem(?:cpy|set|move|cmp)|str(?:cmp|cpy|ncpy|len)|malloc|free|"
+    r"FUN_0078(?:ab40|abb0|ac30|ad40)|FUN_007e78de|"
+    r"FUN_007fc984|FUN_007fcc1a)"
+)
+SUPPORT_MIN_CALL_SITES = 40
+SUPPORT_MAX_DECOMPILED_LINES = 50
+CALLER_CLASS_MIN_FUNCTIONS = 2
+CALLER_CLASS_MIN_SHARE = 0.60
 
 
 def as_addr(v) -> int | None:
@@ -127,6 +169,34 @@ def load_index() -> dict[int, dict]:
     return {int(k, 16): v for k, v in data.items()}
 
 
+def load_source_symbols() -> tuple[dict[int, dict], set[str]]:
+    """Return recovered symbol metadata and the classes represented in src/.
+
+    ``address_map.json`` is generated from source markers. It therefore gives
+    stronger class evidence than a class guessed from a decompiler placeholder.
+    """
+    if not ADDR_MAP.exists():
+        return {}, set()
+    try:
+        raw = json.loads(ADDR_MAP.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}, set()
+    symbols: dict[int, dict] = {}
+    classes: set[str] = set()
+    for key, value in raw.items():
+        if not isinstance(value, dict):
+            continue
+        try:
+            addr = int(key, 16)
+        except ValueError:
+            continue
+        symbols[addr] = value
+        cls = value.get("class")
+        if isinstance(cls, str) and cls:
+            classes.add(cls)
+    return symbols, classes
+
+
 def load_callgraph(index: dict[int, dict], rebuild: bool = False) -> dict[int, list[int]]:
     """addr -> list of caller addrs.
 
@@ -161,14 +231,18 @@ def load_callgraph(index: dict[int, dict], rebuild: bool = False) -> dict[int, l
     return {int(k, 16): [int(a, 16) for a in v] for k, v in graph.items()}
 
 
-def load_callees(addr: int) -> list[int]:
+def load_export_facts(addr: int) -> dict:
     p = EXPORTS / f"{addr:08x}.json"
     if not p.exists():
-        return []
+        return {}
     try:
-        d = json.loads(p.read_text(encoding="utf-8"))
+        return json.loads(p.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
-        return []
+        return {}
+
+
+def load_callees(addr: int) -> list[int]:
+    d = load_export_facts(addr)
     return [a for a in (as_addr(c.get("addr")) for c in (d.get("callees") or []))
             if a is not None]
 
@@ -223,8 +297,88 @@ def stub_sites() -> list[dict]:
 
 
 # --------------------------------------------------------------------------
-# scoring
+# classification and scoring
 # --------------------------------------------------------------------------
+
+def named_exclusion(name: str) -> tuple[str, str] | None:
+    """Return ``(ownership, reason-code)`` for known non-game symbols."""
+    for ownership, code, pattern in NAMED_EXCLUSION_RULES:
+        if pattern.search(name):
+            return ownership, code
+    return None
+
+
+def decompiled_line_count(text: str) -> int:
+    """Count non-empty decompiler lines; formatting changes should not matter."""
+    return sum(1 for line in text.splitlines() if line.strip())
+
+
+def support_shape_reason(call_sites: int, decompiled_lines: int,
+                         callee_names: list[str], decompiled: str = "") -> str | None:
+    """Explain why an unnamed function looks emitted from support code.
+
+    This is deliberately conservative and merely moves a function to a review
+    queue. A reviewer can promote it without first inventing a symbol name.
+    """
+    if call_sites < SUPPORT_MIN_CALL_SITES:
+        return None
+    if not decompiled_lines or decompiled_lines > SUPPORT_MAX_DECOMPILED_LINES:
+        return None
+    shape = f"{call_sites} call sites, {decompiled_lines} non-empty decompiler lines"
+    if ("ExceptionList" in decompiled
+            and re.search(r"\bLAB_[0-9A-Fa-f]+", decompiled)
+            and any(name.startswith("FUN_007fc") for name in callee_names)):
+        return f"{shape}, compiler SEH cleanup shape"
+    if not callee_names:
+        return f"{shape}, no callees"
+    if all(SUPPORT_CALLEE_RE.search(name or "") for name in callee_names):
+        return f"{shape}, only resource/container/runtime callees"
+    return None
+
+
+def probable_caller_class(callers: list[int], recovered: set[int],
+                          source_symbols: dict[int, dict]) -> tuple[str | None, int, int]:
+    """Infer a class affinity from unique recovered caller functions.
+
+    The returned class is evidence for grouping only. It is never used as a
+    replacement name for a FUN_ symbol.
+    """
+    counts: dict[str, int] = {}
+    for addr in set(callers) & recovered:
+        cls = (source_symbols.get(addr) or {}).get("class")
+        if isinstance(cls, str) and cls:
+            counts[cls] = counts.get(cls, 0) + 1
+    if not counts:
+        return None, 0, 0
+    cls, count = min(counts.items(), key=lambda item: (-item[1], item[0]))
+    total = sum(counts.values())
+    if count < CALLER_CLASS_MIN_FUNCTIONS or count / total < CALLER_CLASS_MIN_SHARE:
+        return None, count, total
+    return cls, count, total
+
+
+def classify(name: str, *, placeholder: bool, named_class: str | None,
+             hole_class: str | None, caller_class: str | None,
+             support_reason: str | None, source_classes: set[str]) -> tuple[str, str, list[dict]]:
+    """Return ownership, work bucket, and machine-readable evidence."""
+    excluded = named_exclusion(name) if not placeholder else None
+    if excluded:
+        ownership, code = excluded
+        return ownership, "excluded", [{"code": code, "detail": name}]
+    if hole_class:
+        return "game", "identify" if placeholder else "recover", [
+            {"code": "vtable-class", "detail": hole_class}]
+    if support_reason:
+        return "support", "support", [
+            {"code": "support-shape", "detail": support_reason}]
+    if named_class and named_class in source_classes:
+        return "game", "identify" if placeholder else "recover", [
+            {"code": "source-class", "detail": named_class}]
+    if caller_class:
+        return "game", "identify" if placeholder else "recover", [
+            {"code": "caller-class-consensus", "detail": caller_class}]
+    return "unknown", "triage", [
+        {"code": "ownership-unproven", "detail": "no vtable/source/caller-class evidence"}]
 
 def size_band(n: int) -> float:
     if n < 32:
@@ -238,27 +392,54 @@ def size_band(n: int) -> float:
     return 0.5
 
 
-def score_all(index, recovered, graph, holes, completion, sizes) -> list[dict]:
+def score_all(index, recovered, graph, holes, completion, sizes,
+              source_symbols=None, source_classes=None,
+              facts_loader=load_export_facts) -> list[dict]:
+    source_symbols = source_symbols or {}
+    source_classes = source_classes or set()
     rows = []
     for addr, meta in index.items():
         if addr in recovered:
             continue
         name = meta.get("name") or f"FUN_{addr:08x}"
-        if SKIP_NAME_RE.match(name):
+        hard_exclusion = named_exclusion(name)
+        # The ~19k compiler funclets would swamp the useful JSON. Their stable
+        # classifier and aggregate count remain available through --scope.
+        if hard_exclusion and hard_exclusion[0] == "compiler":
             continue
         size = sizes.get(addr, 0)
         hole_cls = holes.get(addr)
-        if size < MIN_SIZE and not hole_cls:
+        if size < MIN_SIZE and not hole_cls and not hard_exclusion:
             continue
 
         callers = graph.get(addr, [])
-        rec_callers = sum(1 for c in callers if c in recovered)
-        num_callers = meta.get("num_callers") or len(callers)
+        unique_callers = set(callers)
+        rec_callers = len(unique_callers & recovered)
+        recovered_call_sites = sum(1 for c in callers if c in recovered)
+        call_sites = meta.get("num_callers") or len(callers)
         is_fun = name.startswith(("FUN_", "sub_"))
 
-        cls = hole_cls or (name.split("::")[0] if "::" in name else None)
+        named_cls = name.split("::")[0] if "::" in name else None
+        caller_cls, caller_cls_count, classed_callers = probable_caller_class(
+            callers, recovered, source_symbols)
+        cls = hole_cls or named_cls or caller_cls
         comp = completion.get(cls, 0.0) if cls else 0.0
         vhole = 1.0 if (hole_cls and comp >= VTABLE_HOLE_MIN_COMPLETION) else 0.0
+
+        facts = {}
+        support_reason = None
+        if is_fun and call_sites >= SUPPORT_MIN_CALL_SITES:
+            facts = facts_loader(addr) or {}
+            support_reason = support_shape_reason(
+                call_sites,
+                decompiled_line_count(facts.get("decompiled") or ""),
+                [c.get("name") or "" for c in (facts.get("callees") or [])],
+                facts.get("decompiled") or "",
+            )
+        ownership, bucket, reasons = classify(
+            name, placeholder=is_fun, named_class=named_cls,
+            hole_class=hole_cls, caller_class=caller_cls,
+            support_reason=support_reason, source_classes=source_classes)
 
         # Only paid for candidates that could plausibly rank; reading 18.5k
         # export files for the callee term would cost more than the term is worth.
@@ -267,25 +448,38 @@ def score_all(index, recovered, graph, holes, completion, sizes) -> list[dict]:
                   + W_VTABLE_HOLE * vhole
                   + W_CLASS_COMPLETION * comp
                   + W_SIZE_BAND * size_band(size)
-                  + W_CALLERS * math.log2(1 + num_callers))
-        if prelim > 30:
-            callees = load_callees(addr)
+                  + W_CALLERS * math.log2(1 + len(unique_callers))
+                  + W_CLASS_EVIDENCE * math.log2(
+                      1 + (caller_cls_count if caller_cls else 0)))
+        if prelim > 30 and bucket not in ("excluded", "support"):
+            if not facts:
+                facts = facts_loader(addr) or {}
+            callees = [a for a in
+                       (as_addr(c.get("addr")) for c in (facts.get("callees") or []))
+                       if a is not None]
             unrec_callees = sum(1 for c in callees if c not in recovered)
         score = prelim + W_UNRECOVERED_CALLEES * math.log2(1 + unrec_callees)
 
         rows.append({
             "address": f"0x{addr:06x}" if addr < 0x1000000 else f"0x{addr:08x}",
             "addr_int": addr,
-            "bucket": "identify" if is_fun else "recover",
+            "bucket": bucket,
+            "ownership": ownership,
             "name": name,
             "class": cls,
+            "probable_class": caller_cls,
+            "dominant_class_callers": caller_cls_count,
+            "classed_recovered_callers": classed_callers,
             "size": size,
-            "num_callers": num_callers,
+            "num_callers": len(unique_callers),
+            "call_sites": call_sites,
             "recovered_callers": rec_callers,
+            "recovered_call_sites": recovered_call_sites,
             "unrecovered_callees": unrec_callees,
             "vtable_hole": bool(vhole),
             "vtable_class_completion": round(comp, 3),
             "is_placeholder": is_fun,
+            "classification_reasons": reasons,
             "score": round(score, 2),
         })
     # Deterministic: score desc, then address asc -- so regenerating without a
@@ -299,36 +493,49 @@ def score_all(index, recovered, graph, holes, completion, sizes) -> list[dict]:
 # --------------------------------------------------------------------------
 
 def fmt_table(rows: list[dict], limit: int) -> list[str]:
-    out = ["| score | address | size | callers | symbol | why |",
-           "|------:|---------|-----:|---------|--------|-----|"]
+    out = ["| score | address | size | callers | symbol | evidence |",
+           "|------:|---------|-----:|---------|--------|----------|"]
     for r in rows[:limit]:
         why = []
         if r["vtable_hole"]:
-            why.append("vtable hole")
+            why.append(f"vtable `{r['class']}`")
+        elif r["probable_class"]:
+            why.append(f"caller class `{r['probable_class']}`")
         if r["recovered_callers"]:
-            why.append(f"{r['recovered_callers']} recovered caller(s)")
-        if r["is_placeholder"]:
-            why.append("needs naming")
+            why.append(f"{r['recovered_callers']} recovered caller function(s)")
+        if r["bucket"] in ("support", "excluded"):
+            why.extend(reason["code"] for reason in r["classification_reasons"])
         out.append(
             f"| {r['score']:.2f} | `{r['address']}` | {r['size']} | "
-            f"{r['num_callers']} ({r['recovered_callers']}R) | "
+            f"{r['num_callers']} fn / {r['call_sites']} sites "
+            f"({r['recovered_callers']}R) | "
             f"`{r['name']}` | {', '.join(why) or '-'} |")
     return out
 
 
 def scope_stats(index: dict[int, dict], recovered: set[int]) -> dict:
     """The honest denominator: what is actually recoverable, funclets excluded."""
-    real = rec = funclets = 0
+    real = rec = funclets = libraries = other_compiler = 0
     for a, m in index.items():
         name = m.get("name") or ""
+        # Keep the historical scope denominator stable. Other recognized
+        # compiler/library symbols are reported, but were already part of this
+        # denominator and removing recovered ones would change the headline.
         if name.startswith(("Unwind", "Catch", "thunk_")):
             funclets += 1
             continue
+        exclusion = named_exclusion(name)
+        if exclusion and exclusion[0] == "compiler":
+            other_compiler += 1
+        elif exclusion:
+            libraries += 1
         real += 1
         if a in recovered:
             rec += 1
     return {"real": real, "recovered": rec, "remaining": real - rec,
-            "funclets": funclets, "index_total": len(index)}
+            "funclets": funclets, "named_libraries": libraries,
+            "other_compiler": other_compiler,
+            "index_total": len(index)}
 
 
 def write_markdown(rows, stubs, recovered, index, path: Path, top: int) -> None:
@@ -340,6 +547,9 @@ def write_markdown(rows, stubs, recovered, index, path: Path, top: int) -> None:
     st = scope_stats(index, recovered)
     recov = [r for r in rows if r["bucket"] == "recover"]
     ident = [r for r in rows if r["bucket"] == "identify"]
+    triage = [r for r in rows if r["bucket"] == "triage"]
+    support = [r for r in rows if r["bucket"] == "support"]
+    excluded = [r for r in rows if r["bucket"] == "excluded"]
 
     lines = [
         "<!-- GENERATED by scripts/next_targets.py -- do not edit by hand.",
@@ -348,6 +558,7 @@ def write_markdown(rows, stubs, recovered, index, path: Path, top: int) -> None:
         f"     weights: recovered_callers={W_RECOVERED_CALLERS} "
         f"vtable_hole={W_VTABLE_HOLE} class_completion={W_CLASS_COMPLETION} "
         f"size={W_SIZE_BAND} callers={W_CALLERS} "
+        f"class_evidence={W_CLASS_EVIDENCE} "
         f"unrec_callees={W_UNRECOVERED_CALLEES}",
         "     Refresh: scripts/next_targets.py --write   Staleness: --check -->",
         "",
@@ -364,14 +575,16 @@ def write_markdown(rows, stubs, recovered, index, path: Path, top: int) -> None:
         "against the {:,}-entry denominator, which is two thirds SEH funclets."
         .format(st["index_total"]),
         "",
-        "Three buckets, because they are three kinds of work. Full ranking with "
-        "every score term: `.ghidra-exports/next_targets.json` (gitignored).",
+        "Ownership is kept separate from priority. Full ranking, ownership, "
+        "class evidence, unique callers, call-site counts, and reason codes: "
+        "`.ghidra-exports/next_targets.json` (gitignored).",
+        "See `docs/target-selection.md` for the rules and promotion workflow.",
         "",
         "Regenerate after a recovery arc -- deliberately not wired to a hook, "
         "which would put an unrelated file in every commit and hard-fail for "
         "anyone without `.ghidra-exports/`.",
         "",
-        f"## Recover ({len(recov)})",
+        f"## Recover: game-owned names ({len(recov)})",
         "",
         "Named functions with no `// 0xADDR` marker in `src/`.",
         "",
@@ -379,13 +592,40 @@ def write_markdown(rows, stubs, recovered, index, path: Path, top: int) -> None:
     lines += fmt_table(recov, top)
     lines += [
         "",
-        f"## Identify ({len(ident)})",
+        f"## Identify: game-owned placeholders ({len(ident)})",
         "",
         "`FUN_`/`sub_` placeholders. You cannot recover what you have not "
         f"identified, so these need a Ghidra naming pass first. Top {top}:",
         "",
     ]
     lines += fmt_table(ident, top)
+    lines += [
+        "",
+        f"## Triage: ownership unproven ({len(triage)})",
+        "",
+        "These retain their exported name. Gather vtable or caller-class "
+        "evidence before spending a recovery arc:",
+        "",
+    ]
+    lines += fmt_table(triage, top)
+    lines += [
+        "",
+        f"## Support-code review ({len(support)})",
+        "",
+        "Short high-fan-in placeholders with only resource/container/runtime "
+        "callees. This is a review queue, not a permanent exclusion:",
+        "",
+    ]
+    lines += fmt_table(support, min(top, 20))
+    lines += [
+        "",
+        f"## Excluded named libraries ({len(excluded)})",
+        "",
+        f"MFC/ATL, CRT, and STL symbols recognized by explicit rules "
+        f"({st['funclets']:,} compiler funclets are aggregated above):",
+        "",
+    ]
+    lines += fmt_table(excluded, min(top, 20))
     lines += [
         "",
         f"## Complete ({len(stubs)})",
@@ -451,13 +691,19 @@ def main(argv: list[str]) -> int:
     index = load_index()
     graph = load_callgraph(index, args.rebuild)
     holes, completion = load_vtables()
+    if not VTABLE_MAP.exists():
+        print("warning: vtable_map.json missing; run "
+              "scripts/reagent_vtable_map.py for direct class evidence",
+              file=sys.stderr)
+    source_symbols, source_classes = load_source_symbols()
     sizes = sizes_from_index(index)
-    rows = score_all(index, recovered, graph, holes, completion, sizes)
+    rows = score_all(index, recovered, graph, holes, completion, sizes,
+                     source_symbols, source_classes)
     stubs = stub_sites()
 
     if args.json:
         Path(args.json).write_text(json.dumps(rows, indent=1), encoding="utf-8")
-        print(f"wrote {args.json} ({len(rows)} ranked)")
+        print(f"wrote {args.json} ({len(rows)} classified)")
 
     if args.write:
         write_markdown(rows, stubs, recovered, index, OUT_MD, args.top or 50)
@@ -484,24 +730,36 @@ def main(argv: list[str]) -> int:
               f"{st['remaining']:,} left "
               f"-- {st['funclets']:,} SEH funclets/thunks excluded")
 
-    for bucket, title in (("recover", "RECOVER (named)"),
-                          ("identify", "IDENTIFY (FUN_/sub_ -- name it first)")):
+    for bucket, title in (
+            ("recover", "RECOVER (game-owned name)"),
+            ("identify", "IDENTIFY (game-owned FUN_/sub_; name it first)"),
+            ("triage", "TRIAGE (ownership unproven)"),
+            ("support", "SUPPORT REVIEW (inline/template shape)"),
+            ("excluded", "EXCLUDED (named MFC/ATL/CRT/STL)")):
         sel = [r for r in rows if r["bucket"] == bucket]
         if not sel:
             continue
         print(f"\n  == {title}: {len(sel)} ==")
-        print(f"  {'score':>6}  {'address':<10} {'size':>5}  {'callers':<9} what")
-        for r in sel[:args.top]:
+        print(f"  {'score':>6}  {'address':<10} {'size':>5}  {'fn/sites':<13} what")
+        shown = args.top if bucket not in ("support", "excluded") else min(args.top, 10)
+        for r in sel[:shown]:
             why = "vtable hole" if r["vtable_hole"] else ""
-            callers = f"{r['num_callers']} ({r['recovered_callers']}R)"
+            if not why and r["probable_class"]:
+                why = f"caller class {r['probable_class']}"
+            if bucket in ("support", "excluded"):
+                why = r["classification_reasons"][0]["code"]
+            callers = (f"{r['num_callers']}/{r['call_sites']} "
+                       f"({r['recovered_callers']}R)")
             print(f"  {r['score']:6.1f}  {r['address']:<10} {r['size']:5}  "
-                  f"{callers:<9} {r['name']}  {why}".rstrip())
+                  f"{callers:<13} {r['name']}  {why}".rstrip())
     if not rows:
         print("  (nothing matched)")
     if cls_stubs:
         print(f"\n  COMPLETE: {len(cls_stubs)} `TODO: Incomplete` in {args.near} "
               f"-> lines {', '.join(str(s['line']) for s in cls_stubs[:8])}")
-    print(f"\n  {len(rows)} candidate(s); full ranking: --json")
+    actionable = sum(r["bucket"] in ("recover", "identify", "triage") for r in rows)
+    print(f"\n  {actionable} actionable candidate(s), {len(rows)} classified; "
+          "full audit: --json")
     return 0
 
 

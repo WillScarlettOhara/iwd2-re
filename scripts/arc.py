@@ -13,6 +13,7 @@ verdict of a dozen lines. Tool prose is never re-printed: it is captured under
 
   arc check [--staged|--all]      host-only source lints, ~2s     (the commit gate)
   arc verify 0xADDR               the full per-arc sequence
+  arc batch 0xADDR [0xADDR ...]   per-address static checks, one build + smoke
   arc sweep [--deep]              whole-codebase auditors
   arc status                      recovery metrics + freshness nags
   arc targets [...]               proxy to scripts/next_targets.py
@@ -486,10 +487,17 @@ def parse_smoke(rc: int, out: str, err: str) -> Report:
     m = re.search(r"RESULT: (?P<v>[A-Z][A-Z-]+)", out)
     verdict = m["v"] if m else ("CLEAN" if rc == 0 else "UNKNOWN")
     rep.summary = verdict
-    mh = re.search(r"\bhit x(\d+)", out)
-    if mh:
-        rep.summary = f"{verdict}, hit x{mh.group(1)}"
-        rep.counts["hits"] = int(mh.group(1))
+    symbol_hits = [(name.strip(), int(count)) for name, count in
+                   re.findall(r"(?:\(|; )([^;()]+?) hit x(\d+)", out)]
+    if symbol_hits:
+        rep.counts["hits"] = sum(count for _, count in symbol_hits)
+        rep.counts["symbols"] = len(symbol_hits)
+        rep.counts["hits_by_symbol"] = dict(symbol_hits)
+        if len(symbol_hits) == 1:
+            rep.summary = f"{verdict}, hit x{symbol_hits[0][1]}"
+        else:
+            exercised = sum(count > 0 for _, count in symbol_hits)
+            rep.summary = f"{verdict}, {exercised}/{len(symbol_hits)} symbols hit x>=1"
     if rc == 1:
         rep.status = "fail"
         for line in out.splitlines():
@@ -756,7 +764,7 @@ def new_rundir(cmd: str) -> Path:
 # --------------------------------------------------------------------------
 
 def lint_steps(scope_file: str | None, mode: str) -> list[Step]:
-    """mode: 'staged' | 'all' | 'file'.
+    """mode: 'staged' | 'all' | 'file' | 'batch'.
 
     re_lint and lint_uninit_member are changed-lines-only by design and stay
     that way: re_lint --all reports 1600+ pre-existing hits, which is an audit,
@@ -789,8 +797,9 @@ def lint_steps(scope_file: str | None, mode: str) -> list[Step]:
             s("lint_address_markers", "markers", ["--quiet"]),
         ]
     audit = mode == "all"
+    changed = ["--staged", "--worktree"] if mode == "batch" else ["--staged"]
     return [
-        s("re_lint", "re_lint", ["--all"] if audit else ["--staged"], advisory=audit),
+        s("re_lint", "re_lint", ["--all"] if audit else changed, advisory=audit),
         s("lint_pragma_pack_balance", "pragma", []),
         s("lint_twin_symmetry", "twin", ["--quiet"]),
         s("lint_extend_cells", "extend", ["--quiet"]),
@@ -1075,6 +1084,221 @@ def cmd_verify(args) -> int:
     return render(reports, header, elapsed, args.max_findings, baseline,
                   runner.ran_tools, args.strict, notes,
                   scope_files={info["file"]})
+
+
+def batch_addresses(raw_addresses: list[str]) -> tuple[list[str], str | None]:
+    """Normalize and de-duplicate a batch before any expensive step runs."""
+    addresses: list[str] = []
+    seen: set[str] = set()
+    for raw in raw_addresses:
+        addr = raw.lower()
+        if not ADDR_RE.match(addr):
+            return [], f"'{raw}' is not a 0xADDR"
+        if addr not in seen:
+            seen.add(addr)
+            addresses.append(addr)
+    return addresses, None
+
+
+def batch_binary_steps(infos: list[dict]) -> list[tuple[str, Step]]:
+    """The address-specific cheap binary checks; owner keeps JSON attribution."""
+    steps: list[tuple[str, Step]] = []
+    for info in infos:
+        addr = info["address"]
+        suffix = addr[2:]
+        steps += [
+            (addr, Step(id=f"parity_offsets_{suffix}", label=f"off {suffix}",
+                        needs=("exe",), timeout=300,
+                        argv=[PY, str(SCRIPTS / "parity_offsets.py"), addr],
+                        parse=parse_parity_offsets)),
+            (addr, Step(id=f"arg_provenance_{suffix}", label=f"args {suffix}",
+                        needs=("exe",), timeout=300,
+                        argv=[PY, str(SCRIPTS / "arg_provenance.py"), addr, "--check"],
+                        parse=parse_arg_provenance)),
+        ]
+    return steps
+
+
+def batch_hit_symbols(args, infos: list[dict]) -> list[str]:
+    """Return a stable unique counter list; explicit --hit entries override symbols."""
+    raw = args.hit or [info["symbol"] for info in infos if info["symbol"]]
+    symbols: list[str] = []
+    for item in raw:
+        for symbol in item.split(","):
+            symbol = symbol.strip()
+            if symbol and symbol not in symbols:
+                symbols.append(symbol)
+    return symbols
+
+
+def parse_batch_smoke(rc: int, out: str, err: str) -> Report:
+    report = parse_smoke(rc, out, err)
+    if rc == 2:
+        # A batch must not count unobserved targets as validated work.
+        report.status = "error"
+    return report
+
+
+def cmd_batch(args) -> int:
+    """Validate related recoveries while paying for build/runtime only once."""
+    t0 = time.monotonic()
+    addresses, error = batch_addresses(args.addresses)
+    if error:
+        print(f"arc batch: {error}", file=sys.stderr)
+        return 2
+
+    infos = [resolve_address(addr) for addr in addresses]
+    missing = [info["address"] for info in infos if not info["file"]]
+    if missing:
+        print("arc batch: address(es) not recovered (no source marker): " +
+              ", ".join(missing), file=sys.stderr)
+        print("           see: scripts/arc.py targets", file=sys.stderr)
+        return 2
+
+    caps = Caps(set(args.require or []))
+    baseline = Baseline()
+    rundir = new_rundir("batch")
+    runner = Runner(caps, baseline, rundir, progress=not args.json)
+    notes: list[str] = []
+
+    # Global source checks are intentionally paid once. These structural lints
+    # scan the tree, while re_lint still restricts itself to changed lines.
+    lint_parts = runner.run_parallel(lint_steps(None, "batch"))
+    lint_report = fold(lint_parts, "lint", "8 shared source checks")
+
+    target_steps: dict[str, list[Report]] = {addr: [] for addr in addresses}
+    owned_binary = batch_binary_steps(infos)
+    binary_reports = runner.run_parallel([step for _, step in owned_binary])
+    for (addr, _step), report in zip(owned_binary, binary_reports):
+        target_steps[addr].append(report)
+
+    # re-agent owns one Ghidra project, so parity remains serial. Each address
+    # gets its own output and report even though the final console row is folded.
+    if not args.no_parity:
+        for info in infos:
+            addr = info["address"]
+            suffix = addr[2:]
+            parity_json = rundir / f"parity_{suffix}.json"
+            parity_argv = [str(venv_tool("re-agent")),
+                           "--config", str(REPO / "re-agent.host.yaml"),
+                           "parity", "--address", addr,
+                           "--output", str(parity_json)]
+            target_steps[addr].append(runner.run(Step(
+                id=f"parity_{suffix}", label=f"parity {suffix}",
+                needs=("ghidra",), timeout=900, argv=parity_argv,
+                parse=lambda rc, o, e, path=parity_json:
+                    parse_parity_json(rc, o, e, path))))
+
+    # Class-wide checks and layout probes are shared by every target in that
+    # class and therefore run once per distinct class.
+    classes = list(dict.fromkeys(info["class"] for info in infos if info["class"]))
+    class_steps: list[Step] = []
+    for cls in classes:
+        class_steps += [
+            Step(id=f"ctor_vtable_check_{cls}", label=f"ctor {cls}",
+                 needs=("exe",), timeout=300,
+                 argv=[PY, str(SCRIPTS / "ctor_vtable_check.py"), cls, "--quiet"],
+                 parse=parse_ctor_vtable),
+            Step(id=f"vtable_audit_{cls}", label=f"vtable {cls}",
+                 needs=("exe",), timeout=300,
+                 argv=[PY, str(SCRIPTS / "vtable_audit.py"), cls, "--quiet"],
+                 parse=parse_vtable_audit),
+        ]
+    class_parts = runner.run_parallel(class_steps) if class_steps else []
+    layout_parts: list[Report] = []
+    for cls in classes:
+        step = layout_step(cls)
+        step.id += f"_{cls}"
+        step.label = f"layout {cls}"
+        layout_parts.append(runner.run(step))
+
+    shared_reports: list[Report] = [lint_report]
+    if class_parts:
+        shared_reports.append(fold(class_parts, "classes",
+                                   f"class audits for {len(classes)} class(es)"))
+    if layout_parts:
+        shared_reports.append(fold(layout_parts, "layouts",
+                                   f"layout audits for {len(classes)} class(es)"))
+
+    target_reports: list[Report] = []
+    for info in infos:
+        addr = info["address"]
+        report = fold(target_steps[addr], f"target:{addr}",
+                      f"{info['symbol'] or '?'}; {len(target_steps[addr])} checks")
+        report.label = addr
+        target_reports.append(report)
+
+        gname = ghidra_name(addr)
+        if gname and info["symbol"] and gname != info["symbol"] and not gname.startswith("FUN_"):
+            notes.append(f"  WARN {addr} name mismatch: source says {info['symbol']}, "
+                         f"Ghidra says {gname}")
+        if touches_visual(info["file"], info["class"], info["symbol"]):
+            notes.append(f"VISUAL: user check required for {addr} ({info['symbol'] or info['file']})")
+
+    build_report = None
+    if not args.no_build:
+        build_report = runner.run(Step(id="build", label="build", needs=("vm",),
+                                       timeout=1200, parse=parse_build,
+                                       argv=runtime_command("build")))
+        shared_reports.append(build_report)
+
+    hit_symbols = [] if args.expect else batch_hit_symbols(args, infos)
+    if not args.no_smoke:
+        if build_report is not None and build_report.status not in ("pass", "warn"):
+            shared_reports.append(Report(tool="smoke", status="skip", label="smoke",
+                                         summary="build failed -- smoke would prove nothing"))
+        else:
+            smoke_argv = runtime_command("smoke", str(args.slot), str(args.hold))
+            if WINDOWS and args.new_game:
+                smoke_argv += ["--new-game", "--party", args.party]
+            if args.save:
+                smoke_argv += ["--save", args.save]
+            if args.ui:
+                smoke_argv += ["--ui", args.ui]
+            if args.expect:
+                smoke_argv += ["--expect", args.expect]
+            elif hit_symbols:
+                smoke_argv += ["--hit", ",".join(hit_symbols)]
+            shared_reports.append(runner.run(Step(
+                id="smoke", label="smoke", needs=("vm",), timeout=args.hold + 600,
+                argv=smoke_argv, parse=parse_batch_smoke)))
+
+    reports = [shared_reports[0], *target_reports, *shared_reports[1:]]
+    elapsed = time.monotonic() - t0
+    target_payloads = []
+    for info in infos:
+        steps = target_steps[info["address"]]
+        target_payloads.append({**info,
+                                "verdict": verdict_of(steps, args.strict)[0],
+                                "steps": [report.to_json() for report in steps]})
+    payload = {"schema": SCHEMA, "cmd": "batch", "addresses": addresses,
+               "targets": target_payloads, "hit_symbols": hit_symbols,
+               "elapsed_s": round(elapsed, 2),
+               "verdict": verdict_of(reports, args.strict)[0],
+               "shared_steps": [report.to_json() for report in shared_reports],
+               "steps": [report.to_json() for report in reports]}
+    write_run_json(rundir, payload)
+    if args.json:
+        print(json.dumps(payload, indent=2))
+        return verdict_of(reports, args.strict)[1]
+
+    if args.no_smoke:
+        notes.append("runtime: skipped (--static/--no-smoke)")
+    elif build_report is not None and build_report.status == "fail":
+        notes.append("runtime: skipped because the shared build failed")
+    elif args.expect:
+        notes.append("runtime: one smoke with one debug-log gate")
+    elif hit_symbols:
+        notes.append(f"runtime: one smoke, {len(hit_symbols)} symbol gate(s)")
+    elif args.ui:
+        notes.append("runtime: one smoke with one AutoUI scenario gate")
+    else:
+        notes.append("runtime: one smoke, no path gate (use --hit or --ui)")
+    notes.append(f"detail: scripts/arc.py explain <step>    logs: .arc/{rundir.name}/")
+    header = f"arc batch  {len(addresses)} targets  " + ", ".join(addresses)
+    return render(reports, header, elapsed, args.max_findings, baseline,
+                  runner.ran_tools, args.strict, notes,
+                  scope_files={info["file"] for info in infos})
 
 
 def layout_step(cls: str | None) -> Step:
@@ -1419,6 +1643,24 @@ def main(argv: list[str]) -> int:
                    help="host-only: no build, no smoke")
     common(v)
     v.set_defaults(func=cmd_verify)
+
+    b = sub.add_parser("batch", help="per-address static checks with one build and smoke")
+    b.add_argument("addresses", nargs="+")
+    b.add_argument("--slot", type=int, default=3)
+    b.add_argument("--hold", type=int, default=90)
+    b.add_argument("--save", help="exact MPSave directory name instead of a shifting slot")
+    b.add_argument("--new-game", action="store_true", help="native Windows: start a premade new game")
+    b.add_argument("--party", default="0", help="native Windows: premade party index/name")
+    b.add_argument("--hit", action="append",
+                   help="runtime symbol gate; repeat it, or omit to gate every resolved symbol")
+    b.add_argument("--ui", metavar="SCRIPT", help="AutoUI scenario replayed by the shared smoke")
+    b.add_argument("--expect", help="regex debug-log gate for the shared smoke")
+    b.add_argument("--no-build", action="store_true")
+    b.add_argument("--no-smoke", action="store_true")
+    b.add_argument("--no-parity", action="store_true")
+    b.add_argument("--static", action="store_true", help="host-only: no build, no smoke")
+    common(b)
+    b.set_defaults(func=cmd_batch)
 
     s = sub.add_parser("sweep", help="whole-codebase auditors")
     s.add_argument("--deep", action="store_true", help="add the whole-tree disasm sweep")

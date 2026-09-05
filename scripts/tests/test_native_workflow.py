@@ -66,6 +66,31 @@ class NativeWorkflowTest(unittest.TestCase):
         self.args.hit_min = 1
         self.assertEqual(native.evidence_verdict(self.args, self.observation), (0, "CLEAN"))
 
+    def test_every_comma_separated_hit_is_required(self):
+        self.args.hit = "COne::Tick, CTwo::Tick,COne::Tick"
+        self.assertEqual(native.hit_symbols(self.args.hit), ["COne::Tick", "CTwo::Tick"])
+        for name in native.hit_symbols(self.args.hit):
+            self.observation.message({"type": "send",
+                                      "payload": {"tag": "SYM", "name": name, "n": 1}})
+        self.observation.message({"type": "send",
+                                  "payload": {"tag": "HITS", "name": "COne::Tick", "n": 4}})
+        self.assertEqual(native.evidence_verdict(self.args, self.observation),
+                         (2, "NOT-EXERCISED"))
+        self.observation.message({"type": "send",
+                                  "payload": {"tag": "HITS", "name": "CTwo::Tick", "n": 1}})
+        self.assertEqual(native.evidence_verdict(self.args, self.observation), (0, "CLEAN"))
+
+    def test_arc_parses_multi_symbol_smoke_counts(self):
+        report = arc.parse_smoke(
+            0,
+            "RESULT: CLEAN (COne::Tick hit x4; CTwo::Tick hit x1)\n",
+            "")
+        self.assertEqual(report.status, "pass")
+        self.assertEqual(report.counts["symbols"], 2)
+        self.assertEqual(report.counts["hits_by_symbol"],
+                         {"COne::Tick": 4, "CTwo::Tick": 1})
+        self.assertIn("2/2 symbols", report.summary)
+
     def test_process_exit_and_crash_fail_even_with_hits(self):
         self.instrument()
         self.observation.detached = True

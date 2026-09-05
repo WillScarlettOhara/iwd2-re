@@ -4,12 +4,13 @@
   python scripts/native.py build
   python scripts/native.py menu
   python scripts/native.py run --new-game --party 0
-  python scripts/native.py smoke 3 60 --hit CGameSprite::Render
+  python scripts/native.py smoke 3 60 --hit CGameSprite::Render,CGameSprite::AIUpdate
   python scripts/native.py smoke --new-game --party 0 --hold 60 --ui scripts/scenarios/newgame-reload.txt
   python scripts/native.py trace --hooks scripts/probes/hooks.json --load-slot 3 --hit NAME
 
 Smoke attaches the existing crash oracle and PDB counters BEFORE resuming the
 game, requires AutoLoad's loaded result, and composes UI, --hit and --expect gates.
+Comma-separated --hit symbols are all instrumented and all must meet --hit-min.
 Exit 0 CLEAN / 1 build or runtime failure / 2 unavailable or unproven. A bare
 CLEAN without a gate proves only that loading and the observation interval ended.
 """
@@ -246,6 +247,14 @@ def ui_verdict(path: Path) -> str | None:
     return None
 
 
+def hit_symbols(hit: str | None) -> list[str]:
+    """Parse the shared comma-separated counter contract used by native and VM."""
+    if not hit:
+        return []
+    return list(dict.fromkeys(symbol.strip() for symbol in hit.split(",")
+                              if symbol.strip()))
+
+
 def evidence_verdict(args: argparse.Namespace, observation: Observation) -> tuple[int, str]:
     if observation.crash or observation.detached:
         return 1, "CRASH" if observation.crash else "PROCESS-EXITED"
@@ -255,10 +264,10 @@ def evidence_verdict(args: argparse.Namespace, observation: Observation) -> tupl
         verdict = ui_verdict(Path(args.ui_result))
         if verdict:
             return 2, verdict
-    if args.hit:
-        if args.hit not in observation.instrumented:
+    for symbol in hit_symbols(args.hit):
+        if symbol not in observation.instrumented:
             return 2, "NOT-INSTRUMENTED"
-        if observation.hits.get(args.hit, 0) < args.hit_min:
+        if observation.hits.get(symbol, 0) < args.hit_min:
             return 2, "NOT-EXERCISED"
     if args.expect:
         count = sum(bool(re.search(args.expect, line)) for line in
@@ -309,8 +318,9 @@ def smoke(args: argparse.Namespace) -> int:
             guard.on("message", observation.message)
             guard.load()
             counter = None
-            if args.hit:
-                counter = session.create_script(COUNT_JS.replace("%SYMS%", json.dumps([args.hit])))
+            symbols = hit_symbols(args.hit)
+            if symbols:
+                counter = session.create_script(COUNT_JS.replace("%SYMS%", json.dumps(symbols)))
                 counter.on("message", observation.message)
                 counter.load()
             observation.write(f"ARMED pid={pid} before resume")
@@ -361,7 +371,10 @@ def smoke(args: argparse.Namespace) -> int:
                     session.detach()
                 except Exception:
                     pass
-        suffix = f" ({args.hit} hit x{observation.hits.get(args.hit, 0)})" if args.hit else ""
+        symbols = hit_symbols(args.hit)
+        counts = "; ".join(f"{symbol} hit x{observation.hits.get(symbol, 0)}"
+                           for symbol in symbols)
+        suffix = f" ({counts})" if counts else ""
         output = f"RESULT: {verdict}{suffix}\n"
         if verdict == "CLEAN" and not (args.hit or args.expect):
             output += "No symbol or debug-log gate requested; this does not prove a specific recovered function ran.\n"
