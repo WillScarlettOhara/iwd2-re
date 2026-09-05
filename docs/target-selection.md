@@ -43,6 +43,11 @@ The queues have distinct costs:
   are aggregated because listing roughly 19,600 rows would make the audit less
   useful.
 
+Address-specific assembly reviews can also exclude library helpers whose export
+name is ambiguous. These retain their original names and include an evidence
+document in `classification_reasons`; see the [MFC list review](mfc-list-target-review.md).
+Such exclusions do not count as source recoveries.
+
 Caller scoring uses unique functions. `call_sites` remains in the output so a
 reviewer can see when one function contains many references to the same helper.
 After a recovery or a classification change, refresh the tracked snapshot:

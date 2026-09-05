@@ -10,6 +10,29 @@ import next_targets
 
 
 class TargetClassificationTest(unittest.TestCase):
+    def test_reviewed_library_helpers_override_game_caller_consensus(self):
+        callers = [0x410000, 0x410100]
+        for target, (name, _role) in next_targets.REVIEWED_MFC_LISTS.items():
+            with self.subTest(target=hex(target)):
+                rows = next_targets.score_all(
+                    {target: {"name": name, "num_callers": 2}}, set(callers),
+                    {target: callers}, {}, {}, {target: 64},
+                    {c: {"class": "CGameSprite"} for c in callers},
+                    {"CGameSprite"}, facts_loader=lambda _addr: {})
+                self.assertEqual(rows[0]["bucket"], "excluded")
+                self.assertEqual(rows[0]["ownership"], "mfc")
+                self.assertEqual(rows[0]["name"], name)
+                self.assertEqual(rows[0]["recovered_callers"], 2)
+                self.assertEqual(rows[0]["classification_reasons"][0]["code"],
+                                 "reviewed-mfc-list")
+
+    def test_library_review_is_address_and_export_name_specific(self):
+        self.assertIsNone(next_targets.reviewed_exclusion(0x500000, "Find"))
+        self.assertIsNone(next_targets.reviewed_exclusion(
+            0x727DC0, "CGameSprite::Find"))
+        self.assertIsNone(next_targets.reviewed_exclusion(
+            0x727720, "FUN_00727720"))
+
     def test_named_runtime_families_have_stable_reason_codes(self):
         cases = {
             "AfxGetThread": ("mfc", "mfc-symbol"),

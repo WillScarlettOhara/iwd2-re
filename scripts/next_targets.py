@@ -47,7 +47,7 @@ kinds of work:
             evidence. It still needs a naming pass first.
   Triage    code whose ownership is not established yet
   Support   likely inline/template/resource plumbing, held for a cheap audit
-  Excluded  named MFC/ATL, CRT, STL, or compiler code, with a reason code
+  Excluded  named or individually reviewed library code, with a reason code
   Complete  a `// TODO: Incomplete.` / `// PARTIAL:` site: a lie already in the
             tree, relevance guaranteed, but completing is not creating
 
@@ -131,6 +131,27 @@ SUPPORT_MIN_CALL_SITES = 40
 SUPPORT_MAX_DECOMPILED_LINES = 50
 CALLER_CLASS_MIN_FUNCTIONS = 2
 CALLER_CLASS_MIN_SHARE = 0.60
+
+# Address-specific reviews against the canonical IWD2.exe, not naming guesses
+# derived from the caller class. Keep export names intact for reproducibility.
+# Evidence: docs/mfc-list-target-review.md. A renamed export requires review.
+REVIEWED_MFC_LISTS = {
+    0x727BF0: ("FUN_00727bf0", "typed pointer-list constructor"),
+    0x727CD0: ("FUN_00727cd0", "MFC pointer-sized list AddTail"),
+    0x727D50: ("FUN_00727d50", "MFC pointer-sized list RemoveAt"),
+    0x727DC0: ("Find", "MFC pointer-sized list Find"),
+}
+
+
+def reviewed_exclusion(addr: int, name: str) -> tuple[str, str, list[dict]] | None:
+    review = REVIEWED_MFC_LISTS.get(addr)
+    if review is None or review[0] != name:
+        return None
+    return "mfc", "excluded", [{
+        "code": "reviewed-mfc-list",
+        "detail": review[1],
+        "evidence": "docs/mfc-list-target-review.md",
+    }]
 
 
 def as_addr(v) -> int | None:
@@ -440,6 +461,9 @@ def score_all(index, recovered, graph, holes, completion, sizes,
             name, placeholder=is_fun, named_class=named_cls,
             hole_class=hole_cls, caller_class=caller_cls,
             support_reason=support_reason, source_classes=source_classes)
+        reviewed = reviewed_exclusion(addr, name)
+        if reviewed is not None:
+            ownership, bucket, reasons = reviewed
 
         # Only paid for candidates that could plausibly rank; reading 18.5k
         # export files for the callee term would cost more than the term is worth.
@@ -619,7 +643,7 @@ def write_markdown(rows, stubs, recovered, index, path: Path, top: int) -> None:
     lines += fmt_table(support, min(top, 20))
     lines += [
         "",
-        f"## Excluded named libraries ({len(excluded)})",
+        f"## Excluded libraries, named or reviewed ({len(excluded)})",
         "",
         f"MFC/ATL, CRT, and STL symbols recognized by explicit rules "
         f"({st['funclets']:,} compiler funclets are aggregated above):",
@@ -735,7 +759,7 @@ def main(argv: list[str]) -> int:
             ("identify", "IDENTIFY (game-owned FUN_/sub_; name it first)"),
             ("triage", "TRIAGE (ownership unproven)"),
             ("support", "SUPPORT REVIEW (inline/template shape)"),
-            ("excluded", "EXCLUDED (named MFC/ATL/CRT/STL)")):
+            ("excluded", "EXCLUDED (named or reviewed libraries)")):
         sel = [r for r in rows if r["bucket"] == bucket]
         if not sel:
             continue
