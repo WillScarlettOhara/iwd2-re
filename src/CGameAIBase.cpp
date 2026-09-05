@@ -3166,6 +3166,17 @@ SHORT CGameAIBase::ForceSpellAction(CGameObject* target)
         // and deliver on arrival instead of at cast.  Fired directly after the loop.
         CProjectile* pProj = CProjectile::DecodeProjectile(pAbility->missileType, this, 0);
 
+        BYTE nSpellClass = 0;
+        DWORD nSpellSpecialization = 0;
+        BYTE nSpellLevel = 0;
+        BOOL bFoundSpell = pSprite->FindAvailableSpell(resRef, nSpellClass, nSpellSpecialization, nSpellLevel);
+        if (pProj != NULL) {
+            if (bFoundSpell) {
+                pProj->m_nSpellLevel = nSpellLevel;
+            }
+            pProj->m_casterResRef = resRef;
+        }
+
         for (LONG e = 0; e < static_cast<LONG>(pAbility->effectCount); ++e) {
             CGameEffect* pEffect = pSpell->BuildAbilityEffect(
                 nAbilityIndex, e, this, nClass, nSpec, nLevel);
@@ -3235,8 +3246,8 @@ SHORT CGameAIBase::ForceSpellAction(CGameObject* target)
         // arrival rather than at cast.  The original ALSO queues a broadcast
         // CMessageFireProjectile here, but its Run() skips on the casting owner and
         // only fires the visual on remote machines -- that MP replication is deferred
-        // with the rest of MP.  The caster-class stamp (proj +0x186 via FUN_00727720)
-        // for damage scaling is likewise still deferred.  Fire ignores nHeight.
+        // with the rest of MP. The spell-level stamp at +0x186 is set above.
+        // Fire ignores nHeight.
         if (pProj != NULL) {
             LONG nMissileTarget = (target != NULL)
                 ? target->m_id : CGameObjectArray::INVALID_INDEX;

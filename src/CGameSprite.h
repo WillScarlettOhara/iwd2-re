@@ -676,6 +676,7 @@ public:
     SHORT EquipMostDamagingMelee();
     const CAIObjectType& GetLiveAIType();
     SHORT GetCasterLevel(CSpell* pSpell, BYTE nClass, DWORD nSpecialization);
+    BOOL FindAvailableSpell(const CResRef& resRef, BYTE& nClass, DWORD& nSpecialization, BYTE& nSpellLevel); // #guess: descriptive name
     BOOL CheckCastingRange(CSpell* pSpell, const CPoint& targetPos, BYTE nClass, DWORD nSpecialization);
     SHORT SavePositionToBaseStats();
     SHORT SetStealthState(int a1);

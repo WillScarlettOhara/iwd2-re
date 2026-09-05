@@ -21215,6 +21215,56 @@ BOOLEAN CGameSprite::CanSaveGame(STRREF& strError)
     return FALSE;
 }
 
+// 0x727720
+BOOL CGameSprite::FindAvailableSpell(const CResRef& resRef, BYTE& nClass, DWORD& nSpecialization, BYTE& nSpellLevel)
+{
+    UINT nID;
+    if (!g_pBaldurChitin->GetObjectGame()->m_spells.Find(resRef, nID)) {
+        return FALSE;
+    }
+
+    UINT nFirstLevel = 0;
+    UINT nEndLevel = CSPELLLIST_MAX_LEVELS;
+    if (nSpellLevel > 0 && nSpellLevel <= CSPELLLIST_MAX_LEVELS) {
+        nFirstLevel = nSpellLevel - 1;
+        nEndLevel = nSpellLevel;
+    }
+
+    if (nSpecialization == 0) {
+        UINT nFirstClass = 0;
+        if (nClass > 0 && nClass <= 11) {
+            nFirstClass = g_pBaldurChitin->GetObjectGame()->GetSpellcasterIndex(nClass);
+        }
+        for (UINT nClassIndex = nFirstClass; nClassIndex < CSPELLLIST_NUM_CLASSES; nClassIndex++) {
+            CGameSpriteGroupedSpellList* pGrouped = m_spells.Get(nClassIndex);
+            UINT nLimit = min(nEndLevel, pGrouped->m_nHighestLevel);
+            for (UINT nLevel = nFirstLevel; nLevel < nLimit; nLevel++) {
+                CGameSpriteSpellList* pList = pGrouped->GetSpellsAtLevel(nLevel);
+                UINT nIndex;
+                if (pList->Find(nID, nIndex) && pList->Get(nIndex)->m_nCurrent > 0) {
+                    nClass = g_pBaldurChitin->GetObjectGame()->GetSpellcasterClass(nClassIndex);
+                    nSpellLevel = static_cast<BYTE>(nLevel + 1);
+                    nSpecialization = 0;
+                    return TRUE;
+                }
+            }
+        }
+    }
+
+    UINT nLimit = min(nEndLevel, m_domainSpells.m_nHighestLevel);
+    for (UINT nLevel = nFirstLevel; nLevel < nLimit; nLevel++) {
+        CGameSpriteSpellList* pList = m_domainSpells.GetSpellsAtLevel(nLevel);
+        UINT nIndex;
+        if (pList->Find(nID, nIndex) && pList->Get(nIndex)->m_nCurrent > 0) {
+            nClass = CAIOBJECTTYPE_C_CLERIC;
+            nSpellLevel = static_cast<BYTE>(nLevel + 1);
+            nSpecialization = m_baseStats.m_specialization;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 // 0x75E940
 SHORT CGameSprite::GetCasterLevel(CSpell* pSpell, BYTE nClass, DWORD nSpecialization)
 {
