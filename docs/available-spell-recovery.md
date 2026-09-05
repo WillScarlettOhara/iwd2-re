@@ -65,5 +65,5 @@ harness counts the driving AI callback and independently gates lookup return
 values. It does not report injected calls as ordinary hit-counter observations.
 Evidence and pre-test save/config backups: `work/available-spell-20260905/`.
 
-Next related task: examine the `ForceSpellPointAction` caller's projectile
-metadata path, reusing this lookup and checking its own binary call site.
+The related `ForceSpellPointAction` metadata path is now repaired and exercised;
+see [its evidence and remaining dialogue blocker](force-spell-point-recovery.md).

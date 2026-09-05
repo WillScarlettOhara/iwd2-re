@@ -3423,6 +3423,17 @@ SHORT CGameAIBase::ForceSpellPointAction()
         // spells -- Fireball: damage targetType-2 + missile 38 -- never fired.
         CProjectile* pProj = CProjectile::DecodeProjectile(pAbility->missileType, this, 0);
 
+        BYTE nSpellClass = 0;
+        DWORD nSpellSpecialization = 0;
+        BYTE nSpellLevel = 0;
+        BOOL bFoundSpell = pSprite->FindAvailableSpell(resRef, nSpellClass, nSpellSpecialization, nSpellLevel);
+        if (pProj != NULL) {
+            if (bFoundSpell) {
+                pProj->m_nSpellLevel = nSpellLevel;
+            }
+            pProj->m_casterResRef = resRef;
+        }
+
         for (LONG e = 0; e < static_cast<LONG>(pAbility->effectCount); ++e) {
             CGameEffect* pEffect = pSpell->BuildAbilityEffect(
                 nAbilityIndex, e, this, nClass, nSpec, nLevel);
@@ -3483,9 +3494,8 @@ SHORT CGameAIBase::ForceSpellPointAction()
         // target object, so the missile homes on the destination point with an
         // invalid target id.  The original ALSO queues a broadcast
         // CMessageFireProjectile (its Run() only fires the visual on remote
-        // machines) and stamps the caster-class scaling byte (proj +0x186 via
-        // FUN_00727720); both are deferred with the rest of MP.  Fire ignores
-        // nHeight.
+        // machines), deferred with the rest of MP. The spell level and resref
+        // are stamped above (binary 0x46214E-0x46217B). Fire ignores nHeight.
         if (pProj != NULL) {
             pProj->Fire(pSprite->m_pArea, m_id, CGameObjectArray::INVALID_INDEX,
                 targetPos, 0x1E, 0);

@@ -1,0 +1,16 @@
+# Native --new-game --party 1; engine action injection, not casting UI coverage.
+# First available party caster uses SPPR103 at their own position.
+# Require ForceSpellPointAction hit AND an in-handler successful lookup.
+waitgo 3000
+wait chapter 3000
+key 13
+wait world 3000
+sleep 30
+# Isolate casting from the incomplete opening dialogue. This does not test
+# normal dialogue completion or the casting UI.
+enddialog
+sleep 30
+resume
+forcepoint SPPR103
+sleep 300
+expect screen world

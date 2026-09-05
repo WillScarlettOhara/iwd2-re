@@ -48,6 +48,11 @@
 //   expect controls <panel> <min>
 //   expect control <panel> <control>
 //   sleep <ticks>
+//   resume                      unpause the world if paused
+//   enddialog                   end the current dialogue for isolated engine tests
+//   forcepoint <resref>          queue ForceSpellPoint at the first party
+//                                caster's own position (requires available spell).
+//                                Engine-action test, not a casting UI click.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -57,11 +62,13 @@
 #include "mfc.h"
 
 #include "BalDataTypes.h"
+#include "CAIAction.h"
 #include "CBaldurChitin.h"
 #include "CBaldurEngine.h"
 #include "CGameArea.h"
 #include "CGameObject.h"
 #include "CGameObjectArray.h"
+#include "CGameSprite.h"
 #include "CInfGame.h"
 #include "CInfinity.h"
 #include "CScreenWorld.h"
@@ -571,6 +578,78 @@ void Tick(CWarp* pActiveEngine)
 
     const Step& step = s_steps[s_pc];
     const int nStep = s_pc + 1;
+
+    if (strcmp(step.op, "enddialog") == 0) {
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld) {
+            Fail(nStep, "enddialog", "requires world");
+            return;
+        }
+        g_pBaldurChitin->m_pEngineWorld->EndDialog(TRUE, TRUE);
+        Emit("{\"step\":%d,\"op\":\"enddialog\",\"status\":\"ok\"}", nStep);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "resume") == 0) {
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld) {
+            Fail(nStep, "resume", "requires world");
+            return;
+        }
+        BOOL wasPaused = g_pBaldurChitin->m_pEngineWorld->m_bPaused;
+        if (wasPaused) {
+            g_pBaldurChitin->m_pEngineWorld->TogglePauseGame(0, 1, 0);
+        }
+        if (g_pBaldurChitin->m_pEngineWorld->m_bPaused) {
+            Fail(nStep, "resume", "world remains paused");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"resume\",\"wasPaused\":%d,\"status\":\"ok\"}", nStep, wasPaused);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "forcepoint") == 0) {
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || step.s[0][0] == '\0' || strlen(step.s[0]) > 8) {
+            Fail(nStep, "forcepoint", "requires world and a resref of 1-8 characters");
+            return;
+        }
+        CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+        CResRef resRef(step.s[0]);
+        for (SHORT nSlot = 0; nSlot < pGame->GetNumCharacters(); nSlot++) {
+            LONG id = pGame->GetFixedOrderCharacterId(nSlot);
+            CGameObject* pObject = NULL;
+            BYTE rc = pGame->GetObjectArray()->GetDeny(id,
+                CGameObjectArray::THREAD_ASYNCH, &pObject, INFINITE);
+            if (rc != CGameObjectArray::SUCCESS) {
+                continue;
+            }
+            BOOL queued = FALSE;
+            if (pObject != NULL && pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
+                CGameSprite* pSprite = static_cast<CGameSprite*>(pObject);
+                BYTE nClass = 0;
+                DWORD nSpecialization = 0;
+                BYTE nLevel = 0;
+                if (pSprite->FindAvailableSpell(resRef, nClass, nSpecialization, nLevel)) {
+                    CAIAction action;
+                    action.m_actionID = CAIAction::FORCESPELLPOINT;
+                    action.m_dest = pSprite->GetPos();
+                    action.m_specificID = 1;
+                    action.SetString1(CString(step.s[0]));
+                    pSprite->SetCurrAction(action);
+                    queued = TRUE;
+                }
+            }
+            pGame->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            if (queued) {
+                Emit("{\"step\":%d,\"op\":\"forcepoint\",\"slot\":%d,\"status\":\"ok\"}", nStep, nSlot);
+                s_pc++;
+                return;
+            }
+        }
+        Fail(nStep, "forcepoint", "no available party caster");
+        return;
+    }
 
     if (strcmp(step.op, "dump") == 0) {
         DumpTree(pActiveEngine, nStep);
