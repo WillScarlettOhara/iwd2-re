@@ -12983,7 +12983,7 @@ void CGameSprite::ProcessAI()
     // recovered path below keeps the exact paused action loop used by chapter
     // text before delegating active script selection to the recovered
     // CGameAIBase implementation until those branches are ported.
-    CGameAIBase::ProcessAI();
+    CGameAIBase::ProcessScripts();
 
     // 0x72DA32: script timers tick every 16th AI frame, staggered per id, so
     // TimerActive() expires and the 00AMVW wander loop repaces (2-5s).

@@ -83,3 +83,7 @@ This campaign validates the batch harness, not full parity of those functions.
 Evidence: `.arc/2026-09-05T02-33-20-batch/`. Investigate those slots in a separate
 game-code recovery arc. The trace comparator is covered by synthetic regression
 tests; no new matched original/reconstruction capture pair was produced here.
+
+The three slot discrepancies were subsequently resolved in the
+[AI vtable recovery](vtable-ai-recovery.md), with a successful new-game/reload
+scenario. The original failed report remains useful evidence of detection.

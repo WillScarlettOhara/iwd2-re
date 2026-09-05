@@ -202,29 +202,6 @@ const BYTE* CGameAIBase::GetTerrainTable()
     return CGameObject::DEFAULT_TERRAIN_TABLE;
 }
 
-// 0x44CBC0
-// HACK: the binary inherits CGameObject::CanSaveGame here (slot 0x28 == 0x44CBC0,
-// which sets strError=16502 and returns FALSE). But CGameDoor/CGameContainer/
-// HACK: CGameAIBase does not override CanSaveGame at all -- its vtable slot
-// 0x0028 holds 0x44CBC0, i.e. the inherited CGameObject::CanSaveGame
-// (strError = 16502, return FALSE). We return TRUE instead, because
-// CGameArea::CanSaveGame walks the area's vert-sort lists and blocks the save
-// if ANY object answers FALSE, so a faithful FALSE here blocks all saving.
-// -- replaces 0x44CBC0
-//
-// Blocker, narrowed 2026-07-31: of the seven CGameAIBase subclasses, five
-// override slot 0x0028 to 0x47C830 (strError = -1, return TRUE) and
-// CGameSprite has its own at 0x75E890. CGameContainer, CGameDoor and
-// CGameTrigger were the three still missing and are now declared, so the only
-// subclass left inheriting the FALSE is CGameTiledObject. Its vtable
-// (0x84C700) resolves from a single anchor, which is too weak to bet saving
-// on -- confirm that table, then delete this override and let the base answer.
-BOOLEAN CGameAIBase::CanSaveGame(STRREF& strError)
-{
-    strError = -1;
-    return TRUE;
-}
-
 // 0x44D120
 BOOLEAN CGameAIBase::CompressTime(DWORD deltaTime)
 {
@@ -1680,8 +1657,90 @@ void CGameAIBase::InsertResponse(CAIResponse& response, BOOL checkCurrentRespons
     }
 }
 
-// 0x45CA10
+// 0x45C730
 void CGameAIBase::ProcessAI()
+{
+    if (!InControl()) {
+        return;
+    }
+
+    if (m_curAction.GetActionID() == CAIAction::NO_ACTION) {
+        if (!m_queuedActions.IsEmpty()) {
+            SetCurrAction(GetNextAction(m_aiAction));
+            m_interrupt = FALSE;
+        }
+        if (m_curAction.GetActionID() == CAIAction::NO_ACTION) {
+            m_inCutScene = FALSE;
+        }
+    }
+    m_randValue = rand() % 0x7FFF;
+
+    if (!g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_active && !m_firstCall) {
+        if (m_curAction.GetActionID() == CAIAction::NO_ACTION) {
+            SetCurrAction(GetNextAction(m_aiAction));
+            m_interrupt = FALSE;
+        }
+        while (g_pBaldurChitin->GetObjectGame()->GetRuleTables().m_lInstantActions.Find(m_curAction.GetActionID()) != NULL) {
+            if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
+                && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA) {
+                break;
+            }
+            DoAction();
+        }
+        return;
+    }
+
+    field_44A++;
+    if (((field_44A ^ m_id) & 0xF) == 0) {
+        CheckTimers(1);
+    }
+    if (((field_44A ^ m_id) & 0xF) == 0 || m_firstCall || m_forceActionPick) {
+        field_54C++;
+        m_firstCall = FALSE;
+        m_forceActionPick = FALSE;
+        if (m_curAction.GetActionID() != CAIAction::NO_ACTION
+            && m_pendingTriggers.IsEmpty() && field_550 < 120 && field_552 <= 0) {
+            field_550++;
+        } else {
+            if (!m_pendingTriggers.IsEmpty()) {
+                field_552 = 5;
+            }
+            ProcessScripts();
+            if (field_552 > 0) {
+                field_552--;
+            }
+            field_550 = 0;
+        }
+    }
+
+    if (m_curAction.GetActionID() == CAIAction::NO_ACTION) {
+        SetCurrAction(GetNextAction(m_aiAction));
+        m_interrupt = FALSE;
+    }
+    if (m_posVertList != NULL) {
+        do {
+            DoAction();
+        } while (g_pBaldurChitin->GetObjectGame()->GetRuleTables().m_lInstantActions.Find(m_curAction.GetActionID()) != NULL
+            && !(g_pChitin->cNetwork.GetSessionOpen() == TRUE
+                && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA));
+    }
+}
+
+// 0x45D050
+BOOL CGameAIBase::QuickDecode(CAITrigger& trigger, CGameSprite*& sprite)
+{
+    trigger.m_triggerCause.Decode(this);
+    sprite = static_cast<CGameSprite*>(trigger.m_triggerCause.GetObjectWithType(this, TYPE_SPRITE, FALSE));
+    if (sprite != NULL && sprite->GetAIType().Equal(CAIObjectType::NOT_SPRITE)) {
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(sprite->GetId(),
+            CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        sprite = NULL;
+    }
+    return FALSE;
+}
+
+// 0x45CA10
+void CGameAIBase::ProcessScripts()
 {
     // TODO: 0x57 action sentinel meaning not yet identified.
 
@@ -1689,31 +1748,6 @@ void CGameAIBase::ProcessAI()
         return;
     }
     if (m_nLastActionReturn == 0) {
-        return;
-    }
-
-    // TODO INCOMPLETE: the binary drives CGameAIArea queued actions outside the
-    // recovered ProcessAI body. Until that caller is recovered, drain the active
-    // area response before allowing a new script response to interrupt it.
-    BOOL bAreaActionFallback = m_objectType == CGameObject::TYPE_AIBASE;
-    if (bAreaActionFallback
-        && (m_curAction.m_actionID != CAIAction::NO_ACTION || !m_queuedActions.IsEmpty())) {
-        if (m_curAction.m_actionID == CAIAction::NO_ACTION) {
-            CAIAction action;
-            SetCurrAction(GetNextAction(action));
-            ResetCurrResponse();
-        }
-
-        BOOL bCanDoAction = m_curAction.m_actionID != CAIAction::NO_ACTION;
-        if (bCanDoAction && !g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_active) {
-            bCanDoAction = g_pBaldurChitin->GetObjectGame()
-                               ->GetRuleTables()
-                               .m_lInstantActions.Find(m_curAction.GetActionID()) != NULL;
-        }
-
-        if (bCanDoAction) {
-            DoAction();
-        }
         return;
     }
 
@@ -1811,22 +1845,7 @@ void CGameAIBase::ProcessAI()
         delete found;
     }
 
-    if (bAreaActionFallback && m_curAction.m_actionID == CAIAction::NO_ACTION && !m_queuedActions.IsEmpty()) {
-        CAIAction action;
-        SetCurrAction(GetNextAction(action));
-        ResetCurrResponse();
-    }
 
-    BOOL bCanDoAreaAction = bAreaActionFallback && m_curAction.m_actionID != CAIAction::NO_ACTION;
-    if (bCanDoAreaAction && !g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_active) {
-        bCanDoAreaAction = g_pBaldurChitin->GetObjectGame()
-                               ->GetRuleTables()
-                               .m_lInstantActions.Find(m_curAction.GetActionID()) != NULL;
-    }
-
-    if (bCanDoAreaAction) {
-        DoAction();
-    }
 }
 
 // 0x45D130
