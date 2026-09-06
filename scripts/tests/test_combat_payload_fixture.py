@@ -24,7 +24,7 @@ class CombatPayloadFixtureTest(unittest.TestCase):
         other = self.override / "OTHER.ITM"
         other.write_bytes(b"unrelated")
         self.assertEqual(self.run_fixture("install").returncode, 0)
-        self.assertEqual(len(list(self.override.glob("ZRC*.ITM"))), 7)
+        self.assertEqual(len(list(self.override.glob("ZRC*.ITM"))), 10)
         self.assertEqual(self.run_fixture("remove").returncode, 0)
         self.assertEqual(other.read_bytes(), b"unrelated")
         self.assertEqual(list(self.override.glob("ZRC*.ITM")), [])
@@ -42,7 +42,7 @@ class CombatPayloadFixtureTest(unittest.TestCase):
         edited = self.override / "ZRCBOLT.ITM"
         edited.write_bytes(b"edited")
         self.assertNotEqual(self.run_fixture("remove").returncode, 0)
-        self.assertEqual(len(list(self.override.iterdir())), 7)
+        self.assertEqual(len(list(self.override.iterdir())), 10)
         self.assertEqual(edited.read_bytes(), b"edited")
 
 

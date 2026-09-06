@@ -2817,7 +2817,7 @@ void CScreenCharacter::UpdateGeneralInformation(CUIControlTextDisplay* pText, CG
     }
 
     if (pSprite->HasClassLevel(CAIOBJECTTYPE_C_MONK)) {
-        sValue.Format("%+d", pSprite->GetAttacksPerRound());
+        sValue.Format(_T("%+d"), pSprite->GetMonkACBonus());
         tlk.SetToken(TOKEN_NUMBER, sValue);
 
         UpdateText(pText,
@@ -3467,7 +3467,7 @@ void CScreenCharacter::UpdateEquipmentInformation(CUIControlTextDisplay* pText, 
 
     if (pSprite->HasClassLevel(CAIOBJECTTYPE_C_MONK)) {
         CString sValue;
-        sValue.Format("%+d", pSprite->GetAttacksPerRound());
+        sValue.Format(_T("%+d"), pSprite->GetMonkACBonus());
         g_pBaldurChitin->GetTlkTable().SetToken(TOKEN_NUMBER, sValue);
         UpdateText(pText, "%s", (LPCSTR)FetchString(39431)); // "Monk Wisdom Bonus: <number> to AC"
     }

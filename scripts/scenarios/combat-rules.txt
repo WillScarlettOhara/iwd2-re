@@ -1,0 +1,6 @@
+# Install combat_payload_fixture.py first. No damage, no saving.
+waitgo
+wait world
+enddialog
+combatrules
+sleep 30

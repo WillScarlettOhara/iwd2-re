@@ -56,6 +56,8 @@
 //   weaponpayload <item> [launcher]  ZRC fixtures only; verify weapon/launcher
 //                                effect provenance, fire at portrait 1, check HP.
 //                                Bypasses Swing and attack/base-damage rolls.
+//   combatrules                 assert recovered AC/dual-wield/range calculations;
+//                                transient state restored in the same tick.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -587,6 +589,163 @@ void Tick(CWarp* pActiveEngine)
 
     const Step& step = s_steps[s_pc];
     const int nStep = s_pc + 1;
+
+    if (strcmp(step.op, "combatrules") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2) {
+            Fail(nStep, "combatrules", "requires world and two party members");
+            return;
+        }
+        CGameObjectArray* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0);
+        LONG targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* sourceObject = NULL;
+        CGameObject* targetObject = NULL;
+        if (objects->GetDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, &sourceObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, "combatrules", "source unavailable");
+            return;
+        }
+        if (objects->GetDeny(targetId, CGameObjectArray::THREAD_ASYNCH, &targetObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, "combatrules", "target unavailable");
+            return;
+        }
+        CGameSprite* source = static_cast<CGameSprite*>(sourceObject);
+        CGameSprite* target = static_cast<CGameSprite*>(targetObject);
+        auto savedBase = source->m_baseStats;
+        auto savedTargetBase = target->m_baseStats;
+        CPoint sourcePos = source->m_pos, targetPos = target->m_pos;
+        DWORD sourceState = source->m_derivedStats.m_generalState;
+        DWORD targetState = target->m_derivedStats.m_generalState;
+        SHORT dex = source->m_derivedStats.m_nDEX, wis = source->m_derivedStats.m_nWIS;
+        SHORT natural = source->m_derivedStats.m_nACNaturalBonus;
+        SHORT deflection = source->m_derivedStats.m_nACDeflectionBonus;
+        SHORT dodge = source->m_derivedStats.m_nACDodgeBonus;
+        auto ranger = source->m_derivedStats.m_nClassLevels[CAIOBJECTTYPE_C_RANGER - 1];
+        BYTE weaponSet = source->m_nWeaponSet, selected = source->m_equipment.m_selectedWeapon;
+        CItem* armor = source->m_equipment.m_items[1];
+        CItem* mainhand = source->m_equipment.m_items[43];
+        CItem* offhand = source->m_equipment.m_items[44];
+        CItem sword(CResRef("ZRCMELEE"), 1, 0, 0, 0, 0);
+        CItem dagger(CResRef("ZRCDAGGR"), 1, 0, 0, 0, 0);
+        CItem plate(CResRef("ZRCARMOR"), 1, 0, 0, 0, 0);
+        CItem shield(CResRef("ZRCSHLD"), 1, 0, 0, 0, 0);
+        BOOL valid = sword.GetItemType() == 20 && dagger.GetItemType() == 16
+            && plate.GetItemType() == 63 && shield.GetItemType() == 41;
+        INT checks = 0;
+        auto check = [&](const char* name, INT actual, INT expected) {
+            Emit("{\"step\":%d,\"op\":\"combatrules-case\",\"case\":\"%s\",\"actual\":%d,\"expected\":%d}",
+                nStep, name, actual, expected);
+            valid = valid && actual == expected;
+            ++checks;
+        };
+        if (valid) {
+            memset(source->m_baseStats.m_feats, 0, sizeof(source->m_baseStats.m_feats));
+            memset(target->m_baseStats.m_feats, 0, sizeof(target->m_baseStats.m_feats));
+            source->m_baseStats.m_monkLevel = 0;
+            source->m_derivedStats.m_nClassLevels[CAIOBJECTTYPE_C_RANGER - 1] = 0;
+            source->m_derivedStats.m_generalState = target->m_derivedStats.m_generalState = 0;
+            source->m_derivedStats.m_nDEX = 18;
+            source->m_derivedStats.m_nWIS = 16;
+            source->m_derivedStats.m_nACNaturalBonus = 2;
+            source->m_derivedStats.m_nACDeflectionBonus = 3;
+            source->m_derivedStats.m_nACDodgeBonus = 1;
+            source->m_nWeaponSet = 0;
+            source->m_equipment.m_selectedWeapon = 43;
+            source->m_equipment.m_items[1] = NULL;
+            source->m_equipment.m_items[43] = &sword;
+            source->m_equipment.m_items[44] = NULL;
+            check("touch-unarmored", source->GetTouchAC(), 20);
+            source->m_equipment.m_items[1] = &plate;
+            check("touch-plate-dex-cap", source->GetTouchAC(), 16);
+            source->m_equipment.m_items[1] = NULL;
+            source->m_derivedStats.m_generalState = 0x40000;
+            check("touch-blind", source->GetTouchAC(), 16);
+            source->m_baseStats.m_feats[0] |= 1 << CGAMESPRITE_FEAT_BLIND_FIGHT;
+            check("touch-blind-fight", source->GetTouchAC(), 20);
+            source->m_derivedStats.m_nDEX = 8;
+            check("touch-negative-dex", source->GetTouchAC(), 15);
+            source->m_derivedStats.m_nDEX = 18;
+            source->m_derivedStats.m_generalState = 0;
+            source->m_baseStats.m_monkLevel = 1;
+            check("monk-wisdom", source->GetMonkACBonus(), 3);
+            check("touch-monk", source->GetTouchAC(), 23);
+            source->m_equipment.m_items[44] = &shield;
+            check("monk-shield", source->GetMonkACBonus(), 0);
+            check("shield-is-not-dual-wield", source->GetDualWieldPenalty(1), 0);
+            source->m_equipment.m_items[44] = NULL;
+            check("no-offhand", source->GetDualWieldPenalty(0), 0);
+            source->m_equipment.m_items[44] = &sword;
+            check("dual-main", source->GetDualWieldPenalty(0), -6);
+            check("dual-off", source->GetDualWieldPenalty(1), -10);
+            source->m_equipment.m_items[44] = &dagger;
+            check("dual-light", source->GetDualWieldPenalty(1), -8);
+            source->m_baseStats.m_feats[0] |= 1 << CGAMESPRITE_FEAT_AMBIDEXTERITY;
+            source->m_baseStats.m_feats[2] |= 1 << (CGAMESPRITE_FEAT_TWO_WEAPON_FIGHTING - 64);
+            check("dual-feats-main", source->GetDualWieldPenalty(0), -2);
+            check("dual-feats-off", source->GetDualWieldPenalty(1), -2);
+            memset(source->m_baseStats.m_feats, 0, sizeof(source->m_baseStats.m_feats));
+            source->m_derivedStats.m_nClassLevels[CAIOBJECTTYPE_C_RANGER - 1] = 1;
+            check("dual-ranger", source->GetDualWieldPenalty(1), -2);
+            source->m_equipment.m_selectedWeapon = 42;
+            check("dual-selection-42", source->GetDualWieldPenalty(1), 0);
+
+            ITEM_ABILITY ability = {};
+            ability.type = 1;
+            INT baseline = source->m_derivedStats.m_cToHitBonusList.GetBonus(target->GetAIType());
+            check("situational-melee", source->GetSituationalAttackBonus(target, &ability), baseline);
+            target->m_derivedStats.m_generalState = 8;
+            check("situational-stunned", source->GetSituationalAttackBonus(target, &ability), baseline + 2);
+            target->m_derivedStats.m_generalState = 0;
+            source->m_derivedStats.m_generalState = 0x10;
+            check("situational-invisible-dword", source->GetSituationalAttackBonus(target, &ability), baseline - 327678);
+            target->m_baseStats.m_feats[0] |= 1 << CGAMESPRITE_FEAT_BLIND_FIGHT;
+            check("situational-target-blind-fight", source->GetSituationalAttackBonus(target, &ability), baseline);
+            source->m_derivedStats.m_generalState = 0;
+            source->m_pos = CPoint(0, 0);
+            // Far from each threshold, independent of the actors' personal space.
+            ability.type = 2;
+            target->m_pos = CPoint(0, 0);
+            check("ranged-close-word", source->GetSituationalAttackBonus(target, &ability), baseline + 65528);
+            source->m_baseStats.m_feats[1] |= 1 << (CGAMESPRITE_FEAT_PRECISE_SHOT - 32);
+            check("ranged-precise-shot", source->GetSituationalAttackBonus(target, &ability), baseline + 65532);
+            source->m_derivedStats.m_generalState = 0x10;
+            check("ranged-bypasses-blind-fight", source->GetSituationalAttackBonus(target, &ability), baseline - 262146);
+            source->m_derivedStats.m_generalState = 0;
+            target->m_pos = CPoint(16 * 20, 0);
+            check("ranged-normal", source->GetSituationalAttackBonus(target, &ability), baseline);
+            target->m_pos = CPoint(16 * 50, 0);
+            check("ranged-medium-word", source->GetSituationalAttackBonus(target, &ability), baseline + 65534);
+            target->m_pos = CPoint(16 * 90, 0);
+            check("ranged-long-word", source->GetSituationalAttackBonus(target, &ability), baseline + 65531);
+        }
+        source->m_baseStats = savedBase;
+        target->m_baseStats = savedTargetBase;
+        source->m_pos = sourcePos;
+        target->m_pos = targetPos;
+        source->m_derivedStats.m_generalState = sourceState;
+        target->m_derivedStats.m_generalState = targetState;
+        source->m_derivedStats.m_nDEX = dex;
+        source->m_derivedStats.m_nWIS = wis;
+        source->m_derivedStats.m_nACNaturalBonus = natural;
+        source->m_derivedStats.m_nACDeflectionBonus = deflection;
+        source->m_derivedStats.m_nACDodgeBonus = dodge;
+        source->m_derivedStats.m_nClassLevels[CAIOBJECTTYPE_C_RANGER - 1] = ranger;
+        source->m_nWeaponSet = weaponSet;
+        source->m_equipment.m_selectedWeapon = selected;
+        source->m_equipment.m_items[1] = armor;
+        source->m_equipment.m_items[43] = mainhand;
+        source->m_equipment.m_items[44] = offhand;
+        objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            Fail(nStep, "combatrules", "missing fixtures or numeric mismatch (state restored)");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"combatrules\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
 
     if (strcmp(step.op, "weaponpayload") == 0) {
         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();

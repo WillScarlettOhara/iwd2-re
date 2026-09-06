@@ -608,7 +608,10 @@ public:
     LONG GetLevel();
     void SetHideState(BOOLEAN bInvisible, BOOLEAN bLeaveStore);
     INT GetAC();
-    INT GetAttacksPerRound();
+    INT GetMonkACBonus();
+    INT GetTouchAC();
+    SHORT GetDualWieldPenalty(INT nOffhand);
+    INT GetSituationalAttackBonus(CGameSprite* pTarget, const ITEM_ABILITY* pAbility);
     void sub_72DE60();
     void sub_71E760(CDerivedStats& DStats, int a2);
     void CheckModal();

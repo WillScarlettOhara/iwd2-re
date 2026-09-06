@@ -12930,11 +12930,41 @@ INT CGameSprite::GetAC()
         + nShieldBonus
         + m_derivedStats.m_nACDodgeBonus
         + nDexBonus
-        + GetAttacksPerRound();
+        + GetMonkACBonus();
+}
+
+// 0x723DB0
+INT CGameSprite::GetTouchAC()
+{
+    INT nBonus = m_derivedStats.m_nACDeflectionBonus
+        + m_derivedStats.m_nACNaturalBonus
+        + m_derivedStats.m_nACDodgeBonus;
+    INT nDexBonus = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetAbilityScoreModifier(m_derivedStats.m_nDEX);
+    CItem* pArmor = m_equipment.m_items[CGameSpriteEquipment::SLOT_ARMOR];
+    if (pArmor != NULL) {
+        INT nMaxDexBonus = nDexBonus;
+        switch (pArmor->GetItemType()) {
+        case 60: nMaxDexBonus = 6; break;
+        case 61: nMaxDexBonus = 5; break;
+        case 62: nMaxDexBonus = 2; break;
+        case 63:
+        case 64: nMaxDexBonus = 0; break;
+        case 65: nMaxDexBonus = 1; break;
+        case 66: nMaxDexBonus = 4; break;
+        case 68: nMaxDexBonus = 3; break;
+        }
+        nDexBonus = min(nDexBonus, nMaxDexBonus);
+    }
+    if ((m_derivedStats.m_generalState & STATE_BLIND) != 0
+        && nDexBonus > 0
+        && !HasFeat(CGAMESPRITE_FEAT_BLIND_FIGHT)) {
+        nDexBonus = 0;
+    }
+    return 10 + nBonus + nDexBonus + GetMonkACBonus();
 }
 
 // 0x723F60
-INT CGameSprite::GetAttacksPerRound()
+INT CGameSprite::GetMonkACBonus()
 {
     if (GetClassLevel(CAIOBJECTTYPE_C_MONK) == 0) {
         return 0;
@@ -12958,6 +12988,95 @@ INT CGameSprite::GetAttacksPerRound()
     }
 
     return nWisBonus;
+}
+
+// 0x73D080
+SHORT CGameSprite::GetDualWieldPenalty(INT nOffhand)
+{
+    if (m_equipment.m_selectedWeapon == 42) {
+        return 0;
+    }
+    INT nWeaponSlot = CGameSpriteEquipment::SLOT_WEAPON + 2 * m_nWeaponSet;
+    CItem* pOffhand = m_equipment.m_items[nWeaponSlot + 1];
+    if (m_equipment.m_items[nWeaponSlot] == NULL || pOffhand == NULL) {
+        return 0;
+    }
+    if (pOffhand->GetItemType() == 47
+        || pOffhand->GetItemType() == 53
+        || pOffhand->GetItemType() == 49
+        || pOffhand->GetItemType() == 41) {
+        return 0;
+    }
+
+    SHORT nPenalty = nOffhand == 1 ? -10 : -6;
+    BOOL bRanger = m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_RANGER) >= 1
+        && !HasArmorType(3)
+        && !HasArmorType(2);
+    if ((bRanger || HasFeat(CGAMESPRITE_FEAT_AMBIDEXTERITY) == TRUE) && nOffhand == 1) {
+        nPenalty += 4;
+    }
+    if (bRanger || HasFeat(CGAMESPRITE_FEAT_TWO_WEAPON_FIGHTING) == TRUE) {
+        nPenalty += 2;
+    }
+    WORD nType = pOffhand->GetItemType();
+    if (nType == 16 || nType == 19) {
+        nPenalty += 2;
+    }
+    return nPenalty;
+}
+
+// 0x73D1B0
+INT CGameSprite::GetSituationalAttackBonus(CGameSprite* pTarget, const ITEM_ABILITY* pAbility)
+{
+    UTIL_ASSERT(pTarget != NULL);
+    UTIL_ASSERT(pAbility != NULL);
+
+    INT nBonus = 0;
+    if (static_cast<BYTE>(pAbility->type) == 2) {
+        CPoint targetPos = pTarget->GetPos();
+        CPoint sourcePos = GetPos();
+        INT dx = sourcePos.x / CPathSearch::GRID_SQUARE_SIZEX - targetPos.x / CPathSearch::GRID_SQUARE_SIZEX;
+        INT dy = sourcePos.y / CPathSearch::GRID_SQUARE_SIZEY - targetPos.y / CPathSearch::GRID_SQUARE_SIZEY;
+        BYTE nSpace = static_cast<BYTE>(((m_animation.GetPersonalSpace() - 1) >> 1)
+            + ((pTarget->m_animation.GetPersonalSpace() - 1) >> 1) - 1);
+        INT nDistanceSquared = dx * dx + dy * dy - nSpace;
+        // The original writes only the low word of an initially zero DWORD.
+        if (nDistanceSquared < 3 * 3) {
+            nBonus = static_cast<WORD>(-8);
+            if (HasFeat(CGAMESPRITE_FEAT_PRECISE_SHOT)) {
+                nBonus += 4;
+            }
+        } else if (nDistanceSquared > 64 * 64) {
+            nBonus = static_cast<WORD>(-5);
+        } else if (nDistanceSquared > 32 * 32) {
+            nBonus = static_cast<WORD>(-2);
+        }
+    }
+    if ((m_derivedStats.m_generalState & (0x10 | 0x400000)) != 0
+        && (!pTarget->HasFeat(CGAMESPRITE_FEAT_BLIND_FIGHT) || static_cast<BYTE>(pAbility->type) == 2)) {
+        // PE 0x85BB86 is read as a DWORD, overlapping the next range modifier.
+        nBonus += static_cast<INT>(0xFFFB0002);
+    }
+    if (HasFeat(CGAMESPRITE_FEAT_FIENDSLAYER)) {
+        switch (pTarget->m_typeAI.m_nRace) {
+        case 0xBA:
+        case 0xA4:
+        case 0x76:
+        case 0x9A:
+        case 0xBB:
+        case 0xBC:
+            nBonus += 2;
+            break;
+        }
+    }
+    if (HasFeat(CGAMESPRITE_FEAT_HERETICS_BANE)
+        && (pTarget->GetAIType().m_nClassMask & 0xC) != 0) {
+        nBonus++;
+    }
+    if ((pTarget->m_derivedStats.m_generalState & 8) != 0) {
+        nBonus += 2;
+    }
+    return nBonus + m_derivedStats.m_cToHitBonusList.GetBonus(pTarget->GetAIType());
 }
 
 // 0x72DE60

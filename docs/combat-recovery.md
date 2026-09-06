@@ -89,6 +89,57 @@ arrow 2, bolt 12, and sling stone 17. HP deltas are assertions, not just hit cou
 
 ## Remaining combat chain
 
+### Attack-rule prerequisites (2026-09-06)
+
+Recovered `GetTouchAC` (0x723DB0), `GetDualWieldPenalty` (0x73D080), and
+`GetSituationalAttackBonus` (0x73D1B0). Renamed the previously recovered
+0x723F60 from `GetAttacksPerRound` to `GetMonkACBonus`, including character-sheet
+callers: the binary returns an unarmored monk's positive Wisdom AC modifier,
+not an attack count. No object-layout fields were added.
+
+PE details deliberately retained:
+
+- Touch AC includes natural, deflection and dodge bonuses, plus capped Dexterity
+  and monk Wisdom. Blindness removes only positive Dexterity without Blind Fight.
+- Dual wield starts at -6/-10; Ambidexterity, Two Weapon Fighting, light offhand
+  types 16/19 and an eligible ranger adjust these. Shields bypass the penalty.
+  The binary compares the selected weapon to literal 42; `SLOT_FIST` is 10 and
+  cannot replace that comparison. The first runtime matrix caught this mistake.
+- Range uses squared search-grid distance minus an unsigned byte of personal
+  space, with thresholds 3/32/64. Negative range modifiers are **zero-extended
+  WORDs** in the INT return (65528/65534/65531). The invisible-source branch reads
+  a **DWORD** at 0x85BB86 (0xFFFB0002), overlapping the adjacent range constant.
+  Blind Fight is queried on the target. These widths follow assembly rather than
+  normalizing the result to the apparent D&D rule; the hit resolver subsequently
+  uses its own widths.
+
+`scripts/scenarios/combat-rules.txt` exercises these helpers directly on loaded
+party sprites. `combatrules` temporarily changes stats, equipment, feats and
+positions under deny locks, restores them before returning to the engine, and
+does not save or inflict damage. The fixture installer also provides a dagger,
+armor and shield; it now manages ten resources with the same no-overwrite and
+verified-removal protections. This is prerequisite coverage, **not an Attack or
+Swing test**. It does not establish original/reconstruction differential parity.
+
+The corrected runtime matrix passes 27 numeric assertions: AC and blindness,
+monk Wisdom/shield exclusion, offhand types, feats, ranger and selection 42,
+invisibility/target Blind Fight, and four range cases including Precise Shot.
+The first matrix failed selection 42 (preserved as `rules-first-fail.jsonl`);
+the correction was rebuilt before rerunning. All nine Python fixture/batch tests
+also pass after extending the expected fixture inventory from seven to ten.
+
+Final batch `.arc/2026-09-06T20-07-43-batch/`: PASS, four GREEN parity checks,
+clean lints/layout audit, VS2019 Win32 build, and CLEAN 60-second observation.
+Runtime hits: touch AC x6, monk AC x8, dual wield x9, situational bonus x10.
+The remaining name warning is the old Ghidra export label for 0x723F60.
+Local evidence is in `work/combat-rules-20260906/rules-pass.jsonl`,
+`smoke-pass.log` and `smoke-pass.txt`. Test resources were removed and the original
+INI restored after the run. Reproduce with the fixture installer followed by
+`native.py smoke --save 000000037-testSpells --hold 60 --ui scripts/scenarios/combat-rules.txt`
+and a `--hit` list of the four names above, then remove the fixtures.
+
+### Next recovery batch
+
 Prioritize these over the generic size-ranked target list:
 
 1. `Attack` candidate 0x737EF0: target validity, approach/range/LOS and dispatch
@@ -99,7 +150,10 @@ Prioritize these over the generic size-ranked target list:
 3. 0x73B760: hit/critical resolution; 0x73D560: base weapon damage and modifiers.
    These are large unrecovered functions, not substitutes for opcode-12 delivery.
 4. Dependencies: 0x75D450 depleted ammunition/equipment cleanup; 0x761AB0
-   on-hit subspell effects. Additional unresolved calls remain in the bundles.
+   on-hit subspell effects. Hit-resolution dependencies still include 0x73C490
+   concealment, 0x73CD00 resource-specific bonuses, 0x73CF10 proficiency/launcher
+   resolution and 0x547020 iterative attack bonus. Full context bundles for the
+   main chain and these dependencies are available as `tmp_combat_*.md` locally.
 5. Drive a real forced attack on another party member in both executables,
    compare captures, and test normal/critical/missed blows, ammunition exhaustion,
    target movement and death. The payload-only test cannot prove those behaviors.
