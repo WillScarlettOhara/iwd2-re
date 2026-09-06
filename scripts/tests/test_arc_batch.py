@@ -53,6 +53,28 @@ class ArcBatchTest(unittest.TestCase):
         self.assertEqual(addresses, ["0x442990", "0x4428a0"])
         self.assertIsNotNone(arc.batch_addresses(["442990"])[1])
 
+    def test_layout_shared_header_does_not_audit_empty_leaf_as_sibling(self):
+        root = Path(self.temp.name)
+        header = root / "Family.h"
+        header.write_text("class Base {\n/* 0x04 */ int member;\n};\n"
+                          "class Leaf : public Base {\npublic:\nLeaf();\n};\n")
+        with patch.object(arc, "header_for_class", return_value=header):
+            step = arc.layout_step("Leaf")
+        self.assertIn("no own offset-annotated members", step.skip_reason)
+        self.assertEqual(step.argv, [])
+
+    def test_layout_shared_header_passes_resolved_header_and_source(self):
+        root = Path(self.temp.name)
+        header = root / "Family.h"
+        header.write_text("class Leaf {\n/* 0x04 */ int one;\n/* 0x08 */ int two;\n};\n")
+        source = header.with_suffix(".cpp")
+        source.write_text('#include "Family.h"\n')
+        with patch.object(arc, "REPO", root), \
+             patch.object(arc, "header_for_class", return_value=header):
+            step = arc.layout_step("Leaf")
+        self.assertIsNone(step.skip_reason)
+        self.assertEqual(step.argv[-4:], ["--header", str(header), "--source", "Family.cpp"])
+
     def test_default_and_explicit_hit_lists_are_stable(self):
         infos = [resolved("0x442990", "CTest::One"),
                  resolved("0x4428a0", "CTest::Two")]

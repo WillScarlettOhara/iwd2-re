@@ -53,6 +53,9 @@
 //   forcepoint <resref>          queue ForceSpellPoint at the first party
 //                                caster's own position (requires available spell).
 //                                Engine-action test, not a casting UI click.
+//   weaponpayload <item> [launcher]  ZRC fixtures only; verify weapon/launcher
+//                                effect provenance, fire at portrait 1, check HP.
+//                                Bypasses Swing and attack/base-damage rolls.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -69,6 +72,9 @@
 #include "CGameObject.h"
 #include "CGameObjectArray.h"
 #include "CGameSprite.h"
+#include "CGameEffect.h"
+#include "CItem.h"
+#include "CProjectile.h"
 #include "CInfGame.h"
 #include "CInfinity.h"
 #include "CScreenWorld.h"
@@ -112,6 +118,9 @@ int s_clickPhase = 0;
 bool s_clickRight = false;
 CPoint s_clickPt(0, 0);
 FILE* s_out = NULL;
+LONG s_payloadTarget = -1;
+SHORT s_payloadHP = 0;
+INT s_payloadDamage = 0;
 
 DWORD GetEnv(const char* name, char* value, DWORD size)
 {
@@ -578,6 +587,126 @@ void Tick(CWarp* pActiveEngine)
 
     const Step& step = s_steps[s_pc];
     const int nStep = s_pc + 1;
+
+    if (strcmp(step.op, "weaponpayload") == 0) {
+        CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || pGame->GetNumCharacters() < 2
+            || strncmp(step.s[0], "ZRC", 3) != 0 || strlen(step.s[0]) > 8
+            || (step.s[1][0] != '\0'
+                && (strncmp(step.s[1], "ZRC", 3) != 0 || strlen(step.s[1]) > 8))) {
+            Fail(nStep, "weaponpayload", "requires world, two party members and ZRC fixtures");
+            return;
+        }
+        CGameObjectArray* objects = pGame->GetObjectArray();
+        if (s_payloadTarget != -1) {
+            CGameObject* object = NULL;
+            BYTE rc = objects->GetShare(s_payloadTarget, CGameObjectArray::THREAD_ASYNCH,
+                &object, INFINITE);
+            if (rc != CGameObjectArray::SUCCESS || object == NULL) {
+                Fail(nStep, "weaponpayload", "target unavailable after launch");
+                return;
+            }
+            SHORT hp = static_cast<CGameSprite*>(object)->m_baseStats.m_hitPoints;
+            objects->ReleaseShare(s_payloadTarget, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            if (s_payloadHP - hp < s_payloadDamage && ++s_waited < 600) {
+                return;
+            }
+            Emit("{\"step\":%d,\"op\":\"weaponpayload\",\"item\":\"%s\",\"hpBefore\":%d,\"hpAfter\":%d,\"expectedDamage\":%d}",
+                nStep, step.s[0], s_payloadHP, hp, s_payloadDamage);
+            if (s_payloadHP - hp != s_payloadDamage) {
+                Fail(nStep, "weaponpayload", "unexpected HP delta or projectile did not arrive");
+                return;
+            }
+            s_payloadTarget = -1;
+            s_waited = 0;
+            s_pc++;
+            return;
+        }
+
+        LONG sourceId = pGame->GetFixedOrderCharacterId(0);
+        LONG targetId = pGame->GetFixedOrderCharacterId(1);
+        CGameObject* sourceObject = NULL;
+        CGameObject* targetObject = NULL;
+        BYTE rc = objects->GetDeny(sourceId, CGameObjectArray::THREAD_ASYNCH,
+            &sourceObject, INFINITE);
+        if (rc != CGameObjectArray::SUCCESS) {
+            Fail(nStep, "weaponpayload", "source unavailable");
+            return;
+        }
+        rc = objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH,
+            &targetObject, INFINITE);
+        if (rc != CGameObjectArray::SUCCESS) {
+            objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, "weaponpayload", "target unavailable");
+            return;
+        }
+        CGameSprite* source = static_cast<CGameSprite*>(sourceObject);
+        CGameSprite* target = static_cast<CGameSprite*>(targetObject);
+        CPoint targetPos = target->m_pos;
+        CGameArea* area = source->m_pArea;
+        SHORT hp = target->m_baseStats.m_hitPoints;
+        BOOL valid = area != NULL && target->m_pArea == area
+            && hp > (step.s[1][0] != '\0' ? 4 : 2);
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+
+        CItem weapon(CResRef(step.s[0]), 1, 0, 0, 0, 0);
+        CItem launcher(CResRef(step.s[1]), 1, 0, 0, 0, 0);
+        BOOL hasLauncher = step.s[1][0] != '\0';
+        BOOL weaponDemanded = valid && weapon.Demand();
+        valid = valid && weaponDemanded;
+        ITEM_ABILITY* ability = valid ? weapon.GetAbility(0) : NULL;
+        valid = valid && ability != NULL;
+        USHORT missile = valid ? ability->missileType : 0;
+        CProjectile* projectile = valid ? CProjectile::DecodeProjectile(missile, source, 0) : NULL;
+        valid = valid && projectile != NULL;
+        if (valid) {
+            // Transient selection for GetLauncher; restored before any engine tick.
+            CItem* saved = source->m_equipment.m_items[43];
+            BYTE savedSet = source->m_nWeaponSet;
+            source->m_nWeaponSet = 0;
+            source->m_equipment.m_items[43] = hasLauncher ? &launcher : NULL;
+            source->ApplyWeaponEffects(projectile, NULL, 0, targetPos);
+            source->ApplyWeaponEffects(projectile, &weapon, -1, targetPos);
+            valid = projectile->m_effectList.IsEmpty();
+            source->ApplyWeaponEffects(projectile, &weapon, 0, targetPos);
+            source->m_equipment.m_items[43] = saved;
+            source->m_nWeaponSet = savedSet;
+
+            INT index = 0;
+            POSITION pos = projectile->m_effectList.GetHeadPosition();
+            while (pos != NULL) {
+                CGameEffect* effect = projectile->m_effectList.GetNext(pos);
+                valid = valid && effect->m_effectID == CGAMEEFFECT_DAMAGE
+                    && effect->m_targetType == 2 && effect->m_sourceID == sourceId
+                    && effect->m_source == source->m_pos && effect->m_target == targetPos
+                    && effect->m_sourceRes == CResRef(index == 0 ? step.s[0] : step.s[1])
+                    && effect->m_effectAmount == (index == 0 ? 1 : 2);
+                ++index;
+            }
+            valid = valid && index == (hasLauncher ? 2 : 1);
+            Emit("{\"step\":%d,\"op\":\"weaponpayload-assembled\",\"item\":\"%s\",\"launcher\":\"%s\",\"effects\":%d,\"missile\":%u,\"valid\":%d}",
+                nStep, step.s[0], step.s[1], index, missile, valid);
+        }
+        if (weaponDemanded) {
+            weapon.Release();
+        }
+        LONG height = valid ? projectile->DetermineHeight(source) : 0;
+        objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            if (projectile != NULL) {
+                projectile->ClearEffects();
+                delete projectile;
+            }
+            Fail(nStep, "weaponpayload", "fixture, party state or effect provenance mismatch");
+            return;
+        }
+        s_payloadHP = hp;
+        s_payloadDamage = hasLauncher ? 3 : 1;
+        s_payloadTarget = targetId;
+        projectile->Fire(area, sourceId, targetId, targetPos, height, 0);
+        return;
+    }
 
     if (strcmp(step.op, "enddialog") == 0) {
         if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld) {

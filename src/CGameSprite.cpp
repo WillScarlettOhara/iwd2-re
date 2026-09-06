@@ -10107,6 +10107,113 @@ BOOL CGameSprite::BuildAbilityButtonData(const CResRef& res, BYTE nClass, DWORD 
     return bResult;
 }
 
+// 0x71F860
+void CGameSprite::ApplyWeaponEffects(CProjectile* pProjectile, CItem* pWeapon, SHORT abilityNum, const CPoint& target)
+{
+    if (pWeapon == NULL) {
+        return;
+    }
+
+    pWeapon->Demand();
+    ITEM_ABILITY* ability = pWeapon->GetAbility(abilityNum);
+    if (ability == NULL) {
+        pWeapon->Release();
+        return;
+    }
+
+    SHORT launcherSlot;
+    CItem* pLauncher = GetLauncher(ability, launcherSlot);
+    ITEM_ABILITY* launcherAbility = NULL;
+    if (pLauncher != NULL) {
+        pLauncher->Demand();
+        launcherAbility = pLauncher->GetAbility(0);
+    }
+
+    for (LONG effectIndex = 0; effectIndex < ability->effectCount; ++effectIndex) {
+        CGameEffect* effect = pWeapon->GetAbilityEffect(abilityNum, effectIndex, this);
+        effect->m_source = m_pos;
+        effect->m_sourceID = m_id;
+        effect->m_target = target;
+        IcewindMisc::ApplyDamageModifiers(this, effect);
+
+        switch (effect->m_targetType) {
+        case 1: {
+            CMessage* message = new CMessageAddEffect(effect, m_id, m_id);
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
+            continue;
+        }
+        case 2:
+            pProjectile->AddEffect(effect);
+            continue;
+        case 3:
+            ApplyEffectToParty(effect);
+            break;
+        case 4:
+            m_pArea->ApplyEffect(effect, FALSE, FALSE, 0, NULL);
+            break;
+        case 5:
+            m_pArea->ApplyEffect(effect, TRUE, FALSE, 0, NULL);
+            break;
+        case 6:
+            m_pArea->ApplyEffect(effect, FALSE, TRUE, m_typeAI.m_nSpecific, NULL);
+            break;
+        case 7:
+            break;
+        case 8:
+            m_pArea->ApplyEffect(effect, FALSE, FALSE, 0, this);
+            break;
+        default:
+            UTIL_ASSERT(FALSE);
+        }
+        delete effect;
+    }
+
+    pWeapon->Release();
+    if (launcherAbility != NULL) {
+        for (LONG effectIndex = 0; effectIndex < launcherAbility->effectCount; ++effectIndex) {
+            CGameEffect* effect = pLauncher->GetAbilityEffect(0, effectIndex, this);
+            effect->m_source = m_pos;
+            effect->m_sourceID = m_id;
+            effect->m_target = target;
+            IcewindMisc::ApplyDamageModifiers(this, effect);
+
+            switch (effect->m_targetType) {
+            case 1: {
+                CMessage* message = new CMessageAddEffect(effect, m_id, m_id);
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
+                continue;
+            }
+            case 2:
+                pProjectile->AddEffect(effect);
+                continue;
+            case 3:
+                ApplyEffectToParty(effect);
+                break;
+            case 4:
+                m_pArea->ApplyEffect(effect, FALSE, FALSE, 0, NULL);
+                break;
+            case 5:
+                m_pArea->ApplyEffect(effect, TRUE, FALSE, 0, NULL);
+                break;
+            case 6:
+                m_pArea->ApplyEffect(effect, FALSE, TRUE, m_typeAI.m_nSpecific, NULL);
+                break;
+            case 7:
+                break;
+            case 8:
+                m_pArea->ApplyEffect(effect, FALSE, FALSE, 0, this);
+                break;
+            default:
+                UTIL_ASSERT(FALSE);
+            }
+            delete effect;
+        }
+    }
+    if (pLauncher != NULL) {
+        pLauncher->Release();
+    }
+}
+
 // 0x718650
 CItem* CGameSprite::GetLauncher(const ITEM_ABILITY* ability, SHORT& launcherSlot)
 {

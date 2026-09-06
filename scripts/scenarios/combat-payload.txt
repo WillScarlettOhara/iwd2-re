@@ -1,0 +1,16 @@
+# Install with scripts/combat_payload_fixture.py install; remove afterwards.
+# Use a settled save with >= 2 members, target portrait 1 > 20 HP and no DR,
+# no damage buffs or difficulty reduction. Does NOT execute Attack or Swing.
+# Each fixture checks provenance/order, then the actual projectile + HP path.
+waitgo
+wait world
+enddialog
+resume
+weaponpayload ZRCMELEE
+sleep 30
+weaponpayload ZRCARROW ZRCBOW
+sleep 30
+weaponpayload ZRCBOLT ZRCXBOW
+sleep 30
+weaponpayload ZRCSTONE ZRCSLING
+sleep 60

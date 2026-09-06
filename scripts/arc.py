@@ -1318,8 +1318,23 @@ def layout_step(cls: str | None) -> Step:
     if "/* 0x" not in text:
         return Step(id="struct_layout_audit", label="layout", argv=[], parse=parse_struct_layout,
                     skip_reason=f"{hdr.name} has no /* 0xNNN */ comments")
+    # A projectile family shares one header. Comments in a sibling class do
+    # not give an empty leaf any members to compare, and the audit must receive
+    # the header we resolved rather than invent src/<leaf>.h.
+    from struct_layout_audit import AuditError, parse_header
+    try:
+        members = parse_header(hdr, cls)
+    except (AuditError, OSError):
+        members = None  # Let the audit report the parse error, never hide it.
+    if members == []:
+        return Step(id="struct_layout_audit", label="layout", argv=[], parse=parse_struct_layout,
+                    skip_reason=f"{cls} has no own offset-annotated members")
+    argv = [PY, str(SCRIPTS / "struct_layout_audit.py"), cls, "--header", str(hdr)]
+    source = hdr.with_suffix(".cpp")
+    if source.exists():
+        argv += ["--source", str(source.relative_to(REPO))]
     return Step(id="struct_layout_audit", label="layout", needs=("vm",), timeout=600,
-                argv=[PY, str(SCRIPTS / "struct_layout_audit.py"), cls],
+                argv=argv,
                 parse=parse_struct_layout)
 
 

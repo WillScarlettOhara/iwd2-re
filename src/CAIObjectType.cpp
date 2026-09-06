@@ -1411,7 +1411,9 @@ CGameObject* CAIObjectType::GetObjectFromId(CGameAIBase* caller, BOOL checkBackL
         nId = FindObjectId(caller, checkBackList);
     }
 
-    CGameObject* pObject;
+    // 0x40D114 initializes the result before GetShare, which can leave its
+    // output untouched for an unresolved/deleted object.
+    CGameObject* pObject = NULL;
     BYTE rc;
     do {
         rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(nId,

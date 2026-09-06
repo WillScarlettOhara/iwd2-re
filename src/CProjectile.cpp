@@ -413,6 +413,26 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
         pProjectile = new CProjectileArrow();
         break;
 
+    case 0xC:
+    case 0xF:
+    case 0x10:
+        // 0x51F08A / 0x51F208 / 0x51F276: ordinary crossbow bolts.
+        pProjectile = new CProjectileBolt();
+        pProjectile->m_bHasHeight = TRUE;
+        pProjectile->m_fireSoundRef = CResRef("");
+        pProjectile->m_arrivalSoundRef = CResRef("");
+        break;
+
+    case 0x11:
+    case 0x14:
+    case 0x15:
+        // 0x51F389 / 0x51F49D / 0x51F50B: ordinary sling stones.
+        pProjectile = new CProjectileSlingStone();
+        pProjectile->m_bHasHeight = TRUE;
+        pProjectile->m_fireSoundRef = CResRef("");
+        pProjectile->m_arrivalSoundRef = CResRef("");
+        break;
+
     case 0x3: {
         // The exploding flame missile: flies its default SPFLMARR cell to the
         // target and runs the strike pass there, launch sound TRA_10.
@@ -4140,6 +4160,44 @@ void CProjectileTravelling::GetCellBounds(CRect& rBounds, CPoint& ptRef, CVidCel
         if (rBounds.right < extX) rBounds.right = extX;
         if (rBounds.bottom < extY) rBounds.bottom = extY;
     }
+}
+
+// 0x531360
+CProjectileBolt::CProjectileBolt()
+    : CProjectileTravelling(CResRef("BOLT"))
+{
+    m_pVidCell->SequenceSet(0);
+
+    m_tinted = 1;
+    m_useHeightOffset = 0;
+    m_mirror = 0;
+    m_hasShadowCell = 0;
+    m_dirCount = 16;
+    m_fireSoundRef = CResRef("");
+    m_velocity = static_cast<SHORT>(m_velocity * 5);
+    m_callBackProjectile = CGameObjectArray::INVALID_INDEX;
+    field_17E = "";
+    m_nTargetId = CGameObjectArray::INVALID_INDEX;
+}
+
+// 0x5319A0
+CProjectileSlingStone::CProjectileSlingStone()
+    : CProjectileTravelling(CResRef("MAGICSTN"))
+{
+    m_pVidCell->SequenceSet(0);
+    m_palette.SetRange(0, 0x1B, *g_pBaldurChitin->GetObjectGame()->GetMasterBitmap());
+    m_pVidCell->SetPalette(m_palette);
+
+    m_tinted = 1;
+    m_useHeightOffset = 0;
+    m_mirror = 0;
+    m_hasShadowCell = 0;
+    m_dirCount = 1;
+    m_fireSoundRef = CResRef("");
+    m_velocity = static_cast<SHORT>(m_velocity * 5);
+    m_callBackProjectile = CGameObjectArray::INVALID_INDEX;
+    field_17E = "";
+    m_nTargetId = CGameObjectArray::INVALID_INDEX;
 }
 
 // 0x5324A0

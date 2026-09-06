@@ -224,6 +224,18 @@ public:
     CProjectileArrow();   // 0x5324A0
 };
 
+// Travelling weapon leaves; vtables 0x84E14C and 0x84E2E4 inherit all
+// gameplay/render slots from CProjectileTravelling and add no members.
+class CProjectileBolt : public CProjectileTravelling {
+public:
+    CProjectileBolt(); // 0x531360
+};
+
+class CProjectileSlingStone : public CProjectileTravelling {
+public:
+    CProjectileSlingStone(); // 0x5319A0
+};
+
 // Leaf 0x532720 -- the generic travelling weapon missile with a flame trail
 // (vtable 0x84E614, binary sizeof 0x2A8). DecodeProjectile builds it for the
 // flaming arrow (type 0x4, flying its default SPFLMARR cell), the thrown axe

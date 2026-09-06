@@ -563,6 +563,7 @@ public:
     CGameButtonList* GetInternalButtonList();
     CGameButtonList* GetItemUsages(SHORT slotNum, WORD buttonType, SHORT abilityNum);
     CItem* GetLauncher(const ITEM_ABILITY* ability, SHORT& launcherSlot);
+    void ApplyWeaponEffects(CProjectile* pProjectile, CItem* pWeapon, SHORT abilityNum, const CPoint& target);
     SHORT GetLauncherSlot(SHORT slotNum, SHORT abilityNum);
     BOOL CheckLauncherType(const ITEM_ABILITY* ability, CItem* pLauncher);
     INT CanUseItem(CGameSprite* pUser, CItem* pItem, STRREF& errorCode, BOOL a4);
