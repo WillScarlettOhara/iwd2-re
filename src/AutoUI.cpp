@@ -618,6 +618,9 @@ void Tick(CWarp* pActiveEngine)
         DWORD sourceState = source->m_derivedStats.m_generalState;
         DWORD targetState = target->m_derivedStats.m_generalState;
         SHORT dex = source->m_derivedStats.m_nDEX, wis = source->m_derivedStats.m_nWIS;
+        SHORT luck = source->m_derivedStats.m_nLuck;
+        BOOL hiding = target->m_bHiding;
+        bool tenser = source->m_derivedStats.m_spellStates[SPLSTATE_TENSERS_TRANSFORMATION];
         SHORT natural = source->m_derivedStats.m_nACNaturalBonus;
         SHORT deflection = source->m_derivedStats.m_nACDeflectionBonus;
         SHORT dodge = source->m_derivedStats.m_nACDodgeBonus;
@@ -718,6 +721,106 @@ void Tick(CWarp* pActiveEngine)
             check("ranged-medium-word", source->GetSituationalAttackBonus(target, &ability), baseline + 65534);
             target->m_pos = CPoint(16 * 90, 0);
             check("ranged-long-word", source->GetSituationalAttackBonus(target, &ability), baseline + 65531);
+
+            const CRuleTables& rules = game->GetRuleTables();
+            check("iterative-first", rules.GetIterativeAttackBonus(16, 5, 0), 16);
+            check("iterative-second", rules.GetIterativeAttackBonus(16, 5, 1), 11);
+            check("iterative-fourth", rules.GetIterativeAttackBonus(16, 5, 3), 1);
+            check("iterative-floor", rules.GetIterativeAttackBonus(16, 5, 4), 0);
+            check("iterative-no-step", rules.GetIterativeAttackBonus(7, 0, 3), 7);
+
+            memset(source->m_baseStats.m_feats, 0, sizeof(source->m_baseStats.m_feats));
+            source->m_derivedStats.m_spellStates[SPLSTATE_TENSERS_TRANSFORMATION] = false;
+            ability.type = 1;
+            check("proficiency-untrained-party", source->GetWeaponProficiencyHitBonus(&sword, &ability), -4);
+            ability.abilityFlags = 0x10000;
+            check("proficiency-touch-exempt", source->GetWeaponProficiencyHitBonus(&sword, &ability), 0);
+            ability.abilityFlags = 0;
+            source->m_id = -1;
+            check("proficiency-untrained-npc", source->GetWeaponProficiencyHitBonus(&sword, &ability),
+                atol(rules.m_tWeaponSpecialization.GetAt(CPoint(0, 0))));
+            source->m_id = sourceId;
+            source->m_baseStats.m_feats[1] |= 1 << (CGAMESPRITE_FEAT_MARTIAL_LARGESWORD - 32);
+            source->m_baseStats.m_featLargeSword = 2;
+            INT rank2 = atol(rules.m_tWeaponSpecialization.GetAt(CPoint(0, 2)));
+            check("proficiency-sword-focus", source->GetWeaponProficiencyHitBonus(&sword, &ability), rank2);
+            source->m_baseStats.m_featLargeSword = 3;
+            INT rank3 = atol(rules.m_tWeaponSpecialization.GetAt(CPoint(0, 3)));
+            check("proficiency-sword-specialization", source->GetWeaponProficiencyHitBonus(&sword, &ability), rank3);
+
+            const char* ammunition[] = { "ZRCARROW", "ZRCBOLT", "ZRCSTONE" };
+            const char* launchers[] = { "ZRCBOW", "ZRCXBOW", "ZRCSLING" };
+            const UINT feats[] = { CGAMESPRITE_FEAT_MARTIAL_BOW, CGAMESPRITE_FEAT_SIMPLE_CROSSBOW, CGAMESPRITE_FEAT_SIMPLE_MISSILE };
+            source->m_baseStats.m_featLargeSword = 2;
+            for (INT i = 0; i < 3; ++i) {
+                CItem ammo(CResRef(ammunition[i]), 1, 0, 0, 0, 0);
+                CItem launcher(CResRef(launchers[i]), 1, 0, 0, 0, 0);
+                source->m_equipment.m_items[43] = &launcher;
+                source->m_baseStats.m_feats[feats[i] >> 5] |= 1 << (feats[i] & 31);
+                source->m_baseStats.m_featBow = 2;
+                source->m_baseStats.m_featCrossbow = 2;
+                source->m_baseStats.m_featMissile = 2;
+                ability.type = 2;
+                ability.launcherType = static_cast<BYTE>(i + 1);
+                check(ammunition[i], source->GetWeaponProficiencyHitBonus(&ammo, &ability), rank2);
+                source->m_baseStats.m_featBow = 1;
+                source->m_baseStats.m_featCrossbow = 1;
+                source->m_baseStats.m_featMissile = 1;
+                check("proficiency-keeps-higher-weapon-rank", source->GetWeaponProficiencyHitBonus(&sword, &ability), rank2);
+                source->m_equipment.m_items[43] = &sword;
+            }
+
+            // Fixed CRT seeds assert thresholds AND consumption of the reroll.
+            // This isolated scenario deliberately reseeds the thread's RNG.
+            memset(source->m_baseStats.m_feats, 0, sizeof(source->m_baseStats.m_feats));
+            source->m_derivedStats.m_generalState = 0;
+            target->m_derivedStats.m_generalState = 0;
+            target->m_bHiding = FALSE;
+            target->m_baseStats.m_visible = 0;
+            source->m_derivedStats.m_nLuck = 0;
+            srand(1);
+            check("concealment-none", source->CheckConcealment(target), TRUE);
+            check("concealment-none-no-roll", rand(), 41);
+            target->m_derivedStats.m_generalState = 0x20000000;
+            source->m_derivedStats.m_nLuck = 19;
+            srand(0);
+            check("concealment-blur-below-20", source->CheckConcealment(target), FALSE);
+            source->m_derivedStats.m_nLuck = 20;
+            srand(0);
+            check("concealment-blur-at-20", source->CheckConcealment(target), TRUE);
+            target->m_derivedStats.m_generalState = 0;
+            target->m_bHiding = TRUE;
+            source->m_derivedStats.m_nLuck = 19;
+            srand(0);
+            check("concealment-hiding", source->CheckConcealment(target), FALSE);
+            target->m_bHiding = 2;
+            check("concealment-hiding-exact-one", source->CheckConcealment(target), TRUE);
+            target->m_bHiding = FALSE;
+            target->m_derivedStats.m_generalState = 0x10;
+            check("concealment-invisible-without-visible-flag", source->CheckConcealment(target), TRUE);
+            target->m_baseStats.m_visible = 1;
+            source->m_derivedStats.m_nLuck = 49;
+            srand(0);
+            check("concealment-invisible-below-50", source->CheckConcealment(target), FALSE);
+            source->m_derivedStats.m_nLuck = 50;
+            srand(0);
+            check("concealment-invisible-at-50", source->CheckConcealment(target), TRUE);
+            target->m_derivedStats.m_generalState = 0;
+            source->m_derivedStats.m_generalState = 0x40000;
+            source->m_derivedStats.m_nLuck = 49;
+            srand(0);
+            check("concealment-blind-source", source->CheckConcealment(target), FALSE);
+            source->m_derivedStats.m_nLuck = 0;
+            source->m_baseStats.m_feats[0] |= 1 << CGAMESPRITE_FEAT_BLIND_FIGHT;
+            srand(1);
+            check("blind-fight-reroll-success", source->CheckConcealment(target), TRUE);
+            check("blind-fight-consumed-two-rolls", rand(), 6334);
+            srand(0);
+            check("blind-fight-reroll-failure", source->CheckConcealment(target), FALSE);
+            source->m_derivedStats.m_nLuck = 50;
+            srand(1);
+            check("blind-fight-first-roll-success", source->CheckConcealment(target), TRUE);
+            check("blind-fight-no-unneeded-reroll", rand(), 18467);
         }
         source->m_baseStats = savedBase;
         target->m_baseStats = savedTargetBase;
@@ -727,6 +830,9 @@ void Tick(CWarp* pActiveEngine)
         target->m_derivedStats.m_generalState = targetState;
         source->m_derivedStats.m_nDEX = dex;
         source->m_derivedStats.m_nWIS = wis;
+        source->m_derivedStats.m_nLuck = luck;
+        target->m_bHiding = hiding;
+        source->m_derivedStats.m_spellStates[SPLSTATE_TENSERS_TRANSFORMATION] = tenser;
         source->m_derivedStats.m_nACNaturalBonus = natural;
         source->m_derivedStats.m_nACDeflectionBonus = deflection;
         source->m_derivedStats.m_nACDodgeBonus = dodge;

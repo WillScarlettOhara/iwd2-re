@@ -1,6 +1,11 @@
 # Install combat_payload_fixture.py first. No damage, no saving.
+# Stats/equipment are restored; concealment cases reseed the test thread's RNG.
 waitgo
 wait world
 enddialog
 combatrules
+goto character
+wait character
+click 2 61
+expect screen character
 sleep 30

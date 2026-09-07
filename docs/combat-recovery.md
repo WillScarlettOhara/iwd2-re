@@ -138,6 +138,44 @@ INI restored after the run. Reproduce with the fixture installer followed by
 `native.py smoke --save 000000037-testSpells --hold 60 --ui scripts/scenarios/combat-rules.txt`
 and a `--hit` list of the four names above, then remove the fixtures.
 
+### Proficiency, concealment and iterative attacks (2026-09-07)
+
+Recovered `GetWeaponProficiencyHitBonus` (0x73CF10), `CheckConcealment`
+(0x73C490), and `CRuleTables::GetIterativeAttackBonus` (0x547020).
+
+- Proficiency takes the higher weapon/launcher rank and reads WSPECIAL column 0.
+  Untrained party members (or character creation) receive -4 except for ability
+  flag 0x10000; other creatures use the table's rank-zero entry.
+- Concealment is 50% for attacker blindness or target invisibility combined with
+  the creature's visible flag, otherwise 20% for state 0x20000000 or `m_bHiding == 1`.
+  Without either it returns success without consuming a random roll. Blind Fight
+  retries only a failure and emits the original localized world feedback.
+- Iterative attack bonus is base minus step times index, clamped to zero.
+  The character sheet now calls these recovered proficiency/iteration helpers
+  and the preceding batch's dual-wield helper. Its removed duplicate incorrectly
+  granted the light-armor two-weapon exception to rogues rather than rangers.
+
+`combat-rules.txt` now runs 58 numeric assertions and opens the character sheet's
+Equipment tab via the real UI button. Cases include all three launchers, higher
+rank selection in either direction, untrained PC/NPC/touch behavior, threshold
+boundaries and exact random-roll consumption. Concealment cases deliberately
+reseed the test thread's CRT RNG; stats, IDs, equipment and positions are restored,
+but this is an isolated diagnostic and must not be used as a save-producing run.
+
+Static batch `.arc/2026-09-07T02-10-13-batch/` passes with one warning:
+concealment and iteration are GREEN; proficiency is YELLOW (12 binary calls vs
+17 source calls, including un-inlined accessors/table lookup). The rule-table
+layout audit is skipped by the existing auditor; no members were added.
+VS2019 Debug Win32 compilation passes. A first 60-second native run passed all
+58 cases and reached all three new functions. Final batch
+`.arc/2026-09-07T02-12-21-batch/` passed the shared checks and a fresh 60-second
+native observation with nine UI steps, including the Equipment tab. Parity was
+not repeated in this final batch; the preceding warning still applies.
+Hits: proficiency x13, concealment x12, iteration x21, equipment information x2.
+Evidence: `work/combat-hit-prereqs-20260907/rules-pass.jsonl`, `smoke-pass.log`
+and `smoke-pass.txt`. All ten fixtures were removed and the saved INI restored.
+No paired original/reconstruction capture or visual parity comparison was made.
+
 ### Next recovery batch
 
 Prioritize these over the generic size-ranked target list:
@@ -150,9 +188,10 @@ Prioritize these over the generic size-ranked target list:
 3. 0x73B760: hit/critical resolution; 0x73D560: base weapon damage and modifiers.
    These are large unrecovered functions, not substitutes for opcode-12 delivery.
 4. Dependencies: 0x75D450 depleted ammunition/equipment cleanup; 0x761AB0
-   on-hit subspell effects. Hit-resolution dependencies still include 0x73C490
-   concealment, 0x73CD00 resource-specific bonuses, 0x73CF10 proficiency/launcher
-   resolution and 0x547020 iterative attack bonus. Full context bundles for the
+   on-hit subspell effects. Hit-resolution dependency 0x73CD00 still handles
+   `ZZ`-prefixed weapon/launcher resrefs with race/alignment-encoded bonuses.
+   Preserve its shared scratch state and PE table/return-width behavior rather
+   than replacing this branch with a constant zero. Full context bundles for the
    main chain and these dependencies are available as `tmp_combat_*.md` locally.
 5. Drive a real forced attack on another party member in both executables,
    compare captures, and test normal/critical/missed blows, ammunition exhaustion,

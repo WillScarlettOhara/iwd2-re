@@ -3574,6 +3574,16 @@ void CRuleTables::GetBaseCombatValues(CGameSprite* pSprite, int& a2, int& a3, in
     }
 }
 
+// 0x547020
+INT CRuleTables::GetIterativeAttackBonus(INT nBaseAttack, INT nAttackStep, INT nAttackIndex) const
+{
+    INT nBonus = nBaseAttack - nAttackStep * nAttackIndex;
+    if (nBonus < 0) {
+        nBonus = 0;
+    }
+    return nBonus;
+}
+
 // 0x547040
 //
 // Returns the governing spellcasting ability modifier for `pSprite`, used by

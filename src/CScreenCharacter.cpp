@@ -45,10 +45,6 @@ CString CScreenCharacter::SAVE_NAME("default");
 
 namespace {
 
-const INT WEAPON_PROFICIENCY_HIT_COLUMN = 0;
-const INT TWO_WEAPON_MAIN_HAND_PENALTY = -6;
-const INT TWO_WEAPON_OFF_HAND_PENALTY = -10;
-const INT NON_PROFICIENCY_PENALTY = -4;
 const INT INFORMATION_PANEL_CATEGORY_COUNT = 6;
 const INT INFORMATION_PANEL_ITEM_COUNT = 11;
 const DWORD INFORMATION_PANEL_CATEGORY_LABEL_START = 0x10000004;
@@ -84,10 +80,7 @@ CString FormatAttackCascade(INT nBaseAttack, INT nAttackStep, INT nAttacks)
             sValue += "/";
         }
 
-        INT nRoll = nBaseAttack - nAttackStep * nAttack;
-        if (nRoll < 0) {
-            nRoll = 0;
-        }
+        INT nRoll = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetIterativeAttackBonus(nBaseAttack, nAttackStep, nAttack);
 
         sValue += FormatSigned(nRoll);
     }
@@ -109,76 +102,6 @@ void UpdateIndentedPercent(CUIControlTextDisplay* pText, STRREF strLabel, INT nV
         "   %s: %+d%%",
         (LPCSTR)CBaldurEngine::FetchString(strLabel),
         nValue);
-}
-
-INT GetWeaponProficiencyHitBonus(CGameSprite* pSprite, CItem* pWeapon, const ITEM_ABILITY* pAbility)
-{
-    const CRuleTables& rule = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
-
-    SHORT nRank = pSprite->GetProficiencyTHAC0Bonus(pWeapon);
-
-    SHORT nLauncherSlot;
-    CItem* pLauncher = pSprite->GetLauncher(pAbility, nLauncherSlot);
-    if (pLauncher != NULL) {
-        pLauncher->Demand();
-        nRank = max(nRank, pSprite->GetProficiencyTHAC0Bonus(pLauncher));
-        pLauncher->Release();
-    }
-
-    if (nRank < 0) {
-        return nRank;
-    }
-
-    if (nRank == 0) {
-        if ((pAbility->abilityFlags & 0x10000) == 0) {
-            return NON_PROFICIENCY_PENALTY;
-        }
-        return 0;
-    }
-
-    return atol(rule.m_tWeaponSpecialization.GetAt(CPoint(WEAPON_PROFICIENCY_HIT_COLUMN, nRank)));
-}
-
-INT GetTwoWeaponPenalty(CGameSprite* pSprite, BOOL bOffHand)
-{
-    if (pSprite->m_equipment.m_selectedWeapon == '*') {
-        return 0;
-    }
-
-    BYTE nMainHandSlot = static_cast<BYTE>(CGameSpriteEquipment::SLOT_WEAPON + 2 * pSprite->m_nWeaponSet);
-    BYTE nOffHandSlot = static_cast<BYTE>(nMainHandSlot + 1);
-    CItem* pMainHand = pSprite->m_equipment.m_items[nMainHandSlot];
-    CItem* pOffHand = pSprite->m_equipment.m_items[nOffHandSlot];
-    if (pMainHand == NULL || pOffHand == NULL) {
-        return 0;
-    }
-
-    WORD nOffHandType = pOffHand->GetItemType();
-    if (IsShieldItemType(nOffHandType)) {
-        return 0;
-    }
-
-    INT nPenalty = bOffHand ? TWO_WEAPON_OFF_HAND_PENALTY : TWO_WEAPON_MAIN_HAND_PENALTY;
-
-    BOOL bRogueLightArmorBonus = pSprite->GetClassLevel(CAIOBJECTTYPE_C_ROGUE) >= 1
-        && !pSprite->HasArmorType(3)
-        && !pSprite->HasArmorType(2);
-
-    if (bRogueLightArmorBonus || pSprite->HasFeat(CGAMESPRITE_FEAT_AMBIDEXTERITY)) {
-        if (bOffHand) {
-            nPenalty += 4;
-        }
-    }
-
-    if (bRogueLightArmorBonus || pSprite->HasFeat(CGAMESPRITE_FEAT_TWO_WEAPON_FIGHTING)) {
-        nPenalty += 2;
-    }
-
-    if (nOffHandType == 16 || nOffHandType == 19) {
-        nPenalty += 2;
-    }
-
-    return nPenalty;
 }
 
 INT GetItemCriticalRangeBonus(CItem* pItem, const ITEM_ABILITY* pAbility)
@@ -3208,8 +3131,8 @@ void CScreenCharacter::UpdateEquipmentInformation(CUIControlTextDisplay* pText, 
     INT nMainWeaponBonus = pSprite->GetWeaponStyleBonus(pMainWeapon, pMainAttack)
         + pSprite->GetTHAC0Bonuses(pMainWeapon, pMainAttack);
     INT nMainProficiencyBonus = pSprite->GetHalflingSlingBonus(pMainWeapon, pMainAttack)
-        + GetWeaponProficiencyHitBonus(pSprite, pMainWeapon, pMainAttack)
-        + GetTwoWeaponPenalty(pSprite, FALSE);
+        + pSprite->GetWeaponProficiencyHitBonus(pMainWeapon, pMainAttack)
+        + pSprite->GetDualWieldPenalty(FALSE);
     INT nMainAbilityBonus = pSprite->GetAbilityHitBonus(pMainWeapon, pMainAttack);
 
     ITEM_ABILITY* pOffHandAttack = NULL;
@@ -3230,8 +3153,8 @@ void CScreenCharacter::UpdateEquipmentInformation(CUIControlTextDisplay* pText, 
         nOffHandWeaponBonus = pSprite->GetHalflingSlingBonus(pOffHandWeapon, pOffHandAttack)
             + pSprite->GetWeaponStyleBonus(pOffHandWeapon, pOffHandAttack)
             + pSprite->GetTHAC0Bonuses(pOffHandWeapon, pOffHandAttack);
-        nOffHandProficiencyBonus = GetWeaponProficiencyHitBonus(pSprite, pOffHandWeapon, pOffHandAttack)
-            + GetTwoWeaponPenalty(pSprite, TRUE);
+        nOffHandProficiencyBonus = pSprite->GetWeaponProficiencyHitBonus(pOffHandWeapon, pOffHandAttack)
+            + pSprite->GetDualWieldPenalty(TRUE);
         nOffHandAbilityBonus = pSprite->GetAbilityHitBonus(pOffHandWeapon, pOffHandAttack);
     }
 
@@ -3283,10 +3206,7 @@ void CScreenCharacter::UpdateEquipmentInformation(CUIControlTextDisplay* pText, 
                 nAttackBase -= 5;
             }
 
-            INT nAttackRoll = nAttackBase - nAttackStep * nAttack;
-            if (nAttackRoll < 0) {
-                nAttackRoll = 0;
-            }
+            INT nAttackRoll = rule.GetIterativeAttackBonus(nAttackBase, nAttackStep, nAttack);
 
             nAttackRoll += nMainTotalBonus;
             if (bRapidShot) {
@@ -3316,10 +3236,7 @@ void CScreenCharacter::UpdateEquipmentInformation(CUIControlTextDisplay* pText, 
                 nAttackBase -= 2;
             }
 
-            INT nAttackRoll = nAttackBase - nAttackStep * nAttack;
-            if (nAttackRoll < 0) {
-                nAttackRoll = 0;
-            }
+            INT nAttackRoll = rule.GetIterativeAttackBonus(nAttackBase, nAttackStep, nAttack);
 
             sMainBaseAttacks += FormatSigned(nAttackRoll);
         }

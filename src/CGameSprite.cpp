@@ -12990,6 +12990,75 @@ INT CGameSprite::GetMonkACBonus()
     return nWisBonus;
 }
 
+// 0x73C490
+BOOL CGameSprite::CheckConcealment(CGameSprite* pTarget)
+{
+    UTIL_ASSERT(pTarget != NULL);
+
+    INT nMissChance;
+    if ((m_derivedStats.m_generalState & STATE_BLIND) == 0
+        && ((pTarget->m_derivedStats.m_generalState & 0x10) == 0
+            || (pTarget->m_baseStats.m_visible & 1) == 0)) {
+        if ((pTarget->m_derivedStats.m_generalState & 0x20000000) == 0
+            && pTarget->m_bHiding != TRUE) {
+            return TRUE;
+        }
+        nMissChance = 20;
+    } else {
+        nMissChance = 50;
+    }
+
+    BOOL bHit = CUtil::UtilRandInt(100, m_derivedStats.m_nLuck) >= nMissChance;
+    if (HasFeat(CGAMESPRITE_FEAT_BLIND_FIGHT) == TRUE) {
+        CString sText;
+        CBaldurEngine* pEngine = g_pBaldurChitin->GetActiveEngine();
+        if (!bHit && CUtil::UtilRandInt(100, m_derivedStats.m_nLuck) >= nMissChance) {
+            bHit = TRUE;
+        }
+        if (pEngine != NULL && pEngine == g_pBaldurChitin->m_pEngineWorld) {
+            COLORREF rgbNameColor = CVidPalette::RANGE_COLORS[m_baseStats.m_colors[CVIDPALETTE_RANGE_MAIN_CLOTH]];
+            sText.Format(_T("%s: %s - %s"),
+                (LPCTSTR)CBaldurEngine::FetchString(0x9B8F),
+                (LPCTSTR)CBaldurEngine::FetchString(0x8BC2),
+                (LPCTSTR)CBaldurEngine::FetchString(bHit ? 0x83D9 : 0x83D8));
+            g_pBaldurChitin->m_pEngineWorld->DisplayText(GetName(), sText,
+                rgbNameColor, 0xBED7D7, -1, FALSE);
+        }
+    }
+    return bHit;
+}
+
+// 0x73CF10
+SHORT CGameSprite::GetWeaponProficiencyHitBonus(CItem* pWeapon, const ITEM_ABILITY* pAbility)
+{
+    UTIL_ASSERT(pWeapon != NULL);
+    UTIL_ASSERT(pAbility != NULL);
+
+    const CRuleTables& rules = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
+    SHORT nLauncherSlot;
+    CItem* pLauncher = GetLauncher(pAbility, nLauncherSlot);
+    if (pLauncher != NULL) {
+        pLauncher->Demand();
+        pLauncher->GetAbility(0);
+    }
+    SHORT nRank = GetProficiencyTHAC0Bonus(pWeapon);
+    if (pLauncher != NULL) {
+        if (nRank < GetProficiencyTHAC0Bonus(pLauncher)) {
+            nRank = GetProficiencyTHAC0Bonus(pLauncher);
+        }
+        pLauncher->Release();
+    }
+    if (nRank < 0) {
+        return nRank;
+    }
+    if (nRank == 0
+        && (g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id) != -1
+            || g_pBaldurChitin->GetActiveEngine() == g_pBaldurChitin->m_pEngineCreateChar)) {
+        return (pAbility->abilityFlags & 0x10000) != 0 ? 0 : -4;
+    }
+    return static_cast<SHORT>(atol(rules.m_tWeaponSpecialization.GetAt(CPoint(0, nRank))));
+}
+
 // 0x73D080
 SHORT CGameSprite::GetDualWieldPenalty(INT nOffhand)
 {

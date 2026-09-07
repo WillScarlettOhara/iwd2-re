@@ -612,6 +612,8 @@ public:
     INT GetTouchAC();
     SHORT GetDualWieldPenalty(INT nOffhand);
     INT GetSituationalAttackBonus(CGameSprite* pTarget, const ITEM_ABILITY* pAbility);
+    SHORT GetWeaponProficiencyHitBonus(CItem* pWeapon, const ITEM_ABILITY* pAbility);
+    BOOL CheckConcealment(CGameSprite* pTarget);
     void sub_72DE60();
     void sub_71E760(CDerivedStats& DStats, int a2);
     void CheckModal();

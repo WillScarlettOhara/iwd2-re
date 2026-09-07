@@ -442,6 +442,7 @@ public:
     INT GetHatedRaceBonus(BYTE& nRace, const CCreatureFileHeader& BStats) const;
     INT GetEncumbranceMod(CGameSprite* pSprite) const;
     void GetBaseCombatValues(CGameSprite* pSprite, int& a2, int& a3, int& a4, BOOL a5) const;
+    INT GetIterativeAttackBonus(INT nBaseAttack, INT nAttackStep, INT nAttackIndex) const;
     DWORD GetMaxSpellLevel(const BYTE& nClass, const UINT& nLevel) const;
     static int GetSpellAbilityValue(CGameSprite* pSprite, const CResRef& resRef, int nSaveMod, BYTE nClass, DWORD nSpecialization, BYTE nCasterLevel);
     // #guess name: the only field read is m_derivedStats.m_nSkills[1] -- the Animal
