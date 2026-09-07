@@ -58,6 +58,8 @@
 //                                Bypasses Swing and attack/base-damage rolls.
 //   combatrules                 assert recovered AC/dual-wield/range calculations;
 //                                transient state restored in the same tick.
+//   combathit                   exercise attack/critical resolution on portraits
+//                                0 and 1; no damage or save, reseeds thread RNG.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -73,6 +75,7 @@
 #include "CGameArea.h"
 #include "CGameObject.h"
 #include "CGameObjectArray.h"
+#include "CGameOptions.h"
 #include "CGameSprite.h"
 #include "CGameEffect.h"
 #include "CItem.h"
@@ -894,6 +897,233 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         Emit("{\"step\":%d,\"op\":\"combatrules\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "combathit") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2) {
+            Fail(nStep, "combathit", "requires world and two party members");
+            return;
+        }
+        CGameObjectArray* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* sourceObject = NULL;
+        CGameObject* targetObject = NULL;
+        if (objects->GetDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, &sourceObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, "combathit", "source unavailable");
+            return;
+        }
+        if (objects->GetDeny(targetId, CGameObjectArray::THREAD_ASYNCH, &targetObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, "combathit", "target unavailable");
+            return;
+        }
+        CGameSprite* source = static_cast<CGameSprite*>(sourceObject);
+        CGameSprite* target = static_cast<CGameSprite*>(targetObject);
+        CDerivedStatsTemplate sourceStats = source->m_derivedStats, targetStats = target->m_derivedStats;
+        auto sourceBase = source->m_baseStats, targetBase = target->m_baseStats;
+        BYTE sourceRace = source->m_typeAI.m_nRace, targetRace = target->m_typeAI.m_nRace;
+        BYTE sourceEA = source->m_typeAI.m_nEnemyAlly, targetEA = target->m_typeAI.m_nEnemyAlly;
+        BYTE sourceClass = source->m_typeAI.m_nClass;
+        auto sourceClassMask = source->m_typeAI.m_nClassMask;
+        BYTE sourceSet = source->m_nWeaponSet, targetSet = target->m_nWeaponSet;
+        auto sourceSelected = source->m_equipment.m_selectedWeapon;
+        auto sourceAbility = source->m_equipment.m_selectedWeaponAbility;
+        CPoint sourcePos = source->m_pos, targetPos = target->m_pos;
+        BOOL hiding = target->m_bHiding;
+        auto timeStop = game->m_nTimeStop, timeStopCaster = game->m_nTimeStopCaster;
+        auto difficulty = game->GetOptions()->m_nDifficultyLevel;
+        BOOL shake = game->GetOptions()->m_bCriticalHitScreenShake;
+        CItem* sourceItems[sizeof(source->m_equipment.m_items) / sizeof(CItem*)];
+        CItem* targetItems[sizeof(target->m_equipment.m_items) / sizeof(CItem*)];
+        memcpy(sourceItems, source->m_equipment.m_items, sizeof(sourceItems));
+        memcpy(targetItems, target->m_equipment.m_items, sizeof(targetItems));
+        CItem sword(CResRef("ZRCMELEE"), 1, 0, 0, 0, 0);
+        sword.Demand();
+        ITEM_ABILITY* ability = sword.GetAbility(0);
+        BOOL valid = ability != NULL && source->m_derivedStats.m_cToHitBonusList.IsEmpty();
+        INT checks = 0;
+        auto check = [&](const char* name, INT actual, INT expected) {
+            Emit("{\"step\":%d,\"op\":\"combathit-case\",\"case\":\"%s\",\"actual\":%d,\"expected\":%d}", nStep, name, actual, expected);
+            valid = valid && actual == expected;
+            ++checks;
+        };
+        if (valid) {
+            ITEM_ABILITY savedAbility = *ability;
+            static_cast<CDerivedStatsTemplate&>(source->m_derivedStats) = CDerivedStatsTemplate{};
+            static_cast<CDerivedStatsTemplate&>(target->m_derivedStats) = CDerivedStatsTemplate{};
+            source->m_derivedStats.m_nSTR = source->m_derivedStats.m_nDEX = source->m_derivedStats.m_nCHR = 10;
+            target->m_derivedStats.m_nDEX = 10;
+            source->m_derivedStats.m_nClassLevels[CAIOBJECTTYPE_C_FIGHTER - 1] = 10;
+            source->m_derivedStats.m_nNumberOfAttacks = 2;
+            source->m_typeAI.m_nClass = CAIOBJECTTYPE_C_FIGHTER;
+            source->m_typeAI.m_nClassMask = CLASSMASK_FIGHTER;
+            source->m_typeAI.m_nRace = target->m_typeAI.m_nRace = CAIOBJECTTYPE_R_HUMAN;
+            source->m_typeAI.m_nEnemyAlly = target->m_typeAI.m_nEnemyAlly = CAIOBJECTTYPE_EA_PC;
+            memset(source->m_baseStats.m_feats, 0, sizeof(source->m_baseStats.m_feats));
+            memset(target->m_baseStats.m_feats, 0, sizeof(target->m_baseStats.m_feats));
+            memset(source->m_baseStats.m_classLevels, 0, sizeof(source->m_baseStats.m_classLevels));
+            memset(target->m_baseStats.m_classLevels, 0, sizeof(target->m_baseStats.m_classLevels));
+            source->m_baseStats.m_fighterLevel = 10;
+            source->m_baseStats.m_featLargeSword = 0;
+            source->m_baseStats.m_specFlags = target->m_baseStats.m_specFlags = 0;
+            source->m_baseStats.m_attackBase = 10;
+            target->m_baseStats.m_visible = 0;
+            target->m_bHiding = FALSE;
+            memset(source->m_equipment.m_items, 0, sizeof(sourceItems));
+            memset(target->m_equipment.m_items, 0, sizeof(targetItems));
+            source->m_nWeaponSet = target->m_nWeaponSet = 0;
+            source->m_equipment.m_items[43] = &sword;
+            source->m_equipment.m_selectedWeapon = 43;
+            source->m_equipment.m_selectedWeaponAbility = 0;
+            source->m_pos = CPoint(1000, 1000);
+            target->m_pos = CPoint(1120, 1000);
+            game->m_nTimeStop = 0;
+            game->GetOptions()->m_bCriticalHitScreenShake = FALSE;
+            game->GetOptions()->m_nDifficultyLevel = 3;
+            ability->abilityFlags = 0;
+            ability->thac0Bonus = 0;
+            ability->damageType = 2;
+            auto attack = [&](const char* name, UINT seed, INT expectedHit, INT expectedCritical, INT index = 0, INT offhand = 0, BYTE count = 1) {
+                srand(seed);
+                BOOL critical = 0;
+                BOOLEAN hit = source->CheckAttackHit(target, &sword, index, &critical, offhand, count);
+                check(name, hit, expectedHit);
+                check("critical-result", critical, expectedCritical);
+            };
+            // Fighter 10, STR 10, untrained sword: +6 against the controlled AC.
+            target->m_derivedStats.m_nACNaturalBonus = 6;
+            source->m_derivedStats.m_nLuck = 9;
+            attack("melee-equals-ac", 0, 1, 0);
+            target->m_derivedStats.m_nACNaturalBonus = 7;
+            attack("melee-one-below-ac", 0, 0, 0);
+            target->m_derivedStats.m_nACNaturalBonus = -3;
+            source->m_derivedStats.m_nLuck = 0;
+            attack("natural-one-fails", 0, 0, 0);
+            attack("confirmation-one-can-succeed", 9563, 1, 1);
+            target->m_derivedStats.m_nACNaturalBonus = -2;
+            attack("confirmation-one-below-ac", 9563, 1, 0);
+            target->m_derivedStats.m_nACNaturalBonus = 1000;
+            attack("natural-twenty-hits-high-ac", 9563, 1, 0);
+            target->m_derivedStats.m_nACNaturalBonus = -3;
+            attack("sword-nineteen-threat", 9063, 1, 1);
+            source->m_derivedStats.m_nLuck = 17;
+            attack("sword-eighteen-not-threat", 0, 1, 0);
+            source->m_baseStats.m_feats[0] |= 1 << CGAMESPRITE_FEAT_IMPROVED_CRITICAL;
+            attack("improved-critical-eighteen", 0, 1, 1);
+            source->m_baseStats.m_feats[0] = 0;
+            ability->abilityFlags = 0x20000;
+            attack("keen-eighteen", 0, 1, 1);
+            ability->abilityFlags = 0;
+            target->m_baseStats.m_specFlags = 2;
+            source->m_derivedStats.m_nLuck = 0;
+            attack("target-immune-to-critical", 9563, 1, 0);
+            target->m_baseStats.m_specFlags = 0;
+            target->m_derivedStats.m_generalState = 0x20000000;
+            attack("concealment-overrides-natural-twenty", 9563, 0, 0);
+            target->m_derivedStats.m_generalState = 0;
+            target->m_derivedStats.m_nACNaturalBonus = 1000;
+            target->m_derivedStats.m_generalState = 0x20;
+            attack("helpless-autohit", 0, 1, 0);
+            target->m_derivedStats.m_generalState = 0;
+            target->m_derivedStats.m_spellStates[SPLSTATE_TORTOISE_SHELL] = true;
+            attack("tortoise-autohit", 0, 1, 0);
+            target->m_derivedStats.m_spellStates.reset();
+            game->m_nTimeStop = 1;
+            game->m_nTimeStopCaster = sourceId;
+            attack("time-stop-autohit", 0, 1, 0);
+            game->m_nTimeStopCaster = targetId;
+            attack("time-stop-caster-not-autohit", 0, 0, 0);
+            game->m_nTimeStop = 0;
+            ability->thac0Bonus = SHORT_MAX;
+            attack("weapon-autohit-sentinel", 0, 1, 0);
+            ability->thac0Bonus = 0;
+            target->m_derivedStats.m_nACNaturalBonus = -3;
+            target->m_derivedStats.m_spellStates[SPLSTATE_BLINK] = true;
+            attack("target-blink-miss", 1, 0, 0);
+            target->m_derivedStats.m_spellStates.reset();
+            source->m_derivedStats.m_spellStates[SPLSTATE_BLINK] = true;
+            attack("source-blink-miss", 23, 0, 0);
+            // MSVC rand seed 1 starts at 41 (passes the source's 20% check).
+            source->m_derivedStats.m_nLuck = 19;
+            attack("source-blink-pass", 1, 1, 1);
+            source->m_derivedStats.m_spellStates.reset();
+            source->m_derivedStats.m_nLuck = 9;
+            target->m_derivedStats.m_nACNaturalBonus = 6;
+            attack("second-attack-penalty", 0, 0, 0, 0, 0, 2);
+            attack("missing-ability-fallback", 0, 1, 0, 99);
+            source->m_equipment.m_items[44] = &sword;
+            target->m_derivedStats.m_nACNaturalBonus = -4;
+            attack("offhand-resets-attack-count", 0, 1, 0, 0, 0, 2);
+            source->m_equipment.m_items[44] = NULL;
+            target->m_derivedStats.m_nACNaturalBonus = 6;
+            target->m_derivedStats.m_nACArmorBonus = 10;
+            attack("armor-blocks-normal-hit", 0, 0, 0);
+            ability->abilityFlags = 0x10000;
+            attack("touch-ignores-armor", 0, 1, 0);
+            ability->abilityFlags = 0;
+            target->m_derivedStats.m_nACArmorBonus = 0;
+            source->m_typeAI.m_nEnemyAlly = 255;
+            game->GetOptions()->m_nDifficultyLevel = 1;
+            attack("easy-npc-penalty", 0, 0, 0);
+            game->GetOptions()->m_nDifficultyLevel = 5;
+            attack("hard-npc-bonus", 0, 1, 0);
+            source->m_typeAI.m_nEnemyAlly = CAIOBJECTTYPE_EA_PC;
+            source->m_pos = CPoint(0, 0);
+            target->m_pos = CPoint(320, 0);
+            const char* ammunition[] = { "ZRCARROW", "ZRCBOLT", "ZRCSTONE" };
+            const char* launchers[] = { "ZRCBOW", "ZRCXBOW", "ZRCSLING" };
+            for (INT i = 0; i < 3; ++i) {
+                CItem ammo(CResRef(ammunition[i]), 1, 0, 0, 0, 0);
+                CItem launcher(CResRef(launchers[i]), 1, 0, 0, 0, 0);
+                source->m_equipment.m_items[43] = &launcher;
+                srand(0);
+                BOOL critical = FALSE;
+                check(ammunition[i], source->CheckAttackHit(target, &ammo, 0, &critical, 0, 1), TRUE);
+                check("ranged-no-critical", critical, FALSE);
+                source->m_derivedStats.m_spellStates[SPLSTATE_FEAT_RAPID_SHOT] = true;
+                srand(0);
+                check("rapid-shot-penalty", source->CheckAttackHit(target, &ammo, 0, &critical, 0, 1), FALSE);
+                source->m_derivedStats.m_spellStates[SPLSTATE_FEAT_RAPID_SHOT] = false;
+                source->m_equipment.m_items[43] = &sword;
+                ammo.ReleaseAll();
+                launcher.ReleaseAll();
+            }
+            *ability = savedAbility;
+        }
+        sword.ReleaseAll();
+        static_cast<CDerivedStatsTemplate&>(source->m_derivedStats) = sourceStats;
+        static_cast<CDerivedStatsTemplate&>(target->m_derivedStats) = targetStats;
+        source->m_baseStats = sourceBase;
+        target->m_baseStats = targetBase;
+        source->m_typeAI.m_nRace = sourceRace;
+        target->m_typeAI.m_nRace = targetRace;
+        source->m_typeAI.m_nEnemyAlly = sourceEA;
+        target->m_typeAI.m_nEnemyAlly = targetEA;
+        source->m_typeAI.m_nClass = sourceClass;
+        source->m_typeAI.m_nClassMask = sourceClassMask;
+        source->m_nWeaponSet = sourceSet;
+        target->m_nWeaponSet = targetSet;
+        source->m_equipment.m_selectedWeapon = sourceSelected;
+        source->m_equipment.m_selectedWeaponAbility = sourceAbility;
+        memcpy(source->m_equipment.m_items, sourceItems, sizeof(sourceItems));
+        memcpy(target->m_equipment.m_items, targetItems, sizeof(targetItems));
+        source->m_pos = sourcePos;
+        target->m_pos = targetPos;
+        target->m_bHiding = hiding;
+        game->m_nTimeStop = timeStop;
+        game->m_nTimeStopCaster = timeStopCaster;
+        game->GetOptions()->m_nDifficultyLevel = difficulty;
+        game->GetOptions()->m_bCriticalHitScreenShake = shake;
+        objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            Fail(nStep, "combathit", "fixture/precondition or numeric mismatch (state restored)");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"combathit\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
     }

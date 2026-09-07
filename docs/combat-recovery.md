@@ -239,6 +239,60 @@ in the same evidence directory. All 13 fixtures were removed and the pre-run
 INI restored with matching SHA-256. This still does not exercise normal attack
 resolution or base weapon damage.
 
+### Attack hit and critical resolution (2026-09-07)
+
+Recovered `CGameSprite::CheckAttackHit` (0x73B760), including the full original
+decision path: offhand detection, automatic hits, blink, fallback ability,
+normal/touch AC, iterative attacks, weapon/launcher and class/race/feat bonuses,
+difficulty, concealment, critical threat and confirmation, feedback, screen
+shake, Dirty Fighting, and consumption of missed unarmed special attacks.
+
+The assembler fixes several easily misread details:
+
+- Natural 1 is rejected after feedback/critical processing; natural 20 hits
+  irrespective of AC. Confirmation has no special 1/20 rule: it compares its
+  roll plus the signed 16-bit attack total with the signed 16-bit AC.
+- Concealment runs before confirmation and may veto even a confirmed critical.
+  The output critical flag is only written when a critical is accepted; early
+  automatic-hit paths leave it alone.
+- Derived THAC0 is zero-extended before summing, then the final comparison
+  truncates the total to a signed short, as the original does.
+- Dirty Fighting writes saving-throw mask 4 and save modifier 4, not dice 4d4.
+  Its message uses the target as caller and the attacker as recipient in the
+  original. The unarmed miss cleanup uses SPIN232/SPIN233.
+
+The new `combathit` AutoUI command invokes the resolver directly using an
+isolated party pair and the existing fixture items. It restores the modified
+base stats, derived-stat template, equipment, AI fields, positions, resource
+ability, time-stop and game options before releasing the objects. It reseeds
+the test thread's CRT RNG and does not save. It does not run Swing, launch a
+projectile or inflict base weapon damage.
+
+Static batch `.arc/2026-09-07T17-03-38-batch/` passes source, member-offset,
+argument and layout checks, with YELLOW parity for the call count (96 original
+calls versus 112 source calls). The earlier static run's CString literal lint
+was fixed. An initial test-harness build failure used a non-constant slot count
+as an array bound; the arrays now derive their extent from the equipment array.
+
+The Win32 build passes. The first native `combat-hit.txt` run passes 63
+assertions and five UI steps, but the observer returns PROCESS-EXITED before
+the full observation completes: CheckAttackHit x33,
+CheckConcealment x27, FeedBack x36. Covered cases include exact AC boundaries,
+natural 1/20, confirmation on 1, sword/keen/improved threat ranges, critical
+immunity, concealment, source/target blink, automatic hits, fallback ability,
+offhand/iterative attacks, touch attacks, NPC difficulty and all three launchers
+with Rapid Shot. Evidence: `work/combat-hit-20260907/hit-first.jsonl` and
+`smoke-first-exit.log`. Test fixtures were removed and the original INI restored with
+a matching hash. No original/recovered differential capture was made. Screen
+shake, Dirty Fighting and unarmed miss effect messages remain runtime-untested;
+the scenario disables these side effects to restore party state in one tick.
+
+A fresh rerun passes the same 63 assertions and finishes the full 60-second
+observation CLEAN, with the same 33/27/36 function counts. Final evidence is
+`hit-second.jsonl` and `smoke-pass.log` in the same directory. No application
+crash event or new crash dump was found for the first exit; its cause is not
+established. The rerun's 13 fixtures were removed and its INI restored.
+
 ### Next recovery batch
 
 Prioritize these over the generic size-ranked target list:
@@ -248,8 +302,8 @@ Prioritize these over the generic size-ranked target list:
    executor can actually run; preserve the original target/lock handling.
 2. `Swing` candidate 0x739B60: attack-frame progression, projectile creation,
    to-hit and damage calculation, effects, ammo and feedback.
-3. 0x73B760: hit/critical resolution; 0x73D560: base weapon damage and modifiers.
-   These are large unrecovered functions, not substitutes for opcode-12 delivery.
+3. 0x73D560: base weapon damage and modifiers. Hit/critical resolution at
+   0x73B760 is recovered; the normal attack executor still needs to call it.
 4. Dependencies: 0x75D450 depleted ammunition/equipment cleanup; 0x761AB0
    on-hit subspell effects. Full context bundles for the
    main chain and these dependencies are available as `tmp_combat_*.md` locally.

@@ -1,0 +1,6 @@
+# Install combat_payload_fixture.py first. No damage or saving; reseeds RNG.
+waitgo
+wait world
+enddialog
+combathit
+sleep 30
