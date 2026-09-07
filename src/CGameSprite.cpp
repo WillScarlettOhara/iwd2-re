@@ -36,6 +36,9 @@
 #include "IcewindCVisualEffect.h"
 #include "IcewindMisc.h"
 
+#include <ctype.h>
+#include <string.h>
+
 // 0x85BB38
 const BYTE CGameSprite::DIR_S = 0;
 
@@ -13026,6 +13029,75 @@ BOOL CGameSprite::CheckConcealment(CGameSprite* pTarget)
         }
     }
     return bHit;
+}
+
+// 0x73CD00
+INT CGameSprite::GetSpecialWeaponHitBonus(CGameSprite* pTarget, CItem* pWeapon, const ITEM_ABILITY* pAbility)
+{
+    UTIL_ASSERT(pTarget != NULL);
+    UTIL_ASSERT(pWeapon != NULL);
+    UTIL_ASSERT(pAbility != NULL);
+
+    SHORT nLauncherSlot;
+    CItem* pLauncher = GetLauncher(pAbility, nLauncherSlot);
+    if (pLauncher != NULL) {
+        pLauncher->Demand();
+        pLauncher->GetAbility(0);
+    }
+
+    static BOOL bSpecialWeapon;
+    static char sSpecialWeapon[9];
+    bSpecialWeapon = FALSE;
+    if (_strnicmp(reinterpret_cast<const char*>(pWeapon->GetResRef().GetResRef()), "ZZ", 2) == 0) {
+        bSpecialWeapon = TRUE;
+        strncpy(sSpecialWeapon,
+            reinterpret_cast<const char*>(pWeapon->GetResRef().GetResRef()),
+            8);
+    }
+    if (pLauncher != NULL) {
+        if (_strnicmp(reinterpret_cast<const char*>(pLauncher->GetResRef().GetResRef()), "ZZ", 2) == 0) {
+            bSpecialWeapon = TRUE;
+            strncpy(sSpecialWeapon,
+                reinterpret_cast<const char*>(pLauncher->GetResRef().GetResRef()),
+                8);
+        }
+        pLauncher->Release();
+    }
+
+    if (!bSpecialWeapon) {
+        return 0;
+    }
+
+    const unsigned char nTargetCode = static_cast<unsigned char>(sSpecialWeapon[2]);
+    const unsigned char nBonusCode = static_cast<unsigned char>(sSpecialWeapon[3]);
+    UTIL_ASSERT(isdigit(nBonusCode));
+
+    BOOL bMatches = FALSE;
+    if (isalpha(nTargetCode)) {
+        static const BYTE RACE_BY_CODE[26] = {
+            156, 157, 164, 152, 160, 161, 165, 153, 168, 167, 166, 155, 2,
+            4, 6, 5, 3, 1, 116, 150, 108, 159, 162, 117, 113, 115
+        };
+        INT nIndex = toupper(nTargetCode) - 'A';
+        bMatches = nIndex >= 0 && nIndex < 26
+            && RACE_BY_CODE[nIndex] == pTarget->m_typeAI.m_nRace;
+    } else if (isdigit(nTargetCode)) {
+        static const DWORD ALIGNMENT_MASK[6] = { 0xF0, 0xF0, 0xF0, 0x0F, 0x0F, 0x0F };
+        static const DWORD ALIGNMENT_VALUE[6] = { 1, 2, 3, 1, 2, 3 };
+        INT nIndex = nTargetCode - '0';
+        // Codes 6..9 read the following PE constants, whose comparison values
+        // exceed any BYTE alignment; those comparisons always fail.
+        bMatches = nIndex < 6
+            && (ALIGNMENT_MASK[nIndex] & pTarget->m_typeAI.m_nAlignment)
+                == ALIGNMENT_VALUE[nIndex];
+    } else {
+        UTIL_ASSERT(FALSE);
+    }
+
+    if (!bMatches) {
+        return 0;
+    }
+    return nBonusCode < '5' ? nBonusCode - '5' : nBonusCode - '4';
 }
 
 // 0x73CF10

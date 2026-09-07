@@ -42,6 +42,9 @@ FIXTURES = {
     "ZRCDAGGR": item(16, 1, 0, 1, 0),
     "ZRCARMOR": item(63, 1, 0, 1, 0),
     "ZRCSHLD": item(41, 1, 0, 1, 0),
+    "ZZA5TST": item(20, 1, 0, 1, 0),
+    "ZZ05TST": item(15, 4, 0, 1, 0),
+    "ZZ35TST": item(15, 4, 0, 1, 0),
 }
 
 

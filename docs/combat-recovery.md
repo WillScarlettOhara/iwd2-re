@@ -176,6 +176,69 @@ Evidence: `work/combat-hit-prereqs-20260907/rules-pass.jsonl`, `smoke-pass.log`
 and `smoke-pass.txt`. All ten fixtures were removed and the saved INI restored.
 No paired original/reconstruction capture or visual parity comparison was made.
 
+### Legacy `ZZ` weapon bonuses (2026-09-07)
+
+Recovered `GetSpecialWeaponHitBonus` (0x73CD00), the last standalone modifier
+called by the hit resolver. It examines the weapon and then its launcher; a
+launcher whose resref begins with `ZZ` overrides the ammunition/weapon code.
+The third character selects a race (`A` through `Z`) or one of six hard-coded
+alignment mask/value pairs. The fourth character maps `0..4` to `-5..-1` and
+`5..9` to `+1..+5`.
+
+The exact 26-entry race map and six alignment pairs come from PE data at
+0x8B8548 and 0x8B85B0. The implementation keeps the original shared scratch
+buffer and launcher demand/release behavior. The high-nibble alignment codes
+`0..2` compare `(alignment & 0xF0)` with `1..3`, which cannot match the normal
+`0x11..0x33` values; codes `3..5` compare the low nibble and do match. This
+historical behavior is retained rather than corrected.
+
+The combat fixture set now contains 13 resources, adding race and alignment
+`ZZ` items. The runtime matrix contains 75 cases, including a matching race,
+nonmatching race, the high-mask behavior, a working low-mask alignment and a
+nonmatching alignment, plus launcher override of the weapon/ammunition code.
+It also checks both bonus endpoints (-5/+5) and target codes `6..9`: the
+original reads adjacent PE constants for these codes, whose comparison values
+cannot match a BYTE alignment. The recovered function returns zero for them.
+Fixture cleanup tests still enforce all-or-nothing
+installation/removal without touching unrelated resources.
+
+Static batch `.arc/2026-09-07T02-22-06-batch/` passes with a YELLOW call-count
+warning (21 binary calls vs 26 source calls from un-inlined accessors/CRT use).
+The first runtime exposed the impossible high-mask case; the second exposed an
+incorrect expected value after changing `ZZ05` to `ZZ35`. Both are retained as
+failure evidence. A corrected 63-case run was CLEAN, then the final launcher
+override run passed all 64 assertions and nine UI steps and remained CLEAN for
+60 seconds. Runtime hit count: special weapon bonus x6. Evidence is in
+`work/combat-zz-20260907/`: `rules-pass.jsonl`, `smoke-pass.log`,
+`rules-first-fail.jsonl`, and `rules-second-fail.jsonl`. No original differential
+capture was made.
+
+`CItem::GetCriticalRangeBonus` (0x4E9840) is also recovered and replaces the
+local copy in `CScreenCharacter`. Item types 16/19/20/23/27/31/57/69 contribute
+one point; ability flag `0x20000` contributes one more. A null ability still
+allows the item-type bonus. Five additional matrix cases cover a sword, bow,
+null ability, and the flag on both weapon types.
+
+The updated static batch `.arc/2026-09-07T16-46-35-batch/` passes: critical
+range GREEN, special weapon bonus YELLOW (21 binary calls versus 25 source
+calls). The CItem layout audit is unavailable; no fields were added. The
+Win32 build succeeds with existing warnings in unrelated files. The fixture
+installer/remover's three Python tests pass, including preservation of unrelated
+resources and cleanup of all three new `ZZ` fixtures.
+
+The first 75-case run passed its assertions but the observer returned
+NOT-INSTRUMENTED: it was given the nonexistent UI symbol
+`CScreenCharacter::UpdateCharacterEquipmentInfo`. Its evidence is preserved as
+`rules-uninstrumented.jsonl` and `smoke-uninstrumented.log`; the correct symbol
+is `CScreenCharacter::UpdateEquipmentInformation`.
+
+The corrected run passed all 75 assertions and nine UI steps, with 60 seconds
+of CLEAN observation: special weapon bonus x12, critical range x7, equipment
+information x2. Final captures are `rules-final.jsonl` and `smoke-final.log`
+in the same evidence directory. All 13 fixtures were removed and the pre-run
+INI restored with matching SHA-256. This still does not exercise normal attack
+resolution or base weapon damage.
+
 ### Next recovery batch
 
 Prioritize these over the generic size-ranked target list:
@@ -188,10 +251,7 @@ Prioritize these over the generic size-ranked target list:
 3. 0x73B760: hit/critical resolution; 0x73D560: base weapon damage and modifiers.
    These are large unrecovered functions, not substitutes for opcode-12 delivery.
 4. Dependencies: 0x75D450 depleted ammunition/equipment cleanup; 0x761AB0
-   on-hit subspell effects. Hit-resolution dependency 0x73CD00 still handles
-   `ZZ`-prefixed weapon/launcher resrefs with race/alignment-encoded bonuses.
-   Preserve its shared scratch state and PE table/return-width behavior rather
-   than replacing this branch with a constant zero. Full context bundles for the
+   on-hit subspell effects. Full context bundles for the
    main chain and these dependencies are available as `tmp_combat_*.md` locally.
 5. Drive a real forced attack on another party member in both executables,
    compare captures, and test normal/critical/missed blows, ammunition exhaustion,

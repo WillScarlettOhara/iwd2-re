@@ -37,6 +37,7 @@ public:
     CGameEffect* GetAbilityEffect(LONG abilityNum, LONG effectNum, CGameObject* pObject);
     INT GetMaxEffectSpellLevel();
     WORD GetItemType();
+    SHORT GetCriticalRangeBonus(const ITEM_ABILITY* pAbility);
     DWORD GetCriticalHitMultiplier();
     DWORD GetWeight();
     CResRef GetUsedUpItemId();

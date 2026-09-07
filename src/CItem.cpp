@@ -835,6 +835,28 @@ INT CItem::GetMaxEffectSpellLevel()
     return (INT)nMaxLevel;
 }
 
+// 0x4E9840
+SHORT CItem::GetCriticalRangeBonus(const ITEM_ABILITY* pAbility)
+{
+    SHORT nBonus = 0;
+    switch (GetItemType()) {
+    case 16:
+    case 19:
+    case 20:
+    case 23:
+    case 27:
+    case 31:
+    case 57:
+    case 69:
+        nBonus = 1;
+        break;
+    }
+    if (pAbility != NULL && (pAbility->abilityFlags & 0x20000) != 0) {
+        nBonus++;
+    }
+    return nBonus;
+}
+
 // 0x4E9910
 DWORD CItem::GetCriticalHitMultiplier()
 {

@@ -614,6 +614,8 @@ void Tick(CWarp* pActiveEngine)
         CGameSprite* target = static_cast<CGameSprite*>(targetObject);
         auto savedBase = source->m_baseStats;
         auto savedTargetBase = target->m_baseStats;
+        BYTE targetRace = target->m_typeAI.m_nRace;
+        BYTE targetAlignment = target->m_typeAI.m_nAlignment;
         CPoint sourcePos = source->m_pos, targetPos = target->m_pos;
         DWORD sourceState = source->m_derivedStats.m_generalState;
         DWORD targetState = target->m_derivedStats.m_generalState;
@@ -748,6 +750,47 @@ void Tick(CWarp* pActiveEngine)
             INT rank3 = atol(rules.m_tWeaponSpecialization.GetAt(CPoint(0, 3)));
             check("proficiency-sword-specialization", source->GetWeaponProficiencyHitBonus(&sword, &ability), rank3);
 
+            CItem specialRace(CResRef("ZZA5TST"), 1, 0, 0, 0, 0);
+            CItem specialAlignmentBroken(CResRef("ZZ05TST"), 1, 0, 0, 0, 0);
+            CItem specialAlignment(CResRef("ZZ35TST"), 1, 0, 0, 0, 0);
+            ability.type = 1;
+            target->m_typeAI.m_nRace = 156;
+            check("special-race-match", source->GetSpecialWeaponHitBonus(target, &specialRace, &ability), 1);
+            // The melee helper reads the resref without demanding the weapon.
+            // Keep the resource binding intact and restore its name afterwards.
+            specialRace.cResRef = CResRef("ZZA0TST");
+            check("special-negative-endpoint", source->GetSpecialWeaponHitBonus(target, &specialRace, &ability), -5);
+            specialRace.cResRef = CResRef("ZZA9TST");
+            check("special-positive-endpoint", source->GetSpecialWeaponHitBonus(target, &specialRace, &ability), 5);
+            const char* unusedCodes[] = { "ZZ65TST", "ZZ75TST", "ZZ85TST", "ZZ95TST" };
+            for (INT i = 0; i < 4; ++i) {
+                specialRace.cResRef = CResRef(unusedCodes[i]);
+                check(unusedCodes[i], source->GetSpecialWeaponHitBonus(target, &specialRace, &ability), 0);
+            }
+            specialRace.cResRef = CResRef("ZZA5TST");
+            ability.abilityFlags = 0;
+            check("critical-sword", specialRace.GetCriticalRangeBonus(&ability), 1);
+            check("critical-bow", specialAlignment.GetCriticalRangeBonus(&ability), 0);
+            check("critical-null-ability", specialRace.GetCriticalRangeBonus(NULL), 1);
+            ability.abilityFlags = 0x20000;
+            check("critical-keen-sword", specialRace.GetCriticalRangeBonus(&ability), 2);
+            check("critical-keen-bow", specialAlignment.GetCriticalRangeBonus(&ability), 1);
+            ability.abilityFlags = 0;
+            target->m_typeAI.m_nRace = 157;
+            check("special-race-miss", source->GetSpecialWeaponHitBonus(target, &specialRace, &ability), 0);
+            target->m_typeAI.m_nAlignment = CAIOBJECTTYPE_LAWFUL_GOOD;
+            check("special-alignment-high-mask-bug", source->GetSpecialWeaponHitBonus(target, &specialAlignmentBroken, &ability), 0);
+            check("special-alignment-low-mask-match", source->GetSpecialWeaponHitBonus(target, &specialAlignment, &ability), 1);
+            target->m_typeAI.m_nAlignment = CAIOBJECTTYPE_LAWFUL_NEUTRAL;
+            check("special-alignment-miss", source->GetSpecialWeaponHitBonus(target, &specialAlignment, &ability), 0);
+            target->m_typeAI.m_nRace = 157;
+            target->m_typeAI.m_nAlignment = CAIOBJECTTYPE_LAWFUL_GOOD;
+            source->m_equipment.m_items[43] = &specialAlignment;
+            ability.type = 2;
+            ability.launcherType = 1;
+            check("special-launcher-overrides-weapon", source->GetSpecialWeaponHitBonus(target, &specialRace, &ability), 1);
+            source->m_equipment.m_items[43] = &sword;
+
             const char* ammunition[] = { "ZRCARROW", "ZRCBOLT", "ZRCSTONE" };
             const char* launchers[] = { "ZRCBOW", "ZRCXBOW", "ZRCSLING" };
             const UINT feats[] = { CGAMESPRITE_FEAT_MARTIAL_BOW, CGAMESPRITE_FEAT_SIMPLE_CROSSBOW, CGAMESPRITE_FEAT_SIMPLE_MISSILE };
@@ -824,6 +867,8 @@ void Tick(CWarp* pActiveEngine)
         }
         source->m_baseStats = savedBase;
         target->m_baseStats = savedTargetBase;
+        target->m_typeAI.m_nRace = targetRace;
+        target->m_typeAI.m_nAlignment = targetAlignment;
         source->m_pos = sourcePos;
         target->m_pos = targetPos;
         source->m_derivedStats.m_generalState = sourceState;

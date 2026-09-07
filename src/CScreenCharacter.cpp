@@ -104,30 +104,6 @@ void UpdateIndentedPercent(CUIControlTextDisplay* pText, STRREF strLabel, INT nV
         nValue);
 }
 
-INT GetItemCriticalRangeBonus(CItem* pItem, const ITEM_ABILITY* pAbility)
-{
-    INT nBonus = 0;
-
-    switch (pItem->GetItemType()) {
-    case 16:
-    case 19:
-    case 20:
-    case 23:
-    case 27:
-    case 31:
-    case 57:
-    case 69:
-        nBonus = 1;
-        break;
-    }
-
-    if (pAbility != NULL && (pAbility->abilityFlags & 0x20000) != 0) {
-        nBonus++;
-    }
-
-    return nBonus;
-}
-
 STRREF GetDamageTypeStrRef(DWORD dwFlags)
 {
     switch (dwFlags & 0xFFFF0000) {
@@ -358,7 +334,7 @@ void UpdateWeaponInformation(CUIControlTextDisplay* pText, CGameSprite* pSprite,
         }
     }
 
-    INT nCriticalRangeBonus = GetItemCriticalRangeBonus(pWeapon, pAbility) + pSprite->GetCriticalHitBonus();
+    INT nCriticalRangeBonus = pWeapon->GetCriticalRangeBonus(pAbility) + pSprite->GetCriticalHitBonus();
     DWORD nCriticalMultiplier = pWeapon->GetCriticalHitMultiplier();
     if (nCriticalRangeBonus == 0) {
         CBaldurEngine::UpdateTextNoTrim(pText,

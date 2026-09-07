@@ -25,9 +25,10 @@ class CombatPayloadFixtureTest(unittest.TestCase):
         other.write_bytes(b"unrelated")
         self.assertEqual(self.run_fixture("install").returncode, 0)
         self.assertEqual(len(list(self.override.glob("ZRC*.ITM"))), 10)
+        self.assertEqual(len(list(self.override.glob("ZZ*.ITM"))), 3)
         self.assertEqual(self.run_fixture("remove").returncode, 0)
         self.assertEqual(other.read_bytes(), b"unrelated")
-        self.assertEqual(list(self.override.glob("ZRC*.ITM")), [])
+        self.assertEqual(list(self.override.iterdir()), [other])
 
     def test_existing_resource_aborts_before_any_install(self):
         self.override.mkdir()
@@ -42,7 +43,7 @@ class CombatPayloadFixtureTest(unittest.TestCase):
         edited = self.override / "ZRCBOLT.ITM"
         edited.write_bytes(b"edited")
         self.assertNotEqual(self.run_fixture("remove").returncode, 0)
-        self.assertEqual(len(list(self.override.iterdir())), 10)
+        self.assertEqual(len(list(self.override.iterdir())), 13)
         self.assertEqual(edited.read_bytes(), b"edited")
 
 
