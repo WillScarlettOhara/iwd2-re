@@ -293,6 +293,70 @@ observation CLEAN, with the same 33/27/36 function counts. Final evidence is
 crash event or new crash dump was found for the first exit; its cause is not
 established. The rerun's 13 fixtures were removed and its INI restored.
 
+### Base weapon damage (2026-09-07)
+
+Recovered `CGameSprite::CreateWeaponDamage` (0x73D560). It builds the damage
+effect from weapon and launcher dice, ability/derived/hand bonuses, strength,
+Power Attack, favored enemies, conditional feats, special `ZZ` names, critical
+multiplier and sneak damage. It also recovers the original side effects for
+sneak-attack feats, unarmed special attacks, poison coating and Cleave.
+
+Binary details retained:
+
+- Kai maximizes weapon dice; launcher dice still roll with luck. The minimum
+  is one only when the weapon has a nonzero dice count. Bonuses are added as
+  zero-extended words, then the total is compared as a signed short.
+- Positive offhand strength bonuses above one are halved; positive two-handed
+  bonuses are multiplied by 1.5 and truncated, except the `FIST` item icon.
+- Sneak damage is added after the critical multiplier. The sneak position
+  exception checks movement scale zero, not the animation's CanLieDown method.
+- Damage type 8 preserves the original crushing/slashing resistance comparison,
+  including its asymmetric choice. The mixed-type boundary is covered in tests.
+- Special attack message recipients and portrait-icon removal follow the
+  original. These side-effect branches remain outside the current runtime
+  matrix; the diagnostic clears their enabling feats/states.
+
+`combathit` now contains 144 assertions (63 hit/critical checks plus 81 damage
+checks). `weapondamage` constructs the base damage effect, then sends it through
+the existing projectile delivery path. It excludes ITM payload effects so the
+observed HP change is attributable to base damage. The fixture weapons carry
+1d4+1, and launchers add 1d2+2; the delivery diagnostic temporarily fixes luck
+high enough to obtain 5 and 9 respectively. Source statistics are restored
+before firing. The target's HP loss persists for this unsaved test session.
+
+Run on the isolated save with two party members and more than 32 HP on portrait
+1, without damage reductions or other combat:
+
+```powershell
+$py = '.\.venv-reagent\Scripts\python.exe'
+& $py scripts/combat_payload_fixture.py install
+try {
+    & $py scripts/native.py smoke --save 000000037-testSpells --hold 60 `
+        --ui scripts/scenarios/combat-damage.txt `
+        --hit 'CGameSprite::CreateWeaponDamage,CGameEffectDamage::ApplyEffect,CProjectileBolt::CProjectileBolt,CProjectileSlingStone::CProjectileSlingStone'
+} finally {
+    & $py scripts/combat_payload_fixture.py remove
+}
+```
+
+Static batch `.arc/2026-09-07T21-56-47-batch/` passes with YELLOW parity:
+133 original calls versus 112 source calls (repeated special-state handling is
+shared), plus floating-point/NaN heuristics. The 1.5 multiplier is explicitly
+implemented as float; NaNs in the decompile are mis-typed CPoint(-1,-1) values.
+The initial member-offset failure was an auditor bug: it stopped at the direct
+base class and mislabeled inherited `m_typeAI` as `m_nFacing`. The auditor now
+walks transitive bases, with a regression test that excludes unrelated includes.
+The three fixture safety tests and this new auditor test pass.
+
+Native validation passes all 144 numeric assertions and eight scenario steps,
+then finishes the full 60-second observation CLEAN. Target HP changes are
+291 -> 286 (melee) -> 277 (arrow) -> 268 (bolt) -> 259 (sling stone).
+Hits: CreateWeaponDamage x31, damage ApplyEffect x4, bolt constructor x1,
+sling-stone constructor x1. The Win32 build succeeds. Evidence is under
+`work/combat-damage-20260907/`: `damage-first.jsonl` and `smoke-pass.log`.
+All 13 test resources were removed and the pre-run INI restored with matching
+SHA-256. There is no original/recovered differential trace for this batch.
+
 ### Next recovery batch
 
 Prioritize these over the generic size-ranked target list:
@@ -302,8 +366,9 @@ Prioritize these over the generic size-ranked target list:
    executor can actually run; preserve the original target/lock handling.
 2. `Swing` candidate 0x739B60: attack-frame progression, projectile creation,
    to-hit and damage calculation, effects, ammo and feedback.
-3. 0x73D560: base weapon damage and modifiers. Hit/critical resolution at
-   0x73B760 is recovered; the normal attack executor still needs to call it.
+3. Hit/critical resolution (0x73B760) and base damage (0x73D560) are recovered;
+   the normal attack executor still needs to call them. Current tests invoke
+   them directly and therefore do not prove an ordinary mouse attack works.
 4. Dependencies: 0x75D450 depleted ammunition/equipment cleanup; 0x761AB0
    on-hit subspell effects. Full context bundles for the
    main chain and these dependencies are available as `tmp_combat_*.md` locally.

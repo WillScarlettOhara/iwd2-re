@@ -19419,6 +19419,367 @@ BOOLEAN CGameSprite::CheckAttackHit(CGameSprite* pTarget, CItem* pWeapon, INT nA
     return bHit;
 }
 
+// 0x73D560
+CGameEffect* CGameSprite::CreateWeaponDamage(CItem* pWeapon, CItem* pLauncher, INT nAbility, BOOL bCritical, const CAIObjectType& targetType, SHORT nDirection, SHORT nTargetDirection, CGameSprite* pTarget, INT nOffhand)
+{
+    BOOL bOffhand = nOffhand != 0
+        && m_equipment.m_selectedWeapon != 42
+        && m_equipment.m_items[static_cast<BYTE>(GetWeaponSlot())] != NULL
+        && m_equipment.m_items[static_cast<BYTE>(GetWeaponSlot())]->GetItemType() != 53
+        && m_equipment.m_items[static_cast<BYTE>(GetWeaponSlot())]->GetItemType() != 47
+        && m_equipment.m_items[static_cast<BYTE>(GetWeaponSlot())]->GetItemType() != 49
+        && m_equipment.m_items[static_cast<BYTE>(GetWeaponSlot())]->GetItemType() != 41;
+    pWeapon->Demand();
+    const ITEM_ABILITY* pAbility = pWeapon->GetAbility(nAbility);
+    const ITEM_ABILITY* pLauncherAbility = NULL;
+    if (pLauncher != NULL) {
+        pLauncher->Demand();
+        pLauncherAbility = pLauncher->GetAbility(0);
+    }
+    if (pAbility == NULL) {
+        // PE 0x85BBD0.
+        static const ITEM_ABILITY DEFAULT_ATTACK = {
+            1, 1, 0, { 0 }, 1, 1, 1, 0, 0, 0, 0, 0,
+            2, 9, 1, 0, 0, 2, 0, 0, 0xFFFF, 0, 0, 0, { 0 }
+        };
+        pAbility = &DEFAULT_ATTACK;
+    }
+    INT nMinimum = pAbility->damageDiceCount != 0 ? 1 : 0;
+    INT nDamage = 0;
+    INT nSneakDamage = 0;
+    if (m_derivedStats.m_spellStates[SPLSTATE_KAI_64]) {
+        nDamage = pAbility->damageDice * pAbility->damageDiceCount;
+    } else {
+        for (INT i = 0; i < pAbility->damageDiceCount; ++i) {
+            nDamage += CUtil::UtilRandInt(pAbility->damageDice, m_derivedStats.m_nLuck) + 1;
+        }
+    }
+    BOOL bDamage = (pAbility->damageDiceCount != 0 && pAbility->damageDice != 0)
+        || pAbility->damageDiceBonus != 0;
+    if (pLauncherAbility != NULL) {
+        for (INT i = 0; i < pLauncherAbility->damageDiceCount; ++i) {
+            bDamage = TRUE;
+            nDamage += CUtil::UtilRandInt(pLauncherAbility->damageDice, m_derivedStats.m_nLuck) + 1;
+        }
+        nDamage += static_cast<WORD>(pLauncherAbility->damageDiceBonus);
+        if (pLauncherAbility->damageDiceBonus != 0) {
+            bDamage = TRUE;
+        }
+    }
+    const CRuleTables& rules = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
+    if (bDamage) {
+        if ((pAbility->abilityFlags & 1) != 0
+            || (pLauncherAbility != NULL && (pLauncherAbility->abilityFlags & 1) != 0)) {
+            INT nStrength = rules.GetAbilityScoreModifier(m_derivedStats.m_nSTR);
+            if (bOffhand) {
+                if (nStrength > 1) {
+                    nStrength /= 2;
+                }
+            } else if ((pWeapon->GetFlagsFile() & 2) != 0
+                && pWeapon->GetItemIcon() != CResRef("FIST")
+                && nStrength > 0) {
+                nStrength = static_cast<INT>(static_cast<float>(nStrength) * 1.5f);
+            }
+            nDamage += nStrength;
+        }
+        if (static_cast<BYTE>(pAbility->type) != 2
+            && m_baseStats.m_rogueLevel != 0
+            && !pTarget->m_derivedStats.m_spellStates[SPLSTATE_SNEAK_ATTACK_IMMUNITY]
+            && (pTarget->m_baseStats.m_specFlags & 2) == 0) {
+            BOOL bImmobile = (pTarget->m_derivedStats.m_generalState & 0x20) != 0
+                || pTarget->m_animation.GetMoveScale() == 0;
+            BOOL bCheckDodge = TRUE;
+            if (m_typeAI.m_nEnemyAlly <= 30) {
+                if (nDirection <= 2) {
+                    bCheckDodge = nTargetDirection > (nDirection + 12) % 16
+                        || nTargetDirection < nDirection + 4;
+                } else if (nDirection < 14) {
+                    bCheckDodge = nTargetDirection > nDirection - 4
+                        && nTargetDirection < nDirection + 4;
+                } else {
+                    bCheckDodge = nTargetDirection > nDirection - 4
+                        || nTargetDirection < (nDirection + 4) % 16;
+                }
+            }
+            BOOL bSneak = bImmobile;
+            if (bCheckDodge) {
+                bSneak = !((pTarget->m_baseStats.m_barbarianLevel >= 5
+                               && static_cast<INT>(m_baseStats.m_rogueLevel) - pTarget->m_baseStats.m_barbarianLevel < 4)
+                    || (pTarget->m_baseStats.m_rogueLevel >= 6
+                        && static_cast<INT>(m_baseStats.m_rogueLevel) - pTarget->m_baseStats.m_rogueLevel < 4));
+                if (!bSneak) {
+                    FeedBack(0x52, 0, 0, 0, -1, 0, 0);
+                }
+            }
+            if (bSneak) {
+                for (INT i = IcewindMisc::GetSneakAttackRolls(this); i > 0; --i) {
+                    INT nDice = IcewindMisc::GetSneakAttackDice();
+                    nSneakDamage += (nDice != 0 ? rand() % nDice : 0) + 1;
+                }
+                STRREF nText = 0x61DD;
+                if (m_derivedStats.m_spellStates[SPLSTATE_FEAT_ARTERIAL_STRIKE]
+                    && HasFeat(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) {
+                    ITEM_EFFECT effect;
+                    CGameEffect::ClearItemEffect(&effect, 0x1A0);
+                    effect.targetType = 2;
+                    effect.spellLevel = 0;
+                    effect.effectAmount = 1;
+                    effect.dwFlags = 0;
+                    effect.durationType = 0;
+                    effect.duration = 70;
+                    effect.savingThrow = 0;
+                    CGameEffect* pEffect = CGameEffect::DecodeEffect(&effect, CPoint(-1, -1), -1, CPoint(-1, -1));
+                    pEffect->m_source = GetPos();
+                    pEffect->m_sourceID = m_id;
+                    pEffect->m_flags = (pEffect->m_flags & ~1) | 2;
+                    pTarget->AddEffect(pEffect, 1, TRUE, TRUE);
+                    nText = 0x9B94;
+                } else if (m_derivedStats.m_spellStates[SPLSTATE_FEAT_HAMSTRING]
+                    && HasFeat(CGAMESPRITE_FEAT_HAMSTRING)) {
+                    ITEM_EFFECT effect;
+                    CGameEffect::ClearItemEffect(&effect, 0x1B9);
+                    effect.targetType = 2;
+                    effect.spellLevel = 0;
+                    effect.effectAmount = 50;
+                    effect.dwFlags = 2;
+                    effect.durationType = 0;
+                    effect.duration = 70;
+                    effect.savingThrow = 0;
+                    CGameEffect* pEffect = CGameEffect::DecodeEffect(&effect, CPoint(-1, -1), -1, CPoint(-1, -1));
+                    pEffect->m_source = GetPos();
+                    pEffect->m_sourceID = m_id;
+                    pEffect->m_flags = (pEffect->m_flags & ~1) | 2;
+                    pTarget->AddEffect(pEffect, 1, TRUE, TRUE);
+                    nText = 0x9B95;
+                }
+                FeedBack(0x34, nSneakDamage, 0, 0, nText, 0, 0);
+                pTarget->AddEffect(IcewindMisc::CreateEffectImmunityToBackstab(this, IcewindMisc::GetMaxFavoredEnemies()), 1, TRUE, TRUE);
+                if (HasFeat(CGAMESPRITE_FEAT_CRIPPLING_STRIKE)) {
+                    CGameEffect* pEffect = IcewindMisc::CreateEffectSTR(this, -1, 700, 0);
+                    pEffect->m_flags = (pEffect->m_flags & ~1) | 2;
+                    pTarget->AddEffect(pEffect, 1, TRUE, TRUE);
+                }
+            }
+        }
+        if ((m_derivedStats.m_generalState & 2) != 0) {
+            nDamage += 2;
+        }
+    }
+    if (m_derivedStats.m_spellStates[SPLSTATE_SMITE_EVIL] && IcewindMisc::IsEvil(pTarget) == TRUE) {
+        nDamage += m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_PALADIN);
+    }
+    if (bDamage && static_cast<BYTE>(pAbility->type) == 1
+        && HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK) && GetFeatRank(CGAMESPRITE_FEAT_POWER_ATTACK) > 0) {
+        nDamage += GetFeatRank(CGAMESPRITE_FEAT_POWER_ATTACK);
+    }
+    nDamage += static_cast<WORD>(pAbility->damageDiceBonus);
+    if (bDamage) {
+        nDamage += static_cast<WORD>(m_derivedStats.m_nDamageBonus);
+        nDamage += static_cast<WORD>(bOffhand ? m_derivedStats.m_DamageBonusLeft : m_derivedStats.m_DamageBonusRight);
+    }
+    if (pLauncher != NULL) {
+        pLauncher->Release();
+    }
+    if (bDamage && rules.IsHatedRace(targetType, m_baseStats) && m_typeAI.IsClassValid(CAIOBJECTTYPE_C_RANGER)) {
+        nDamage += 4;
+    }
+    if (HasFeat(CGAMESPRITE_FEAT_FIENDSLAYER)) {
+        switch (pTarget->m_typeAI.m_nRace) {
+        case 0xBA:
+        case 0xA4:
+        case 0x76:
+        case 0x9A:
+        case 0xBB:
+        case 0xBC:
+            nDamage += 2;
+            break;
+        }
+    }
+    if (HasFeat(CGAMESPRITE_FEAT_HERETICS_BANE) && (pTarget->GetAIType().m_nClassMask & 0xC) != 0) {
+        nDamage += 3;
+    }
+
+    INT nSpecialState = -1;
+    if (pWeapon == m_equipment.m_items[CGameSpriteEquipment::SLOT_FIST]) {
+        if (m_derivedStats.m_spellStates[SPLSTATE_STUNNING_BLOW_70]) {
+            nSpecialState = SPLSTATE_STUNNING_BLOW_70;
+        } else if (m_derivedStats.m_spellStates[SPLSTATE_QUIVERING_PALM]) {
+            nSpecialState = SPLSTATE_QUIVERING_PALM;
+        }
+    } else if (m_derivedStats.m_spellStates[SPLSTATE_COAT_WEAPON_WITH_POISON]) {
+        nSpecialState = SPLSTATE_COAT_WEAPON_WITH_POISON;
+    }
+    if (nSpecialState != -1) {
+        m_derivedStats.m_spellStates.set(nSpecialState, false);
+        INT nIcon = nSpecialState == SPLSTATE_COAT_WEAPON_WITH_POISON ? 116
+            : (nSpecialState == SPLSTATE_STUNNING_BLOW_70 ? 134 : 135);
+        POSITION pos = m_portraitIcons.Find(reinterpret_cast<int*>(nIcon));
+        if (pos != NULL) {
+            m_portraitIcons.RemoveAt(pos);
+        }
+        ITEM_EFFECT remove;
+        CGameEffect::ClearItemEffect(&remove, 0xFE);
+        remove.targetType = 1;
+        remove.spellLevel = 0;
+        remove.effectAmount = 0;
+        remove.dwFlags = 0;
+        const CResRef& res = nSpecialState == SPLSTATE_COAT_WEAPON_WITH_POISON ? SPIN231
+            : (nSpecialState == SPLSTATE_STUNNING_BLOW_70 ? SPIN232 : SPIN233);
+        memcpy(remove.res, res.GetResRef(), sizeof(remove.res));
+        remove.durationType = 1;
+        remove.duration = 0;
+        remove.numDice = 0;
+        remove.diceSize = 0;
+        remove.savingThrow = 0;
+        CGameEffect* pRemove = CGameEffect::DecodeEffect(&remove, CPoint(-1, -1), -1, CPoint(-1, -1));
+        pRemove->m_source = GetPos();
+        pRemove->m_sourceID = m_id;
+        pRemove->m_flags &= ~1;
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(pRemove, m_id, m_id), FALSE);
+        if (static_cast<BYTE>(pTarget->m_derivedStats.m_nMirrorImages) == 0) {
+            ITEM_EFFECT effect;
+            WORD nEffect = nSpecialState == SPLSTATE_COAT_WEAPON_WITH_POISON ? 0x19
+                : (nSpecialState == SPLSTATE_STUNNING_BLOW_70 ? 0x2D : 0x0D);
+            CGameEffect::ClearItemEffect(&effect, nEffect);
+            effect.targetType = 2;
+            effect.spellLevel = nSpecialState == SPLSTATE_COAT_WEAPON_WITH_POISON ? 10 : 1;
+            effect.effectAmount = 0;
+            effect.dwFlags = 0;
+            effect.durationType = 0;
+            effect.duration = 14;
+            effect.numDice = 0;
+            effect.diceSize = 0;
+            effect.savingThrow = 4;
+            if (nSpecialState == SPLSTATE_COAT_WEAPON_WITH_POISON) {
+                effect.effectAmount = -1 - rand() % 6;
+                effect.dwFlags = 8;
+                effect.duration = 7;
+            } else {
+                if (nSpecialState == SPLSTATE_QUIVERING_PALM) {
+                    effect.dwFlags = 4;
+                    effect.durationType = 1;
+                    effect.duration = 0;
+                }
+                effect.saveMod = rules.GetAbilityScoreModifier(m_derivedStats.m_nWIS) - 1
+                    + m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_MONK) / 2;
+            }
+            CGameEffect* pEffect = CGameEffect::DecodeEffect(&effect, CPoint(-1, -1), -1, CPoint(-1, -1));
+            pEffect->m_source = pTarget->GetPos();
+            pEffect->m_sourceID = pTarget->m_id;
+            if (nSpecialState == SPLSTATE_STUNNING_BLOW_70) {
+                pEffect->m_flags |= 3;
+            } else {
+                pEffect->m_flags &= ~1;
+            }
+            if (nSpecialState == SPLSTATE_COAT_WEAPON_WITH_POISON) {
+                pEffect->m_special = -1 - rand() % 6;
+            }
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(pEffect, pTarget->m_id, m_id), FALSE);
+        }
+    }
+
+    if (_strnicmp(reinterpret_cast<const char*>(pWeapon->GetResRef().GetResRef()), "ZZ", 2) == 0) {
+        char name[9];
+        strcpy(name, pWeapon->GetResRef().GetResRefStr());
+        UTIL_ASSERT(isdigit(static_cast<unsigned char>(name[3])));
+        INT nCode = static_cast<unsigned char>(name[2]);
+        BOOL bMatch = FALSE;
+        if (isalpha(nCode)) {
+            static const BYTE RACES[26] = {
+                156, 157, 164, 152, 160, 161, 165, 153, 168, 167, 166, 155, 2,
+                4, 6, 5, 3, 1, 116, 150, 108, 159, 162, 117, 113, 115
+            };
+            INT nIndex = toupper(nCode) - 'A';
+            bMatch = nIndex >= 0 && nIndex < 26 && RACES[nIndex] == pTarget->m_typeAI.m_nRace;
+        } else if (isdigit(nCode)) {
+            static const DWORD MASKS[6] = { 0xF0, 0xF0, 0xF0, 0x0F, 0x0F, 0x0F };
+            static const DWORD VALUES[6] = { 1, 2, 3, 1, 2, 3 };
+            INT nIndex = nCode - '0';
+            bMatch = nIndex < 6 && (pTarget->m_typeAI.m_nAlignment & MASKS[nIndex]) == VALUES[nIndex];
+        } else {
+            UTIL_ASSERT(FALSE);
+        }
+        if (bMatch) {
+            nDamage += name[3] - '5';
+            if (name[3] > '4') {
+                nDamage++;
+            }
+        }
+    }
+    nDamage += m_derivedStats.m_cDamageBonusList.GetBonus(targetType);
+    SHORT nFinalDamage = static_cast<SHORT>(nDamage);
+    if (nFinalDamage < nMinimum) {
+        nFinalDamage = static_cast<SHORT>(nMinimum);
+    }
+    if (bCritical) {
+        nFinalDamage *= static_cast<SHORT>(pWeapon->GetCriticalHitMultiplier());
+    }
+    nFinalDamage += static_cast<SHORT>(nSneakDamage);
+    DWORD nDamageType = nSneakDamage;
+    switch (pAbility->damageType) {
+    case 1:
+        nDamageType = 0x100000;
+        break;
+    case 2:
+        nDamageType = 0;
+        break;
+    case 3:
+        nDamageType = 0x1000000;
+        break;
+    case 4:
+        nDamageType = 0x2000000;
+        break;
+    case 5:
+        nDamageType = 0x8000000;
+        break;
+    case 6:
+        nDamageType = pTarget == NULL || pTarget->m_derivedStats.m_nResistPiercing <= pTarget->m_derivedStats.m_nResistCrushing ? 0x100000 : 0;
+        break;
+    case 7:
+        nDamageType = pTarget == NULL || pTarget->m_derivedStats.m_nResistPiercing <= pTarget->m_derivedStats.m_nResistSlashing ? 0x100000 : 0x1000000;
+        break;
+    case 8:
+        nDamageType = pTarget != NULL && pTarget->m_derivedStats.m_nResistCrushing <= pTarget->m_derivedStats.m_nResistSlashing ? 0x1000000 : 0;
+        break;
+    case 9:
+        nDamageType = 0x4000000;
+        break;
+    }
+    pWeapon->Release();
+    if (nFinalDamage >= pTarget->m_baseStats.m_hitPoints && static_cast<BYTE>(pAbility->type) == 1
+        && HasFeat(CGAMESPRITE_FEAT_CLEAVE) == TRUE) {
+        INT nCleave = GetFeatValue(CGAMESPRITE_FEAT_CLEAVE);
+        if (!m_timedEffectList.IsTypeOnList(0x1BA) || nCleave == 2) {
+            ITEM_EFFECT effect;
+            CGameEffect::ClearItemEffect(&effect, 0x1BA);
+            effect.targetType = 1;
+            effect.spellLevel = 0;
+            effect.effectAmount = field_5636 - 1;
+            effect.dwFlags = GetFeatValue(CGAMESPRITE_FEAT_CLEAVE);
+            effect.durationType = 0;
+            effect.duration = 7;
+            effect.numDice = 0;
+            effect.diceSize = 0;
+            effect.savingThrow = 0;
+            effect.special = pTarget->m_id;
+            CGameEffect* pEffect = CGameEffect::DecodeEffect(&effect, CPoint(-1, -1), -1, CPoint(-1, -1));
+            pEffect->m_source = GetPos();
+            pEffect->m_sourceID = m_id;
+            pEffect->m_flags &= ~1;
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(pEffect, m_id, m_id), FALSE);
+        }
+    }
+    CGameEffectDamage* pDamage = new CGameEffectDamage();
+    pDamage->m_effectAmount = nFinalDamage;
+    pDamage->m_dwFlags = nDamageType;
+    pDamage->m_source = m_pos;
+    pDamage->m_sourceID = m_id;
+    CWeaponIdentification weaponId;
+    pWeapon->LoadWeaponIdentification(weaponId);
+    pDamage->m_special = weaponId.m_attributes;
+    return pDamage;
+}
+
 // 0x73C6A0
 SHORT CGameSprite::GetDamageTypeACMod(CGameSprite* target, CItem* curWeapon, const ITEM_ABILITY* curAttack)
 {

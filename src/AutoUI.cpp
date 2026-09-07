@@ -60,6 +60,8 @@
 //                                transient state restored in the same tick.
 //   combathit                   exercise attack/critical resolution on portraits
 //                                0 and 1; no damage or save, reseeds thread RNG.
+//   weapondamage <item> [launcher]  calculate base damage and deliver by projectile;
+//                                ZRC fixtures only, no saving, check actual HP loss.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -1091,6 +1093,79 @@ void Tick(CWarp* pActiveEngine)
                 ammo.ReleaseAll();
                 launcher.ReleaseAll();
             }
+            auto damage = [&](const char* name, INT expected, DWORD flags = 0, BOOL critical = FALSE, INT offhand = 0, INT index = 0) {
+                srand(1);
+                CGameEffect* effect = source->CreateWeaponDamage(&sword, NULL, index, critical,
+                    target->GetAIType(), 0, 0, target, offhand);
+                check(name, effect->m_effectAmount, expected);
+                check("damage-type", effect->m_dwFlags, flags);
+                check("damage-source", effect->m_sourceID, sourceId);
+                delete effect;
+            };
+            ability->type = 1;
+            ability->abilityFlags = 0;
+            ability->damageDice = 6;
+            ability->damageDiceCount = 2;
+            ability->damageDiceBonus = 3;
+            ability->damageType = 2;
+            source->m_derivedStats.m_nLuck = 0;
+            damage("base-two-dice-plus-bonus", 8);
+            damage("base-critical-doubles", 16, 0, TRUE);
+            source->m_derivedStats.m_nLuck = 19;
+            damage("luck-caps-each-die", 15);
+            source->m_derivedStats.m_spellStates[SPLSTATE_KAI_64] = true;
+            source->m_derivedStats.m_nLuck = -20;
+            damage("kai-maximizes-despite-negative-luck", 15);
+            source->m_derivedStats.m_spellStates.reset();
+            source->m_derivedStats.m_nLuck = 0;
+            source->m_derivedStats.m_nSTR = 18;
+            ability->abilityFlags = 1;
+            damage("strength-mainhand", 12);
+            DWORD savedFlags = sword.pRes->m_pHeader->itemFlags;
+            sword.pRes->m_pHeader->itemFlags |= 2;
+            damage("strength-two-handed", 14);
+            source->m_derivedStats.m_nSTR = 20;
+            damage("strength-two-handed-rounds-down", 15);
+            sword.pRes->m_pHeader->itemFlags = savedFlags;
+            source->m_derivedStats.m_nSTR = 18;
+            source->m_equipment.m_items[44] = &sword;
+            damage("strength-offhand-halved", 10, 0, FALSE, 1);
+            source->m_derivedStats.m_nSTR = 6;
+            damage("negative-strength-not-halved", 6, 0, FALSE, 1);
+            source->m_equipment.m_items[44] = NULL;
+            ability->abilityFlags = 0;
+            source->m_derivedStats.m_nSTR = 10;
+            source->m_derivedStats.m_DamageBonusRight = 0x10002;
+            damage("right-hand-bonus-low-word", 10);
+            source->m_derivedStats.m_DamageBonusRight = 0;
+            source->m_derivedStats.m_nDamageBonus = -20;
+            damage("negative-total-floors-at-one", 1);
+            source->m_derivedStats.m_nDamageBonus = 0;
+            ability->damageDiceBonus = -2;
+            damage("signed-weapon-bonus-final-word", 3);
+            ability->damageDiceBonus = 0;
+            ability->damageDiceCount = 0;
+            damage("zero-dice-has-zero-floor", 0);
+            source->m_derivedStats.m_nDamageBonus = 10;
+            damage("no-damage-ignores-derived-bonus", 0);
+            source->m_derivedStats.m_nDamageBonus = 0;
+            ability->damageDiceCount = 2;
+            ability->damageDiceBonus = 3;
+            const DWORD damageTypes[] = { 0x100000, 0, 0x1000000, 0x2000000, 0x8000000, 0x100000, 0x100000, 0x1000000, 0x4000000 };
+            for (INT i = 0; i < 9; ++i) {
+                ability->damageType = i + 1;
+                damage("base-damage-descriptor", 8, damageTypes[i]);
+            }
+            target->m_derivedStats.m_nResistPiercing = 10;
+            ability->damageType = 6;
+            damage("mixed-piercing-crushing", 8, 0);
+            ability->damageType = 7;
+            damage("mixed-piercing-slashing", 8, 0x1000000);
+            target->m_derivedStats.m_nResistCrushing = 10;
+            ability->damageType = 8;
+            damage("mixed-crushing-slashing-original-order", 8, 0);
+            target->m_derivedStats.m_nResistPiercing = target->m_derivedStats.m_nResistCrushing = 0;
+            damage("base-fallback-ability", 1, 0, FALSE, 0, 99);
             *ability = savedAbility;
         }
         sword.ReleaseAll();
@@ -1128,7 +1203,8 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
-    if (strcmp(step.op, "weaponpayload") == 0) {
+    if (strcmp(step.op, "weaponpayload") == 0 || strcmp(step.op, "weapondamage") == 0) {
+        BOOL baseDamage = strcmp(step.op, "weapondamage") == 0;
         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
         if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
             || pGame->GetNumCharacters() < 2
@@ -1152,8 +1228,8 @@ void Tick(CWarp* pActiveEngine)
             if (s_payloadHP - hp < s_payloadDamage && ++s_waited < 600) {
                 return;
             }
-            Emit("{\"step\":%d,\"op\":\"weaponpayload\",\"item\":\"%s\",\"hpBefore\":%d,\"hpAfter\":%d,\"expectedDamage\":%d}",
-                nStep, step.s[0], s_payloadHP, hp, s_payloadDamage);
+            Emit("{\"step\":%d,\"op\":\"%s\",\"item\":\"%s\",\"hpBefore\":%d,\"hpAfter\":%d,\"expectedDamage\":%d}",
+                nStep, step.op, step.s[0], s_payloadHP, hp, s_payloadDamage);
             if (s_payloadHP - hp != s_payloadDamage) {
                 Fail(nStep, "weaponpayload", "unexpected HP delta or projectile did not arrive");
                 return;
@@ -1187,8 +1263,7 @@ void Tick(CWarp* pActiveEngine)
         CGameArea* area = source->m_pArea;
         SHORT hp = target->m_baseStats.m_hitPoints;
         BOOL valid = area != NULL && target->m_pArea == area
-            && hp > (step.s[1][0] != '\0' ? 4 : 2);
-        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            && hp > (baseDamage ? 10 : (step.s[1][0] != '\0' ? 4 : 2));
 
         CItem weapon(CResRef(step.s[0]), 1, 0, 0, 0, 0);
         CItem launcher(CResRef(step.s[1]), 1, 0, 0, 0, 0);
@@ -1200,7 +1275,37 @@ void Tick(CWarp* pActiveEngine)
         USHORT missile = valid ? ability->missileType : 0;
         CProjectile* projectile = valid ? CProjectile::DecodeProjectile(missile, source, 0) : NULL;
         valid = valid && projectile != NULL;
-        if (valid) {
+        if (valid && baseDamage) {
+            valid = source->m_derivedStats.m_cDamageBonusList.IsEmpty();
+            if (valid) {
+                CDerivedStatsTemplate savedStats = source->m_derivedStats;
+                auto savedBase = source->m_baseStats;
+                BYTE savedClass = source->m_typeAI.m_nClass;
+                auto savedMask = source->m_typeAI.m_nClassMask;
+                static_cast<CDerivedStatsTemplate&>(source->m_derivedStats) = CDerivedStatsTemplate{};
+                source->m_derivedStats.m_nLuck = 19;
+                source->m_derivedStats.m_nSTR = 10;
+                memset(source->m_baseStats.m_feats, 0, sizeof(source->m_baseStats.m_feats));
+                source->m_baseStats.m_rogueLevel = 0;
+                source->m_typeAI.m_nClass = 0;
+                source->m_typeAI.m_nClassMask = 0;
+                CGameEffect* effect = source->CreateWeaponDamage(&weapon, hasLauncher ? &launcher : NULL,
+                    0, FALSE, target->GetAIType(), 0, 0, target, 0);
+                valid = effect != NULL && effect->m_effectID == CGAMEEFFECT_DAMAGE
+                    && effect->m_effectAmount == (hasLauncher ? 9 : 5)
+                    && effect->m_dwFlags == 0 && effect->m_sourceID == sourceId;
+                if (effect != NULL) {
+                    projectile->m_effectList.AddTail(effect);
+                }
+                static_cast<CDerivedStatsTemplate&>(source->m_derivedStats) = savedStats;
+                source->m_baseStats = savedBase;
+                source->m_typeAI.m_nClass = savedClass;
+                source->m_typeAI.m_nClassMask = savedMask;
+                Emit("{\"step\":%d,\"op\":\"weapondamage-assembled\",\"item\":\"%s\",\"damage\":%ld,\"missile\":%u,\"valid\":%d}",
+                    nStep, step.s[0], effect != NULL ? effect->m_effectAmount : -1, missile, valid);
+            }
+        }
+        if (valid && !baseDamage) {
             // Transient selection for GetLauncher; restored before any engine tick.
             CItem* saved = source->m_equipment.m_items[43];
             BYTE savedSet = source->m_nWeaponSet;
@@ -1232,6 +1337,7 @@ void Tick(CWarp* pActiveEngine)
             weapon.Release();
         }
         LONG height = valid ? projectile->DetermineHeight(source) : 0;
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         if (!valid) {
             if (projectile != NULL) {
@@ -1242,7 +1348,7 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         s_payloadHP = hp;
-        s_payloadDamage = hasLauncher ? 3 : 1;
+        s_payloadDamage = baseDamage ? (hasLauncher ? 9 : 5) : (hasLauncher ? 3 : 1);
         s_payloadTarget = targetId;
         projectile->Fire(area, sourceId, targetId, targetPos, height, 0);
         return;

@@ -122,7 +122,7 @@ def _is_noise_callee(callee: str) -> bool:
 def header_offset_map(class_name: str) -> dict[str, int]:
     """member-name -> declared offset, from `/* 0xNNN */ ... m_name;` comments.
 
-    Walks the class header + (shallow) base headers it includes.
+    Walks the class header and its transitive base-class headers.
     """
     out: dict[str, int] = {}
     seen: set[Path] = set()
@@ -134,15 +134,13 @@ def header_offset_map(class_name: str) -> dict[str, int]:
         text = hpath.read_text(errors="replace")
         for m in DECL_RE.finditer(text):
             out.setdefault(f"m_{m.group(2)}", int(m.group(1), 16))
+        for bm in re.finditer(r":\s*(?:public|protected|private)?\s*(\w+)", text):
+            absorb(SRC / f"{bm.group(1)}.h")
 
     # primary header
     cands = list(SRC.glob(f"{class_name}.h"))
     for c in cands:
         absorb(c)
-    # base headers (best-effort: any `: public Base` in the .cpp/.h)
-    for c in cands:
-        for bm in re.finditer(r":\s*(?:public|protected|private)?\s*(\w+)", c.read_text(errors="replace")):
-            absorb(SRC / f"{bm.group(1)}.h")
     return out
 
 

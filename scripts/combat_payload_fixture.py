@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Install/remove deterministic ITM payload fixtures for combat-payload.txt.
 
-These exercise ApplyWeaponEffects and projectile delivery, NOT attack rolls or
-base weapon damage. No existing resource is overwritten. Removal verifies bytes.
+These exercise weapon payloads, base damage and projectile delivery in the
+combat scenarios. No existing resource is overwritten. Removal verifies bytes.
 """
 import argparse
 import struct
@@ -22,6 +22,10 @@ def item(item_type, ability_type, launcher_type, projectile, amount):
     struct.pack_into("<H", ability, 0, ability_type)
     struct.pack_into("<H", ability, 0x0E, 30)
     ability[0x10] = launcher_type
+    if amount:
+        ability[0x16] = 2 if ability_type == 4 else 4
+        ability[0x18] = 1
+        struct.pack_into("<hH", ability, 0x1A, amount, 2)
     struct.pack_into("<H", ability, 0x1E, 1)
     struct.pack_into("<H", ability, 0x2A, projectile)
     effect = bytearray(0x30)
