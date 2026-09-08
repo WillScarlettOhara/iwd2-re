@@ -19360,7 +19360,7 @@ BOOLEAN CGameSprite::CheckAttackHit(CGameSprite* pTarget, CItem* pWeapon, INT nA
                     pEffect->m_source = GetPos();
                     pEffect->m_sourceID = m_id;
                     pEffect->m_flags &= ~1;
-                    g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(pEffect, pTarget->m_id, m_id), FALSE);
+                    g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(pEffect, m_id, pTarget->m_id), FALSE);
                 }
             }
         }
@@ -19674,7 +19674,7 @@ CGameEffect* CGameSprite::CreateWeaponDamage(CItem* pWeapon, CItem* pLauncher, I
             if (nSpecialState == SPLSTATE_COAT_WEAPON_WITH_POISON) {
                 pEffect->m_special = -1 - rand() % 6;
             }
-            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(pEffect, pTarget->m_id, m_id), FALSE);
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(pEffect, m_id, pTarget->m_id), FALSE);
         }
     }
 
@@ -26124,6 +26124,23 @@ void RefreshWeaponSetButtons(CGameSprite* pSprite)
 
     CMessage* pMessage = new CMessageSpriteEquipment(pSprite, pSprite->m_id, pSprite->m_id);
     g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
+}
+
+// 0x761AB0
+void CGameSprite::ApplyOnHitSpells(CGameSprite* pTarget)
+{
+    for (const COnHitSpell& spell : m_derivedStats.m_onHitSpells) {
+        std::list<CGameEffect*> effects = BuildSubSpellEffects(this,
+            CResRef(const_cast<BYTE*>(spell.m_spellRes.GetResRef())),
+            static_cast<BYTE>(spell.m_level));
+        for (CGameEffect* effect : effects) {
+            effect->m_sourceRes = spell.m_sourceRes;
+            effect->m_target = spell.m_target;
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                new CMessageAddEffect(effect, m_id,
+                    effect->m_targetType == 1 ? m_id : pTarget->m_id), FALSE);
+        }
+    }
 }
 
 // 0x75E150

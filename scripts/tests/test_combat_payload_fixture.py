@@ -43,7 +43,7 @@ class CombatPayloadFixtureTest(unittest.TestCase):
         edited = self.override / "ZRCBOLT.ITM"
         edited.write_bytes(b"edited")
         self.assertNotEqual(self.run_fixture("remove").returncode, 0)
-        self.assertEqual(len(list(self.override.iterdir())), 13)
+        self.assertEqual(len(list(self.override.iterdir())), 14)
         self.assertEqual(edited.read_bytes(), b"edited")
 
 

@@ -8,7 +8,7 @@
 #include "CUtil.h"
 
 // The effect-opcode trees at CDerivedStats+0x470/0x480 must be 16 bytes each so
-// m_naturalImmunities stays at +0x490 and the rest of the class does not shift.
+// m_onHitSpells stays at +0x490 and the rest of the class does not shift.
 static_assert(sizeof(CEffectOpcodeSet) == 16, "CEffectOpcodeSet must be 16 bytes");
 
 namespace {
@@ -179,7 +179,8 @@ void CDerivedStats::Reload(CGameSprite* pSprite, CCreatureFileHeader* pCreature,
 
     // TODO: Incomplete.
 
-    m_naturalImmunities.clear();
+    m_activeEffectOpcodes.clear();
+    m_onHitSpells.clear();
 
     // TODO: Incomplete.
 
@@ -200,37 +201,37 @@ void CDerivedStats::Reload(CGameSprite* pSprite, CCreatureFileHeader* pCreature,
 
         if (typeAI.m_nRace == CAIOBJECTTYPE_R_ELF
             || typeAI.m_nRace == CAIOBJECTTYPE_R_HALF_ELF) {
-            m_naturalImmunities.insert(CGAMEEFFECT_SLEEP);
-            m_naturalImmunities.insert(CGAMEEFFECT_POWERWORDSLEEP);
+            m_activeEffectOpcodes.insert(CGAMEEFFECT_SLEEP);
+            m_activeEffectOpcodes.insert(CGAMEEFFECT_POWERWORDSLEEP);
         }
 
         if (pSprite->m_derivedStats.m_paladinLevel != 0) {
-            m_naturalImmunities.insert(CGAMEEFFECT_DISEASE);
+            m_activeEffectOpcodes.insert(CGAMEEFFECT_DISEASE);
 
             if (pSprite->m_derivedStats.m_paladinLevel >= 2) {
-                m_naturalImmunities.insert(CGAMEEFFECT_PANIC);
+                m_activeEffectOpcodes.insert(CGAMEEFFECT_PANIC);
             }
         }
 
         if (pSprite->m_derivedStats.m_druidLevel >= 9) {
-            m_naturalImmunities.insert(CGAMEEFFECT_POISON);
+            m_activeEffectOpcodes.insert(CGAMEEFFECT_POISON);
         }
 
         if (pSprite->m_derivedStats.m_druidLevel >= 15) {
-            m_naturalImmunities.insert(CGAMEEFFECT_FATIGUE);
+            m_activeEffectOpcodes.insert(CGAMEEFFECT_FATIGUE);
         }
 
         if (typeAI.m_nRace == CAIOBJECTTYPE_R_DWARF
             && typeAI.m_nSubRace == CAIOBJECTTYPE_SUBRACE_DWARF_GRAY) {
-            m_naturalImmunities.insert(CGAMEEFFECT_HOLDCREATURE);
+            m_activeEffectOpcodes.insert(CGAMEEFFECT_HOLDCREATURE);
         }
 
         if (pSprite->m_derivedStats.m_monkLevel >= 5) {
-            m_naturalImmunities.insert(CGAMEEFFECT_DISEASE);
+            m_activeEffectOpcodes.insert(CGAMEEFFECT_DISEASE);
         }
 
         if (pSprite->m_derivedStats.m_monkLevel >= 11) {
-            m_naturalImmunities.insert(CGAMEEFFECT_POISON);
+            m_activeEffectOpcodes.insert(CGAMEEFFECT_POISON);
         }
 
         if (pSprite->m_equipment.m_selectedWeapon != '*') {
@@ -382,7 +383,7 @@ CDerivedStats& CDerivedStats::operator=(const CDerivedStats& other)
     m_cImmunitiesSpell = other.m_cImmunitiesSpell;
     m_activeEffectOpcodes = other.m_activeEffectOpcodes;
 
-    m_naturalImmunities = other.m_naturalImmunities;
+    m_onHitSpells = other.m_onHitSpells;
 
     // TODO: Incomplete (copying unknown STL container).
 

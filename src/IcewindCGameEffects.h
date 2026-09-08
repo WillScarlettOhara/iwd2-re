@@ -2,6 +2,10 @@
 #define ICEWINDCGAMEEFFECTS_H_
 
 #include "CGameEffect.h"
+#include <list>
+
+std::list<CGameEffect*> BuildSubSpellEffects(CGameSprite* pCaster,
+    const CResRef& spellRes, BYTE level);
 
 #define ICEWIND_CGAMEEFFECT_COLORGLOWDISSIPATE 232
 #define ICEWIND_CGAMEEFFECT_VISUALSPELLHIT 233

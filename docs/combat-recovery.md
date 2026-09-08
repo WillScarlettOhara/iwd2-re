@@ -258,8 +258,9 @@ The assembler fixes several easily misread details:
 - Derived THAC0 is zero-extended before summing, then the final comparison
   truncates the total to a signed short, as the original does.
 - Dirty Fighting writes saving-throw mask 4 and save modifier 4, not dice 4d4.
-  Its message uses the target as caller and the attacker as recipient in the
-  original. The unarmed miss cleanup uses SPIN232/SPIN233.
+  Its message uses the attacker as caller and the victim as recipient. The
+  earlier recovery reversed these parameters; corrected by the on-hit audit
+  below. The unarmed miss cleanup uses SPIN232/SPIN233.
 
 The new `combathit` AutoUI command invokes the resolver directly using an
 isolated party pair and the existing fixture items. It restores the modified
@@ -312,9 +313,8 @@ Binary details retained:
   exception checks movement scale zero, not the animation's CanLieDown method.
 - Damage type 8 preserves the original crushing/slashing resistance comparison,
   including its asymmetric choice. The mixed-type boundary is covered in tests.
-- Special attack message recipients and portrait-icon removal follow the
-  original. These side-effect branches remain outside the current runtime
-  matrix; the diagnostic clears their enabling feats/states.
+- Special attack message recipients were subsequently corrected by the on-hit
+  audit below; the initial matrix did not cover those side-effect branches.
 
 `combathit` now contains 144 assertions (63 hit/critical checks plus 81 damage
 checks). `weapondamage` constructs the base damage effect, then sends it through
@@ -514,3 +514,60 @@ constructors, `.arc/2026-09-08T06-23-22-batch/` passes all static checks with
 missing ability 0, special slot 42 and non-party fallback branches are not yet
 runtime-covered. No original/recovered differential trace. Attack/Swing still
 need recovery; their on-hit subspell dependency 0x761AB0 remains next.
+
+### On-hit spell list and delivery (2026-09-08)
+
+Recovered `CGameSprite::ApplyOnHitSpells` (0x761AB0). It walks the ordered
+list, builds each subspell at the low byte of the stored level, replaces each
+effect's source resource and target point, and queues ownership through
+CMessageAddEffect. Target type 1 addresses the attacker; all other target types
+address the victim. The message caller is the attacker in both branches
+(message +4 is recipient, +8 is caller). List destruction frees nodes only;
+the messages own the effects. BuildSubSpellEffects is now shared with its
+existing Call Lightning and Static Charge callers.
+
+This exposed a pre-existing container conflation. CDerivedStats+0x490 is a
+list of 28-byte records (two resrefs, level DWORD, target point), not the
+previously declared natural-immunity set. Constructor helper 0x4490E0 allocates
+36-byte nodes and initializes two links; assignment at 0x445BB3 copies the
+two resrefs and three dwords. The on-hit helper reads its head at sprite+0xDB4.
+The actual opcode set is at derived+0x480 (sprite+0xDA0): Reload's natural
+immunities, Protection From Evil, Free Action and the nonlethal damage check
+all use that set in the binary. Those accesses now use m_activeEffectOpcodes;
+Reload clears both it and m_onHitSpells, and assignment copies the ordered list.
+
+The dedicated ZRCHIT.SPL fixture contains two damage payloads, targeting self
+and victim. `combat-onhit.txt` centers and checks both portraits, inspects
+queued messages without applying their damage, and then runs combathit.
+The test covers an empty list, two ordered records, recipient/caller, source
+resource, source/target points, payloads, copying and Reload clearing.
+It restores the source list and deletes only the newly queued test messages.
+
+Static batch `.arc/2026-09-08T15-48-03-batch/` passes: new helper GREEN;
+Reload and Free Action retain call-count YELLOW warnings in existing bodies.
+This batch does not yet connect Attack/Swing or the opcode that populates the
+on-hit list. Original/recovered differential behavior remains unverified.
+
+The same message-layout audit corrected reversed caller/recipient arguments
+in CheckAttackHit's Dirty Fighting effect and CreateWeaponDamage's special
+attack effects. Binary stores at 0x73C168/0x73C16B and 0x73DFC9/0x73DFCC put
+the attacker at +8 and victim at +4. Effect source metadata is unchanged,
+including the original victim-source metadata in the special damage branch.
+Two added scenarios inspect and discard Dirty Fighting and weapon poison
+messages; portrait icons removed by the poison helper are restored afterwards.
+
+Win32 build and the three fixture safety tests pass. Native retry passes all
+189 checks (33 on-hit and 156 hit/damage) and the full 60-second CLEAN guard:
+ApplyOnHitSpells x2, CheckAttackHit x34, CreateWeaponDamage x28. Evidence is
+`work/combat-onhit-20260908/onhit-retry.jsonl` and `guard-pass.log`.
+The first run correctly failed its Dirty Fighting payload expectation because
+the test omitted the feat's DEX 13 prerequisite; that preparation is corrected
+and explicitly asserted. The failed run is retained as `onhit.jsonl`.
+All 14 fixtures were removed and the original INI SHA256 restored.
+Additional static checks for the message argument corrections pass in
+`.arc/2026-09-08T15-55-15-batch/` (without rerunning the prior parity comparison).
+
+Next: Swing (0x739B60) and Attack (0x737EF0), including Swing's remaining
+global-variable bookkeeping helper 0x6F50A0. Its context is assembled in
+`tmp_swing_bookkeeping_full.md`; it processes the sprite's +0x58C bit mask,
+sets matching global variables to 1 and queues their update messages.

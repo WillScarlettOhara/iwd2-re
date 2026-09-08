@@ -9,6 +9,7 @@
 #include "TString.h"
 
 #include <bitset>
+#include <list>
 #include <set>
 #include <vector>
 
@@ -27,8 +28,17 @@ struct EffectOpcodeCompare {
 
 // A set of effect-opcode IDs, keyed ascending (Frida-confirmed: e.g. opcode
 // 218 = "Protection: Stoneskin"). The binary is a hand-rolled red-black tree;
-// modelled here as std::set for identical behaviour, as with m_naturalImmunities.
+// modelled here as std::set for identical behaviour.
 typedef std::set<int, EffectOpcodeCompare> CEffectOpcodeSet;
+
+// Value in the list at +0x490: two resrefs and three dwords. The binary
+// allocates 0x24-byte nodes, including the two links (0x4490E0).
+struct COnHitSpell {
+    CResRef m_sourceRes;
+    CResRef m_spellRes;
+    DWORD m_level;
+    CPoint m_target;
+};
 
 // Ordering functor for the spell-resref tree at CDerivedStats+0x470.  Keys are
 // TStrings (resrefs); the binary orders them with the memcmp+length-tiebreak
@@ -659,10 +669,7 @@ public:
     // (BG2 PDB name m_cImmunitiesSpell, class CImmunitiesSpellList).
     /* 0470 */ CSpellImmunitySet m_cImmunitiesSpell;
     /* 0480 */ CEffectOpcodeSet m_activeEffectOpcodes;
-    // ctor 0x443B30 writes _Myhead@0x494 / _Mysize@0x498 -> the set core sits
-    // at 0x490 (the old /* 0480 */ comment was wrong). Used: find/insert in
-    // CGameEffect / IcewindCGameEffects, so it must stay a real std::set<int>.
-    /* 0490 */ std::set<int> m_naturalImmunities;
+    /* 0490 */ std::list<COnHitSpell> m_onHitSpells;
     // 0x049C-0x04AC: the damage-reduction vector (alloc/first/last/end); the
     // ctor zeroes its four dwords.  16 bytes in our build, matching the binary.
     /* 049C */ std::vector<DR_ENTRY> m_drReductions;

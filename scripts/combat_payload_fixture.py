@@ -55,6 +55,25 @@ FIXTURES = {
 }
 
 
+def on_hit_spell():
+    header = bytearray(0x82)
+    header[:8] = b"SPL V2.0"
+    struct.pack_into("<ii", header, 8, -1, -1)
+    struct.pack_into("<IHI", header, 0x64, len(header), 1, len(header) + 0x28)
+    ability = bytearray(0x28)
+    struct.pack_into("<H", ability, 0, 1)
+    struct.pack_into("<H", ability, 0x10, 1)
+    struct.pack_into("<H", ability, 0x1E, 2)
+    effects = bytearray()
+    for target in (1, 2):
+        effect = bytearray(0x30)
+        struct.pack_into("<HBBi", effect, 0, 12, target, 0, target)
+        effect[0x12] = 100
+        struct.pack_into("<i", effect, 0x2C, -1)
+        effects.extend(effect)
+    return bytes(header + ability + effects)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operation", choices=["install", "remove"])
@@ -62,6 +81,7 @@ def main():
     args = parser.parse_args()
     override = args.game_dir.resolve() / "override"
     paths = [(override / (name + ".ITM"), data) for name, data in FIXTURES.items()]
+    paths.append((override / "ZRCHIT.SPL", on_hit_spell()))
     for path, data in paths:
         if path.exists() and (args.operation == "install" or path.read_bytes() != data):
             parser.error(f"Refusing to overwrite/remove existing or changed resource: {path}")

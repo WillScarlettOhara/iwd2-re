@@ -1198,7 +1198,7 @@ CGameEffect* IcewindCGameEffectCallLightning::Copy()
 // stores one ability per caster level; the highest whose minimum level is still
 // reached is chosen.  Each built effect is stamped with the caster's position
 // and id before delivery.
-static std::list<CGameEffect*> BuildSubSpellEffects(CGameSprite* pCaster,
+std::list<CGameEffect*> BuildSubSpellEffects(CGameSprite* pCaster,
     const CResRef& spellRes, BYTE level)
 {
     std::list<CGameEffect*> effects;
@@ -2046,7 +2046,7 @@ BOOL IcewindCGameEffectProtectionFromEvil::ApplyEffect(CGameSprite* pSprite)
         // NOTE: Uninline.
         AddPortraitIcon(pSprite, 9);
 
-        pSprite->GetDerivedStats()->m_naturalImmunities.insert(ICEWIND_CGAMEEFFECT_CHARM);
+        pSprite->GetDerivedStats()->m_activeEffectOpcodes.insert(ICEWIND_CGAMEEFFECT_CHARM);
         SetMinNaturalAC(pSprite, 2);
         pSprite->GetDerivedStats()->m_nSaveVSFortitude += 2;
         pSprite->GetDerivedStats()->m_nSaveVSReflex += 2;
@@ -2755,12 +2755,12 @@ BOOL IcewindCGameEffectFreeAction::ApplyEffect(CGameSprite* pSprite)
 
         AddColorEffect(pSprite, 128, 96, 96, 30);
 
-        pSprite->GetDerivedStats()->m_naturalImmunities.insert(CGAMEEFFECT_ENTANGLE);
-        pSprite->GetDerivedStats()->m_naturalImmunities.insert(CGAMEEFFECT_GREASEPOOL);
-        pSprite->GetDerivedStats()->m_naturalImmunities.insert(CGAMEEFFECT_WEBHOLD);
-        pSprite->GetDerivedStats()->m_naturalImmunities.insert(CGAMEEFFECT_HOLDCREATURE);
-        pSprite->GetDerivedStats()->m_naturalImmunities.insert(CGAMEEFFECT_SLOW);
-        pSprite->GetDerivedStats()->m_naturalImmunities.insert(CGAMEEFFECT_MOVEMENTRATE_176);
+        pSprite->GetDerivedStats()->m_activeEffectOpcodes.insert(CGAMEEFFECT_ENTANGLE);
+        pSprite->GetDerivedStats()->m_activeEffectOpcodes.insert(CGAMEEFFECT_GREASEPOOL);
+        pSprite->GetDerivedStats()->m_activeEffectOpcodes.insert(CGAMEEFFECT_WEBHOLD);
+        pSprite->GetDerivedStats()->m_activeEffectOpcodes.insert(CGAMEEFFECT_HOLDCREATURE);
+        pSprite->GetDerivedStats()->m_activeEffectOpcodes.insert(CGAMEEFFECT_SLOW);
+        pSprite->GetDerivedStats()->m_activeEffectOpcodes.insert(CGAMEEFFECT_MOVEMENTRATE_176);
 
         m_done = FALSE;
     }

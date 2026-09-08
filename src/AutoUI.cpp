@@ -87,6 +87,7 @@
 #include "CGameSprite.h"
 #include "CGameEffect.h"
 #include "CItem.h"
+#include "CMessage.h"
 #include "CProjectile.h"
 #include "CInfGame.h"
 #include "CInfinity.h"
@@ -1017,6 +1018,27 @@ void Tick(CWarp* pActiveEngine)
             attack("natural-twenty-hits-high-ac", 9563, 1, 0);
             target->m_derivedStats.m_nACNaturalBonus = -3;
             attack("sword-nineteen-threat", 9063, 1, 1);
+            {
+                auto& queue = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+                INT before = queue.GetCount(), payloads = 0;
+                source->m_baseStats.m_feats[0] |= 1 << CGAMESPRITE_FEAT_DIRTY_FIGHTING;
+                source->m_derivedStats.m_nDEX = 13;
+                check("dirty-fighting-prerequisites", source->HasFeat(CGAMESPRITE_FEAT_DIRTY_FIGHTING), TRUE);
+                attack("dirty-fighting-critical", 9063, 1, 1);
+                source->m_derivedStats.m_nDEX = 10;
+                source->m_baseStats.m_feats[0] = 0;
+                while (queue.GetCount() > before) {
+                    CMessage* raw = queue.RemoveTail();
+                    CMessageAddEffect* message = dynamic_cast<CMessageAddEffect*>(raw);
+                    if (message != NULL) {
+                        check("dirty-fighting-recipient", message->GetTarget(), targetId);
+                        check("dirty-fighting-caller", message->GetSource(), sourceId);
+                        ++payloads;
+                    }
+                    delete raw;
+                }
+                check("dirty-fighting-payload-count", payloads, 1);
+            }
             source->m_derivedStats.m_nLuck = 17;
             attack("sword-eighteen-not-threat", 0, 1, 0);
             source->m_baseStats.m_feats[0] |= 1 << CGAMESPRITE_FEAT_IMPROVED_CRITICAL;
@@ -1116,6 +1138,28 @@ void Tick(CWarp* pActiveEngine)
             ability->damageType = 2;
             source->m_derivedStats.m_nLuck = 0;
             damage("base-two-dice-plus-bonus", 8);
+            {
+                auto& queue = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+                INT before = queue.GetCount(), payloads = 0;
+                std::vector<int*> icons;
+                POSITION iconPos = source->m_portraitIcons.GetHeadPosition();
+                while (iconPos != NULL) icons.push_back(source->m_portraitIcons.GetNext(iconPos));
+                source->m_derivedStats.m_spellStates[SPLSTATE_COAT_WEAPON_WITH_POISON] = true;
+                damage("poison-weapon-base-damage", 8);
+                while (queue.GetCount() > before) {
+                    CMessage* raw = queue.RemoveTail();
+                    CMessageAddEffect* message = dynamic_cast<CMessageAddEffect*>(raw);
+                    if (message != NULL && message->m_effect->m_effectID == CGAMEEFFECT_POISON) {
+                        check("poison-recipient", message->GetTarget(), targetId);
+                        check("poison-caller", message->GetSource(), sourceId);
+                        ++payloads;
+                    }
+                    delete raw;
+                }
+                check("poison-payload-count", payloads, 1);
+                source->m_portraitIcons.RemoveAll();
+                for (int* icon : icons) source->m_portraitIcons.AddTail(icon);
+            }
             damage("base-critical-doubles", 16, 0, TRUE);
             source->m_derivedStats.m_nLuck = 19;
             damage("luck-caps-each-die", 15);
@@ -1205,6 +1249,91 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         Emit("{\"step\":%d,\"op\":\"combathit\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "combatonhit") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2) {
+            Fail(nStep, "combatonhit", "requires world and two party members");
+            return;
+        }
+        CGameObjectArray* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* sourceObject = NULL;
+        CGameObject* targetObject = NULL;
+        if (objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH, &sourceObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, "combatonhit", "source unavailable");
+            return;
+        }
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &targetObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, "combatonhit", "target unavailable");
+            return;
+        }
+        CGameSprite* source = static_cast<CGameSprite*>(sourceObject);
+        CGameSprite* target = static_cast<CGameSprite*>(targetObject);
+        auto saved = source->m_derivedStats.m_onHitSpells;
+        auto& queue = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = queue.GetCount();
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"combatonhit-case\",\"case\":\"%s\",\"passed\":%s}",
+                nStep, name, passed ? "true" : "false");
+            valid = valid && passed;
+            ++checks;
+        };
+        source->m_derivedStats.m_onHitSpells.clear();
+        source->ApplyOnHitSpells(target);
+        check("empty-list", queue.GetCount() == before);
+        for (INT index = 0; index < 2; ++index) {
+            COnHitSpell entry;
+            entry.m_sourceRes = index == 0 ? "ZRCORIG1" : "ZRCORIG2";
+            entry.m_spellRes = "ZRCHIT";
+            entry.m_level = 1;
+            entry.m_target = CPoint(123 + index, 456 + index);
+            source->m_derivedStats.m_onHitSpells.push_back(entry);
+        }
+        source->ApplyOnHitSpells(target);
+        check("four-effects", queue.GetCount() == before + 4);
+        {
+            CDerivedStats copied;
+            copied = source->m_derivedStats;
+            check("copy-list", copied.m_onHitSpells.size() == 2
+                && copied.m_onHitSpells.front().m_sourceRes == CResRef("ZRCORIG1")
+                && copied.m_onHitSpells.back().m_target == CPoint(124, 457));
+            copied.m_activeEffectOpcodes.insert(CGAMEEFFECT_SLEEP);
+            copied.Reload(NULL, &source->m_baseStats, NULL, NULL);
+            check("reload-clears-list", copied.m_onHitSpells.empty());
+            check("reload-clears-opcodes", copied.m_activeEffectOpcodes.empty());
+        }
+        INT count = queue.GetCount() - before;
+        for (INT index = count - 1; index >= 0; --index) {
+            CMessage* rawMessage = queue.RemoveTail();
+            CMessageAddEffect* message = dynamic_cast<CMessageAddEffect*>(rawMessage);
+            check("message-type", message != NULL);
+            if (message != NULL) {
+                CGameEffect* effect = message->m_effect;
+                INT entry = index / 2, effectIndex = index % 2;
+                check("recipient", message->GetTarget() == (effectIndex == 0 ? sourceId : targetId));
+                check("caller", message->GetSource() == sourceId);
+                check("source-resource", effect->m_sourceRes == CResRef(entry == 0 ? "ZRCORIG1" : "ZRCORIG2"));
+                check("target-point", effect->m_target == CPoint(123 + entry, 456 + entry));
+                check("source-point", effect->m_source == source->GetPos() && effect->m_sourceID == sourceId);
+                check("payload", effect->m_effectAmount == effectIndex + 1 && effect->m_targetType == effectIndex + 1);
+            }
+            delete rawMessage;
+        }
+        source->m_derivedStats.m_onHitSpells = saved;
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            Fail(nStep, "combatonhit", "message mismatch (state restored, effects discarded)");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"combatonhit\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
     }

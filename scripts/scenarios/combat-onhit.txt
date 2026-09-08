@@ -1,0 +1,10 @@
+# Install combat_payload_fixture.py. Inspect and discard effects before delivery.
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+combatonhit
+combathit

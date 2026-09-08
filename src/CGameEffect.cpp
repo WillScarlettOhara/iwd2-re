@@ -3533,8 +3533,8 @@ BOOL CGameEffectDamage::ApplyEffect(CGameSprite* pSprite)
             if (IcewindMisc::IsUndead(pSprite) == TRUE) {
                 // Undead cannot be knocked out: they die a crushing death.
                 nKindType = 0;
-            } else if (pSprite->GetDerivedStats()->m_naturalImmunities.find(CGAMEEFFECT_SLEEP)
-                != pSprite->GetDerivedStats()->m_naturalImmunities.end()) {
+            } else if (pSprite->GetDerivedStats()->m_activeEffectOpcodes.find(CGAMEEFFECT_SLEEP)
+                != pSprite->GetDerivedStats()->m_activeEffectOpcodes.end()) {
                 // Naturally sleep-immune targets cannot be knocked out either:
                 // they die outright (the death kind stays at the constructor
                 // default, as in the binary).
