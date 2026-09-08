@@ -415,3 +415,56 @@ Prioritize these over the generic size-ranked target list:
 5. Drive a real forced attack on another party member in both executables,
    compare captures, and test normal/critical/missed blows, ammunition exhaustion,
    target movement and death. The payload-only test cannot prove those behaviors.
+
+### Ammunition selection and melee fallback (2026-09-08)
+
+Recovered `CGameSprite::SelectLauncherAmmo` (0x75E330) and replaced the stub
+`EquipMostDamagingMelee` (0x75DFD0). The first is a dependency of depleted-item
+handling at 0x75D450, and originally also of SetWeaponSet. The current
+SetWeaponSet implementation still contains its own approximate ammunition
+search; it has not been replaced in this batch. Attack/Swing remain unrecovered.
+
+SelectLauncherAmmo scans slots 11..14 for ability 0 with low-byte type 2 and
+the exact launcher pointer returned by GetLauncher. It selects the greatest
+positive usage count, retaining the first equal stack. The original compares
+an unsigned candidate count against a signed saved SHORT; the wrap at 32768
+is preserved. With no candidate, only fallback flag exactly 1 invokes melee
+selection and returns ACTION_DONE; otherwise it returns ACTION_ERROR. On
+success it selects ability 0 and updates the first matching launcher quick
+button in slots 43..50 from GetItemUsages, remembers the ammunition slot, and
+refreshes quick buttons. Returned button/list ownership follows the binary.
+
+EquipMostDamagingMelee rejects an occupied slot 42. Across all eight weapon
+slots it scores low-byte type-1 abilities as signed SHORT(dice count * dice
+size + bonus), accepts scores >= the current maximum, and therefore retains
+the last equal candidate. It selects the candidate's weapon set, not its
+scored ability; if no candidate reaches zero, it selects fists. For the selected
+PC leader it updates the bar. The original's two GetGroupList calls and leak
+of the first allocated list are preserved (0x75E0EC..0x75E10E).
+
+`combat-ammo.txt` invokes the actual helpers on temporarily substituted ZRC
+fixtures. For each of bow, crossbow and sling it checks: larger compatible
+stack, equal stacks, depleted later stack, no compatible nonempty stack, and
+fallback to melee in slot 45/set 1. Each selection is also checked against
+the quick button and remembered ammo slot. A larger incompatible stack is
+present throughout. Original equipment pointers, selection, weapon set,
+quick weapon buttons, remembered ammo and base attack count are restored.
+No damage or saving occurs. Fixtures now declare weapon quick-slot type 1,
+so GetItemUsages can build their buttons; payload and damage values are unchanged.
+
+The first 12-case run passed its assertions but terminated before its 30-second
+observation completed (PROCESS-EXITED, no captured exception); this is not a
+clean runtime result and its cause remains unidentified. The subsequent
+15-case run including melee fallback passes all assertions and the complete
+60-second observation CLEAN. Hits: SelectLauncherAmmo 15,
+EquipMostDamagingMelee 3, SetWeaponSet 15 (including save loading).
+Evidence is under `work/combat-ammo-20260908/`: `ammo.jsonl`, `first-guard.log`,
+`ammo-fallback.jsonl`, `fallback-guard.log`. Win32 build and three fixture
+safety tests pass. All 13 fixtures were removed and the INI restored with
+SHA-256 `1E7BF0A7526C8FDB85BC42AE9998ACD3C4CFEF42CCABBB11EABCF104BFA07DA6`.
+Signed-overflow counts, melee ties, fist fallback and the slot-42 rejection
+have assembly evidence only. There is no original/recovered differential trace.
+Static batch `.arc/2026-09-08T06-12-15-batch/` passes source, member and class
+audits. Both parity results are YELLOW: 21 original vs 13 source calls for
+SelectLauncherAmmo (inlined button/default-ability construction), and 12 vs 18
+for EquipMostDamagingMelee (accessors expressed as source calls).

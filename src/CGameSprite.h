@@ -617,6 +617,7 @@ public:
     BOOL CheckConcealment(CGameSprite* pTarget);
     BOOLEAN CheckAttackHit(CGameSprite* pTarget, CItem* pWeapon, INT nAbility, BOOL* pCritical, INT nOffhand, BYTE nAttackCount);
     CGameEffect* CreateWeaponDamage(CItem* pWeapon, CItem* pLauncher, INT nAbility, BOOL bCritical, const CAIObjectType& targetType, SHORT nDirection, SHORT nTargetDirection, CGameSprite* pTarget, INT nOffhand);
+    SHORT SelectLauncherAmmo(CItem* pLauncher, BOOL bFallbackToMelee);
     void sub_72DE60();
     void sub_71E760(CDerivedStats& DStats, int a2);
     void CheckModal();

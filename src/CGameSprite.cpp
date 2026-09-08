@@ -22120,7 +22120,58 @@ SHORT CGameSprite::Turn()
 // 0x75DFD0
 SHORT CGameSprite::EquipMostDamagingMelee()
 {
-    return ACTION_ERROR;
+    if (m_equipment.m_items[42] != NULL) {
+        return ACTION_ERROR;
+    }
+
+    SHORT nBestDamage = 0;
+    SHORT nBestSlot = -1;
+    SHORT nBestAbility = -1;
+    for (INT index = 0; index < 8; ++index) {
+        CItem* pItem = m_equipment.m_items[CGameSpriteEquipment::SLOT_WEAPON + index];
+        if (pItem == NULL) {
+            continue;
+        }
+        pItem->Demand();
+        for (INT ability = 0; ability < pItem->GetAbilityCount(); ++ability) {
+            ITEM_ABILITY* pAbility = pItem->GetAbility(ability);
+            if (pAbility != NULL && static_cast<BYTE>(pAbility->type) == 1) {
+                SHORT nDamage = static_cast<SHORT>(pAbility->damageDiceCount * pAbility->damageDice
+                    + pAbility->damageDiceBonus);
+                if (nDamage >= nBestDamage) {
+                    nBestSlot = static_cast<SHORT>(CGameSpriteEquipment::SLOT_WEAPON + index);
+                    nBestAbility = static_cast<SHORT>(ability);
+                    nBestDamage = nDamage;
+                }
+            }
+        }
+        pItem->Release();
+    }
+    if (nBestSlot == -1 && nBestAbility == -1) {
+        SelectWeaponAbility(CGameSpriteEquipment::SLOT_FIST, 0, TRUE, TRUE);
+    } else {
+        // The chosen ability only scores the weapon; the original selects its set.
+        SetWeaponSet(static_cast<BYTE>((nBestSlot - 43) / 2));
+    }
+
+    if (IcewindMisc::IsPC(this) == TRUE) {
+        CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+        CAIGroup* pGroup = pGame->GetGroup();
+        if (pGroup->m_memberList.GetCount() != 0 && pGroup != NULL) {
+            // The binary obtains two allocated lists and only deletes the second.
+            if (pGroup->GetGroupList() != NULL) {
+                LONG* pList = pGroup->GetGroupList();
+                LONG nLeader = pList[0];
+                delete[] pList;
+                if (nLeader == m_id && g_pBaldurChitin != NULL
+                    && g_pBaldurChitin->GetObjectGame() != NULL
+                    && g_pBaldurChitin->GetObjectGame()->GetButtonArray() != NULL) {
+                    g_pBaldurChitin->GetObjectGame()->GetButtonArray()->UpdateState();
+                }
+            }
+        }
+    }
+    return ACTION_DONE;
 }
 
 // 0x75E630
@@ -26073,6 +26124,68 @@ void RefreshWeaponSetButtons(CGameSprite* pSprite)
 
     CMessage* pMessage = new CMessageSpriteEquipment(pSprite, pSprite->m_id, pSprite->m_id);
     g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
+}
+
+// 0x75E330
+SHORT CGameSprite::SelectLauncherAmmo(CItem* pLauncher, BOOL bFallbackToMelee)
+{
+    SHORT nBestCount = 0;
+    INT nBestAmmo = -1;
+    for (INT index = 0; index < 4; ++index) {
+        CItem* pAmmo = m_equipment.m_items[CGameSpriteEquipment::SLOT_AMMO + index];
+        if (pAmmo != NULL) {
+            pAmmo->Demand();
+            ITEM_ABILITY* pAbility = pAmmo->GetAbility(0);
+            if (pAbility != NULL && static_cast<BYTE>(pAbility->type) == 2) {
+                SHORT nLauncherSlot;
+                if (GetLauncher(pAbility, nLauncherSlot) == pLauncher) {
+                    // The comparison zero-extends the candidate, but sign-extends
+                    // the saved WORD. Preserve the original wrap at 32768.
+                    if (static_cast<INT>(pAmmo->GetUsageCount(0)) > nBestCount) {
+                        nBestAmmo = index;
+                        nBestCount = static_cast<SHORT>(pAmmo->GetUsageCount(0));
+                    }
+                }
+            }
+            pAmmo->Release();
+        }
+    }
+
+    if (nBestAmmo == -1) {
+        if (bFallbackToMelee == TRUE) {
+            EquipMostDamagingMelee();
+            return ACTION_DONE;
+        }
+        return ACTION_ERROR;
+    }
+
+    BYTE nAmmoSlot = static_cast<BYTE>(CGameSpriteEquipment::SLOT_AMMO + nBestAmmo);
+    SelectWeaponAbility(nAmmoSlot, 0, TRUE, TRUE);
+    for (INT nSlot = 43; nSlot < 51; ++nSlot) {
+        if (m_equipment.m_items[nSlot] != pLauncher) {
+            continue;
+        }
+        CGameButtonList* pUsages = GetItemUsages(nAmmoSlot, 1, 0);
+        if (pUsages != NULL) {
+            CButtonData* pButton = pUsages->GetHead();
+            if (pButton != NULL) {
+                BYTE nButton = static_cast<BYTE>(nSlot - 43);
+                UTIL_ASSERT(nButton < CGAMESAVECHARACTER_NUM_QUICK_WEAPONS22);
+                m_quickWeapons[nButton] = *pButton;
+                SHORT nItem = pButton->m_abilityId.m_itemNum;
+                UTIL_ASSERT(nButton < CGAMESAVECHARACTER_NUM_QUICK_WEAPONS22);
+                field_3D3A[nButton] = nItem >= 11 && nItem <= 14
+                    ? static_cast<BYTE>(nItem) : 0;
+                CAbilityId ability;
+                UpdateQuickButtons(ability, 0, FALSE, FALSE);
+                delete pButton;
+                delete pUsages;
+                return ACTION_DONE;
+            }
+            delete pUsages;
+        }
+    }
+    return ACTION_DONE;
 }
 
 // 0x726810

@@ -1,0 +1,8 @@
+# Install combat_payload_fixture.py first; no damage or saving.
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+combatammo

@@ -64,6 +64,8 @@
 //                                transient state restored in the same tick.
 //   combathit                   exercise attack/critical resolution on portraits
 //                                0 and 1; no damage or save, reseeds thread RNG.
+//   combatammo                  select compatible fixture ammunition and verify
+//                                quick buttons; restores the original equipment.
 //   weapondamage <item> [launcher]  calculate base damage and deliver by projectile;
 //                                ZRC fixtures only, no saving, check actual HP loss.
 //
@@ -1203,6 +1205,106 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         Emit("{\"step\":%d,\"op\":\"combathit\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "combatammo") == 0) {
+        CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || pGame->GetNumCharacters() == 0) {
+            Fail(nStep, step.op, "requires world and party");
+            return;
+        }
+        LONG id = pGame->GetFixedOrderCharacterId(0);
+        CGameObject* object = NULL;
+        if (pGame->GetObjectArray()->GetDeny(id, CGameObjectArray::THREAD_ASYNCH,
+                &object, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable");
+            return;
+        }
+        CGameSprite* source = static_cast<CGameSprite*>(object);
+        CItem* savedItems[51];
+        memcpy(savedItems, source->m_equipment.m_items, sizeof(savedItems));
+        BYTE savedSlot = source->m_equipment.m_selectedWeapon;
+        WORD savedAbility = source->m_equipment.m_selectedWeaponAbility;
+        BYTE savedSet = source->m_nWeaponSet;
+        BYTE savedAttacks = source->m_baseStats.m_numberOfAttacksBase;
+        CButtonData savedButtons[8];
+        BYTE savedAmmo[8];
+        for (int i = 0; i < 8; ++i) savedButtons[i] = source->m_quickWeapons[i];
+        memcpy(savedAmmo, source->field_3D3A, sizeof(savedAmmo));
+        BOOL valid = TRUE;
+        int checks = 0;
+        const char* ammoNames[] = { "ZRCARROW", "ZRCBOLT", "ZRCSTONE" };
+        const char* launcherNames[] = { "ZRCBOW", "ZRCXBOW", "ZRCSLING" };
+        for (int kind = 0; kind < 3 && valid; ++kind) {
+            CItem launcher(CResRef(launcherNames[kind]), 1, 0, 0, 0, 0);
+            CItem low(CResRef(ammoNames[kind]), 7, 0, 0, 0, 0);
+            CItem high(CResRef(ammoNames[kind]), 19, 0, 0, 0, 0);
+            CItem wrong(CResRef(ammoNames[(kind + 1) % 3]), 99, 0, 0, 0, 0);
+            CItem melee(CResRef("ZRCMELEE"), 1, 0, 0, 0, 0);
+            BOOL demanded = launcher.Demand();
+            valid = demanded && launcher.GetAbility(0) != NULL;
+            if (demanded) launcher.Release();
+            if (!valid) break;
+            memset(source->m_equipment.m_items, 0, sizeof(savedItems));
+            source->m_nWeaponSet = 0;
+            source->m_equipment.m_items[43] = &launcher;
+            source->m_equipment.m_items[11] = &low;
+            source->m_equipment.m_items[12] = &wrong;
+            source->m_equipment.m_items[13] = &high;
+            source->m_equipment.m_items[10] = savedItems[10];
+            // Avoid unequipping saved items while fixture pointers occupy the slots.
+            source->m_equipment.m_selectedWeapon = 255;
+            const WORD counts[][2] = { {7, 19}, {19, 19}, {19, 0}, {0, 0} };
+            const int slots[] = {13, 11, 11, 255};
+            for (int trial = 0; trial < 4; ++trial) {
+                low.SetUsageCount(0, counts[trial][0]);
+                high.SetUsageCount(0, counts[trial][1]);
+                source->m_equipment.m_selectedWeapon = 255;
+                SHORT result = source->SelectLauncherAmmo(&launcher, FALSE);
+                int actualSlot = source->m_equipment.m_selectedWeapon;
+                BOOL passed = result == (trial == 3 ? CGameAIBase::ACTION_ERROR : CGameAIBase::ACTION_DONE)
+                    && actualSlot == slots[trial];
+                if (trial != 3) {
+                    passed = passed && source->m_quickWeapons[0].m_abilityId.m_itemNum == slots[trial]
+                        && source->field_3D3A[0] == slots[trial];
+                }
+                Emit("{\"step\":%d,\"op\":\"combatammo-case\",\"launcher\":\"%s\","
+                     "\"trial\":%d,\"result\":%d,\"slot\":%d,\"passed\":%d}",
+                    nStep, launcherNames[kind], trial, result, actualSlot, passed);
+                valid = valid && passed;
+                ++checks;
+            }
+            source->m_equipment.m_items[45] = &melee;
+            source->m_quickWeapons[2].m_abilityId.m_itemNum = 45;
+            source->m_quickWeapons[2].m_abilityId.m_abilityNum = 0;
+            source->m_equipment.m_selectedWeapon = 255;
+            SHORT fallback = source->SelectLauncherAmmo(&launcher, TRUE);
+            BOOL fallbackPassed = fallback == CGameAIBase::ACTION_DONE
+                && source->m_nWeaponSet == 1 && source->m_equipment.m_selectedWeapon == 45;
+            Emit("{\"step\":%d,\"op\":\"combatammo-fallback\",\"launcher\":\"%s\","
+                 "\"result\":%d,\"set\":%d,\"slot\":%d,\"passed\":%d}",
+                nStep, launcherNames[kind], fallback, source->m_nWeaponSet,
+                source->m_equipment.m_selectedWeapon, fallbackPassed);
+            valid = valid && fallbackPassed;
+            ++checks;
+            // Restore pointers before the stack-owned fixtures are destroyed.
+            memcpy(source->m_equipment.m_items, savedItems, sizeof(savedItems));
+        }
+        memcpy(source->m_equipment.m_items, savedItems, sizeof(savedItems));
+        source->m_nWeaponSet = savedSet;
+        source->m_equipment.m_selectedWeapon = 255;
+        source->SelectWeaponAbility(savedSlot, static_cast<BYTE>(savedAbility), FALSE, TRUE);
+        source->m_baseStats.m_numberOfAttacksBase = savedAttacks;
+        for (int i = 0; i < 8; ++i) source->m_quickWeapons[i] = savedButtons[i];
+        memcpy(source->field_3D3A, savedAmmo, sizeof(savedAmmo));
+        pGame->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            Fail(nStep, step.op, "ammo selection mismatch or fixture unavailable; equipment restored");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"combatammo\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
     }
