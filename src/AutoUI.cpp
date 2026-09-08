@@ -49,6 +49,8 @@
 //   expect control <panel> <control>
 //   expect partyvisible <slot>  require that party member's ground position to
 //                                be inside the visible area's viewport.
+//   expect targeting <state> <icon> <button>  check game targeting and bar selection.
+//   expect picked <slot>        require the ground picker to identify that party member.
 //   sleep <ticks>
 //   resume                      unpause the world if paused
 //   enddialog                   end the current dialogue for isolated engine tests
@@ -1615,6 +1617,43 @@ void Tick(CWarp* pActiveEngine)
     }
 
     if (strcmp(step.op, "expect") == 0) {
+        if (strcmp(step.s[0], "picked") == 0) {
+            CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+            CGameArea* pArea = pGame != NULL ? pGame->GetVisibleArea() : NULL;
+            int slot = Num(step, 0, -1);
+            if (pArea == NULL || slot < 0 || slot >= pGame->GetNumCharacters()) {
+                Fail(nStep, "expect", "picked requires a valid party slot and visible area");
+                return;
+            }
+            LONG id = pGame->GetFixedOrderCharacterId(static_cast<SHORT>(slot));
+            Emit("{\"step\":%d,\"op\":\"expect\",\"kind\":\"picked\",\"slot\":%d,"
+                 "\"expected\":%ld,\"actual\":%ld}", nStep, slot, id, pArea->m_iPicked);
+            if (id == CGameObjectArray::INVALID_INDEX || pArea->m_iPicked != id) {
+                Fail(nStep, "expect", "ground picker did not identify the requested party member");
+                return;
+            }
+            s_pc++;
+            return;
+        }
+        if (strcmp(step.s[0], "targeting") == 0) {
+            CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+            if (pGame == NULL) {
+                Fail(nStep, "expect", "targeting requires game");
+                return;
+            }
+            int state = pGame->GetState();
+            int icon = pGame->GetIconIndex();
+            int button = pGame->GetButtonArray()->m_nSelectedButton;
+            Emit("{\"step\":%d,\"op\":\"expect\",\"kind\":\"targeting\","
+                 "\"state\":%d,\"icon\":%d,\"button\":%d}", nStep, state, icon, button);
+            if (state != Num(step, 0, -1) || icon != Num(step, 1, -1)
+                || button != Num(step, 2, -1)) {
+                Fail(nStep, "expect", "targeting state/icon/button mismatch");
+                return;
+            }
+            s_pc++;
+            return;
+        }
         if (strcmp(step.s[0], "partyvisible") == 0) {
             CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
             CGameArea* pArea = pGame != NULL ? pGame->GetVisibleArea() : NULL;

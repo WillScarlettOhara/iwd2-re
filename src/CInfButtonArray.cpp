@@ -2836,13 +2836,15 @@ void CInfButtonArray::OnLButtonPressed(int buttonID)
         case 0x41:
         case 0x42:
         case 0x43: {
-            // Quick weapon click â€” Ghidra 0x58FF20 default + button-type fall-
-            // through.  Two behaviors: full picker (state 0x65) if the active
-            // engine reports "weapon swap allowed", otherwise just select the
-            // weapon set and call the equip helper.  We approximate by always
-            // doing the lightweight path: if a different button is clicked,
-            // make it the selected one; clicking the active one clears the
-            // selection.
+            // Shift opens the weapon ability picker (0x592D92).
+            if (g_pBaldurChitin->pActiveEngine->GetShiftKey() == TRUE) {
+                pGame->SetState(0);
+                SetSelectedButton(100);
+                m_nCustomizeSlot = nButtonType - 0x3C;
+                UpdateButtons();
+                SetState(0x65, 1);
+                return;
+            }
             INT nEffective = nButtonType;
             // Off-hand collapses to its main when the main is empty or holds a
             // 2H/ranged/sling/crossbow (ITEMTYPE 0x29/0x2F/0x31/0x35).  Ghidra
@@ -2874,7 +2876,21 @@ void CInfButtonArray::OnLButtonPressed(int buttonID)
             }
             if (m_nSelectedButton != nEffective) {
                 pGame->SetState(0);
+                LONG nLeader = pGame->GetGroup()->GetGroupLeader();
+                CGameSprite* pSprite = NULL;
+                BYTE rc = pGame->GetObjectArray()->GetShare(nLeader,
+                    CGameObjectArray::THREAD_ASYNCH,
+                    reinterpret_cast<CGameObject**>(&pSprite), INFINITE);
+                if (rc == CGameObjectArray::SUCCESS) {
+                    pSprite->SetModalState(0, 0);
+                    pGame->GetObjectArray()->ReleaseShare(nLeader,
+                        CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                }
                 SetSelectedButton(nEffective);
+                ReadyQuickSlotByMode(static_cast<SHORT>(nEffective - 0x3C), 1);
+                if (pGame->GetState() == 0) {
+                    SetSelectedButton(100);
+                }
                 UpdateButtons();
             } else {
                 pGame->SetState(0);

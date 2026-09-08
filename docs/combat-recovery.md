@@ -372,14 +372,32 @@ Win32 build succeeds; the INI was restored with SHA-256
 The damage and payload scenarios now require portraits 0 and 1 on screen.
 This verifies a targeting precondition, not mouse attacks or new damage paths.
 
-Also inspect the quick-weapon branch of `CInfButtonArray::OnLButtonPressed`
-(0x58FF20): its current 0x3C..0x43 branch explicitly approximates the original
-by toggling selection and keeping game state 0. The first character's observed
-bar has type 60 at control 7 and type 61 at control 8. Do not assume clicking
-that weapon readies a forced attack. The dedicated type-8 attack-button branch
-already sets game state 2 / icon 12. Full context for the missing weapon-click
-behavior is in `tmp_combat_weapon_click_full.md`; no new recovery of that
-function was made in the camera batch.
+Weapon-click recovery (2026-09-08): the 0x3C..0x43 branch of
+`CInfButtonArray::OnLButtonPressed` now follows 0x592D92..0x592ED4. The active
+engine virtual call at +0x44 is **GetShiftKey**, not a weapon-swap capability.
+Shift resets targeting and opens state 0x65 with the clicked weapon ability
+index. A normal click clears modal state, selects the effective weapon button,
+and calls `ReadyQuickSlotByMode(index,1)`. This reaches the existing
+`SetSelectedWeaponButton`; selection resets to 100 if it cannot ready targeting.
+Clicking the selected weapon cancels targeting. The existing offhand collapse
+rules are preserved. The enclosing dispatcher remains incomplete.
+
+The first character's observed bar has type 60 at control 7 and type 61 at
+control 8. `combat-weapon-click.txt` exercises ready/cancel/re-ready, asserts
+game state/icon/button as (2,12,60), (0,12,100), (2,12,60), and then clicks
+portrait 1's ground position (232,168). Before clicking it asserts that the
+picker identifies object 8847495, and afterwards checks (0,12,100).
+The equivalent captured 20-step scenario passes with a CLEAN 30-second smoke:
+ReadyQuickSlotByMode x2, SetSelectedWeaponButton x2, OnActionButton x2,
+GroupSetTarget x1. Evidence: `work/combat-weapon-click-20260908/target.jsonl`.
+The earlier 15-step ready/cancel-only run also passes (`click.jsonl`).
+The Win32 build succeeds. Static batch `.arc/2026-09-08T02-52-36-batch/`
+passes with YELLOW call-count parity (444 original vs 372 source calls for the
+whole incomplete dispatcher). Shift/picker and offhand branches have assembly
+evidence only, not runtime assertions; there is no original/recovered trace.
+This proves mouse targeting reaches GroupSetTarget, not attack execution or
+damage. The INI is restored after the runs. Full context and assembly are in
+`tmp_combat_weapon_click_full.md` and `tmp_weapon_click_asm.txt`.
 
 Prioritize these over the generic size-ranked target list:
 

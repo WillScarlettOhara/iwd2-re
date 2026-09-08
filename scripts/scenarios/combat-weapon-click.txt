@@ -1,0 +1,24 @@
+# 000000037-testSpells: first character, weapon type 60 at panel 1/control 7.
+# Test ready/cancel/re-ready, then issue an attack on portrait 1; no saving.
+# Ground coordinates were measured after centering at the save's 800x600 setup.
+# The picker assertion prevents a click on the wrong object at another resolution.
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+key 49
+bar
+click 1 7
+expect targeting 2 12 60
+click 1 7
+expect targeting 0 12 100
+click 1 7
+expect targeting 2 12 60
+hover 232 168
+sleep 3
+expect picked 1
+clickxy 232 168
+expect targeting 0 12 100
