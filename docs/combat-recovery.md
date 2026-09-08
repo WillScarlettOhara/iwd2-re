@@ -359,6 +359,28 @@ SHA-256. There is no original/recovered differential trace for this batch.
 
 ### Next recovery batch
 
+Camera validation (2026-09-08): `000000037-testSpells` contains six party
+members in AR2000. It loads at scroll (0,2447), placing portrait 0 at screen
+(232,-1589). `center` moves the scroll to (0,642); all six members then lie
+inside the 800x433 viewport. The new `combat-camera.txt` scenario verifies each
+member with `expect partyvisible <slot>` and completes 15 steps, with
+`CInfinity::SetViewPosition` observed 12 times and a CLEAN 30-second smoke.
+A separate negative scenario omitting `center` reports UI-FAIL at portrait 0,
+as intended. Evidence: `work/combat-targeting-20260908/{scout,camera,camera-negative}.jsonl`.
+Win32 build succeeds; the INI was restored with SHA-256
+`1E7BF0A7526C8FDB85BC42AE9998ACD3C4CFEF42CCABBB11EABCF104BFA07DA6`.
+The damage and payload scenarios now require portraits 0 and 1 on screen.
+This verifies a targeting precondition, not mouse attacks or new damage paths.
+
+Also inspect the quick-weapon branch of `CInfButtonArray::OnLButtonPressed`
+(0x58FF20): its current 0x3C..0x43 branch explicitly approximates the original
+by toggling selection and keeping game state 0. The first character's observed
+bar has type 60 at control 7 and type 61 at control 8. Do not assume clicking
+that weapon readies a forced attack. The dedicated type-8 attack-button branch
+already sets game state 2 / icon 12. Full context for the missing weapon-click
+behavior is in `tmp_combat_weapon_click_full.md`; no new recovery of that
+function was made in the camera batch.
+
 Prioritize these over the generic size-ranked target list:
 
 1. `Attack` candidate 0x737EF0: target validity, approach/range/LOS and dispatch

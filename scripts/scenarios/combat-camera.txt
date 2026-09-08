@@ -1,0 +1,17 @@
+# Camera precondition for 000000037-testSpells; no attacks or saving.
+# This save starts with all six party members above the viewport.
+waitgo
+wait world
+enddialog
+ground
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+expect partyvisible 2
+expect partyvisible 3
+expect partyvisible 4
+expect partyvisible 5
+ground
+key 49
+bar

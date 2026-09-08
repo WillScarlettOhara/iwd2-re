@@ -47,6 +47,8 @@
 //   expect screen <screen>
 //   expect controls <panel> <min>
 //   expect control <panel> <control>
+//   expect partyvisible <slot>  require that party member's ground position to
+//                                be inside the visible area's viewport.
 //   sleep <ticks>
 //   resume                      unpause the world if paused
 //   enddialog                   end the current dialogue for isolated engine tests
@@ -1613,6 +1615,38 @@ void Tick(CWarp* pActiveEngine)
     }
 
     if (strcmp(step.op, "expect") == 0) {
+        if (strcmp(step.s[0], "partyvisible") == 0) {
+            CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+            CGameArea* pArea = pGame != NULL ? pGame->GetVisibleArea() : NULL;
+            int slot = Num(step, 0, -1);
+            if (pArea == NULL || slot < 0 || slot >= pGame->GetNumCharacters()) {
+                Fail(nStep, "expect", "partyvisible requires a valid party slot and visible area");
+                return;
+            }
+            LONG id = pGame->GetFixedOrderCharacterId(static_cast<SHORT>(slot));
+            CGameObject* pMember = NULL;
+            if (pGame->GetObjectArray()->GetShare(id, CGameObjectArray::THREAD_ASYNCH,
+                    &pMember, INFINITE) != CGameObjectArray::SUCCESS) {
+                Fail(nStep, "expect", "partyvisible member unavailable");
+                return;
+            }
+            CInfinity* pInfinity = pArea->GetInfinity();
+            CPoint pt(pMember->m_pos.x - pInfinity->nNewX + pInfinity->rViewPort.left,
+                pMember->m_pos.y - pInfinity->nNewY + pInfinity->rViewPort.top);
+            BOOL visible = pMember->m_pArea == pArea
+                && pInfinity->rViewPort.PtInRect(pt);
+            pGame->GetObjectArray()->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Emit("{\"step\":%d,\"op\":\"expect\",\"kind\":\"partyvisible\",\"slot\":%d,"
+                 "\"id\":%ld,\"x\":%ld,\"y\":%ld,\"visible\":%d}",
+                nStep, slot, id, pt.x, pt.y, visible);
+            if (!visible) {
+                Fail(nStep, "expect", "party member is outside the visible viewport; center before targeting");
+                return;
+            }
+            s_pc++;
+            return;
+        }
+
         if (strcmp(step.s[0], "screen") == 0) {
             const char* szNow = ScreenName(pActiveEngine);
             if (strcmp(szNow, step.s[1]) != 0) {
