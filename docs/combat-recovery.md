@@ -571,3 +571,47 @@ Next: Swing (0x739B60) and Attack (0x737EF0), including Swing's remaining
 global-variable bookkeeping helper 0x6F50A0. Its context is assembled in
 `tmp_swing_bookkeeping_full.md`; it processes the sprite's +0x58C bit mask,
 sets matching global variables to 1 and queues their update messages.
+
+### Team-hostility bookkeeping and variable messages (2026-09-08)
+
+Recovered SetTeamEnemies (0x6F50A0), the remaining bookkeeping dependency
+called by Swing. With bit 21 enabled in field_58C, it scans bits 0..20 in
+ascending order, sets GLOBAL TEAM_<index>_ENEMY to 1 and queues the same update
+for the sprite's area. Bit 21 alone and bits above 20 do not produce updates.
+The team mask is not cleared. Existing global variables are overwritten;
+missing variables are copied into the hash and the temporary object deleted.
+
+Added the missing CMessageSetVariable (vtable 0x84882C, subtype 53), including
+its local Run (0x50A820), MarshalMessage (0x50A4D0), UnmarshalMessage (0x50A6C0)
+and metadata. The message holds area/name strings, LONG value, byte increment,
+and DWORD flags at +0x1A under pack(2). Run handles case-sensitive GLOBAL,
+LOCALS, MYAREA and explicit area scopes; only increment byte exactly 1 adds.
+GLOBAL can update even when the target is unavailable. Flags 2/4 instead remove
+the target from area/global named-creature hashes. Unmarshal retains fields and
+returns TRUE with INVALID_INDEX when the remote target cannot be resolved.
+The wire order is remote player/object, signed-short name length/name,
+signed-short area length/area, LONG value, byte increment and DWORD flags.
+
+The marshal function lacked an export despite being a vtable target. The
+address-map/create-functions workflow restored its export; the batch also
+re-exported the existing project (one unrelated pre-existing create failure at
+0x443320). Context and exact assembly were checked before replacing its stub.
+
+`combat-teams.txt` recenters the loaded save and tests against temporary global,
+area and local hashes, restoring the original hash storage before returning.
+Its 30 checks cover creation, overwrite, increment, invalid target, scope case,
+team gates/boundaries, message fields/order, queued area updates and wire
+roundtrip/unknown target. It needs no resource fixture and never saves.
+Named-creature removal flags and incoming network-factory dispatch are not
+covered by this scenario; no original/recovered differential trace is claimed.
+
+Win32 build and the complete 60-second native guard pass: SetTeamEnemies x5,
+CMessageSetVariable::Run x11, MarshalMessage x2 and UnmarshalMessage x1.
+All 30 assertions pass in `work/combat-teams-20260908/teams.jsonl`; guard output
+is `guard-pass.log`. The original INI SHA256 is restored. Static parity for all
+four functions is GREEN in `.arc/2026-09-08T21-11-54-batch/`; that initial batch
+failed three source-style lints, subsequently fixed. The final static batch
+`.arc/2026-09-08T21-15-14-batch/` passes with three string-operator provenance
+count warnings (binary 0/source 2) in the message functions; their serialized
+string order is checked directly against assembly and by the runtime roundtrip.
+Next execution targets remain Swing (0x739B60) and Attack (0x737EF0).

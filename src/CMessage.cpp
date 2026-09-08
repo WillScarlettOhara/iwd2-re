@@ -220,6 +220,9 @@ const BYTE CBaldurMessage::MSG_SUBTYPE_CMESSAGE_SET_SEQUENCE = 50;
 // 0x84CF0B
 const BYTE CBaldurMessage::MSG_SUBTYPE_CMESSAGE_SET_TRIGGER = 52;
 
+// 0x84CF0C
+const BYTE CBaldurMessage::MSG_SUBTYPE_CMESSAGE_SET_VARIABLE = 53;
+
 // 0x84CF06
 const BYTE CBaldurMessage::MSG_SUBTYPE_CMESSAGE_SET_LAST_OBJECT = 47;
 
@@ -18412,3 +18415,169 @@ void CMessageProjectileTrailingVFX::Run()
     // happens in the factory (0x554D20) and the post-dispatch object-flag
     // modification in IcewindCProjectileTravellingVFX::Fire.
 }
+
+// Constructor is inlined at 0x6F5235..0x6F52AC.
+CMessageSetVariable::CMessageSetVariable(const CString& area, const CString& name,
+    LONG value, BYTE increment, LONG caller, LONG target)
+    : CMessage(caller, target)
+    , m_sAreaName(area)
+    , m_sGlobalName(name)
+    , m_nValue(value)
+    , m_bIncrement(increment)
+    , m_flags(0)
+{
+}
+
+// 0x43E170
+SHORT CMessageSetVariable::GetCommType()
+{
+    return BROADCAST_FORCED;
+}
+
+// 0x40A0E0
+BYTE CMessageSetVariable::GetMsgType()
+{
+    return CBaldurMessage::MSG_TYPE_CMESSAGE;
+}
+
+// 0x453560
+BYTE CMessageSetVariable::GetMsgSubType()
+{
+    return CBaldurMessage::MSG_SUBTYPE_CMESSAGE_SET_VARIABLE;
+}
+
+// 0x50A4D0
+void CMessageSetVariable::MarshalMessage(BYTE** pData, DWORD* dwSize)
+{
+    UTIL_ASSERT(pData != NULL && dwSize != NULL);
+    CGameObject* object;
+    BYTE rc;
+    do {
+        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) {
+        *dwSize = 0;
+        return;
+    }
+    PLAYER_ID player = object->m_remotePlayerID;
+    LONG remote = object->m_remoteObjectID;
+    g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+        CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    *dwSize = 21 + m_sGlobalName.GetLength() + m_sAreaName.GetLength();
+    UTIL_ASSERT(*dwSize <= STATICBUFFERSIZE);
+    DWORD cnt = 0;
+    *reinterpret_cast<PLAYER_ID*>(*pData + cnt) = player;
+    cnt += sizeof(PLAYER_ID);
+    *reinterpret_cast<LONG*>(*pData + cnt) = remote;
+    cnt += sizeof(LONG);
+    SHORT length = static_cast<SHORT>(m_sGlobalName.GetLength());
+    *reinterpret_cast<SHORT*>(*pData + cnt) = length;
+    cnt += sizeof(SHORT);
+    memcpy(*pData + cnt, m_sGlobalName.GetBuffer(length), length);
+    cnt += length;
+    length = static_cast<SHORT>(m_sAreaName.GetLength());
+    *reinterpret_cast<SHORT*>(*pData + cnt) = length;
+    cnt += sizeof(SHORT);
+    memcpy(*pData + cnt, m_sAreaName.GetBuffer(length), length);
+    cnt += length;
+    *reinterpret_cast<LONG*>(*pData + cnt) = m_nValue;
+    cnt += sizeof(LONG);
+    (*pData)[cnt++] = m_bIncrement;
+    *reinterpret_cast<DWORD*>(*pData + cnt) = m_flags;
+    cnt += sizeof(DWORD);
+    UTIL_ASSERT(cnt == *dwSize);
+}
+
+// 0x50A6C0
+BOOL CMessageSetVariable::UnmarshalMessage(BYTE* pData, DWORD dwSize)
+{
+    UTIL_ASSERT(pData != NULL);
+    DWORD cnt = CNetwork::SPEC_MSG_HEADER_LENGTH;
+    PLAYER_ID player = *reinterpret_cast<PLAYER_ID*>(pData + cnt);
+    cnt += sizeof(PLAYER_ID);
+    LONG remote = *reinterpret_cast<LONG*>(pData + cnt);
+    cnt += sizeof(LONG);
+    LONG local;
+    if (g_pBaldurChitin->GetObjectGame()->GetRemoteObjectArray()->Find(player, remote, local) == TRUE) {
+        m_targetId = local;
+    } else {
+        m_targetId = CGameObjectArray::INVALID_INDEX;
+    }
+    SHORT length = *reinterpret_cast<SHORT*>(pData + cnt);
+    cnt += sizeof(SHORT);
+    m_sGlobalName = CString(reinterpret_cast<const char*>(pData + cnt), length);
+    cnt += length;
+    length = *reinterpret_cast<SHORT*>(pData + cnt);
+    cnt += sizeof(SHORT);
+    m_sAreaName = CString(reinterpret_cast<const char*>(pData + cnt), length);
+    cnt += length;
+    m_nValue = *reinterpret_cast<LONG*>(pData + cnt);
+    cnt += sizeof(LONG);
+    m_bIncrement = pData[cnt++];
+    m_flags = *reinterpret_cast<DWORD*>(pData + cnt);
+    cnt += sizeof(DWORD);
+    UTIL_ASSERT(cnt == dwSize);
+    return TRUE;
+}
+
+// 0x50A820
+void CMessageSetVariable::Run()
+{
+    CGameObject* object = NULL;
+    BYTE rc;
+    do {
+        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+
+    if (object != NULL && (m_flags & 6) != 0) {
+        if ((m_flags & 2) != 0) {
+            CGameArea* area = g_pBaldurChitin->GetObjectGame()->GetArea(m_sAreaName);
+            if (area != NULL) {
+                area->GetNamedCreatures()->RemoveKey(m_sGlobalName, TRUE, object->m_id);
+            }
+        }
+        if ((m_flags & 4) != 0) {
+            g_pBaldurChitin->GetObjectGame()->GetNamedCreatures()->RemoveKey(m_sGlobalName, TRUE, object->m_id);
+        }
+    } else {
+        auto update = [&](CVariableHashBase* variables, const CString& name) {
+            CVariable* variable = variables->FindKey(name);
+            if (variable == NULL) {
+                variable = new CVariable;
+                variable->SetName(name);
+                variable->m_intValue = m_nValue;
+                variables->AddKey(*variable);
+                delete variable;
+            } else if (m_bIncrement == 1) {
+                variable->m_intValue += m_nValue;
+            } else {
+                variable->m_intValue = m_nValue;
+            }
+        };
+        if (strcmp(m_sAreaName, "GLOBAL") == 0) {
+            update(g_pBaldurChitin->GetObjectGame()->GetVariables(), m_sGlobalName);
+        }
+        if (rc != CGameObjectArray::SUCCESS) {
+            return;
+        }
+        if (strcmp(m_sAreaName, "LOCALS") == 0) {
+            if (object != NULL && object->GetObjectType() == CGameObject::TYPE_SPRITE) {
+                CString name(m_sGlobalName);
+                update(static_cast<CGameSprite*>(object)->GetLocalVariables(), name);
+            }
+        } else {
+            if (strcmp(m_sAreaName, "MYAREA") == 0) {
+                m_sAreaName = reinterpret_cast<const char*>(object->m_pArea->m_header.m_areaName);
+            }
+            CGameArea* area = g_pBaldurChitin->GetObjectGame()->GetArea(m_sAreaName);
+            if (area != NULL) {
+                update(area->GetVariables(), m_sGlobalName);
+            }
+        }
+    }
+    g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
+        CGameObjectArray::THREAD_ASYNCH, INFINITE);
+}
+

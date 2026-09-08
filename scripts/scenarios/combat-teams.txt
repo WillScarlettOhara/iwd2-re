@@ -1,0 +1,8 @@
+# No resource fixtures; swaps and restores the variable hashes for one step.
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+combatteams

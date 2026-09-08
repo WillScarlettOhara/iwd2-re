@@ -88,6 +88,7 @@
 #include "CGameEffect.h"
 #include "CItem.h"
 #include "CMessage.h"
+#include "CVariableHash.h"
 #include "CProjectile.h"
 #include "CInfGame.h"
 #include "CInfinity.h"
@@ -1249,6 +1250,139 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         Emit("{\"step\":%d,\"op\":\"combathit\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "combatteams") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        CGameObject* object = NULL;
+        LONG id = game->GetFixedOrderCharacterId(0);
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || game->GetObjectArray()->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, "combatteams", "party source unavailable");
+            return;
+        }
+        CGameSprite* source = static_cast<CGameSprite*>(object);
+        CGameArea* area = source->m_pArea;
+        CVariableHash globals, areaVars, locals;
+        auto swapHash = [](CVariableHash& left, CVariableHash& right) {
+            std::swap(left.m_hashEntries, right.m_hashEntries);
+            std::swap(left.m_nTableEntries, right.m_nTableEntries);
+        };
+        swapHash(globals, *game->GetVariables());
+        swapHash(areaVars, *area->GetVariables());
+        CVariableHash* savedLocals = source->m_pLocalVariables;
+        source->m_pLocalVariables = &locals;
+        INT savedTeams = source->field_58C;
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"combatteams-case\",\"case\":\"%s\",\"passed\":%s}",
+                nStep, name, passed ? "true" : "false");
+            valid = valid && passed;
+            ++checks;
+        };
+        auto value = [](CVariableHash* vars, const char* name) {
+            CVariable* var = vars->FindKey(CString(name));
+            return var != NULL ? var->m_intValue : LONG_MIN;
+        };
+        auto run = [&](const char* scope, LONG amount, BYTE increment, LONG target) {
+            CString areaName(scope), name;
+            name = "ZRC_TEST";
+            CMessageSetVariable message(areaName, name, amount, increment, id, target);
+            message.Run();
+            return message.m_sAreaName;
+        };
+        run("GLOBAL", 7, 0, id);
+        check("global-create", value(game->GetVariables(), "ZRC_TEST") == 7);
+        run("GLOBAL", -2, 1, id);
+        check("global-increment", value(game->GetVariables(), "ZRC_TEST") == 5);
+        run("GLOBAL", 9, 2, id);
+        check("increment-exactly-one", value(game->GetVariables(), "ZRC_TEST") == 9);
+        run("GLOBAL", 11, 0, -1);
+        check("global-without-target", value(game->GetVariables(), "ZRC_TEST") == 11);
+        run("LOCALS", 3, 1, id);
+        check("locals-create", value(&locals, "ZRC_TEST") == 3);
+        run("LOCALS", 4, 1, id);
+        check("locals-increment", value(&locals, "ZRC_TEST") == 7);
+        CString actualArea(reinterpret_cast<const char*>(area->m_header.m_areaName));
+        check("myarea-resolves", run("MYAREA", 13, 0, id) == actualArea);
+        check("area-create", value(area->GetVariables(), "ZRC_TEST") == 13);
+        run(actualArea, -5, 1, id);
+        check("area-increment", value(area->GetVariables(), "ZRC_TEST") == 8);
+        run("global", 99, 0, id);
+        check("scope-case-sensitive", value(game->GetVariables(), "ZRC_TEST") == 11);
+
+        auto& queue = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = queue.GetCount();
+        for (DWORD mask : { 0u, 1u, 0x200000u, 0x80200000u }) {
+            source->field_58C = mask;
+            source->SetTeamEnemies();
+            check("inactive-or-no-team", queue.GetCount() == before);
+        }
+        CVariable existing;
+        CString teamName;
+        teamName = "TEAM_0_ENEMY";
+        existing.SetName(teamName);
+        existing.m_intValue = 9;
+        game->GetVariables()->AddKey(existing);
+        source->field_58C = 0x80300001;
+        source->SetTeamEnemies();
+        check("two-team-messages", queue.GetCount() == before + 2);
+        check("team-existing", value(game->GetVariables(), "TEAM_0_ENEMY") == 1);
+        check("team-created", value(game->GetVariables(), "TEAM_20_ENEMY") == 1);
+        check("team-high-bit-ignored", value(game->GetVariables(), "TEAM_31_ENEMY") == LONG_MIN);
+        check("team-mask-preserved", static_cast<DWORD>(source->field_58C) == 0x80300001);
+        INT index = 0;
+        while (queue.GetCount() > before) {
+            CMessage* raw = queue.RemoveTail();
+            CMessageSetVariable* message = dynamic_cast<CMessageSetVariable*>(raw);
+            check("team-message-type", message != NULL);
+            if (message != NULL) {
+                check("team-message-fields", message->m_sAreaName == actualArea
+                    && message->m_sGlobalName == (index == 0 ? "TEAM_20_ENEMY" : "TEAM_0_ENEMY")
+                    && message->m_nValue == 1 && message->m_bIncrement == 0 && message->m_flags == 0
+                    && message->GetSource() == id && message->GetTarget() == id);
+                message->Run();
+            }
+            delete raw;
+            ++index;
+        }
+        check("team-area-zero", value(area->GetVariables(), "TEAM_0_ENEMY") == 1);
+        check("team-area-twenty", value(area->GetVariables(), "TEAM_20_ENEMY") == 1);
+
+        CString globalScope, testName;
+        globalScope = "GLOBAL";
+        testName = "ZRC_WIRE";
+        CMessageSetVariable sent(globalScope, testName, -17, 1, id, id);
+        sent.m_flags = 0x80000004;
+        BYTE bytes[256] = {};
+        BYTE* payload = bytes + CNetwork::SPEC_MSG_HEADER_LENGTH;
+        DWORD size = 0;
+        sent.MarshalMessage(&payload, &size);
+        check("wire-size", size == 21 + 8 + 6);
+        // Force an unmapped target to exercise the invalid-id fallback.
+        *reinterpret_cast<DWORD*>(payload) = 0xDEADBEEF;
+        *reinterpret_cast<DWORD*>(payload + 4) = 0x7FFFFFFF;
+        CMessageSetVariable received(CString(), CString(), 0, 0, id, id);
+        check("wire-decode", received.UnmarshalMessage(bytes, size + CNetwork::SPEC_MSG_HEADER_LENGTH));
+        check("wire-fields", received.m_sAreaName == globalScope && received.m_sGlobalName == testName
+            && received.m_nValue == -17 && received.m_bIncrement == 1 && received.m_flags == 0x80000004);
+        check("wire-unmapped-target", received.GetTarget() == CGameObjectArray::INVALID_INDEX);
+        received.MarshalMessage(&payload, &size);
+        check("wire-invalid-target-empty", size == 0);
+
+        source->field_58C = savedTeams;
+        source->m_pLocalVariables = savedLocals;
+        swapHash(areaVars, *area->GetVariables());
+        swapHash(globals, *game->GetVariables());
+        game->GetObjectArray()->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            Fail(nStep, "combatteams", "variable/message mismatch (original hashes restored)");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"combatteams\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
     }

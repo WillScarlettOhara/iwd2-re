@@ -79,6 +79,7 @@ public:
     static const BYTE MSG_SUBTYPE_CMESSAGE_SET_NUM_TIMES_TALKED_TO;
     static const BYTE MSG_SUBTYPE_CMESSAGE_SET_PATH;
     static const BYTE MSG_SUBTYPE_CMESSAGE_SET_SEQUENCE;
+    static const BYTE MSG_SUBTYPE_CMESSAGE_SET_VARIABLE;
     static const BYTE MSG_SUBTYPE_CMESSAGE_SET_TRIGGER;
     static const BYTE MSG_SUBTYPE_CMESSAGE_SPRITE_DEATH;
     static const BYTE MSG_SUBTYPE_CMESSAGE_SPRITE_EQUIPMENT;
@@ -1981,5 +1982,25 @@ public:
     /* 0024 */ LONG m_nType;            // projectile type
     /* 0028 */ SHORT m_launchHeight;    // launch height (from DetermineHeight, SHORT copy)
 };
+
+#pragma pack(push, 2)
+class CMessageSetVariable : public CMessage {
+public:
+    CMessageSetVariable(const CString& area, const CString& name, LONG value,
+        BYTE increment, LONG caller, LONG target);
+    SHORT GetCommType() override;
+    BYTE GetMsgType() override;
+    BYTE GetMsgSubType() override;
+    void MarshalMessage(BYTE** pData, DWORD* dwSize) override;
+    BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
+    void Run() override;
+
+    /* 000C */ CString m_sAreaName;
+    /* 0010 */ CString m_sGlobalName;
+    /* 0014 */ LONG m_nValue;
+    /* 0018 */ BYTE m_bIncrement;
+    /* 001A */ DWORD m_flags;
+};
+#pragma pack(pop)
 
 #endif /* CMESSAGE_H_ */

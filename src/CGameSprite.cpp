@@ -26126,6 +26126,38 @@ void RefreshWeaponSetButtons(CGameSprite* pSprite)
     g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
 }
 
+// 0x6F50A0
+void CGameSprite::SetTeamEnemies()
+{
+    DWORD teams = field_58C;
+    if ((teams & 0x200000) == 0 || teams == 0x200000) {
+        return;
+    }
+    for (INT index = 0; index < 21; ++index) {
+        if ((teams & (1 << index)) != 0) {
+            CString number;
+            number.Format(_T("%d"), index);
+            CString name;
+            name = "TEAM_";
+            name += number;
+            name += "_ENEMY";
+            CVariable* variable = g_pBaldurChitin->GetObjectGame()->GetVariables()->FindKey(name);
+            if (variable != NULL) {
+                variable->m_intValue = 1;
+            } else {
+                variable = new CVariable;
+                variable->SetName(name);
+                variable->m_intValue = 1;
+                g_pBaldurChitin->GetObjectGame()->m_variables.AddKey(*variable);
+                delete variable;
+            }
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetVariable(
+                CString(reinterpret_cast<const char*>(m_pArea->m_header.m_areaName)),
+                name, 1, FALSE, m_id, m_id), FALSE);
+        }
+    }
+}
+
 // 0x761AB0
 void CGameSprite::ApplyOnHitSpells(CGameSprite* pTarget)
 {

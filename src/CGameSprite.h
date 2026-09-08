@@ -620,6 +620,7 @@ public:
     SHORT SelectLauncherAmmo(CItem* pLauncher, BOOL bFallbackToMelee);
     SHORT EquipRangedWeapon();
     void ApplyOnHitSpells(CGameSprite* pTarget);
+    void SetTeamEnemies();
     BOOL CheckItemDepleted(SHORT nSlot, SHORT nAbility);
     void sub_72DE60();
     void sub_71E760(CDerivedStats& DStats, int a2);
