@@ -468,3 +468,49 @@ Static batch `.arc/2026-09-08T06-12-15-batch/` passes source, member and class
 audits. Both parity results are YELLOW: 21 original vs 13 source calls for
 SelectLauncherAmmo (inlined button/default-ability construction), and 12 vs 18
 for EquipMostDamagingMelee (accessors expressed as source calls).
+
+### Depleted items and ranged selection (2026-09-08)
+
+Recovered CheckItemDepleted (0x75D450, BOOL with SHORT slot and ability) and
+EquipRangedWeapon (0x75E150). The former notifies the active engine's
+UpdatePersonalItemStatus, checks usage counts, and applies the original usage
+flags: 1 deletes the item, 2 replaces its resource with the used-up item (or
+deletes it if none), other flags retain the depleted item. Unusable events
+carry the resource in trigger **string2**, not string1. A replacement ammo
+stack with the same eight-byte resource returns FALSE so the attack can
+continue; otherwise the helper returns TRUE. It does not decrement charges;
+that remains the caller's job. Invalid ability 0 has its separate deletion
+path; nonzero missing abilities send Unusable and release all demands.
+The original slot bound is `> NUM_SLOT`, preserving its slot-51 edge case.
+
+EquipRangedWeapon retains an already selected ranged ability for a party
+member, otherwise scans ammunition then weapon slots for a compatible ranged
+ability, selects the corresponding weapon set, or falls back to melee.
+It deliberately does not rank or check charges. Its existing callers have
+not been connected in this batch. The original party-member entry demands
+the selected item before its null test, so a valid selected item is a precondition.
+
+The ammo scenario now executes 36 checks: the previous 15, plus deletion of
+an exhausted heap-owned stack and replacement by the identical resource,
+remaining charges, invalid slot, empty slot, missing ability, unlimited melee
+ability, and switching from fists back to ranged, for bow/crossbow/sling.
+The first test failed because CItem construction with count 0 initializes a
+charge; explicitly SetUsageCount(0,0) now establishes the depleted precondition.
+No recovery-code change was needed for that failed test. The corrected run
+passes all checks and a complete 60-second CLEAN observation: CheckItemDepleted
+x18, EquipRangedWeapon x3, SelectLauncherAmmo x18, CMessageSetTrigger::Run x10.
+Evidence: `work/combat-depletion-20260908/depletion-retry.jsonl` and
+`guard-pass.log`; the failed preparation is retained in `depletion.jsonl`.
+The ammo fixtures now declare stack limit 40 and consumable usage flags/max
+charges. Other fixture payload/damage values are unchanged. All 13 fixtures
+were removed and the original INI hash restored; three fixture safety tests pass.
+
+Win32 build passes. Static batch `.arc/2026-09-08T06-20-23-batch/` gave GREEN
+parity for EquipRangedWeapon and YELLOW for CheckItemDepleted (110 original
+calls vs 61 source calls, repeated trigger/destructor handling shared), but
+failed two narrow-CString-literal lints. After replacing those with empty
+constructors, `.arc/2026-09-08T06-23-22-batch/` passes all static checks with
+`--no-parity`; earlier parity evidence remains applicable. Resource transformation,
+missing ability 0, special slot 42 and non-party fallback branches are not yet
+runtime-covered. No original/recovered differential trace. Attack/Swing still
+need recovery; their on-hit subspell dependency 0x761AB0 remains next.

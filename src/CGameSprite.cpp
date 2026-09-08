@@ -26126,6 +26126,182 @@ void RefreshWeaponSetButtons(CGameSprite* pSprite)
     g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
 }
 
+// 0x75E150
+SHORT CGameSprite::EquipRangedWeapon()
+{
+    if (m_equipment.m_items[42] != NULL) {
+        return ACTION_ERROR;
+    }
+    if (g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id) != -1) {
+        CItem* pSelected = m_equipment.m_items[m_equipment.m_selectedWeapon];
+        pSelected->Demand();
+        if (pSelected != NULL && pSelected->GetAbility(m_equipment.m_selectedWeaponAbility) != NULL
+            && static_cast<BYTE>(pSelected->GetAbility(m_equipment.m_selectedWeaponAbility)->type) == 2) {
+            pSelected->Release();
+            return ACTION_DONE;
+        }
+        pSelected->Release();
+    }
+    for (INT index = 0; index < 4; ++index) {
+        CItem* pAmmo = m_equipment.m_items[CGameSpriteEquipment::SLOT_AMMO + index];
+        if (pAmmo != NULL) {
+            pAmmo->Demand();
+            ITEM_ABILITY* pAbility = pAmmo->GetAbility(0);
+            if (pAbility != NULL && static_cast<BYTE>(pAbility->type) == 2
+                && CheckLauncherType(pAbility, NULL)) {
+                SHORT nLauncherSlot;
+                if (GetLauncher(pAbility, nLauncherSlot) != NULL) {
+                    SetWeaponSet(static_cast<BYTE>((nLauncherSlot - 43) / 2));
+                }
+                pAmmo->Release();
+                return ACTION_DONE;
+            }
+            pAmmo->Release();
+        }
+    }
+    for (INT index = 0; index < 8; ++index) {
+        CItem* pItem = m_equipment.m_items[CGameSpriteEquipment::SLOT_WEAPON + index];
+        if (pItem != NULL) {
+            pItem->Demand();
+            ITEM_ABILITY* pAbility = pItem->GetAbility(0);
+            if (pAbility != NULL && static_cast<BYTE>(pAbility->type) == 2
+                && CheckLauncherType(pAbility, NULL)) {
+                SetWeaponSet(static_cast<BYTE>((CGameSpriteEquipment::SLOT_WEAPON - 43 + index) / 2));
+                pItem->Release();
+                return ACTION_DONE;
+            }
+            pItem->Release();
+        }
+    }
+    EquipMostDamagingMelee();
+    return ACTION_DONE;
+}
+
+// 0x75D450
+BOOL CGameSprite::CheckItemDepleted(SHORT nSlot, SHORT nAbility)
+{
+    SHORT nOldSlot = m_equipment.m_selectedWeapon;
+    SHORT nLauncherSlot = GetLauncherSlot(nOldSlot, m_equipment.m_selectedWeaponAbility);
+    static_cast<CBaldurEngine*>(g_pBaldurChitin->pActiveEngine)->UpdatePersonalItemStatus(m_id);
+    auto unusable = [this](const CString& resource) {
+        CAITrigger trigger(CAITrigger::UNUSABLE, 0);
+        trigger.m_string2 = resource;
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetTrigger(trigger, m_id, m_id), FALSE);
+    };
+    if (nSlot < 0 || nSlot > CGameSpriteEquipment::NUM_SLOT) {
+        unusable(CString());
+        return TRUE;
+    }
+    CItem*& pSlotItem = m_equipment.m_items[nSlot];
+    if (pSlotItem == NULL) {
+        unusable(CString());
+        return TRUE;
+    }
+    CResRef originalRes = pSlotItem->GetResRef();
+    CItem* pItem = pSlotItem;
+    pItem->Demand();
+    ITEM_ABILITY* pAbility = pItem->GetAbility(nAbility);
+    auto replaceAmmo = [this, nLauncherSlot, &originalRes]() -> BOOL {
+        if (SelectLauncherAmmo(m_equipment.m_items[nLauncherSlot], !IcewindMisc::IsPC(this)) == ACTION_DONE) {
+            CItem* pSelected = m_equipment.m_items[m_equipment.m_selectedWeapon];
+            return pSelected != NULL && pSelected->GetResRef() == originalRes;
+        }
+        return FALSE;
+    };
+    if (pAbility == NULL) {
+        if (nAbility == 0) {
+            if (pItem->GetMaxStackable() < 2) {
+                PlaySound(CResRef("EFF_M02"));
+            }
+            if (nSlot == m_equipment.m_selectedWeapon) {
+                SelectWeaponAbility(CGameSpriteEquipment::SLOT_FIST, 0, FALSE, TRUE);
+            } else {
+                Unequip(nSlot);
+            }
+            pSlotItem->ReleaseAll();
+            delete pSlotItem;
+            pSlotItem = NULL;
+            if (nSlot == nOldSlot) {
+                if (nLauncherSlot == -1) {
+                    EquipMostDamagingMelee();
+                } else if (replaceAmmo()) {
+                    return FALSE;
+                }
+            }
+        } else {
+            CString resource;
+            pItem->GetResRef().CopyToString(resource);
+            unusable(resource);
+            pSlotItem->ReleaseAll();
+        }
+        return TRUE;
+    }
+    if (pItem->GetUsageCount(nAbility) == 0xFFFF && pAbility->maxUsageCount != 0 && pAbility->usageFlags == 1) {
+        pItem->SetUsageCount(nAbility, 0);
+    }
+    if (pItem->GetUsageCount(nAbility) != 0 || pAbility->maxUsageCount == 0) {
+        pItem->Release();
+        return FALSE;
+    }
+    CString resource;
+    pItem->GetResRef().CopyToString(resource);
+    BOOL bDemanded = TRUE;
+    if (pAbility->usageFlags == 1) {
+        if (pSlotItem != NULL) {
+            if (pItem->GetMaxStackable() < 2) {
+                PlaySound(CResRef("EFF_M02"));
+            }
+            if (nSlot == m_equipment.m_selectedWeapon) {
+                SelectWeaponAbility(CGameSpriteEquipment::SLOT_FIST, 0, FALSE, TRUE);
+            } else {
+                Unequip(nSlot);
+            }
+            pSlotItem->ReleaseAll();
+            bDemanded = FALSE;
+            delete pSlotItem;
+            pSlotItem = NULL;
+            if (nSlot == nOldSlot) {
+                if (nLauncherSlot == -1) {
+                    if (!IcewindMisc::IsPC(this)) EquipMostDamagingMelee();
+                } else if (replaceAmmo()) {
+                    return FALSE;
+                }
+            }
+            SetWeaponSet(m_nWeaponSet);
+        }
+    } else if (pAbility->usageFlags == 2) {
+        if (nSlot != m_equipment.m_selectedWeapon) {
+            Unequip(nSlot);
+        }
+        pSlotItem->Release();
+        bDemanded = FALSE;
+        if (pItem->GetUsedUpItemId() != "") {
+            pItem->SetResRef(pItem->GetUsedUpItemId(), TRUE);
+            pItem->GetResRef().CopyToString(resource);
+        } else {
+            pSlotItem->ReleaseAll();
+            delete pSlotItem;
+            pSlotItem = NULL;
+        }
+        if (nSlot == nOldSlot) {
+            if (nLauncherSlot == -1) {
+                if (!IcewindMisc::IsPC(this)) EquipMostDamagingMelee();
+            } else if (replaceAmmo()) {
+                return FALSE;
+            }
+        }
+        if (g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id) != -1
+            && (m_derivedStats.m_generalState & 0x2000) == 0) {
+            SetWeaponSet(m_nWeaponSet);
+        } else {
+            EquipRangedWeapon();
+        }
+    }
+    unusable(resource);
+    if (bDemanded) pItem->Release();
+    return TRUE;
+}
+
 // 0x75E330
 SHORT CGameSprite::SelectLauncherAmmo(CItem* pLauncher, BOOL bFallbackToMelee)
 {

@@ -1289,6 +1289,48 @@ void Tick(CWarp* pActiveEngine)
                 source->m_equipment.m_selectedWeapon, fallbackPassed);
             valid = valid && fallbackPassed;
             ++checks;
+            // The depletion helper owns and deletes the exhausted heap item.
+            CItem* exhausted = new CItem(CResRef(ammoNames[kind]), 0, 0, 0, 0, 0);
+            exhausted->SetUsageCount(0, 0);
+            source->m_equipment.m_items[14] = exhausted;
+            high.SetUsageCount(0, 7);
+            source->m_nWeaponSet = 0;
+            source->m_equipment.m_selectedWeapon = 14;
+            source->m_equipment.m_selectedWeaponAbility = 0;
+            BOOL depleted = source->CheckItemDepleted(14, 0);
+            BOOL replaced = !depleted && source->m_equipment.m_items[14] == NULL
+                && source->m_equipment.m_selectedWeapon == 13 && high.GetUsageCount(0) == 7;
+            Emit("{\"step\":%d,\"op\":\"combatammo-depleted\",\"launcher\":\"%s\","
+                 "\"result\":%d,\"slot\":%d,\"passed\":%d}",
+                nStep, launcherNames[kind], depleted, source->m_equipment.m_selectedWeapon, replaced);
+            valid = valid && replaced;
+            ++checks;
+            if (source->m_equipment.m_items[14] != NULL) {
+                delete source->m_equipment.m_items[14];
+                source->m_equipment.m_items[14] = NULL;
+            }
+            auto checkDepletion = [&](const char* name, SHORT slot, SHORT ability, BOOL expected) {
+                BOOL actual = source->CheckItemDepleted(slot, ability);
+                Emit("{\"step\":%d,\"op\":\"combatammo-depletion-case\",\"case\":\"%s\","
+                     "\"actual\":%d,\"expected\":%d}", nStep, name, actual, expected);
+                valid = valid && actual == expected;
+                ++checks;
+            };
+            checkDepletion("remaining charges", 13, 0, FALSE);
+            checkDepletion("invalid slot", -1, 0, TRUE);
+            checkDepletion("empty slot", 14, 0, TRUE);
+            checkDepletion("missing ability", 13, 99, TRUE);
+            checkDepletion("unlimited melee ability", 45, 0, FALSE);
+            source->m_equipment.m_selectedWeapon = 10;
+            source->m_equipment.m_selectedWeaponAbility = 0;
+            SHORT ranged = source->EquipRangedWeapon();
+            BOOL rangedPassed = ranged == CGameAIBase::ACTION_DONE
+                && source->m_nWeaponSet == 0 && source->m_equipment.m_selectedWeapon == 13;
+            Emit("{\"step\":%d,\"op\":\"combatammo-ranged\",\"launcher\":\"%s\","
+                 "\"result\":%d,\"slot\":%d,\"passed\":%d}",
+                nStep, launcherNames[kind], ranged, source->m_equipment.m_selectedWeapon, rangedPassed);
+            valid = valid && rangedPassed;
+            ++checks;
             // Restore pointers before the stack-owned fixtures are destroyed.
             memcpy(source->m_equipment.m_items, savedItems, sizeof(savedItems));
         }

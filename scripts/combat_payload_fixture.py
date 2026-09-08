@@ -16,13 +16,15 @@ def item(item_type, ability_type, launcher_type, projectile, amount):
     header[:8] = b"ITM V2.0"
     struct.pack_into("<ii", header, 8, -1, -1)
     struct.pack_into("<H", header, 0x1C, item_type)
-    struct.pack_into("<H", header, 0x38, 1)
+    struct.pack_into("<H", header, 0x38, 40 if ability_type == 2 else 1)
     struct.pack_into("<IHI", header, 0x64, len(header), 1, len(header) + 0x38)
     ability = bytearray(0x38)
     struct.pack_into("<H", ability, 0, ability_type)
     ability[2] = 1  # weapon quick-slot usage
     struct.pack_into("<H", ability, 0x0E, 30)
     ability[0x10] = launcher_type
+    if ability_type == 2:
+        struct.pack_into("<HH", ability, 0x22, 1, 1)  # consumable ammunition
     if amount:
         ability[0x16] = 2 if ability_type == 4 else 4
         ability[0x18] = 1
