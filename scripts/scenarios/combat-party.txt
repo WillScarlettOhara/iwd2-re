@@ -1,0 +1,9 @@
+# No fixtures or damage application; verify message ownership and discard copies.
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+combatparty

@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-party.txt",
+  "hold": 60,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Offline world with at least two party members; the scenario centers the camera and checks visibility.",
+    "combatparty checks independent effect ownership, payload, recipient order and arena filtering, then discards effects and restores state without saving.",
+    "Reconstruction assertions and binary inspection; differential evidence remains unproven."
+  ]
+}

@@ -66,6 +66,8 @@
 //                                0 and 1; no damage or save, reseeds thread RNG.
 //   combatammo                  select compatible fixture ammunition and verify
 //                                quick buttons; restores the original equipment.
+//   combatparty                 verify independent party-effect copies and arena
+//                                recipients; discard effects and restore state.
 //   weapondamage <item> [launcher]  calculate base damage and deliver by projectile;
 //                                ZRC fixtures only, no saving, check actual HP loss.
 //
@@ -1250,6 +1252,126 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         Emit("{\"step\":%d,\"op\":\"combathit\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "combatparty") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto& network = g_pChitin->cNetwork;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || game->GetNumCharacters() < 2
+            || (network.GetServiceProvider() != CNetwork::SERV_PROV_NULL && network.GetSessionOpen())) {
+            Fail(nStep, step.op, "requires offline world and two party members");
+            return;
+        }
+        auto* objects = game->GetObjectArray();
+        LONG sourceId = game->GetCharacterId(0);
+        CGameObject* sourceObject = NULL;
+        if (objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH,
+                &sourceObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(sourceObject);
+        auto arena = game->m_gameSave.m_bArenaMode;
+        auto provider = network.m_nServiceProvider;
+        auto player = network.m_idLocalPlayer;
+        auto connected = network.m_bConnectionEstablished;
+        SHORT partyCount = game->m_nCharacters;
+        auto& queue = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"combatparty-case\",\"case\":\"%s\",\"passed\":%s}",
+                nStep, name, passed ? "true" : "false");
+            valid = valid && passed;
+            ++checks;
+        };
+        ITEM_EFFECT itemEffect = {};
+        CGameEffect::ClearItemEffect(&itemEffect, CGAMEEFFECT_DAMAGE);
+        itemEffect.effectAmount = 7;
+        CGameEffect* effect = CGameEffect::DecodeEffect(&itemEffect,
+            CPoint(123, 456), sourceId, CPoint(789, 321));
+        effect->m_sourceRes = "ZRCORIG1";
+        // A local save can mark its null-provider session open. Keep the
+        // synchronous ownership checks from invoking the network transport.
+        network.m_bConnectionEstablished = FALSE;
+        for (INT test = 0; test < 5; ++test) {
+            game->m_gameSave.m_bArenaMode = test != 0;
+            BOOL filter = test == 2 || test == 4;
+            network.m_nServiceProvider = filter ? 1 : CNetwork::SERV_PROV_NULL;
+            network.m_idLocalPlayer = source->m_remotePlayerID ^ (test == 4 ? 1 : 0);
+            game->m_nCharacters = test == 3 ? 0 : partyCount;
+            std::vector<LONG> recipients;
+            for (SHORT portrait = 0; portrait < game->GetNumCharacters(); ++portrait) {
+                LONG id = game->GetCharacterId(portrait);
+                CGameObject* object = NULL;
+                if (!filter) {
+                    recipients.push_back(id);
+                } else if (objects->GetShare(id, CGameObjectArray::THREAD_ASYNCH,
+                               &object, INFINITE) == CGameObjectArray::SUCCESS) {
+                    if (object->m_remotePlayerID == network.m_idLocalPlayer) {
+                        recipients.push_back(id);
+                    }
+                    objects->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                }
+            }
+            if (test == 4) {
+                check("foreign-owner-excluded", recipients.size() < static_cast<size_t>(partyCount));
+            }
+            INT before = queue.GetCount();
+            source->ApplyEffectToParty(effect);
+            check("recipient-count", queue.GetCount() == before + static_cast<INT>(recipients.size()));
+            std::vector<CGameEffect*> copies;
+            INT index = static_cast<INT>(recipients.size()) - 1;
+            while (queue.GetCount() > before) {
+                CMessage* raw = queue.RemoveTail();
+                auto* message = dynamic_cast<CMessageAddEffect*>(raw);
+                check("message-type", message != NULL);
+                if (message != NULL) {
+                    CGameEffect* copy = message->m_effect;
+                    check("recipient-order", index >= 0 && message->GetTarget() == recipients[index]);
+                    check("caller", message->GetSource() == sourceId);
+                    BOOL unique = copy != NULL && copy != effect;
+                    for (auto* previous : copies) {
+                        unique = unique && copy != previous;
+                    }
+                    check("independent-copy", unique);
+                    if (copy != NULL) {
+                        check("payload", copy->m_effectAmount == 7 && copy->m_effectID == CGAMEEFFECT_DAMAGE);
+                        check("provenance", copy->m_source == CPoint(123, 456)
+                            && copy->m_target == CPoint(789, 321) && copy->m_sourceID == sourceId
+                            && copy->m_sourceRes == CResRef("ZRCORIG1"));
+                        if (unique) {
+                            copy->m_effectAmount = 99;
+                            copies.push_back(copy);
+                        }
+                    }
+                    // Retain all copies until the identity checks finish; even a
+                    // regression sharing pointers must fail without double deletion.
+                    message->m_effect = NULL;
+                }
+                delete raw;
+                --index;
+            }
+            for (auto* copy : copies) {
+                delete copy;
+            }
+            check("input-retained", effect->m_effectAmount == 7);
+        }
+        delete effect;
+        game->m_nCharacters = partyCount;
+        game->m_gameSave.m_bArenaMode = arena;
+        network.m_nServiceProvider = provider;
+        network.m_idLocalPlayer = player;
+        network.m_bConnectionEstablished = connected;
+        objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            Fail(nStep, step.op, "party effect ownership/recipient mismatch (state restored)");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"combatparty\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
     }
