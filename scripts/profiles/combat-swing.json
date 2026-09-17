@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-swing.txt",
+  "hold": 60,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Two visible party members in the same area, enough target HP, no bonus-damage list or weapon immunities.",
+    "Run one bitmap-driven Swing round per weapon, with a forced hit, fixed base damage and a three-charge fixture; verify one charge spent for ranged weapons and actual HP loss.",
+    "Transient equipment and attack state are restored. Damage is not saved. This exercises Swing directly, not Attack/action dispatch or original/reconstruction differential parity."
+  ]
+}

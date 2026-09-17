@@ -70,6 +70,8 @@
 //                                recipients; discard effects and restore state.
 //   weapondamage <item> [launcher]  calculate base damage and deliver by projectile;
 //                                ZRC fixtures only, no saving, check actual HP loss.
+//   swingdamage <item> [launcher] run Swing through one real combat bitmap round;
+//                                check ammunition and actual HP loss, no saving.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -1736,8 +1738,10 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
-    if (strcmp(step.op, "weaponpayload") == 0 || strcmp(step.op, "weapondamage") == 0) {
+    if (strcmp(step.op, "weaponpayload") == 0 || strcmp(step.op, "weapondamage") == 0
+        || strcmp(step.op, "swingdamage") == 0) {
         BOOL baseDamage = strcmp(step.op, "weapondamage") == 0;
+        BOOL swingDamage = strcmp(step.op, "swingdamage") == 0;
         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
         if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
             || pGame->GetNumCharacters() < 2
@@ -1796,9 +1800,9 @@ void Tick(CWarp* pActiveEngine)
         CGameArea* area = source->m_pArea;
         SHORT hp = target->m_baseStats.m_hitPoints;
         BOOL valid = area != NULL && target->m_pArea == area
-            && hp > (baseDamage ? 10 : (step.s[1][0] != '\0' ? 4 : 2));
+            && hp > (baseDamage || swingDamage ? 14 : (step.s[1][0] != '\0' ? 4 : 2));
 
-        CItem weapon(CResRef(step.s[0]), 1, 0, 0, 0, 0);
+        CItem weapon(CResRef(step.s[0]), swingDamage ? 3 : 1, 0, 0, 0, 0);
         CItem launcher(CResRef(step.s[1]), 1, 0, 0, 0, 0);
         BOOL hasLauncher = step.s[1][0] != '\0';
         BOOL weaponDemanded = valid && weapon.Demand();
@@ -1806,8 +1810,105 @@ void Tick(CWarp* pActiveEngine)
         ITEM_ABILITY* ability = valid ? weapon.GetAbility(0) : NULL;
         valid = valid && ability != NULL;
         USHORT missile = valid ? ability->missileType : 0;
-        CProjectile* projectile = valid ? CProjectile::DecodeProjectile(missile, source, 0) : NULL;
-        valid = valid && projectile != NULL;
+        CProjectile* projectile = valid && !swingDamage ? CProjectile::DecodeProjectile(missile, source, 0) : NULL;
+        valid = valid && (swingDamage || projectile != NULL);
+        if (valid && swingDamage) {
+            valid = source->m_derivedStats.m_cDamageBonusList.IsEmpty()
+                && target->m_derivedStats.m_cImmunitiesWeapon.IsEmpty();
+            if (valid) {
+                CDerivedStatsTemplate savedStats = source->m_derivedStats;
+                auto savedBase = source->m_baseStats;
+                auto savedType = source->m_typeAI;
+                auto retaliation = target->m_derivedStats.m_onHitSpells;
+                auto team = target->field_58C;
+                auto selected = source->m_equipment.m_selectedWeapon;
+                auto selectedAbility = source->m_equipment.m_selectedWeaponAbility;
+                auto weaponSet = source->m_nWeaponSet;
+                auto allow = source->m_bAllowEffectListCall;
+                auto frame = source->m_attackFrame;
+                auto speed = source->m_speedFactor;
+                auto active = source->field_5630;
+                auto offhand = source->field_5632;
+                auto count = source->field_5636;
+                auto attackState = source->field_7118;
+                auto pending = source->m_curProjectile;
+                CItem* oldAmmo = source->m_equipment.m_items[11];
+                CItem* oldMain = source->m_equipment.m_items[43];
+                CItem* oldOff = source->m_equipment.m_items[44];
+                CButtonData buttons[8];
+                for (INT i = 0; i < 8; ++i) buttons[i] = source->m_quickWeapons[i];
+                CResRef weaponRefs[CGAMESAVECHARACTER_NUM_STATS_WEAPONS];
+                SHORT weaponUses[CGAMESAVECHARACTER_NUM_STATS_WEAPONS];
+                for (INT i = 0; i < CGAMESAVECHARACTER_NUM_STATS_WEAPONS; ++i) {
+                    weaponRefs[i] = source->m_cGameStats.m_pWeaponStats[i].m_cResRef;
+                    weaponUses[i] = source->m_cGameStats.m_pWeaponStats[i].m_nTimesUsed;
+                }
+                SHORT hitBonus = ability->thac0Bonus;
+                ability->thac0Bonus = SHORT_MAX;
+                static_cast<CDerivedStatsTemplate&>(source->m_derivedStats) = CDerivedStatsTemplate{};
+                source->m_derivedStats.m_nLuck = 19;
+                source->m_derivedStats.m_nSTR = 10;
+                source->m_derivedStats.m_nNumberOfAttacks = 1;
+                memset(source->m_baseStats.m_feats, 0, sizeof(source->m_baseStats.m_feats));
+                source->m_baseStats.m_rogueLevel = 0;
+                source->m_typeAI.m_nClass = 0;
+                source->m_typeAI.m_nClassMask = 0;
+                target->m_derivedStats.m_onHitSpells.clear();
+                target->field_58C = 0x200000;
+                source->m_equipment.m_items[11] = hasLauncher ? &weapon : oldAmmo;
+                source->m_equipment.m_items[43] = hasLauncher ? &launcher : &weapon;
+                source->m_equipment.m_items[44] = NULL;
+                source->m_equipment.m_selectedWeapon = hasLauncher ? 11 : 43;
+                source->m_equipment.m_selectedWeaponAbility = 0;
+                source->m_nWeaponSet = 0;
+                source->m_bAllowEffectListCall = TRUE;
+                source->m_curProjectile = NULL;
+                source->m_attackFrame = -1;
+                source->field_5630 = 0;
+                source->field_5632 = 0;
+                source->field_5636 = 0;
+                SHORT result = source->Swing(target);
+                INT ticks = 1;
+                for (SHORT combatFrame = 1; combatFrame <= 101 && source->m_attackFrame != -2; ++combatFrame) {
+                    source->m_attackFrame = combatFrame;
+                    result = source->Swing(target);
+                    valid = valid && result != CGameAIBase::ACTION_ERROR;
+                    ++ticks;
+                }
+                WORD remaining = weapon.GetUsageCount(0);
+                valid = valid && result == CGameAIBase::ACTION_INTERRUPTABLE
+                    && source->m_attackFrame == -2 && source->m_curProjectile == NULL
+                    && remaining == (ability->maxUsageCount != 0 ? 2 : 3);
+                Emit("{\"step\":%d,\"op\":\"swingdamage-round\",\"item\":\"%s\",\"calls\":%d,\"remaining\":%u,\"valid\":%d}",
+                    nStep, step.s[0], ticks, remaining, valid);
+                delete source->m_curProjectile;
+                source->m_curProjectile = pending;
+                source->m_attackFrame = frame;
+                source->m_speedFactor = speed;
+                source->field_5630 = active;
+                source->field_5632 = offhand;
+                source->field_5636 = count;
+                source->field_7118 = attackState;
+                source->m_bAllowEffectListCall = allow;
+                source->m_equipment.m_items[11] = oldAmmo;
+                source->m_equipment.m_items[43] = oldMain;
+                source->m_equipment.m_items[44] = oldOff;
+                source->m_equipment.m_selectedWeapon = selected;
+                source->m_equipment.m_selectedWeaponAbility = selectedAbility;
+                source->m_nWeaponSet = weaponSet;
+                for (INT i = 0; i < 8; ++i) source->m_quickWeapons[i] = buttons[i];
+                for (INT i = 0; i < CGAMESAVECHARACTER_NUM_STATS_WEAPONS; ++i) {
+                    source->m_cGameStats.m_pWeaponStats[i].m_cResRef = weaponRefs[i];
+                    source->m_cGameStats.m_pWeaponStats[i].m_nTimesUsed = weaponUses[i];
+                }
+                ability->thac0Bonus = hitBonus;
+                static_cast<CDerivedStatsTemplate&>(source->m_derivedStats) = savedStats;
+                source->m_baseStats = savedBase;
+                source->m_typeAI = savedType;
+                target->m_derivedStats.m_onHitSpells = retaliation;
+                target->field_58C = team;
+            }
+        }
         if (valid && baseDamage) {
             valid = source->m_derivedStats.m_cDamageBonusList.IsEmpty();
             if (valid) {
@@ -1838,7 +1939,7 @@ void Tick(CWarp* pActiveEngine)
                     nStep, step.s[0], effect != NULL ? effect->m_effectAmount : -1, missile, valid);
             }
         }
-        if (valid && !baseDamage) {
+        if (valid && !baseDamage && !swingDamage) {
             // Transient selection for GetLauncher; restored before any engine tick.
             CItem* saved = source->m_equipment.m_items[43];
             BYTE savedSet = source->m_nWeaponSet;
@@ -1869,7 +1970,7 @@ void Tick(CWarp* pActiveEngine)
         if (weaponDemanded) {
             weapon.Release();
         }
-        LONG height = valid ? projectile->DetermineHeight(source) : 0;
+        LONG height = valid && !swingDamage ? projectile->DetermineHeight(source) : 0;
         objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         if (!valid) {
@@ -1881,9 +1982,10 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         s_payloadHP = hp;
-        s_payloadDamage = baseDamage ? (hasLauncher ? 9 : 5) : (hasLauncher ? 3 : 1);
+        s_payloadDamage = swingDamage ? (hasLauncher ? 12 : 6)
+            : (baseDamage ? (hasLauncher ? 9 : 5) : (hasLauncher ? 3 : 1));
         s_payloadTarget = targetId;
-        projectile->Fire(area, sourceId, targetId, targetPos, height, 0);
+        if (!swingDamage) projectile->Fire(area, sourceId, targetId, targetPos, height, 0);
         return;
     }
 

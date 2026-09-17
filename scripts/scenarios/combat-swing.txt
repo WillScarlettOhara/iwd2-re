@@ -1,0 +1,12 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+resume
+swingdamage ZRCMELEE
+swingdamage ZRCARROW ZRCBOW
+swingdamage ZRCBOLT ZRCXBOW
+swingdamage ZRCSTONE ZRCSLING

@@ -6,6 +6,8 @@
 #include "CBaldurEngine.h"
 #include "CBlood.h"
 #include "CGameAnimationType.h"
+#include "CGameAnimationTypeMonsterIcewind.h"
+#include "CGameAnimationTypeMonsterIcewindNew.h"
 #include "CGameArea.h"
 #include "CGameButtonList.h"
 #include "CGameContainer.h"
@@ -19139,6 +19141,345 @@ SHORT CGameSprite::GetCriticalHitBonus()
         nCriticalHitBonus++;
     }
     return nCriticalHitBonus;
+}
+
+// 0x739B60
+SHORT CGameSprite::Swing(CGameSprite* pTarget)
+{
+    CAITrigger attacked(CAITRIGGER_ATTACKEDBY, m_typeAI, 0);
+    CAITrigger hit(CAITRIGGER_HITBY, m_typeAI, 0);
+    CAbilityId abilityId;
+    WORD nAbility = m_equipment.m_selectedWeaponAbility;
+    WORD nSlot = static_cast<BYTE>(m_equipment.m_selectedWeapon);
+    BOOL bHit = FALSE;
+    CItem* pLauncher = NULL;
+    const ITEM_ABILITY* pLauncherAbility = NULL;
+    if (field_5632 != 0 && m_equipment.m_selectedWeapon != 42
+        && m_equipment.m_items[static_cast<BYTE>(GetWeaponSlot())] != NULL
+        && m_equipment.m_items[static_cast<BYTE>(GetWeaponSlot())]->GetItemType() != 53
+        && m_equipment.m_items[static_cast<BYTE>(GetWeaponSlot())]->GetItemType() != 47
+        && m_equipment.m_items[static_cast<BYTE>(GetWeaponSlot())]->GetItemType() != 49
+        && m_equipment.m_items[static_cast<BYTE>(GetWeaponSlot())]->GetItemType() != 41) {
+        nSlot = static_cast<BYTE>(GetWeaponSlot());
+        nAbility = 0;
+    }
+    CItem* pWeapon = m_equipment.m_items[nSlot];
+    BOOL bDemanded = TRUE;
+    const ITEM_ABILITY* pAbility;
+    if (pWeapon == NULL) {
+        EquipMostDamagingMelee();
+        pWeapon = m_equipment.m_items[10];
+        UTIL_ASSERT(pWeapon != NULL);
+        pWeapon->Demand();
+        pAbility = pWeapon->GetAbility(0);
+        nAbility = 0;
+    } else {
+        pWeapon->Demand();
+        pAbility = pWeapon->GetAbility(nAbility);
+    }
+    m_cGameStats.RecordWeaponUse(pWeapon->GetResRef());
+    if (pAbility == NULL) {
+        // Default attack record (0x85BBD0).
+        static const ITEM_ABILITY DEFAULT_ATTACK = {
+            1, 1, 0, { 0 }, 1, 1, 1, 0, 0, 0, 0, 0,
+            2, 9, 1, 0, 0, 2, 0, 0, 0xFFFF, 0, 0, 0, { 0 }
+        };
+        pAbility = &DEFAULT_ATTACK;
+    }
+    if (static_cast<BYTE>(pAbility->type) == 4) {
+        pWeapon->Release();
+        return ACTION_ERROR;
+    }
+    BOOL bRanged = static_cast<BYTE>(pAbility->type) == 2;
+    if (bRanged) {
+        SHORT launcherSlot;
+        pLauncher = GetLauncher(pAbility, launcherSlot);
+        if (pLauncher != NULL) {
+            pLauncher->Demand();
+            pLauncherAbility = pLauncher->GetAbility(0);
+        }
+    }
+    CMessageHandler* messages = g_pBaldurChitin->GetMessageHandler();
+    if (pTarget != NULL && m_nDirection != GetDirection(pTarget->GetPos())) {
+        messages->AddMessage(new CMessageSetDirection(pTarget->GetPos(), m_id, m_id), FALSE);
+    }
+    if (m_attackFrame == -1) {
+        m_attackFrame = 0;
+        const CDerivedStats& stats = m_bAllowEffectListCall ? m_derivedStats : m_tempStats;
+        m_speedFactor = static_cast<SHORT>(max(static_cast<INT>(pAbility->speedFactor) - stats.m_nPhysicalSpeed, 0));
+        m_speedFactor = static_cast<SHORT>(m_speedFactor + CUtil::UtilRandInt(6, -stats.m_nLuck));
+        m_speedFactor -= 3;
+        if ((m_typeAI.m_nClassMask & CLASSMASK_MONK) != 0) {
+            INT level = m_derivedStats.GetClassLevel(6);
+            if (level >= 8) --m_speedFactor;
+            if (level >= 12) --m_speedFactor;
+        }
+        if (HasFeat(CGAMESPRITE_FEAT_IMPROVED_INITIATIVE) == TRUE) --m_speedFactor;
+        m_speedFactor = max(static_cast<SHORT>(0), min(m_speedFactor, static_cast<SHORT>(10)));
+        field_5630 = 0;
+        field_5632 = 0;
+        if (bRanged) {
+            delete m_curProjectile;
+            m_curProjectile = NULL;
+            CProjectile* projectile = CProjectile::DecodeProjectile(pAbility->missileType, this, NULL);
+            CWeaponIdentification identification;
+            pWeapon->LoadWeaponIdentification(identification);
+            m_curProjectile = projectile;
+        }
+    }
+    BYTE frameType = m_derivedStats.m_nNumberOfAttacks > 0
+        ? m_animation.GetAttackFrameType(static_cast<BYTE>(m_derivedStats.m_nNumberOfAttacks),
+              static_cast<BYTE>(m_speedFactor), static_cast<BYTE>(m_attackFrame))
+        : 0;
+    if (m_derivedStats.m_nNumberOfAttacks < field_5636) frameType = 15;
+    if (bRanged) {
+        UTIL_ASSERT(m_animation.m_animation != NULL);
+        if ((m_animation.m_animation->m_animationID & 0xF000) == 0xE000) {
+            auto* animation = static_cast<CGameAnimationTypeMonsterIcewind*>(m_animation.m_animation);
+            if (frameType == 9) frameType = 7;
+            if (animation->field_1CDE != -1
+                && m_attackFrame == animation->field_1CDA + animation->field_1CDE) frameType = 9;
+        } else if ((m_animation.m_animation->m_animationID & 0xFF00) == 0xF100) {
+            auto* animation = static_cast<CGameAnimationTypeMonsterIcewindNew*>(m_animation.m_animation);
+            if (frameType == 9) frameType = 0;
+            if (animation->field_34F8 != -1) {
+                INT impactFrame = animation->field_34F4 + animation->field_34F8;
+                if (m_attackFrame == impactFrame) {
+                    frameType = 9;
+                } else if (m_attackFrame > impactFrame && m_attackFrame < impactFrame + 6) {
+                    frameType = 8;
+                } else if (m_attackFrame == impactFrame + 6) {
+                    frameType = 8;
+                    animation->field_34F8 = -1;
+                }
+            }
+        }
+    }
+    SHORT sequence = m_nSequence;
+    SHORT result = ACTION_NORMAL;
+    auto setSequence = [&](BYTE value) {
+        messages->AddMessage(new CMessageSetSequence(value, m_id, m_id), FALSE);
+    };
+    switch (frameType) {
+    case 0:
+    case 15:
+        field_7118 = 0;
+        result = ACTION_INTERRUPTABLE;
+        if (sequence != GetIdleSequence() && sequence != CGAMESPRITE_SEQ_SHOOT
+            && sequence != CGAMESPRITE_SEQ_ATTACK) setSequence(static_cast<BYTE>(GetIdleSequence()));
+        if (frameType == 15) {
+            if (bRanged) {
+                delete m_curProjectile;
+                m_curProjectile = NULL;
+            }
+            m_attackFrame = -2;
+        }
+        break;
+    case 6:
+        result = ACTION_INTERRUPTABLE;
+        if (!bRanged) {
+            if (sequence != CGAMESPRITE_SEQ_ATTACK) setSequence(CGAMESPRITE_SEQ_ATTACK);
+            messages->AddMessage(new CMessageSetLastAttacker(m_typeAI, m_id, pTarget->m_id), FALSE);
+        }
+        break;
+    case 7:
+        field_7118 = 1;
+        if (!bRanged) {
+            if (sequence != CGAMESPRITE_SEQ_ATTACK) setSequence(CGAMESPRITE_SEQ_ATTACK);
+        } else if (sequence != CGAMESPRITE_SEQ_SHOOT && field_5630 != 0) {
+            setSequence(CGAMESPRITE_SEQ_SHOOT);
+        }
+        break;
+    case 8:
+        field_7118 = 0;
+        break;
+    case 9: {
+        field_7118 = 1;
+        UTIL_ASSERT(m_animation.m_animation != NULL);
+        if ((m_animation.m_animation->m_animationID & 0xF000) == 0xE000) {
+            static_cast<CGameAnimationTypeMonsterIcewind*>(m_animation.m_animation)->field_1CDE = -1;
+        }
+        messages->AddMessage(new CMessageSetLastAttacker(m_typeAI, m_id, pTarget->m_id), FALSE);
+        if (CheckInvisibility(FALSE) == FALSE) {
+            ITEM_EFFECT effect;
+            CGameEffect::ClearItemEffect(&effect, CGAMEEFFECT_FORCEVISIBLE);
+            effect.durationType = 1;
+            messages->AddMessage(new CMessageAddEffect(CGameEffect::DecodeEffect(&effect,
+                m_pos, m_id, CPoint(-1, -1)), m_id, m_id), FALSE);
+        }
+        if (m_derivedStats.m_spellStates[SPLSTATE_SANCTUARY]) {
+            ITEM_EFFECT effect;
+            CGameEffect::ClearItemEffect(&effect, CGAMEEFFECT_DISPELSANCTUARY);
+            effect.durationType = 1;
+            messages->AddMessage(new CMessageAddEffect(CGameEffect::DecodeEffect(&effect,
+                m_pos, m_id, CPoint(-1, -1)), m_id, m_id), FALSE);
+        }
+        if (bRanged) {
+            CAIObjectType startType;
+            startType.Set(m_startTypeAI);
+            if (sequence != CGAMESPRITE_SEQ_SHOOT && field_5630 != 0) setSequence(CGAMESPRITE_SEQ_SHOOT);
+            if (m_curProjectile == NULL) {
+                CProjectile* projectile = CProjectile::DecodeProjectile(pAbility->missileType, this, NULL);
+                CWeaponIdentification identification;
+                pWeapon->LoadWeaponIdentification(identification);
+                m_curProjectile = projectile;
+            }
+            if (m_curProjectile != NULL && field_5630 != 0) {
+                BOOL critical = FALSE;
+                if (!CheckAttackHit(pTarget, pWeapon, nAbility, &critical, field_5632, field_5636)) {
+                    m_curProjectile->ClearEffects();
+                } else {
+                    bHit = TRUE;
+                    CWeaponIdentification identification;
+                    pWeapon->LoadWeaponIdentification(identification);
+                    if ((pTarget->GetAIType().IsClassValid(6)
+                            && pTarget->m_derivedStats.GetClassLevel(6) >= 20
+                            && (identification.m_itemFlags & 0x40) == 0)
+                        || pTarget->m_derivedStats.m_cImmunitiesWeapon.OnList(identification)) {
+                        FeedBack(0x25, 0, 0, 0, -1, 0, 0);
+                        m_curProjectile->ClearEffects();
+                    } else {
+                        m_curProjectile->AddEffect(CreateWeaponDamage(pWeapon, pLauncher, nAbility,
+                            critical, pTarget->m_typeAI, pTarget->m_nDirection,
+                            GetDirection(pTarget->GetPos()), pTarget, field_5632));
+                        ApplyWeaponEffects(m_curProjectile, pWeapon, nAbility, pTarget->GetPos());
+                    }
+                }
+                auto* message = new CMessageFireProjectile(m_curProjectile->m_projectileType,
+                    pTarget->m_id, pTarget->m_pos, m_curProjectile->DetermineHeight(this), m_id, m_id, 0);
+                if (m_curProjectile->m_projectileType == 0x130) {
+                    LONG seed = rand() % 1000000;
+                    static_cast<CProjectileWhirlwind*>(m_curProjectile)->m_wanderSeed = seed;
+                    message->field_20 = seed;
+                }
+                messages->AddMessage(message, FALSE);
+                m_curProjectile->Fire(m_pArea, m_id, pTarget->m_id, pTarget->m_pos,
+                    m_curProjectile->DetermineHeight(this), 6);
+                if (!AfxIsValidAddress(&m_curProjectile, sizeof(m_curProjectile), TRUE)) m_curProjectile = NULL;
+                CProjectile* projectile = CProjectile::DecodeProjectile(pAbility->missileType, this, NULL);
+                CWeaponIdentification identification;
+                pWeapon->LoadWeaponIdentification(identification);
+                m_curProjectile = projectile;
+            }
+        } else {
+            if (sequence != CGAMESPRITE_SEQ_ATTACK) setSequence(CGAMESPRITE_SEQ_ATTACK);
+            if (field_5630 != 0) {
+                BOOL critical = FALSE;
+                if (CheckAttackHit(pTarget, pWeapon, nAbility, &critical, field_5632, field_5636)) {
+                    bHit = TRUE;
+                    if ((pTarget->field_58C & 0x200000) == 0
+                        && GetAIType().m_nEnemyAlly <= CAIOBJECTTYPE_EA_GOODCUTOFF) {
+                        pTarget->field_58C |= 0x200000;
+                        pTarget->SetTeamEnemies();
+                    }
+                    messages->AddMessage(new CMessageSetTrigger(attacked, m_id, pTarget->m_id), FALSE);
+                    CWeaponIdentification identification;
+                    pWeapon->LoadWeaponIdentification(identification);
+                    messages->AddMessage(new CMessageAddEffect(CreateWeaponDamage(pWeapon, pLauncher,
+                        nAbility, critical, pTarget->m_typeAI, pTarget->m_nDirection,
+                        GetDirection(pTarget->GetPos()), pTarget, field_5632), m_id, pTarget->m_id), FALSE);
+                    auto dispatchEffect = [&](CGameEffect* effect, BOOL launcher) {
+                        effect->m_source = m_pos;
+                        effect->m_sourceID = m_id;
+                        effect->m_target = pTarget->m_pos;
+                        IcewindMisc::ApplyDamageModifiers(this, effect);
+                        switch (effect->m_targetType) {
+                        case 1:
+                            messages->AddMessage(new CMessageAddEffect(effect, m_id, m_id), FALSE);
+                            return;
+                        case 2:
+                            if (launcher) m_curProjectile->AddEffect(effect);
+                            else messages->AddMessage(new CMessageAddEffect(effect, m_id, pTarget->m_id), FALSE);
+                            return;
+                        case 3: ApplyEffectToParty(effect); break;
+                        case 4: m_pArea->ApplyEffect(effect, FALSE, FALSE, 0, NULL); break;
+                        case 5: m_pArea->ApplyEffect(effect, TRUE, FALSE, 0, NULL); break;
+                        case 6: m_pArea->ApplyEffect(effect, FALSE, TRUE, m_typeAI.m_nSpecific, NULL); break;
+                        case 7:
+                            if (pTarget != NULL) m_pArea->ApplyEffect(effect, FALSE, TRUE, pTarget->GetAIType().m_nSpecific, NULL);
+                            break;
+                        case 8: m_pArea->ApplyEffect(effect, FALSE, FALSE, 0, this); break;
+                        }
+                        delete effect;
+                    };
+                    for (INT index = 0; index < pAbility->effectCount; ++index) {
+                        dispatchEffect(pWeapon->GetAbilityEffect(nAbility, index, this), FALSE);
+                    }
+                    if (pLauncherAbility != NULL) {
+                        for (INT index = 0; index < pLauncherAbility->effectCount; ++index) {
+                            dispatchEffect(pLauncher->GetAbilityEffect(0, index, this), TRUE);
+                        }
+                    }
+                    if (static_cast<BYTE>(pAbility->type) == 1) pTarget->ApplyOnHitSpells(this);
+                }
+            }
+        }
+        if (field_5630 != 0 && pAbility->maxUsageCount != 0
+            && (static_cast<BYTE>(pAbility->type) != 1 || bHit)) {
+            pWeapon->SetUsageCount(nAbility, pWeapon->GetUsageCount(nAbility) - 1);
+        }
+        if (field_5630 != 0 && pAbility->maxUsageCount != 0) {
+            abilityId.m_itemType = 2;
+            abilityId.m_itemNum = nSlot;
+            abilityId.m_abilityNum = nAbility;
+            UpdateQuickButtons(abilityId, -1, FALSE, FALSE);
+        }
+        if (m_derivedStats.m_spellStates[SPLSTATE_SMITE_EVIL]) {
+            messages->AddMessage(new CMessageAddEffect(
+                IcewindMisc::CreateEffectRemoveAllOfType(this, 446, 0), m_id, m_id), FALSE);
+        }
+        bDemanded = FALSE;
+        pWeapon->Release();
+        if (CheckItemDepleted(nSlot, nAbility)) {
+            AutoPause(1);
+            result = ACTION_ERROR;
+        }
+        messages->AddMessage(new CMessageSetTrigger(hit, m_id, pTarget->m_id), FALSE);
+        break;
+    }
+    default: {
+        field_5636 = static_cast<BYTE>(frameType - 9);
+        UTIL_ASSERT(field_5636 <= m_derivedStats.m_nNumberOfAttacks);
+        INT index = frameType - 9;
+        if (index < 1) break;
+        if (m_derivedStats.m_nNumberOfAttacks < 6) {
+            if (m_derivedStats.m_nNumberOfAttacks < index) {
+                field_7118 = 0;
+                field_5630 = 0;
+                field_5632 = 0;
+            } else {
+                field_7118 = 1;
+                field_5630 = 1;
+                if (index == m_derivedStats.m_nNumberOfAttacks) field_5632 = 1;
+            }
+        } else if (m_derivedStats.m_nNumberOfAttacks - 5 <= index) {
+            field_7118 = 0;
+            field_5630 = 0;
+            field_5632 = 0;
+        } else {
+            field_7118 = 1;
+            field_5630 = 1;
+            if (index == m_derivedStats.m_nNumberOfAttacks - 6) field_5632 = 1;
+        }
+        if (bRanged) {
+            if (sequence != CGAMESPRITE_SEQ_SHOOT && field_5630 != 0) {
+                setSequence(CGAMESPRITE_SEQ_SHOOT);
+                UTIL_ASSERT(m_animation.m_animation != NULL);
+                if ((m_animation.m_animation->m_animationID & 0xF000) == 0xE000) {
+                    static_cast<CGameAnimationTypeMonsterIcewind*>(m_animation.m_animation)->field_1CDE = m_attackFrame;
+                } else if ((m_animation.m_animation->m_animationID & 0xFF00) == 0xF100) {
+                    static_cast<CGameAnimationTypeMonsterIcewindNew*>(m_animation.m_animation)->field_34F8 = m_attackFrame;
+                }
+            }
+        } else if (sequence != CGAMESPRITE_SEQ_ATTACK) {
+            setSequence(CGAMESPRITE_SEQ_ATTACK);
+        }
+        break;
+    }
+    }
+    if (pLauncher != NULL) pLauncher->Release();
+    if (bDemanded) pWeapon->Release();
+    return result;
 }
 
 // 0x73B760

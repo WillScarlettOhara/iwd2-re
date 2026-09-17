@@ -615,6 +615,7 @@ public:
     SHORT GetWeaponProficiencyHitBonus(CItem* pWeapon, const ITEM_ABILITY* pAbility);
     INT GetSpecialWeaponHitBonus(CGameSprite* pTarget, CItem* pWeapon, const ITEM_ABILITY* pAbility);
     BOOL CheckConcealment(CGameSprite* pTarget);
+    SHORT Swing(CGameSprite* pTarget);
     BOOLEAN CheckAttackHit(CGameSprite* pTarget, CItem* pWeapon, INT nAbility, BOOL* pCritical, INT nOffhand, BYTE nAttackCount);
     CGameEffect* CreateWeaponDamage(CItem* pWeapon, CItem* pLauncher, INT nAbility, BOOL bCritical, const CAIObjectType& targetType, SHORT nDirection, SHORT nTargetDirection, CGameSprite* pTarget, INT nOffhand);
     SHORT SelectLauncherAmmo(CItem* pLauncher, BOOL bFallbackToMelee);
