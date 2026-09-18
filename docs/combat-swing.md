@@ -38,6 +38,7 @@ namespace and quick-button reference); the first static run also failed its
 compile-dependent layout gate. Those reports are retained in
 `.arc/2026-09-17T13-48-22-608648-batch/`. The corrected full profile passed.
 
-Remaining: recover Attack (0x737EF0) and its ExecuteAction dispatch. This
-diagnostic calls Swing directly; a normal attack click is not yet connected.
-Full next context is `tmp_attack_current.md`.
+Follow-up: Attack (0x737EF0) and its ExecuteAction dispatch are now recovered;
+see [combat-attack.md](combat-attack.md) for action-dispatch rounds and a
+normal UI attack that damages another party member. This Swing diagnostic
+still calls Swing directly.

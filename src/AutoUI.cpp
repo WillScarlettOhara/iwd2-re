@@ -140,6 +140,9 @@ FILE* s_out = NULL;
 LONG s_payloadTarget = -1;
 SHORT s_payloadHP = 0;
 INT s_payloadDamage = 0;
+LONG s_attackTarget = -1;
+SHORT s_attackHP = 0;
+BOOL s_attackOrderSeen = FALSE;
 
 DWORD GetEnv(const char* name, char* value, DWORD size)
 {
@@ -1738,10 +1741,62 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "attackmark") == 0 || strcmp(step.op, "attackwait") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        BOOL mark = strcmp(step.op, "attackmark") == 0;
+        LONG targetId = mark ? game->GetFixedOrderCharacterId(1) : s_attackTarget;
+        CGameObject* target = NULL;
+        CGameObject* attacker = NULL;
+        LONG sourceId = game->GetFixedOrderCharacterId(0);
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &target, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "target unavailable");
+            return;
+        }
+        SHORT hp = static_cast<CGameSprite*>(target)->m_baseStats.m_hitPoints;
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (mark) {
+            s_attackTarget = targetId;
+            s_attackHP = hp;
+            s_attackOrderSeen = FALSE;
+            s_pc++;
+            Emit("{\"step\":%d,\"op\":\"attackmark\",\"hp\":%d}", nStep, hp);
+            return;
+        }
+        if (objects->GetDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, &attacker, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "attacker unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(attacker);
+        s_attackOrderSeen = s_attackOrderSeen || source->m_curAction.m_actionID == CAIAction::ATTACK;
+        BOOL success = hp < s_attackHP && s_attackOrderSeen;
+        if (success || s_waited >= 600) {
+            source->ClearActions(FALSE);
+            source->SetCurrAction(CAIAction::NULL_ACTION);
+            source->DropPath();
+            source->DropSearchRequest();
+            source->m_attackFrame = -2;
+        }
+        if (s_waited % 30 == 0 || success) {
+            Emit("{\"step\":%d,\"op\":\"attackwait\",\"ticks\":%d,\"action\":%d,\"frame\":%d,\"hpBefore\":%d,\"hpAfter\":%d,\"orderSeen\":%d}",
+                nStep, s_waited, source->m_curAction.m_actionID, source->m_attackFrame,
+                s_attackHP, hp, s_attackOrderSeen);
+        }
+        objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (success) {
+            s_waited = 0;
+            s_pc++;
+        } else if (++s_waited > 600) {
+            Fail(nStep, step.op, "UI attack order did not damage target");
+        }
+        return;
+    }
+
     if (strcmp(step.op, "weaponpayload") == 0 || strcmp(step.op, "weapondamage") == 0
-        || strcmp(step.op, "swingdamage") == 0) {
+        || strcmp(step.op, "swingdamage") == 0 || strcmp(step.op, "attackdamage") == 0) {
         BOOL baseDamage = strcmp(step.op, "weapondamage") == 0;
-        BOOL swingDamage = strcmp(step.op, "swingdamage") == 0;
+        BOOL attackDamage = strcmp(step.op, "attackdamage") == 0;
+        BOOL swingDamage = strcmp(step.op, "swingdamage") == 0 || attackDamage;
         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
         if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
             || pGame->GetNumCharacters() < 2
@@ -1819,6 +1874,10 @@ void Tick(CWarp* pActiveEngine)
                 CDerivedStatsTemplate savedStats = source->m_derivedStats;
                 auto savedBase = source->m_baseStats;
                 auto savedType = source->m_typeAI;
+                CAIAction savedAction = source->m_curAction;
+                auto actionCount = source->m_actionCount;
+                auto lastAction = source->m_lastActionID;
+                auto feedbackTarget = source->field_70EE;
                 auto retaliation = target->m_derivedStats.m_onHitSpells;
                 auto team = target->field_58C;
                 auto selected = source->m_equipment.m_selectedWeapon;
@@ -1867,20 +1926,29 @@ void Tick(CWarp* pActiveEngine)
                 source->field_5630 = 0;
                 source->field_5632 = 0;
                 source->field_5636 = 0;
-                SHORT result = source->Swing(target);
+                SHORT actionId = step.nCount > 0 ? static_cast<SHORT>(step.n[0]) : CAIAction::ATTACK;
+                if (attackDamage) {
+                    CAIObjectType targetType;
+                    targetType.m_nInstance = targetId;
+                    source->m_curAction = CAIAction(actionId, targetType, 0, 0, 0);
+                    source->m_actionCount = 0;
+                }
+                SHORT result = attackDamage ? source->ExecuteAction() : source->Swing(target);
                 INT ticks = 1;
                 for (SHORT combatFrame = 1; combatFrame <= 101 && source->m_attackFrame != -2; ++combatFrame) {
                     source->m_attackFrame = combatFrame;
-                    result = source->Swing(target);
+                    if (attackDamage) source->m_actionCount = combatFrame;
+                    result = attackDamage ? source->ExecuteAction() : source->Swing(target);
                     valid = valid && result != CGameAIBase::ACTION_ERROR;
                     ++ticks;
                 }
                 WORD remaining = weapon.GetUsageCount(0);
-                valid = valid && result == CGameAIBase::ACTION_INTERRUPTABLE
+                valid = valid && result == (attackDamage && actionId == CAIAction::ATTACKONEROUND
+                        ? CGameAIBase::ACTION_DONE : CGameAIBase::ACTION_INTERRUPTABLE)
                     && source->m_attackFrame == -2 && source->m_curProjectile == NULL
                     && remaining == (ability->maxUsageCount != 0 ? 2 : 3);
-                Emit("{\"step\":%d,\"op\":\"swingdamage-round\",\"item\":\"%s\",\"calls\":%d,\"remaining\":%u,\"valid\":%d}",
-                    nStep, step.s[0], ticks, remaining, valid);
+                Emit("{\"step\":%d,\"op\":\"%s-round\",\"item\":\"%s\",\"calls\":%d,\"remaining\":%u,\"valid\":%d}",
+                    nStep, step.op, step.s[0], ticks, remaining, valid);
                 delete source->m_curProjectile;
                 source->m_curProjectile = pending;
                 source->m_attackFrame = frame;
@@ -1905,6 +1973,10 @@ void Tick(CWarp* pActiveEngine)
                 static_cast<CDerivedStatsTemplate&>(source->m_derivedStats) = savedStats;
                 source->m_baseStats = savedBase;
                 source->m_typeAI = savedType;
+                source->m_curAction = savedAction;
+                source->m_actionCount = actionCount;
+                source->m_lastActionID = lastAction;
+                source->field_70EE = feedbackTarget;
                 target->m_derivedStats.m_onHitSpells = retaliation;
                 target->field_58C = team;
             }

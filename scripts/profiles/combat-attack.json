@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-attack.txt",
+  "hold": 90,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Two visible party members in the same area, enough target HP and no weapon immunities or bonus-damage list.",
+    "Four controlled rounds pass through ExecuteAction and Attack; cover action IDs 3, 98 and 105, charge consumption and exact HP loss.",
+    "Then click the weapon button and the second party member with the save's real equipment; require an active Attack order and actual HP loss, then stop the test attack.",
+    "No save writes. Static checks and reconstruction runtime observation do not establish original/reconstruction differential parity."
+  ]
+}

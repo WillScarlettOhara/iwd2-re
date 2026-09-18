@@ -39,6 +39,7 @@
 #include "IcewindMisc.h"
 
 #include <ctype.h>
+#include <mbstring.h>
 #include <string.h>
 
 // 0x85BB38
@@ -19143,6 +19144,143 @@ SHORT CGameSprite::GetCriticalHitBonus()
     return nCriticalHitBonus;
 }
 
+// 0x737EF0
+SHORT CGameSprite::Attack(CGameSprite* pTarget)
+{
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    auto unreachable = [&]() {
+        AutoPause(0x20);
+        CAITrigger trigger(CAITRIGGER_TARGETUNREACHABLE, m_curAction.m_acteeID, 0);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetTrigger(trigger, m_id, m_id), FALSE);
+        return ACTION_ERROR;
+    };
+    auto clearLastTarget = [&]() {
+        if (game->m_lastTarget == pTarget->m_id) {
+            game->m_lastClick = CPoint(-1, -1);
+            game->m_lastTarget = CGameObjectArray::INVALID_INDEX;
+        }
+    };
+    if (pTarget == NULL) return unreachable();
+    if (pTarget->m_baseStats.m_bStealthMode == 1) return ACTION_ERROR;
+    if (pTarget->m_animation.GetListType() == 2) return unreachable();
+    if (!pTarget->CheckInvisibility(GetCanSeeInvisible())
+        || pTarget->m_derivedStats.m_spellStates[SPLSTATE_SANCTUARY]) {
+        clearLastTarget();
+        return unreachable();
+    }
+    if (pTarget->m_id == m_id) return ACTION_ERROR;
+    if ((pTarget->m_derivedStats.m_generalState & STATE_DEAD) != 0) {
+        clearLastTarget();
+        AutoPause(0x20);
+        CAIObjectType enemy = m_typeAI.GetEnemyOf();
+        LONG id = m_pArea->GetNearest(m_id, enemy, GetVisualRange(), m_terrainTable,
+            TRUE, GetCanSeeInvisible(), FALSE, 0, FALSE);
+        if (id != CGameObjectArray::INVALID_INDEX) {
+            CAIObjectType target;
+            target.m_nInstance = id;
+            CAIAction action(CAIAction::ATTACK, target, 0, 0, 0);
+            AddAction(action);
+        }
+        return ACTION_DONE;
+    }
+    if ((pTarget->m_derivedStats.m_generalState & STATE_SLEEPING) != 0
+        && m_equipment.m_selectedWeapon == 10 && !GetAIType().IsClassValid(6)) {
+        clearLastTarget();
+        AutoPause(0x20);
+        return ACTION_DONE;
+    }
+    CItem* weapon = m_equipment.m_items[static_cast<BYTE>(m_equipment.m_selectedWeapon)];
+    if (weapon == NULL) {
+        EquipMostDamagingMelee();
+        AutoPause(1);
+        return ACTION_ERROR;
+    }
+    weapon->Demand();
+    const ITEM_ABILITY* ability = weapon->GetAbility(m_equipment.m_selectedWeaponAbility);
+    if (ability == NULL) {
+        AutoPause(1);
+        weapon->Release();
+        return ACTION_ERROR;
+    }
+    if (static_cast<BYTE>(ability->type) == 4
+        || (ability->usageFlags == 3 && weapon->GetUsageCount(m_equipment.m_selectedWeaponAbility) == 0
+            && ability->maxUsageCount != 0)) {
+        CString resource;
+        weapon->GetResRef().CopyToString(resource);
+        CAITrigger trigger(CAITRIGGER_UNUSABLE, 0);
+        trigger.m_string1 = resource;
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetTrigger(trigger, m_id, m_id), FALSE);
+        weapon->Release();
+        return ACTION_ERROR;
+    }
+    if (field_70EE != pTarget->m_id) {
+        FeedBack(6, 0, 0, 0, pTarget->GetNameRef(), 0, 0);
+        field_70EE = pTarget->m_id;
+    }
+    CString animationRes;
+    pTarget->m_animation.GetAnimationResRef(animationRes, 0);
+    auto isAnimation = [&](const char* name) {
+        return _mbscmp(reinterpret_cast<const unsigned char*>(static_cast<LPCTSTR>(animationRes)),
+                   reinterpret_cast<const unsigned char*>(name)) == 0;
+    };
+    if (m_pArea != NULL && !isAnimation("MGEN") && !isAnimation("MKG1")
+        && !isAnimation("MKG2") && !isAnimation("MKG3")) {
+        m_pArea->PlaySong(3, 0x101F4);
+    }
+    if (m_actionCount == 0 && m_curAction.m_actionID == CAIAction::ATTACK
+        && (game->GetCharacterPortraitNum(m_id) == -1 || rand() % 6 == 0)) {
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessagePlaySound(5, TRUE, FALSE, m_id, m_id), FALSE);
+    }
+    CPoint targetCell(pTarget->GetPos().x / CPathSearch::GRID_SQUARE_SIZEX,
+        pTarget->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY);
+    CPoint sourceCell(GetPos().x / CPathSearch::GRID_SQUARE_SIZEX,
+        GetPos().y / CPathSearch::GRID_SQUARE_SIZEY);
+    LONG distance;
+    CItem* launcher = NULL;
+    const ITEM_ABILITY* launcherAbility = NULL;
+    if (static_cast<BYTE>(ability->type) == 2) {
+        LONG dx = sourceCell.x - targetCell.x;
+        LONG dy = sourceCell.y - targetCell.y;
+        distance = dx * dx + dy * dy;
+        SHORT launcherSlot;
+        launcher = GetLauncher(ability, launcherSlot);
+        if (launcher != NULL) {
+            launcher->Demand();
+            launcherAbility = launcher->GetAbility(0);
+        }
+    } else {
+        distance = CAIUtil::CountSquares(sourceCell, targetCell);
+        distance *= distance;
+    }
+    SHORT range = static_cast<SHORT>(ability->range + 1);
+    if (launcherAbility != NULL) range = static_cast<SHORT>(max(launcherAbility->range + 1, ability->range + 1));
+    if (launcher != NULL) launcher->Release();
+    weapon->Release();
+    BYTE sourceSpace = m_animation.GetPersonalSpace();
+    BYTE targetSpace = pTarget->m_animation.GetPersonalSpace();
+    BYTE space = static_cast<BYTE>(((targetSpace - 1) >> 1) + ((sourceSpace - 1) >> 1) - 1);
+    INT reach = space + range;
+    if ((distance <= reach * reach || (field_7118 != 0 && distance <= (reach + 1) * (reach + 1)))
+        && m_pArea->CheckLOS(pTarget->GetPos(), GetPos(), m_visibleTerrainTable, pTarget->Orderable(FALSE))) {
+        if (m_pPath != NULL) {
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageDropPath(m_id, m_id), FALSE);
+        }
+        if (m_attackFrame == -2) m_attackFrame = -1;
+        SHORT result = Swing(pTarget);
+        if (m_attackFrame <= 0 && m_actionCount != 0) {
+            AutoPause(0x40);
+            if (m_curAction.m_actionID == CAIAction::ATTACKONEROUND) return ACTION_DONE;
+        }
+        m_lastActionID = 3;
+        return result;
+    }
+    SHORT result = MoveToObject(pTarget);
+    if (result == ACTION_DONE) result = ACTION_INTERRUPTABLE;
+    else if (result == ACTION_ERROR) return ACTION_DONE;
+    m_lastActionID = 22;
+    return result;
+}
+
 // 0x739B60
 SHORT CGameSprite::Swing(CGameSprite* pTarget)
 {
@@ -20990,6 +21128,39 @@ SHORT CGameSprite::ExecuteAction()
     // action this tick, same as the base dispatcher.
     if (m_curAction.m_actionID == 1) {
         SetCurrAction(GetNextAction(m_aiAction));
+    }
+
+    // Jump-table cases 2 (Attack/AttackNoSound) and 0x35 (AttackOneRound).
+    if (m_curAction.m_actionID == CAIAction::ATTACK
+        || m_curAction.m_actionID == CAIAction::ATTACKNOSOUND || m_curAction.m_actionID == CAIAction::ATTACKONEROUND) {
+        BOOL oneRound = m_curAction.m_actionID == CAIAction::ATTACKONEROUND;
+        if (!oneRound) {
+            DWORD now = GetTickCount();
+            g_pBaldurChitin->field_1AB2[1] += now - g_pBaldurChitin->field_1AF2[1];
+            g_pBaldurChitin->field_1AF2[1] = now;
+        }
+        CGameObject* object = ResolveActionTarget(CGameObject::TYPE_SPRITE);
+        if (object == NULL && !oneRound
+            && g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id) != -1) {
+            CAIObjectType enemy(CAIObjectType::ANYONE);
+            enemy.m_nEnemyAlly = m_typeAI.GetEnemyOf().m_nEnemyAlly;
+            object = ResolveActionTarget(enemy, CGameObject::TYPE_SPRITE);
+        }
+        if (object != NULL && (m_baseStats.m_flags & 0x100000) == 0
+            && object->GetAIType().m_nEnemyAlly <= CAIOBJECTTYPE_EA_GOODCUTOFF) {
+            m_baseStats.m_flags |= 0x100000;
+        }
+        SHORT result = Attack(static_cast<CGameSprite*>(object));
+        if (!oneRound) {
+            DWORD now = GetTickCount();
+            g_pBaldurChitin->field_1A72[1] += now - g_pBaldurChitin->field_1AF2[1];
+            g_pBaldurChitin->field_1AF2[1] = now;
+        }
+        if (object != NULL) {
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(
+                object->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        return result;
     }
 
     // 0x729A84 (jumptable case 0x19). Spell(31) / SpellNoDec(191).  Spell()

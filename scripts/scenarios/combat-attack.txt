@@ -1,0 +1,23 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+resume
+attackdamage ZRCMELEE 3
+attackdamage ZRCARROW ZRCBOW 98
+attackdamage ZRCBOLT ZRCXBOW 105
+attackdamage ZRCSTONE ZRCSLING 3
+# Ordinary weapon button and ground click with the save's real equipment.
+key 49
+attackmark
+click 1 7
+expect targeting 2 12 60
+hover 232 168
+sleep 3
+expect picked 1
+clickxy 232 168
+expect targeting 0 12 100
+attackwait
