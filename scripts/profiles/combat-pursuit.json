@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-pursuit.txt",
+  "hold": 90,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Two party members in the same area; center camera and assert visibility before testing.",
+    "Synchronous movement guards restore actor state and discard their messages; check seen identity, visibility timer and path-stop messages.",
+    "JumpToPoint prepares an actor away from its target; an ordinary attack click must then move the attacker and reduce the companion's HP. No save writes.",
+    "Runtime observation is not original/reconstruction differential parity."
+  ]
+}

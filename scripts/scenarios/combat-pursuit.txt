@@ -1,0 +1,22 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+resume
+combatmove
+# Place the actor away using JumpToPoint/AdjustTarget; the attack itself uses the UI.
+key 49
+attackplace 232 1002
+sleep 15
+attackmark 1
+click 1 7
+expect targeting 2 12 60
+hover 232 168
+sleep 3
+expect picked 1
+clickxy 232 168
+expect targeting 0 12 100
+attackwait

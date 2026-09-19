@@ -20607,11 +20607,25 @@ SHORT CGameSprite::MoveToObject(CGameObject* pTarget)
         return ACTION_DONE;
     }
 
-    // Action 0x107 (MoveToObjectUntilSee) stops early once the target is within
-    // half the visual range and in line of sight, posting a follow message
-    // (vtable 0x848998 @ binary 0x73EFD3).  DEFERRED -- needs that CMessage
-    // subclass plus the GetAIType()/m_liveTypeAI field comparison; until then
-    // the action falls through to the generic approach below.
+    if (m_curAction.m_actionID == 0x107) {
+        CPoint targetPos = pTarget->GetPos();
+        CPoint sourcePos = GetPos();
+        LONG dx = sourcePos.x - targetPos.x;
+        LONG dy = sourcePos.y - targetPos.y;
+        SHORT range = GetVisualRange() >> 1;
+        BOOL visible = dx * dx + dy * dy <= range * range
+            && m_pArea->CheckLOS(pTarget->GetPos(), GetPos(), GetVisibleTerrainTable(), FALSE);
+        if (visible && pTarget->m_pArea == m_pArea) {
+            if (m_lSeen.Equal(pTarget->GetAIType())) return ACTION_DONE;
+            if (g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(pTarget->m_id) != -1) {
+                m_canBeSeen = VISIBLE_DELAY * 4 + 4;
+            }
+            m_lSeen.Set(pTarget->GetAIType());
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                new CMessageSetLastObject(pTarget->GetAIType(), CAITRIGGER_SEE, m_id, m_id), FALSE);
+            return ACTION_DONE;
+        }
+    }
 
     CPoint targetPt;
     pTarget->GetNextWaypoint(&targetPt);
@@ -20650,8 +20664,7 @@ SHORT CGameSprite::MoveToObject(CGameObject* pTarget)
     if (actionID == 0xB4 && distSquares <= (range + 4) * (range + 4)) {
         // MoveToObjectFollow: close enough on the loose follow distance.
         if (m_pPath != NULL) {
-            // DEFERRED: post the clear-search message (vtable 0x84C44C @ binary
-            // 0x73F1D4) so the follower halts its current path.
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageDropPath(m_id, m_id), FALSE);
         }
         return actionID == 0xD0 ? ACTION_NORMAL : ACTION_INTERRUPTABLE;
     }

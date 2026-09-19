@@ -72,6 +72,11 @@
 //                                ZRC fixtures only, no saving, check actual HP loss.
 //   swingdamage <item> [launcher] run Swing through one real combat bitmap round;
 //                                check ammunition and actual HP loss, no saving.
+//   combatmove                  check seen/follow movement guards; restore state.
+//   attackplace <worldx> <worldy> prepare party member 0 using JumpToPoint.
+//   attackmark [requireMove]    remember target HP and the attacker's position.
+//   attackwait                  require a normal attack order and HP loss, plus
+//                                movement if marked; stop the attack on completion.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -143,6 +148,9 @@ INT s_payloadDamage = 0;
 LONG s_attackTarget = -1;
 SHORT s_attackHP = 0;
 BOOL s_attackOrderSeen = FALSE;
+CPoint s_attackStart;
+BOOL s_attackRequireMove = FALSE;
+BOOL s_attackMoved = FALSE;
 
 DWORD GetEnv(const char* name, char* value, DWORD size)
 {
@@ -1741,6 +1749,112 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "attackplace") == 0 && step.nCount == 2) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        CGameObject* object = NULL;
+        LONG id = game->GetFixedOrderCharacterId(0);
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || game->GetObjectArray()->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(object);
+        source->ClearActions(FALSE);
+        source->SetCurrAction(CAIAction::NULL_ACTION);
+        source->DropPath();
+        source->DropSearchRequest();
+        source->JumpToPoint(CPoint(step.n[0], step.n[1]), TRUE);
+        Emit("{\"step\":%d,\"op\":\"attackplace\",\"x\":%ld,\"y\":%ld,\"encumbrance\":%d,\"space\":%u}",
+            nStep, source->GetPos().x, source->GetPos().y, source->m_derivedStats.m_nEncumberance,
+            source->m_animation.GetPersonalSpace());
+        game->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "combatmove") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        CGameObject* raw = NULL;
+        CGameObject* target = NULL;
+        LONG id = game->GetFixedOrderCharacterId(0);
+        LONG targetId = game->GetFixedOrderCharacterId(1);
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and two party members");
+            return;
+        }
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &target, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        auto action = source->m_curAction;
+        auto seen = source->m_lSeen;
+        auto visibility = source->m_canBeSeen;
+        auto encumbrance = source->m_derivedStats.m_nEncumberance;
+        auto pos = source->m_pos;
+        auto path = source->m_pPath;
+        auto& queue = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = queue.GetCount();
+        BOOL valid = source->m_pArea == target->m_pArea;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"combatmove-case\",\"case\":\"%s\",\"passed\":%s}",
+                nStep, name, passed ? "true" : "false");
+            valid = valid && passed;
+            ++checks;
+        };
+        source->m_derivedStats.m_nEncumberance = 0;
+        check("null-target", source->MoveToObject(NULL) == CGameAIBase::ACTION_ERROR);
+        // Synchronous position change: no tick/render/search-map update occurs.
+        source->m_pos = target->GetPos();
+        source->m_curAction.m_actionID = 0x107;
+        source->m_lSeen.Set(CAIObjectType::NOONE);
+        check("visible-target-done", source->MoveToObject(target) == CGameAIBase::ACTION_DONE);
+        check("seen-and-visibility", source->m_lSeen.Equal(target->GetAIType())
+            && source->m_canBeSeen == CGameObject::VISIBLE_DELAY * 4 + 4);
+        check("seen-message-count", queue.GetCount() == before + 1);
+        if (queue.GetCount() > before) {
+            CMessage* message = queue.RemoveTail();
+            auto* last = dynamic_cast<CMessageSetLastObject*>(message);
+            check("seen-message-payload", last != NULL && last->m_type == CAITRIGGER_SEE
+                && last->GetTarget() == id && last->GetSource() == id
+                && last->m_lAttacker.Equal(target->GetAIType()));
+            delete message;
+        }
+        check("already-seen-done", source->MoveToObject(target) == CGameAIBase::ACTION_DONE);
+        check("already-seen-no-message", queue.GetCount() == before);
+        LONG dummyPath = 0;
+        source->m_pPath = &dummyPath;
+        source->m_curAction.m_actionID = CAIAction::MOVETOOBJECTFOLLOW;
+        check("follow-close-interruptible", source->MoveToObject(target) == CGameAIBase::ACTION_INTERRUPTABLE);
+        check("drop-path-message-count", queue.GetCount() == before + 1);
+        if (queue.GetCount() > before) {
+            CMessage* message = queue.RemoveTail();
+            check("drop-path-message", dynamic_cast<CMessageDropPath*>(message) != NULL
+                && message->GetTarget() == id && message->GetSource() == id);
+            delete message;
+        }
+        source->m_pPath = NULL;
+        check("follow-idle-interruptible", source->MoveToObject(target) == CGameAIBase::ACTION_INTERRUPTABLE);
+        check("follow-idle-no-message", queue.GetCount() == before);
+        while (queue.GetCount() > before) delete queue.RemoveTail();
+        source->m_curAction = action;
+        source->m_lSeen = seen;
+        source->m_canBeSeen = visibility;
+        source->m_derivedStats.m_nEncumberance = encumbrance;
+        source->m_pos = pos;
+        source->m_pPath = path;
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) { Fail(nStep, step.op, "movement guard mismatch (state restored)"); return; }
+        Emit("{\"step\":%d,\"op\":\"combatmove\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
     if (strcmp(step.op, "attackmark") == 0 || strcmp(step.op, "attackwait") == 0) {
         CInfGame* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();
@@ -1759,8 +1873,17 @@ void Tick(CWarp* pActiveEngine)
             s_attackTarget = targetId;
             s_attackHP = hp;
             s_attackOrderSeen = FALSE;
+            s_attackRequireMove = step.nCount > 0 && step.n[0] != 0;
+            s_attackMoved = FALSE;
+            if (objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH, &attacker, INFINITE) != CGameObjectArray::SUCCESS) {
+                Fail(nStep, step.op, "attacker unavailable");
+                return;
+            }
+            s_attackStart = attacker->GetPos();
+            objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
             s_pc++;
-            Emit("{\"step\":%d,\"op\":\"attackmark\",\"hp\":%d}", nStep, hp);
+            Emit("{\"step\":%d,\"op\":\"attackmark\",\"hp\":%d,\"x\":%ld,\"y\":%ld,\"requireMove\":%d}",
+                nStep, hp, s_attackStart.x, s_attackStart.y, s_attackRequireMove);
             return;
         }
         if (objects->GetDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, &attacker, INFINITE) != CGameObjectArray::SUCCESS) {
@@ -1769,7 +1892,9 @@ void Tick(CWarp* pActiveEngine)
         }
         auto* source = static_cast<CGameSprite*>(attacker);
         s_attackOrderSeen = s_attackOrderSeen || source->m_curAction.m_actionID == CAIAction::ATTACK;
-        BOOL success = hp < s_attackHP && s_attackOrderSeen;
+        s_attackMoved = s_attackMoved || (source->m_curAction.m_actionID == CAIAction::ATTACK
+            && source->GetPos() != s_attackStart);
+        BOOL success = hp < s_attackHP && s_attackOrderSeen && (!s_attackRequireMove || s_attackMoved);
         if (success || s_waited >= 600) {
             source->ClearActions(FALSE);
             source->SetCurrAction(CAIAction::NULL_ACTION);
@@ -1778,9 +1903,9 @@ void Tick(CWarp* pActiveEngine)
             source->m_attackFrame = -2;
         }
         if (s_waited % 30 == 0 || success) {
-            Emit("{\"step\":%d,\"op\":\"attackwait\",\"ticks\":%d,\"action\":%d,\"frame\":%d,\"hpBefore\":%d,\"hpAfter\":%d,\"orderSeen\":%d}",
+            Emit("{\"step\":%d,\"op\":\"attackwait\",\"ticks\":%d,\"action\":%d,\"frame\":%d,\"hpBefore\":%d,\"hpAfter\":%d,\"orderSeen\":%d,\"moved\":%d,\"x\":%ld,\"y\":%ld}",
                 nStep, s_waited, source->m_curAction.m_actionID, source->m_attackFrame,
-                s_attackHP, hp, s_attackOrderSeen);
+                s_attackHP, hp, s_attackOrderSeen, s_attackMoved, source->GetPos().x, source->GetPos().y);
         }
         objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         if (success) {
