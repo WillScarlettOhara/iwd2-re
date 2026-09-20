@@ -1,0 +1,48 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+resume
+key 49
+rangedready 0
+sleep 10
+attackmark
+click 1 7
+expect targeting 2 12 60
+hover 232 168
+sleep 3
+expect picked 1
+clickxy 232 168
+expect targeting 0 12 100
+attackwait
+rangedrestore
+sleep 10
+rangedready 1
+sleep 10
+attackmark
+click 1 7
+expect targeting 2 12 60
+hover 232 168
+sleep 3
+expect picked 1
+clickxy 232 168
+expect targeting 0 12 100
+attackwait
+rangedrestore
+sleep 10
+rangedready 2
+sleep 10
+attackmark
+click 1 7
+expect targeting 2 12 60
+hover 232 168
+sleep 3
+expect picked 1
+clickxy 232 168
+expect targeting 0 12 100
+attackwait
+rangedrestore
+sleep 10

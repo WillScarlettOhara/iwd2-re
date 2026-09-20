@@ -73,6 +73,8 @@
 //   swingdamage <item> [launcher] run Swing through one real combat bitmap round;
 //                                check ammunition and actual HP loss, no saving.
 //   combatmove                  check seen/follow movement guards; restore state.
+//   rangedready <0|1|2>          temporarily equip bow/crossbow/sling test fixtures.
+//   rangedrestore               verify ammo spent and restore the saved equipment.
 //   attackplace <worldx> <worldy> prepare party member 0 using JumpToPoint.
 //   attackmark [requireMove]    remember target HP and the attacker's position.
 //   attackwait                  require a normal attack order and HP loss, plus
@@ -1745,6 +1747,101 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         Emit("{\"step\":%d,\"op\":\"combatammo\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "rangedready") == 0 || strcmp(step.op, "rangedrestore") == 0) {
+        static LONG owner = -1;
+        static CItem* savedItems[51];
+        static CItem* ammo = NULL;
+        static CItem* launcher = NULL;
+        static BYTE selected, weaponSet, attacks, savedAmmo[8];
+        static WORD ability;
+        static CButtonData buttons[8];
+        BOOL restore = strcmp(step.op, "rangedrestore") == 0;
+        const char* ammoNames[] = { "ZRCARROW", "ZRCBOLT", "ZRCSTONE" };
+        const char* launcherNames[] = { "ZRCBOW", "ZRCXBOW", "ZRCSLING" };
+        INT kind = step.nCount == 1 ? step.n[0] : -1;
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        CGameObject* object = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || (restore ? owner != id : (owner != -1 || kind < 0 || kind > 2))
+            || game->GetObjectArray()->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "invalid fixture state or actor unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(object);
+        BOOL valid = TRUE;
+        if (!restore) {
+            valid = source->m_curProjectile == NULL && source->m_curAction.m_actionID == 0;
+            if (valid) {
+                ammo = new CItem(CResRef(ammoNames[kind]), 40, 0, 0, 0, 0);
+                launcher = new CItem(CResRef(launcherNames[kind]), 1, 0, 0, 0, 0);
+                BOOL ammoLoaded = ammo->Demand();
+                BOOL launcherLoaded = launcher->Demand();
+                valid = ammoLoaded && launcherLoaded && ammo->GetAbility(0) != NULL && launcher->GetAbility(0) != NULL;
+                if (ammoLoaded) ammo->Release();
+                if (launcherLoaded) launcher->Release();
+                if (valid) {
+                    owner = id;
+                    memcpy(savedItems, source->m_equipment.m_items, sizeof(savedItems));
+                    selected = source->m_equipment.m_selectedWeapon;
+                    ability = source->m_equipment.m_selectedWeaponAbility;
+                    weaponSet = source->m_nWeaponSet;
+                    attacks = source->m_baseStats.m_numberOfAttacksBase;
+                    memcpy(savedAmmo, source->field_3D3A, sizeof(savedAmmo));
+                    for (INT i = 0; i < 8; ++i) buttons[i] = source->m_quickWeapons[i];
+                    // Remove the original weapon's equipped effects through the engine.
+                    // The fist remains in place while the fixture slots are swapped.
+                    source->SelectWeaponAbility(10, 0, FALSE, TRUE);
+                    // Retain the real items; only fixture pointers occupy weapon/ammo slots.
+                    for (INT i = 11; i < 15; ++i) source->m_equipment.m_items[i] = NULL;
+                    for (INT i = 43; i < 51; ++i) source->m_equipment.m_items[i] = NULL;
+                    source->m_equipment.m_items[11] = ammo;
+                    source->m_equipment.m_items[43] = launcher;
+                    source->m_nWeaponSet = 0;
+                    valid = source->SelectLauncherAmmo(launcher, FALSE) == CGameAIBase::ACTION_DONE
+                        && source->m_equipment.m_selectedWeapon == 11 && ammo->GetUsageCount(0) == 40;
+                    source->m_attackFrame = -2;
+                    Emit("{\"step\":%d,\"op\":\"rangedready\",\"ammo\":\"%s\",\"launcher\":\"%s\",\"count\":%u,\"slot\":%u}",
+                        nStep, ammoNames[kind], launcherNames[kind], ammo->GetUsageCount(0), source->m_equipment.m_selectedWeapon);
+                } else {
+                    delete ammo; ammo = NULL;
+                    delete launcher; launcher = NULL;
+                }
+            }
+        } else {
+            // attackwait has already stopped the order. Verify the tested ammo was spent.
+            valid = source->m_curAction.m_actionID == 0 && source->m_equipment.m_items[11] == ammo;
+            BOOL ammoPresent = source->m_equipment.m_items[11] == ammo;
+            WORD remaining = ammoPresent ? ammo->GetUsageCount(0) : 0;
+            valid = valid && remaining > 0 && remaining < 40;
+            source->ClearActions(FALSE);
+            source->SetCurrAction(CAIAction::NULL_ACTION);
+            delete source->m_curProjectile;
+            source->m_curProjectile = NULL;
+            source->SelectWeaponAbility(10, 0, FALSE, TRUE);
+            memcpy(source->m_equipment.m_items, savedItems, sizeof(savedItems));
+            source->m_nWeaponSet = weaponSet;
+            source->SelectWeaponAbility(selected, static_cast<BYTE>(ability), FALSE, TRUE);
+            source->m_baseStats.m_numberOfAttacksBase = attacks;
+            memcpy(source->field_3D3A, savedAmmo, sizeof(savedAmmo));
+            for (INT i = 0; i < 8; ++i) source->m_quickWeapons[i] = buttons[i];
+            // A depletion regression may have deleted ammo; never delete it twice.
+            if (ammoPresent) delete ammo;
+            delete launcher;
+            ammo = NULL;
+            launcher = NULL;
+            owner = -1;
+            valid = valid && source->m_equipment.m_selectedWeapon == selected
+                && source->m_equipment.m_selectedWeaponAbility == ability
+                && memcmp(source->m_equipment.m_items, savedItems, sizeof(savedItems)) == 0;
+            Emit("{\"step\":%d,\"op\":\"rangedrestore\",\"remaining\":%u,\"restored\":true}", nStep, remaining);
+        }
+        game->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) { Fail(nStep, step.op, "ranged fixture selection or consumption failed"); return; }
         s_pc++;
         return;
     }
