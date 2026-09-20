@@ -73,8 +73,10 @@
 //   swingdamage <item> [launcher] run Swing through one real combat bitmap round;
 //                                check ammunition and actual HP loss, no saving.
 //   combatmove                  check seen/follow movement guards; restore state.
-//   rangedready <0|1|2>          temporarily equip bow/crossbow/sling test fixtures.
+//   rangedready <0|1|2> [mode]  temporarily equip bow/crossbow/sling test fixtures;
+//                                mode 0 = 40 ammo, 1 = last round, 2 = last + spare.
 //   rangedrestore               verify ammo spent and restore the saved equipment.
+//   depletewait                 verify first pile deleted and fists/spare selected.
 //   attackplace <worldx> <worldy> prepare party member 0 using JumpToPoint.
 //   attackmark [requireMove]    remember target HP and the attacker's position.
 //   attackwait                  require a normal attack order and HP loss, plus
@@ -1711,6 +1713,12 @@ void Tick(CWarp* pActiveEngine)
             }
             auto checkDepletion = [&](const char* name, SHORT slot, SHORT ability, BOOL expected) {
                 BOOL actual = source->CheckItemDepleted(slot, ability);
+                if (strcmp(name, "missing ability") == 0) {
+                    auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+                    auto* message = messages.IsEmpty() ? NULL : dynamic_cast<CMessageSetTrigger*>(messages.GetTail());
+                    valid = valid && message != NULL && message->m_trigger.m_string1 == ammoNames[kind]
+                        && message->m_trigger.m_string2.IsEmpty();
+                }
                 Emit("{\"step\":%d,\"op\":\"combatammo-depletion-case\",\"case\":\"%s\","
                      "\"actual\":%d,\"expected\":%d}", nStep, name, actual, expected);
                 valid = valid && actual == expected;
@@ -1751,33 +1759,58 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
-    if (strcmp(step.op, "rangedready") == 0 || strcmp(step.op, "rangedrestore") == 0) {
+    if (strcmp(step.op, "rangedready") == 0 || strcmp(step.op, "rangedrestore") == 0
+        || strcmp(step.op, "depletewait") == 0) {
         static LONG owner = -1;
         static CItem* savedItems[51];
         static CItem* ammo = NULL;
         static CItem* launcher = NULL;
+        static CItem* spare = NULL;
+        static INT mode = 0;
         static BYTE selected, weaponSet, attacks, savedAmmo[8];
         static WORD ability;
         static CButtonData buttons[8];
         BOOL restore = strcmp(step.op, "rangedrestore") == 0;
+        BOOL depletedWait = strcmp(step.op, "depletewait") == 0;
         const char* ammoNames[] = { "ZRCARROW", "ZRCBOLT", "ZRCSTONE" };
         const char* launcherNames[] = { "ZRCBOW", "ZRCXBOW", "ZRCSLING" };
-        INT kind = step.nCount == 1 ? step.n[0] : -1;
+        INT kind = step.nCount >= 1 ? step.n[0] : -1;
         CInfGame* game = g_pBaldurChitin->GetObjectGame();
         LONG id = game->GetFixedOrderCharacterId(0);
         CGameObject* object = NULL;
         if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
-            || (restore ? owner != id : (owner != -1 || kind < 0 || kind > 2))
+            || (restore || depletedWait ? owner != id : (owner != -1 || kind < 0 || kind > 2))
             || game->GetObjectArray()->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) {
             Fail(nStep, step.op, "invalid fixture state or actor unavailable");
             return;
         }
         auto* source = static_cast<CGameSprite*>(object);
         BOOL valid = TRUE;
+        if (depletedWait) {
+            BOOL empty = source->m_equipment.m_items[11] == NULL;
+            if (!empty && ++s_waited < 600) {
+                game->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                return;
+            }
+            valid = empty && (mode == 1 ? source->m_equipment.m_selectedWeapon == 10
+                : mode == 2 && source->m_equipment.m_selectedWeapon == 12
+                    && source->m_equipment.m_items[12] == spare && spare->GetUsageCount(0) == 1);
+            Emit("{\"step\":%d,\"op\":\"depletewait\",\"mode\":%d,\"empty\":%d,\"selected\":%u,\"action\":%d,\"valid\":%d}",
+                nStep, mode, empty, source->m_equipment.m_selectedWeapon, source->m_curAction.m_actionID, valid);
+            source->ClearActions(FALSE);
+            source->SetCurrAction(CAIAction::NULL_ACTION);
+            source->m_attackFrame = -2;
+            game->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            if (!valid) { Fail(nStep, step.op, "last-ammo transition failed"); return; }
+            s_waited = 0;
+            s_pc++;
+            return;
+        }
         if (!restore) {
+            mode = step.nCount >= 2 ? step.n[1] : 0;
             valid = source->m_curProjectile == NULL && source->m_curAction.m_actionID == 0;
             if (valid) {
-                ammo = new CItem(CResRef(ammoNames[kind]), 40, 0, 0, 0, 0);
+                ammo = new CItem(CResRef(ammoNames[kind]), mode == 0 ? 40 : 1, 0, 0, 0, 0);
                 launcher = new CItem(CResRef(launcherNames[kind]), 1, 0, 0, 0, 0);
                 BOOL ammoLoaded = ammo->Demand();
                 BOOL launcherLoaded = launcher->Demand();
@@ -1800,10 +1833,14 @@ void Tick(CWarp* pActiveEngine)
                     for (INT i = 11; i < 15; ++i) source->m_equipment.m_items[i] = NULL;
                     for (INT i = 43; i < 51; ++i) source->m_equipment.m_items[i] = NULL;
                     source->m_equipment.m_items[11] = ammo;
+                    if (mode == 2) {
+                        spare = new CItem(CResRef(ammoNames[kind]), 1, 0, 0, 0, 0);
+                        source->m_equipment.m_items[12] = spare;
+                    }
                     source->m_equipment.m_items[43] = launcher;
                     source->m_nWeaponSet = 0;
                     valid = source->SelectLauncherAmmo(launcher, FALSE) == CGameAIBase::ACTION_DONE
-                        && source->m_equipment.m_selectedWeapon == 11 && ammo->GetUsageCount(0) == 40;
+                        && source->m_equipment.m_selectedWeapon == 11 && ammo->GetUsageCount(0) == (mode == 0 ? 40 : 1);
                     source->m_attackFrame = -2;
                     Emit("{\"step\":%d,\"op\":\"rangedready\",\"ammo\":\"%s\",\"launcher\":\"%s\",\"count\":%u,\"slot\":%u}",
                         nStep, ammoNames[kind], launcherNames[kind], ammo->GetUsageCount(0), source->m_equipment.m_selectedWeapon);
@@ -1814,10 +1851,11 @@ void Tick(CWarp* pActiveEngine)
             }
         } else {
             // attackwait has already stopped the order. Verify the tested ammo was spent.
-            valid = source->m_curAction.m_actionID == 0 && source->m_equipment.m_items[11] == ammo;
+            valid = source->m_curAction.m_actionID == 0;
             BOOL ammoPresent = source->m_equipment.m_items[11] == ammo;
+            BOOL sparePresent = spare != NULL && source->m_equipment.m_items[12] == spare;
             WORD remaining = ammoPresent ? ammo->GetUsageCount(0) : 0;
-            valid = valid && remaining > 0 && remaining < 40;
+            valid = valid && (mode == 0 ? remaining > 0 && remaining < 40 : source->m_equipment.m_items[11] == NULL);
             source->ClearActions(FALSE);
             source->SetCurrAction(CAIAction::NULL_ACTION);
             delete source->m_curProjectile;
@@ -1831,6 +1869,8 @@ void Tick(CWarp* pActiveEngine)
             for (INT i = 0; i < 8; ++i) source->m_quickWeapons[i] = buttons[i];
             // A depletion regression may have deleted ammo; never delete it twice.
             if (ammoPresent) delete ammo;
+            if (sparePresent) delete spare;
+            spare = NULL;
             delete launcher;
             ammo = NULL;
             launcher = NULL;

@@ -26759,7 +26759,7 @@ BOOL CGameSprite::CheckItemDepleted(SHORT nSlot, SHORT nAbility)
     static_cast<CBaldurEngine*>(g_pBaldurChitin->pActiveEngine)->UpdatePersonalItemStatus(m_id);
     auto unusable = [this](const CString& resource) {
         CAITrigger trigger(CAITrigger::UNUSABLE, 0);
-        trigger.m_string2 = resource;
+        trigger.m_string1 = resource;
         g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetTrigger(trigger, m_id, m_id), FALSE);
     };
     if (nSlot < 0 || nSlot > CGameSpriteEquipment::NUM_SLOT) {

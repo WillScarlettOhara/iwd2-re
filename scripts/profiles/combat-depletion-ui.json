@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-depletion-ui.txt",
+  "hold": 120,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Two visible party members; the scenario centers the camera and verifies the target picker.",
+    "Check Unusable trigger resource in string1, then six ordinary UI shots using one arrow, bolt or stone, with and without a second matching pile.",
+    "Require the first pile to be deleted and selection to become fists without spare ammunition, or the second pile with one round remaining. Damage is not required: a missed shot must also consume ammunition.",
+    "Restore equipment between cases and restore save/config files afterward; no saving or original/reconstruction equivalence claim."
+  ]
+}
