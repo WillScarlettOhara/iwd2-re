@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-npc-fallback.txt",
+  "hold": 120,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Center the camera and require two visible party members; temporary ranged and melee equipment, no save writes.",
+    "For each launcher test one shot with a stronger melee fixture in slot 45 and a weaker later candidate in slot 47.",
+    "After the ordinary UI click, transiently set the attacker's EA classification to ALLY before the last shot to exercise IsPC=false; require slot 45/set 1. Restore classification immediately after depletion.",
+    "Repeat with unchanged PC classification and require fists, despite available melee equipment. Restore equipment after each case.",
+    "This isolates the non-PC depletion branch on a party actor; it is not a full NPC AI scenario or original/reconstruction comparison."
+  ]
+}

@@ -75,8 +75,9 @@
 //   combatmove                  check seen/follow movement guards; restore state.
 //   rangedready <0|1|2> [mode]  temporarily equip bow/crossbow/sling test fixtures;
 //                                mode 0 = 40 ammo, 1 = last round, 2 = last + spare.
+//                                modes 3/4 = last round + melee, transient non-PC/PC.
 //   rangedrestore               verify ammo spent and restore the saved equipment.
-//   depletewait                 verify first pile deleted and fists/spare selected.
+//   depletewait                 verify first pile deleted and fallback selected.
 //   attackplace <worldx> <worldy> prepare party member 0 using JumpToPoint.
 //   attackmark [requireMove]    remember target HP and the attacker's position.
 //   attackwait                  require a normal attack order and HP loss, plus
@@ -1766,6 +1767,10 @@ void Tick(CWarp* pActiveEngine)
         static CItem* ammo = NULL;
         static CItem* launcher = NULL;
         static CItem* spare = NULL;
+        static CItem* melee = NULL;
+        static CItem* weaker = NULL;
+        static BYTE savedEnemyAlly;
+        static BOOL npcBranchArmed = FALSE;
         static INT mode = 0;
         static BYTE selected, weaponSet, attacks, savedAmmo[8];
         static WORD ability;
@@ -1788,15 +1793,29 @@ void Tick(CWarp* pActiveEngine)
         BOOL valid = TRUE;
         if (depletedWait) {
             BOOL empty = source->m_equipment.m_items[11] == NULL;
+            // Keep the UI order a real party click, then exercise IsPC's non-PC
+            // branch during the pending shot. This is not a full NPC AI test.
+            if (mode == 3 && !npcBranchArmed && !empty) {
+                savedEnemyAlly = source->m_typeAI.m_nEnemyAlly;
+                source->m_typeAI.m_nEnemyAlly = CAIObjectType::EA_ALLY;
+                npcBranchArmed = TRUE;
+            }
             if (!empty && ++s_waited < 600) {
                 game->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
                 return;
             }
-            valid = empty && (mode == 1 ? source->m_equipment.m_selectedWeapon == 10
+            valid = empty && ((mode == 1 || mode == 4) ? source->m_equipment.m_selectedWeapon == 10
+                : mode == 3 ? npcBranchArmed && source->m_equipment.m_selectedWeapon == 45
+                    && source->m_nWeaponSet == 1 && source->m_equipment.m_items[45] == melee
                 : mode == 2 && source->m_equipment.m_selectedWeapon == 12
                     && source->m_equipment.m_items[12] == spare && spare->GetUsageCount(0) == 1);
             Emit("{\"step\":%d,\"op\":\"depletewait\",\"mode\":%d,\"empty\":%d,\"selected\":%u,\"action\":%d,\"valid\":%d}",
                 nStep, mode, empty, source->m_equipment.m_selectedWeapon, source->m_curAction.m_actionID, valid);
+            if (npcBranchArmed) {
+                source->m_typeAI.m_nEnemyAlly = savedEnemyAlly;
+                npcBranchArmed = FALSE;
+                Emit("{\"step\":%d,\"op\":\"npc-classification-restored\",\"enemyAlly\":%u}", nStep, source->m_typeAI.m_nEnemyAlly);
+            }
             source->ClearActions(FALSE);
             source->SetCurrAction(CAIAction::NULL_ACTION);
             source->m_attackFrame = -2;
@@ -1837,6 +1856,16 @@ void Tick(CWarp* pActiveEngine)
                         spare = new CItem(CResRef(ammoNames[kind]), 1, 0, 0, 0, 0);
                         source->m_equipment.m_items[12] = spare;
                     }
+                    if (mode == 3 || mode == 4) {
+                        melee = new CItem(CResRef("ZRCMELEE"), 1, 0, 0, 0, 0);
+                        weaker = new CItem(CResRef("ZRCDAGGR"), 1, 0, 0, 0, 0);
+                        source->m_equipment.m_items[45] = melee;
+                        source->m_equipment.m_items[47] = weaker;
+                        source->m_quickWeapons[2].m_abilityId.m_itemNum = 45;
+                        source->m_quickWeapons[2].m_abilityId.m_abilityNum = 0;
+                        source->m_quickWeapons[4].m_abilityId.m_itemNum = 47;
+                        source->m_quickWeapons[4].m_abilityId.m_abilityNum = 0;
+                    }
                     source->m_equipment.m_items[43] = launcher;
                     source->m_nWeaponSet = 0;
                     valid = source->SelectLauncherAmmo(launcher, FALSE) == CGameAIBase::ACTION_DONE
@@ -1871,6 +1900,10 @@ void Tick(CWarp* pActiveEngine)
             if (ammoPresent) delete ammo;
             if (sparePresent) delete spare;
             spare = NULL;
+            delete melee;
+            delete weaker;
+            melee = NULL;
+            weaker = NULL;
             delete launcher;
             ammo = NULL;
             launcher = NULL;
