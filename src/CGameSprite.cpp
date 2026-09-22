@@ -22234,12 +22234,12 @@ SHORT CGameSprite::GroupAttack(CGameSprite* pTarget)
         return ACTION_INTERRUPTABLE;
     }
 
-    CAIObjectType typeAI(GetAIType());
+    CAIObjectType typeAI(pTarget->GetAIType());
     typeAI.SetName(CString(""));
     typeAI.SetInstance(-1);
     m_curAction.m_acteeID.Set(typeAI);
     AddAction(m_curAction);
-    AddAction(CAIAction(CAIAction::ATTACK, m_curAction.m_acteeID, 0, 0, 0));
+    AddAction(CAIAction(CAIAction::ATTACKNOSOUND, m_curAction.m_acteeID, 0, 0, 0));
 
     return ACTION_DONE;
 }

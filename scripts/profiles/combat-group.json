@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-group.txt",
+  "hold": 60,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Center the camera and require two visible party members.",
+    "Synchronous direct GroupAttack tests distinguish target classification from the attacker, inspect queued actions and exercise inactive/interrupted guards.",
+    "Restore target classification, activity flags and source action/interrupt; discard only actions added by the test. No save writes.",
+    "This tests the recovered function directly, not the still-missing GroupAttack ExecuteAction dispatch or original/reconstruction differential parity."
+  ]
+}

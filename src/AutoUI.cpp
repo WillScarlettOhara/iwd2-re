@@ -73,6 +73,7 @@
 //   swingdamage <item> [launcher] run Swing through one real combat bitmap round;
 //                                check ammunition and actual HP loss, no saving.
 //   combatmove                  check seen/follow movement guards; restore state.
+//   combatgroup                 check GroupAttack targets/queue/guards; restore state.
 //   rangedready <0|1|2> [mode]  temporarily equip bow/crossbow/sling test fixtures;
 //                                mode 0 = 40 ammo, 1 = last round, 2 = last + spare.
 //                                modes 3/4 = last round + melee, transient non-PC/PC.
@@ -1938,6 +1939,103 @@ void Tick(CWarp* pActiveEngine)
             nStep, source->GetPos().x, source->GetPos().y, source->m_derivedStats.m_nEncumberance,
             source->m_animation.GetPersonalSpace());
         game->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "combatgroup") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        CGameObject* raw = NULL;
+        CGameObject* other = NULL;
+        LONG id = game->GetFixedOrderCharacterId(0);
+        LONG targetId = game->GetFixedOrderCharacterId(1);
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and two party members");
+            return;
+        }
+        if (objects->GetDeny(targetId, CGameObjectArray::THREAD_ASYNCH, &other, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        auto* target = static_cast<CGameSprite*>(other);
+        CAIAction action;
+        action = source->m_curAction;
+        auto interrupt = source->m_interrupt;
+        auto targetType = target->m_typeAI;
+        auto active = target->m_active;
+        auto activeAI = target->m_activeAI;
+        auto activeImprisonment = target->m_activeImprisonment;
+        auto& queue = source->m_queuedActions;
+        INT before = queue.GetCount();
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"combatgroup-case\",\"case\":\"%s\",\"passed\":%s}",
+                nStep, name, passed ? "true" : "false");
+            valid = valid && passed;
+            ++checks;
+        };
+        // Deliberately distinguish the target from the attacker even if both
+        // party members have the same classification in the loaded save.
+        target->m_typeAI.m_nSpecific = source->GetAIType().m_nSpecific ^ 1;
+        target->m_typeAI.SetName(CString(_T("ZRCTARGET")));
+        target->m_typeAI.SetInstance(targetId);
+        CAIObjectType expected(target->GetAIType());
+        expected.SetName(CString(_T("")));
+        expected.SetInstance(-1);
+        source->m_curAction = CAIAction(CAIAction::GROUPATTACK, source->GetAIType(), 7, 8, 9);
+        auto originalTarget = source->m_curAction.m_acteeID;
+        target->m_active = target->m_activeAI = target->m_activeImprisonment = TRUE;
+        source->m_interrupt = FALSE;
+        check("null-target", source->GroupAttack(NULL) == CGameAIBase::ACTION_DONE);
+        target->m_active = FALSE;
+        check("inactive-target", source->GroupAttack(target) == CGameAIBase::ACTION_DONE);
+        target->m_active = TRUE;
+        target->m_activeAI = FALSE;
+        check("inactive-ai", source->GroupAttack(target) == CGameAIBase::ACTION_DONE);
+        target->m_activeAI = TRUE;
+        target->m_activeImprisonment = FALSE;
+        check("imprisoned-target", source->GroupAttack(target) == CGameAIBase::ACTION_DONE);
+        target->m_activeImprisonment = TRUE;
+        source->m_interrupt = TRUE;
+        check("interrupted", source->GroupAttack(target) == CGameAIBase::ACTION_INTERRUPTABLE);
+        check("null-before-interrupt", source->GroupAttack(NULL) == CGameAIBase::ACTION_DONE);
+        check("guards-preserve-order", queue.GetCount() == before
+            && source->m_curAction.m_acteeID.Equal(originalTarget));
+        source->m_interrupt = FALSE;
+        check("active-target", source->GroupAttack(target) == CGameAIBase::ACTION_DONE);
+        check("current-target", source->m_curAction.m_acteeID.Equal(expected)
+            && source->m_curAction.m_acteeID.GetName().IsEmpty());
+        check("two-actions", queue.GetCount() == before + 2);
+        if (queue.GetCount() == before + 2) {
+            CAIAction* attack = queue.RemoveHead();
+            CAIAction* repeat = queue.RemoveHead();
+            check("attack-target", attack->m_actionID == CAIAction::ATTACKNOSOUND
+                && attack->m_acteeID.Equal(expected) && attack->m_acteeID.GetName().IsEmpty());
+            check("attack-specifics", attack->m_specificID == 0
+                && attack->m_specificID2 == 0 && attack->m_specificID3 == 0);
+            check("repeat-target", repeat->m_actionID == CAIAction::GROUPATTACK
+                && repeat->m_acteeID.Equal(expected) && repeat->m_acteeID.GetName().IsEmpty());
+            check("repeat-specifics", repeat->m_specificID == 7
+                && repeat->m_specificID2 == 8 && repeat->m_specificID3 == 9);
+            delete attack;
+            delete repeat;
+        }
+        while (queue.GetCount() > before) delete queue.RemoveHead();
+        source->m_curAction = action;
+        source->m_interrupt = interrupt;
+        target->m_typeAI = targetType;
+        target->m_active = active;
+        target->m_activeAI = activeAI;
+        target->m_activeImprisonment = activeImprisonment;
+        objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) { Fail(nStep, step.op, "GroupAttack mismatch (state restored)"); return; }
+        Emit("{\"step\":%d,\"op\":\"combatgroup\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
     }
