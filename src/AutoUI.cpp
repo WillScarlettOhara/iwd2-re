@@ -73,7 +73,7 @@
 //   swingdamage <item> [launcher] run Swing through one real combat bitmap round;
 //                                check ammunition and actual HP loss, no saving.
 //   combatmove                  check seen/follow movement guards; restore state.
-//   combatgroup                 check GroupAttack targets/queue/guards; restore state.
+//   combatgroup [dispatch]      check GroupAttack targets/queue/guards; restore state.
 //   rangedready <0|1|2> [mode]  temporarily equip bow/crossbow/sling test fixtures;
 //                                mode 0 = 40 ammo, 1 = last round, 2 = last + spare.
 //                                modes 3/4 = last round + melee, transient non-PC/PC.
@@ -1965,6 +1965,8 @@ void Tick(CWarp* pActiveEngine)
         CAIAction action;
         action = source->m_curAction;
         auto interrupt = source->m_interrupt;
+        auto lastReturn = source->m_nLastActionReturn;
+        auto sourceEA = source->m_typeAI.m_nEnemyAlly;
         auto targetType = target->m_typeAI;
         auto active = target->m_active;
         auto activeAI = target->m_activeAI;
@@ -2026,8 +2028,51 @@ void Tick(CWarp* pActiveEngine)
             delete repeat;
         }
         while (queue.GetCount() > before) delete queue.RemoveHead();
+        if (step.nCount > 0 && step.n[0] != 0) {
+            source->m_typeAI.m_nEnemyAlly = CAIObjectType::EA_PC;
+            target->m_typeAI.m_nEnemyAlly = CAIObjectType::EA_ENEMY;
+            expected.Set(target->GetAIType());
+            expected.SetName(CString(_T("")));
+            expected.SetInstance(-1);
+            // A self selector deliberately contradicts the enemy search.
+            source->m_curAction = CAIAction(CAIAction::GROUPATTACK, source->GetAIType(), 7, 8, 9);
+            auto* area = source->m_pArea;
+            source->m_pArea = NULL;
+            source->m_nLastActionReturn = 123;
+            SHORT result = source->ExecuteAction();
+            source->m_pArea = area;
+            check("dispatch-no-target", result == CGameAIBase::ACTION_DONE
+                && source->m_nLastActionReturn == result && queue.GetCount() == before);
+            source->m_interrupt = TRUE;
+            source->m_nLastActionReturn = 123;
+            result = source->ExecuteAction();
+            check("dispatch-interrupted", result == CGameAIBase::ACTION_INTERRUPTABLE
+                && source->m_nLastActionReturn == result && queue.GetCount() == before);
+            source->m_interrupt = FALSE;
+            source->m_nLastActionReturn = 123;
+            result = source->ExecuteAction();
+            check("dispatch-active", result == CGameAIBase::ACTION_DONE
+                && source->m_nLastActionReturn == result);
+            check("dispatch-enemy-selector", source->m_curAction.m_acteeID.Equal(expected)
+                && source->m_curAction.m_acteeID.GetName().IsEmpty());
+            check("dispatch-two-actions", queue.GetCount() == before + 2);
+            if (queue.GetCount() == before + 2) {
+                CAIAction* attack = queue.RemoveHead();
+                CAIAction* repeat = queue.RemoveHead();
+                check("dispatch-silent-attack", attack->m_actionID == CAIAction::ATTACKNOSOUND
+                    && attack->m_acteeID.Equal(expected) && attack->m_acteeID.GetName().IsEmpty());
+                check("dispatch-repeat", repeat->m_actionID == CAIAction::GROUPATTACK
+                    && repeat->m_acteeID.Equal(expected) && repeat->m_specificID == 7
+                    && repeat->m_specificID2 == 8 && repeat->m_specificID3 == 9);
+                delete attack;
+                delete repeat;
+            }
+            while (queue.GetCount() > before) delete queue.RemoveHead();
+        }
         source->m_curAction = action;
         source->m_interrupt = interrupt;
+        source->m_nLastActionReturn = lastReturn;
+        source->m_typeAI.m_nEnemyAlly = sourceEA;
         target->m_typeAI = targetType;
         target->m_active = active;
         target->m_activeAI = activeAI;

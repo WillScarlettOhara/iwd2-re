@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-group-dispatch.txt",
+  "hold": 60,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Center the camera and require two visible party members.",
+    "Run direct GroupAttack guards followed by ExecuteAction dispatch with no target, interruption and a live nearby enemy.",
+    "Temporarily classify the companion as an enemy within the synchronous test. A self target selector must be ignored in favor of the enemy search.",
+    "Check queued AttackNoSound and repeated GroupAttack, then discard only test actions and restore all changed fields before another tick. No save writes.",
+    "This tests selection and scheduling; no damage assertion or original/reconstruction paired capture."
+  ]
+}

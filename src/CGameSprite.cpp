@@ -21176,6 +21176,21 @@ SHORT CGameSprite::ExecuteAction()
         return result;
     }
 
+    // 0x729E07 (jumptable case 0x2B). GroupAttack selects a nearby enemy
+    // independently of the action's current target selector.
+    if (m_curAction.m_actionID == CAIAction::GROUPATTACK) {
+        CAIObjectType enemy(CAIObjectType::ANYONE);
+        enemy.m_nEnemyAlly = m_typeAI.GetEnemyOf().m_nEnemyAlly;
+        CGameObject* object = ResolveActionTarget(enemy, CGameObject::TYPE_SPRITE);
+        SHORT result = GroupAttack(static_cast<CGameSprite*>(object));
+        if (object != NULL) {
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(
+                object->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        m_nLastActionReturn = result;
+        return result;
+    }
+
     // 0x729A84 (jumptable case 0x19). Spell(31) / SpellNoDec(191).  Spell()
     // is called unconditionally -- a NULL target still runs its prologue
     // (projectile cleanup, aura-cleansing feedback) before its own NULL

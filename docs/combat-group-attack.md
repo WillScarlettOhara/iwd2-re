@@ -30,9 +30,9 @@ precedence, the normalized target on both queued actions, their order and
 specific arguments. It restores all temporarily changed fields and removes
 only the newly queued actions before any further game tick.
 
-This test does not execute those queued attacks or prove damage. The GroupAttack
-branch in the partial ExecuteAction dispatcher remains missing and is the next
-recovery target. No matched original/reconstruction runtime capture is attached.
+This direct test does not execute those queued attacks or prove damage. At this
+stage the GroupAttack branch in ExecuteAction was still missing; the follow-up
+below restores it. No matched original/reconstruction runtime capture is attached.
 
 ## Validation
 
@@ -52,3 +52,38 @@ warning above. All eight shared source checks, class/layout audits and the
 VS2019 Win32 build passed. All 14 assertions and eight scenario steps passed;
 GroupAttack executed seven times during a CLEAN 60-second world observation.
 Profile cleanup restored the preserved paths and verified their hashes.
+
+## ExecuteAction dispatch follow-up
+
+The full bundle `tmp_group_dispatch_ctx.md` and its manifest cover ExecuteAction
+(0x728F80). The action-94 mapping byte at 0x72B57E is 0x2B; the corresponding
+jump-table entry at 0x72B3F4 points to 0x729E07. That block copies ANYONE
+(0x8C7748), then replaces only its enemy/ally byte with m_typeAI.GetEnemyOf's
+result. It resolves a sprite (type byte 0x31 at 0x84C507) via 0x45C030 and
+calls GroupAttack at 0x729E70, even when resolution returns NULL.
+
+The new branch follows that sequence. A non-NULL target takes the ReleaseShare
+path at 0x72B2F6, not ReleaseDeny; the epilogue stores the returned SHORT in
+m_nLastActionReturn (+0x592) before returning. The rest of ExecuteAction remains
+partial.
+
+`combat-group-dispatch.json` runs the original 14 assertions plus seven dispatch
+assertions. It temporarily classifies the companion as an enemy and deliberately
+puts the attacker itself in the action's target selector: the enemy search must
+still choose the companion. The test also checks absent-area/no-target and
+interrupted results, the stored return value, and the two queued actions. All
+classification changes, the temporary area pointer, return state and actions
+are restored synchronously. Queued attacks are inspected and discarded; this
+does not assert damage or demonstrate an entire group-combat AI loop.
+
+The next useful step is to exercise the queued AttackNoSound through normal AI
+ticks, then compare an equivalent original-binary scenario.
+
+Validation run `.arc/2026-09-22T21-43-57-408325-batch/`: build, source checks,
+class/layout audits, 21 assertions and eight UI steps passed. The 60-second
+world observation was CLEAN, with 65,946 ExecuteAction entries (all world
+actors/actions combined) and ten GroupAttack entries (seven direct plus three
+dispatch calls). Preserved paths were restored and their hashes checked.
+Parity remains YELLOW: ExecuteAction has 284 binary calls versus 70 source
+calls because it is still partial; GroupAttack remains 24 versus nine, with
+its member-offset check non-analysable. No differential equivalence is claimed.

@@ -1,0 +1,8 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+combatgroup 1
