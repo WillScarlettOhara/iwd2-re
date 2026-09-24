@@ -1,0 +1,30 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+resume
+key 49
+# Original equipped melee weapon, then temporary bow/crossbow/sling.
+groupdamage
+sleep 15
+resume
+rangedready 0
+sleep 10
+groupdamage
+rangedrestore
+sleep 15
+resume
+rangedready 1
+sleep 10
+groupdamage
+rangedrestore
+sleep 15
+resume
+rangedready 2
+sleep 10
+groupdamage
+rangedrestore
+sleep 15

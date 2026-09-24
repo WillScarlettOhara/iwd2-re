@@ -74,6 +74,8 @@
 //                                check ammunition and actual HP loss, no saving.
 //   combatmove                  check seen/follow movement guards; restore state.
 //   combatgroup [dispatch]      check GroupAttack targets/queue/guards; restore state.
+//   groupdamage                 run GroupAttack on normal ticks until HP loss;
+//                                restore temporary enemy classification, stop order.
 //   rangedready <0|1|2> [mode]  temporarily equip bow/crossbow/sling test fixtures;
 //                                mode 0 = 40 ammo, 1 = last round, 2 = last + spare.
 //                                modes 3/4 = last round + melee, transient non-PC/PC.
@@ -1940,6 +1942,112 @@ void Tick(CWarp* pActiveEngine)
             source->m_animation.GetPersonalSpace());
         game->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "groupdamage") == 0) {
+        static BOOL running = FALSE;
+        static LONG sourceId, targetId;
+        static BYTE enemyAlly;
+        static SHORT hpBefore;
+        static BOOL attackSeen, repeatSeen;
+        static CAIObjectType expected;
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        CGameObject* raw = NULL;
+        CGameObject* other = NULL;
+        if (!running) {
+            sourceId = game->GetFixedOrderCharacterId(0);
+            targetId = game->GetFixedOrderCharacterId(1);
+        }
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2
+            || objects->GetDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable");
+            return;
+        }
+        if (objects->GetDeny(targetId, CGameObjectArray::THREAD_ASYNCH, &other, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        auto* target = static_cast<CGameSprite*>(other);
+        if (!running) {
+            BOOL ready = source->m_curAction.m_actionID == CAIAction::NO_ACTION
+                && source->m_queuedActions.IsEmpty() && source->m_curProjectile == NULL
+                && target->m_curAction.m_actionID == CAIAction::NO_ACTION
+                && target->m_queuedActions.IsEmpty() && target->m_baseStats.m_hitPoints > 60
+                && source->m_pArea != NULL && source->m_pArea == target->m_pArea
+                && source->m_typeAI.m_nEnemyAlly == CAIObjectType::EA_PC;
+            if (!ready) {
+                objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                Fail(nStep, step.op, "requires idle party actors in one area and sufficient HP");
+                return;
+            }
+            enemyAlly = target->m_typeAI.m_nEnemyAlly;
+            hpBefore = target->m_baseStats.m_hitPoints;
+            target->m_typeAI.m_nEnemyAlly = CAIObjectType::EA_ENEMY;
+            expected.Set(target->GetAIType());
+            expected.SetName(CString(_T("")));
+            expected.SetInstance(-1);
+            attackSeen = repeatSeen = FALSE;
+            running = TRUE;
+            s_waited = 0;
+            source->SetCurrAction(CAIAction(CAIAction::GROUPATTACK, CAIObjectType::ANYONE, 0, 0, 0));
+            Emit("{\"step\":%d,\"op\":\"groupdamage-start\",\"source\":%ld,\"target\":%ld,\"hp\":%d,\"slot\":%u}",
+                nStep, sourceId, targetId, hpBefore, source->m_equipment.m_selectedWeapon);
+        } else {
+            attackSeen = attackSeen || (source->m_curAction.m_actionID == CAIAction::ATTACKNOSOUND
+                && source->m_curAction.m_acteeID.Equal(expected));
+            POSITION pos = source->m_queuedActions.GetHeadPosition();
+            while (pos != NULL) {
+                CAIAction* queued = source->m_queuedActions.GetNext(pos);
+                repeatSeen = repeatSeen || (queued->m_actionID == CAIAction::GROUPATTACK
+                    && queued->m_acteeID.Equal(expected));
+            }
+            // Reject competing party attacks rather than crediting their damage
+            // to the actor whose GroupAttack order is under test.
+            BOOL competingAttack = FALSE;
+            for (INT i = 1; i < game->GetNumCharacters(); ++i) {
+                CGameObject* member = NULL;
+                LONG memberId = game->GetFixedOrderCharacterId(i);
+                if (objects->GetShare(memberId, CGameObjectArray::THREAD_ASYNCH, &member, INFINITE) == CGameObjectArray::SUCCESS) {
+                    SHORT actionId = static_cast<CGameSprite*>(member)->m_curAction.m_actionID;
+                    competingAttack = competingAttack || actionId == CAIAction::ATTACK
+                        || actionId == CAIAction::ATTACKNOSOUND || actionId == CAIAction::ATTACKONEROUND;
+                    objects->ReleaseShare(memberId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                }
+            }
+            SHORT hp = target->m_baseStats.m_hitPoints;
+            BOOL success = hp < hpBefore && attackSeen && repeatSeen && !competingAttack;
+            BOOL finished = success || competingAttack || ++s_waited >= 600;
+            if (s_waited % 30 == 0 || finished) {
+                Emit("{\"step\":%d,\"op\":\"groupdamage-wait\",\"ticks\":%d,\"action\":%d,\"frame\":%d,\"hpBefore\":%d,\"hpAfter\":%d,\"attackSeen\":%d,\"repeatSeen\":%d,\"competingAttack\":%d}",
+                    nStep, s_waited, source->m_curAction.m_actionID, source->m_attackFrame,
+                    hpBefore, hp, attackSeen, repeatSeen, competingAttack);
+            }
+            if (finished) {
+                source->ClearActions(FALSE);
+                source->SetCurrAction(CAIAction::NULL_ACTION);
+                source->DropPath();
+                source->DropSearchRequest();
+                source->m_attackFrame = -2;
+                delete source->m_curProjectile;
+                source->m_curProjectile = NULL;
+                target->m_typeAI.m_nEnemyAlly = enemyAlly;
+                running = FALSE;
+                s_waited = 0;
+                Emit("{\"step\":%d,\"op\":\"groupdamage-restored\",\"enemyAlly\":%u,\"success\":%d}", nStep, enemyAlly, success);
+                objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                if (!success) { Fail(nStep, step.op, "group order did not produce isolated damage"); return; }
+                ++s_pc;
+                return;
+            }
+        }
+        objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         return;
     }
 

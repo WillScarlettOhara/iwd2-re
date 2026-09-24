@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-group-live.txt",
+  "hold": 120,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Center camera and require two idle party actors in the same area with enough target HP.",
+    "Temporarily classify the companion as an enemy, issue GroupAttack once, and let normal AI ticks select and execute AttackNoSound. No manual ExecuteAction calls, forced rolls or combat frames.",
+    "Require the silent attack and repeated group order to reference the expected target, followed by HP loss. Reject competing party attacks.",
+    "Test the original equipped melee weapon and temporary bow, crossbow and sling fixtures; verify ammunition expenditure and restore equipment after each ranged case.",
+    "Stop the order and restore classification on success or timeout. Save/config files are transactionally preserved; no save writes. This is not original/reconstruction differential parity."
+  ]
+}
