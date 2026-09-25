@@ -68,6 +68,7 @@ Interceptor.attach(ptr('0x686690'), {onLeave() {
         oldInterrupt = source.add(0x470).readS32();
         oldActivity = target.add(0x50a6).readByteArray(12);
         oldResponses = source.add(0x46a).readByteArray(6);
+        if (typeof gaTargetChecks === 'function') gaTargetChecks(source, target, ids, check);
         const name = Memory.alloc(4);
         gaStringCtor(name, Memory.allocUtf8String('ZRCTARGET'));
         gaStringSet(type, name); gaStringDtor(name);

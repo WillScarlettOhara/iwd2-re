@@ -17706,12 +17706,43 @@ BOOL CGameSprite::EvaluateStatusTrigger(const CAITrigger& trigger)
     return CGameAIBase::EvaluateStatusTrigger(trigger);
 }
 
-// 0x733660 (vtable 0x70)
-// TODO(vtable-stub): recover CGameSprite::UpdateTarget -- sets m_targetId and
-// toggles the CMarker on the old/new target (gated on m_bSelected + Orderable).
+// 0x733660
 void CGameSprite::UpdateTarget(CGameObject* pObject)
 {
-    CGameAIBase::UpdateTarget(pObject);
+    if (pObject != NULL && m_targetId == pObject->GetId()) {
+        return;
+    }
+
+    if (m_targetId != CGameObjectArray::INVALID_INDEX) {
+        CGameObject* pPrevious = NULL;
+        BYTE rc;
+        do {
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_targetId,
+                CGameObjectArray::THREAD_ASYNCH, &pPrevious, INFINITE);
+        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+        if (rc != CGameObjectArray::SUCCESS) {
+            return;
+        }
+        if (pPrevious != NULL && pPrevious->GetObjectType() == CGameObject::TYPE_SPRITE
+            && m_bSelected && Orderable(FALSE)) {
+            static_cast<CGameSprite*>(pPrevious)->m_marker.SetType(CMarker::ELLIPSE);
+        }
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+
+    if (pObject != NULL) {
+        if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE && m_bSelected && Orderable(FALSE)) {
+            CGameSprite* pTarget = static_cast<CGameSprite*>(pObject);
+            pTarget->m_marker.SetType(CMarker::RECTICLE);
+            if (m_actionCount == 0 && m_userCommandPause > CTimerWorld::TIMESCALE_MSEC_PER_SEC * 5 - 2) {
+                pTarget->m_marker.m_nRecticleForceRenderTarget = CTimerWorld::TIMESCALE_MSEC_PER_SEC;
+            }
+        }
+        m_targetId = pObject->GetId();
+    } else {
+        m_targetId = CGameObjectArray::INVALID_INDEX;
+    }
 }
 
 // 0x733050 (vtable 0x78)

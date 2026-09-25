@@ -73,7 +73,7 @@
 //   swingdamage <item> [launcher] run Swing through one real combat bitmap round;
 //                                check ammunition and actual HP loss, no saving.
 //   combatmove                  check seen/follow movement guards; restore state.
-//   combatgroup [dispatch]      check GroupAttack targets/queue/guards; restore state.
+//   combatgroup [mode]          1: dispatch, 2: also UpdateTarget; restore state.
 //   groupdamage                 run GroupAttack on normal ticks until HP loss;
 //                                restore temporary enemy classification, stop order.
 //   rangedready <0|1|2> [mode]  temporarily equip bow/crossbow/sling test fixtures;
@@ -2074,6 +2074,13 @@ void Tick(CWarp* pActiveEngine)
         action = source->m_curAction;
         auto interrupt = source->m_interrupt;
         auto lastReturn = source->m_nLastActionReturn;
+        auto savedTargetId = source->m_targetId;
+        auto sourceMarker = source->m_marker;
+        auto targetMarker = target->m_marker;
+        auto selected = source->m_bSelected;
+        auto actionCount = source->m_actionCount;
+        auto userPause = source->m_userCommandPause;
+        auto unselectable = source->m_nUnselectableCounter;
         auto sourceEA = source->m_typeAI.m_nEnemyAlly;
         auto targetType = target->m_typeAI;
         auto active = target->m_active;
@@ -2089,6 +2096,75 @@ void Tick(CWarp* pActiveEngine)
             valid = valid && passed;
             ++checks;
         };
+        // Isolate marker changes from any target already present in the save.
+        source->m_targetId = CGameObjectArray::INVALID_INDEX;
+        if (step.nCount > 0 && step.n[0] == 2) {
+            check("target-orderable-precondition", source->Orderable(FALSE));
+            source->m_bSelected = TRUE;
+            source->m_actionCount = 0;
+            source->m_userCommandPause = CTimerWorld::TIMESCALE_MSEC_PER_SEC * 5 - 2;
+            target->m_marker.m_type = CMarker::ELLIPSE;
+            target->m_marker.m_nRecticleCounter = 0;
+            target->m_marker.m_nRecticleForceRenderTarget = 0;
+            source->UpdateTarget(NULL);
+            check("target-empty-clear", source->m_targetId == CGameObjectArray::INVALID_INDEX);
+            source->UpdateTarget(target);
+            check("target-select-threshold", source->m_targetId == targetId
+                && target->m_marker.m_type == CMarker::RECTICLE
+                && target->m_marker.m_nRecticleCounter == 1
+                && target->m_marker.m_nRecticleForceRenderTarget == 0);
+            ++source->m_userCommandPause;
+            source->UpdateTarget(target);
+            check("target-duplicate-no-op", target->m_marker.m_nRecticleCounter == 1
+                && target->m_marker.m_nRecticleForceRenderTarget == 0);
+            source->UpdateTarget(NULL);
+            check("target-clear", source->m_targetId == CGameObjectArray::INVALID_INDEX
+                && target->m_marker.m_type == CMarker::ELLIPSE && target->m_marker.m_nRecticleCounter == 0);
+            source->UpdateTarget(target);
+            check("target-force-render", target->m_marker.m_nRecticleForceRenderTarget == CTimerWorld::TIMESCALE_MSEC_PER_SEC);
+            source->m_marker.m_type = CMarker::ELLIPSE;
+            source->m_marker.m_nRecticleCounter = 0;
+            source->UpdateTarget(source);
+            check("target-switch", source->m_targetId == id && source->m_marker.m_nRecticleCounter == 1
+                && target->m_marker.m_nRecticleCounter == 0 && target->m_marker.m_type == CMarker::ELLIPSE);
+            source->UpdateTarget(NULL);
+            target->m_marker.m_nRecticleForceRenderTarget = 0;
+            source->m_actionCount = 1;
+            source->UpdateTarget(target);
+            check("target-action-count", target->m_marker.m_nRecticleCounter == 1
+                && target->m_marker.m_nRecticleForceRenderTarget == 0);
+            target->m_marker.SetType(CMarker::RECTICLE);
+            source->UpdateTarget(NULL);
+            check("target-shared-marker", target->m_marker.m_nRecticleCounter == 1
+                && target->m_marker.m_type == CMarker::RECTICLE);
+            source->m_bSelected = FALSE;
+            source->UpdateTarget(target);
+            check("target-unselected", source->m_targetId == targetId && target->m_marker.m_nRecticleCounter == 1);
+            source->UpdateTarget(NULL);
+            check("target-unselected-clear", source->m_targetId == CGameObjectArray::INVALID_INDEX
+                && target->m_marker.m_nRecticleCounter == 1);
+            source->m_bSelected = TRUE;
+            source->m_nUnselectableCounter = 1;
+            source->UpdateTarget(target);
+            check("target-unorderable", source->m_targetId == targetId && target->m_marker.m_nRecticleCounter == 1);
+            source->UpdateTarget(NULL);
+            check("target-unorderable-clear", source->m_targetId == CGameObjectArray::INVALID_INDEX
+                && target->m_marker.m_nRecticleCounter == 1);
+            source->m_nUnselectableCounter = unselectable;
+            // Low-word bit 15 is rejected by GetDeny, without referring to a live object.
+            source->m_targetId = 0x8000;
+            source->UpdateTarget(target);
+            check("target-missing-old-preserved", source->m_targetId == 0x8000
+                && target->m_marker.m_nRecticleCounter == 1);
+            source->UpdateTarget(NULL);
+            check("target-missing-old-clear-preserved", source->m_targetId == 0x8000);
+            source->m_targetId = CGameObjectArray::INVALID_INDEX;
+            source->m_marker = sourceMarker;
+            target->m_marker = targetMarker;
+            source->m_bSelected = selected;
+            source->m_actionCount = actionCount;
+            source->m_userCommandPause = userPause;
+        }
         // Deliberately distinguish the target from the attacker even if both
         // party members have the same classification in the loaded save.
         target->m_typeAI.m_nSpecific = source->GetAIType().m_nSpecific ^ 1;
@@ -2180,6 +2256,9 @@ void Tick(CWarp* pActiveEngine)
         source->m_curAction = action;
         source->m_interrupt = interrupt;
         source->m_nLastActionReturn = lastReturn;
+        source->m_targetId = savedTargetId;
+        source->m_marker = sourceMarker;
+        target->m_marker = targetMarker;
         source->m_typeAI.m_nEnemyAlly = sourceEA;
         target->m_typeAI = targetType;
         target->m_active = active;

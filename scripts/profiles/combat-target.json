@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-target.txt",
+  "hold": 60,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Center the loaded save and require two visible party members.",
+    "Check UpdateTarget selection, duplicate, clear, switch, shared marker, strict pause threshold, action count, unselected and unorderable actors, and missing previous object.",
+    "Then run GroupAttack direct guards and ExecuteAction enemy dispatch.",
+    "Restore all changed target IDs, markers, selections, actions and AI fields synchronously. No save writes.",
+    "These are reconstruction assertions against assembly-derived expectations, not an original/reconstruction differential capture."
+  ]
+}

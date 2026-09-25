@@ -1,6 +1,7 @@
 """Original GroupAttack semantic checks, compared with a recorded AutoUI run.
 
-The comparison is of fourteen named predicates, not complete raw actor state.
+The comparison is of fourteen named predicates, plus fifteen with --target,
+not complete raw actor state.
 The original is loaded using the existing driver; only this probe's PID is killed.
 """
 from __future__ import annotations
@@ -23,8 +24,9 @@ import frida_trace_diff as diff
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--ours', type=Path, required=True, help='Existing combat-group ui.jsonl')
+    parser.add_argument('--ours', type=Path, required=True, help='Existing combat-group or combat-target ui.jsonl')
     parser.add_argument('--timeout', type=int, default=150)
+    parser.add_argument('--target', action='store_true', help='Also compare the fifteen UpdateTarget predicates')
     args = parser.parse_args()
     if not 1 <= args.timeout <= 300:
         parser.error('timeout must be in 1..300 seconds')
@@ -36,15 +38,20 @@ def main():
         raise ValueError('Original executable is not canonical')
     ours = [dict(tag='combatgroup-case', case=e['case'], passed=e['passed'])
             for line in args.ours.read_text(encoding='utf-8').splitlines()
-            if (e := json.loads(line)).get('op') == 'combatgroup-case']
-    if len(ours) != 14 or not all(e['passed'] is True for e in ours):
-        raise ValueError('Expected fourteen successful direct GroupAttack checks')
+            if (e := json.loads(line)).get('op') == 'combatgroup-case'
+            and (not args.target or not e['case'].startswith('dispatch-'))]
+    expected_count = 29 if args.target else 14
+    if len(ours) != expected_count or not all(e['passed'] is True for e in ours):
+        raise ValueError(f'Expected {expected_count} successful checks')
     out = REPO / '.arc' / datetime.now(timezone.utc).strftime('%Y-%m-%dT%H-%M-%S-%f-group-reference')
     out.mkdir()
-    report = {'verdict':'UNPROVEN', 'scope':'Fourteen named predicates, not complete raw state',
+    report = {'verdict':'UNPROVEN', 'scope':f'{expected_count} named predicates, not complete raw state',
               'ours_capture':str(args.ours.resolve()), 'frida_version':frida.__version__}
     paths = [exe, Path(__file__), Path(__file__).with_suffix('.js'), args.ours,
              SCRIPTS / 'frida_orig.py', SCRIPTS / 'arc_profile.py', SCRIPTS / 'frida_trace_diff.py']
+    target_js = Path(__file__).with_name('update_target_reference.js')
+    if args.target:
+        paths.append(target_js)
     report['sha256'] = {str(p.resolve()):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
     def write_report():
         (out / 'run.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
@@ -68,7 +75,10 @@ def main():
     if driver.count(call) != 1:
         raise ValueError('Load driver changed; review exact-save integration')
     driver = driver.replace(call, 'gaSelectSave(this.thiz); ' + call)
-    code = driver + '\n' + Path(__file__).with_suffix('.js').read_text(encoding='utf-8')
+    code = driver + '\n'
+    if args.target:
+        code += target_js.read_text(encoding='utf-8') + '\n'
+    code += Path(__file__).with_suffix('.js').read_text(encoding='utf-8')
     (out / 'original.js').write_text(code, encoding='utf-8')
     print(f'GROUP-REFERENCE {out}', flush=True)
     rc = 2
@@ -106,7 +116,7 @@ def main():
                             pass
         original = [e for e in events if e.get('tag') == 'combatgroup-case']
         errors = [e for e in events if e.get('tag') in ('reference-error','crash','ERROR')]
-        if errors or not any(e.get('tag') == 'reference-done' for e in events) or len(original) != 14:
+        if errors or not any(e.get('tag') == 'reference-done' for e in events) or len(original) != expected_count:
             raise ValueError(f'Incomplete original capture: checks={len(original)}, errors={errors}')
         for label, records in [('original', original), ('reconstructed', ours)]:
             (out / f'{label}.jsonl').write_text(''.join(json.dumps(e)+'\n' for e in records), encoding='utf-8')
