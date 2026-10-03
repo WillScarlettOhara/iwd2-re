@@ -1,10 +1,10 @@
-# Final shots with empty/different reserves — 2026-10-03
+# Matched final shots with empty/different reserves — 2026-10-03
 
 Reconstructed runtime checks pass for bow, crossbow and sling, with no reserve
 and with a different resource reserve. This adds test scaffolding only, with no
-recovered engine body changes. **Differential evidence is UNPROVEN:** original
-captures failed before loading because the mouse cursor could not be moved.
-No MATCH claim is made for these six cancellation cases.
+recovered engine body changes. **Differential evidence is MATCH 14/14 for each reserve mode.** The canonical
+original agrees on the three ranged cancellation summaries and their delivered
+damage, alongside eight base damage observations in each capture.
 
 Each test starts with one unit in slot 11, clears slots 13/14 and installs either
 no slot-12 reserve or seven units of ZRCARR2/ZRCBLT2/ZRCSTN2. Alternate resources
@@ -45,14 +45,25 @@ All transaction journals record restoration without cleanup errors. No game
 process remains and no test damage was saved. Twenty-three comparator/fixture
 tests pass, including rejection of incorrect cancellation return evidence.
 
-Run the original comparison once input automation is available:
+The input blocker cleared on the follow-up without driver changes. The thread
+and input desktops both report Default; this does not establish the cause of
+the earlier failure. Two initial retries hit the transient journal access error;
+subsequent runs succeeded:
+- Empty original: `.arc/2026-10-03T15-00-03-771927-weapon-reference/`, MATCH 14/14.
+- Different original: `.arc/2026-10-03T15-00-43-819145-weapon-reference/`, MATCH 14/14.
+
+Both successful transactions restored save/config files with no cleanup errors,
+and their spawned games stopped. Win32 build and 23 comparator/fixture tests
+pass again. No source/probe changes were required to obtain these comparisons.
+
+Reproduce the comparisons:
 
 ```powershell
 .\.venv-reagent\Scripts\python.exe scripts/probes/weapon_damage_reference.py --finalshot --final-mode empty --ours .arc/2026-10-03T16-05-28-034819-batch/profile-runtime/ui.jsonl
 .\.venv-reagent\Scripts\python.exe scripts/probes/weapon_damage_reference.py --finalshot --final-mode different --ours .arc/2026-10-03T16-08-14-528288-batch/profile-runtime/ui.jsonl
 ```
 
-These scenarios do not establish original agreement, normal AI cancellation or
+These scenarios establish original agreement for the controlled final shot,
+item deletion, selected replacement and action return/frame. They do not establish normal AI cancellation or
 next-round behavior, natural hit/miss/critical rolls, or Unusable trigger payloads
-within Swing. Next: obtain the two original captures, then test resumed attacks
-using the selected replacement ammunition.
+within Swing. Next: test resumed attacks using the selected replacement ammunition.

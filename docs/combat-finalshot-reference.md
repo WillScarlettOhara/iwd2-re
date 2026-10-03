@@ -62,4 +62,4 @@ that reserve, normal AI timing, hit/miss/critical rolls, or final-shot behavior
 without a reserve or with a different resource. Next: the latter two cancellation
 paths, retaining damage delivery and the exact action return/frame evidence.
 
-Follow-up: [empty/different reserve cancellation checks](combat-finalshot-cancellation.md) pass in the reconstruction; original comparison is currently unproven due to input calibration.
+Follow-up: [empty/different reserve cancellation checks](combat-finalshot-cancellation.md) now match the original for each mode (14/14 observations), including delivered damage and the ACTION_ERROR cancellation frame.
