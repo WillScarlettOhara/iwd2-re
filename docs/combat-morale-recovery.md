@@ -19,9 +19,10 @@ frame arithmetic, a DWORD_MAX threshold, recovery phase, clamping, equality,
 immunity and both exemptions. The profile centers the party and preserves
 save/config files transactionally, without requiring weapon fixtures.
 
-This function is not yet called by the recovered ProcessAI. Automatic morale
-failure entry, panic/flee/berserk selection and morale failure exit remain the
-next recovery arc; the dialogue control branch also remains incomplete.
+At this initial checkpoint the function was not yet called by ProcessAI.
+The subsequent [morale failure recovery](combat-morale-failure-recovery.md)
+connects it to entry, panic/flee/berserk selection and shared exit. Dialogue
+control remains incomplete.
 
 Validation: .arc/2026-10-03T21-15-13-882267-batch, PASS with one skipped
 static check. Parity GREEN; eight source checks and class/layout audits pass;

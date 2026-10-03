@@ -238,6 +238,7 @@ public:
     static const BYTE SPRITE_EFFECT_INTENSITY_LOW;
 
     static const BYTE SOUND_DAMAGE;
+    static const BYTE SOUND_MORALE;
     static const BYTE SOUND_DYING;
     static const BYTE SOUND_BADLY_WOUNDED;
     static const BYTE SOUND_SELECT;

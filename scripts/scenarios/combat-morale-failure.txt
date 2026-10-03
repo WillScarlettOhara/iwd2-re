@@ -1,0 +1,9 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+combatmorale
+moralfailure
+resume

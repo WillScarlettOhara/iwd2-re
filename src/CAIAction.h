@@ -80,6 +80,7 @@ public:
     static const SHORT GIVEPARTYGOLD;
     static const SHORT ATTACKREEVALUATE;
     static const SHORT RUNAWAYFROM;
+    static const SHORT PANIC;
     static const SHORT RUNAWAYFROMNOINTERRUPT;
     static const SHORT STARTDIALOGUENOSET;
     static const SHORT TIMEDMOVETOPOINT;

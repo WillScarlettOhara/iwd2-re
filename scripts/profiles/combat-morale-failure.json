@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-morale-failure.txt",
+  "hold": 60,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Center the camera on the party and require an idle actor.",
+    "Use a disposable game process to exercise ProcessAI morale failure selection, retention and recovery; block action execution while inspecting the queued choice.",
+    "Never save test state; preserve save and configuration files transactionally."
+  ]
+}

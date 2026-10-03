@@ -111,6 +111,9 @@ const BYTE CGameSprite::SPRITE_EFFECT_INTENSITY_LOW = 0;
 // 0x85BB69
 const BYTE CGameSprite::SOUND_DAMAGE = 6;
 
+// 0x85BB64
+const BYTE CGameSprite::SOUND_MORALE = 1;
+
 // 0x85BB6A
 const BYTE CGameSprite::SOUND_DYING = 7;
 
@@ -13375,13 +13378,76 @@ void CGameSprite::ProcessAI()
     m_nCommandPause--;
     field_44A++;
 
-    if (((m_id ^ field_44A) & 0xF) == 0) {
-        CheckTimers(1);
+    BOOL bControlledAction = FALSE;
+    if ((m_derivedStats.m_generalState & STATE_DEAD) == 0 && !CheckMorale()) {
+        if (!m_moraleFailure) {
+            m_moraleFailure = TRUE;
+            if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL
+                || g_pChitin->cNetwork.m_idLocalPlayer == m_remotePlayerID) {
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                    new CMessageSpriteUpdate(this, m_id, m_id), FALSE);
+            }
+            PlaySound(SOUND_MORALE, TRUE, FALSE, FALSE);
+            BYTE choice = static_cast<BYTE>(rand() % 100);
+            if (choice < 10) {
+                FeedBack(FEEDBACK_MORALEFAILURE_PANIC, 0, 0, 0, -1, 0, 0);
+                m_aiDoAction.m_actionID = CAIAction::PANIC;
+                m_aiDoAction.m_specificID = 0;
+                m_aiDoAction.m_specificID2 = -1;
+                m_baseStats.m_generalState |= STATE_PANIC;
+            } else if (choice < 90) {
+                FeedBack(FEEDBACK_MORALEFAILURE_RUN, 0, 0, 0, -1, 0, 0);
+                m_aiDoAction.m_actionID = CAIAction::RUNAWAYFROMNOINTERRUPT;
+                m_aiDoAction.m_specificID = LONG_MAX;
+                m_aiDoAction.m_specificID2 = 0;
+                m_baseStats.m_generalState |= STATE_PANIC;
+            } else {
+                FeedBack(FEEDBACK_MORALEFAILURE_BERSERK, 0, 0, 0, -1, 0, 0);
+                m_berserkActive = TRUE;
+                m_aiDoAction.m_actionID = CAIAction::BERSERK;
+                m_aiDoAction.m_specificID = LONG_MAX;
+                m_aiDoAction.m_specificID2 = 0;
+            }
+            m_aiDoAction.m_specificID3 = 0;
+            m_aiDoAction.m_dest = CPoint(-1, -1);
+            m_aiDoAction.m_string1 = "";
+            m_aiDoAction.m_string2 = "";
+            m_aiDoAction.m_internalFlags = 0;
+            ClearActions(FALSE);
+            m_interrupt = TRUE;
+            AddAction(m_aiDoAction);
+        }
+        bControlledAction = TRUE;
+    } else {
+        if (m_moraleFailure) {
+            m_moraleFailure = FALSE;
+            if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL
+                || g_pChitin->cNetwork.m_idLocalPlayer == m_remotePlayerID) {
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                    new CMessageSpriteUpdate(this, m_id, m_id), FALSE);
+            }
+            ClearActions(FALSE);
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                new CMessageDropPath(m_id, m_id), FALSE);
+            SetCurrAction(GetNextAction(m_aiDoAction));
+            m_baseStats.m_generalState &= ~STATE_PANIC;
+            m_derivedStats.m_generalState &= ~STATE_PANIC;
+        }
+        BOOL bDialogPause = m_dialogWait > 0
+            && m_typeAI.m_nEnemyAlly < CAIObjectType::EA_EVILCUTOFF
+            && (m_derivedStats.m_generalState & STATE_SLEEPING) == 0
+            && m_bAllowDialogInterrupt
+            && !m_derivedStats.m_bIgnoreDialogPause;
+        if (bDialogPause) {
+            // TODO INCOMPLETE: dialogue wait, facing and idle messages.
+            bControlledAction = TRUE;
+        } else if (((m_id ^ field_44A) & 0xF) == 0) {
+            CheckTimers(1);
+        }
     }
 
-    BOOL bControlledAction = FALSE;
     BOOL bCanAct = CanAct();
-    if (bCanAct && (m_derivedStats.m_generalState & STATE_HELPLESS) != 0) {
+    if (!bControlledAction && bCanAct && (m_derivedStats.m_generalState & STATE_HELPLESS) != 0) {
         if (m_curAction.GetActionID() != CAIAction::NO_ACTION) {
             m_aiDoAction = CAIAction::NULL_ACTION;
             ClearActions(FALSE);
@@ -13392,7 +13458,7 @@ void CGameSprite::ProcessAI()
         field_727E = TRUE;
         ApplyTriggers();
         bControlledAction = TRUE;
-    } else if (bCanAct
+    } else if (!bControlledAction && bCanAct
         && (m_derivedStats.m_generalState & STATE_BERSERK) != 0
         && m_berserkActive) {
         UpdateBerserkActive();
@@ -13414,7 +13480,7 @@ void CGameSprite::ProcessAI()
         field_727E = TRUE;
         ApplyTriggers();
         bControlledAction = TRUE;
-    } else if (bCanAct
+    } else if (!bControlledAction && bCanAct
         && (m_derivedStats.m_generalState & STATE_FEEBLEMINDED) != 0) {
         if (m_curAction.GetActionID() != CAIAction::NO_ACTION) {
             m_aiDoAction = CAIAction::NULL_ACTION;
@@ -13532,7 +13598,7 @@ void CGameSprite::ProcessAI()
     if (!bControlledAction) {
         UpdateBerserkActive();
         CheckModal();
-        // TODO INCOMPLETE: morale/dialogue control
+        // TODO INCOMPLETE: dialogue control
         // and sprite-specific script scheduling in ProcessAI are unrecovered.
         CGameAIBase::ProcessScripts();
     }
@@ -21546,6 +21612,13 @@ SHORT CGameSprite::ExecuteAction()
 
     if (m_curAction.m_actionID == 124) {
         SHORT result = Berserk();
+        m_nLastActionReturn = result;
+        return result;
+    }
+
+    // ExecuteAction jump-table case 0x14 (729654).
+    if (m_curAction.m_actionID == CAIAction::PANIC) {
+        SHORT result = Panic();
         m_nLastActionReturn = result;
         return result;
     }

@@ -18,6 +18,9 @@ const SHORT CAIAction::MOVETOOBJECT = 22;
 // 0x8477B0
 const SHORT CAIAction::MOVETOPOINT = 23;
 
+// 0x8477B2
+const SHORT CAIAction::PANIC = 24;
+
 // 0x8477B8
 const SHORT CAIAction::PROTECTPOINT = 27;
 

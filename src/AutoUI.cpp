@@ -2485,6 +2485,134 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "moralfailure") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        CGameObject* raw = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and party actor");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        if (source->m_pPath != NULL || source->m_currentSearchRequest != NULL) {
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires idle actor");
+            return;
+        }
+        auto savedMorale = source->m_baseStats.field_25C;
+        auto savedImmunity = source->m_baseStats.field_2F0[3];
+        auto savedBreak = source->m_derivedStats.m_nMoraleBreak;
+        auto savedRecovery = source->m_derivedStats.m_nMoraleRecoveryTime;
+        auto savedBaseState = source->m_baseStats.m_generalState;
+        auto savedState = source->m_derivedStats.m_generalState;
+        auto savedSelected = source->m_bSelected;
+        auto savedBerserk = source->m_berserkActive;
+        auto savedFailure = source->m_moraleFailure;
+        auto savedCutscene = game->GetGameSave()->m_cutScene;
+        auto savedActive = game->GetWorldTimer()->m_active;
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = messages.GetCount();
+        BOOL valid = TRUE;
+        INT seen[3] = { 0, 0, 0 };
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            ++checks;
+            valid = valid && passed;
+            Emit("{\"step\":%d,\"op\":\"moralfailure-case\",\"case\":\"%s\",\"passed\":%s}",
+                nStep, name, passed ? "true" : "false");
+        };
+        source->m_bSelected = FALSE;
+        source->m_inCutScene = FALSE;
+        game->GetGameSave()->m_cutScene = FALSE;
+        game->GetWorldTimer()->m_active = TRUE;
+        source->m_baseStats.field_2F0[3] &= ~1;
+        source->m_derivedStats.m_nMoraleRecoveryTime = 1000;
+        source->m_derivedStats.m_nMoraleBreak = 20;
+        // Keep action execution blocked while observing ProcessAI selection.
+        // This disposable profile never saves the actor's test state.
+        for (INT attempt = 0; attempt < 96 && (seen[0] == 0 || seen[1] == 0 || seen[2] == 0); ++attempt) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction(CAIAction::WAIT, LONG_MAX);
+            source->m_baseStats.field_25C = 0;
+            source->m_baseStats.m_generalState = STATE_STONE_DEATH;
+            source->m_derivedStats.m_generalState = STATE_STONE_DEATH;
+            source->m_moraleFailure = FALSE;
+            source->m_berserkActive = FALSE;
+            source->m_dialogWait = 0;
+            source->ProcessAI();
+            check("entry-latch-and-single-action", source->m_moraleFailure
+                && source->m_queuedActions.GetCount() == 1 && source->m_interrupt);
+            if (source->m_queuedActions.GetCount() != 1) break;
+            CAIAction* action = source->m_queuedActions.GetHead();
+            SHORT actionId = action->m_actionID;
+            INT variant = actionId == CAIAction::PANIC ? 0
+                : actionId == CAIAction::RUNAWAYFROMNOINTERRUPT ? 1
+                : actionId == CAIAction::BERSERK ? 2 : -1;
+            check("selected-action-and-state", variant >= 0
+                && ((source->m_baseStats.m_generalState & STATE_PANIC) != 0) == (variant < 2)
+                && source->m_berserkActive == (variant == 2)
+                && action->m_specificID == (variant == 0 ? 0 : LONG_MAX)
+                && action->m_specificID2 == (variant == 0 ? -1 : 0)
+                && action->m_dest == CPoint(-1, -1) && action->m_internalFlags == 0);
+            if (variant >= 0) ++seen[variant];
+            source->ProcessAI();
+            check("failure-retains-action", source->m_moraleFailure
+                && source->m_queuedActions.GetCount() == 1
+                && source->m_queuedActions.GetHead() == action);
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        check("all-three-selections", seen[0] > 0 && seen[1] > 0 && seen[2] > 0);
+        source->m_baseStats.field_25C = 20;
+        source->m_derivedStats.m_nMoraleBreak = 0;
+        source->m_baseStats.m_generalState = STATE_STONE_DEATH | STATE_PANIC;
+        source->m_derivedStats.m_generalState = STATE_STONE_DEATH | STATE_PANIC;
+        source->m_moraleFailure = TRUE;
+        source->ProcessAI();
+        BOOL dropSeen = FALSE;
+        while (messages.GetCount() > before) {
+            CMessage* message = messages.RemoveTail();
+            if (dynamic_cast<CMessageDropPath*>(message) != NULL && message->GetTarget() == id) dropSeen = TRUE;
+            delete message;
+        }
+        check("recovery-clears-panic-and-drops-path", !source->m_moraleFailure
+            && (source->m_baseStats.m_generalState & STATE_PANIC) == 0
+            && (source->m_derivedStats.m_generalState & STATE_PANIC) == 0 && dropSeen);
+        for (INT count = 0; count < 2; ++count) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = CAIAction::PANIC;
+            source->m_actionCount = count;
+            SHORT result = source->ExecuteAction();
+            check("panic-dispatch-queues-randomwalk", result == CGameAIBase::ACTION_DONE
+                && source->m_nLastActionReturn == result
+                && source->m_queuedActions.GetCount() == 1
+                && source->m_queuedActions.GetHead()->m_actionID == CAIAction::RANDOMWALK
+                && messages.GetCount() == before + (count == 0 ? 2 : 0));
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        source->ClearActions(FALSE);
+        source->m_curAction = CAIAction::NULL_ACTION;
+        source->m_baseStats.field_25C = savedMorale;
+        source->m_baseStats.field_2F0[3] = savedImmunity;
+        source->m_derivedStats.m_nMoraleBreak = savedBreak;
+        source->m_derivedStats.m_nMoraleRecoveryTime = savedRecovery;
+        source->m_baseStats.m_generalState = savedBaseState;
+        source->m_derivedStats.m_generalState = savedState;
+        source->m_bSelected = savedSelected;
+        source->m_berserkActive = savedBerserk;
+        source->m_moraleFailure = savedFailure;
+        game->GetGameSave()->m_cutScene = savedCutscene;
+        game->GetWorldTimer()->m_active = savedActive;
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"moralfailure\",\"checks\":%d,\"panic\":%d,\"run\":%d,\"berserk\":%d,\"disposable\":true,\"valid\":%s}",
+            nStep, checks, seen[0], seen[1], seen[2], valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "ProcessAI morale failure mismatch"); return; }
+        s_pc++;
+        return;
+    }
+
     if (strcmp(step.op, "combatmorale") == 0) {
         CInfGame* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();
