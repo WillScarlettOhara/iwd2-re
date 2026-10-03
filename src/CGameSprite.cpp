@@ -13335,6 +13335,13 @@ void CGameSprite::ProcessAI()
         m_dialogWait = 0;
     }
 
+    if (m_dialogWait > 0 && !m_pendingTriggers.IsEmpty()) {
+        SHORT triggerId = m_pendingTriggers.GetHead()->m_triggerID;
+        if (triggerId == CAITRIGGER_ATTACKEDBY || triggerId == CAITRIGGER_HITBY) {
+            m_dialogWait = 0;
+        }
+    }
+
     if (m_curAction.GetActionID() == CAIAction::NO_ACTION
         && !m_queuedActions.IsEmpty()) {
         SetCurrAction(GetNextAction(m_aiDoAction));
@@ -13349,6 +13356,9 @@ void CGameSprite::ProcessAI()
     }
 
     BOOL bWorldTimerActive = pGame->GetWorldTimer()->m_active;
+    if (bWorldTimerActive && m_nUnselectableCounter > 0) {
+        m_nUnselectableCounter--;
+    }
     if (!bWorldTimerActive) {
         if (m_curAction.GetActionID() == CAIAction::NO_ACTION
             && !m_queuedActions.IsEmpty()) {
@@ -13431,10 +13441,6 @@ void CGameSprite::ProcessAI()
                                      && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA));
         }
         return;
-    }
-
-    if (m_nUnselectableCounter > 0) {
-        m_nUnselectableCounter--;
     }
 
     m_userCommandPause--;

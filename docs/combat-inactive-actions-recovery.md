@@ -39,4 +39,6 @@ Both targets remain parity YELLOW: ProcessAI's floating-point warning remains;
 ResolveInstants reports 17 original/35 source calls. Offset analysis remains
 unavailable for both targets, so full static equivalence is unproven.
 
-Next target: earlier ProcessAI bookkeeping and synchronization branches.
+Early combat-trigger and non-selection-counter rules are covered by
+[the dialogue trigger recovery](combat-dialog-trigger-recovery.md).
+Next target: periodic sprite synchronization in ProcessAI and its 0x71D0B0 callee.

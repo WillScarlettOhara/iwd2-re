@@ -2519,6 +2519,7 @@ void Tick(CWarp* pActiveEngine)
         auto savedSpriteActive = source->m_active;
         auto savedAIActive = source->m_activeAI;
         auto savedImprisonmentActive = source->m_activeImprisonment;
+        auto savedUnselectable = source->m_nUnselectableCounter;
         auto savedSequence = source->m_nSequence;
         auto savedSelected = source->m_bSelected;
         auto savedEA = source->m_typeAI.m_nEnemyAlly;
@@ -2578,6 +2579,7 @@ void Tick(CWarp* pActiveEngine)
             game->m_nTimeStop = stop;
             game->m_nTimeStopCaster = ownsStop ? id : -1;
             game->GetWorldTimer()->m_active = !paused;
+            source->m_nUnselectableCounter = 5;
             if (instant || (state & STATE_DEAD) || inactive >= 0) source->AddAction(CAIAction(CAIAction::WAIT, 200));
             LONG beforeFrame = source->field_44A;
             source->ProcessAI();
@@ -2591,6 +2593,7 @@ void Tick(CWarp* pActiveEngine)
                 passed = passed && source->m_curAction.m_specificID == 100;
             }
             if (inactive >= 0) passed = passed && source->field_44A == beforeFrame;
+            passed = passed && source->m_nUnselectableCounter == (paused ? 5 : 4);
             valid = valid && passed;
             ++checks;
             Emit("{\"step\":%d,\"op\":\"actiongates-case\",\"case\":\"%s\",\"instant\":%s,\"executed\":%s,\"action\":%d,\"specific\":%ld,\"passed\":%s}",
@@ -2627,6 +2630,30 @@ void Tick(CWarp* pActiveEngine)
             run("inactive-instant", 0, -1, FALSE, 0, FALSE, TRUE, TRUE, FALSE, FALSE, inactive);
         }
         source->m_active = source->m_activeAI = source->m_activeImprisonment = TRUE;
+        CTypedPtrList<CPtrList, CAITrigger*> savedTriggers;
+        while (!source->m_pendingTriggers.IsEmpty()) savedTriggers.AddTail(source->m_pendingTriggers.RemoveHead());
+        game->GetWorldTimer()->m_active = FALSE;
+        for (INT triggerCase = 0; triggerCase < 4; ++triggerCase) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = CAIAction::WAIT;
+            source->m_dialogWait = 10;
+            source->m_inCutScene = FALSE;
+            source->m_pendingTriggers.AddTail(new CAITrigger(triggerCase == 0 ? CAITRIGGER_ATTACKEDBY
+                : triggerCase == 1 ? CAITRIGGER_HITBY : CAITRIGGER_NO_TRIGGER, 0));
+            if (triggerCase == 3) source->m_pendingTriggers.AddTail(new CAITrigger(CAITRIGGER_HITBY, 0));
+            source->ProcessAI();
+            BOOL passed = source->m_dialogWait == (triggerCase < 2 ? 0 : 10);
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"dialog-combat-trigger\",\"case\":%d,\"passed\":%s}",
+                nStep, triggerCase, passed ? "true" : "false");
+            while (!source->m_pendingTriggers.IsEmpty()) delete source->m_pendingTriggers.RemoveHead();
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        while (!savedTriggers.IsEmpty()) source->m_pendingTriggers.AddTail(savedTriggers.RemoveHead());
+        source->m_dialogWait = 0;
+        game->GetWorldTimer()->m_active = TRUE;
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         source->m_inCutScene = TRUE;
@@ -2678,6 +2705,7 @@ void Tick(CWarp* pActiveEngine)
         source->m_active = savedSpriteActive;
         source->m_activeAI = savedAIActive;
         source->m_activeImprisonment = savedImprisonmentActive;
+        source->m_nUnselectableCounter = savedUnselectable;
         source->SetSequence(static_cast<BYTE>(savedSequence));
         source->m_bSelected = savedSelected;
         source->m_typeAI.m_nEnemyAlly = savedEA;
