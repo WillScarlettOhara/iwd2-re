@@ -13229,6 +13229,33 @@ void CGameSprite::sub_72DE60()
     ProcessEffectList();
 }
 
+// 0x71CFF0
+BOOL CGameSprite::CheckMorale()
+{
+    if ((m_baseStats.field_2F0[3] & 1) != 0) {
+        return TRUE;
+    }
+
+    BYTE morale = min(m_baseStats.field_25C, 20);
+    m_baseStats.field_25C = morale;
+    if (m_derivedStats.m_nMoraleRecoveryTime == 0) {
+        m_baseStats.field_25C = 10;
+    } else if (static_cast<DWORD>(field_44A)
+        % (m_derivedStats.m_nMoraleRecoveryTime * 15) == 0) {
+        if (morale > 10) {
+            m_baseStats.field_25C = morale - 1;
+        } else if (morale < 10) {
+            m_baseStats.field_25C = morale + 1;
+        }
+    }
+
+    if (g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_cutScene != 0
+        || (m_curAction.m_internalFlags & 1) != 0) {
+        return TRUE;
+    }
+    return m_derivedStats.m_nMoraleBreak < static_cast<DWORD>(m_baseStats.field_25C);
+}
+
 // 0x72B9A0 (virtual)
 void CGameSprite::ProcessAI()
 {

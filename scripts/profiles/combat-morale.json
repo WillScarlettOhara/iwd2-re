@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-morale.txt",
+  "hold": 60,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Center camera on the party before checking morale.",
+    "Exercise morale recovery, thresholds and exemptions synchronously on a party actor, restoring every changed field before the next engine tick.",
+    "Preserve save/config files transactionally; never save test state."
+  ]
+}

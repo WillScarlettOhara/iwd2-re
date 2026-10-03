@@ -2485,6 +2485,72 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "combatmorale") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        CGameObject* raw = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and party actor");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        auto savedMorale = source->m_baseStats.field_25C;
+        auto savedImmunity = source->m_baseStats.field_2F0[3];
+        auto savedBreak = source->m_derivedStats.m_nMoraleBreak;
+        auto savedRecovery = source->m_derivedStats.m_nMoraleRecoveryTime;
+        auto savedFrame = source->field_44A;
+        auto savedFlags = source->m_curAction.m_internalFlags;
+        auto savedCutscene = game->GetGameSave()->m_cutScene;
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BYTE morale, DWORD recovery, DWORD threshold,
+                         LONG frame, BYTE immunity, BOOL cutscene, BYTE flags,
+                         BYTE expectedMorale, BOOL expectedResult) {
+            source->m_baseStats.field_25C = morale;
+            source->m_baseStats.field_2F0[3] = immunity;
+            source->m_derivedStats.m_nMoraleBreak = threshold;
+            source->m_derivedStats.m_nMoraleRecoveryTime = recovery;
+            source->field_44A = frame;
+            source->m_curAction.m_internalFlags = flags;
+            game->GetGameSave()->m_cutScene = cutscene;
+            BOOL result = source->CheckMorale();
+            BOOL passed = result == expectedResult && source->m_baseStats.field_25C == expectedMorale;
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"combatmorale-case\",\"case\":\"%s\",\"passed\":%s}",
+                nStep, name, passed ? "true" : "false");
+        };
+        check("immunity-bypasses-update", 255, 0, 255, 0, 1, FALSE, 0, 255, TRUE);
+        check("clamp", 255, 2, 19, 1, 0, FALSE, 0, 20, TRUE);
+        check("zero-recovery-resets", 0, 0, 9, 1, 0, FALSE, 0, 10, TRUE);
+        check("threshold-equality-fails", 10, 2, 10, 1, 0, FALSE, 0, 10, FALSE);
+        check("below-threshold-fails", 9, 2, 10, 1, 0, FALSE, 0, 9, FALSE);
+        check("recovery-up", 9, 2, 9, 30, 0, FALSE, 0, 10, TRUE);
+        check("recovery-down", 11, 2, 10, 30, 0, FALSE, 0, 10, FALSE);
+        check("recovery-equilibrium", 10, 2, 9, 30, 0, FALSE, 0, 10, TRUE);
+        check("off-phase", 9, 2, 9, 29, 0, FALSE, 0, 9, FALSE);
+        check("unsigned-frame", 9, 1, 9, -1, 0, FALSE, 0, 10, TRUE);
+        check("unsigned-threshold", 10, 2, 0xFFFFFFFF, 1, 0, FALSE, 0, 10, FALSE);
+        check("cutscene-after-recovery", 9, 2, 255, 30, 0, TRUE, 0, 10, TRUE);
+        check("action-exemption-after-recovery", 11, 2, 255, 30, 0, FALSE, 1, 10, TRUE);
+        check("other-action-flag", 9, 2, 9, 1, 0, FALSE, 2, 9, FALSE);
+        source->m_baseStats.field_25C = savedMorale;
+        source->m_baseStats.field_2F0[3] = savedImmunity;
+        source->m_derivedStats.m_nMoraleBreak = savedBreak;
+        source->m_derivedStats.m_nMoraleRecoveryTime = savedRecovery;
+        source->field_44A = savedFrame;
+        source->m_curAction.m_internalFlags = savedFlags;
+        game->GetGameSave()->m_cutScene = savedCutscene;
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"combatmorale\",\"checks\":%d,\"restored\":true,\"valid\":%s}",
+            nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "morale mismatch (state restored)"); return; }
+        s_pc++;
+        return;
+    }
+
     if (strcmp(step.op, "combatrunaway") == 0) {
         CInfGame* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();

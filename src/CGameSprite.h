@@ -631,6 +631,7 @@ public:
     SHORT Berserk();
     void UpdateBerserkActive();
     void CheckModal();
+    BOOL CheckMorale();
     SHORT sub_757B40();
     void sub_71C0C0();
     void sub_737990();
