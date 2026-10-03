@@ -101,6 +101,8 @@
 #include "CAIResponse.h"
 #include "CAIScript.h"
 #include "CAITrigger.h"
+#include "CAIIdList.h"
+#include "CRuleTables.h"
 #include "CBaldurChitin.h"
 #include "CBaldurEngine.h"
 #include "CGameArea.h"
@@ -2485,6 +2487,149 @@ void Tick(CWarp* pActiveEngine)
         Emit("{\"step\":%d,\"op\":\"runawaymove\",\"ticks\":%d,\"startX\":%ld,\"startY\":%ld,\"endX\":%ld,\"endY\":%ld,\"away\":%ld,\"valid\":%s}",
             nStep, elapsed, start.x, start.y, finish.x, finish.y, away, moved ? "true" : "false");
         if (!moved) { Fail(nStep, step.op, "actor did not flee (test action/path removed)"); return; }
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "actiongates") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        CGameObject* raw = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and party actor");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        if (source->m_pArea == NULL || source->m_pPath != NULL || source->m_currentSearchRequest != NULL) {
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires idle actor in area");
+            return;
+        }
+        auto savedState = source->m_derivedStats.m_generalState;
+        auto savedBaseState = source->m_baseStats.m_generalState;
+        auto savedSpells = source->m_derivedStats.m_spellStates;
+        auto savedHold = source->m_derivedStats.m_bCasterHold;
+        auto savedFlags = source->m_baseStats.m_flags;
+        auto savedImmunity = source->m_baseStats.field_2F0[3];
+        auto savedStart = source->m_posStart;
+        auto savedSequence = source->m_nSequence;
+        auto savedSelected = source->m_bSelected;
+        auto savedEA = source->m_typeAI.m_nEnemyAlly;
+        auto savedAllow = source->m_bAllowDialogInterrupt;
+        auto savedIgnore = source->m_derivedStats.m_bIgnoreDialogPause;
+        auto savedStop = game->m_nTimeStop;
+        auto savedCaster = game->m_nTimeStopCaster;
+        auto savedActive = game->GetWorldTimer()->m_active;
+        auto savedCutscene = game->GetGameSave()->m_cutScene;
+        auto& instants = const_cast<CAIIdList&>(game->GetRuleTables().m_lInstantActions);
+        auto savedFaster = instants.m_faster;
+        instants.m_faster = FALSE;
+        CAIId* fixture = NULL;
+        if (instants.Find(269) == NULL) {
+            fixture = new CAIId();
+            fixture->m_id = 269;
+            fixture->m_line = "ZRC_STARTPOS";
+            instants.m_idList.AddTail(fixture);
+        }
+        BOOL valid = instants.Find(CAIAction::WAIT) == NULL;
+        INT checks = 0;
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = messages.GetCount();
+        source->m_bSelected = FALSE;
+        game->GetWorldTimer()->m_active = TRUE;
+        game->GetGameSave()->m_cutScene = FALSE;
+        CPoint marker(savedStart.x + 3, savedStart.y + 5);
+        auto run = [&](const char* name, DWORD state, INT spell, BOOL casterHold,
+                       LONG stop, BOOL ownsStop, BOOL instant, BOOL shouldExecute) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = instant ? 269 : CAIAction::WAIT;
+            source->m_curAction.m_specificID = 100;
+            source->m_curAction.m_dest = marker;
+            source->m_actionCount = 1;
+            source->m_interrupt = FALSE;
+            source->m_nLastActionReturn = CGameAIBase::ACTION_DONE;
+            source->m_baseStats.m_flags = savedFlags & 0x7FFFFFFF;
+            source->m_baseStats.field_2F0[3] |= 1;
+            source->m_baseStats.m_generalState = state;
+            source->m_derivedStats.m_generalState = state;
+            source->m_derivedStats.m_spellStates.reset();
+            if (spell >= 0) source->m_derivedStats.m_spellStates.set(spell);
+            source->m_derivedStats.m_bCasterHold = casterHold;
+            source->m_inCutScene = FALSE;
+            source->m_moraleFailure = FALSE;
+            source->field_727E = FALSE;
+            source->field_3428 = 7;
+            source->field_558E = FALSE;
+            source->m_userCommandPause = source->m_nCommandPause = 0;
+            source->m_dialogWait = 0;
+            source->m_posStart = savedStart;
+            source->m_nSequence = CGameSprite::SEQ_READY;
+            game->m_nTimeStop = stop;
+            game->m_nTimeStopCaster = ownsStop ? id : -1;
+            if (instant || (state & STATE_DEAD)) source->AddAction(CAIAction(CAIAction::WAIT, 200));
+            source->ProcessAI();
+            BOOL executed = instant ? source->m_posStart == marker
+                : source->m_curAction.m_actionID == CAIAction::WAIT && source->m_curAction.m_specificID == 99;
+            BOOL passed = executed == shouldExecute;
+            if (state & STATE_DEAD) {
+                passed = passed && source->m_curAction.m_actionID == CAIAction::WAIT
+                    && source->m_curAction.m_specificID == 200 && !source->m_interrupt;
+            } else if (!instant && !shouldExecute) {
+                passed = passed && source->m_curAction.m_specificID == 100;
+            }
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"actiongates-case\",\"case\":\"%s\",\"instant\":%s,\"executed\":%s,\"action\":%d,\"specific\":%ld,\"passed\":%s}",
+                nStep, name, instant ? "true" : "false", executed ? "true" : "false",
+                source->m_curAction.m_actionID, source->m_curAction.m_specificID, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        };
+        for (INT instant = 0; instant < 2; ++instant) {
+            run("able", 0, -1, FALSE, 0, FALSE, instant, TRUE);
+            run("caster-hold", 0, -1, TRUE, 0, FALSE, instant, instant);
+            run("held", 0, SPLSTATE_HELD, FALSE, 0, FALSE, instant, instant);
+            run("hopelessness", 0, SPLSTATE_HOPELESSNESS, FALSE, 0, FALSE, instant, instant);
+            run("resilient-sphere", 0, SPLSTATE_OTILUKES_RESILIENT_SPHERE, FALSE, 0, FALSE, instant, instant);
+            run("petrified", STATE_STONE_DEATH, -1, FALSE, 0, FALSE, instant, instant);
+            run("frozen", STATE_FROZEN_DEATH, -1, FALSE, 0, FALSE, instant, instant);
+            run("time-stop-other", 0, -1, FALSE, 30, FALSE, instant, instant);
+            run("time-stop-caster", 0, -1, FALSE, 30, TRUE, instant, TRUE);
+            run("negative-time-stop", 0, -1, FALSE, -1, FALSE, instant, instant);
+            run("dead", STATE_DEAD, -1, FALSE, 0, FALSE, instant, instant);
+        }
+        source->ClearActions(FALSE);
+        source->m_curAction = CAIAction::NULL_ACTION;
+        source->m_derivedStats.m_generalState = savedState;
+        source->m_baseStats.m_generalState = savedBaseState;
+        source->m_derivedStats.m_spellStates = savedSpells;
+        source->m_derivedStats.m_bCasterHold = savedHold;
+        source->m_baseStats.m_flags = savedFlags;
+        source->m_baseStats.field_2F0[3] = savedImmunity;
+        source->m_posStart = savedStart;
+        source->SetSequence(static_cast<BYTE>(savedSequence));
+        source->m_bSelected = savedSelected;
+        source->m_typeAI.m_nEnemyAlly = savedEA;
+        source->m_bAllowDialogInterrupt = savedAllow;
+        source->m_derivedStats.m_bIgnoreDialogPause = savedIgnore;
+        source->m_inCutScene = source->m_moraleFailure = FALSE;
+        source->field_3428 = 0;
+        source->field_558E = TRUE;
+        game->m_nTimeStop = savedStop;
+        game->m_nTimeStopCaster = savedCaster;
+        game->GetWorldTimer()->m_active = savedActive;
+        game->GetGameSave()->m_cutScene = savedCutscene;
+        if (fixture != NULL) {
+            instants.m_idList.RemoveAt(instants.m_idList.Find(fixture));
+            delete fixture;
+        }
+        instants.m_faster = savedFaster;
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"actiongates\",\"checks\":%d,\"rulesRestored\":true,\"disposable\":true,\"valid\":%s}",
+            nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "common action resolution mismatch"); return; }
         s_pc++;
         return;
     }

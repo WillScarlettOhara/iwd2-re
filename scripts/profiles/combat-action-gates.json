@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-action-gates.txt",
+  "hold": 60,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Center camera and require an idle party actor in an area.",
+    "Compare actual WAIT execution and an instant SetStartPos canary across incapacity, time-stop and death states.",
+    "Temporarily classify SetStartPos as instant in the in-memory rule list if absent, restore membership and lookup mode before the next tick.",
+    "Restore state/spell bits, time-stop fields and position marker; never save the disposable test process and preserve save/config files transactionally."
+  ]
+}

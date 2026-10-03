@@ -67,5 +67,6 @@ Initial .arc/2026-10-03T21-59-48-919455-batch stopped at three test-only
 compile errors: CAITrigger has no default constructor. The fixture now uses
 CAITrigger(CAITRIGGER_NO_TRIGGER, 0); the complete validation was rerun.
 
-Next recovery target: common action resolution in ProcessAI, especially its
-remaining incapacity/time-stop gates and paused execution paths.
+Common incapacity/time-stop resolution is now covered by
+[the action gates recovery](combat-action-gates-recovery.md).
+Next recovery target: remaining paused/cutscene execution paths in ProcessAI.

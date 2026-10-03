@@ -13685,13 +13685,21 @@ void CGameSprite::ProcessAI()
         BOOL bCanResolveInstants = (m_derivedStats.m_generalState & STATE_DEAD) == 0;
         bCanResolveInstants = bCanResolveInstants
             && IsHelpless() == FALSE
-            && (m_derivedStats.m_generalState & (STATE_STONE_DEATH | STATE_FROZEN_DEATH)) == 0;
+            && !m_derivedStats.m_bCasterHold
+            && (m_derivedStats.m_generalState & (STATE_STONE_DEATH | STATE_FROZEN_DEATH)) == 0
+            && (pGame->m_nTimeStop == 0 || pGame->m_nTimeStopCaster == m_id);
 
         BOOL bCurrentInstant = g_pBaldurChitin->GetObjectGame()
                                    ->GetRuleTables()
                                    .m_lInstantActions.Find(m_curAction.GetActionID())
             != NULL;
-        if (bCanResolveInstants) {
+        if ((m_derivedStats.m_generalState & STATE_DEAD) != 0
+            && (!bCurrentInstant
+                || (g_pChitin->cNetwork.GetSessionOpen() == TRUE
+                    && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA))) {
+            SetCurrAction(GetNextAction(m_aiDoAction));
+            m_interrupt = FALSE;
+        } else if (bCanResolveInstants) {
             do {
                 ResolveInstants(TRUE);
                 bCurrentInstant = g_pBaldurChitin->GetObjectGame()
@@ -13702,14 +13710,20 @@ void CGameSprite::ProcessAI()
                 && !(g_pChitin->cNetwork.GetSessionOpen() == TRUE
                     && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA));
         } else {
-            while (bCurrentInstant
-                && !(g_pChitin->cNetwork.GetSessionOpen() == TRUE
-                    && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA)) {
+            BOOL bSkipNetworkLeave = (m_derivedStats.m_generalState & STATE_DEAD) == 0
+                && g_pChitin->cNetwork.GetSessionOpen() == TRUE
+                && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA
+                && IsHelpless() == FALSE;
+            while (bCurrentInstant && !bSkipNetworkLeave) {
                 ResolveInstants(FALSE);
                 bCurrentInstant = g_pBaldurChitin->GetObjectGame()
                                       ->GetRuleTables()
                                       .m_lInstantActions.Find(m_curAction.GetActionID())
                     != NULL;
+                if (g_pChitin->cNetwork.GetSessionOpen() == TRUE
+                    && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA) {
+                    break;
+                }
             }
         }
     }
