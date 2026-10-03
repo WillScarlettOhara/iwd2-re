@@ -13361,9 +13361,8 @@ void CGameSprite::ProcessAI()
         CheckTimers(1);
     }
 
-    // 0x72D816: per-round modal / passive-ability update (bard song, search,
-    // stealth, turn undead).  The binary also runs a nearest-enemy acquisition
-    // pass (0x72FBF0) immediately before this; that remains unrecovered.
+    // Update nearby-enemy state before passive/modal abilities (call at 0x72D90B).
+    UpdateBerserkActive();
     CheckModal();
 
     if (ProcessEffectList()
@@ -13533,6 +13532,31 @@ CString CGameSprite::GetRaceLabel(BYTE nRace)
     case 0xFF: sRace = "NO_RACE"; break;
     }
     return sRace;
+}
+
+// 0x72FBF0
+void CGameSprite::UpdateBerserkActive()
+{
+    if (!CanAct()) {
+        m_berserkActive = FALSE;
+    }
+    if (m_derivedStats.m_spellStates[SPLSTATE_BERSERK_ALWAYS_ACTIVE]) {
+        m_berserkActive = TRUE;
+        return;
+    }
+    if (static_cast<DWORD>(field_44A) % 100 != static_cast<DWORD>(m_id) % 100) {
+        return;
+    }
+    if (GetVertListType() != CGameObject::LIST_FRONT) {
+        m_berserkActive = FALSE;
+        return;
+    }
+    CAIObjectType enemy = m_typeAI.GetEnemyOf();
+    BOOL seeInvisible = GetCanSeeInvisible();
+    SHORT range = GetVisualRange();
+    LONG nearest = m_pArea->GetNearest(m_id, enemy, range, m_terrainTable,
+        TRUE, seeInvisible, FALSE, 0, FALSE);
+    m_berserkActive = nearest != CGameObjectArray::INVALID_INDEX;
 }
 
 // 0x72FD20

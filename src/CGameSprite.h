@@ -626,6 +626,7 @@ public:
     BOOL CheckItemDepleted(SHORT nSlot, SHORT nAbility);
     void sub_72DE60();
     void sub_71E760(CDerivedStats& DStats, int a2);
+    void UpdateBerserkActive();
     void CheckModal();
     SHORT sub_757B40();
     void sub_71C0C0();
