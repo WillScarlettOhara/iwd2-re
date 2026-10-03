@@ -2607,6 +2607,12 @@ void Tick(CWarp* pActiveEngine)
             }
         }
         if (valid && baseDamage) {
+            Emit("{\"step\":%d,\"op\":\"damage-context\",\"item\":\"%s\",\"derivedCrushing\":%d,\"tempCrushing\":%d,\"tempMaxHP\":%d,\"difficulty\":%lu,\"multiplier\":%ld,\"mpMultiplier\":%ld,\"baseCrushing\":%d,\"barbarianLevel\":%u,\"nameRef\":%lu,\"x\":%ld,\"y\":%ld}",
+                nStep, step.s[0], target->m_derivedStats.m_nResistCrushing, target->m_tempStats.m_nResistCrushing,
+                target->m_tempStats.m_nMaxHitPoints, pGame->m_cOptions.m_nDifficultyLevel,
+                pGame->m_cOptions.m_nDifficultyMultiplier, pGame->m_cOptions.m_nMPDifficultyMultiplier,
+                target->m_baseStats.m_resistCrushingBase, target->m_baseStats.m_barbarianLevel,
+                target->m_baseStats.m_name, target->m_pos.x, target->m_pos.y);
             valid = source->m_derivedStats.m_cDamageBonusList.IsEmpty();
             if (valid) {
                 CDerivedStatsTemplate savedStats = source->m_derivedStats;
