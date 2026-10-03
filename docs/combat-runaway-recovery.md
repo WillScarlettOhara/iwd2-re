@@ -51,3 +51,7 @@ parity is YELLOW (284 original / 77 detected source calls) and remains partial.
 GREEN function parity and this bounded runtime scenario do not establish
 full original/recovered equivalence. Next combat validation should cover
 flee destinations and nearest-enemy retaliation.
+
+Follow-up: [runtime path coverage](combat-runaway-paths-validation.md) proves
+nearby periodic fleeing and melee retaliation for both actions 23 and 184.
+The random-point phases, sanctuary skip and ranged rejection remain untested.

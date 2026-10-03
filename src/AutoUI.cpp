@@ -2392,6 +2392,99 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "runawaymove") == 0) {
+        static BOOL running = FALSE;
+        static CAIAction savedAction;
+        static CTypedPtrList<CPtrList, CAIAction*> savedQueue;
+        static CPoint start;
+        static CPoint threat;
+        static CPoint savedDest;
+        static SHORT savedCount;
+        static SHORT savedActionCount;
+        static SHORT savedReturn;
+        static SHORT savedSequence;
+        static BOOL savedInterrupt;
+        static INT elapsed;
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        LONG targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* raw = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and party actor");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        if (!running) {
+            CGameObject* target = NULL;
+            if (source->m_pPath != NULL || source->m_currentSearchRequest != NULL
+                || objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &target, INFINITE) != CGameObjectArray::SUCCESS) {
+                objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                Fail(nStep, step.op, "requires idle actor and available target");
+                return;
+            }
+            BOOL sameArea = source->m_pArea != NULL && source->m_pArea == target->m_pArea;
+            threat = target->GetPos();
+            objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            if (!sameArea) {
+                objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                Fail(nStep, step.op, "requires same area");
+                return;
+            }
+            savedAction = source->m_curAction;
+            savedCount = source->field_5614;
+            savedActionCount = source->m_actionCount;
+            savedReturn = source->m_nLastActionReturn;
+            savedSequence = source->m_nSequence;
+            savedInterrupt = source->m_interrupt;
+            savedDest = source->m_curDest;
+            while (!source->m_queuedActions.IsEmpty()) savedQueue.AddTail(source->m_queuedActions.RemoveHead());
+            start = source->m_pos;
+            CAIObjectType selector;
+            selector.m_nInstance = targetId;
+            source->m_curAction = CAIAction(CAIAction::RUNAWAYFROMNOINTERRUPT, selector, 1000, 0, 0);
+            source->field_5614 = 14;
+            source->m_actionCount = 0;
+            source->m_interrupt = FALSE;
+            SHORT result = source->ExecuteAction();
+            Emit("{\"step\":%d,\"op\":\"runawaymove-start\",\"returned\":%d,\"x\":%ld,\"y\":%ld,\"destX\":%ld,\"destY\":%ld,\"request\":%s}",
+                nStep, result, start.x, start.y, source->m_curDest.x, source->m_curDest.y,
+                source->m_currentSearchRequest != NULL ? "true" : "false");
+            running = TRUE;
+            elapsed = 0;
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            return;
+        }
+        ++elapsed;
+        CPoint finish = source->m_pos;
+        LONG away = (finish.x - start.x) * (start.x - threat.x)
+            + (finish.y - start.y) * (start.y - threat.y);
+        BOOL moved = finish != start && away > 0;
+        if (!moved && elapsed < 150) {
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            return;
+        }
+        source->DropPath();
+        source->DropSearchRequest();
+        while (!source->m_queuedActions.IsEmpty()) delete source->m_queuedActions.RemoveHead();
+        while (!savedQueue.IsEmpty()) source->m_queuedActions.AddTail(savedQueue.RemoveHead());
+        source->m_curAction = savedAction;
+        source->field_5614 = savedCount;
+        source->m_actionCount = savedActionCount;
+        source->m_nLastActionReturn = savedReturn;
+        source->m_curDest = savedDest;
+        source->m_interrupt = savedInterrupt;
+        source->SetSequence(savedSequence);
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        running = FALSE;
+        Emit("{\"step\":%d,\"op\":\"runawaymove\",\"ticks\":%d,\"startX\":%ld,\"startY\":%ld,\"endX\":%ld,\"endY\":%ld,\"away\":%ld,\"valid\":%s}",
+            nStep, elapsed, start.x, start.y, finish.x, finish.y, away, moved ? "true" : "false");
+        if (!moved) { Fail(nStep, step.op, "actor did not flee (test action/path removed)"); return; }
+        s_pc++;
+        return;
+    }
+
     if (strcmp(step.op, "combatrunaway") == 0) {
         CInfGame* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();
@@ -2802,10 +2895,13 @@ void Tick(CWarp* pActiveEngine)
                 savedAction = source->m_curAction;
                 auto actionCount = source->m_actionCount;
                 auto lastReturn = source->m_nLastActionReturn;
+                auto runawayCount = source->field_5614;
+                auto sourcePos = source->m_pos;
                 auto lastAction = source->m_lastActionID;
                 auto feedbackTarget = source->field_70EE;
                 auto retaliation = target->m_derivedStats.m_onHitSpells;
                 auto team = target->field_58C;
+                auto targetType = target->m_typeAI;
                 auto selected = source->m_equipment.m_selectedWeapon;
                 auto selectedAbility = source->m_equipment.m_selectedWeaponAbility;
                 auto weaponSet = source->m_nWeaponSet;
@@ -2868,11 +2964,28 @@ void Tick(CWarp* pActiveEngine)
                 source->field_5632 = 0;
                 source->field_5636 = 0;
                 SHORT actionId = step.nCount > 0 ? static_cast<SHORT>(step.n[0]) : CAIAction::ATTACK;
+                BOOL runaway = attackDamage && (actionId == CAIAction::RUNAWAYFROM
+                    || actionId == CAIAction::RUNAWAYFROMNOINTERRUPT);
+                if (runaway) {
+                    // Temporarily make the other party member the nearest enemy.
+                    target->m_typeAI.m_nEnemyAlly = CAIObjectType::EA_ENEMY;
+                    source->m_pos = target->m_pos;
+                    source->field_5614 = 0;
+                    BYTE sourceSpace = source->m_animation.GetPersonalSpace();
+                    BYTE targetSpace = target->m_animation.GetPersonalSpace();
+                    BYTE space = static_cast<BYTE>(((targetSpace - 1) >> 1) + ((sourceSpace - 1) >> 1) - 1);
+                    SHORT reach = static_cast<SHORT>((space + static_cast<SHORT>(ability->range + 1)) * 16);
+                    LONG nearest = area->GetNearest(sourceId, source->m_typeAI.GetEnemyOf(), reach,
+                        source->m_terrainTable, TRUE, source->GetCanSeeInvisible(), FALSE, 0, FALSE);
+                    Emit("{\"step\":%d,\"op\":\"runaway-retaliation-target\",\"target\":%ld,\"nearest\":%ld,\"range\":%d,\"sanctuary\":%d}",
+                        nStep, targetId, nearest, reach, target->m_derivedStats.m_spellStates[SPLSTATE_SANCTUARY] ? 1 : 0);
+                    valid = valid && nearest == targetId;
+                }
                 if (attackDamage) {
                     CAIObjectType targetType;
                     targetType.m_nInstance = targetId;
                     source->m_curAction = CAIAction(actionId, targetType,
-                        actionId == CAIAction::ATTACKREEVALUATE ? 1000 : 0, 0, 0);
+                        actionId == CAIAction::ATTACKREEVALUATE || runaway ? 1000 : 0, 0, 0);
                     source->m_actionCount = 0;
                 }
                 SHORT result = attackDamage ? source->ExecuteAction() : source->Swing(target);
@@ -2885,6 +2998,8 @@ void Tick(CWarp* pActiveEngine)
                 for (SHORT combatFrame = 1; combatFrame <= 101 && source->m_attackFrame != -2 && !(finalShot && finalMode != 0 && finalMode != 3 && result == CGameAIBase::ACTION_ERROR); ++combatFrame) {
                     source->m_attackFrame = combatFrame;
                     if (attackDamage) source->m_actionCount = combatFrame;
+                    // Isolate retaliation from the fifteenth-count movement request.
+                    if (runaway) source->field_5614 = 0;
                     result = attackDamage ? source->ExecuteAction() : source->Swing(target);
                     valid = valid && (result != CGameAIBase::ACTION_ERROR || (finalShot && finalMode != 0 && finalMode != 3));
                     ++ticks;
@@ -2912,7 +3027,8 @@ void Tick(CWarp* pActiveEngine)
                 }
                 WORD remaining = finalShot ? (finalMode == 1 ? 0 : reserve.GetUsageCount(0)) : weapon.GetUsageCount(0);
                 valid = valid && result == (finalShot && finalMode != 0 && finalMode != 3 ? CGameAIBase::ACTION_ERROR : attackDamage && actionId == CAIAction::ATTACKONEROUND
-                        ? CGameAIBase::ACTION_DONE : CGameAIBase::ACTION_INTERRUPTABLE)
+                        ? CGameAIBase::ACTION_DONE : runaway && actionId == CAIAction::RUNAWAYFROMNOINTERRUPT
+                        ? CGameAIBase::ACTION_NORMAL : CGameAIBase::ACTION_INTERRUPTABLE)
                     && (finalShot && finalMode != 0 && finalMode != 3 ? source->m_attackFrame >= 0 : source->m_attackFrame == -2)
                     && (finalShot && finalMode != 0 && finalMode != 3 || source->m_curProjectile == NULL)
                     && remaining == (finalShot ? (finalMode == 1 ? 0 : (finalMode == 3 ? 6 : 7)) : (ability->maxUsageCount != 0 ? 2 : 3));
@@ -2958,10 +3074,13 @@ void Tick(CWarp* pActiveEngine)
                 source->m_curAction = savedAction;
                 source->m_actionCount = actionCount;
                 source->m_nLastActionReturn = lastReturn;
+                source->field_5614 = runawayCount;
+                source->m_pos = sourcePos;
                 source->m_lastActionID = lastAction;
                 source->field_70EE = feedbackTarget;
                 target->m_derivedStats.m_onHitSpells = retaliation;
                 target->field_58C = team;
+                target->m_typeAI = targetType;
             }
         }
         if (valid && baseDamage) {

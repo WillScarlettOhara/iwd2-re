@@ -1,0 +1,12 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+combatrunaway
+resume
+runawaymove
+attackdamage ZRCMELEE 184
+attackdamage ZRCMELEE 23

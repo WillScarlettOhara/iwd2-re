@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-runaway-paths.txt",
+  "hold": 60,
+  "fixtures": [
+    "combat-payload"
+  ],
+  "preserve": [],
+  "preconditions": [
+    "Center camera and require two visible party members with an idle actor and enough target HP.",
+    "Exercise actual fifteenth-count flee movement; cancel the test path and restore the previous action and queue. Never save the moved position.",
+    "Temporarily mark only the target party member as an enemy during an isolated melee cycle for actions 184 and 23, verify real HP loss, and restore actor position/type/counter.",
+    "Preserve save/config files transactionally."
+  ]
+}
