@@ -18,6 +18,9 @@ const wdActionCtor = wdNative('0x403a40', 'pointer', []);
 const wdActionAssign = wdNative('0x405090', 'pointer', ['pointer']);
 const wdActionDtor = wdNative('0x403b40', 'void', []);
 const wdUsage = wdNative('0x4e84b0', 'uint16', ['int']);
+const wdGameNew = new NativeFunction(ptr('0x7fc95b'), 'pointer', ['uint'], 'mscdecl');
+const wdSelect = wdNative('0x74f830', 'void', ['uint8','uint8','uint8','uint8']);
+const wdButtonCtor = wdNative('0x593f80', 'pointer', []);
 const wdCases = [['ZRCMELEE','',1,5], ['ZRCARROW','ZRCBOW',2,9],
     ['ZRCBOLT','ZRCXBOW',12,9], ['ZRCSTONE','ZRCSLING',17,9]];
 let wdLoaded = false, wdDone = false, wdTicks = 0, wdIndex = 0, wdWaiting = null, wdMatched = false;
@@ -109,32 +112,53 @@ function wdRound(source, target, ids, input) {
         [0x342c,8*0x3c], [0x4c12,4*0x0e], [0x4ad8+11*4,4], [0x4ad8+43*4,8],
         [0x4ba4,1], [0x4ba6,2], [0x4c68,1], [0x5592,4], [0x5604,2],
         [0x5622,2], [0x5630,1], [0x5632,4], [0x5636,1], [0x7118,4], [0x72a4,4], [0x70ee,4]];
-    if (wdTestAttack) sourceFields.push([0x474,2], [0x5606,2]);
+    if (wdTestAttack || wdTestFinalShot) sourceFields.push([0x474,2], [0x5606,2]);
+    if (wdTestFinalShot) sourceFields.push([0x4ad8+12*4,12], [0x3d3a,8]);
     const snapshots = sourceFields.map(([offset,size]) => [source.add(offset), source.add(offset).readByteArray(size)]);
     snapshots.push([target.add(0x58c), target.add(0x58c).readByteArray(4)]);
     let weapon = null, launcher = null, ability = null, demanded = false, hitBonus = 0;
     let savedAction = null, testAction = null;
-    const action = [3,98,105,3][wdIndex-wdCases.length];
+    let lastUnit = null, reserve = null, installed = false;
+    const selected = source.add(0x4ba4).readU8(), selectedAbility = source.add(0x4ba6).readU16();
+    const action = wdTestFinalShot ? 3 : [3,98,105,3][wdIndex-wdCases.length];
     try {
         weapon = wdItem(input[0], 3); launcher = wdItem(input[1]);
         demanded = wdDemand(weapon) !== 0;
         if (!demanded) throw new Error('Swing fixture demand failed');
         ability = wdAbility(weapon, 0);
         if (ability.isNull()) throw new Error('Swing fixture ability missing');
+        if (wdTestFinalShot) {
+            reserve = wdItem(input[0], 7);
+            // Only a game-allocated object may be deleted by CheckItemDepleted.
+            lastUnit = wdGameNew(0xf0);
+            if (lastUnit.isNull()) throw new Error('Final unit allocation failed');
+            const ref = Memory.allocUtf8String(input[0].padEnd(8,'\0'));
+            wdCtor(lastUnit, ref.readU32(), ref.add(4).readU32(), 1,0,0,0,0);
+        }
         hitBonus = ability.add(0x14).readS16(); ability.add(0x14).writeS16(32767);
         source.add(0x920).writeByteArray(new Uint8Array(0x188));
         source.add(0x95c).writeS16(19); source.add(0x974).writeS16(10); source.add(0x93a).writeS16(1);
         source.add(0x75c).writeByteArray(new Uint8Array(12)); source.add(0x62f).writeU8(0);
         source.add(0x28).writeU8(0); source.add(0x38).writeU32(0);
         target.add(0x58c).writeU32(0x200000);
-        if (input[1]) source.add(0x4ad8+11*4).writePointer(weapon);
+        if (input[1]) source.add(0x4ad8+11*4).writePointer(wdTestFinalShot ? lastUnit : weapon);
+        installed = true;
         source.add(0x4ad8+43*4).writePointer(input[1] ? launcher : weapon);
         source.add(0x4ad8+44*4).writePointer(ptr(0));
         source.add(0x4ba4).writeU8(input[1] ? 11 : 43); source.add(0x4ba6).writeU16(0);
         source.add(0x4c68).writeU8(0); source.add(0x72a4).writeS32(1);
         source.add(0x5592).writePointer(ptr(0)); source.add(0x5622).writeS16(-1);
         source.add(0x5630).writeU8(0); source.add(0x5632).writeS32(0); source.add(0x5636).writeU8(0);
-        if (wdTestAttack) {
+        if (wdTestFinalShot) {
+            source.add(0x4ad8+12*4).writePointer(reserve);
+            source.add(0x4ad8+13*4).writePointer(ptr(0)); source.add(0x4ad8+14*4).writePointer(ptr(0));
+            source.add(0x3d3a).writeByteArray(new Uint8Array(8));
+            for (let i=0; i<8; ++i) {
+                const button = source.add(0x342c+i*0x3c); wdButtonCtor(button);
+                button.add(0x1c).writeS16(43+i); button.add(0x1e).writeS16(0);
+            }
+        }
+        if (wdTestAttack || wdTestFinalShot) {
             // Own the backup through real construction/assignment, including CString refcounts.
             savedAction = Memory.alloc(0xd6); wdActionCtor(savedAction);
             wdActionAssign(savedAction, source.add(0x476));
@@ -144,34 +168,48 @@ function wdRound(source, target, ids, input) {
             testAction.add(0x48).writeS32(ids[1]);
             wdActionAssign(source.add(0x476), testAction); source.add(0x474).writeS16(0);
         }
-        const execute = () => wdTestAttack ? wdExecute(source) : wdSwing(source, target);
+        const execute = () => wdTestAttack || wdTestFinalShot ? wdExecute(source) : wdSwing(source, target);
         let result = execute(), calls = 1, valid = result !== -2;
         for (let frame = 1; frame <= 101 && source.add(0x5622).readS16() !== -2; ++frame) {
             source.add(0x5622).writeS16(frame);
-            if (wdTestAttack) source.add(0x474).writeS16(frame);
+            if (wdTestAttack || wdTestFinalShot) source.add(0x474).writeS16(frame);
             result = execute();
             valid = valid && result !== -2; ++calls;
         }
-        const remaining = wdUsage(weapon, 0);
+        const remaining = wdUsage(wdTestFinalShot ? reserve : weapon, 0);
         // ACTION_INTERRUPTABLE=1, ACTION_ERROR=-2 (binary constants 0x8485C6/CA).
         valid = valid && result === (wdTestAttack && action === 105 ? -1 : 1) && source.add(0x5622).readS16() === -2
-            && source.add(0x5592).readPointer().isNull() && remaining === (input[1] ? 2 : 3);
-        const tag = wdTestAttack ? 'weapon-attack' : 'weapon-swing';
+            && source.add(0x5592).readPointer().isNull() && remaining === (wdTestFinalShot ? 7 : (input[1] ? 2 : 3));
+        const tag = wdTestFinalShot ? 'weapon-finalshot' : (wdTestAttack ? 'weapon-attack' : 'weapon-swing');
         const record = {tag, stage:'round', item:input[0], calls, remaining, valid};
-        if (wdTestAttack) Object.assign(record, {action, returned:result, frame:source.add(0x5622).readS16()});
+        if (wdTestAttack || wdTestFinalShot) Object.assign(record, {action, returned:result, frame:source.add(0x5622).readS16()});
+        if (wdTestFinalShot) {
+            Object.assign(record, {deleted:Number(source.add(0x4ad8+11*4).readPointer().isNull()),
+                slot:source.add(0x4ba4).readU8(), ability:source.add(0x4ba6).readU16(), set:source.add(0x4c68).readU8()});
+            record.valid = record.valid && record.deleted === 1 && record.slot === 12 && record.ability === 0 && record.set === 0;
+        }
         send(record);
         return {ids, hp, input:[input[0],input[1],input[2],input[1] ? 12 : 6], ticks:0, round:true, tag};
     } finally {
         if (savedAction) { wdActionAssign(source.add(0x476), savedAction); wdActionDtor(savedAction); }
         if (testAction) wdActionDtor(testAction);
+        if (lastUnit && !lastUnit.isNull()) {
+            const live = installed ? source.add(0x4ad8+11*4).readPointer() : lastUnit;
+            if (!live.isNull()) wdDelete(live); // Never read the deleted lastUnit itself.
+        }
         if (weapon) {
             wdDelete(source.add(0x5592).readPointer());
             if (ability && !ability.isNull()) ability.add(0x14).writeS16(hitBonus);
         }
         for (const [p,bytes] of snapshots) p.writeByteArray(bytes);
+        if (wdTestFinalShot) {
+            source.add(0x4ba4).writeU8(255); wdSelect(source,selected,selectedAbility & 255,0,1);
+            for (const [p,bytes] of snapshots) p.writeByteArray(bytes);
+        }
         if (demanded) wdRelease(weapon);
         if (launcher) wdDtor(launcher);
         if (weapon) wdDtor(weapon);
+        if (reserve) wdDtor(reserve);
     }
 }
 function wdLaunch(game, objects, source, target, ids, input) {
@@ -267,7 +305,7 @@ Interceptor.attach(ptr('0x686690'), {onLeave() {
                 damage:damage, expectedDamage:wdWaiting.input[3]});
             if (damage <= 0) throw new Error('No HP loss or projectile timeout');
             wdWaiting = null;
-            if (++wdIndex === wdCases.length * (wdTestRounds || wdTestAttack ? 2 : 1)) {
+            if (++wdIndex === (wdTestFinalShot ? 7 : wdCases.length * (wdTestRounds || wdTestAttack ? 2 : 1))) {
                 if (wdTestCleanup) wdCompressChecks(objects, source);
                 if (wdTestDepletion) wdDepletionChecks(source);
                 wdDone = true; send({tag:'reference-done'}); return;
@@ -275,7 +313,7 @@ Interceptor.attach(ptr('0x686690'), {onLeave() {
         }
         launch = wdIndex < wdCases.length
             ? wdLaunch(game, objects, source, target, ids, wdCases[wdIndex])
-            : wdRound(source, target, ids, wdCases[wdIndex-wdCases.length]);
+            : wdRound(source, target, ids, wdCases[wdIndex-wdCases.length+(wdTestFinalShot ? 1 : 0)]);
     } catch (e) { wdDone = true; send({tag:'reference-error', error:String(e)}); }
     finally { for (const id of held.reverse()) wdUnlock(objects, id, 0, 0xffffffff); }
     if (launch && !wdDone) {

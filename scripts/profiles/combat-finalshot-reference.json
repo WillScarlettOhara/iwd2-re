@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-finalshot-reference.txt",
+  "hold": 60,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Center camera and match the source/target positions and target damage context through four base damage tests.",
+    "Each ranged family fires its last unit through ExecuteAction/Attack/Swing with fixed stats, one forced hit and an identical seven-unit reserve in slot 12; other reserve slots are cleared temporarily.",
+    "Allocate the last unit with the game allocator; a separately demanded resource keeper preserves the ability pointer across deletion. Never read the deleted item.",
+    "Compare delivered payload damage, deletion, selected reserve, untouched reserve count, full round completion and action return. Restore equipment, owned actions, buttons, stats and animation before subsequent world ticks.",
+    "This tests direct frame progression with an identical reserve, not normal AI timing or no-reserve/different-resource cancellation. Never save fixture state or damage."
+  ]
+}

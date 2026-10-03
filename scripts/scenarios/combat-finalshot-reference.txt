@@ -1,0 +1,15 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+resume
+weapondamage ZRCMELEE
+weapondamage ZRCARROW ZRCBOW
+weapondamage ZRCBOLT ZRCXBOW
+weapondamage ZRCSTONE ZRCSLING
+finalshotdamage ZRCARROW ZRCBOW
+finalshotdamage ZRCBOLT ZRCXBOW
+finalshotdamage ZRCSTONE ZRCSLING

@@ -72,3 +72,6 @@ capture deadline still enforced; missing/deleted actors remain errors.
 Next: fire the final arrow, bolt and stone through real Attack/Swing and compare
 delivered damage, depletion, replacement and action continuation with the
 original. The direct transitions above do not establish those combined paths.
+
+Follow-up: [final shots with identical reserves](combat-finalshot-reference.md)
+now match 14 observations. No-reserve/different-resource final shots remain open.

@@ -197,6 +197,49 @@ class ActorInputTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             reference.reconstructed_events(self.path, depletion=True)
 
+    def finalshot_records(self):
+        self.damage_records()
+        for item in ('ZRCARROW', 'ZRCBOLT', 'ZRCSTONE'):
+            self.records += [dict(op='finalshotdamage-round', item=item, calls=102,
+                                  remaining=7, valid=1, action=3, returned=1, frame=-2,
+                                  deleted=1, slot=12, ability=0, set=0),
+                             dict(op='finalshotdamage', item=item, hpBefore=100,
+                                  hpAfter=88, expectedDamage=12)]
+
+    def test_finalshot_requires_damage_after_deletion(self):
+        self.finalshot_records()
+        self.write()
+        self.assertEqual(len(reference.reconstructed_events(self.path, finalshot=True)), 14)
+        self.records[-1]['hpAfter'] = 100
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, finalshot=True)
+
+    def test_finalshot_requires_untouched_selected_reserve(self):
+        self.finalshot_records()
+        self.records[-2]['remaining'] = 6
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, finalshot=True)
+        self.records[-2]['remaining'] = 7
+        self.records[-2]['slot'] = 10
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, finalshot=True)
+
+    def test_finalshot_rejects_undeleted_unit_and_interrupted_round(self):
+        self.finalshot_records()
+        self.records[-2]['deleted'] = 0
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, finalshot=True)
+        self.records[-2]['deleted'] = 1
+        self.records[-2]['returned'] = -2
+        self.records[-2]['frame'] = 51
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, finalshot=True)
+
 
 if __name__ == '__main__':
     unittest.main()

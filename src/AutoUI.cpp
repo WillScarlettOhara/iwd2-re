@@ -2538,9 +2538,11 @@ void Tick(CWarp* pActiveEngine)
     }
 
     if (strcmp(step.op, "weaponpayload") == 0 || strcmp(step.op, "weapondamage") == 0
-        || strcmp(step.op, "swingdamage") == 0 || strcmp(step.op, "attackdamage") == 0) {
+        || strcmp(step.op, "swingdamage") == 0 || strcmp(step.op, "attackdamage") == 0
+        || strcmp(step.op, "finalshotdamage") == 0) {
         BOOL baseDamage = strcmp(step.op, "weapondamage") == 0;
-        BOOL attackDamage = strcmp(step.op, "attackdamage") == 0;
+        BOOL finalShot = strcmp(step.op, "finalshotdamage") == 0;
+        BOOL attackDamage = strcmp(step.op, "attackdamage") == 0 || finalShot;
         BOOL swingDamage = strcmp(step.op, "swingdamage") == 0 || attackDamage;
         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
         if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
@@ -2616,6 +2618,10 @@ void Tick(CWarp* pActiveEngine)
             valid = source->m_derivedStats.m_cDamageBonusList.IsEmpty()
                 && target->m_derivedStats.m_cImmunitiesWeapon.IsEmpty();
             if (valid) {
+                CItem reserve(CResRef(step.s[0]), 7, 0, 0, 0, 0);
+                // CheckItemDepleted owns deletion of the last unit. The stack
+                // weapon remains a resource keeper for the ability pointer.
+                CItem* lastUnit = finalShot ? new CItem(CResRef(step.s[0]), 1, 0, 0, 0, 0) : NULL;
                 CDerivedStatsTemplate savedStats = source->m_derivedStats;
                 auto savedBase = source->m_baseStats;
                 auto savedType = source->m_typeAI;
@@ -2639,6 +2645,10 @@ void Tick(CWarp* pActiveEngine)
                 CItem* oldAmmo = source->m_equipment.m_items[11];
                 CItem* oldMain = source->m_equipment.m_items[43];
                 CItem* oldOff = source->m_equipment.m_items[44];
+                CItem* oldReserves[3];
+                BYTE cachedAmmo[8];
+                memcpy(oldReserves, &source->m_equipment.m_items[12], sizeof(oldReserves));
+                memcpy(cachedAmmo, source->field_3D3A, sizeof(cachedAmmo));
                 CButtonData buttons[8];
                 for (INT i = 0; i < 8; ++i) buttons[i] = source->m_quickWeapons[i];
                 CResRef weaponRefs[CGAMESAVECHARACTER_NUM_STATS_WEAPONS];
@@ -2659,12 +2669,23 @@ void Tick(CWarp* pActiveEngine)
                 source->m_typeAI.m_nClassMask = 0;
                 target->m_derivedStats.m_onHitSpells.clear();
                 target->field_58C = 0x200000;
-                source->m_equipment.m_items[11] = hasLauncher ? &weapon : oldAmmo;
+                source->m_equipment.m_items[11] = finalShot ? lastUnit : (hasLauncher ? &weapon : oldAmmo);
                 source->m_equipment.m_items[43] = hasLauncher ? &launcher : &weapon;
                 source->m_equipment.m_items[44] = NULL;
                 source->m_equipment.m_selectedWeapon = hasLauncher ? 11 : 43;
                 source->m_equipment.m_selectedWeaponAbility = 0;
                 source->m_nWeaponSet = 0;
+                if (finalShot) {
+                    source->m_equipment.m_items[12] = &reserve;
+                    source->m_equipment.m_items[13] = NULL;
+                    source->m_equipment.m_items[14] = NULL;
+                    memset(source->field_3D3A, 0, sizeof(cachedAmmo));
+                    for (INT i = 0; i < 8; ++i) {
+                        source->m_quickWeapons[i] = CButtonData();
+                        source->m_quickWeapons[i].m_abilityId.m_itemNum = static_cast<SHORT>(43 + i);
+                        source->m_quickWeapons[i].m_abilityId.m_abilityNum = 0;
+                    }
+                }
                 source->m_bAllowEffectListCall = TRUE;
                 source->m_curProjectile = NULL;
                 source->m_attackFrame = -1;
@@ -2687,14 +2708,20 @@ void Tick(CWarp* pActiveEngine)
                     valid = valid && result != CGameAIBase::ACTION_ERROR;
                     ++ticks;
                 }
-                WORD remaining = weapon.GetUsageCount(0);
+                WORD remaining = finalShot ? reserve.GetUsageCount(0) : weapon.GetUsageCount(0);
                 valid = valid && result == (attackDamage && actionId == CAIAction::ATTACKONEROUND
                         ? CGameAIBase::ACTION_DONE : CGameAIBase::ACTION_INTERRUPTABLE)
                     && source->m_attackFrame == -2 && source->m_curProjectile == NULL
-                    && remaining == (ability->maxUsageCount != 0 ? 2 : 3);
-                Emit("{\"step\":%d,\"op\":\"%s-round\",\"item\":\"%s\",\"calls\":%d,\"remaining\":%u,\"valid\":%d,\"action\":%d,\"returned\":%d,\"frame\":%d}",
+                    && remaining == (finalShot ? 7 : (ability->maxUsageCount != 0 ? 2 : 3));
+                BOOL deleted = finalShot && source->m_equipment.m_items[11] == NULL;
+                valid = valid && (!finalShot || (hasLauncher && deleted
+                    && source->m_equipment.m_selectedWeapon == 12
+                    && source->m_equipment.m_selectedWeaponAbility == 0 && source->m_nWeaponSet == 0));
+                Emit("{\"step\":%d,\"op\":\"%s-round\",\"item\":\"%s\",\"calls\":%d,\"remaining\":%u,\"valid\":%d,\"action\":%d,\"returned\":%d,\"frame\":%d,\"deleted\":%d,\"slot\":%d,\"ability\":%d,\"set\":%d}",
                     nStep, step.op, step.s[0], ticks, remaining, valid,
-                    attackDamage ? actionId : 0, result, source->m_attackFrame);
+                    attackDamage ? actionId : 0, result, source->m_attackFrame, deleted,
+                    source->m_equipment.m_selectedWeapon, source->m_equipment.m_selectedWeaponAbility, source->m_nWeaponSet);
+                if (finalShot && source->m_equipment.m_items[11] == lastUnit) delete lastUnit;
                 delete source->m_curProjectile;
                 source->m_curProjectile = pending;
                 source->m_attackFrame = frame;
@@ -2707,9 +2734,15 @@ void Tick(CWarp* pActiveEngine)
                 source->m_equipment.m_items[11] = oldAmmo;
                 source->m_equipment.m_items[43] = oldMain;
                 source->m_equipment.m_items[44] = oldOff;
+                memcpy(&source->m_equipment.m_items[12], oldReserves, sizeof(oldReserves));
                 source->m_equipment.m_selectedWeapon = selected;
                 source->m_equipment.m_selectedWeaponAbility = selectedAbility;
                 source->m_nWeaponSet = weaponSet;
+                if (finalShot) {
+                    source->m_equipment.m_selectedWeapon = 255;
+                    source->SelectWeaponAbility(selected, static_cast<BYTE>(selectedAbility), FALSE, TRUE);
+                }
+                memcpy(source->field_3D3A, cachedAmmo, sizeof(cachedAmmo));
                 for (INT i = 0; i < 8; ++i) source->m_quickWeapons[i] = buttons[i];
                 for (INT i = 0; i < CGAMESAVECHARACTER_NUM_STATS_WEAPONS; ++i) {
                     source->m_cGameStats.m_pWeaponStats[i].m_cResRef = weaponRefs[i];
