@@ -13348,22 +13348,88 @@ void CGameSprite::ProcessAI()
     m_nCommandPause--;
     field_44A++;
 
-    // TODO INCOMPLETE: 0x72B9A0 still has unrecovered active-combat branches
-    // for morale failure, modal actions, berserk, panic and invisibility. The
-    // recovered path below keeps the exact paused action loop used by chapter
-    // text before delegating active script selection to the recovered
-    // CGameAIBase implementation until those branches are ported.
-    CGameAIBase::ProcessScripts();
-
-    // 0x72DA32: script timers tick every 16th AI frame, staggered per id, so
-    // TimerActive() expires and the 00AMVW wander loop repaces (2-5s).
     if (((m_id ^ field_44A) & 0xF) == 0) {
         CheckTimers(1);
     }
 
-    // Update nearby-enemy state before passive/modal abilities (call at 0x72D90B).
-    UpdateBerserkActive();
-    CheckModal();
+    BOOL bControlledAction = FALSE;
+    BOOL bCanAct = CanAct();
+    if (bCanAct && (m_derivedStats.m_generalState & STATE_HELPLESS) != 0) {
+        if (m_curAction.GetActionID() != CAIAction::NO_ACTION) {
+            m_aiDoAction = CAIAction::NULL_ACTION;
+            ClearActions(FALSE);
+            DropPath();
+            m_interrupt = TRUE;
+            AddAction(m_aiDoAction);
+        }
+        field_727E = TRUE;
+        ApplyTriggers();
+        bControlledAction = TRUE;
+    } else if (bCanAct
+        && (m_derivedStats.m_generalState & STATE_BERSERK) != 0
+        && m_berserkActive) {
+        UpdateBerserkActive();
+        if (m_curAction.GetActionID() != CAIAction::ATTACK
+            && m_curAction.GetActionID() != CAIAction::ATTACKREEVALUATE) {
+            m_aiDoAction.m_actionID = CAIAction::ATTACKREEVALUATE;
+            m_aiDoAction.m_specificID = LONG_MAX;
+            m_aiDoAction.m_specificID2 = 0;
+            m_aiDoAction.m_specificID3 = 0;
+            m_aiDoAction.m_dest = CPoint(-1, -1);
+            m_aiDoAction.m_string1 = "";
+            m_aiDoAction.m_string2 = "";
+            m_aiDoAction.m_internalFlags = 0;
+            ClearActions(FALSE);
+            DropPath();
+            m_interrupt = TRUE;
+            AddAction(m_aiDoAction);
+        }
+        field_727E = TRUE;
+        ApplyTriggers();
+        bControlledAction = TRUE;
+    } else if (bCanAct
+        && (m_derivedStats.m_generalState & STATE_FEEBLEMINDED) != 0) {
+        if (m_curAction.GetActionID() != CAIAction::NO_ACTION) {
+            m_aiDoAction = CAIAction::NULL_ACTION;
+            ClearActions(FALSE);
+            DropPath();
+            m_interrupt = TRUE;
+            AddAction(m_aiDoAction);
+        }
+        field_727E = TRUE;
+        ApplyTriggers();
+        bControlledAction = TRUE;
+    }
+
+    // The remaining forced-action branches (confusion, animal rage and charm)
+    // are not recovered yet. Do not take their normal-state exit transition.
+    BOOL bNormalAction = !bCanAct
+        || ((m_derivedStats.m_generalState & STATE_CONFUSED) == 0
+            && !m_derivedStats.m_spellStates[SPLSTATE_ANIMAL_RAGE]
+            && !m_derivedStats.m_spellStates[SPLSTATE_179]
+            && ((m_derivedStats.m_generalState & STATE_CHARMED) == 0
+                || m_startTypeAI.m_nEnemyAlly > CAIObjectType::EA_GOODCUTOFF
+                || m_typeAI.m_nEnemyAlly != CAIObjectType::EA_CHARMED_PC));
+    if (!bControlledAction && bNormalAction && field_727E != 0) {
+        field_727E = FALSE;
+        if (m_curAction.GetActionID() != CAIAction::NO_ACTION) {
+            m_aiDoAction = CAIAction::NULL_ACTION;
+            ClearActions(FALSE);
+            DropPath();
+            m_interrupt = TRUE;
+            AddAction(m_aiDoAction);
+        }
+        ApplyTriggers();
+        bControlledAction = TRUE;
+    }
+
+    if (!bControlledAction) {
+        UpdateBerserkActive();
+        CheckModal();
+        // TODO INCOMPLETE: morale/dialogue control, remaining forced actions,
+        // and sprite-specific script scheduling in ProcessAI are unrecovered.
+        CGameAIBase::ProcessScripts();
+    }
 
     if (ProcessEffectList()
         && m_pArea != NULL
