@@ -2485,6 +2485,143 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "dialogwait") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        LONG targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* raw = NULL;
+        CGameObject* target = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and two party members");
+            return;
+        }
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &target, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        if (source->m_pPath != NULL || source->m_currentSearchRequest != NULL) {
+            objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires idle actor");
+            return;
+        }
+        auto savedWait = source->m_dialogWait;
+        auto savedTarget = source->m_dialogWaitTarget;
+        auto savedInterrupt = source->m_bAllowDialogInterrupt;
+        auto savedIgnore = source->m_derivedStats.m_bIgnoreDialogPause;
+        auto savedEA = source->m_typeAI.m_nEnemyAlly;
+        auto savedSequence = source->m_nSequence;
+        auto savedDirection = source->m_nDirection;
+        auto savedSelected = source->m_bSelected;
+        auto savedBase = source->m_baseStats.m_generalState;
+        auto savedState = source->m_derivedStats.m_generalState;
+        auto savedImmunity = source->m_baseStats.field_2F0[3];
+        auto savedFailure = source->m_moraleFailure;
+        auto savedCutscene = game->GetGameSave()->m_cutScene;
+        auto savedActive = game->GetWorldTimer()->m_active;
+        source->m_bSelected = FALSE;
+        source->m_inCutScene = FALSE;
+        source->m_baseStats.field_2F0[3] |= 1;
+        game->GetGameSave()->m_cutScene = FALSE;
+        game->GetWorldTimer()->m_active = TRUE;
+        SHORT direction = source->GetDirection(target->GetPos());
+        SHORT idle = source->GetIdleSequence();
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = messages.GetCount();
+        BOOL valid = TRUE;
+        INT checks = 0;
+        LONG dummyPath[2] = { 0, 0 };
+        auto run = [&](const char* name, SHORT sequence, BOOL aligned, BOOL missingTarget,
+                       BOOL path, BOOL failure, BOOL allow, BOOL ignore, BYTE ea, DWORD state,
+                       BOOL paused, INT expectedSequence, INT expectedDirection, INT expectedDrop, LONG initialWait = 3) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction(CAIAction::WAIT, LONG_MAX);
+            source->m_dialogWait = initialWait;
+            source->m_dialogWaitTarget = missingTarget ? -1 : targetId;
+            source->m_bAllowDialogInterrupt = allow;
+            source->m_derivedStats.m_bIgnoreDialogPause = ignore;
+            source->m_typeAI.m_nEnemyAlly = ea;
+            source->m_nSequence = sequence;
+            source->m_nDirection = aligned ? direction : static_cast<SHORT>((direction + 1) % 16);
+            source->m_baseStats.m_generalState = state | (failure ? STATE_PANIC : 0);
+            source->m_derivedStats.m_generalState = state | (failure ? STATE_PANIC : 0);
+            source->m_moraleFailure = failure;
+            source->m_pPath = path ? dummyPath : NULL;
+            source->ProcessAI();
+            source->m_pPath = NULL;
+            INT sequences = 0, directions = 0, drops = 0, updates = 0;
+            BOOL payload = TRUE;
+            while (messages.GetCount() > before) {
+                CMessage* message = messages.RemoveTail();
+                if (auto* seq = dynamic_cast<CMessageSetSequence*>(message)) {
+                    ++sequences;
+                    payload = payload && seq->m_sequence == idle && seq->GetTarget() == id;
+                }
+                if (auto* face = dynamic_cast<CMessageSetDirection*>(message)) {
+                    ++directions;
+                    payload = payload && face->m_face == target->GetPos() && face->GetTarget() == id;
+                }
+                if (dynamic_cast<CMessageDropPath*>(message) != NULL) ++drops;
+                if (dynamic_cast<CMessageSpriteUpdate*>(message) != NULL) ++updates;
+                delete message;
+            }
+            BOOL passed = source->m_dialogWait == (paused ? initialWait - 1 : initialWait);
+            if (paused) {
+                passed = passed && sequences == expectedSequence && directions == expectedDirection
+                    && drops == expectedDrop && payload;
+            }
+            if (failure) {
+                // SpriteUpdate broadcasts to others; it never enters the local queue.
+                passed = passed && !source->m_moraleFailure && updates == 0
+                    && (source->m_baseStats.m_generalState & STATE_PANIC) == 0
+                    && (source->m_derivedStats.m_generalState & STATE_PANIC) == 0;
+            }
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"dialogwait-case\",\"case\":\"%s\",\"wait\":%ld,\"sequence\":%d,\"direction\":%d,\"drop\":%d,\"localUpdates\":%d,\"passed\":%s}",
+                nStep, name, source->m_dialogWait, sequences, directions, drops, updates, passed ? "true" : "false");
+        };
+        run("idle-and-face", CGameSprite::SEQ_ATTACK, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, CAIObjectType::EA_PC, 0, TRUE, 1, 1, 0);
+        run("already-idle-aligned", idle, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, CAIObjectType::EA_PC, 0, TRUE, 0, 0, 0);
+        run("countdown-completes", idle, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, CAIObjectType::EA_PC, 0, TRUE, 0, 0, 0, 1);
+        run("die-keeps-sequence", CGameSprite::SEQ_DIE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, CAIObjectType::EA_PC, 0, TRUE, 0, 1, 0);
+        run("twitch-keeps-sequence", CGameSprite::SEQ_TWITCH, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, CAIObjectType::EA_PC, 0, TRUE, 0, 1, 0);
+        run("sleep-keeps-sequence-and-direction", CGameSprite::SEQ_SLEEP, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, CAIObjectType::EA_PC, 0, TRUE, 0, 0, 0);
+        run("missing-target", CGameSprite::SEQ_ATTACK, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE, CAIObjectType::EA_PC, 0, TRUE, 1, 0, 0);
+        run("path-drop", idle, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, CAIObjectType::EA_PC, 0, TRUE, 0, 0, 1);
+        run("morale-exit-and-path-drop", idle, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE, CAIObjectType::EA_PC, 0, TRUE, 0, 0, 2);
+        run("interrupt-disabled", idle, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, CAIObjectType::EA_PC, 0, FALSE, 0, 0, 0);
+        run("ignore-dialog-pause", idle, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, CAIObjectType::EA_PC, 0, FALSE, 0, 0, 0);
+        run("enemy-cutoff", idle, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, CAIObjectType::EA_EVILCUTOFF, 0, FALSE, 0, 0, 0);
+        run("sleeping-state", CGameSprite::SEQ_SLEEP, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, CAIObjectType::EA_PC, STATE_SLEEPING, FALSE, 0, 0, 0);
+        source->ClearActions(FALSE);
+        source->m_curAction = CAIAction::NULL_ACTION;
+        source->m_dialogWait = savedWait;
+        source->m_dialogWaitTarget = savedTarget;
+        source->m_bAllowDialogInterrupt = savedInterrupt;
+        source->m_derivedStats.m_bIgnoreDialogPause = savedIgnore;
+        source->m_typeAI.m_nEnemyAlly = savedEA;
+        source->m_nSequence = savedSequence;
+        source->m_nDirection = savedDirection;
+        source->m_bSelected = savedSelected;
+        source->m_baseStats.m_generalState = savedBase;
+        source->m_derivedStats.m_generalState = savedState;
+        source->m_baseStats.field_2F0[3] = savedImmunity;
+        source->m_moraleFailure = savedFailure;
+        game->GetGameSave()->m_cutScene = savedCutscene;
+        game->GetWorldTimer()->m_active = savedActive;
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"dialogwait\",\"checks\":%d,\"disposable\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "dialogue pause mismatch"); return; }
+        s_pc++;
+        return;
+    }
+
     if (strcmp(step.op, "moralfailure") == 0) {
         CInfGame* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();

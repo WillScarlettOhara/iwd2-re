@@ -63,5 +63,5 @@ remain unproven static evidence. There is no full parity/equivalence claim.
 Initial run .arc/2026-10-03T21-27-35-947540-batch stopped at a test-only
 compile error: m_pSearchRequest was corrected to m_currentSearchRequest.
 That run did not reach runtime; the full sequence above was rerun afterward.
-Next recovery target: remaining dialogue-pause handling in ProcessAI, including
+Follow-up: [dialogue pause recovery](combat-dialog-wait-recovery.md) implements
 countdown, idle/facing messages and path cancellation before normal scripts.

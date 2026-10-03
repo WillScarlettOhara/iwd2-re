@@ -13439,7 +13439,28 @@ void CGameSprite::ProcessAI()
             && m_bAllowDialogInterrupt
             && !m_derivedStats.m_bIgnoreDialogPause;
         if (bDialogPause) {
-            // TODO INCOMPLETE: dialogue wait, facing and idle messages.
+            m_dialogWait--;
+            if (m_nSequence != GetIdleSequence()
+                && m_nSequence != SEQ_DIE
+                && m_nSequence != SEQ_SLEEP
+                && m_nSequence != SEQ_TWITCH) {
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                    new CMessageSetSequence(static_cast<BYTE>(GetIdleSequence()), m_id, m_id), FALSE);
+            }
+            CGameObject* pTarget = NULL;
+            CGameObjectArray* pObjects = pGame->GetObjectArray();
+            if (pObjects->GetShare(m_dialogWaitTarget, CGameObjectArray::THREAD_ASYNCH,
+                    &pTarget, INFINITE) == CGameObjectArray::SUCCESS) {
+                if (m_nDirection != GetDirection(pTarget->GetPos()) && m_nSequence != SEQ_SLEEP) {
+                    g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                        new CMessageSetDirection(pTarget->GetPos(), m_id, m_id), FALSE);
+                }
+                pObjects->ReleaseShare(m_dialogWaitTarget, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            }
+            if (m_pPath != NULL) {
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                    new CMessageDropPath(m_id, m_id), FALSE);
+            }
             bControlledAction = TRUE;
         } else if (((m_id ^ field_44A) & 0xF) == 0) {
             CheckTimers(1);
@@ -13598,8 +13619,7 @@ void CGameSprite::ProcessAI()
     if (!bControlledAction) {
         UpdateBerserkActive();
         CheckModal();
-        // TODO INCOMPLETE: dialogue control
-        // and sprite-specific script scheduling in ProcessAI are unrecovered.
+        // TODO INCOMPLETE: sprite-specific script scheduling in ProcessAI.
         CGameAIBase::ProcessScripts();
     }
 

@@ -21,8 +21,9 @@ save/config files transactionally, without requiring weapon fixtures.
 
 At this initial checkpoint the function was not yet called by ProcessAI.
 The subsequent [morale failure recovery](combat-morale-failure-recovery.md)
-connects it to entry, panic/flee/berserk selection and shared exit. Dialogue
-control remains incomplete.
+connects it to entry, panic/flee/berserk selection and shared exit. The subsequent
+[dialogue pause recovery](combat-dialog-wait-recovery.md) restores its countdown
+and idle/facing/path messages.
 
 Validation: .arc/2026-10-03T21-15-13-882267-batch, PASS with one skipped
 static check. Parity GREEN; eight source checks and class/layout audits pass;

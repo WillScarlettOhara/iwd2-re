@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-dialog-wait.txt",
+  "hold": 60,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Center camera on the party and require an idle actor and a second party member.",
+    "Exercise dialogue pause countdown, queued idle/facing/path messages, morale exit and eligibility guards in a disposable game process.",
+    "Keep a temporary path marker only during synchronous ProcessAI calls; remove test messages before the engine handles them.",
+    "Never save test state; preserve save/config files transactionally."
+  ]
+}
