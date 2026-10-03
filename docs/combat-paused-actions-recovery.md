@@ -25,7 +25,8 @@ The test incorrectly used userCommandPause, which clears protection at the
 start of ProcessAI. It now uses the internal command pause to retain protection.
 This failure was not a crash and is not successful runtime evidence.
 
-The active cutscene fast path remains incomplete, explicitly marked in source.
+The active cutscene fast path was subsequently removed by
+[the cutscene action recovery](combat-cutscene-actions-recovery.md).
 This recovery does not establish all paused-action effects, network behavior,
 or original/recovered differential equivalence.
 
@@ -37,4 +38,4 @@ Parity remains YELLOW: original/source call counts 191/165 and 11/21;
 ProcessAI retains its floating-point warning. Offset analysis remains unavailable,
 so static equivalence is unproven.
 
-Next target: active cutscene/inactive-sprite routing in ProcessAI.
+Next target: inactive-sprite routing in ProcessAI.

@@ -13343,8 +13343,13 @@ void CGameSprite::ProcessAI()
         m_nCommandPause = 0;
     }
 
+    if (m_curAction.GetActionID() == CAIAction::NO_ACTION) {
+        m_inCutScene = FALSE;
+        m_nCommandPause = 0;
+    }
+
     BOOL bWorldTimerActive = pGame->GetWorldTimer()->m_active;
-    if (!bWorldTimerActive || m_inCutScene) {
+    if (!bWorldTimerActive) {
         if (m_curAction.GetActionID() == CAIAction::NO_ACTION
             && !m_queuedActions.IsEmpty()) {
             SetCurrAction(GetNextAction(m_aiDoAction));
@@ -13367,22 +13372,15 @@ void CGameSprite::ProcessAI()
             m_interrupt = FALSE;
         }
 
-        BOOL bResolveAction = bWorldTimerActive;
-        if (!bWorldTimerActive) {
-            bResolveAction = g_pBaldurChitin->GetObjectGame()
+        BOOL bResolveAction = g_pBaldurChitin->GetObjectGame()
                                  ->GetRuleTables()
                                  .m_lInstantActions.Find(m_curAction.GetActionID())
                 != NULL;
-        }
 
         if (bResolveAction
             && !(g_pChitin->cNetwork.GetSessionOpen() == TRUE
                 && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA)) {
-            // TODO INCOMPLETE: this cutscene fast path stands in for the
-            // unrecovered active branch at 0x72DAC5. Runtime traces show active
-            // cutscene sprites use dropNonInstants=TRUE; paused/timer-stopped
-            // instant-only resolution still uses FALSE.
-            ResolveInstants(bWorldTimerActive);
+            ResolveInstants(FALSE);
         }
 
         return;

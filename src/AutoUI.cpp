@@ -2544,7 +2544,7 @@ void Tick(CWarp* pActiveEngine)
         game->GetGameSave()->m_cutScene = FALSE;
         CPoint marker(savedStart.x + 3, savedStart.y + 5);
         auto run = [&](const char* name, DWORD state, INT spell, BOOL casterHold,
-                       LONG stop, BOOL ownsStop, BOOL instant, BOOL shouldExecute, BOOL paused = FALSE) {
+                       LONG stop, BOOL ownsStop, BOOL instant, BOOL shouldExecute, BOOL paused = FALSE, BOOL cutscene = FALSE) {
             source->ClearActions(FALSE);
             source->m_curAction = CAIAction::NULL_ACTION;
             source->m_curAction.m_actionID = instant ? 269 : CAIAction::WAIT;
@@ -2560,7 +2560,7 @@ void Tick(CWarp* pActiveEngine)
             source->m_derivedStats.m_spellStates.reset();
             if (spell >= 0) source->m_derivedStats.m_spellStates.set(spell);
             source->m_derivedStats.m_bCasterHold = casterHold;
-            source->m_inCutScene = FALSE;
+            source->m_inCutScene = cutscene;
             source->m_moraleFailure = FALSE;
             source->field_727E = FALSE;
             source->field_3428 = 7;
@@ -2608,6 +2608,23 @@ void Tick(CWarp* pActiveEngine)
         run("paused-held-instant", 0, SPLSTATE_HELD, FALSE, 0, FALSE, TRUE, TRUE, TRUE);
         run("paused-caster-hold-instant", 0, -1, TRUE, 0, FALSE, TRUE, TRUE, TRUE);
         run("paused-time-stop-instant", 0, -1, FALSE, 30, FALSE, TRUE, TRUE, TRUE);
+        for (INT instant = 0; instant < 2; ++instant) {
+            run("cutscene-able", 0, -1, FALSE, 0, FALSE, instant, TRUE, FALSE, TRUE);
+            run("cutscene-held", 0, SPLSTATE_HELD, FALSE, 0, FALSE, instant, instant, FALSE, TRUE);
+            run("cutscene-caster-hold", 0, -1, TRUE, 0, FALSE, instant, instant, FALSE, TRUE);
+            run("cutscene-time-stop", 0, -1, FALSE, 30, FALSE, instant, instant, FALSE, TRUE);
+        }
+        source->ClearActions(FALSE);
+        source->m_curAction = CAIAction::NULL_ACTION;
+        source->m_inCutScene = TRUE;
+        source->m_nCommandPause = 10;
+        source->ProcessAI();
+        BOOL idleCleared = !source->m_inCutScene && source->m_nCommandPause <= 0;
+        valid = valid && idleCleared;
+        ++checks;
+        Emit("{\"step\":%d,\"op\":\"cutscene-idle\",\"passed\":%s}", nStep, idleCleared ? "true" : "false");
+        while (messages.GetCount() > before) delete messages.RemoveTail();
+        game->GetWorldTimer()->m_active = FALSE;
         source->m_groupMove = FALSE;
         for (INT preview = 0; preview < 3; ++preview) {
             source->ClearActions(FALSE);
