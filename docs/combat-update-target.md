@@ -59,5 +59,9 @@ before loading the save or reaching any check. They remain UNPROVEN; no target
 differential result is claimed. The prior fourteen direct GroupAttack matches
 documented in `combat-group-reference.md` do not validate UpdateTarget.
 
-Next useful work: extend the original comparison to ExecuteAction's enemy
-selection, then damage under matched combat inputs.
+On 2026-10-03 the loading failure did not recur: all fifteen target predicates
+and fourteen direct GroupAttack predicates matched the original, followed by
+the seven enemy-dispatch predicates. See `combat-dispatch-reference.md` for the
+29/29 and 36/36 captures and their limits. The earlier failed runs remain retained.
+
+Next useful work: compare damage under matched combat inputs.

@@ -265,7 +265,11 @@ function pollSample(state, target) {
 let calibrated = false, calStep = 0, calAttempts = 0, calPoints = [], calSamples = [], calSample = null;
 let mapAx = 1, mapBx = 0, mapAy = 1, mapBy = 0;
 function calibrationFailed(why) {
-  send({tag: 'drive', step: 'calibrationRetry', attempt: ++calAttempts, why: why});
+  const desktop = desktopPointer();
+  send({tag: 'drive', step: 'calibrationRetry', attempt: ++calAttempts, why: why,
+        desktop: desktop, engine: readPointer(), owned: ownedPoint(desktop),
+        inside: desktop ? !!insideClient(desktop) : false,
+        expected: calStep > 0 ? calPoints[calStep - 1] : null});
   calStep = 0;
   if (calAttempts >= 3) {
     driveFailed = true;

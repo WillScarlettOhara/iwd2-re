@@ -105,6 +105,7 @@ Interceptor.attach(ptr('0x686690'), {onLeave() {
         check('attack-specifics', [0xb6,0xba,0xbe].every(o => attack.add(o).readS32() === 0));
         check('repeat-target', repeat.readS16() === 94 && gaEq(repeat.add(0x3e), expected) && gaEmpty(repeat.add(0x3e)));
         check('repeat-specifics', [0xb6,0xba,0xbe].every((o,i) => repeat.add(o).readS32() === 7+i));
+        if (typeof gaDispatchChecks === 'function') gaDispatchChecks(source, target, check);
     } catch (e) { send({tag:'reference-error', error:String(e)}); }
     finally {
         try {

@@ -1,6 +1,7 @@
 """Original GroupAttack semantic checks, compared with a recorded AutoUI run.
 
-The comparison is of fourteen named predicates, plus fifteen with --target,
+The comparison is of fourteen named predicates, plus fifteen with --target
+and seven dispatch predicates with --dispatch (which includes --target),
 not complete raw actor state.
 The original is loaded using the existing driver; only this probe's PID is killed.
 """
@@ -27,7 +28,9 @@ def main():
     parser.add_argument('--ours', type=Path, required=True, help='Existing combat-group or combat-target ui.jsonl')
     parser.add_argument('--timeout', type=int, default=150)
     parser.add_argument('--target', action='store_true', help='Also compare the fifteen UpdateTarget predicates')
+    parser.add_argument('--dispatch', action='store_true', help='Also compare enemy dispatch; includes --target')
     args = parser.parse_args()
+    args.target = args.target or args.dispatch
     if not 1 <= args.timeout <= 300:
         parser.error('timeout must be in 1..300 seconds')
     import frida
@@ -39,8 +42,8 @@ def main():
     ours = [dict(tag='combatgroup-case', case=e['case'], passed=e['passed'])
             for line in args.ours.read_text(encoding='utf-8').splitlines()
             if (e := json.loads(line)).get('op') == 'combatgroup-case'
-            and (not args.target or not e['case'].startswith('dispatch-'))]
-    expected_count = 29 if args.target else 14
+            and (args.dispatch or not args.target or not e['case'].startswith('dispatch-'))]
+    expected_count = 14 + (15 if args.target else 0) + (7 if args.dispatch else 0)
     if len(ours) != expected_count or not all(e['passed'] is True for e in ours):
         raise ValueError(f'Expected {expected_count} successful checks')
     out = REPO / '.arc' / datetime.now(timezone.utc).strftime('%Y-%m-%dT%H-%M-%S-%f-group-reference')
@@ -52,6 +55,9 @@ def main():
     target_js = Path(__file__).with_name('update_target_reference.js')
     if args.target:
         paths.append(target_js)
+    dispatch_js = Path(__file__).with_name('group_dispatch_reference.js')
+    if args.dispatch:
+        paths.append(dispatch_js)
     report['sha256'] = {str(p.resolve()):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
     def write_report():
         (out / 'run.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
@@ -78,6 +84,8 @@ def main():
     code = driver + '\n'
     if args.target:
         code += target_js.read_text(encoding='utf-8') + '\n'
+    if args.dispatch:
+        code += dispatch_js.read_text(encoding='utf-8') + '\n'
     code += Path(__file__).with_suffix('.js').read_text(encoding='utf-8')
     (out / 'original.js').write_text(code, encoding='utf-8')
     print(f'GROUP-REFERENCE {out}', flush=True)
@@ -101,7 +109,9 @@ def main():
                     deadline = time.monotonic() + args.timeout
                     progress = time.monotonic() + 30
                     while time.monotonic() < deadline:
-                        if any(e.get('tag') in ('reference-done','reference-error','crash') for e in events):
+                        if any(e.get('tag') in ('reference-done','reference-error','crash')
+                               or (e.get('tag') == 'drive' and e.get('step') == 'clickFailed')
+                               for e in events):
                             break
                         if time.monotonic() >= progress:
                             print(f'Waiting for original: {len(events)} events', flush=True)
@@ -115,7 +125,8 @@ def main():
                         except frida.InvalidOperationError:
                             pass
         original = [e for e in events if e.get('tag') == 'combatgroup-case']
-        errors = [e for e in events if e.get('tag') in ('reference-error','crash','ERROR')]
+        errors = [e for e in events if e.get('tag') in ('reference-error','crash','ERROR')
+                  or (e.get('tag') == 'drive' and e.get('step') == 'clickFailed')]
         if errors or not any(e.get('tag') == 'reference-done' for e in events) or len(original) != expected_count:
             raise ValueError(f'Incomplete original capture: checks={len(original)}, errors={errors}')
         for label, records in [('original', original), ('reconstructed', ours)]:
