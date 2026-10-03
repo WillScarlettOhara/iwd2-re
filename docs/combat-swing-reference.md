@@ -57,3 +57,6 @@ ordinary hit/miss rolls, critical hits, normal AI timing, ExecuteAction/Attack
 parity, depletion of the final ammunition unit, or nonempty retaliation and
 immunity lists. Next: matched ExecuteAction/Attack rounds on these same actors
 and fixtures, followed by ordinary AI-driven attacks and final-unit depletion.
+
+Follow-up: [ExecuteAction/Attack comparison](combat-attack-reference.md) now
+matches 16 observations, including AttackOneRound completion and ammunition.

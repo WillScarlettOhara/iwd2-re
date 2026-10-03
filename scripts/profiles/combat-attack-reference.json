@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-attack-reference.txt",
+  "hold": 60,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Center camera and match source/target world positions and target damage context after four base damage tests.",
+    "Four controlled ExecuteAction rounds use Attack (3), AttackNoSound (98), AttackOneRound (105), Attack (3), with luck 19, strength 10, one attack and forced hit bonus.",
+    "Require empty source damage bonuses, target weapon immunities and retaliation. Restore temporary equipment, value fields and owned action objects before queued effects execute.",
+    "Compare action IDs, return values, ending frame, round call counts, remaining ammunition and HP loss including payload effects. Direct frame progression does not establish ordinary AI timing or hit/miss rolls.",
+    "Temporary fixtures only; restore save/config files transactionally and never save test damage."
+  ]
+}

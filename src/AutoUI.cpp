@@ -2572,8 +2572,9 @@ void Tick(CWarp* pActiveEngine)
                         ? CGameAIBase::ACTION_DONE : CGameAIBase::ACTION_INTERRUPTABLE)
                     && source->m_attackFrame == -2 && source->m_curProjectile == NULL
                     && remaining == (ability->maxUsageCount != 0 ? 2 : 3);
-                Emit("{\"step\":%d,\"op\":\"%s-round\",\"item\":\"%s\",\"calls\":%d,\"remaining\":%u,\"valid\":%d}",
-                    nStep, step.op, step.s[0], ticks, remaining, valid);
+                Emit("{\"step\":%d,\"op\":\"%s-round\",\"item\":\"%s\",\"calls\":%d,\"remaining\":%u,\"valid\":%d,\"action\":%d,\"returned\":%d,\"frame\":%d}",
+                    nStep, step.op, step.s[0], ticks, remaining, valid,
+                    attackDamage ? actionId : 0, result, source->m_attackFrame);
                 delete source->m_curProjectile;
                 source->m_curProjectile = pending;
                 source->m_attackFrame = frame;

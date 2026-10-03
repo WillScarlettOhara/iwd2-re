@@ -113,6 +113,48 @@ class ActorInputTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             reference.reconstructed_events(self.path, rounds=True)
 
+    def attack_records(self):
+        self.swing_records()
+        actions = dict(ZRCMELEE=3, ZRCARROW=98, ZRCBOLT=105, ZRCSTONE=3)
+        for record in self.records:
+            if record.get('op') == 'swingdamage-round':
+                action = actions[record['item']]
+                record.update(op='attackdamage-round', action=action,
+                              returned=-1 if action == 105 else 1, frame=-2)
+            elif record.get('op') == 'swingdamage':
+                record['op'] = 'attackdamage'
+
+    def test_attack_mode_requires_action_evidence(self):
+        self.attack_records()
+        self.write()
+        records = reference.reconstructed_events(self.path, attack=True)
+        self.assertEqual(len(records), 16)
+        self.assertEqual(records[12]['action'], 105)
+        self.assertEqual(records[12]['returned'], -1)
+        del self.records[-2]['action']
+        self.write()
+        with self.assertRaises(KeyError):
+            reference.reconstructed_events(self.path, attack=True)
+
+    def test_attack_one_round_must_complete(self):
+        self.attack_records()
+        next(e for e in self.records if e.get('action') == 105)['returned'] = 1
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, attack=True)
+
+    def test_attack_mode_rejects_wrong_action_or_unfinished_frame(self):
+        self.attack_records()
+        self.records[-2]['frame'] = 101
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, attack=True)
+        self.records[-2]['frame'] = -2
+        self.records[-2]['action'] = 105
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, attack=True)
+
 
 if __name__ == '__main__':
     unittest.main()
