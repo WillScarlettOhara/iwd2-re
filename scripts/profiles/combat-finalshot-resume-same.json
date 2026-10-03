@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-finalshot-resume-same.txt",
+  "hold": 60,
+  "fixtures": [
+    "combat-payload"
+  ],
+  "preserve": [],
+  "preconditions": [
+    "Two direct controlled Attack rounds with an identical reserve: first depletes slot 11, second uses selected slot 12 without reinstalling/reselecting equipment. Forced hit, fixed stats; assert reserve 7 then 6 and total HP loss 24.",
+    "This tests explicitly restarted frame progression, not natural AI timing. Never save test damage; restore transaction state."
+  ]
+}

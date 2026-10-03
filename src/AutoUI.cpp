@@ -2703,19 +2703,40 @@ void Tick(CWarp* pActiveEngine)
                 }
                 SHORT result = attackDamage ? source->ExecuteAction() : source->Swing(target);
                 INT ticks = 1;
-                for (SHORT combatFrame = 1; combatFrame <= 101 && source->m_attackFrame != -2 && !(finalShot && finalMode != 0 && result == CGameAIBase::ACTION_ERROR); ++combatFrame) {
+                for (SHORT combatFrame = 1; combatFrame <= 101 && source->m_attackFrame != -2 && !(finalShot && finalMode != 0 && finalMode != 3 && result == CGameAIBase::ACTION_ERROR); ++combatFrame) {
                     source->m_attackFrame = combatFrame;
                     if (attackDamage) source->m_actionCount = combatFrame;
                     result = attackDamage ? source->ExecuteAction() : source->Swing(target);
-                    valid = valid && (result != CGameAIBase::ACTION_ERROR || (finalShot && finalMode != 0));
+                    valid = valid && (result != CGameAIBase::ACTION_ERROR || (finalShot && finalMode != 0 && finalMode != 3));
                     ++ticks;
                 }
+                if (finalShot && finalMode == 3) {
+                    valid = valid && result == CGameAIBase::ACTION_INTERRUPTABLE
+                        && source->m_attackFrame == -2 && reserve.GetUsageCount(0) == 7
+                        && source->m_equipment.m_items[11] == NULL
+                        && source->m_equipment.m_selectedWeapon == 12;
+                    Emit("{\"step\":%d,\"op\":\"resume-first\",\"item\":\"%s\",\"calls\":%d,\"remaining\":%u,\"returned\":%d,\"frame\":%d,\"valid\":%d}",
+                        nStep, step.s[0], ticks, reserve.GetUsageCount(0), result, source->m_attackFrame, valid);
+                    // A new controlled Attack starts from the engine-selected slot.
+                    // Do not reinstall or reselect the reserve.
+                    source->m_attackFrame = -1;
+                    source->m_actionCount = 0;
+                    result = source->ExecuteAction();
+                    ticks = 1;
+                    for (SHORT combatFrame = 1; combatFrame <= 101 && source->m_attackFrame != -2; ++combatFrame) {
+                        source->m_attackFrame = combatFrame;
+                        source->m_actionCount = combatFrame;
+                        result = source->ExecuteAction();
+                        valid = valid && result != CGameAIBase::ACTION_ERROR;
+                        ++ticks;
+                    }
+                }
                 WORD remaining = finalShot ? (finalMode == 1 ? 0 : reserve.GetUsageCount(0)) : weapon.GetUsageCount(0);
-                valid = valid && result == (finalShot && finalMode != 0 ? CGameAIBase::ACTION_ERROR : attackDamage && actionId == CAIAction::ATTACKONEROUND
+                valid = valid && result == (finalShot && finalMode != 0 && finalMode != 3 ? CGameAIBase::ACTION_ERROR : attackDamage && actionId == CAIAction::ATTACKONEROUND
                         ? CGameAIBase::ACTION_DONE : CGameAIBase::ACTION_INTERRUPTABLE)
-                    && (finalShot && finalMode != 0 ? source->m_attackFrame >= 0 : source->m_attackFrame == -2)
-                    && (finalShot && finalMode != 0 || source->m_curProjectile == NULL)
-                    && remaining == (finalShot ? (finalMode == 1 ? 0 : 7) : (ability->maxUsageCount != 0 ? 2 : 3));
+                    && (finalShot && finalMode != 0 && finalMode != 3 ? source->m_attackFrame >= 0 : source->m_attackFrame == -2)
+                    && (finalShot && finalMode != 0 && finalMode != 3 || source->m_curProjectile == NULL)
+                    && remaining == (finalShot ? (finalMode == 1 ? 0 : (finalMode == 3 ? 6 : 7)) : (ability->maxUsageCount != 0 ? 2 : 3));
                 BOOL deleted = finalShot && source->m_equipment.m_items[11] == NULL;
                 valid = valid && (!finalShot || (hasLauncher && deleted
                     && source->m_equipment.m_selectedWeapon == (finalMode == 1 ? 10 : 12)
@@ -2842,7 +2863,7 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         s_payloadHP = hp;
-        s_payloadDamage = swingDamage ? (hasLauncher ? 12 : 6)
+        s_payloadDamage = swingDamage ? (hasLauncher ? (finalMode == 3 ? 24 : 12) : 6)
             : (baseDamage ? (hasLauncher ? 9 : 5) : (hasLauncher ? 3 : 1));
         s_payloadTarget = targetId;
         if (!swingDamage) projectile->Fire(area, sourceId, targetId, targetPos, height, 0);

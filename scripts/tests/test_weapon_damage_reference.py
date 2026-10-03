@@ -221,6 +221,30 @@ class ActorInputTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 reference.reconstructed_events(self.path, finalshot=True, finalmode=mode)
 
+    def test_resumed_shot_requires_first_round_and_second_consumption(self):
+        self.finalshot_records()
+        updated = []
+        for record in self.records:
+            if record.get('op') == 'finalshotdamage-round':
+                updated.append(dict(op='resume-first', item=record['item'], calls=102,
+                                    remaining=7, returned=1, frame=-2, valid=1))
+                record['remaining'] = 6
+            elif record.get('op') == 'finalshotdamage':
+                record.update(hpAfter=76, expectedDamage=24)
+            updated.append(record)
+        self.records = updated
+        self.write()
+        self.assertEqual(len(reference.reconstructed_events(self.path, finalshot=True, finalmode=3)), 17)
+        self.records[-2]['remaining'] = 7
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, finalshot=True, finalmode=3)
+        self.records[-2]['remaining'] = 6
+        next(e for e in self.records if e.get('op') == 'resume-first')['remaining'] = 6
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, finalshot=True, finalmode=3)
+
     def test_finalshot_requires_damage_after_deletion(self):
         self.finalshot_records()
         self.write()

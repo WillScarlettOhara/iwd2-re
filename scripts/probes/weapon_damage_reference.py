@@ -54,7 +54,9 @@ def reconstructed_events(path, cleanup=False, rounds=False, attack=False, deplet
         operation, tag = ('finalshotdamage', 'weapon-finalshot') if finalshot else (('attackdamage', 'weapon-attack') if attack else ('swingdamage', 'weapon-swing'))
         extra = []
         for e in raw:
-            if e.get('op') == operation+'-round':
+            if finalshot and finalmode == 3 and e.get('op') == 'resume-first':
+                extra.append(dict(tag='resume-first', **{k:e[k] for k in ('item','calls','remaining','returned','frame')}, valid=bool(e['valid'])))
+            elif e.get('op') == operation+'-round':
                 record = dict(tag=tag, stage='round', item=e['item'],
                                   calls=e['calls'], remaining=e['remaining'], valid=bool(e['valid']))
                 if attack or finalshot:
@@ -71,13 +73,15 @@ def reconstructed_events(path, cleanup=False, rounds=False, attack=False, deplet
                 continue
             if finalshot:
                 action = 3
-            amount = 6 if item == 'ZRCMELEE' else 12
-            record = dict(tag=tag, stage='round', item=item, calls=7 if finalshot and finalmode else 102,
-                          remaining=(0 if finalmode == 1 else 7) if finalshot else (3 if item == 'ZRCMELEE' else 2), valid=True)
+            amount = 6 if item == 'ZRCMELEE' else (24 if finalshot and finalmode == 3 else 12)
+            record = dict(tag=tag, stage='round', item=item, calls=7 if finalshot and finalmode in (1,2) else 102,
+                          remaining=(0 if finalmode == 1 else (6 if finalmode == 3 else 7)) if finalshot else (3 if item == 'ZRCMELEE' else 2), valid=True)
             if attack or finalshot:
-                record.update(action=action, returned=-2 if finalshot and finalmode else (-1 if action == 105 else 1), frame=6 if finalshot and finalmode else -2)
+                record.update(action=action, returned=-2 if finalshot and finalmode in (1,2) else (-1 if action == 105 else 1), frame=6 if finalshot and finalmode in (1,2) else -2)
             if finalshot:
                 record.update(deleted=1, slot=10 if finalmode == 1 else 12, ability=0, set=0)
+            if finalshot and finalmode == 3:
+                required_extra.append(dict(tag='resume-first', item=item, calls=102, remaining=7, returned=1, frame=-2, valid=True))
             required_extra.extend([record,
                                    dict(tag=tag, stage='delivery', item=item,
                                         damage=amount, expectedDamage=amount)])
@@ -131,9 +135,9 @@ def main():
     mode.add_argument('--attack', action='store_true', help='Also compare ExecuteAction/Attack rounds and action return values')
     mode.add_argument('--depletion', action='store_true', help='Also compare exhausted ammo replacement, triggers and non-PC fallback')
     mode.add_argument('--finalshot', action='store_true', help='Fire the final ranged unit through ExecuteAction; choose reserve with --final-mode')
-    parser.add_argument('--final-mode', choices=('same','empty','different'), default='same')
+    parser.add_argument('--final-mode', choices=('same','empty','different','resume-same'), default='same')
     args = parser.parse_args()
-    finalmode = ('same','empty','different').index(args.final_mode)
+    finalmode = ('same','empty','different','resume-same').index(args.final_mode)
     if finalmode and not args.finalshot:
         parser.error('--final-mode requires --finalshot')
     if not 1 <= args.timeout <= 300:
@@ -151,7 +155,7 @@ def main():
     if args.depletion:
         expected_count, profile_name = 23, 'combat-depletion-reference'
     if args.finalshot:
-        expected_count, profile_name = 14, 'combat-finalshot-reference' if not finalmode else 'combat-finalshot-'+args.final_mode
+        expected_count, profile_name = 17 if finalmode == 3 else 14, 'combat-finalshot-reference' if not finalmode else 'combat-finalshot-'+args.final_mode
     out = REPO / '.arc' / datetime.now(timezone.utc).strftime('%Y-%m-%dT%H-%M-%S-%f-weapon-reference')
     out.mkdir()
     report = {'verdict':'UNPROVEN', 'scope':'Four base damage descriptors and four projectile HP deltas',
@@ -251,7 +255,7 @@ def main():
                     or (args.cleanup and e.get('tag') == 'projectile-compress')
                     or (args.rounds and e.get('tag') == 'weapon-swing')
                     or (args.attack and e.get('tag') == 'weapon-attack')
-                    or (args.finalshot and e.get('tag') == 'weapon-finalshot')
+                    or (args.finalshot and (e.get('tag') == 'weapon-finalshot' or finalmode == 3 and e.get('tag') == 'resume-first'))
                     or (args.depletion and e.get('tag') == 'weapon-depletion')]
         errors = [e for e in events if e.get('tag') in ('reference-error','crash','ERROR')
                   or (e.get('tag') == 'drive' and e.get('step') == 'clickFailed')]

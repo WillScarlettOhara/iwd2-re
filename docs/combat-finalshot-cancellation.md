@@ -67,3 +67,5 @@ These scenarios establish original agreement for the controlled final shot,
 item deletion, selected replacement and action return/frame. They do not establish normal AI cancellation or
 next-round behavior, natural hit/miss/critical rolls, or Unusable trigger payloads
 within Swing. Next: test resumed attacks using the selected replacement ammunition.
+
+Follow-up: [resumed shots with identical reserves](combat-resumed-shot-reference.md) MATCH 17/17, including reserve consumption and total delivered damage.

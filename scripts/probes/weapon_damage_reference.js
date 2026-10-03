@@ -170,17 +170,30 @@ function wdRound(source, target, ids, input) {
         }
         const execute = () => wdTestAttack || wdTestFinalShot ? wdExecute(source) : wdSwing(source, target);
         let result = execute(), calls = 1, valid = result !== -2;
-        for (let frame = 1; frame <= 101 && source.add(0x5622).readS16() !== -2 && !(wdTestFinalShot && wdFinalMode !== 0 && result === -2); ++frame) {
+        for (let frame = 1; frame <= 101 && source.add(0x5622).readS16() !== -2 && !(wdTestFinalShot && wdFinalMode !== 0 && wdFinalMode !== 3 && result === -2); ++frame) {
             source.add(0x5622).writeS16(frame);
             if (wdTestAttack || wdTestFinalShot) source.add(0x474).writeS16(frame);
             result = execute();
-            valid = valid && (result !== -2 || (wdTestFinalShot && wdFinalMode !== 0)); ++calls;
+            valid = valid && (result !== -2 || (wdTestFinalShot && wdFinalMode !== 0 && wdFinalMode !== 3)); ++calls;
+        }
+        if (wdTestFinalShot && wdFinalMode === 3) {
+            valid = valid && result === 1 && source.add(0x5622).readS16() === -2
+                && wdUsage(reserve,0) === 7 && source.add(0x4ad8+11*4).readPointer().isNull()
+                && source.add(0x4ba4).readU8() === 12;
+            send({tag:'resume-first', item:input[0], calls, remaining:wdUsage(reserve,0),
+                returned:result, frame:source.add(0x5622).readS16(), valid});
+            source.add(0x5622).writeS16(-1); source.add(0x474).writeS16(0);
+            result = execute(); calls = 1;
+            for (let frame=1; frame<=101 && source.add(0x5622).readS16() !== -2; ++frame) {
+                source.add(0x5622).writeS16(frame); source.add(0x474).writeS16(frame);
+                result = execute(); valid = valid && result !== -2; ++calls;
+            }
         }
         const remaining = wdTestFinalShot && wdFinalMode === 1 ? 0 : wdUsage(wdTestFinalShot ? reserve : weapon, 0);
         // ACTION_INTERRUPTABLE=1, ACTION_ERROR=-2 (binary constants 0x8485C6/CA).
-        valid = valid && result === (wdTestFinalShot && wdFinalMode !== 0 ? -2 : wdTestAttack && action === 105 ? -1 : 1)
-            && (wdTestFinalShot && wdFinalMode !== 0 ? source.add(0x5622).readS16() >= 0 : source.add(0x5622).readS16() === -2)
-            && (wdTestFinalShot && wdFinalMode !== 0 || source.add(0x5592).readPointer().isNull()) && remaining === (wdTestFinalShot ? (wdFinalMode === 1 ? 0 : 7) : (input[1] ? 2 : 3));
+        valid = valid && result === (wdTestFinalShot && wdFinalMode !== 0 && wdFinalMode !== 3 ? -2 : wdTestAttack && action === 105 ? -1 : 1)
+            && (wdTestFinalShot && wdFinalMode !== 0 && wdFinalMode !== 3 ? source.add(0x5622).readS16() >= 0 : source.add(0x5622).readS16() === -2)
+            && (wdTestFinalShot && wdFinalMode !== 0 && wdFinalMode !== 3 || source.add(0x5592).readPointer().isNull()) && remaining === (wdTestFinalShot ? (wdFinalMode === 1 ? 0 : (wdFinalMode === 3 ? 6 : 7)) : (input[1] ? 2 : 3));
         const tag = wdTestFinalShot ? 'weapon-finalshot' : (wdTestAttack ? 'weapon-attack' : 'weapon-swing');
         const record = {tag, stage:'round', item:input[0], calls, remaining, valid};
         if (wdTestAttack || wdTestFinalShot) Object.assign(record, {action, returned:result, frame:source.add(0x5622).readS16()});
@@ -190,7 +203,7 @@ function wdRound(source, target, ids, input) {
             record.valid = record.valid && record.deleted === 1 && record.slot === (wdFinalMode === 1 ? 10 : 12) && record.ability === 0 && record.set === 0;
         }
         send(record);
-        return {ids, hp, input:[input[0],input[1],input[2],input[1] ? 12 : 6], ticks:0, round:true, tag};
+        return {ids, hp, input:[input[0],input[1],input[2],input[1] ? (wdFinalMode === 3 ? 24 : 12) : 6], ticks:0, round:true, tag};
     } finally {
         if (savedAction) { wdActionAssign(source.add(0x476), savedAction); wdActionDtor(savedAction); }
         if (testAction) wdActionDtor(testAction);
@@ -301,7 +314,9 @@ Interceptor.attach(ptr('0x686690'), {onLeave() {
             targetName:target.add(0x5a0).readPointer().readCString(), context:context});
         if (wdWaiting) {
             const damage = wdWaiting.hp - target.add(0x5c0).readS16();
-            if (damage === 0 && ++wdWaiting.ticks < 600) return;
+            // Two immediately driven rounds can deliver on different world ticks.
+            // Keep a bounded wait for their aggregate; timeout still emits the actual delta.
+            if ((wdTestFinalShot && wdFinalMode === 3 ? damage < wdWaiting.input[3] : damage === 0) && ++wdWaiting.ticks < 600) return;
             send({tag:wdWaiting.round ? wdWaiting.tag : 'weapon-base', stage:'delivery', item:wdWaiting.input[0],
                 damage:damage, expectedDamage:wdWaiting.input[3]});
             if (damage <= 0) throw new Error('No HP loss or projectile timeout');
