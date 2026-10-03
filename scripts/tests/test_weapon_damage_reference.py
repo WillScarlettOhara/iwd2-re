@@ -54,6 +54,32 @@ class ActorInputTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             reference.reconstructed_events(self.path)
 
+    def damage_records(self):
+        for item, missile, amount in [('ZRCMELEE', 1, 5), ('ZRCARROW', 2, 9),
+                                     ('ZRCBOLT', 12, 9), ('ZRCSTONE', 17, 9)]:
+            self.records += [dict(op='weapondamage-assembled', item=item, damage=amount,
+                                  missile=missile, valid=1),
+                             dict(op='weapondamage', item=item, hpBefore=100,
+                                  hpAfter=100-amount, expectedDamage=amount)]
+        self.records.append(dict(op='verdict', verdict='PASS'))
+
+    def test_cleanup_requires_both_branches(self):
+        self.damage_records()
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, cleanup=True)
+
+    def test_cleanup_retention_and_removal_are_preserved(self):
+        self.damage_records()
+        self.records += [dict(op='projectile-compress', case='unregistered', returned=0, retained=1),
+                         dict(op='projectile-compress', case='registered', returned=0, removed=1)]
+        self.write()
+        self.assertEqual(len(reference.reconstructed_events(self.path, cleanup=True)), 10)
+        self.records[-1]['removed'] = 0
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, cleanup=True)
+
 
 if __name__ == '__main__':
     unittest.main()

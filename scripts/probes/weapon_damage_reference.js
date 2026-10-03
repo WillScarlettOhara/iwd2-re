@@ -15,6 +15,32 @@ const wdUnlock = wdNative('0x59a010', 'uint8', ['int','uint8','uint']);
 const wdCases = [['ZRCMELEE','',1,5], ['ZRCARROW','ZRCBOW',2,9],
     ['ZRCBOLT','ZRCXBOW',12,9], ['ZRCSTONE','ZRCSLING',17,9]];
 let wdLoaded = false, wdDone = false, wdTicks = 0, wdIndex = 0, wdWaiting = null, wdMatched = false;
+function wdCompressChecks(objects, source) {
+    const compress = projectile => wdNative(projectile.readPointer().add(0x2c).readPointer(),
+        'uint8', ['uint'])(projectile, 901);
+    let projectile = wdDecode(1, source, 0);
+    if (projectile.isNull()) throw new Error('Instant projectile missing');
+    try {
+        const result = compress(projectile), retained = projectile.add(0x5c).readS32() === -1;
+        send({tag:'projectile-compress', case:'unregistered', returned:result, retained:retained ? 1 : 0});
+    } finally { wdDelete(projectile); }
+    projectile = wdDecode(1, source, 0);
+    if (projectile.isNull()) throw new Error('Instant projectile missing');
+    const add = wdNative('0x59a0f0', 'uint8', ['pointer','pointer','uint']);
+    if (add(objects, projectile.add(0x5c), projectile, 0xffffffff) !== 0) {
+        wdDelete(projectile); throw new Error('Registration failed');
+    }
+    const id = projectile.add(0x5c).readS32(), result = compress(projectile);
+    // On success the projectile is deleted: never dereference it afterwards.
+    const denyResult = wdDeny(objects, id, 0, Memory.alloc(4), 0xffffffff);
+    const removed = denyResult === ptr('0x85186e').readU8();
+    if (denyResult === 0) {
+        wdUnlock(objects, id, 0, 0xffffffff);
+        wdNative('0x59a530', 'uint8', ['int','uint8','pointer','uint'])(objects, id, 0, ptr(0), 0xffffffff);
+        wdDelete(projectile);
+    }
+    send({tag:'projectile-compress', case:'registered', returned:result, removed:removed ? 1 : 0});
+}
 Interceptor.attach(ptr('0x4a7900'), {
     onEnter(args) {
         if (!wdWaiting) return;
@@ -151,7 +177,10 @@ Interceptor.attach(ptr('0x686690'), {onLeave() {
                 damage:damage, expectedDamage:wdWaiting.input[3]});
             if (damage <= 0) throw new Error('No HP loss or projectile timeout');
             wdWaiting = null;
-            if (++wdIndex === wdCases.length) { wdDone = true; send({tag:'reference-done'}); return; }
+            if (++wdIndex === wdCases.length) {
+                if (wdTestCleanup) wdCompressChecks(objects, source);
+                wdDone = true; send({tag:'reference-done'}); return;
+            }
         }
         launch = wdLaunch(game, objects, source, target, ids, wdCases[wdIndex]);
     } catch (e) { wdDone = true; send({tag:'reference-error', error:String(e)}); }

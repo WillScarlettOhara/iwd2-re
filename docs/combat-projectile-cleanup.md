@@ -58,3 +58,7 @@ errors; no damage is saved and fixtures are removed.
 
 Next: recover/compare projectile CompressTime, then extend the matched original
 probe to controlled Attack/Swing rounds and ammunition use.
+
+Follow-up: [CompressTime recovery and original comparison](combat-projectile-compress.md)
+now closes the missing override with ten matching observations including the
+base-damage regression. The earlier captures and their failures remain retained.

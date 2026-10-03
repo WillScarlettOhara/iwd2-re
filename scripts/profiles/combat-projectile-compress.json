@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-projectile-compress.txt",
+  "hold": 60,
+  "fixtures": [
+    "combat-payload"
+  ],
+  "preserve": [],
+  "preconditions": [
+    "Center camera and require two visible party members in the same area, with sufficient target HP and no selective damage bonus list.",
+    "Calculate CreateWeaponDamage using luck 19, strength 10, zero derived template, feats and rogue level; restore source fields before firing the projectile.",
+    "Compare the base effect amount and actual target HP delta for melee, arrow/bow, bolt/crossbow and stone/sling. Payload effects, attack rolls and Swing are excluded.",
+    "Temporary fixtures only; preserve save/config files transactionally and never save the resulting damage.",
+    "CompressTime(901) on unregistered and registered instant projectiles: false return, retain on failed deletion, remove on success; no area placement or time advancement."
+  ]
+}

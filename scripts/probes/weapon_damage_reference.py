@@ -21,7 +21,7 @@ from runtime_paths import REPO, game_directory
 import frida_trace_diff as diff
 
 
-def reconstructed_events(path):
+def reconstructed_events(path, cleanup=False):
     raw = [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines()]
     if not any(e.get('op') == 'verdict' and e.get('verdict') == 'PASS' for e in raw):
         raise ValueError('Reconstruction scenario must have a PASS verdict')
@@ -42,6 +42,14 @@ def reconstructed_events(path):
                               expectedDamage=amount)])
     if result != required:
         raise ValueError('Expected four successful base damage and delivery pairs in order')
+    if cleanup:
+        extra = [dict(tag='projectile-compress', **{k:v for k,v in e.items() if k != 'op'})
+                 for e in raw if e.get('op') == 'projectile-compress']
+        required_extra = [dict(tag='projectile-compress', case='unregistered', returned=0, retained=1),
+                          dict(tag='projectile-compress', case='registered', returned=0, removed=1)]
+        if extra != required_extra:
+            raise ValueError('Expected both successful projectile compression checks')
+        result += extra
     return result
 
 
@@ -63,6 +71,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--ours', type=Path, required=True, help='Existing combat-base-reference ui.jsonl')
     parser.add_argument('--timeout', type=int, default=150)
+    parser.add_argument('--cleanup', action='store_true', help='Also compare CompressTime deletion branches')
     args = parser.parse_args()
     if not 1 <= args.timeout <= 300:
         parser.error('timeout must be in 1..300 seconds')
@@ -72,17 +81,20 @@ def main():
     canonical = '25cb3d8aa2ec648e94e328d8c467973e'
     if any(hashlib.md5(p.read_bytes()).hexdigest() != canonical for p in (exe, REPO / '.bin/IWD2.exe')):
         raise ValueError('Original executable is not canonical')
-    ours = reconstructed_events(args.ours)
+    ours = reconstructed_events(args.ours, args.cleanup)
     actor_positions, expected_context = actor_inputs(args.ours)
-    expected_count = 8
+    expected_count = 10 if args.cleanup else 8
+    profile_name = 'combat-projectile-compress' if args.cleanup else 'combat-base-reference'
     out = REPO / '.arc' / datetime.now(timezone.utc).strftime('%Y-%m-%dT%H-%M-%S-%f-weapon-reference')
     out.mkdir()
     report = {'verdict':'UNPROVEN', 'scope':'Four base damage descriptors and four projectile HP deltas',
               'ours_capture':str(args.ours.resolve()), 'frida_version':frida.__version__}
+    if args.cleanup:
+        report['scope'] += '; two CompressTime deletion branches'
     paths = [exe, Path(__file__), Path(__file__).with_suffix('.js'), args.ours,
              SCRIPTS / 'frida_orig.py', SCRIPTS / 'arc_profile.py', SCRIPTS / 'frida_trace_diff.py',
-             SCRIPTS / 'combat_payload_fixture.py', REPO / 'scripts/profiles/combat-base-reference.json',
-             REPO / 'scripts/scenarios/combat-base-reference.txt', REPO / 'src/AutoUI.cpp',
+             SCRIPTS / 'combat_payload_fixture.py', REPO / f'scripts/profiles/{profile_name}.json',
+             REPO / f'scripts/scenarios/{profile_name}.txt', REPO / 'src/AutoUI.cpp',
              REPO / 'src/CGameSprite.cpp', REPO / 'src/CGameSprite.h',
              REPO / 'src/CProjectile.cpp', REPO / 'src/CProjectile.h']
     report['sha256'] = {str(p.resolve()):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
@@ -101,7 +113,7 @@ def main():
             except frida.ProcessNotFoundError:
                 pass
             pid = None
-    profile = load_profile(REPO / 'scripts/profiles/combat-base-reference.json', REPO)
+    profile = load_profile(REPO / f'scripts/profiles/{profile_name}.json', REPO)
     profile['preserve'] = ['save']
     driver = build_js({'hooks':[]}, 0, 10)
     call = 'LoadGame(this.thiz, LOAD_SLOT);'
@@ -110,6 +122,7 @@ def main():
     driver = driver.replace(call, 'gaSelectSave(this.thiz); ' + call)
     code = driver + '\nconst wdActorPositions = ' + json.dumps(actor_positions) + ';\n'
     code += 'const wdExpectedContext = ' + json.dumps(expected_context) + ';\n'
+    code += 'const wdTestCleanup = ' + json.dumps(args.cleanup) + ';\n'
     code += Path(__file__).with_suffix('.js').read_text(encoding='utf-8')
     (out / 'original.js').write_text(code, encoding='utf-8')
     print(f'WEAPON-REFERENCE {out}', flush=True)
@@ -148,7 +161,8 @@ def main():
                             session.detach()
                         except frida.InvalidOperationError:
                             pass
-        original = [e for e in events if e.get('tag') == 'weapon-base']
+        original = [e for e in events if e.get('tag') == 'weapon-base'
+                    or (args.cleanup and e.get('tag') == 'projectile-compress')]
         errors = [e for e in events if e.get('tag') in ('reference-error','crash','ERROR')
                   or (e.get('tag') == 'drive' and e.get('step') == 'clickFailed')]
         if errors or not any(e.get('tag') == 'reference-done' for e in events) or len(original) != expected_count:

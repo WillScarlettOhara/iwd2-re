@@ -2703,6 +2703,42 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "projectilecompress") == 0) {
+        CGameObjectArray* objects = g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+        CProjectile* unregistered = new CProjectileInstant();
+        BOOLEAN result = unregistered->CompressTime(901);
+        BOOL retained = unregistered->m_id == CGameObjectArray::INVALID_INDEX;
+        Emit("{\"op\":\"projectile-compress\",\"case\":\"unregistered\",\"returned\":%d,\"retained\":%d}", result, retained);
+        delete unregistered;
+        if (result || !retained) {
+            Fail(nStep, step.op, "unregistered projectile changed");
+            return;
+        }
+        CProjectile* registered = new CProjectileInstant();
+        BYTE rc = objects->Add(&registered->m_id, registered, INFINITE);
+        if (rc != CGameObjectArray::SUCCESS) {
+            delete registered;
+            Fail(nStep, step.op, "registration failed");
+            return;
+        }
+        LONG id = registered->m_id;
+        result = registered->CompressTime(901);
+        CGameObject* after = NULL;
+        rc = objects->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &after, INFINITE);
+        BOOL removed = rc == CGameObjectArray::DELETED;
+        if (rc == CGameObjectArray::SUCCESS) {
+            objects->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            registered->RemoveSelf();
+        }
+        Emit("{\"op\":\"projectile-compress\",\"case\":\"registered\",\"returned\":%d,\"removed\":%d}", result, removed);
+        if (result || !removed) {
+            Fail(nStep, step.op, "registered projectile not removed");
+            return;
+        }
+        s_pc++;
+        return;
+    }
+
     if (strcmp(step.op, "resume") == 0) {
         if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld) {
             Fail(nStep, "resume", "requires world");

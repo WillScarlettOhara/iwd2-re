@@ -22,6 +22,7 @@
 #include "CPathSearch.h"
 #include "CResBitmap.h"
 #include "CUtil.h"
+#include "CTimerWorld.h"
 #include "IcewindMisc.h"
 
 // 0x84F06C. Data-segment gather radius the image initialises to 100 and never
@@ -122,6 +123,22 @@ CProjectile::~CProjectile()
         delete m_effectList.GetNext(pos);
     }
     m_effectList.RemoveAll();
+}
+
+// 0x536F40
+BOOLEAN CProjectile::CompressTime(DWORD deltaTime)
+{
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\CProjectile.cpp
+    // __LINE__: 10139
+    UTIL_ASSERT(deltaTime > static_cast<DWORD>(CTimerWorld::TIMESCALE_MSEC_PER_SEC)
+        * CTimerWorld::TIMESCALE_SEC_PER_MIN);
+
+    BYTE rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Delete(m_id,
+        CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE);
+    if (rc == CGameObjectArray::SUCCESS) {
+        delete this;
+    }
+    return FALSE;
 }
 
 // 0x6A3130
