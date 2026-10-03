@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-runaway.txt",
+  "hold": 60,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Center camera and require two visible party members.",
+    "Exercise actions 23 and 184 duration, missing target, different area, signed wrap and expiry messages; isolate positions, selected weapon and messages within one tick.",
+    "Restore typed state and preserved save/config files; never save test state."
+  ]
+}

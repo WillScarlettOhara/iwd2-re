@@ -58,3 +58,6 @@ static or differential PASS is claimed.
 
 Follow-up: action 134 is now recovered and tested; see
 [AttackReevaluate recovery](combat-reevaluate-recovery.md). Action 184 remains.
+
+Follow-up: actions 23/184 now use the recovered RunAwayFrom executor; see
+[RunAwayFrom recovery](combat-runaway-recovery.md). ProcessAI remains partial.

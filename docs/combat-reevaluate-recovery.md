@@ -49,3 +49,6 @@ sling 261->249 (12 HP each). Ranged charges decrease 3->2. Preserved files
 were restored and hashed; fixtures removed. Global verdict PASS with two
 static warnings; this is not a differential equivalence claim.
 ProcessAI and ExecuteAction remain partial; action 184 remains a recovery target.
+
+Follow-up: [RunAwayFrom recovery](combat-runaway-recovery.md) now covers
+actions 23/184. The movement and retaliation branches need focused runtime coverage.

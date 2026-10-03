@@ -79,6 +79,8 @@ public:
     static const SHORT SPELLPOINTNODEC;
     static const SHORT GIVEPARTYGOLD;
     static const SHORT ATTACKREEVALUATE;
+    static const SHORT RUNAWAYFROM;
+    static const SHORT RUNAWAYFROMNOINTERRUPT;
     static const SHORT STARTDIALOGUENOSET;
     static const SHORT TIMEDMOVETOPOINT;
     static const SHORT BACKGROUND;

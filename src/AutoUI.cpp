@@ -2392,6 +2392,109 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "combatrunaway") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        LONG targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* raw = NULL;
+        CGameObject* targetRaw = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and two party members");
+            return;
+        }
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &targetRaw, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        auto* target = static_cast<CGameSprite*>(targetRaw);
+        CAIAction savedAction;
+        savedAction = source->m_curAction;
+        auto savedCount = source->field_5614;
+        auto savedReturn = source->m_nLastActionReturn;
+        auto savedPos = source->m_pos;
+        auto savedTarget = source->m_targetId;
+        auto savedSequence = source->m_nSequence;
+        auto savedWeapon = source->m_equipment.m_items[43];
+        auto savedSelected = source->m_equipment.m_selectedWeapon;
+        auto* savedArea = target->m_pArea;
+        auto& queue = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = queue.GetCount();
+        BOOL valid = source->m_pArea != NULL && source->m_pArea == target->m_pArea;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"combatrunaway-case\",\"case\":\"%s\",\"passed\":%s}",
+                nStep, name, passed ? "true" : "false");
+            valid = valid && passed;
+            ++checks;
+        };
+        source->m_pos = target->m_pos;
+        source->m_targetId = targetId;
+        source->m_equipment.m_selectedWeapon = 43;
+        source->m_equipment.m_items[43] = NULL;
+        source->field_5614 = 9;
+        check("null-target", source->RunAwayFrom(NULL) == CGameAIBase::ACTION_ERROR && source->field_5614 == 9);
+        target->m_pArea = NULL;
+        check("different-area", source->RunAwayFrom(target) == CGameAIBase::ACTION_ERROR && source->field_5614 == 9);
+        target->m_pArea = savedArea;
+        CAIObjectType selector;
+        selector.m_nInstance = targetId;
+        for (INT variant = 0; variant < 2; ++variant) {
+            SHORT action = variant == 0 ? CAIAction::RUNAWAYFROMNOINTERRUPT : CAIAction::RUNAWAYFROM;
+            source->m_curAction = CAIAction(action, selector, 1000, 0, 0);
+            for (SHORT count = 0; count < 14; ++count) {
+                source->field_5614 = count;
+                SHORT result = source->ExecuteAction();
+                check(variant == 0 ? "noninterruptible-duration" : "interruptible-duration",
+                    result == (variant == 0 ? CGameAIBase::ACTION_NORMAL : CGameAIBase::ACTION_INTERRUPTABLE)
+                    && source->m_nLastActionReturn == result && source->field_5614 == count + 1
+                    && queue.GetCount() == before);
+            }
+        }
+        source->m_curAction = CAIAction(CAIAction::RUNAWAYFROMNOINTERRUPT, selector, LONG_MAX, 0, 0);
+        source->field_5614 = SHORT_MAX;
+        check("signed-counter-wrap", source->ExecuteAction() == CGameAIBase::ACTION_NORMAL
+            && source->field_5614 == static_cast<SHORT>(-32768));
+        source->m_curAction.m_specificID = 0;
+        source->field_5614 = 1;
+        source->m_nSequence = CGameSprite::SEQ_READY;
+        check("expired-ready", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+            && source->field_5614 == 0 && queue.GetCount() == before);
+        source->field_5614 = 1;
+        source->m_nSequence = CGameSprite::SEQ_ATTACK;
+        check("expired-attack", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+            && source->field_5614 == 0 && queue.GetCount() == before + 2);
+        if (queue.GetCount() == before + 2) {
+            CMessage* sequence = queue.RemoveTail();
+            CMessage* drop = queue.RemoveTail();
+            check("expired-messages", dynamic_cast<CMessageSetSequence*>(sequence) != NULL
+                && dynamic_cast<CMessageDropPath*>(drop) != NULL
+                && sequence->GetTarget() == id && drop->GetTarget() == id);
+            delete sequence;
+            delete drop;
+        }
+        while (queue.GetCount() > before) delete queue.RemoveTail();
+        source->m_curAction = savedAction;
+        source->field_5614 = savedCount;
+        source->m_nLastActionReturn = savedReturn;
+        source->m_pos = savedPos;
+        source->m_targetId = savedTarget;
+        source->m_nSequence = savedSequence;
+        source->m_equipment.m_items[43] = savedWeapon;
+        source->m_equipment.m_selectedWeapon = savedSelected;
+        target->m_pArea = savedArea;
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"combatrunaway\",\"checks\":%d,\"restored\":true,\"valid\":%s}",
+            nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "runaway duration/guard mismatch (state restored)"); return; }
+        s_pc++;
+        return;
+    }
+
     if (strcmp(step.op, "combatberserk") == 0) {
         CInfGame* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();

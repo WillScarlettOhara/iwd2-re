@@ -21523,6 +21523,18 @@ SHORT CGameSprite::ExecuteAction()
         return result;
     }
 
+    // ExecuteAction jump-table case 0x18 (7296D2).
+    if (m_curAction.m_actionID == CAIAction::RUNAWAYFROM || m_curAction.m_actionID == CAIAction::RUNAWAYFROMNOINTERRUPT) {
+        CGameObject* object = ResolveActionTarget(CGameObject::TYPE_SPRITE);
+        SHORT result = RunAwayFrom(static_cast<CGameSprite*>(object));
+        if (object != NULL) {
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(
+                object->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        m_nLastActionReturn = result;
+        return result;
+    }
+
     // ExecuteAction jump-table case 0x40 (72A33E).
     if (m_curAction.m_actionID == CAIAction::ATTACKREEVALUATE) {
         SHORT result = AttackReevaluate();
@@ -22215,6 +22227,101 @@ SHORT CGameSprite::Recoil()
     g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
 
     return ACTION_DONE;
+}
+
+// 0x744C00
+SHORT CGameSprite::RunAwayFrom(CGameAIBase* pTarget)
+{
+    SHORT result = m_curAction.m_actionID == CAIAction::RUNAWAYFROMNOINTERRUPT ? ACTION_NORMAL : ACTION_INTERRUPTABLE;
+    if (pTarget == NULL || pTarget->m_pArea != m_pArea) return ACTION_ERROR;
+    SHORT previous = field_5614;
+    field_5614 = static_cast<SHORT>(previous + 1);
+    if (previous > m_curAction.m_specificID) {
+        field_5614 = 0;
+        if (m_nSequence != SEQ_READY) {
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageDropPath(m_id, m_id), FALSE);
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetSequence(GetIdleSequence(), m_id, m_id), FALSE);
+        }
+        return ACTION_DONE;
+    }
+    CPoint targetPos = pTarget->GetPos();
+    LONG dx = targetPos.x / CPathSearch::GRID_SQUARE_SIZEX - m_pos.x / CPathSearch::GRID_SQUARE_SIZEX;
+    LONG dy = targetPos.y / CPathSearch::GRID_SQUARE_SIZEY - m_pos.y / CPathSearch::GRID_SQUARE_SIZEY;
+    auto clampPoint = [&](CPoint& point) {
+        if (point.x < 0) point.x = 0;
+        if (point.x >= m_pArea->m_cInfinity.nAreaX) point.x = m_pArea->m_cInfinity.nAreaX;
+        if (point.y < 0) point.y = 0;
+        if (point.y >= m_pArea->m_cInfinity.nAreaY) point.y = m_pArea->m_cInfinity.nAreaY;
+    };
+    if (dx * dx + dy * dy > 8 * 8) {
+        if (m_pPath == NULL && m_currentSearchRequest == NULL) {
+            for (INT phase = 0; phase < 3; ++phase) {
+                SHORT attempts = phase == 1 ? 240 : 120;
+                for (SHORT attempt = 0; attempt < attempts; ++attempt) {
+                    LONG offsetX = CPathSearch::GRID_SQUARE_SIZEX + rand() % 200;
+                    if (m_pos.x - targetPos.x < 0) offsetX = -offsetX;
+                    LONG offsetY = CPathSearch::GRID_SQUARE_SIZEY + rand() % 200;
+                    if (m_pos.y - targetPos.y < 0) offsetY = -offsetY;
+                    if (phase == 1) {
+                        if (rand() % 2 == 0) offsetX = -offsetX;
+                        else offsetY = -offsetY;
+                    } else if (phase == 2) {
+                        offsetX = -offsetX;
+                        offsetY = -offsetY;
+                    }
+                    CPoint destination(m_pos.x + offsetX, m_pos.y + offsetY);
+                    clampPoint(destination);
+                    if (m_pArea->CheckLOS(m_pos, destination, m_visibleTerrainTable, FALSE)) {
+                        m_curDest = destination;
+                        if (m_curDest != m_pos) SetTarget(destination, FALSE);
+                        return result;
+                    }
+                }
+            }
+        }
+    } else if (field_5614 % 15 == 0) {
+        m_curDest = CPoint(2 * m_pos.x - targetPos.x, 2 * m_pos.y - targetPos.y);
+        clampPoint(m_curDest);
+        SetTarget(m_curDest, FALSE);
+    }
+    CAIObjectType enemy = m_typeAI.GetEnemyOf();
+    CItem* weapon = m_equipment.m_items[static_cast<BYTE>(m_equipment.m_selectedWeapon)];
+    if (weapon == NULL) return result;
+    weapon->Demand();
+    const ITEM_ABILITY* ability = weapon->GetAbility(m_equipment.m_selectedWeaponAbility);
+    if (ability == NULL || static_cast<BYTE>(ability->type) == 4
+        || (ability->usageFlags == 3 && weapon->GetUsageCount(m_equipment.m_selectedWeaponAbility) == 0
+            && ability->maxUsageCount != 0)
+        || static_cast<BYTE>(ability->type) == 2) {
+        weapon->Release();
+        return result;
+    }
+    SHORT range = static_cast<SHORT>(ability->range + 1);
+    weapon->Release();
+    BYTE sourceSpace = m_animation.GetPersonalSpace();
+    CGameSprite* spriteTarget = static_cast<CGameSprite*>(pTarget);
+    BYTE targetSpace = spriteTarget->m_animation.GetPersonalSpace();
+    BYTE space = static_cast<BYTE>(((targetSpace - 1) >> 1) + ((sourceSpace - 1) >> 1) - 1);
+    LONG nearest = m_pArea->GetNearest(m_id, enemy, static_cast<SHORT>((space + range) * 16),
+        m_terrainTable, TRUE, GetCanSeeInvisible(), FALSE, 0, FALSE);
+    if (nearest != CGameObjectArray::INVALID_INDEX) {
+        CGameObject* object = NULL;
+        BYTE rc;
+        do {
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(nearest,
+                CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+        if (rc == CGameObjectArray::SUCCESS) {
+            // Sanctuary is tested on the fleeing-from target, not the nearest enemy.
+            if (!spriteTarget->m_derivedStats.m_spellStates[SPLSTATE_SANCTUARY]) {
+                if (m_attackFrame == -2) m_attackFrame = -1;
+                Swing(static_cast<CGameSprite*>(object));
+            }
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(nearest,
+                CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+    }
+    return result;
 }
 
 // 0x744B20

@@ -617,6 +617,7 @@ public:
     BOOL CheckConcealment(CGameSprite* pTarget);
     SHORT Attack(CGameSprite* pTarget);
     SHORT AttackReevaluate();
+    SHORT RunAwayFrom(CGameAIBase* pTarget);
     SHORT Swing(CGameSprite* pTarget);
     BOOLEAN CheckAttackHit(CGameSprite* pTarget, CItem* pWeapon, INT nAbility, BOOL* pCritical, INT nOffhand, BYTE nAttackCount);
     CGameEffect* CreateWeaponDamage(CItem* pWeapon, CItem* pLauncher, INT nAbility, BOOL bCritical, const CAIObjectType& targetType, SHORT nDirection, SHORT nTargetDirection, CGameSprite* pTarget, INT nOffhand);

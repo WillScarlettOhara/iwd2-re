@@ -192,6 +192,9 @@ const SHORT CAIAction::BACKGROUND = -2;
 // 0x8C6118
 const CAIAction CAIAction::NULL_ACTION;
 
+const SHORT CAIAction::RUNAWAYFROM = 23;
+const SHORT CAIAction::RUNAWAYFROMNOINTERRUPT = 184;
+
 // 0x403A40
 CAIAction::CAIAction()
 {
