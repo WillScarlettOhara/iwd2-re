@@ -13259,6 +13259,18 @@ BOOL CGameSprite::CheckMorale()
     return m_derivedStats.m_nMoraleBreak < static_cast<DWORD>(m_baseStats.field_25C);
 }
 
+// 0x728B70
+void CGameSprite::ProcessPendingTriggers()
+{
+    if ((m_derivedStats.m_generalState & STATE_PANIC) == 0
+        && !m_inCutScene
+        && !g_pBaldurChitin->GetObjectGame()->GetGameSave()->m_cutScene
+        && CanAct()
+        && (m_baseStats.m_flags & 0x80000000) == 0) {
+        CGameAIBase::ProcessScripts();
+    }
+}
+
 // 0x72B9A0 (virtual)
 void CGameSprite::ProcessAI()
 {
@@ -13619,15 +13631,57 @@ void CGameSprite::ProcessAI()
     if (!bControlledAction) {
         UpdateBerserkActive();
         CheckModal();
-        // TODO INCOMPLETE: sprite-specific script scheduling in ProcessAI.
-        CGameAIBase::ProcessScripts();
+        if (m_userCommandPause > 0 || m_nCommandPause > 0) {
+            ClearTriggers();
+        }
+        if (static_cast<DWORD>(field_44A) % 16 == static_cast<DWORD>(m_id) % 16
+            && m_userCommandPause <= 0
+            && m_nCommandPause <= 0
+            && (field_3428 & 7) == 0
+            && ((m_derivedStats.m_generalState & STATE_DEAD) == 0 || field_558E != 0)) {
+            field_54C++;
+            field_558E = TRUE;
+            BOOL bProcessScripts = m_curAction.GetActionID() == CAIAction::NO_ACTION
+                || !m_pendingTriggers.IsEmpty()
+                || field_550 >= 120
+                || field_552 > 0;
+            if (!bProcessScripts) {
+                CRect view(m_pArea->m_cInfinity.rViewPort);
+                INT viewX, viewY;
+                m_pArea->m_cInfinity.GetViewPosition(viewX, viewY);
+                view.OffsetRect(viewX, viewY);
+                bProcessScripts = view.PtInRect(m_pos);
+            }
+            if (bProcessScripts) {
+                if ((m_derivedStats.m_generalState & STATE_DEAD) != 0) {
+                    field_558E = FALSE;
+                }
+                if (!m_pendingTriggers.IsEmpty()) {
+                    field_552 = 5;
+                }
+                ProcessPendingTriggers();
+                if (field_552 > 0) {
+                    field_552--;
+                }
+                field_550 = 0;
+            } else {
+                field_550++;
+            }
+            m_userCommandPause = 0;
+            m_nCommandPause = 0;
+        }
+        if (m_curAction.GetActionID() == CAIAction::NO_ACTION && !m_queuedActions.IsEmpty()) {
+            SetCurrAction(GetNextAction(m_aiDoAction));
+            m_interrupt = FALSE;
+        }
     }
 
     if (ProcessEffectList()
         && m_pArea != NULL
         && (m_dialogWait < 1
-            || m_typeAI.m_nEnemyAlly >= CAIObjectType::EA_GOODCUTOFF
-            || m_bAllowDialogInterrupt == FALSE)) {
+            || m_typeAI.m_nEnemyAlly >= CAIObjectType::EA_EVILCUTOFF
+            || m_bAllowDialogInterrupt == FALSE
+            || m_derivedStats.m_bIgnoreDialogPause)) {
         BOOL bCanResolveInstants = (m_derivedStats.m_generalState & STATE_DEAD) == 0;
         bCanResolveInstants = bCanResolveInstants
             && IsHelpless() == FALSE

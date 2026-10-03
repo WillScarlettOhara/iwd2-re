@@ -19,8 +19,8 @@ The existing eligibility requires positive wait, EA below evil cutoff,
 no sleeping state, allowed dialogue interruption and no ignore-dialog-pause
 flag. Sleep animation and sleeping state are different conditions: an awake
 sprite in sleep animation still decrements the wait, while sleeping state
-bypasses this branch. Normal sprite-specific script scheduling remains
-explicitly unrecovered; this is not a full ProcessAI recovery.
+bypasses this branch. The subsequent [script scheduler recovery](combat-script-schedule-recovery.md)
+implements normal sprite-specific scheduling; this is not a full ProcessAI recovery.
 
 AutoUI dialogwait covers 13 cases synchronously with a party actor and target:
 idle/facing messages, aligned idle, die/twitch/sleep sequence exceptions,
@@ -55,5 +55,5 @@ it rather than adding it locally. The expectation was corrected to zero local
 updates, keeping the latch, both panic bits and two path-drop assertions.
 The complete validation above was rerun after the test correction.
 
-Next recovery target: sprite-specific script scheduling in ProcessAI before
-common effect/action resolution.
+Follow-up: [sprite-specific script scheduling](combat-script-schedule-recovery.md)
+before common effect/action resolution.

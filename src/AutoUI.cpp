@@ -97,6 +97,10 @@
 
 #include "BalDataTypes.h"
 #include "CAIAction.h"
+#include "CAICondition.h"
+#include "CAIResponse.h"
+#include "CAIScript.h"
+#include "CAITrigger.h"
 #include "CBaldurChitin.h"
 #include "CBaldurEngine.h"
 #include "CGameArea.h"
@@ -2481,6 +2485,168 @@ void Tick(CWarp* pActiveEngine)
         Emit("{\"step\":%d,\"op\":\"runawaymove\",\"ticks\":%d,\"startX\":%ld,\"startY\":%ld,\"endX\":%ld,\"endY\":%ld,\"away\":%ld,\"valid\":%s}",
             nStep, elapsed, start.x, start.y, finish.x, finish.y, away, moved ? "true" : "false");
         if (!moved) { Fail(nStep, step.op, "actor did not flee (test action/path removed)"); return; }
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "scriptschedule") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        CGameObject* raw = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and party actor");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        if (source->m_pArea == NULL || source->m_pPath != NULL || source->m_currentSearchRequest != NULL) {
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires idle actor in an area");
+            return;
+        }
+        CAIScript script;
+        CAICondition condition;
+        CAIResponse response;
+        response.m_weight = 100;
+        response.m_responseNum = 1;
+        response.Add(CAIAction(CAIAction::WAIT, 9876));
+        CAIResponseSet responses;
+        responses.Add(response);
+        script.Add(condition, responses);
+        CAIScript* savedScripts[7] = { source->m_overrideScript, source->m_special1Script,
+            source->m_teamScript, source->m_special2Script, source->m_combatScript,
+            source->m_special3Script, source->m_movementScript };
+        source->m_overrideScript = &script;
+        source->m_special1Script = source->m_teamScript = source->m_special2Script = NULL;
+        source->m_combatScript = source->m_special3Script = source->m_movementScript = NULL;
+        auto savedState = source->m_derivedStats.m_generalState;
+        auto savedBaseState = source->m_baseStats.m_generalState;
+        auto savedFlags = source->m_baseStats.m_flags;
+        auto savedImmunity = source->m_baseStats.field_2F0[3];
+        auto savedPos = source->m_pos;
+        auto savedSequence = source->m_nSequence;
+        auto savedSelected = source->m_bSelected;
+        auto savedCutscene = game->GetGameSave()->m_cutScene;
+        auto savedActive = game->GetWorldTimer()->m_active;
+        source->m_bSelected = FALSE;
+        source->m_baseStats.field_2F0[3] |= 1;
+        game->GetWorldTimer()->m_active = TRUE;
+        CRect viewport(source->m_pArea->m_cInfinity.rViewPort);
+        INT viewX, viewY;
+        source->m_pArea->m_cInfinity.GetViewPosition(viewX, viewY);
+        viewport.OffsetRect(viewX, viewY);
+        CPoint visible(viewport.left + 1, viewport.top + 1);
+        CPoint hidden(viewport.right + 1, viewport.bottom + 1);
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = messages.GetCount();
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto reset = [&]() {
+            source->ClearActions(FALSE);
+            while (!source->m_pendingTriggers.IsEmpty()) delete source->m_pendingTriggers.RemoveHead();
+            source->m_curAction = CAIAction(CAIAction::WAIT, LONG_MAX);
+            source->m_nLastActionReturn = CGameAIBase::ACTION_DONE;
+            source->m_actionCount = 1;
+            source->m_interrupt = FALSE;
+            source->m_baseStats.m_flags = savedFlags & 0x7FFFFFFF;
+            source->m_baseStats.m_generalState = 0;
+            source->m_derivedStats.m_generalState = 0;
+            source->m_inCutScene = FALSE;
+            source->m_moraleFailure = FALSE;
+            source->field_727E = FALSE;
+            source->field_3428 = 0;
+            source->field_558E = TRUE;
+            source->field_54C = 0;
+            source->field_550 = 0;
+            source->field_552 = 0;
+            source->m_userCommandPause = 0;
+            source->m_nCommandPause = 0;
+            source->m_dialogWait = 0;
+            source->m_nSequence = CGameSprite::SEQ_READY;
+            source->m_pos = visible;
+            game->GetGameSave()->m_cutScene = FALSE;
+            // Active ProcessAI advances the frame before checking phase.
+            source->field_44A = static_cast<INT>(static_cast<DWORD>(id) % 16) - 1;
+        };
+        auto marker = [&]() {
+            BOOL found = source->m_curAction.m_actionID == CAIAction::WAIT
+                && source->m_curAction.m_specificID >= 9874 && source->m_curAction.m_specificID <= 9876;
+            POSITION pos = source->m_queuedActions.GetHeadPosition();
+            while (pos != NULL) {
+                CAIAction* action = source->m_queuedActions.GetNext(pos);
+                found = found || (action->m_actionID == CAIAction::WAIT && action->m_specificID == 9876);
+            }
+            return found;
+        };
+        auto check = [&](const char* name, BOOL passed) {
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"scriptschedule-case\",\"case\":\"%s\",\"scheduled\":%d,\"deferred\":%d,\"grace\":%d,\"marker\":%s,\"passed\":%s}",
+                nStep, name, source->field_54C, source->field_550, source->field_552,
+                marker() ? "true" : "false", passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        };
+        reset(); source->ProcessPendingTriggers(); check("virtual-selects-response", marker());
+        reset(); source->m_derivedStats.m_generalState = STATE_PANIC;
+        source->ProcessPendingTriggers(); check("panic-gate", !marker());
+        reset(); source->m_inCutScene = TRUE;
+        source->ProcessPendingTriggers(); check("sprite-cutscene-gate", !marker());
+        reset(); game->GetGameSave()->m_cutScene = TRUE;
+        source->ProcessPendingTriggers(); check("game-cutscene-gate", !marker());
+        reset(); source->m_curAction.m_internalFlags = 1;
+        source->ProcessPendingTriggers(); check("can-act-gate", !marker());
+        reset(); source->m_baseStats.m_flags |= 0x80000000;
+        source->ProcessPendingTriggers(); check("base-flag-gate", !marker());
+        reset(); source->ProcessAI(); check("visible-phase-selects", marker() && source->field_54C == 1 && source->field_550 == 0);
+        reset(); source->field_44A++;
+        source->ProcessAI(); check("off-phase", !marker() && source->field_54C == 0);
+        for (INT bit = 1; bit <= 4; bit *= 2) {
+            reset(); source->field_3428 = bit;
+            source->ProcessAI(); check("low-flags-block-scheduling", !marker() && source->field_54C == 0);
+        }
+        reset(); source->field_3428 = 8;
+        source->ProcessAI(); check("other-flag-allows", marker() && source->field_54C == 1);
+        reset(); source->m_pos = hidden;
+        source->ProcessAI(); check("offscreen-deferred", !marker() && source->field_54C == 1 && source->field_550 == 1);
+        reset(); source->m_pos = hidden; source->field_550 = 120;
+        source->ProcessAI(); check("deferral-limit-selects", marker() && source->field_550 == 0);
+        reset(); source->m_pos = hidden; source->field_552 = 2;
+        source->ProcessAI(); check("grace-selects-and-decrements", marker() && source->field_552 == 1);
+        reset(); source->m_pos = hidden; source->m_pendingTriggers.AddTail(new CAITrigger(CAITRIGGER_NO_TRIGGER, 0));
+        source->ProcessAI(); check("trigger-selects-and-refreshes-grace", marker() && source->field_552 == 4);
+        reset(); source->m_userCommandPause = 3; source->m_pendingTriggers.AddTail(new CAITrigger(CAITRIGGER_NO_TRIGGER, 0));
+        source->ProcessAI(); check("user-pause-clears-triggers", !marker() && source->field_54C == 0 && source->m_pendingTriggers.IsEmpty());
+        reset(); source->m_nCommandPause = 4; source->m_pendingTriggers.AddTail(new CAITrigger(CAITRIGGER_NO_TRIGGER, 0));
+        source->ProcessAI(); check("command-pause-clears-triggers", !marker() && source->field_54C == 0 && source->m_pendingTriggers.IsEmpty());
+        reset(); source->m_derivedStats.m_generalState = STATE_DEAD; source->field_558E = FALSE;
+        source->ProcessAI(); check("dead-latch-blocks", !marker() && source->field_54C == 0);
+        reset(); source->m_derivedStats.m_generalState = STATE_DEAD;
+        source->ProcessAI(); check("dead-final-script", marker() && source->field_54C == 1 && source->field_558E == FALSE);
+        source->ClearActions(FALSE);
+        while (!source->m_pendingTriggers.IsEmpty()) delete source->m_pendingTriggers.RemoveHead();
+        source->m_curAction = CAIAction::NULL_ACTION;
+        source->m_overrideScript = savedScripts[0]; source->m_special1Script = savedScripts[1];
+        source->m_teamScript = savedScripts[2]; source->m_special2Script = savedScripts[3];
+        source->m_combatScript = savedScripts[4]; source->m_special3Script = savedScripts[5];
+        source->m_movementScript = savedScripts[6];
+        source->m_derivedStats.m_generalState = savedState;
+        source->m_baseStats.m_generalState = savedBaseState;
+        source->m_baseStats.m_flags = savedFlags;
+        source->m_baseStats.field_2F0[3] = savedImmunity;
+        source->m_pos = savedPos;
+        source->SetSequence(static_cast<BYTE>(savedSequence));
+        source->m_bSelected = savedSelected;
+        source->m_inCutScene = FALSE;
+        source->m_moraleFailure = FALSE;
+        source->field_3428 = 0;
+        source->field_558E = TRUE;
+        source->m_userCommandPause = source->m_nCommandPause = 0;
+        game->GetGameSave()->m_cutScene = savedCutscene;
+        game->GetWorldTimer()->m_active = savedActive;
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"scriptschedule\",\"checks\":%d,\"disposable\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "script scheduling mismatch"); return; }
         s_pc++;
         return;
     }

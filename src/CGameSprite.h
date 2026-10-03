@@ -485,6 +485,7 @@ public:
     /* 00BC */ virtual void SetAIType(const CAIObjectType& typeAI, BOOL updateLive, BOOL updateStart);
     /* 00C0 */ virtual void ResetAITypeLive();
     /* 00C4 */ virtual void ResetAIType();
+    /* 00C8 */ virtual void ProcessPendingTriggers();
 
     void AddBlood(SHORT nHeight, SHORT nDirection, SHORT nType);
     void RemoveReplacementFromArea();
