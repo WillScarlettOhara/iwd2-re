@@ -80,6 +80,39 @@ class ActorInputTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             reference.reconstructed_events(self.path, cleanup=True)
 
+    def swing_records(self):
+        self.damage_records()
+        for item in ('ZRCMELEE', 'ZRCARROW', 'ZRCBOLT', 'ZRCSTONE'):
+            amount = 6 if item == 'ZRCMELEE' else 12
+            self.records += [dict(op='swingdamage-round', item=item, calls=102,
+                                  remaining=3 if item == 'ZRCMELEE' else 2, valid=1),
+                             dict(op='swingdamage', item=item, hpBefore=100,
+                                  hpAfter=100-amount, expectedDamage=amount)]
+
+    def test_round_mode_rejects_base_only_capture(self):
+        self.damage_records()
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, rounds=True)
+
+    def test_round_mode_preserves_payload_damage_and_ammunition(self):
+        self.swing_records()
+        self.write()
+        records = reference.reconstructed_events(self.path, rounds=True)
+        self.assertEqual(len(records), 16)
+        self.assertEqual(records[-1]['damage'], 12)
+        self.records[-2]['remaining'] = 3
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, rounds=True)
+
+    def test_round_mode_rejects_missing_launcher_payload(self):
+        self.swing_records()
+        self.records[-1]['hpAfter'] = 91
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, rounds=True)
+
 
 if __name__ == '__main__':
     unittest.main()

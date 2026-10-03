@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-swing-reference.txt",
+  "hold": 60,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Center camera and require two visible party members in the same area with sufficient target HP.",
+    "Four base damage pairs establish matching actors and resistance context before four direct Swing rounds.",
+    "Swing uses luck 19, strength 10, one attack, forced hit bonus, no feats or rogue levels, empty target retaliation and weapon immunity lists; restore temporary source fields synchronously.",
+    "Compare round call counts, remaining ammunition and HP loss including weapon and launcher payloads. Direct frame progression does not prove normal AI timing or ExecuteAction/Attack parity.",
+    "Temporary fixtures only; restore save/config files transactionally and never save test damage."
+  ]
+}

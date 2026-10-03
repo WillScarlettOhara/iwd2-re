@@ -1,7 +1,7 @@
 """Compare original base weapon damage and projectile HP loss with AutoUI.
 
 Four fixture pairs, fixed source stats/luck, real loaded party targets.
-This excludes attack rolls, Swing, weapon payloads and ammunition expenditure.
+Optional direct Swing rounds include weapon payloads and ammunition expenditure.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from runtime_paths import REPO, game_directory
 import frida_trace_diff as diff
 
 
-def reconstructed_events(path, cleanup=False):
+def reconstructed_events(path, cleanup=False, rounds=False):
     raw = [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines()]
     if not any(e.get('op') == 'verdict' and e.get('verdict') == 'PASS' for e in raw):
         raise ValueError('Reconstruction scenario must have a PASS verdict')
@@ -50,6 +50,25 @@ def reconstructed_events(path, cleanup=False):
         if extra != required_extra:
             raise ValueError('Expected both successful projectile compression checks')
         result += extra
+    if rounds:
+        extra = []
+        for e in raw:
+            if e.get('op') == 'swingdamage-round':
+                extra.append(dict(tag='weapon-swing', stage='round', item=e['item'],
+                                  calls=e['calls'], remaining=e['remaining'], valid=bool(e['valid'])))
+            elif e.get('op') == 'swingdamage':
+                extra.append(dict(tag='weapon-swing', stage='delivery', item=e['item'],
+                                  damage=e['hpBefore']-e['hpAfter'], expectedDamage=e['expectedDamage']))
+        required_extra = []
+        for item, _, _ in expected:
+            amount = 6 if item == 'ZRCMELEE' else 12
+            required_extra.extend([dict(tag='weapon-swing', stage='round', item=item, calls=102,
+                                        remaining=3 if item == 'ZRCMELEE' else 2, valid=True),
+                                   dict(tag='weapon-swing', stage='delivery', item=item,
+                                        damage=amount, expectedDamage=amount)])
+        if extra != required_extra:
+            raise ValueError('Expected four successful Swing rounds, ammunition counts and HP deltas')
+        result += extra
     return result
 
 
@@ -71,7 +90,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--ours', type=Path, required=True, help='Existing combat-base-reference ui.jsonl')
     parser.add_argument('--timeout', type=int, default=150)
-    parser.add_argument('--cleanup', action='store_true', help='Also compare CompressTime deletion branches')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--cleanup', action='store_true', help='Also compare CompressTime deletion branches')
+    mode.add_argument('--rounds', action='store_true', help='Also compare direct Swing rounds, payloads and ammunition')
     args = parser.parse_args()
     if not 1 <= args.timeout <= 300:
         parser.error('timeout must be in 1..300 seconds')
@@ -81,16 +102,18 @@ def main():
     canonical = '25cb3d8aa2ec648e94e328d8c467973e'
     if any(hashlib.md5(p.read_bytes()).hexdigest() != canonical for p in (exe, REPO / '.bin/IWD2.exe')):
         raise ValueError('Original executable is not canonical')
-    ours = reconstructed_events(args.ours, args.cleanup)
+    ours = reconstructed_events(args.ours, args.cleanup, args.rounds)
     actor_positions, expected_context = actor_inputs(args.ours)
-    expected_count = 10 if args.cleanup else 8
-    profile_name = 'combat-projectile-compress' if args.cleanup else 'combat-base-reference'
+    expected_count = 16 if args.rounds else (10 if args.cleanup else 8)
+    profile_name = 'combat-swing-reference' if args.rounds else ('combat-projectile-compress' if args.cleanup else 'combat-base-reference')
     out = REPO / '.arc' / datetime.now(timezone.utc).strftime('%Y-%m-%dT%H-%M-%S-%f-weapon-reference')
     out.mkdir()
     report = {'verdict':'UNPROVEN', 'scope':'Four base damage descriptors and four projectile HP deltas',
               'ours_capture':str(args.ours.resolve()), 'frida_version':frida.__version__}
     if args.cleanup:
         report['scope'] += '; two CompressTime deletion branches'
+    if args.rounds:
+        report['scope'] += '; four direct Swing rounds with payloads, ammunition counts and HP deltas'
     paths = [exe, Path(__file__), Path(__file__).with_suffix('.js'), args.ours,
              SCRIPTS / 'frida_orig.py', SCRIPTS / 'arc_profile.py', SCRIPTS / 'frida_trace_diff.py',
              SCRIPTS / 'combat_payload_fixture.py', REPO / f'scripts/profiles/{profile_name}.json',
@@ -123,6 +146,7 @@ def main():
     code = driver + '\nconst wdActorPositions = ' + json.dumps(actor_positions) + ';\n'
     code += 'const wdExpectedContext = ' + json.dumps(expected_context) + ';\n'
     code += 'const wdTestCleanup = ' + json.dumps(args.cleanup) + ';\n'
+    code += 'const wdTestRounds = ' + json.dumps(args.rounds) + ';\n'
     code += Path(__file__).with_suffix('.js').read_text(encoding='utf-8')
     (out / 'original.js').write_text(code, encoding='utf-8')
     print(f'WEAPON-REFERENCE {out}', flush=True)
@@ -162,7 +186,8 @@ def main():
                         except frida.InvalidOperationError:
                             pass
         original = [e for e in events if e.get('tag') == 'weapon-base'
-                    or (args.cleanup and e.get('tag') == 'projectile-compress')]
+                    or (args.cleanup and e.get('tag') == 'projectile-compress')
+                    or (args.rounds and e.get('tag') == 'weapon-swing')]
         errors = [e for e in events if e.get('tag') in ('reference-error','crash','ERROR')
                   or (e.get('tag') == 'drive' and e.get('step') == 'clickFailed')]
         if errors or not any(e.get('tag') == 'reference-done' for e in events) or len(original) != expected_count:

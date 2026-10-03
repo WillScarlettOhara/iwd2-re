@@ -12,6 +12,8 @@ const wdAdd = wdNative('0x51ea90', 'void', ['pointer']);
 const wdHeight = wdNative('0x529f40', 'int', ['pointer']);
 const wdDeny = wdNative('0x599c70', 'uint8', ['int','uint8','pointer','uint']);
 const wdUnlock = wdNative('0x59a010', 'uint8', ['int','uint8','uint']);
+const wdSwing = wdNative('0x739b60', 'int16', ['pointer']);
+const wdUsage = wdNative('0x4e84b0', 'uint16', ['int']);
 const wdCases = [['ZRCMELEE','',1,5], ['ZRCARROW','ZRCBOW',2,9],
     ['ZRCBOLT','ZRCXBOW',12,9], ['ZRCSTONE','ZRCSLING',17,9]];
 let wdLoaded = false, wdDone = false, wdTicks = 0, wdIndex = 0, wdWaiting = null, wdMatched = false;
@@ -74,17 +76,78 @@ function gaSelectSave(screen) {
 }
 Interceptor.attach(ptr('0x6869c0'), {onLeave() { wdLoaded = true; }});
 
-function wdItem(name) {
+function wdItem(name, usage = 1) {
     // CItem's original constructor takes CResRef BY VALUE: two stack DWORDs.
     // RET 0x1C at 0x4E817B; usage words follow the eight-byte value.
     const ref = Memory.allocUtf8String(name.padEnd(8, '\0'));
     const item = Memory.alloc(0xf0); // Original CItem ends at +0xEE.
-    wdCtor(item, ref.readU32(), ref.add(4).readU32(), 1, 0, 0, 0, 0);
+    wdCtor(item, ref.readU32(), ref.add(4).readU32(), usage, 0, 0, 0, 0);
     return item;
 }
 function wdDelete(object) {
     if (!object || object.isNull()) return;
     wdNative(object.readPointer().readPointer(), 'pointer', ['uint'])(object, 1);
+}
+function wdRound(source, target, ids, input) {
+    // Original-only offsets; never apply these reads to the reconstructed build.
+    // ApplyOnHitSpells 0x761AB0 walks the sentinel at +0xDB4.
+    const sentinel = target.add(0xdb4).readPointer();
+    if (source.add(0x41e).readS32() !== 0 || source.add(0x476).readS16() !== 0
+        || source.add(0xb64).readS32() !== 0 || target.add(0xb2c).readS32() !== 0
+        || sentinel.isNull() || !sentinel.readPointer().equals(sentinel)
+        || !source.add(0x5592).readPointer().isNull())
+        throw new Error('Swing requires idle source and empty bonus, immunity, retaliation and pending projectile state');
+    const hp = target.add(0x5c0).readS16();
+    if (hp <= 14 || !source.add(0x12).readPointer().equals(target.add(0x12).readPointer()))
+        throw new Error('Swing target area/HP precondition failed');
+    // Value-only buffers. Never shallow-copy owned action strings or STL containers.
+    const sourceFields = [[0x920,0x188], [0x5a4,0x37c], [0x28,1], [0x38,4],
+        [0x342c,8*0x3c], [0x4c12,4*0x0e], [0x4ad8+11*4,4], [0x4ad8+43*4,8],
+        [0x4ba4,1], [0x4ba6,2], [0x4c68,1], [0x5592,4], [0x5604,2],
+        [0x5622,2], [0x5630,1], [0x5632,4], [0x5636,1], [0x7118,4], [0x72a4,4], [0x70ee,4]];
+    const snapshots = sourceFields.map(([offset,size]) => [source.add(offset), source.add(offset).readByteArray(size)]);
+    snapshots.push([target.add(0x58c), target.add(0x58c).readByteArray(4)]);
+    let weapon = null, launcher = null, ability = null, demanded = false, hitBonus = 0;
+    try {
+        weapon = wdItem(input[0], 3); launcher = wdItem(input[1]);
+        demanded = wdDemand(weapon) !== 0;
+        if (!demanded) throw new Error('Swing fixture demand failed');
+        ability = wdAbility(weapon, 0);
+        if (ability.isNull()) throw new Error('Swing fixture ability missing');
+        hitBonus = ability.add(0x14).readS16(); ability.add(0x14).writeS16(32767);
+        source.add(0x920).writeByteArray(new Uint8Array(0x188));
+        source.add(0x95c).writeS16(19); source.add(0x974).writeS16(10); source.add(0x93a).writeS16(1);
+        source.add(0x75c).writeByteArray(new Uint8Array(12)); source.add(0x62f).writeU8(0);
+        source.add(0x28).writeU8(0); source.add(0x38).writeU32(0);
+        target.add(0x58c).writeU32(0x200000);
+        if (input[1]) source.add(0x4ad8+11*4).writePointer(weapon);
+        source.add(0x4ad8+43*4).writePointer(input[1] ? launcher : weapon);
+        source.add(0x4ad8+44*4).writePointer(ptr(0));
+        source.add(0x4ba4).writeU8(input[1] ? 11 : 43); source.add(0x4ba6).writeU16(0);
+        source.add(0x4c68).writeU8(0); source.add(0x72a4).writeS32(1);
+        source.add(0x5592).writePointer(ptr(0)); source.add(0x5622).writeS16(-1);
+        source.add(0x5630).writeU8(0); source.add(0x5632).writeS32(0); source.add(0x5636).writeU8(0);
+        let result = wdSwing(source, target), calls = 1, valid = result !== -2;
+        for (let frame = 1; frame <= 101 && source.add(0x5622).readS16() !== -2; ++frame) {
+            source.add(0x5622).writeS16(frame); result = wdSwing(source, target);
+            valid = valid && result !== -2; ++calls;
+        }
+        const remaining = wdUsage(weapon, 0);
+        // ACTION_INTERRUPTABLE=1, ACTION_ERROR=-2 (binary constants 0x8485C6/CA).
+        valid = valid && result === 1 && source.add(0x5622).readS16() === -2
+            && source.add(0x5592).readPointer().isNull() && remaining === (input[1] ? 2 : 3);
+        send({tag:'weapon-swing', stage:'round', item:input[0], calls, remaining, valid});
+        return {ids, hp, input:[input[0],input[1],input[2],input[1] ? 12 : 6], ticks:0, round:true};
+    } finally {
+        if (weapon) {
+            wdDelete(source.add(0x5592).readPointer());
+            if (ability && !ability.isNull()) ability.add(0x14).writeS16(hitBonus);
+        }
+        for (const [p,bytes] of snapshots) p.writeByteArray(bytes);
+        if (demanded) wdRelease(weapon);
+        if (launcher) wdDtor(launcher);
+        if (weapon) wdDtor(weapon);
+    }
 }
 function wdLaunch(game, objects, source, target, ids, input) {
     const [itemName, launcherName, expectedMissile, expectedDamage] = input;
@@ -173,20 +236,23 @@ Interceptor.attach(ptr('0x686690'), {onLeave() {
         if (wdWaiting) {
             const damage = wdWaiting.hp - target.add(0x5c0).readS16();
             if (damage === 0 && ++wdWaiting.ticks < 600) return;
-            send({tag:'weapon-base', stage:'delivery', item:wdWaiting.input[0],
+            send({tag:wdWaiting.round ? 'weapon-swing' : 'weapon-base', stage:'delivery', item:wdWaiting.input[0],
                 damage:damage, expectedDamage:wdWaiting.input[3]});
             if (damage <= 0) throw new Error('No HP loss or projectile timeout');
             wdWaiting = null;
-            if (++wdIndex === wdCases.length) {
+            if (++wdIndex === wdCases.length * (wdTestRounds ? 2 : 1)) {
                 if (wdTestCleanup) wdCompressChecks(objects, source);
                 wdDone = true; send({tag:'reference-done'}); return;
             }
         }
-        launch = wdLaunch(game, objects, source, target, ids, wdCases[wdIndex]);
+        launch = wdIndex < wdCases.length
+            ? wdLaunch(game, objects, source, target, ids, wdCases[wdIndex])
+            : wdRound(source, target, ids, wdCases[wdIndex-wdCases.length]);
     } catch (e) { wdDone = true; send({tag:'reference-error', error:String(e)}); }
     finally { for (const id of held.reverse()) wdUnlock(objects, id, 0, 0xffffffff); }
     if (launch && !wdDone) {
         wdWaiting = launch;
+        if (launch.round) return; // Swing already queued effects/fired the projectile.
         try {
             // Virtual Fire slot +0x6C; CPoint is eight BY-VALUE stack bytes.
             wdNative(launch.projectile.readPointer().add(0x6c).readPointer(), 'void',
