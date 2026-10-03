@@ -44,4 +44,5 @@ preserved paths. Both targets remain parity YELLOW: original/source call counts
 Offset analysis is unavailable for both targets, so static equivalence remains
 unproven.
 
-Next target: remaining paused/cutscene execution paths in ProcessAI.
+Paused preview is covered by [the paused action recovery](combat-paused-actions-recovery.md).
+Next target: active cutscene/inactive-sprite routing in ProcessAI.

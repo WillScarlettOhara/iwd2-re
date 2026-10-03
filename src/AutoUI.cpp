@@ -2514,6 +2514,8 @@ void Tick(CWarp* pActiveEngine)
         auto savedFlags = source->m_baseStats.m_flags;
         auto savedImmunity = source->m_baseStats.field_2F0[3];
         auto savedStart = source->m_posStart;
+        auto savedTargetPoint = source->m_targetPoint;
+        auto savedGroupMove = source->m_groupMove;
         auto savedSequence = source->m_nSequence;
         auto savedSelected = source->m_bSelected;
         auto savedEA = source->m_typeAI.m_nEnemyAlly;
@@ -2542,7 +2544,7 @@ void Tick(CWarp* pActiveEngine)
         game->GetGameSave()->m_cutScene = FALSE;
         CPoint marker(savedStart.x + 3, savedStart.y + 5);
         auto run = [&](const char* name, DWORD state, INT spell, BOOL casterHold,
-                       LONG stop, BOOL ownsStop, BOOL instant, BOOL shouldExecute) {
+                       LONG stop, BOOL ownsStop, BOOL instant, BOOL shouldExecute, BOOL paused = FALSE) {
             source->ClearActions(FALSE);
             source->m_curAction = CAIAction::NULL_ACTION;
             source->m_curAction.m_actionID = instant ? 269 : CAIAction::WAIT;
@@ -2569,6 +2571,7 @@ void Tick(CWarp* pActiveEngine)
             source->m_nSequence = CGameSprite::SEQ_READY;
             game->m_nTimeStop = stop;
             game->m_nTimeStopCaster = ownsStop ? id : -1;
+            game->GetWorldTimer()->m_active = !paused;
             if (instant || (state & STATE_DEAD)) source->AddAction(CAIAction(CAIAction::WAIT, 200));
             source->ProcessAI();
             BOOL executed = instant ? source->m_posStart == marker
@@ -2600,6 +2603,37 @@ void Tick(CWarp* pActiveEngine)
             run("negative-time-stop", 0, -1, FALSE, -1, FALSE, instant, instant);
             run("dead", STATE_DEAD, -1, FALSE, 0, FALSE, instant, instant);
         }
+        run("paused-ordinary", 0, -1, FALSE, 0, FALSE, FALSE, FALSE, TRUE);
+        run("paused-instant", 0, -1, FALSE, 0, FALSE, TRUE, TRUE, TRUE);
+        run("paused-held-instant", 0, SPLSTATE_HELD, FALSE, 0, FALSE, TRUE, TRUE, TRUE);
+        run("paused-caster-hold-instant", 0, -1, TRUE, 0, FALSE, TRUE, TRUE, TRUE);
+        run("paused-time-stop-instant", 0, -1, FALSE, 30, FALSE, TRUE, TRUE, TRUE);
+        source->m_groupMove = FALSE;
+        for (INT preview = 0; preview < 3; ++preview) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = 23;
+            source->m_curAction.m_dest = savedStart;
+            CAIAction queued;
+            queued.m_actionID = 27;
+            queued.m_dest = marker;
+            source->AddAction(queued);
+            source->m_interrupt = TRUE;
+            source->m_userCommandPause = 0;
+            source->m_nCommandPause = preview == 2 ? 0 : 10;
+            source->m_baseStats.m_flags = savedFlags & 0x7FFFFFFF;
+            if (preview == 1) source->m_baseStats.m_flags |= 0x80000000;
+            source->m_targetPoint = CPoint(-1, -1);
+            source->ProcessAI();
+            BOOL passed = source->m_targetPoint == (preview == 0 ? marker : savedStart)
+                && source->m_curAction.GetActionID() == (preview == 1 ? 23 : 27)
+                && source->m_interrupt == (preview == 1);
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"paused-preview\",\"case\":%d,\"passed\":%s}",
+                nStep, preview, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         source->m_derivedStats.m_generalState = savedState;
@@ -2609,6 +2643,8 @@ void Tick(CWarp* pActiveEngine)
         source->m_baseStats.m_flags = savedFlags;
         source->m_baseStats.field_2F0[3] = savedImmunity;
         source->m_posStart = savedStart;
+        source->m_targetPoint = savedTargetPoint;
+        source->m_groupMove = savedGroupMove;
         source->SetSequence(static_cast<BYTE>(savedSequence));
         source->m_bSelected = savedSelected;
         source->m_typeAI.m_nEnemyAlly = savedEA;

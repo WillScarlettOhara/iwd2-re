@@ -13351,7 +13351,16 @@ void CGameSprite::ProcessAI()
             m_interrupt = FALSE;
         }
 
-        ResolvePausedAction(&m_curAction, m_queuedActions.GetHeadPosition());
+        if (!m_interrupt || (m_baseStats.m_flags & 0x80000000) != 0
+            || (m_userCommandPause <= 0 && m_nCommandPause <= 0)) {
+            ResolvePausedAction(&m_curAction, m_queuedActions.GetHeadPosition());
+        } else {
+            POSITION pos = m_queuedActions.GetHeadPosition();
+            if (pos != NULL) {
+                CAIAction* nextAction = m_queuedActions.GetNext(pos);
+                ResolvePausedAction(nextAction, pos);
+            }
+        }
 
         if (m_interrupt && (m_baseStats.m_flags & 0x80000000) == 0) {
             SetCurrAction(GetNextAction(m_aiDoAction));
@@ -13376,9 +13385,6 @@ void CGameSprite::ProcessAI()
             ResolveInstants(bWorldTimerActive);
         }
 
-        if (!m_groupMove) {
-            ResolveTargetPoint(&m_curAction, m_queuedActions.GetHeadPosition());
-        }
         return;
     }
 
