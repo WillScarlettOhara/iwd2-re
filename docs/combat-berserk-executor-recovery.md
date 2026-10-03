@@ -55,3 +55,6 @@ passed. All three symbol gates were hit; combatberserk reports 12 active cases
 and 2 early-exit cases valid=true, 8 UI steps passed. Cleanup restored preserved
 paths. The global arc verdict remains FAIL for constructor parity; no full
 static or differential PASS is claimed.
+
+Follow-up: action 134 is now recovered and tested; see
+[AttackReevaluate recovery](combat-reevaluate-recovery.md). Action 184 remains.

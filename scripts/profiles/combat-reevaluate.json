@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-reevaluate.txt",
+  "hold": 60,
+  "fixtures": [
+    "combat-payload"
+  ],
+  "preserve": [],
+  "preconditions": [
+    "Center camera and require two visible party members.",
+    "Exercise action 134 through ExecuteAction with temporary melee, bow, crossbow and sling fixtures; restore fields and never save test damage."
+  ]
+}

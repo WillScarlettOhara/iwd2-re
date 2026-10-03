@@ -19383,6 +19383,141 @@ SHORT CGameSprite::GetCriticalHitBonus()
     return nCriticalHitBonus;
 }
 
+// 0x738E70
+SHORT CGameSprite::AttackReevaluate()
+{
+    CAIObjectType selector;
+    if (m_actionCount == 0) {
+        selector.Set(m_curAction.m_acteeID);
+        selector.Decode(this);
+        m_curAction.m_acteeID2.Set(selector);
+    }
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CGameSprite* pTarget = static_cast<CGameSprite*>(ResolveActionTarget(m_curAction.m_acteeID2, CGameObject::TYPE_SPRITE));
+    auto releaseTarget = [&]() {
+        game->GetObjectArray()->ReleaseShare(pTarget->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    };
+    if (pTarget != NULL && (m_baseStats.m_flags & 0x100000) == 0
+        && pTarget->GetAIType().m_nEnemyAlly <= CAIOBJECTTYPE_EA_GOODCUTOFF) {
+        m_baseStats.m_flags |= 0x100000;
+    }
+    if (pTarget != NULL) {
+        BOOL invalid = pTarget->m_animation.GetListType() == CGameObject::LIST_FLIGHT;
+        if (!invalid) {
+            invalid = !pTarget->CheckInvisibility(GetCanSeeInvisible())
+                || pTarget->m_derivedStats.m_spellStates[SPLSTATE_SANCTUARY]
+                || pTarget->m_id == m_id
+                || (pTarget->m_derivedStats.m_generalState & STATE_DEAD) != 0;
+            if ((pTarget->m_derivedStats.m_generalState & STATE_SLEEPING) != 0
+                && m_equipment.m_selectedWeapon == 10 && !GetAIType().IsClassValid(6)) {
+                invalid = TRUE;
+            }
+        }
+        if (!invalid) {
+            if (m_actionCount == 0 && (game->GetCharacterPortraitNum(m_id) == -1 || rand() % 6 == 0)) {
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessagePlaySound(5, TRUE, FALSE, m_id, m_id), FALSE);
+            }
+            if (field_70EE != pTarget->m_id) {
+                FeedBack(6, 0, 0, 0, pTarget->GetNameRef(), 0, 0);
+                field_70EE = pTarget->m_id;
+            }
+            CItem* weapon = m_equipment.m_items[static_cast<BYTE>(m_equipment.m_selectedWeapon)];
+            if (weapon == NULL) {
+                EquipMostDamagingMelee();
+                releaseTarget();
+                return ACTION_ERROR;
+            }
+            weapon->Demand();
+            const ITEM_ABILITY* ability = weapon->GetAbility(m_equipment.m_selectedWeaponAbility);
+            if (ability == NULL || static_cast<BYTE>(ability->type) == 4
+                || (ability->usageFlags == 3 && weapon->GetUsageCount(m_equipment.m_selectedWeaponAbility) == 0
+                    && ability->maxUsageCount != 0)) {
+                CString resource;
+                weapon->GetResRef().CopyToString(resource);
+                CAITrigger trigger(CAITRIGGER_UNUSABLE, 0);
+                trigger.m_string1 = resource;
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetTrigger(trigger, m_id, m_id), FALSE);
+                releaseTarget();
+                weapon->Release();
+                return ACTION_ERROR;
+            }
+            CPoint targetCell(pTarget->GetPos().x / CPathSearch::GRID_SQUARE_SIZEX,
+                pTarget->GetPos().y / CPathSearch::GRID_SQUARE_SIZEY);
+            CPoint sourceCell(GetPos().x / CPathSearch::GRID_SQUARE_SIZEX,
+                GetPos().y / CPathSearch::GRID_SQUARE_SIZEY);
+            LONG distance;
+            CItem* launcher = NULL;
+            const ITEM_ABILITY* launcherAbility = NULL;
+            if (static_cast<BYTE>(ability->type) == 2) {
+                LONG dx = sourceCell.x - targetCell.x;
+                LONG dy = sourceCell.y - targetCell.y;
+                distance = dx * dx + dy * dy;
+                SHORT launcherSlot;
+                launcher = GetLauncher(ability, launcherSlot);
+                if (launcher != NULL) {
+                    launcher->Demand();
+                    launcherAbility = launcher->GetAbility(0);
+                }
+            } else {
+                distance = CAIUtil::CountSquares(sourceCell, targetCell);
+                distance *= distance;
+            }
+            SHORT range = static_cast<SHORT>(ability->range + 1);
+            if (launcherAbility != NULL) range = static_cast<SHORT>(max(launcherAbility->range + 1, ability->range + 1));
+            if (launcher != NULL) launcher->Release();
+            weapon->Release();
+            CString animationRes;
+            pTarget->m_animation.GetAnimationResRef(animationRes, 0);
+            auto isAnimation = [&](const char* name) {
+                return _mbscmp(reinterpret_cast<const unsigned char*>(static_cast<LPCTSTR>(animationRes)),
+                           reinterpret_cast<const unsigned char*>(name)) == 0;
+            };
+            if (m_pArea != NULL && !isAnimation("MGEN") && !isAnimation("MKG1")
+                && !isAnimation("MKG2") && !isAnimation("MKG3")) {
+                m_pArea->PlaySong(3, 0x101F4);
+            }
+            BYTE sourceSpace = m_animation.GetPersonalSpace();
+            BYTE targetSpace = pTarget->m_animation.GetPersonalSpace();
+            BYTE space = static_cast<BYTE>(((targetSpace - 1) >> 1) + ((sourceSpace - 1) >> 1) - 1);
+            INT reach = space + range;
+            SHORT result;
+            if ((distance <= reach * reach || (field_7118 != 0 && distance <= (reach + 1) * (reach + 1)))
+                && m_pArea->CheckLOS(pTarget->GetPos(), GetPos(), m_visibleTerrainTable, pTarget->Orderable(FALSE))) {
+                if (m_pPath != NULL) {
+                    g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageDropPath(m_id, m_id), FALSE);
+                }
+                if (m_attackFrame == -2) m_attackFrame = -1;
+                result = Swing(pTarget);
+                m_lastActionID = 3;
+                if (m_attackFrame == 0 && m_actionCount != 0) {
+                    AutoPause(0x40);
+                    // The original early exit also skips ReleaseShare here (739A75).
+                    if (m_curAction.m_actionID == CAIAction::ATTACKONEROUND) return ACTION_DONE;
+                }
+            } else {
+                result = MoveToObject(pTarget);
+                if (result == ACTION_DONE) result = ACTION_INTERRUPTABLE;
+                m_lastActionID = 22;
+            }
+            if (m_actionCount > m_curAction.m_specificID) result = ACTION_DONE;
+            releaseTarget();
+            return result;
+        }
+        releaseTarget();
+    }
+    selector.Set(m_curAction.m_acteeID);
+    selector.Decode(this);
+    LONG nearest = m_pArea->GetNearest(m_id, selector, GetVisualRange(), m_visibleTerrainTable,
+        TRUE, GetCanSeeInvisible(), TRUE, 0, FALSE);
+    if (nearest == CGameObjectArray::INVALID_INDEX) return ACTION_DONE;
+    selector.m_nInstance = nearest;
+    m_curAction.m_acteeID2.Set(selector);
+    pTarget = static_cast<CGameSprite*>(ResolveActionTarget(m_curAction.m_acteeID2, CGameObject::TYPE_SPRITE));
+    if (pTarget == NULL) return ACTION_ERROR;
+    releaseTarget();
+    return ACTION_INTERRUPTABLE;
+}
+
 // 0x737EF0
 SHORT CGameSprite::Attack(CGameSprite* pTarget)
 {
@@ -21384,6 +21519,13 @@ SHORT CGameSprite::ExecuteAction()
 
     if (m_curAction.m_actionID == 124) {
         SHORT result = Berserk();
+        m_nLastActionReturn = result;
+        return result;
+    }
+
+    // ExecuteAction jump-table case 0x40 (72A33E).
+    if (m_curAction.m_actionID == CAIAction::ATTACKREEVALUATE) {
+        SHORT result = AttackReevaluate();
         m_nLastActionReturn = result;
         return result;
     }

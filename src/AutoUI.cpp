@@ -2695,8 +2695,10 @@ void Tick(CWarp* pActiveEngine)
                 CDerivedStatsTemplate savedStats = source->m_derivedStats;
                 auto savedBase = source->m_baseStats;
                 auto savedType = source->m_typeAI;
-                CAIAction savedAction = source->m_curAction;
+                CAIAction savedAction;
+                savedAction = source->m_curAction;
                 auto actionCount = source->m_actionCount;
+                auto lastReturn = source->m_nLastActionReturn;
                 auto lastAction = source->m_lastActionID;
                 auto feedbackTarget = source->field_70EE;
                 auto retaliation = target->m_derivedStats.m_onHitSpells;
@@ -2766,10 +2768,16 @@ void Tick(CWarp* pActiveEngine)
                 if (attackDamage) {
                     CAIObjectType targetType;
                     targetType.m_nInstance = targetId;
-                    source->m_curAction = CAIAction(actionId, targetType, 0, 0, 0);
+                    source->m_curAction = CAIAction(actionId, targetType,
+                        actionId == CAIAction::ATTACKREEVALUATE ? 1000 : 0, 0, 0);
                     source->m_actionCount = 0;
                 }
                 SHORT result = attackDamage ? source->ExecuteAction() : source->Swing(target);
+                if (attackDamage && actionId == CAIAction::ATTACKREEVALUATE) {
+                    Emit("{\"step\":%d,\"op\":\"reevaluate-start\",\"target\":%ld,\"resolved\":%ld,\"returned\":%d,\"lastAction\":%d,\"frame\":%d,\"budget\":%ld}",
+                        nStep, targetId, source->m_curAction.m_acteeID2.m_nInstance,
+                        result, source->m_lastActionID, source->m_attackFrame, source->m_curAction.m_specificID);
+                }
                 INT ticks = 1;
                 for (SHORT combatFrame = 1; combatFrame <= 101 && source->m_attackFrame != -2 && !(finalShot && finalMode != 0 && finalMode != 3 && result == CGameAIBase::ACTION_ERROR); ++combatFrame) {
                     source->m_attackFrame = combatFrame;
@@ -2846,6 +2854,7 @@ void Tick(CWarp* pActiveEngine)
                 source->m_typeAI = savedType;
                 source->m_curAction = savedAction;
                 source->m_actionCount = actionCount;
+                source->m_nLastActionReturn = lastReturn;
                 source->m_lastActionID = lastAction;
                 source->field_70EE = feedbackTarget;
                 target->m_derivedStats.m_onHitSpells = retaliation;

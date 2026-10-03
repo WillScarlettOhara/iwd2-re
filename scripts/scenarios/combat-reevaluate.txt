@@ -1,0 +1,12 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+expect partyvisible 1
+resume
+attackdamage ZRCMELEE 134
+attackdamage ZRCARROW ZRCBOW 134
+attackdamage ZRCBOLT ZRCXBOW 134
+attackdamage ZRCSTONE ZRCSLING 134
