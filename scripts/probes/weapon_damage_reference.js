@@ -234,7 +234,9 @@ Interceptor.attach(ptr('0x686690'), {onLeave() {
             const id = game.add(0x3816 + i * 4).readS32();
             if (id === -1) continue;
             const ref = Memory.alloc(4);
-            if (wdDeny(objects, id, 0, ref, 0xffffffff) !== 0) throw new Error('Party lock failed');
+            const lock = wdDeny(objects, id, 0, ref, 0xffffffff);
+            if (lock === 4 || lock === 5) return; // SHARED/DENIED: retry after rendering releases it.
+            if (lock !== 0) throw new Error('Party lock failed: '+lock);
             held.push(id);
             const actor = ref.readPointer();
             for (let n = 0; n < 2; ++n) {
@@ -267,6 +269,7 @@ Interceptor.attach(ptr('0x686690'), {onLeave() {
             wdWaiting = null;
             if (++wdIndex === wdCases.length * (wdTestRounds || wdTestAttack ? 2 : 1)) {
                 if (wdTestCleanup) wdCompressChecks(objects, source);
+                if (wdTestDepletion) wdDepletionChecks(source);
                 wdDone = true; send({tag:'reference-done'}); return;
             }
         }

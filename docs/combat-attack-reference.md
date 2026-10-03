@@ -56,3 +56,6 @@ hit/miss rolls, critical hits, last-unit ammunition depletion, retaliation and
 nonempty immunity lists remain outside this comparison. Next: final-unit
 depletion and automatic weapon/ammunition selection, then matched AI-driven
 attacks with ordinary hit checks.
+
+Follow-up: [direct depletion transitions](combat-depletion-reference.md) now
+match 23 observations. Final-shot delivery and action continuation remain open.

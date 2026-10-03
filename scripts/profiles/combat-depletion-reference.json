@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-depletion-reference.txt",
+  "hold": 60,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Match source/target world positions and target damage context after the four base damage checks.",
+    "For each ranged family, directly call CheckItemDepleted with exhausted ammunition: PC without reserve, identical reserve, different resource, non-PC without reserve, and 65535 normalization with identical reserve.",
+    "Use EA_ALLY on the same party actor to isolate the non-PC branch; this is not a complete NPC AI scenario. Restore classification, equipment, quick buttons and attack count before returning to world updates.",
+    "Compare deletion, selected slot/set/ability, untouched reserve count, return value and emitted Unusable trigger strings. This does not exercise the final shot or action cancellation.",
+    "Never save fixture state or test damage; transactionally restore the selected save and configuration."
+  ]
+}

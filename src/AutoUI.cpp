@@ -66,6 +66,8 @@
 //                                0 and 1; no damage or save, reseeds thread RNG.
 //   combatammo                  select compatible fixture ammunition and verify
 //                                quick buttons; restores the original equipment.
+//   depletionreference          compare exhausted ammunition transitions, including
+//                                resource changes and the non-PC melee fallback.
 //   combatparty                 verify independent party-effect copies and arena
 //                                recipients; discard effects and restore state.
 //   weapondamage <item> [launcher]  calculate base damage and deliver by projectile;
@@ -1759,6 +1761,124 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         Emit("{\"step\":%d,\"op\":\"combatammo\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "depletionreference") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() == 0) {
+            Fail(nStep, step.op, "requires world and party");
+            return;
+        }
+        LONG id = game->GetFixedOrderCharacterId(0);
+        CGameObject* object = NULL;
+        if (game->GetObjectArray()->GetDeny(id, CGameObjectArray::THREAD_ASYNCH,
+                &object, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable");
+            return;
+        }
+        CGameSprite* source = static_cast<CGameSprite*>(object);
+        CItem* savedItems[51];
+        memcpy(savedItems, source->m_equipment.m_items, sizeof(savedItems));
+        BYTE savedSlot = source->m_equipment.m_selectedWeapon;
+        WORD savedAbility = source->m_equipment.m_selectedWeaponAbility;
+        BYTE savedSet = source->m_nWeaponSet;
+        BYTE savedAttacks = source->m_baseStats.m_numberOfAttacksBase;
+        BYTE savedEA = source->m_typeAI.m_nEnemyAlly;
+        CButtonData savedButtons[8];
+        BYTE savedAmmo[8];
+        for (int i = 0; i < 8; ++i) savedButtons[i] = source->m_quickWeapons[i];
+        memcpy(savedAmmo, source->field_3D3A, sizeof(savedAmmo));
+        BOOL valid = source->m_curAction.m_actionID == CAIAction::NO_ACTION
+            && source->m_queuedActions.IsEmpty() && savedEA == CAIObjectType::EA_PC;
+        const char* ammoNames[] = { "ZRCARROW", "ZRCBOLT", "ZRCSTONE" };
+        const char* alternateNames[] = { "ZRCARR2", "ZRCBLT2", "ZRCSTN2" };
+        const char* launcherNames[] = { "ZRCBOW", "ZRCXBOW", "ZRCSLING" };
+        const char* cases[] = { "pc-empty", "pc-same", "pc-different", "ally-empty", "pc-wrapped" };
+        int checks = 0;
+        for (int kind = 0; kind < 3 && valid; ++kind) {
+            for (int trial = 0; trial < 5 && valid; ++trial) {
+                CItem launcher(CResRef(launcherNames[kind]), 1, 0, 0, 0, 0);
+                CItem melee(CResRef("ZRCMELEE"), 1, 0, 0, 0, 0);
+                CItem weaker(CResRef("ZRCDAGGR"), 1, 0, 0, 0, 0);
+                CItem reserve(CResRef(trial == 2 ? alternateNames[kind] : ammoNames[kind]), 7, 0, 0, 0, 0);
+                CItem* exhausted = new CItem(CResRef(ammoNames[kind]), 1, 0, 0, 0, 0);
+                exhausted->SetUsageCount(0, trial == 4 ? 0xFFFF : 0);
+                BOOL hasReserve = trial == 1 || trial == 2 || trial == 4;
+                memset(source->m_equipment.m_items, 0, sizeof(savedItems));
+                for (int i = 0; i < 8; ++i) {
+                    source->m_quickWeapons[i] = CButtonData();
+                    source->m_quickWeapons[i].m_abilityId.m_itemNum = static_cast<SHORT>(43 + i);
+                    source->m_quickWeapons[i].m_abilityId.m_abilityNum = 0;
+                }
+                memset(source->field_3D3A, 0, sizeof(savedAmmo));
+                source->m_equipment.m_items[10] = savedItems[10];
+                source->m_equipment.m_items[11] = exhausted;
+                source->m_equipment.m_items[12] = hasReserve ? &reserve : NULL;
+                source->m_equipment.m_items[43] = &launcher;
+                source->m_equipment.m_items[45] = &melee;
+                source->m_equipment.m_items[47] = &weaker;
+                source->m_nWeaponSet = 0;
+                source->m_equipment.m_selectedWeapon = 11;
+                source->m_equipment.m_selectedWeaponAbility = 0;
+                source->m_typeAI.m_nEnemyAlly = trial == 3 ? CAIObjectType::EA_ALLY : CAIObjectType::EA_PC;
+                auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+                INT oldCount = messages.GetCount();
+                BOOL result = source->CheckItemDepleted(11, 0);
+                INT triggerCount = 0;
+                SHORT triggerId = 0;
+                CString string1, string2;
+                BOOL triggerActors = TRUE;
+                POSITION position = messages.GetTailPosition();
+                for (INT count = messages.GetCount() - oldCount; count > 0 && position != NULL; --count) {
+                    auto* message = dynamic_cast<CMessageSetTrigger*>(messages.GetPrev(position));
+                    if (message != NULL) {
+                        ++triggerCount;
+                        triggerId = message->m_trigger.m_triggerID;
+                        string1 = message->m_trigger.m_string1;
+                        string2 = message->m_trigger.m_string2;
+                        triggerActors = triggerActors && message->GetSource() == id && message->GetTarget() == id;
+                    }
+                }
+                INT slot = source->m_equipment.m_selectedWeapon;
+                BOOL deleted = source->m_equipment.m_items[11] == NULL;
+                BOOL sameResource = trial == 1 || trial == 4;
+                valid = deleted && result == !sameResource
+                    && slot == (hasReserve ? 12 : (trial == 3 ? 45 : 10))
+                    && source->m_nWeaponSet == (trial == 3 ? 1 : 0)
+                    && source->m_equipment.m_selectedWeaponAbility == 0
+                    && (!hasReserve || reserve.GetUsageCount(0) == 7)
+                    && triggerCount == (sameResource ? 0 : 1) && triggerActors
+                    && triggerId == (sameResource ? 0 : CAITrigger::UNUSABLE)
+                    && string1 == (sameResource ? "" : ammoNames[kind]) && string2.IsEmpty();
+                Emit("{\"step\":%d,\"op\":\"depletion-reference\",\"item\":\"%s\",\"case\":\"%s\","
+                     "\"returned\":%d,\"deleted\":%d,\"slot\":%d,\"set\":%d,\"ability\":%d,\"reserve\":%d,"
+                     "\"triggers\":%d,\"triggerId\":%d,\"string1\":\"%s\",\"string2\":\"%s\",\"triggerActors\":%d}",
+                    nStep, ammoNames[kind], cases[trial], result, deleted, slot, source->m_nWeaponSet,
+                    source->m_equipment.m_selectedWeaponAbility, hasReserve ? reserve.GetUsageCount(0) : -1,
+                    triggerCount, triggerId, (LPCTSTR)string1, (LPCTSTR)string2, triggerActors);
+                ++checks;
+                if (!deleted) delete source->m_equipment.m_items[11];
+                // Restore real pointers before fixture destructors and before another engine tick.
+                memcpy(source->m_equipment.m_items, savedItems, sizeof(savedItems));
+                source->m_typeAI.m_nEnemyAlly = savedEA;
+            }
+        }
+        memcpy(source->m_equipment.m_items, savedItems, sizeof(savedItems));
+        source->m_typeAI.m_nEnemyAlly = savedEA;
+        source->m_nWeaponSet = savedSet;
+        source->m_equipment.m_selectedWeapon = 255;
+        source->SelectWeaponAbility(savedSlot, static_cast<BYTE>(savedAbility), FALSE, TRUE);
+        source->m_baseStats.m_numberOfAttacksBase = savedAttacks;
+        for (int i = 0; i < 8; ++i) source->m_quickWeapons[i] = savedButtons[i];
+        memcpy(source->field_3D3A, savedAmmo, sizeof(savedAmmo));
+        game->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid || checks != 15) {
+            Fail(nStep, step.op, "depletion transition mismatch; equipment and classification restored");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"depletionreference\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
     }

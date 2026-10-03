@@ -155,6 +155,48 @@ class ActorInputTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             reference.reconstructed_events(self.path, attack=True)
 
+    def depletion_records(self):
+        self.damage_records()
+        for item in ('ZRCARROW', 'ZRCBOLT', 'ZRCSTONE'):
+            for case in ('pc-empty', 'pc-same', 'pc-different', 'ally-empty', 'pc-wrapped'):
+                same = case in ('pc-same', 'pc-wrapped')
+                reserve = same or case == 'pc-different'
+                ally = case == 'ally-empty'
+                self.records.append(dict(op='depletion-reference', item=item, case=case,
+                    returned=int(not same), deleted=1, slot=12 if reserve else (45 if ally else 10),
+                    set=int(ally), ability=0, reserve=7 if reserve else -1,
+                    triggers=int(not same), triggerId=0 if same else 9,
+                    string1='' if same else item, string2='', triggerActors=1))
+        self.records.append(dict(op='depletionreference', checks=15, restored=True))
+
+    def test_depletion_requires_all_cases_and_restoration(self):
+        self.depletion_records()
+        self.write()
+        self.assertEqual(len(reference.reconstructed_events(self.path, depletion=True)), 23)
+        self.records[-1]['restored'] = False
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, depletion=True)
+        self.records[-1]['restored'] = True
+        del self.records[-2]
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, depletion=True)
+
+    def test_depletion_rejects_consumed_reserve(self):
+        self.depletion_records()
+        self.records[-2]['reserve'] = 6
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, depletion=True)
+
+    def test_depletion_rejects_wrong_unusable_resource(self):
+        self.depletion_records()
+        next(e for e in self.records if e.get('case') == 'pc-different')['string1'] = 'ZRCARR2'
+        self.write()
+        with self.assertRaises(ValueError):
+            reference.reconstructed_events(self.path, depletion=True)
+
 
 if __name__ == '__main__':
     unittest.main()
