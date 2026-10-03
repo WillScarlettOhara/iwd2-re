@@ -33,4 +33,6 @@ remain parity YELLOW, with ProcessAI's floating-point warning and
 ResolveInstants' original/source call count 17/35. Offset analysis remains
 unavailable; full static equivalence is unproven.
 
-Next target: periodic sprite synchronization in ProcessAI and its 0x71D0B0 callee.
+Periodic position synchronization is covered by
+[the periodic recovery](combat-periodic-sync-recovery.md).
+Next target: CGameSprite::CheckFatigue (0x71D0B0) and its periodic dispatch.

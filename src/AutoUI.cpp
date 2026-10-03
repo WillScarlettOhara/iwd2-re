@@ -2653,6 +2653,29 @@ void Tick(CWarp* pActiveEngine)
         }
         while (!savedTriggers.IsEmpty()) source->m_pendingTriggers.AddTail(savedTriggers.RemoveHead());
         source->m_dialogWait = 0;
+        CPoint savedExact = source->m_posExact;
+        LONG savedFrame = source->field_44A;
+        for (INT syncCase = 0; syncCase < 3; ++syncCase) {
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = CAIAction::WAIT;
+            source->m_curAction.m_specificID = 100;
+            source->field_44A = static_cast<DWORD>(id) % 16 + (syncCase == 1 ? 1 : 0);
+            source->SetSequence(syncCase == 2 ? CGameSprite::SEQ_WALK : CGameSprite::SEQ_READY);
+            CPoint exact((source->m_pos.x << CGameSprite::EXACT_SCALE),
+                (source->m_pos.y << (CGameSprite::EXACT_SCALE + 2)) / 3);
+            CPoint stale(exact.x + 8, exact.y + 8);
+            source->m_posExact = stale;
+            source->ProcessAI();
+            BOOL passed = source->m_posExact == (syncCase == 0 ? exact : stale);
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"periodic-sync\",\"case\":%d,\"passed\":%s}",
+                nStep, syncCase, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        source->m_posExact = savedExact;
+        source->field_44A = savedFrame;
+        source->SetSequence(CGameSprite::SEQ_READY);
         game->GetWorldTimer()->m_active = TRUE;
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;

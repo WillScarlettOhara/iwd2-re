@@ -13355,6 +13355,18 @@ void CGameSprite::ProcessAI()
         m_nCommandPause = 0;
     }
 
+    SHORT portrait = pGame->GetCharacterPortraitNum(m_id);
+    if (((portrait != -1 && static_cast<DWORD>(field_44A) % 16 == static_cast<DWORD>(m_id) % 16)
+            || static_cast<DWORD>(field_44A) % 2048 == static_cast<DWORD>(m_id) % 2048)
+        && (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL
+            || g_pChitin->cNetwork.m_idLocalPlayer == m_remotePlayerID)) {
+        if (pGame->GetCharacterPortraitNum(m_id) != -1 && m_nSequence != SEQ_WALK) {
+            JumpToPoint(m_pos, FALSE);
+        }
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(
+            new CMessageSpriteUpdate(this, m_id, m_id), FALSE);
+    }
+
     BOOL bWorldTimerActive = pGame->GetWorldTimer()->m_active;
     if (bWorldTimerActive && m_nUnselectableCounter > 0) {
         m_nUnselectableCounter--;
