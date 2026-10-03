@@ -23,11 +23,13 @@ class CGameSprite;
 class CRes;
 class CResBitmap;
 
+#pragma pack(push, 2)
 class CProjectile : public CGameObject {
 public:
     static CProjectile* DecodeProjectile(USHORT projectileType, CGameAIBase* pCaster, BYTE castDelay);
 
     CProjectile();
+    /* 0000 */ ~CProjectile() override;
 
     /* 0068 */ BOOLEAN IsProjectile() override;
     /* 006C */ virtual void Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType);
@@ -86,6 +88,7 @@ public:
     /* 0186 */ LONG m_nSpellLevel;
     /* 018A */ CResRef m_casterResRef;
 };
+#pragma pack(pop)
 
 // ---------------------------------------------------------------------------
 // CProjectileInstant (vtable 0x84D8B8) -- the "None" projectile (missileType 1).

@@ -83,7 +83,8 @@ def main():
              SCRIPTS / 'frida_orig.py', SCRIPTS / 'arc_profile.py', SCRIPTS / 'frida_trace_diff.py',
              SCRIPTS / 'combat_payload_fixture.py', REPO / 'scripts/profiles/combat-base-reference.json',
              REPO / 'scripts/scenarios/combat-base-reference.txt', REPO / 'src/AutoUI.cpp',
-             REPO / 'src/CGameSprite.cpp', REPO / 'src/CProjectile.cpp']
+             REPO / 'src/CGameSprite.cpp', REPO / 'src/CGameSprite.h',
+             REPO / 'src/CProjectile.cpp', REPO / 'src/CProjectile.h']
     report['sha256'] = {str(p.resolve()):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
     def write_report():
         (out / 'run.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')

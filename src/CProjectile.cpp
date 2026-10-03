@@ -114,6 +114,16 @@ static BOOL GetProjectileSourcePosition(LONG source, CPoint& pt)
     return TRUE;
 }
 
+// 0x51E9B0
+CProjectile::~CProjectile()
+{
+    POSITION pos = m_effectList.GetHeadPosition();
+    while (pos != NULL) {
+        delete m_effectList.GetNext(pos);
+    }
+    m_effectList.RemoveAll();
+}
+
 // 0x6A3130
 BOOLEAN CProjectile::IsProjectile()
 {
