@@ -13367,6 +13367,11 @@ void CGameSprite::ProcessAI()
             new CMessageSpriteUpdate(this, m_id, m_id), FALSE);
     }
 
+    if (pGame->GetCharacterPortraitNum(m_id) != -1
+        && static_cast<DWORD>(field_44A) % 2051 == static_cast<DWORD>(m_id) % 2051) {
+        CheckFatigue();
+    }
+
     BOOL bWorldTimerActive = pGame->GetWorldTimer()->m_active;
     if (bWorldTimerActive && m_nUnselectableCounter > 0) {
         m_nUnselectableCounter--;
@@ -13807,6 +13812,42 @@ void CGameSprite::ProcessAI()
     // for FACE/idle, so the marker disappears on arrival.
     if (!m_groupMove) {
         ResolveTargetPoint(&m_curAction, m_queuedActions.GetHeadPosition());
+    }
+}
+
+// 0x71D0B0
+void CGameSprite::CheckFatigue()
+{
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    ULONG now = pGame->GetWorldTimer()->m_gameTime;
+    ULONG period = 4 * CTimerWorld::TIMESCALE_MSEC_PER_SEC
+        * CTimerWorld::TIMESCALE_SEC_PER_MIN * CTimerWorld::TIMESCALE_MIN_PER_HOUR;
+    LONG fatigue = static_cast<LONG>((now - field_722A) / period);
+    if (fatigue > m_baseStats.m_fatigue) {
+        ITEM_EFFECT itemEffect;
+        CGameEffect::ClearItemEffect(&itemEffect, CGAMEEFFECT_FATIGUE);
+        itemEffect.effectAmount = fatigue;
+        itemEffect.dwFlags = 1;
+        itemEffect.durationType = 1;
+        CGameEffect* effect = CGameEffect::DecodeEffect(&itemEffect, m_pos, m_id, CPoint(-1, -1));
+        if (!m_derivedStats.m_cImmunitiesEffect.OnList(effect)
+            && m_derivedStats.m_activeEffectOpcodes.find(effect->m_effectID)
+                == m_derivedStats.m_activeEffectOpcodes.end()) {
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(effect, m_id, m_id), FALSE);
+            signed char modifier = static_cast<signed char>(atoi(pGame->GetRuleTables().m_tFatigueMod.GetAt(CPoint(0, fatigue))));
+            m_derivedStats.m_nLuck += modifier;
+            if (modifier != 0 && m_portraitIcons.Find(reinterpret_cast<int*>(39)) == NULL) {
+                m_portraitIcons.AddTail(reinterpret_cast<int*>(39));
+            }
+            if (fatigue > 6) {
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessagePlaySound(3, TRUE, TRUE, m_id, m_id), FALSE);
+            }
+        }
+    } else if (fatigue < m_baseStats.m_fatigue) {
+        field_722A = now - period * m_baseStats.m_fatigue;
+        if (m_baseStats.m_fatigue > 6) {
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessagePlaySound(3, TRUE, TRUE, m_id, m_id), FALSE);
+        }
     }
 }
 

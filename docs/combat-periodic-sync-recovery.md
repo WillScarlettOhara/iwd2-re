@@ -37,4 +37,6 @@ original/source calls 191/200 and 50/36; ProcessAI's floating-point warning
 remains. ProcessAI offset analysis is unavailable; complete static equivalence
 is not established.
 
-Next target: CGameSprite::CheckFatigue (0x71D0B0) and its periodic dispatch.
+CheckFatigue and its periodic dispatch are covered by
+[the fatigue recovery](combat-fatigue-recovery.md).
+Next target: remaining early ProcessAI action replacement and movement bookkeeping.

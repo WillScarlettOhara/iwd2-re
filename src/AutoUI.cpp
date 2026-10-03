@@ -2491,6 +2491,101 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "fatiguechecks") == 0) {
+        auto* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        CGameObject* object = NULL;
+        if (objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "actor unavailable"); return;
+        }
+        auto* source = static_cast<CGameSprite*>(object);
+        BYTE savedFatigue = source->m_baseStats.m_fatigue;
+        ULONG savedEpoch = source->field_722A;
+        SHORT savedLuck = source->m_derivedStats.m_nLuck;
+        ULONG savedTime = game->GetWorldTimer()->m_gameTime;
+        BOOL hadIcon = source->m_portraitIcons.Find(reinterpret_cast<int*>(39)) != NULL;
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = messages.GetCount();
+        BOOL valid = TRUE;
+        INT checks = 0;
+        ULONG period = 18000;
+        auto run = [&](const char* name, BYTE base, ULONG elapsed, BOOL effectExpected, BOOL soundExpected) {
+            game->GetWorldTimer()->m_gameTime = 1000000;
+            source->m_baseStats.m_fatigue = base;
+            source->field_722A = 1000000 - elapsed;
+            source->m_derivedStats.m_nLuck = 10;
+            source->CheckFatigue();
+            INT effects = 0, sounds = 0;
+            BOOL passed = TRUE;
+            LONG amount = elapsed / period;
+            while (messages.GetCount() > before) {
+                CMessage* raw = messages.RemoveTail();
+                auto* effectMessage = dynamic_cast<CMessageAddEffect*>(raw);
+                auto* soundMessage = dynamic_cast<CMessagePlaySound*>(raw);
+                if (effectMessage != NULL) {
+                    ++effects;
+                    auto* effect = effectMessage->m_effect;
+                    passed = passed && effect->m_effectID == CGAMEEFFECT_FATIGUE
+                        && effect->m_effectAmount == amount && effect->m_dwFlags == 1 && effect->m_durationType == 1;
+                    effect->ApplyEffect(source);
+                    passed = passed && source->m_baseStats.m_fatigue == min(amount, 100);
+                } else if (soundMessage != NULL) {
+                    ++sounds;
+                    passed = passed && soundMessage->m_soundId == 3
+                        && soundMessage->m_showText && soundMessage->m_showCircle;
+                } else passed = FALSE;
+                delete raw;
+            }
+            signed char modifier = static_cast<signed char>(atoi(game->GetRuleTables().m_tFatigueMod.GetAt(CPoint(0, amount))));
+            passed = passed && effects == (effectExpected ? 1 : 0) && sounds == (soundExpected ? 1 : 0)
+                && source->m_derivedStats.m_nLuck == 10 + (effectExpected ? modifier : 0)
+                && source->field_722A == (amount < base ? 1000000 - period * base : 1000000 - elapsed);
+            if (effectExpected && modifier != 0) passed = passed && source->m_portraitIcons.Find(reinterpret_cast<int*>(39)) != NULL;
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"fatigue-case\",\"case\":\"%s\",\"effects\":%d,\"sounds\":%d,\"passed\":%s}",
+                nStep, name, effects, sounds, passed ? "true" : "false");
+        };
+        run("equal", 2, 2 * period, FALSE, FALSE);
+        run("below-boundary", 0, period - 1, FALSE, FALSE);
+        run("increase", 0, 2 * period, TRUE, FALSE);
+        run("sound-threshold-six", 0, 6 * period, TRUE, FALSE);
+        run("sound-threshold-seven", 0, 7 * period, TRUE, TRUE);
+        run("clock-correction", 5, 2 * period, FALSE, FALSE);
+        run("clock-correction-sound", 7, 2 * period, FALSE, TRUE);
+        LONG savedFrame = source->field_44A;
+        BOOLEAN savedActive = game->GetWorldTimer()->m_active;
+        game->GetWorldTimer()->m_active = FALSE;
+        game->GetWorldTimer()->m_gameTime = savedTime;
+        for (INT phase = 0; phase < 2; ++phase) {
+            source->m_baseStats.m_fatigue = 5;
+            source->field_722A = savedTime - 2 * period;
+            source->field_44A = static_cast<DWORD>(id) % 2051 + phase;
+            source->ProcessAI();
+            BOOL passed = source->field_722A == savedTime - (phase == 0 ? 5 : 2) * period;
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"fatigue-phase\",\"case\":%d,\"passed\":%s}",
+                nStep, phase, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        source->field_44A = savedFrame;
+        game->GetWorldTimer()->m_active = savedActive;
+        source->m_baseStats.m_fatigue = savedFatigue;
+        source->field_722A = savedEpoch;
+        source->m_derivedStats.m_nLuck = savedLuck;
+        game->GetWorldTimer()->m_gameTime = savedTime;
+        if (!hadIcon) {
+            POSITION pos = source->m_portraitIcons.Find(reinterpret_cast<int*>(39));
+            if (pos != NULL) source->m_portraitIcons.RemoveAt(pos);
+        }
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"fatiguechecks\",\"checks\":%d,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "fatigue mismatch"); return; }
+        s_pc++; return;
+    }
+
     if (strcmp(step.op, "actiongates") == 0) {
         CInfGame* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();
