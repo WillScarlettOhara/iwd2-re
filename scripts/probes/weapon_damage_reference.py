@@ -21,7 +21,7 @@ from runtime_paths import REPO, game_directory
 import frida_trace_diff as diff
 
 
-def reconstructed_events(path, cleanup=False, rounds=False, attack=False, depletion=False, finalshot=False):
+def reconstructed_events(path, cleanup=False, rounds=False, attack=False, depletion=False, finalshot=False, finalmode=0):
     raw = [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines()]
     if not any(e.get('op') == 'verdict' and e.get('verdict') == 'PASS' for e in raw):
         raise ValueError('Reconstruction scenario must have a PASS verdict')
@@ -72,12 +72,12 @@ def reconstructed_events(path, cleanup=False, rounds=False, attack=False, deplet
             if finalshot:
                 action = 3
             amount = 6 if item == 'ZRCMELEE' else 12
-            record = dict(tag=tag, stage='round', item=item, calls=102,
-                          remaining=7 if finalshot else (3 if item == 'ZRCMELEE' else 2), valid=True)
+            record = dict(tag=tag, stage='round', item=item, calls=7 if finalshot and finalmode else 102,
+                          remaining=(0 if finalmode == 1 else 7) if finalshot else (3 if item == 'ZRCMELEE' else 2), valid=True)
             if attack or finalshot:
-                record.update(action=action, returned=-1 if action == 105 else 1, frame=-2)
+                record.update(action=action, returned=-2 if finalshot and finalmode else (-1 if action == 105 else 1), frame=6 if finalshot and finalmode else -2)
             if finalshot:
-                record.update(deleted=1, slot=12, ability=0, set=0)
+                record.update(deleted=1, slot=10 if finalmode == 1 else 12, ability=0, set=0)
             required_extra.extend([record,
                                    dict(tag=tag, stage='delivery', item=item,
                                         damage=amount, expectedDamage=amount)])
@@ -130,8 +130,12 @@ def main():
     mode.add_argument('--rounds', action='store_true', help='Also compare direct Swing rounds, payloads and ammunition')
     mode.add_argument('--attack', action='store_true', help='Also compare ExecuteAction/Attack rounds and action return values')
     mode.add_argument('--depletion', action='store_true', help='Also compare exhausted ammo replacement, triggers and non-PC fallback')
-    mode.add_argument('--finalshot', action='store_true', help='Fire the final ranged unit through ExecuteAction, with an identical reserve')
+    mode.add_argument('--finalshot', action='store_true', help='Fire the final ranged unit through ExecuteAction; choose reserve with --final-mode')
+    parser.add_argument('--final-mode', choices=('same','empty','different'), default='same')
     args = parser.parse_args()
+    finalmode = ('same','empty','different').index(args.final_mode)
+    if finalmode and not args.finalshot:
+        parser.error('--final-mode requires --finalshot')
     if not 1 <= args.timeout <= 300:
         parser.error('timeout must be in 1..300 seconds')
     import frida
@@ -140,14 +144,14 @@ def main():
     canonical = '25cb3d8aa2ec648e94e328d8c467973e'
     if any(hashlib.md5(p.read_bytes()).hexdigest() != canonical for p in (exe, REPO / '.bin/IWD2.exe')):
         raise ValueError('Original executable is not canonical')
-    ours = reconstructed_events(args.ours, args.cleanup, args.rounds, args.attack, args.depletion, args.finalshot)
+    ours = reconstructed_events(args.ours, args.cleanup, args.rounds, args.attack, args.depletion, args.finalshot, finalmode)
     actor_positions, expected_context = actor_inputs(args.ours)
     expected_count = 16 if args.rounds or args.attack else (10 if args.cleanup else 8)
     profile_name = ('combat-attack-reference' if args.attack else 'combat-swing-reference') if args.rounds or args.attack else ('combat-projectile-compress' if args.cleanup else 'combat-base-reference')
     if args.depletion:
         expected_count, profile_name = 23, 'combat-depletion-reference'
     if args.finalshot:
-        expected_count, profile_name = 14, 'combat-finalshot-reference'
+        expected_count, profile_name = 14, 'combat-finalshot-reference' if not finalmode else 'combat-finalshot-'+args.final_mode
     out = REPO / '.arc' / datetime.now(timezone.utc).strftime('%Y-%m-%dT%H-%M-%S-%f-weapon-reference')
     out.mkdir()
     report = {'verdict':'UNPROVEN', 'scope':'Four base damage descriptors and four projectile HP deltas',
@@ -161,7 +165,7 @@ def main():
     if args.depletion:
         report['scope'] += '; fifteen direct CheckItemDepleted transitions and Unusable payloads (no final shot or action cancellation)'
     if args.finalshot:
-        report['scope'] += '; three final-unit ExecuteAction rounds with identical reserves, deletion, continuation and delivered damage'
+        report['scope'] += '; three final-unit ExecuteAction rounds with '+args.final_mode+' reserves, deletion, action result and delivered damage'
     paths = [exe, Path(__file__), Path(__file__).with_suffix('.js'), args.ours,
              SCRIPTS / 'frida_orig.py', SCRIPTS / 'arc_profile.py', SCRIPTS / 'frida_trace_diff.py',
              SCRIPTS / 'combat_payload_fixture.py', REPO / f'scripts/profiles/{profile_name}.json',
@@ -201,6 +205,7 @@ def main():
     code += 'const wdTestRounds = ' + json.dumps(args.rounds) + ';\n'
     code += 'const wdTestAttack = ' + json.dumps(args.attack) + ';\n'
     code += 'const wdTestDepletion = ' + json.dumps(args.depletion) + ';\n'
+    code += 'const wdFinalMode = ' + json.dumps(finalmode) + ';\n'
     code += 'const wdTestFinalShot = ' + json.dumps(args.finalshot) + ';\n'
     code += Path(__file__).with_suffix('.js').read_text(encoding='utf-8')
     if args.depletion:

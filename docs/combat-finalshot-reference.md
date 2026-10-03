@@ -61,3 +61,5 @@ round with an identical reserve. It does not prove another round firing from
 that reserve, normal AI timing, hit/miss/critical rolls, or final-shot behavior
 without a reserve or with a different resource. Next: the latter two cancellation
 paths, retaining damage delivery and the exact action return/frame evidence.
+
+Follow-up: [empty/different reserve cancellation checks](combat-finalshot-cancellation.md) pass in the reconstruction; original comparison is currently unproven due to input calibration.

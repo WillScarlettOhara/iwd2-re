@@ -128,7 +128,7 @@ function wdRound(source, target, ids, input) {
         ability = wdAbility(weapon, 0);
         if (ability.isNull()) throw new Error('Swing fixture ability missing');
         if (wdTestFinalShot) {
-            reserve = wdItem(input[0], 7);
+            reserve = wdItem(wdFinalMode === 2 ? {ZRCARROW:'ZRCARR2',ZRCBOLT:'ZRCBLT2',ZRCSTONE:'ZRCSTN2'}[input[0]] : input[0], 7);
             // Only a game-allocated object may be deleted by CheckItemDepleted.
             lastUnit = wdGameNew(0xf0);
             if (lastUnit.isNull()) throw new Error('Final unit allocation failed');
@@ -150,7 +150,7 @@ function wdRound(source, target, ids, input) {
         source.add(0x5592).writePointer(ptr(0)); source.add(0x5622).writeS16(-1);
         source.add(0x5630).writeU8(0); source.add(0x5632).writeS32(0); source.add(0x5636).writeU8(0);
         if (wdTestFinalShot) {
-            source.add(0x4ad8+12*4).writePointer(reserve);
+            source.add(0x4ad8+12*4).writePointer(wdFinalMode === 1 ? ptr(0) : reserve);
             source.add(0x4ad8+13*4).writePointer(ptr(0)); source.add(0x4ad8+14*4).writePointer(ptr(0));
             source.add(0x3d3a).writeByteArray(new Uint8Array(8));
             for (let i=0; i<8; ++i) {
@@ -170,23 +170,24 @@ function wdRound(source, target, ids, input) {
         }
         const execute = () => wdTestAttack || wdTestFinalShot ? wdExecute(source) : wdSwing(source, target);
         let result = execute(), calls = 1, valid = result !== -2;
-        for (let frame = 1; frame <= 101 && source.add(0x5622).readS16() !== -2; ++frame) {
+        for (let frame = 1; frame <= 101 && source.add(0x5622).readS16() !== -2 && !(wdTestFinalShot && wdFinalMode !== 0 && result === -2); ++frame) {
             source.add(0x5622).writeS16(frame);
             if (wdTestAttack || wdTestFinalShot) source.add(0x474).writeS16(frame);
             result = execute();
-            valid = valid && result !== -2; ++calls;
+            valid = valid && (result !== -2 || (wdTestFinalShot && wdFinalMode !== 0)); ++calls;
         }
-        const remaining = wdUsage(wdTestFinalShot ? reserve : weapon, 0);
+        const remaining = wdTestFinalShot && wdFinalMode === 1 ? 0 : wdUsage(wdTestFinalShot ? reserve : weapon, 0);
         // ACTION_INTERRUPTABLE=1, ACTION_ERROR=-2 (binary constants 0x8485C6/CA).
-        valid = valid && result === (wdTestAttack && action === 105 ? -1 : 1) && source.add(0x5622).readS16() === -2
-            && source.add(0x5592).readPointer().isNull() && remaining === (wdTestFinalShot ? 7 : (input[1] ? 2 : 3));
+        valid = valid && result === (wdTestFinalShot && wdFinalMode !== 0 ? -2 : wdTestAttack && action === 105 ? -1 : 1)
+            && (wdTestFinalShot && wdFinalMode !== 0 ? source.add(0x5622).readS16() >= 0 : source.add(0x5622).readS16() === -2)
+            && (wdTestFinalShot && wdFinalMode !== 0 || source.add(0x5592).readPointer().isNull()) && remaining === (wdTestFinalShot ? (wdFinalMode === 1 ? 0 : 7) : (input[1] ? 2 : 3));
         const tag = wdTestFinalShot ? 'weapon-finalshot' : (wdTestAttack ? 'weapon-attack' : 'weapon-swing');
         const record = {tag, stage:'round', item:input[0], calls, remaining, valid};
         if (wdTestAttack || wdTestFinalShot) Object.assign(record, {action, returned:result, frame:source.add(0x5622).readS16()});
         if (wdTestFinalShot) {
             Object.assign(record, {deleted:Number(source.add(0x4ad8+11*4).readPointer().isNull()),
                 slot:source.add(0x4ba4).readU8(), ability:source.add(0x4ba6).readU16(), set:source.add(0x4c68).readU8()});
-            record.valid = record.valid && record.deleted === 1 && record.slot === 12 && record.ability === 0 && record.set === 0;
+            record.valid = record.valid && record.deleted === 1 && record.slot === (wdFinalMode === 1 ? 10 : 12) && record.ability === 0 && record.set === 0;
         }
         send(record);
         return {ids, hp, input:[input[0],input[1],input[2],input[1] ? 12 : 6], ticks:0, round:true, tag};

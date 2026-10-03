@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-finalshot-empty.txt",
+  "hold": 60,
+  "fixtures": [
+    "combat-payload"
+  ],
+  "preserve": [],
+  "preconditions": [
+    "Final shot with empty reserve; stop direct ExecuteAction calls on ACTION_ERROR, compare delivered 12 HP damage and selected slot.",
+    "Transactional fixture and save restoration; never save damage."
+  ]
+}

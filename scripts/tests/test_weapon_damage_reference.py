@@ -206,6 +206,21 @@ class ActorInputTests(unittest.TestCase):
                              dict(op='finalshotdamage', item=item, hpBefore=100,
                                   hpAfter=88, expectedDamage=12)]
 
+    def test_finalshot_cancellation_requires_damage_and_action_error(self):
+        for mode in (1, 2):
+            self.records = []
+            self.finalshot_records()
+            for record in self.records:
+                if record.get('op') == 'finalshotdamage-round':
+                    record.update(calls=7, frame=6, returned=-2,
+                                  remaining=0 if mode == 1 else 7, slot=10 if mode == 1 else 12)
+            self.write()
+            self.assertEqual(len(reference.reconstructed_events(self.path, finalshot=True, finalmode=mode)), 14)
+            self.records[-2]['returned'] = 1
+            self.write()
+            with self.assertRaises(ValueError):
+                reference.reconstructed_events(self.path, finalshot=True, finalmode=mode)
+
     def test_finalshot_requires_damage_after_deletion(self):
         self.finalshot_records()
         self.write()

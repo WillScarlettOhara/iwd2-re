@@ -2542,6 +2542,7 @@ void Tick(CWarp* pActiveEngine)
         || strcmp(step.op, "finalshotdamage") == 0) {
         BOOL baseDamage = strcmp(step.op, "weapondamage") == 0;
         BOOL finalShot = strcmp(step.op, "finalshotdamage") == 0;
+        INT finalMode = finalShot && step.nCount > 1 ? step.n[1] : 0;
         BOOL attackDamage = strcmp(step.op, "attackdamage") == 0 || finalShot;
         BOOL swingDamage = strcmp(step.op, "swingdamage") == 0 || attackDamage;
         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -2618,7 +2619,8 @@ void Tick(CWarp* pActiveEngine)
             valid = source->m_derivedStats.m_cDamageBonusList.IsEmpty()
                 && target->m_derivedStats.m_cImmunitiesWeapon.IsEmpty();
             if (valid) {
-                CItem reserve(CResRef(step.s[0]), 7, 0, 0, 0, 0);
+                const char* reserveName = finalMode == 2 ? (strcmp(step.s[0], "ZRCARROW") == 0 ? "ZRCARR2" : (strcmp(step.s[0], "ZRCBOLT") == 0 ? "ZRCBLT2" : "ZRCSTN2")) : step.s[0];
+                CItem reserve(CResRef(reserveName), 7, 0, 0, 0, 0);
                 // CheckItemDepleted owns deletion of the last unit. The stack
                 // weapon remains a resource keeper for the ability pointer.
                 CItem* lastUnit = finalShot ? new CItem(CResRef(step.s[0]), 1, 0, 0, 0, 0) : NULL;
@@ -2676,7 +2678,7 @@ void Tick(CWarp* pActiveEngine)
                 source->m_equipment.m_selectedWeaponAbility = 0;
                 source->m_nWeaponSet = 0;
                 if (finalShot) {
-                    source->m_equipment.m_items[12] = &reserve;
+                    source->m_equipment.m_items[12] = finalMode == 1 ? NULL : &reserve;
                     source->m_equipment.m_items[13] = NULL;
                     source->m_equipment.m_items[14] = NULL;
                     memset(source->field_3D3A, 0, sizeof(cachedAmmo));
@@ -2701,21 +2703,22 @@ void Tick(CWarp* pActiveEngine)
                 }
                 SHORT result = attackDamage ? source->ExecuteAction() : source->Swing(target);
                 INT ticks = 1;
-                for (SHORT combatFrame = 1; combatFrame <= 101 && source->m_attackFrame != -2; ++combatFrame) {
+                for (SHORT combatFrame = 1; combatFrame <= 101 && source->m_attackFrame != -2 && !(finalShot && finalMode != 0 && result == CGameAIBase::ACTION_ERROR); ++combatFrame) {
                     source->m_attackFrame = combatFrame;
                     if (attackDamage) source->m_actionCount = combatFrame;
                     result = attackDamage ? source->ExecuteAction() : source->Swing(target);
-                    valid = valid && result != CGameAIBase::ACTION_ERROR;
+                    valid = valid && (result != CGameAIBase::ACTION_ERROR || (finalShot && finalMode != 0));
                     ++ticks;
                 }
-                WORD remaining = finalShot ? reserve.GetUsageCount(0) : weapon.GetUsageCount(0);
-                valid = valid && result == (attackDamage && actionId == CAIAction::ATTACKONEROUND
+                WORD remaining = finalShot ? (finalMode == 1 ? 0 : reserve.GetUsageCount(0)) : weapon.GetUsageCount(0);
+                valid = valid && result == (finalShot && finalMode != 0 ? CGameAIBase::ACTION_ERROR : attackDamage && actionId == CAIAction::ATTACKONEROUND
                         ? CGameAIBase::ACTION_DONE : CGameAIBase::ACTION_INTERRUPTABLE)
-                    && source->m_attackFrame == -2 && source->m_curProjectile == NULL
-                    && remaining == (finalShot ? 7 : (ability->maxUsageCount != 0 ? 2 : 3));
+                    && (finalShot && finalMode != 0 ? source->m_attackFrame >= 0 : source->m_attackFrame == -2)
+                    && (finalShot && finalMode != 0 || source->m_curProjectile == NULL)
+                    && remaining == (finalShot ? (finalMode == 1 ? 0 : 7) : (ability->maxUsageCount != 0 ? 2 : 3));
                 BOOL deleted = finalShot && source->m_equipment.m_items[11] == NULL;
                 valid = valid && (!finalShot || (hasLauncher && deleted
-                    && source->m_equipment.m_selectedWeapon == 12
+                    && source->m_equipment.m_selectedWeapon == (finalMode == 1 ? 10 : 12)
                     && source->m_equipment.m_selectedWeaponAbility == 0 && source->m_nWeaponSet == 0));
                 Emit("{\"step\":%d,\"op\":\"%s-round\",\"item\":\"%s\",\"calls\":%d,\"remaining\":%u,\"valid\":%d,\"action\":%d,\"returned\":%d,\"frame\":%d,\"deleted\":%d,\"slot\":%d,\"ability\":%d,\"set\":%d}",
                     nStep, step.op, step.s[0], ticks, remaining, valid,
