@@ -2392,6 +2392,74 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "combatberserk") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        CGameObject* raw = NULL;
+        LONG id = game->GetFixedOrderCharacterId(0);
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 1
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and party actor");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(raw);
+        if (source->m_pArea == NULL) {
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires actor area");
+            return;
+        }
+        CAIAction savedAction;
+        savedAction = source->m_curAction;
+        BOOL savedBerserk = source->m_berserkActive;
+        SHORT savedReturn = source->m_nLastActionReturn;
+        CTypedPtrList<CPtrList, CAIAction*> savedQueue;
+        while (!source->m_queuedActions.IsEmpty()) {
+            savedQueue.AddTail(source->m_queuedActions.RemoveHead());
+        }
+        CAIAction waitAction(CAIAction::WAIT, 6);
+        BOOL valid = waitAction.m_actionID == CAIAction::WAIT
+            && waitAction.m_specificID == 6 && waitAction.m_specificID2 == 0
+            && waitAction.m_specificID3 == 0 && waitAction.m_internalFlags == 0;
+        INT activeCases = 0;
+        for (INT i = 0; i < 14; ++i) {
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = 124;
+            source->m_curAction.m_specificID = i == 1 ? 1 : 12;
+            source->m_berserkActive = i != 0;
+            SHORT result = source->ExecuteAction();
+            INT count = source->m_queuedActions.GetCount();
+            valid = valid && result == CGameAIBase::ACTION_DONE
+                && source->m_nLastActionReturn == result
+                && source->m_curAction.m_specificID == (i == 1 ? 0 : 11);
+            if (i < 2) {
+                valid = valid && count == 0;
+            } else {
+                valid = valid && (count == 1 || count == 2);
+                if (count > 0) {
+                    SHORT actionId = source->m_queuedActions.GetHead()->m_actionID;
+                    valid = valid && (actionId == CAIAction::NO_ACTION
+                        || actionId == CAIAction::ATTACK || actionId == CAIAction::WAIT);
+                }
+                ++activeCases;
+            }
+            while (!source->m_queuedActions.IsEmpty()) {
+                delete source->m_queuedActions.RemoveHead();
+            }
+        }
+        source->m_curAction = savedAction;
+        source->m_berserkActive = savedBerserk;
+        source->m_nLastActionReturn = savedReturn;
+        while (!savedQueue.IsEmpty()) {
+            source->m_queuedActions.AddTail(savedQueue.RemoveHead());
+        }
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"combatberserk\",\"active_cases\":%d,\"valid\":%s}",
+            nStep, activeCases, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "berserk queue mismatch (state restored)"); return; }
+        s_pc++;
+        return;
+    }
+
     if (strcmp(step.op, "combatmove") == 0) {
         CInfGame* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();

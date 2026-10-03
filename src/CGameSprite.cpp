@@ -13370,8 +13370,8 @@ void CGameSprite::ProcessAI()
         && m_berserkActive) {
         UpdateBerserkActive();
         if (m_curAction.GetActionID() != CAIAction::ATTACK
-            && m_curAction.GetActionID() != 124 /* original action at 0x84786C */) {
-            m_aiDoAction.m_actionID = 124 /* original action at 0x84786C */;
+            && m_curAction.GetActionID() != CAIAction::BERSERK) {
+            m_aiDoAction.m_actionID = CAIAction::BERSERK;
             m_aiDoAction.m_specificID = LONG_MAX;
             m_aiDoAction.m_specificID2 = 0;
             m_aiDoAction.m_specificID3 = 0;
@@ -13677,6 +13677,45 @@ CString CGameSprite::GetRaceLabel(BYTE nRace)
     case 0xFF: sRace = "NO_RACE"; break;
     }
     return sRace;
+}
+
+// 0x75A4B0
+SHORT CGameSprite::Berserk()
+{
+    m_curAction.m_specificID--;
+    if (!m_berserkActive || m_curAction.m_specificID <= 0) {
+        return ACTION_DONE;
+    }
+
+    CAIObjectType target(0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0);
+    CAIAction action;
+    if (rand() % 100 < 25) {
+        BOOL seeInvisible = GetCanSeeInvisible();
+        SHORT range = GetVisualRange();
+        LONG nearest = m_pArea->GetNearest(m_id, CAIObjectType::ANYONE, range,
+            m_terrainTable, TRUE, seeInvisible, FALSE, 0, FALSE);
+        if (nearest != CGameObjectArray::INVALID_INDEX) {
+            AddAction(m_curAction);
+            target.m_nInstance = nearest;
+            action = CAIAction(CAIAction::ATTACK, target, 0, 0, 0);
+        }
+        AddAction(action);
+    } else {
+        CAIObjectType enemy = m_typeAI.GetEnemyOf();
+        BOOL seeInvisible = GetCanSeeInvisible();
+        SHORT range = GetVisualRange();
+        LONG nearest = m_pArea->GetNearest(m_id, enemy, range,
+            m_terrainTable, TRUE, seeInvisible, FALSE, 0, FALSE);
+        AddAction(m_curAction);
+        if (nearest == CGameObjectArray::INVALID_INDEX) {
+            action = CAIAction(CAIAction::WAIT, 6);
+        } else {
+            target.m_nInstance = nearest;
+            action = CAIAction(CAIAction::ATTACK, target, 0, 0, 0);
+        }
+        AddAction(action);
+    }
+    return ACTION_DONE;
 }
 
 // 0x72FBF0
@@ -21341,6 +21380,12 @@ SHORT CGameSprite::ExecuteAction()
     // action this tick, same as the base dispatcher.
     if (m_curAction.m_actionID == 1) {
         SetCurrAction(GetNextAction(m_aiAction));
+    }
+
+    if (m_curAction.m_actionID == 124) {
+        SHORT result = Berserk();
+        m_nLastActionReturn = result;
+        return result;
     }
 
     // Jump-table cases 2 (Attack/AttackNoSound) and 0x35 (AttackOneRound).

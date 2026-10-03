@@ -22,6 +22,7 @@ class CAIAction {
 public:
     static const SHORT NO_ACTION;
     static const SHORT ATTACK;
+    static const SHORT BERSERK;
     static const SHORT DIALOGUE;
     static const SHORT MOVETOOBJECT;
     static const SHORT MOVETOPOINT;
@@ -85,6 +86,7 @@ public:
     static const CAIAction NULL_ACTION;
 
     CAIAction();
+    CAIAction(SHORT actionID, LONG specificID);
     CAIAction(SHORT actionID, const CAIObjectType& actee, LONG specificID, LONG specificID2, LONG specificID3);
     CAIAction(SHORT actionID, const CPoint& dest, LONG specificID, LONG specificID2);
     CAIAction(SHORT actionID, const CString& name, CPoint pt, LONG specificID);

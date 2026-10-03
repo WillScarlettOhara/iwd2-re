@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-berserk-executor.txt",
+  "hold": 60,
+  "fixtures": [],
+  "preserve": [],
+  "preconditions": [
+    "Center on the party and require a visible party actor in a loaded area.",
+    "Exercise action 124 through ExecuteAction with inactive, exhausted and active berserk states; inspect queued action kinds and restore action, return state, berserk flag and the original queue in the same tick.",
+    "Never save the transient test state."
+  ]
+}

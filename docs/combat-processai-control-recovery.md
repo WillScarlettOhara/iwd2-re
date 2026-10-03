@@ -68,3 +68,7 @@ Continuation validation: .arc/2026-10-03T18-10-30-824159-batch, PASS with one
 warning. Win32 build OK, 60-second hold CLEAN, both symbols exercised, cleanup
 restored preserved paths. ProcessAI parity YELLOW (191/105 calls), offset
 analysis skipped; forced-state branches remain dynamically unproven.
+
+Executor continuation: see combat-berserk-executor-recovery.md. Action 124 now
+has a recovered Berserk executor and a named BERSERK constant. Actions 134/184
+remain missing.
