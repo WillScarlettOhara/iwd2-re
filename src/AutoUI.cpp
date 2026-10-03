@@ -2516,6 +2516,9 @@ void Tick(CWarp* pActiveEngine)
         auto savedStart = source->m_posStart;
         auto savedTargetPoint = source->m_targetPoint;
         auto savedGroupMove = source->m_groupMove;
+        auto savedSpriteActive = source->m_active;
+        auto savedAIActive = source->m_activeAI;
+        auto savedImprisonmentActive = source->m_activeImprisonment;
         auto savedSequence = source->m_nSequence;
         auto savedSelected = source->m_bSelected;
         auto savedEA = source->m_typeAI.m_nEnemyAlly;
@@ -2544,7 +2547,7 @@ void Tick(CWarp* pActiveEngine)
         game->GetGameSave()->m_cutScene = FALSE;
         CPoint marker(savedStart.x + 3, savedStart.y + 5);
         auto run = [&](const char* name, DWORD state, INT spell, BOOL casterHold,
-                       LONG stop, BOOL ownsStop, BOOL instant, BOOL shouldExecute, BOOL paused = FALSE, BOOL cutscene = FALSE) {
+                       LONG stop, BOOL ownsStop, BOOL instant, BOOL shouldExecute, BOOL paused = FALSE, BOOL cutscene = FALSE, INT inactive = -1) {
             source->ClearActions(FALSE);
             source->m_curAction = CAIAction::NULL_ACTION;
             source->m_curAction.m_actionID = instant ? 269 : CAIAction::WAIT;
@@ -2561,6 +2564,9 @@ void Tick(CWarp* pActiveEngine)
             if (spell >= 0) source->m_derivedStats.m_spellStates.set(spell);
             source->m_derivedStats.m_bCasterHold = casterHold;
             source->m_inCutScene = cutscene;
+            source->m_active = inactive != 0;
+            source->m_activeAI = inactive != 1;
+            source->m_activeImprisonment = inactive != 2;
             source->m_moraleFailure = FALSE;
             source->field_727E = FALSE;
             source->field_3428 = 7;
@@ -2572,17 +2578,19 @@ void Tick(CWarp* pActiveEngine)
             game->m_nTimeStop = stop;
             game->m_nTimeStopCaster = ownsStop ? id : -1;
             game->GetWorldTimer()->m_active = !paused;
-            if (instant || (state & STATE_DEAD)) source->AddAction(CAIAction(CAIAction::WAIT, 200));
+            if (instant || (state & STATE_DEAD) || inactive >= 0) source->AddAction(CAIAction(CAIAction::WAIT, 200));
+            LONG beforeFrame = source->field_44A;
             source->ProcessAI();
             BOOL executed = instant ? source->m_posStart == marker
                 : source->m_curAction.m_actionID == CAIAction::WAIT && source->m_curAction.m_specificID == 99;
             BOOL passed = executed == shouldExecute;
-            if (state & STATE_DEAD) {
+            if ((state & STATE_DEAD) || inactive >= 0) {
                 passed = passed && source->m_curAction.m_actionID == CAIAction::WAIT
                     && source->m_curAction.m_specificID == 200 && !source->m_interrupt;
             } else if (!instant && !shouldExecute) {
                 passed = passed && source->m_curAction.m_specificID == 100;
             }
+            if (inactive >= 0) passed = passed && source->field_44A == beforeFrame;
             valid = valid && passed;
             ++checks;
             Emit("{\"step\":%d,\"op\":\"actiongates-case\",\"case\":\"%s\",\"instant\":%s,\"executed\":%s,\"action\":%d,\"specific\":%ld,\"passed\":%s}",
@@ -2614,6 +2622,11 @@ void Tick(CWarp* pActiveEngine)
             run("cutscene-caster-hold", 0, -1, TRUE, 0, FALSE, instant, instant, FALSE, TRUE);
             run("cutscene-time-stop", 0, -1, FALSE, 30, FALSE, instant, instant, FALSE, TRUE);
         }
+        for (INT inactive = 0; inactive < 3; ++inactive) {
+            run("inactive-ordinary", 0, -1, FALSE, 0, FALSE, FALSE, FALSE, FALSE, FALSE, inactive);
+            run("inactive-instant", 0, -1, FALSE, 0, FALSE, TRUE, TRUE, FALSE, FALSE, inactive);
+        }
+        source->m_active = source->m_activeAI = source->m_activeImprisonment = TRUE;
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         source->m_inCutScene = TRUE;
@@ -2662,6 +2675,9 @@ void Tick(CWarp* pActiveEngine)
         source->m_posStart = savedStart;
         source->m_targetPoint = savedTargetPoint;
         source->m_groupMove = savedGroupMove;
+        source->m_active = savedSpriteActive;
+        source->m_activeAI = savedAIActive;
+        source->m_activeImprisonment = savedImprisonmentActive;
         source->SetSequence(static_cast<BYTE>(savedSequence));
         source->m_bSelected = savedSelected;
         source->m_typeAI.m_nEnemyAlly = savedEA;

@@ -13386,6 +13386,53 @@ void CGameSprite::ProcessAI()
         return;
     }
 
+    if (!m_active || !m_activeAI || !m_activeImprisonment) {
+        if (static_cast<DWORD>(field_44A) % 16 == static_cast<DWORD>(m_id) % 16
+            && m_userCommandPause <= 0 && m_nCommandPause <= 0
+            && (field_3428 & 7) == 0
+            && ((m_derivedStats.m_generalState & STATE_DEAD) == 0 || field_558E != 0)) {
+            field_54C++;
+            field_558E = TRUE;
+            BOOL bProcessScripts = m_curAction.GetActionID() == CAIAction::NO_ACTION
+                || !m_pendingTriggers.IsEmpty() || field_550 >= 120 || field_552 > 0;
+            if (!bProcessScripts) {
+                CRect view(m_pArea->m_cInfinity.rViewPort);
+                INT viewX, viewY;
+                m_pArea->m_cInfinity.GetViewPosition(viewX, viewY);
+                view.OffsetRect(viewX, viewY);
+                bProcessScripts = view.PtInRect(m_pos);
+            }
+            if (bProcessScripts) {
+                if ((m_derivedStats.m_generalState & STATE_DEAD) != 0) field_558E = FALSE;
+                if (!m_pendingTriggers.IsEmpty()) field_552 = 5;
+                ProcessPendingTriggers();
+                if (field_552 > 0) field_552--;
+                field_550 = 0;
+            } else {
+                field_550++;
+            }
+            m_userCommandPause = 0;
+            m_nCommandPause = 0;
+        }
+        if (m_curAction.GetActionID() == CAIAction::NO_ACTION && !m_queuedActions.IsEmpty()) {
+            SetCurrAction(GetNextAction(m_aiDoAction));
+            m_interrupt = FALSE;
+        }
+        BOOL bInstant = pGame->GetRuleTables().m_lInstantActions.Find(m_curAction.GetActionID()) != NULL;
+        if (!bInstant || (g_pChitin->cNetwork.GetSessionOpen() == TRUE
+                            && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA)) {
+            SetCurrAction(GetNextAction(m_aiDoAction));
+            m_interrupt = FALSE;
+        } else {
+            do {
+                ResolveInstants(FALSE);
+                bInstant = pGame->GetRuleTables().m_lInstantActions.Find(m_curAction.GetActionID()) != NULL;
+            } while (bInstant && !(g_pChitin->cNetwork.GetSessionOpen() == TRUE
+                                     && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA));
+        }
+        return;
+    }
+
     if (m_nUnselectableCounter > 0) {
         m_nUnselectableCounter--;
     }

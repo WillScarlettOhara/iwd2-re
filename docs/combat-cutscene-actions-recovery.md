@@ -33,4 +33,5 @@ Parity remains YELLOW (original/source calls 191/166 and 17/35); ProcessAI
 retains its floating-point warning. Offset analysis remains unavailable for
 both targets, so full static equivalence is unproven.
 
-Next target: inactive-sprite routing in ProcessAI.
+Inactive routing is covered by [the inactive action recovery](combat-inactive-actions-recovery.md).
+Next target: earlier ProcessAI bookkeeping and synchronization branches.
