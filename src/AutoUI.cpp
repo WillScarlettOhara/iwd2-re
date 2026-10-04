@@ -2491,6 +2491,100 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "tickcounters") == 0) {
+        auto* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        CGameObject* object = NULL;
+        if (objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "actor unavailable"); return;
+        }
+        auto* source = static_cast<CGameSprite*>(object);
+        auto savedPoison = source->m_poisonSoundTimer;
+        auto savedSequence = source->m_nSequence;
+        auto savedPause = source->m_nCommandPause;
+        auto savedUserPause = source->m_userCommandPause;
+        auto savedActive = game->GetWorldTimer()->m_active;
+        auto savedSpriteActive = source->m_active;
+        auto savedAIActive = source->m_activeAI;
+        auto savedImprisonment = source->m_activeImprisonment;
+        auto savedSelected = source->m_bSelected;
+        auto savedState = source->m_derivedStats.m_generalState;
+        auto savedBaseState = source->m_baseStats.m_generalState;
+        auto savedSpells = source->m_derivedStats.m_spellStates;
+        auto savedImmunity = source->m_baseStats.field_2F0[3];
+        auto savedFlags = source->field_3428;
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = messages.GetCount();
+        BOOL valid = TRUE;
+        for (INT test = 0; test < 7; ++test) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = CAIAction::WAIT;
+            source->m_curAction.m_specificID = 100;
+            source->m_actionCount = 1;
+            source->m_interrupt = FALSE;
+            source->m_inCutScene = source->m_moraleFailure = FALSE;
+            source->field_727E = FALSE;
+            source->m_dialogWait = 0;
+            source->m_bSelected = FALSE;
+            source->m_baseStats.m_generalState = source->m_derivedStats.m_generalState = 0;
+            source->m_derivedStats.m_spellStates.reset();
+            source->m_baseStats.field_2F0[3] |= 1;
+            source->field_3428 = 7;
+            source->m_active = test != 6;
+            source->m_activeAI = source->m_activeImprisonment = TRUE;
+            game->GetWorldTimer()->m_active = test % 2 == 0;
+            SHORT poison = test < 2 || test == 6 ? 5 : test < 4 ? 0 : -1;
+            source->m_poisonSoundTimer = poison;
+            source->m_userCommandPause = 0;
+            source->m_nCommandPause = 5;
+            source->ProcessAI();
+            BOOL passed = source->m_poisonSoundTimer == (poison > 0 ? poison - 1 : poison)
+                && source->m_nCommandPause == (test % 2 == 0 && test != 6 ? 4 : 5);
+            valid = valid && passed;
+            Emit("{\"step\":%d,\"op\":\"tick-counter-case\",\"case\":%d,\"poison\":%d,\"pause\":%d,\"passed\":%s}",
+                nStep, test, source->m_poisonSoundTimer, source->m_nCommandPause, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        source->ClearActions(FALSE);
+        source->m_curAction = CAIAction::NULL_ACTION;
+        CGameArea* savedArea = source->m_pArea;
+        source->m_pArea = NULL;
+        source->m_baseStats.m_generalState = source->m_derivedStats.m_generalState = STATE_DEAD;
+        source->m_curAction.m_actionID = CAIAction::WAIT;
+        source->m_curAction.m_specificID = 100;
+        source->AddAction(CAIAction(CAIAction::WAIT, 200));
+        source->m_interrupt = TRUE;
+        source->ProcessAI();
+        BOOL detachedPassed = source->m_curAction.GetActionID() == CAIAction::WAIT
+            && source->m_curAction.m_specificID == 200 && !source->m_interrupt;
+        valid = valid && detachedPassed;
+        Emit("{\"step\":%d,\"op\":\"detached-dead\",\"passed\":%s}", nStep, detachedPassed ? "true" : "false");
+        source->m_pArea = savedArea;
+        source->ClearActions(FALSE);
+        source->m_curAction = CAIAction::NULL_ACTION;
+        while (messages.GetCount() > before) delete messages.RemoveTail();
+        source->m_poisonSoundTimer = savedPoison;
+        source->m_nCommandPause = savedPause;
+        source->m_userCommandPause = savedUserPause;
+        source->m_active = savedSpriteActive;
+        source->m_activeAI = savedAIActive;
+        source->m_activeImprisonment = savedImprisonment;
+        source->m_bSelected = savedSelected;
+        source->m_derivedStats.m_generalState = savedState;
+        source->m_baseStats.m_generalState = savedBaseState;
+        source->m_derivedStats.m_spellStates = savedSpells;
+        source->SetSequence(static_cast<BYTE>(savedSequence));
+        source->m_baseStats.field_2F0[3] = savedImmunity;
+        source->field_3428 = savedFlags;
+        game->GetWorldTimer()->m_active = savedActive;
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"tickcounters\",\"checks\":8,\"valid\":%s}", nStep, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "tick counters mismatch"); return; }
+        s_pc++; return;
+    }
+
     if (strcmp(step.op, "protectchecks") == 0) {
         auto* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();

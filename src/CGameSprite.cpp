@@ -13290,8 +13290,8 @@ void CGameSprite::ProcessAI()
     if (m_userCommandPause > 0) {
         m_baseStats.m_flags &= 0x7FFFFFFF;
     }
-    if (m_nCommandPause > 0) {
-        m_nCommandPause--;
+    if (m_poisonSoundTimer > 0) {
+        m_poisonSoundTimer--;
     }
 
     m_randValue = rand() % 0x7FFF;
@@ -13301,6 +13301,23 @@ void CGameSprite::ProcessAI()
         && m_nSequence != SEQ_DIE
         && m_nSequence != SEQ_TWITCH) {
         SetSequence(SEQ_TWITCH);
+    }
+
+    if (m_pArea == NULL && (m_derivedStats.m_generalState & STATE_DEAD) != 0) {
+        if (!ProcessEffectList()) return;
+        BOOL instant = pGame->GetRuleTables().m_lInstantActions.Find(m_curAction.GetActionID()) != NULL;
+        if (!instant || (g_pChitin->cNetwork.GetSessionOpen() == TRUE
+                           && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA)) {
+            SetCurrAction(GetNextAction(m_aiDoAction));
+            m_interrupt = FALSE;
+        } else {
+            do {
+                ResolveInstants(FALSE);
+                instant = pGame->GetRuleTables().m_lInstantActions.Find(m_curAction.GetActionID()) != NULL;
+            } while (instant && !(g_pChitin->cNetwork.GetSessionOpen() == TRUE
+                                     && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA));
+        }
+        return;
     }
 
     if (m_pPath == NULL && m_nSequence == SEQ_WALK) {

@@ -7,4 +7,5 @@ expect partyvisible 0
 actiongates
 fatiguechecks
 protectchecks
+tickcounters
 resume

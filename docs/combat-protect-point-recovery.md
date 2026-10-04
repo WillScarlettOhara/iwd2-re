@@ -38,4 +38,6 @@ do not convert the static oracle into a PASS. Ghidra additionally names this
 address CMessage. ProcessAI remains YELLOW (191/212 calls and floating-point
 warning); its offset analysis is unavailable. The message layout audit is skipped.
 
+Early counter correction and detached-dead routing are covered by
+[the tick counter recovery](combat-tick-counters-recovery.md).
 Next target: remaining initial movement and animation bookkeeping in ProcessAI.
