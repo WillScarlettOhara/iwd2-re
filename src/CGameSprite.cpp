@@ -13342,6 +13342,16 @@ void CGameSprite::ProcessAI()
         }
     }
 
+    if (m_curAction.GetActionID() == CAIAction::PROTECTPOINT
+        && GetAIType().m_nEnemyAlly >= CAIObjectType::EA_EVILCUTOFF) {
+        ClearActions(FALSE);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageDropPath(m_id, m_id), FALSE);
+        CAIAction emptyAction;
+        emptyAction.m_specificID2 = -1;
+        emptyAction.m_dest = CPoint(-1, -1);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddAction(emptyAction, m_id, m_id), FALSE);
+    }
+
     if (m_curAction.GetActionID() == CAIAction::NO_ACTION
         && !m_queuedActions.IsEmpty()) {
         SetCurrAction(GetNextAction(m_aiDoAction));

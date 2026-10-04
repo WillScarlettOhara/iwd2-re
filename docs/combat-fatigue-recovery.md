@@ -60,4 +60,6 @@ Both functions remain parity YELLOW: original/source calls 191/202 and 14/23;
 ProcessAI retains its floating-point warning and unavailable offset analysis.
 Complete equivalence remains unproven.
 
-Next target: remaining early ProcessAI action replacement and movement bookkeeping.
+Early hostile ProtectPoint replacement is covered by
+[the ProtectPoint recovery](combat-protect-point-recovery.md).
+Next target: remaining initial movement and animation bookkeeping in ProcessAI.

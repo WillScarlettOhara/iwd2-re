@@ -6,4 +6,5 @@ sleep 15
 expect partyvisible 0
 actiongates
 fatiguechecks
+protectchecks
 resume

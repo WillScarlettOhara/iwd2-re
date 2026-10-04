@@ -2491,6 +2491,72 @@ void Tick(CWarp* pActiveEngine)
         return;
     }
 
+    if (strcmp(step.op, "protectchecks") == 0) {
+        auto* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(0);
+        CGameObject* object = NULL;
+        if (objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "actor unavailable"); return;
+        }
+        auto* source = static_cast<CGameSprite*>(object);
+        auto savedEA = source->m_typeAI.m_nEnemyAlly;
+        auto savedSelected = source->m_bSelected;
+        auto savedActive = game->GetWorldTimer()->m_active;
+        auto savedTargetPoint = source->m_targetPoint;
+        auto savedTarget = source->m_targetId;
+        auto savedGroup = source->m_groupMove;
+        source->m_bSelected = FALSE;
+        source->m_groupMove = FALSE;
+        game->GetWorldTimer()->m_active = FALSE;
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = messages.GetCount();
+        BOOL valid = TRUE;
+        for (INT test = 0; test < 4; ++test) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = test == 3 ? CAIAction::WAIT : CAIAction::PROTECTPOINT;
+            source->m_curAction.m_dest = source->m_pos;
+            source->m_typeAI.m_nEnemyAlly = test == 0 ? 199 : test == 1 ? 200 : 255;
+            source->m_interrupt = FALSE;
+            source->m_targetId = CGameObjectArray::INVALID_INDEX;
+            source->AddAction(CAIAction(CAIAction::WAIT, 100));
+            source->ProcessAI();
+            BOOL replaced = test == 1 || test == 2;
+            INT drops = 0, actions = 0;
+            BOOL passed = source->m_queuedActions.GetCount() == (replaced ? 0 : 1)
+                && source->m_curAction.GetActionID() == (test == 3 ? CAIAction::WAIT : CAIAction::PROTECTPOINT);
+            while (messages.GetCount() > before) {
+                CMessage* raw = messages.RemoveTail();
+                if (dynamic_cast<CMessageDropPath*>(raw) != NULL) ++drops;
+                auto* action = dynamic_cast<CMessageAddAction*>(raw);
+                if (action != NULL) {
+                    ++actions;
+                    passed = passed && action->m_action.GetActionID() == CAIAction::NO_ACTION
+                        && action->m_action.m_specificID == 0 && action->m_action.m_specificID2 == -1
+                        && action->m_action.m_specificID3 == 0 && action->m_action.m_dest == CPoint(-1, -1)
+                        && action->m_action.m_internalFlags == 0;
+                }
+                delete raw;
+            }
+            passed = passed && drops == (replaced ? 1 : 0) && actions == (replaced ? 1 : 0);
+            valid = valid && passed;
+            Emit("{\"step\":%d,\"op\":\"protect-case\",\"case\":%d,\"passed\":%s}", nStep, test, passed ? "true" : "false");
+        }
+        source->ClearActions(FALSE);
+        source->m_curAction = CAIAction::NULL_ACTION;
+        source->m_typeAI.m_nEnemyAlly = savedEA;
+        source->m_bSelected = savedSelected;
+        source->m_targetPoint = savedTargetPoint;
+        source->m_targetId = savedTarget;
+        source->m_groupMove = savedGroup;
+        game->GetWorldTimer()->m_active = savedActive;
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"protectchecks\",\"checks\":4,\"valid\":%s}", nStep, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "protect point replacement mismatch"); return; }
+        s_pc++; return;
+    }
+
     if (strcmp(step.op, "fatiguechecks") == 0) {
         auto* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();
