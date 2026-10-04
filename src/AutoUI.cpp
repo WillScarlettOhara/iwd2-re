@@ -2608,6 +2608,32 @@ void Tick(CWarp* pActiveEngine)
         source->field_562C = savedMoveDirty;
         source->m_posDest = savedDest;
         source->m_posDelta = savedDelta;
+        auto& network = g_pChitin->cNetwork;
+        auto savedProvider = network.m_nServiceProvider;
+        auto savedLocalPlayer = network.m_idLocalPlayer;
+        auto savedOwner = source->m_remotePlayerID;
+        auto savedEscaping = source->m_bEscapingArea;
+        auto savedDialogWait = source->m_dialogWait;
+        for (INT test = 0; test < 4; ++test) {
+            network.m_nServiceProvider = test < 2 ? CNetwork::SERV_PROV_NULL : CNetwork::SERV_PROV_TCP_IP;
+            network.m_idLocalPlayer = 123;
+            source->m_remotePlayerID = test % 2 == 0 ? 456 : 123;
+            source->m_bEscapingArea = TRUE;
+            source->m_dialogWait = 100;
+            source->m_poisonSoundTimer = 5;
+            source->ProcessAI();
+            BOOL passed = source->m_dialogWait == (test == 2 ? 100 : 0)
+                && source->m_poisonSoundTimer == 4;
+            valid = valid && passed;
+            Emit("{\"step\":%d,\"op\":\"network-owner-case\",\"case\":%d,\"dialogWait\":%d,\"passed\":%s}",
+                nStep, test, source->m_dialogWait, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        network.m_nServiceProvider = savedProvider;
+        network.m_idLocalPlayer = savedLocalPlayer;
+        source->m_remotePlayerID = savedOwner;
+        source->m_bEscapingArea = savedEscaping;
+        source->m_dialogWait = savedDialogWait;
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         while (messages.GetCount() > before) delete messages.RemoveTail();
@@ -2626,7 +2652,7 @@ void Tick(CWarp* pActiveEngine)
         source->field_3428 = savedFlags;
         game->GetWorldTimer()->m_active = savedActive;
         objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
-        Emit("{\"step\":%d,\"op\":\"tickcounters\",\"checks\":17,\"valid\":%s}", nStep, valid ? "true" : "false");
+        Emit("{\"step\":%d,\"op\":\"tickcounters\",\"checks\":21,\"valid\":%s}", nStep, valid ? "true" : "false");
         if (!valid) { Fail(nStep, step.op, "tick counters mismatch"); return; }
         s_pc++; return;
     }

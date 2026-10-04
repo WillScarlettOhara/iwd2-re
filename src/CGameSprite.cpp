@@ -13274,10 +13274,6 @@ void CGameSprite::ProcessPendingTriggers()
 // 0x72B9A0 (virtual)
 void CGameSprite::ProcessAI()
 {
-    if (!ProcessEffectList()) {
-        return;
-    }
-
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     CScreenWorld* pWorld = g_pBaldurChitin->m_pEngineWorld;
 
@@ -13360,6 +13356,12 @@ void CGameSprite::ProcessAI()
     if (m_bSelected && !Orderable(FALSE)) {
         Unselect();
         pGame->SelectToolbar();
+    }
+
+    // 0x72C247..0x72C268: only the owning player processes networked actions.
+    if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL
+        && g_pChitin->cNetwork.m_idLocalPlayer != m_remotePlayerID) {
+        return;
     }
 
     SHORT curActionId = m_curAction.GetActionID();

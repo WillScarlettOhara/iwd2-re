@@ -33,4 +33,5 @@ and 17/35 original/source calls); offset analysis is unavailable for both.
 Full ProcessAI recovery and original/recovered differential equivalence
 remain unproven.
 
-Next target: missing network ownership return before dialog/action processing.
+The subsequent network ownership return is recovered in
+[combat-network-owner-recovery.md](combat-network-owner-recovery.md).
