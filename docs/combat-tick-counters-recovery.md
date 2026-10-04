@@ -43,4 +43,5 @@ hashed. Both targets remain parity YELLOW (191/226 and 17/35 original/source
 calls); ProcessAI retains its floating-point warning. Offset analysis is
 unavailable for both, so full static equivalence remains unproven.
 
-Next target: missing movement/animation bookkeeping before the action-control path.
+The subsequent movement scale block is recovered in
+[combat-move-scale-recovery.md](combat-move-scale-recovery.md).

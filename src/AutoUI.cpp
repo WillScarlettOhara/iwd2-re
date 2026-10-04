@@ -2562,6 +2562,52 @@ void Tick(CWarp* pActiveEngine)
         valid = valid && detachedPassed;
         Emit("{\"step\":%d,\"op\":\"detached-dead\",\"passed\":%s}", nStep, detachedPassed ? "true" : "false");
         source->m_pArea = savedArea;
+        auto savedMode = game->m_gameSave.m_mode;
+        auto savedScale = source->m_animation.GetMoveScale();
+        auto savedOverride = source->field_72AA;
+        auto savedOriginalScale = source->field_72A8;
+        auto savedMoveDirty = source->field_562C;
+        auto savedDest = source->m_posDest;
+        auto savedDelta = source->m_posDelta;
+        source->m_baseStats.m_generalState = source->m_derivedStats.m_generalState = 0;
+        source->SetSequence(static_cast<BYTE>(savedSequence));
+        game->GetWorldTimer()->m_active = FALSE;
+        for (INT test = 0; test < 9; ++test) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = CAIAction::WAIT;
+            source->m_curAction.m_specificID = 100;
+            source->m_interrupt = FALSE;
+            game->m_gameSave.m_mode = test < 5 || test == 7 || test == 8 ? 0x142 : 0;
+            source->field_72AA = test == 2 || test == 3 || test == 5 || test == 6;
+            source->field_72A8 = test == 6 ? 6 : 4;
+            source->field_562C = 0;
+            source->m_animation.SetMoveScale(test == 1 || test == 2 ? 6 : 4);
+            source->m_posDest = source->m_pos + (test == 4 ? CPoint(0, 0)
+                : test == 7 ? CPoint(-3, -3) : test == 8 ? CPoint(1, 1) : CPoint(3, 3));
+            source->m_posDelta = CPoint(123, 456);
+            source->ProcessAI();
+            CPoint expected = test == 1 || test == 2 || test == 6 ? CPoint(123, 456)
+                : test == 4 ? CPoint(0, 0) : test == 5 ? CPoint(2457, 3276)
+                : test == 7 ? CPoint(-3686, -4915) : test == 8 ? CPoint(6144, 6144)
+                : CPoint(3686, 4915);
+            BOOL passed = source->m_posDelta == expected
+                && source->m_animation.GetMoveScale() == (test == 5 ? 4 : 6)
+                && source->field_72AA == (test == 5 || test == 6 ? FALSE : TRUE)
+                && source->field_72A8 == (test == 1 || test == 6 ? 6 : 4)
+                && source->field_562C == (test == 5 || test == 6 ? 1 : 0);
+            valid = valid && passed;
+            Emit("{\"step\":%d,\"op\":\"move-scale-case\",\"case\":%d,\"x\":%ld,\"y\":%ld,\"passed\":%s}",
+                nStep, test, source->m_posDelta.x, source->m_posDelta.y, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        game->m_gameSave.m_mode = savedMode;
+        source->m_animation.SetMoveScale(savedScale);
+        source->field_72AA = savedOverride;
+        source->field_72A8 = savedOriginalScale;
+        source->field_562C = savedMoveDirty;
+        source->m_posDest = savedDest;
+        source->m_posDelta = savedDelta;
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         while (messages.GetCount() > before) delete messages.RemoveTail();
@@ -2580,7 +2626,7 @@ void Tick(CWarp* pActiveEngine)
         source->field_3428 = savedFlags;
         game->GetWorldTimer()->m_active = savedActive;
         objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
-        Emit("{\"step\":%d,\"op\":\"tickcounters\",\"checks\":8,\"valid\":%s}", nStep, valid ? "true" : "false");
+        Emit("{\"step\":%d,\"op\":\"tickcounters\",\"checks\":17,\"valid\":%s}", nStep, valid ? "true" : "false");
         if (!valid) { Fail(nStep, step.op, "tick counters mismatch"); return; }
         s_pc++; return;
     }

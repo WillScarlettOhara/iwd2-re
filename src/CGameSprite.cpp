@@ -13294,6 +13294,36 @@ void CGameSprite::ProcessAI()
         m_poisonSoundTimer--;
     }
 
+    // 0x72BBC3..0x72C0CF: mode 0x142 temporarily fixes the walk scale at six.
+    auto updateMoveDelta = [this]() {
+        INT dx = m_posDest.x - m_pos.x;
+        INT dy = m_posDest.y - m_pos.y;
+        INT distance = static_cast<INT>(sqrt(static_cast<double>(dx * dx + dy * dy * 16 / 9)) + 0.5);
+        if (distance == 0) {
+            m_posDelta = CPoint(0, 0);
+        } else {
+            m_posDelta.x = (dx << EXACT_SCALE) * m_animation.GetMoveScale() / distance;
+            m_posDelta.y = ((dy * 4 / 3) << EXACT_SCALE) * m_animation.GetMoveScale() / distance;
+        }
+    };
+    if (pGame->m_gameSave.m_mode == 0x142) {
+        if (!field_72AA) {
+            field_72A8 = m_animation.GetMoveScale();
+            field_72AA = TRUE;
+            m_animation.SetMoveScale(6);
+            if (field_72A8 != 6) updateMoveDelta();
+        } else if (m_animation.GetMoveScale() != 6) {
+            field_72AA = TRUE;
+            m_animation.SetMoveScale(6);
+            updateMoveDelta();
+        }
+    } else if (field_72AA) {
+        field_72AA = FALSE;
+        m_animation.SetMoveScale(field_72A8);
+        field_562C = 1;
+        if (field_72A8 != 6) updateMoveDelta();
+    }
+
     m_randValue = rand() % 0x7FFF;
 
     if ((m_derivedStats.m_generalState & STATE_DEAD) != 0
