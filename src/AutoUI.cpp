@@ -2683,6 +2683,25 @@ void Tick(CWarp* pActiveEngine)
         source->m_typeAI.m_nEnemyAlly = savedEA;
         source->m_liveTypeAI.m_nEnemyAlly = savedLiveEA;
         source->m_startTypeAI.m_nEnemyAlly = savedStartEA;
+        auto savedListType = source->m_listType;
+        auto savedPath = source->m_pPath;
+        LONG* testPath = new LONG[1];
+        testPath[0] = 0;
+        for (INT test = 0; test < 4; ++test) {
+            source->m_listType = test == 1 ? CGameObject::LIST_FLIGHT : CGameObject::LIST_FRONT;
+            source->m_pPath = test == 2 ? testPath : NULL;
+            source->SetSequence(test == 3 ? CGameSprite::SEQ_READY : CGameSprite::SEQ_WALK);
+            SHORT expected = test == 0 ? source->GetIdleSequence() : test == 3 ? CGameSprite::SEQ_READY : CGameSprite::SEQ_WALK;
+            source->ProcessAI();
+            BOOL passed = source->m_nSequence == expected;
+            valid = valid && passed;
+            Emit("{\"step\":%d,\"op\":\"walk-idle-case\",\"case\":%d,\"sequence\":%d,\"passed\":%s}",
+                nStep, test, source->m_nSequence, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        source->m_listType = savedListType;
+        source->m_pPath = savedPath;
+        delete[] testPath;
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         while (messages.GetCount() > before) delete messages.RemoveTail();
@@ -2701,7 +2720,7 @@ void Tick(CWarp* pActiveEngine)
         source->field_3428 = savedFlags;
         game->GetWorldTimer()->m_active = savedActive;
         objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
-        Emit("{\"step\":%d,\"op\":\"tickcounters\",\"checks\":29,\"valid\":%s}", nStep, valid ? "true" : "false");
+        Emit("{\"step\":%d,\"op\":\"tickcounters\",\"checks\":33,\"valid\":%s}", nStep, valid ? "true" : "false");
         if (!valid) { Fail(nStep, step.op, "tick counters mismatch"); return; }
         s_pc++; return;
     }
@@ -3031,12 +3050,16 @@ void Tick(CWarp* pActiveEngine)
         source->m_dialogWait = 0;
         CPoint savedExact = source->m_posExact;
         LONG savedFrame = source->field_44A;
+        LONG* savedSyncPath = source->m_pPath;
+        LONG* syncPath = new LONG[1];
+        syncPath[0] = 0;
         for (INT syncCase = 0; syncCase < 3; ++syncCase) {
             source->m_curAction = CAIAction::NULL_ACTION;
             source->m_curAction.m_actionID = CAIAction::WAIT;
             source->m_curAction.m_specificID = 100;
             source->field_44A = static_cast<DWORD>(id) % 16 + (syncCase == 1 ? 1 : 0);
             source->SetSequence(syncCase == 2 ? CGameSprite::SEQ_WALK : CGameSprite::SEQ_READY);
+            source->m_pPath = syncCase == 2 ? syncPath : savedSyncPath;
             CPoint exact((source->m_pos.x << CGameSprite::EXACT_SCALE),
                 (source->m_pos.y << (CGameSprite::EXACT_SCALE + 2)) / 3);
             CPoint stale(exact.x + 8, exact.y + 8);
@@ -3049,6 +3072,8 @@ void Tick(CWarp* pActiveEngine)
                 nStep, syncCase, passed ? "true" : "false");
             while (messages.GetCount() > before) delete messages.RemoveTail();
         }
+        source->m_pPath = savedSyncPath;
+        delete[] syncPath;
         source->m_posExact = savedExact;
         source->field_44A = savedFrame;
         source->SetSequence(CGameSprite::SEQ_READY);

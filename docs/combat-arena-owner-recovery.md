@@ -43,4 +43,5 @@ this header's bare hexadecimal offset comments; its complete layout is
 therefore not established by this batch. This establishes local arena routing, not a real
 multiplayer match or full original/recovered ProcessAI equivalence.
 
-Next target: walking/idle animation routing at 0x72C1F0..0x72C21B.
+The subsequent walking/idle gate is corrected in
+[combat-walk-idle-recovery.md](combat-walk-idle-recovery.md).

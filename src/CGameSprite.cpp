@@ -13360,11 +13360,9 @@ void CGameSprite::ProcessAI()
         return;
     }
 
-    if (m_pPath == NULL && m_nSequence == SEQ_WALK) {
-        if (m_animation.m_animation != NULL
-            && m_animation.m_nSequence != SEQ_WALK) {
-            SetIdleSequence();
-        }
+    if (m_pPath == NULL && m_nSequence == SEQ_WALK
+        && GetVertListType() != CGameObject::LIST_FLIGHT) {
+        SetIdleSequence();
     }
 
     if (m_bSelected && !Orderable(FALSE)) {
