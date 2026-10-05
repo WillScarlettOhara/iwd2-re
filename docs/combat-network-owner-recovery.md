@@ -36,5 +36,5 @@ and 17/35 original/source calls), and offset analysis is unavailable.
 This fixture proves the local conditional routing;
 it does not prove a real multiplayer session or full ProcessAI equivalence.
 
-Next target: missing multiplayer visibility and enemy/ally bookkeeping
-at 0x72BAD7..0x72BB9C, before the counters.
+The subsequent arena visibility and affiliation block is recovered in
+[combat-arena-owner-recovery.md](combat-arena-owner-recovery.md).

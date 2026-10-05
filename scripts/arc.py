@@ -955,7 +955,10 @@ def header_for_class(cls: str) -> Path | None:
         return direct
     out = git("grep", "-l", "-E", rf"^\s*(class|struct)\s+{cls}\b", "--", "src/*.h")
     for line in out.splitlines():
-        return REPO / line
+        candidate = REPO / line
+        definition = rf"^\s*(?:class|struct)\s+{re.escape(cls)}\b[^;{{]*\{{"
+        if re.search(definition, candidate.read_text(encoding="utf-8", errors="replace"), re.MULTILINE):
+            return candidate
     return None
 
 

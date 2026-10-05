@@ -13283,6 +13283,20 @@ void CGameSprite::ProcessAI()
         pWorld->TogglePauseGame(0, 1, 0);
     }
 
+    // 0x72BAD7..0x72BB9A: arena opponents no longer reveal the local map.
+    if (pGame->m_gameSave.m_bArenaMode
+        && g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL
+        && g_pChitin->cNetwork.m_idLocalPlayer != m_remotePlayerID) {
+        if (m_pArea != NULL && m_pArea->m_visibility.IsCharacterIdOnMap(m_id)) {
+            m_pArea->m_visibility.RemoveCharacter(m_pos, m_id, m_visibleTerrainTable);
+        }
+        if (m_typeAI.m_nEnemyAlly <= CAIObjectType::EA_GOODCUTOFF) {
+            m_typeAI.m_nEnemyAlly = CAIObjectType::EA_ARENAPC;
+            m_liveTypeAI.m_nEnemyAlly = CAIObjectType::EA_ARENAPC;
+            m_startTypeAI.m_nEnemyAlly = CAIObjectType::EA_ARENAPC;
+        }
+    }
+
     if (m_userCommandPause > 0) {
         m_baseStats.m_flags &= 0x7FFFFFFF;
     }

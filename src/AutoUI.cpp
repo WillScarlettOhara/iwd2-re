@@ -2634,6 +2634,55 @@ void Tick(CWarp* pActiveEngine)
         source->m_remotePlayerID = savedOwner;
         source->m_bEscapingArea = savedEscaping;
         source->m_dialogWait = savedDialogWait;
+        auto savedArena = game->m_gameSave.m_bArenaMode;
+        auto savedEA = source->m_typeAI.m_nEnemyAlly;
+        auto savedLiveEA = source->m_liveTypeAI.m_nEnemyAlly;
+        auto savedStartEA = source->m_startTypeAI.m_nEnemyAlly;
+        auto& visibility = savedArea->m_visibility;
+        LONG savedCharacterIds[6];
+        memcpy(savedCharacterIds, visibility.m_aCharacterIds, sizeof(savedCharacterIds));
+        BYTE* savedVisibility = new BYTE[visibility.m_nMapSize];
+        memcpy(savedVisibility, visibility.m_pMap, visibility.m_nMapSize);
+        for (INT test = 0; test < 8; ++test) {
+            memcpy(visibility.m_aCharacterIds, savedCharacterIds, sizeof(savedCharacterIds));
+            memcpy(visibility.m_pMap, savedVisibility, visibility.m_nMapSize);
+            BOOL registered = visibility.IsCharacterIdOnMap(id);
+            if (!registered) registered = visibility.AddCharacter(source->m_pos, id, source->m_visibleTerrainTable);
+            if (test == 7 && registered) visibility.RemoveCharacter(source->m_pos, id, source->m_visibleTerrainTable);
+            game->m_gameSave.m_bArenaMode = test != 0;
+            network.m_nServiceProvider = test == 1 ? CNetwork::SERV_PROV_NULL : CNetwork::SERV_PROV_TCP_IP;
+            network.m_idLocalPlayer = 123;
+            source->m_remotePlayerID = test == 2 ? 123 : 456;
+            BYTE ea = test == 4 ? 31 : test == 5 ? 0 : CAIObjectType::EA_GOODCUTOFF;
+            source->m_typeAI.m_nEnemyAlly = ea;
+            source->m_liveTypeAI.m_nEnemyAlly = 11;
+            source->m_startTypeAI.m_nEnemyAlly = 12;
+            source->m_pArea = test == 6 ? NULL : savedArea;
+            source->ProcessAI();
+            BOOL opponent = test >= 3;
+            BOOL changed = opponent && test != 4;
+            BOOL passed = registered
+                && visibility.IsCharacterIdOnMap(id) == (test < 3 || test == 6)
+                && source->m_typeAI.m_nEnemyAlly == (changed ? CAIObjectType::EA_ARENAPC : ea)
+                && source->m_liveTypeAI.m_nEnemyAlly == (changed ? CAIObjectType::EA_ARENAPC : 11)
+                && source->m_startTypeAI.m_nEnemyAlly == (changed ? CAIObjectType::EA_ARENAPC : 12);
+            valid = valid && passed;
+            Emit("{\"step\":%d,\"op\":\"arena-owner-case\",\"case\":%d,\"visible\":%s,\"ea\":%d,\"passed\":%s}",
+                nStep, test, visibility.IsCharacterIdOnMap(id) ? "true" : "false",
+                source->m_typeAI.m_nEnemyAlly, passed ? "true" : "false");
+            source->m_pArea = savedArea;
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        memcpy(visibility.m_aCharacterIds, savedCharacterIds, sizeof(savedCharacterIds));
+        memcpy(visibility.m_pMap, savedVisibility, visibility.m_nMapSize);
+        delete[] savedVisibility;
+        game->m_gameSave.m_bArenaMode = savedArena;
+        network.m_nServiceProvider = savedProvider;
+        network.m_idLocalPlayer = savedLocalPlayer;
+        source->m_remotePlayerID = savedOwner;
+        source->m_typeAI.m_nEnemyAlly = savedEA;
+        source->m_liveTypeAI.m_nEnemyAlly = savedLiveEA;
+        source->m_startTypeAI.m_nEnemyAlly = savedStartEA;
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         while (messages.GetCount() > before) delete messages.RemoveTail();
@@ -2652,7 +2701,7 @@ void Tick(CWarp* pActiveEngine)
         source->field_3428 = savedFlags;
         game->GetWorldTimer()->m_active = savedActive;
         objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
-        Emit("{\"step\":%d,\"op\":\"tickcounters\",\"checks\":21,\"valid\":%s}", nStep, valid ? "true" : "false");
+        Emit("{\"step\":%d,\"op\":\"tickcounters\",\"checks\":29,\"valid\":%s}", nStep, valid ? "true" : "false");
         if (!valid) { Fail(nStep, step.op, "tick counters mismatch"); return; }
         s_pc++; return;
     }
