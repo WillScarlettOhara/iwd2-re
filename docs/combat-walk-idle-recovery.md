@@ -40,5 +40,5 @@ complete static equivalence remains unproven.
 This establishes the local animation gate, not full
 ProcessAI equivalence or movement completion across every animation family.
 
-Next target: source-only destination-marker update after action resolution;
-the original tail returns without that unconditional ResolveTargetPoint call.
+The subsequent source-only marker tail is removed in
+[combat-marker-tail-recovery.md](combat-marker-tail-recovery.md).

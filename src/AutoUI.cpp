@@ -3115,6 +3115,31 @@ void Tick(CWarp* pActiveEngine)
                 nStep, preview, passed ? "true" : "false");
             while (messages.GetCount() > before) delete messages.RemoveTail();
         }
+        for (INT markerCase = 0; markerCase < 4; ++markerCase) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = CAIAction::WAIT;
+            source->m_curAction.m_specificID = 100;
+            source->m_actionCount = 1;
+            source->m_interrupt = FALSE;
+            source->m_userCommandPause = source->m_nCommandPause = 0;
+            source->m_baseStats.m_flags = savedFlags & 0x7FFFFFFF;
+            source->m_dialogWait = 0;
+            source->m_inCutScene = source->m_moraleFailure = FALSE;
+            source->field_3428 = 7;
+            source->m_groupMove = markerCase % 2 != 0;
+            game->GetWorldTimer()->m_active = markerCase < 2;
+            CPoint sentinel(123, 456);
+            source->m_targetPoint = sentinel;
+            source->ProcessAI();
+            BOOL passed = source->m_targetPoint == (markerCase == 2 ? CPoint(-1, -1) : sentinel)
+                && source->m_curAction.GetActionID() == CAIAction::WAIT;
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"marker-tail-case\",\"case\":%d,\"x\":%ld,\"y\":%ld,\"passed\":%s}",
+                nStep, markerCase, source->m_targetPoint.x, source->m_targetPoint.y, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         source->m_derivedStats.m_generalState = savedState;

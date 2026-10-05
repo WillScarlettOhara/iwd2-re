@@ -13873,17 +13873,6 @@ void CGameSprite::ProcessAI()
         }
     }
 
-    // Keep the destination ground marker in sync with the current action. The
-    // binary's ProcessAI (0x72b9a0) resolves m_targetPoint each tick (via
-    // ResolvePausedAction, 0x72dd64); the recovered stub omitted it, so once a
-    // member stopped (action advanced to FACE/idle) m_targetPoint kept the old
-    // move destination and RenderMarkers (m_targetPoint.x != -1) drew the marker
-    // forever. ResolveTargetPoint is the side-effect-free core of that resolve:
-    // it sets the marker to the pending move's destination, or clears it (-1)
-    // for FACE/idle, so the marker disappears on arrival.
-    if (!m_groupMove) {
-        ResolveTargetPoint(&m_curAction, m_queuedActions.GetHeadPosition());
-    }
 }
 
 // 0x71D0B0
