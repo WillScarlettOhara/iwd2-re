@@ -13274,6 +13274,8 @@ void CGameSprite::ProcessPendingTriggers()
 // 0x72B9A0 (virtual)
 void CGameSprite::ProcessAI()
 {
+    // Function-local scratch at 0x8F9928, distinct from m_aiDoAction (0x8F9A18).
+    static CAIAction controlAction;
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     CScreenWorld* pWorld = g_pBaldurChitin->m_pEngineWorld;
 
@@ -13348,7 +13350,7 @@ void CGameSprite::ProcessAI()
         BOOL instant = pGame->GetRuleTables().m_lInstantActions.Find(m_curAction.GetActionID()) != NULL;
         if (!instant || (g_pChitin->cNetwork.GetSessionOpen() == TRUE
                            && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA)) {
-            SetCurrAction(GetNextAction(m_aiDoAction));
+            SetCurrAction(GetNextAction(controlAction));
             m_interrupt = FALSE;
         } else {
             do {
@@ -13415,7 +13417,7 @@ void CGameSprite::ProcessAI()
 
     if (m_curAction.GetActionID() == CAIAction::NO_ACTION
         && !m_queuedActions.IsEmpty()) {
-        SetCurrAction(GetNextAction(m_aiDoAction));
+        SetCurrAction(GetNextAction(controlAction));
         m_interrupt = FALSE;
         m_actionCount = 0;
         m_nCommandPause = 0;
@@ -13450,7 +13452,7 @@ void CGameSprite::ProcessAI()
     if (!bWorldTimerActive) {
         if (m_curAction.GetActionID() == CAIAction::NO_ACTION
             && !m_queuedActions.IsEmpty()) {
-            SetCurrAction(GetNextAction(m_aiDoAction));
+            SetCurrAction(GetNextAction(controlAction));
             m_interrupt = FALSE;
         }
 
@@ -13466,7 +13468,7 @@ void CGameSprite::ProcessAI()
         }
 
         if (m_interrupt && (m_baseStats.m_flags & 0x80000000) == 0) {
-            SetCurrAction(GetNextAction(m_aiDoAction));
+            SetCurrAction(GetNextAction(controlAction));
             m_interrupt = FALSE;
         }
 
@@ -13513,13 +13515,13 @@ void CGameSprite::ProcessAI()
             m_nCommandPause = 0;
         }
         if (m_curAction.GetActionID() == CAIAction::NO_ACTION && !m_queuedActions.IsEmpty()) {
-            SetCurrAction(GetNextAction(m_aiDoAction));
+            SetCurrAction(GetNextAction(controlAction));
             m_interrupt = FALSE;
         }
         BOOL bInstant = pGame->GetRuleTables().m_lInstantActions.Find(m_curAction.GetActionID()) != NULL;
         if (!bInstant || (g_pChitin->cNetwork.GetSessionOpen() == TRUE
                             && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA)) {
-            SetCurrAction(GetNextAction(m_aiDoAction));
+            SetCurrAction(GetNextAction(controlAction));
             m_interrupt = FALSE;
         } else {
             do {
@@ -13548,31 +13550,31 @@ void CGameSprite::ProcessAI()
             BYTE choice = static_cast<BYTE>(rand() % 100);
             if (choice < 10) {
                 FeedBack(FEEDBACK_MORALEFAILURE_PANIC, 0, 0, 0, -1, 0, 0);
-                m_aiDoAction.m_actionID = CAIAction::PANIC;
-                m_aiDoAction.m_specificID = 0;
-                m_aiDoAction.m_specificID2 = -1;
+                controlAction.m_actionID = CAIAction::PANIC;
+                controlAction.m_specificID = 0;
+                controlAction.m_specificID2 = -1;
                 m_baseStats.m_generalState |= STATE_PANIC;
             } else if (choice < 90) {
                 FeedBack(FEEDBACK_MORALEFAILURE_RUN, 0, 0, 0, -1, 0, 0);
-                m_aiDoAction.m_actionID = CAIAction::RUNAWAYFROMNOINTERRUPT;
-                m_aiDoAction.m_specificID = LONG_MAX;
-                m_aiDoAction.m_specificID2 = 0;
+                controlAction.m_actionID = CAIAction::RUNAWAYFROMNOINTERRUPT;
+                controlAction.m_specificID = LONG_MAX;
+                controlAction.m_specificID2 = 0;
                 m_baseStats.m_generalState |= STATE_PANIC;
             } else {
                 FeedBack(FEEDBACK_MORALEFAILURE_BERSERK, 0, 0, 0, -1, 0, 0);
                 m_berserkActive = TRUE;
-                m_aiDoAction.m_actionID = CAIAction::BERSERK;
-                m_aiDoAction.m_specificID = LONG_MAX;
-                m_aiDoAction.m_specificID2 = 0;
+                controlAction.m_actionID = CAIAction::BERSERK;
+                controlAction.m_specificID = LONG_MAX;
+                controlAction.m_specificID2 = 0;
             }
-            m_aiDoAction.m_specificID3 = 0;
-            m_aiDoAction.m_dest = CPoint(-1, -1);
-            m_aiDoAction.m_string1 = "";
-            m_aiDoAction.m_string2 = "";
-            m_aiDoAction.m_internalFlags = 0;
+            controlAction.m_specificID3 = 0;
+            controlAction.m_dest = CPoint(-1, -1);
+            controlAction.m_string1 = "";
+            controlAction.m_string2 = "";
+            controlAction.m_internalFlags = 0;
             ClearActions(FALSE);
             m_interrupt = TRUE;
-            AddAction(m_aiDoAction);
+            AddAction(controlAction);
         }
         bControlledAction = TRUE;
     } else {
@@ -13586,7 +13588,7 @@ void CGameSprite::ProcessAI()
             ClearActions(FALSE);
             g_pBaldurChitin->GetMessageHandler()->AddMessage(
                 new CMessageDropPath(m_id, m_id), FALSE);
-            SetCurrAction(GetNextAction(m_aiDoAction));
+            SetCurrAction(GetNextAction(controlAction));
             m_baseStats.m_generalState &= ~STATE_PANIC;
             m_derivedStats.m_generalState &= ~STATE_PANIC;
         }
@@ -13627,11 +13629,11 @@ void CGameSprite::ProcessAI()
     BOOL bCanAct = CanAct();
     if (!bControlledAction && bCanAct && (m_derivedStats.m_generalState & STATE_HELPLESS) != 0) {
         if (m_curAction.GetActionID() != CAIAction::NO_ACTION) {
-            m_aiDoAction = CAIAction::NULL_ACTION;
+            controlAction = CAIAction::NULL_ACTION;
             ClearActions(FALSE);
             DropPath();
             m_interrupt = TRUE;
-            AddAction(m_aiDoAction);
+            AddAction(controlAction);
         }
         field_727E = TRUE;
         ApplyTriggers();
@@ -13642,18 +13644,18 @@ void CGameSprite::ProcessAI()
         UpdateBerserkActive();
         if (m_curAction.GetActionID() != CAIAction::ATTACK
             && m_curAction.GetActionID() != CAIAction::BERSERK) {
-            m_aiDoAction.m_actionID = CAIAction::BERSERK;
-            m_aiDoAction.m_specificID = LONG_MAX;
-            m_aiDoAction.m_specificID2 = 0;
-            m_aiDoAction.m_specificID3 = 0;
-            m_aiDoAction.m_dest = CPoint(-1, -1);
-            m_aiDoAction.m_string1 = "";
-            m_aiDoAction.m_string2 = "";
-            m_aiDoAction.m_internalFlags = 0;
+            controlAction.m_actionID = CAIAction::BERSERK;
+            controlAction.m_specificID = LONG_MAX;
+            controlAction.m_specificID2 = 0;
+            controlAction.m_specificID3 = 0;
+            controlAction.m_dest = CPoint(-1, -1);
+            controlAction.m_string1 = "";
+            controlAction.m_string2 = "";
+            controlAction.m_internalFlags = 0;
             ClearActions(FALSE);
             DropPath();
             m_interrupt = TRUE;
-            AddAction(m_aiDoAction);
+            AddAction(controlAction);
         }
         field_727E = TRUE;
         ApplyTriggers();
@@ -13661,11 +13663,11 @@ void CGameSprite::ProcessAI()
     } else if (!bControlledAction && bCanAct
         && (m_derivedStats.m_generalState & STATE_FEEBLEMINDED) != 0) {
         if (m_curAction.GetActionID() != CAIAction::NO_ACTION) {
-            m_aiDoAction = CAIAction::NULL_ACTION;
+            controlAction = CAIAction::NULL_ACTION;
             ClearActions(FALSE);
             DropPath();
             m_interrupt = TRUE;
-            AddAction(m_aiDoAction);
+            AddAction(controlAction);
         }
         field_727E = TRUE;
         ApplyTriggers();
@@ -13677,27 +13679,27 @@ void CGameSprite::ProcessAI()
         if (static_cast<DWORD>(field_44A) % 100 == static_cast<DWORD>(m_id) % 100) {
             INT choice = rand() % 10;
             if (choice < 3) {
-                m_aiDoAction.m_actionID = 184; // Original action at 0x8478E4.
-                m_aiDoAction.m_specificID = LONG_MAX;
-                m_aiDoAction.m_dest = CPoint(-1, -1);
+                controlAction.m_actionID = 184; // Original action at 0x8478E4.
+                controlAction.m_specificID = LONG_MAX;
+                controlAction.m_dest = CPoint(-1, -1);
             } else if (choice < 6) {
-                m_aiDoAction = CAIAction::NULL_ACTION;
+                controlAction = CAIAction::NULL_ACTION;
             } else {
-                m_aiDoAction.m_actionID = CAIAction::GROUPATTACK;
-                m_aiDoAction.m_acteeID.Set(CAIObjectType::ANYONE);
-                m_aiDoAction.m_specificID = 0;
+                controlAction.m_actionID = CAIAction::GROUPATTACK;
+                controlAction.m_acteeID.Set(CAIObjectType::ANYONE);
+                controlAction.m_specificID = 0;
             }
             if (choice < 3 || choice >= 6) {
-                m_aiDoAction.m_specificID2 = 0;
-                m_aiDoAction.m_specificID3 = 0;
-                m_aiDoAction.m_string1 = "";
-                m_aiDoAction.m_string2 = "";
-                m_aiDoAction.m_internalFlags = 0;
+                controlAction.m_specificID2 = 0;
+                controlAction.m_specificID3 = 0;
+                controlAction.m_string1 = "";
+                controlAction.m_string2 = "";
+                controlAction.m_internalFlags = 0;
             }
             ClearActions(FALSE);
             DropPath();
             m_interrupt = TRUE;
-            AddAction(m_aiDoAction);
+            AddAction(controlAction);
         }
         field_727E = TRUE;
         ApplyTriggers();
@@ -13723,22 +13725,22 @@ void CGameSprite::ProcessAI()
             }
         }
         if (bReplaceAction) {
-            m_aiDoAction.m_actionID = CAIAction::ATTACKREEVALUATE;
-            m_aiDoAction.m_specificID = 0;
-            m_aiDoAction.m_specificID2 = -1;
-            m_aiDoAction.m_specificID3 = 0;
-            m_aiDoAction.m_dest = CPoint(-1, -1);
-            m_aiDoAction.m_string1 = "";
-            m_aiDoAction.m_string2 = "";
-            m_aiDoAction.m_internalFlags = 0;
+            controlAction.m_actionID = CAIAction::ATTACKREEVALUATE;
+            controlAction.m_specificID = 0;
+            controlAction.m_specificID2 = -1;
+            controlAction.m_specificID3 = 0;
+            controlAction.m_dest = CPoint(-1, -1);
+            controlAction.m_string1 = "";
+            controlAction.m_string2 = "";
+            controlAction.m_internalFlags = 0;
             CAIObjectType target(0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0);
             target.m_nEnemyAlly = targetEnemyAlly;
-            m_aiDoAction.m_acteeID.Set(target);
-            m_aiDoAction.m_specificID = 45;
+            controlAction.m_acteeID.Set(target);
+            controlAction.m_specificID = 45;
             ClearActions(FALSE);
             DropPath();
             m_interrupt = TRUE;
-            AddAction(m_aiDoAction);
+            AddAction(controlAction);
         }
         field_727E = TRUE;
         ApplyTriggers();
@@ -13749,11 +13751,11 @@ void CGameSprite::ProcessAI()
                 && m_startTypeAI.m_nEnemyAlly <= CAIObjectType::EA_GOODCUTOFF
                 && m_typeAI.m_nEnemyAlly == CAIObjectType::EA_CHARMED_PC))) {
         if (m_curAction.GetActionID() != CAIAction::NO_ACTION) {
-            m_aiDoAction = CAIAction::NULL_ACTION;
+            controlAction = CAIAction::NULL_ACTION;
             ClearActions(FALSE);
             DropPath();
             m_interrupt = TRUE;
-            AddAction(m_aiDoAction);
+            AddAction(controlAction);
         }
         field_727E = TRUE;
         ApplyTriggers();
@@ -13763,11 +13765,11 @@ void CGameSprite::ProcessAI()
     if (!bControlledAction && field_727E != 0) {
         field_727E = FALSE;
         if (m_curAction.GetActionID() != CAIAction::NO_ACTION) {
-            m_aiDoAction = CAIAction::NULL_ACTION;
+            controlAction = CAIAction::NULL_ACTION;
             ClearActions(FALSE);
             DropPath();
             m_interrupt = TRUE;
-            AddAction(m_aiDoAction);
+            AddAction(controlAction);
         }
         ApplyTriggers();
         bControlledAction = TRUE;
@@ -13816,7 +13818,7 @@ void CGameSprite::ProcessAI()
             m_nCommandPause = 0;
         }
         if (m_curAction.GetActionID() == CAIAction::NO_ACTION && !m_queuedActions.IsEmpty()) {
-            SetCurrAction(GetNextAction(m_aiDoAction));
+            SetCurrAction(GetNextAction(controlAction));
             m_interrupt = FALSE;
         }
     }
@@ -13842,7 +13844,7 @@ void CGameSprite::ProcessAI()
             && (!bCurrentInstant
                 || (g_pChitin->cNetwork.GetSessionOpen() == TRUE
                     && m_curAction.GetActionID() == CAIAction::LEAVEAREALUA))) {
-            SetCurrAction(GetNextAction(m_aiDoAction));
+            SetCurrAction(GetNextAction(controlAction));
             m_interrupt = FALSE;
         } else if (bCanResolveInstants) {
             do {

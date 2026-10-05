@@ -3140,6 +3140,44 @@ void Tick(CWarp* pActiveEngine)
                 nStep, markerCase, source->m_targetPoint.x, source->m_targetPoint.y, passed ? "true" : "false");
             while (messages.GetCount() > before) delete messages.RemoveTail();
         }
+        CAIAction savedResolveScratch;
+        savedResolveScratch = CGameSprite::m_aiDoAction;
+        for (INT scratchCase = 0; scratchCase < 4; ++scratchCase) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = scratchCase == 0 ? CAIAction::NO_ACTION : CAIAction::WAIT;
+            source->m_curAction.m_specificID = scratchCase == 2 ? 1 : 100;
+            source->m_actionCount = 1;
+            source->m_interrupt = scratchCase == 1 || scratchCase == 3;
+            source->m_userCommandPause = 0;
+            source->m_nCommandPause = scratchCase == 3 ? 10 : 0;
+            source->m_baseStats.m_flags = savedFlags & 0x7FFFFFFF;
+            source->m_dialogWait = 0;
+            source->m_inCutScene = source->m_moraleFailure = FALSE;
+            source->field_3428 = 7;
+            source->m_groupMove = FALSE;
+            game->GetWorldTimer()->m_active = scratchCase == 1 || scratchCase == 2;
+            CGameSprite::m_aiDoAction = CAIAction::NULL_ACTION;
+            CGameSprite::m_aiDoAction.m_actionID = CAIAction::WAIT;
+            CGameSprite::m_aiDoAction.m_specificID = 901;
+            CGameSprite::m_aiDoAction.m_specificID2 = 902;
+            CGameSprite::m_aiDoAction.m_specificID3 = 903;
+            source->AddAction(CAIAction(CAIAction::WAIT, 200));
+            source->ProcessAI();
+            BOOL resolved = scratchCase == 1 || scratchCase == 2;
+            BOOL passed = source->m_curAction.GetActionID() == CAIAction::WAIT
+                && source->m_curAction.m_specificID == 200 && !source->m_interrupt
+                && CGameSprite::m_aiDoAction.m_specificID == (resolved ? 200 : 901)
+                && (resolved || (CGameSprite::m_aiDoAction.m_specificID2 == 902
+                    && CGameSprite::m_aiDoAction.m_specificID3 == 903));
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"action-scratch-case\",\"case\":%d,\"specific\":%ld,\"scratch\":%ld,\"passed\":%s}",
+                nStep, scratchCase, source->m_curAction.m_specificID,
+                CGameSprite::m_aiDoAction.m_specificID, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        CGameSprite::m_aiDoAction = savedResolveScratch;
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         source->m_derivedStats.m_generalState = savedState;

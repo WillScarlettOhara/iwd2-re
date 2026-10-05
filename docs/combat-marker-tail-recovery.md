@@ -29,5 +29,5 @@ original/source calls); offset analysis is unavailable, so full static
 equivalence remains unproven. This establishes the local marker-write timing, not
 full ProcessAI equivalence or every destination-marker lifecycle.
 
-Next target: remaining active-action scheduling and interruption branches
-inside ProcessAI.
+The subsequent action scratch separation is recovered in
+[combat-action-scratch-recovery.md](combat-action-scratch-recovery.md).
