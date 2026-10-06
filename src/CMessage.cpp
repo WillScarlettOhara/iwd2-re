@@ -18016,7 +18016,7 @@ void CMessage107::Run()
 
     BYTE rc;
     do {
-        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_targetId,
             CGameObjectArray::THREAD_ASYNCH,
             &pObject,
             INFINITE);
@@ -18027,7 +18027,7 @@ void CMessage107::Run()
             static_cast<CGameSprite*>(pObject)->field_580 = field_C;
         }
 
-        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
             CGameObjectArray::THREAD_ASYNCH,
             INFINITE);
     }

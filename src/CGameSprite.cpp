@@ -18155,6 +18155,19 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
         ResolveTargetPoint(&action, m_queuedActions.GetHeadPosition());
     }
 
+    // Weapon snapshot and trap-mode messages at 0x733C14..0x733CCD.
+    if (action.GetActionID() != 92) {
+        m_nTempSelectedWeapon = m_equipment.m_selectedWeapon;
+        m_nTempSelectedWeaponAbility = static_cast<BYTE>(m_equipment.m_selectedWeaponAbility);
+    }
+    if (action.GetActionID() == CAIAction::REMOVETRAPS) {
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessage107(TRUE, m_id, m_id), FALSE);
+    }
+    if (m_curAction.GetActionID() == CAIAction::REMOVETRAPS
+        && action.GetActionID() != CAIAction::REMOVETRAPS) {
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessage107(FALSE, m_id, m_id), FALSE);
+    }
+
     // 0x733D6B / 0x734056: a new action clears the encumbrance feedback latch,
     // then -- for a movement action -- re-announces the sprite's encumbrance so
     // "Encumbered: Slowed/Can not move" prints once per move command (the only

@@ -2923,6 +2923,8 @@ void Tick(CWarp* pActiveEngine)
         auto savedIgnore = source->m_derivedStats.m_bIgnoreDialogPause;
         auto savedModal = source->m_nModalState;
         auto savedHiding = source->m_bHiding;
+        auto savedTempWeapon = source->m_nTempSelectedWeapon;
+        auto savedTempAbility = source->m_nTempSelectedWeaponAbility;
         auto savedStop = game->m_nTimeStop;
         auto savedCaster = game->m_nTimeStopCaster;
         auto savedActive = game->GetWorldTimer()->m_active;
@@ -3333,6 +3335,80 @@ void Tick(CWarp* pActiveEngine)
         buttons.SetState(savedBarState, 0);
         buttons.m_stateStack = savedBarStack;
         buttons.m_nSelectedButton = savedBarSelection;
+        BYTE savedWeapon = source->m_equipment.m_selectedWeapon;
+        WORD savedAbility = source->m_equipment.m_selectedWeaponAbility;
+        INT savedTrapFlag = source->field_580;
+        source->m_nModalState = 0;
+        const SHORT weaponActions[] = { 0, 63, 3, 34, 92, 93, 28 };
+        for (INT weaponCase = 0; weaponCase < 7; ++weaponCase) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_equipment.m_selectedWeapon = savedWeapon;
+            source->m_equipment.m_selectedWeaponAbility = 0x1234;
+            source->m_nTempSelectedWeapon = 0xFE;
+            source->m_nTempSelectedWeaponAbility = 0xAB;
+            CAIAction incoming;
+            incoming.m_actionID = weaponActions[weaponCase];
+            source->SetCurrAction(incoming);
+            BOOL preserve = incoming.GetActionID() == 92;
+            BOOL passed = source->m_nTempSelectedWeapon == (preserve ? 0xFE : savedWeapon)
+                && source->m_nTempSelectedWeaponAbility == (preserve ? 0xAB : 0x34)
+                && source->m_equipment.m_selectedWeapon == savedWeapon
+                && source->m_equipment.m_selectedWeaponAbility == 0x1234;
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"action-weapon-snapshot\",\"action\":%d,\"ability\":%u,\"passed\":%s}",
+                nStep, incoming.GetActionID(), source->m_nTempSelectedWeaponAbility, passed ? "true" : "false");
+            source->m_equipment.m_selectedWeaponAbility = savedAbility;
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        const SHORT oldTrapActions[] = { 0, 28, 28, 28, 63 };
+        const SHORT newTrapActions[] = { 28, 28, 63, 0, 63 };
+        for (INT trapCase = 0; trapCase < 5; ++trapCase) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = oldTrapActions[trapCase];
+            source->field_580 = 99;
+            CAIAction incoming;
+            incoming.m_actionID = newTrapActions[trapCase];
+            source->SetCurrAction(incoming);
+            BOOL passed = source->field_580 == 99
+                && source->m_curAction.GetActionID() == incoming.GetActionID()
+                && messages.GetCount() - before == (trapCase < 4 ? 1 : 0);
+            if (trapCase < 4 && messages.GetCount() > before) {
+                CMessage* message = messages.RemoveTail();
+                BOOL isTrapMessage = message->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_107;
+                passed = passed && isTrapMessage && message->GetSource() == id && message->GetTarget() == id;
+                if (isTrapMessage) {
+                    BYTE expected = trapCase < 2 ? TRUE : FALSE;
+                    passed = passed && static_cast<CMessage107*>(message)->field_C == expected;
+                    message->Run();
+                    passed = passed && source->field_580 == expected;
+                }
+                delete message;
+            }
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"action-trap-message\",\"case\":%d,\"flag\":%d,\"passed\":%s}",
+                nStep, trapCase, source->field_580, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        for (INT messageCase = 0; messageCase < 2; ++messageCase) {
+            source->field_580 = 99;
+            CMessage107 message(0xFF, id, messageCase == 0 ? id : CGameObjectArray::INVALID_INDEX);
+            message.Run();
+            BOOL passed = source->field_580 == (messageCase == 0 ? 255 : 99);
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"trap-message-target\",\"case\":%d,\"flag\":%d,\"passed\":%s}",
+                nStep, messageCase, source->field_580, passed ? "true" : "false");
+        }
+        source->field_580 = savedTrapFlag;
+        source->m_nModalState = savedModal;
+        source->m_equipment.m_selectedWeapon = savedWeapon;
+        source->m_equipment.m_selectedWeaponAbility = savedAbility;
+        source->m_nTempSelectedWeapon = savedTempWeapon;
+        source->m_nTempSelectedWeaponAbility = savedTempAbility;
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         source->m_derivedStats.m_generalState = savedState;

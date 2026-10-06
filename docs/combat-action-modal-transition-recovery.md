@@ -46,3 +46,6 @@ skips because it does not recognize the header's bare hexadecimal comments.
 Full static and original/recovered differential equivalence remain unproven.
 
 Next target: SetCurrAction temporary weapon selection and trap-mode messages.
+
+Those transitions are subsequently recovered in
+[combat-action-weapon-trap-transition-recovery.md](combat-action-weapon-trap-transition-recovery.md).
