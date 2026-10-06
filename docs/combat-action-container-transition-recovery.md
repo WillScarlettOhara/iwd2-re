@@ -40,3 +40,6 @@ calls); one layout audit is skipped. Full static and differential equivalence
 remain unproven.
 
 Next target: SetCurrAction modal-state transition before the action copy.
+
+The subsequent modal transition is recovered in
+[combat-action-modal-transition-recovery.md](combat-action-modal-transition-recovery.md).

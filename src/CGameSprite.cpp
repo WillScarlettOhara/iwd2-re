@@ -18080,8 +18080,7 @@ void CGameSprite::ClearAI(BOOLEAN bSetSequence)
 // override, fell through to the base (which never touches m_curDest), so blocked
 // members kept m_curDest == dest and stopped re-pathing.
 //
-// DEFERRED: the binary also updates modal-state/quickbar,
-// broadcasts CMessage action-change notifications
+// DEFERRED: the binary also broadcasts CMessage action-change notifications
 // (0x84D424 / 0x84D22C), tears down the target marker + deny-list reservation
 // (m_targetId), releases the portrait resource request, emits encumbrance
 // feedback, randomizes the move-throttle phase (field_5616 = UtilRandInt) and
@@ -18113,6 +18112,42 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
     field_5636 = 0;
     m_moveCount = 0;
     m_bInCasting = FALSE;
+
+    // Modal gate at 0x7339A4..0x733BEB. Preserve the binary's action whitelist.
+    BOOL bPreserveModal = FALSE;
+    const SHORT modalActions[] = {
+        CAIAction::NO_ACTION, CAIAction::MOVETOPOINT, CAIAction::MOVETOOBJECT,
+        CAIAction::FACE, 18, CAIAction::SMALLWAIT, 99, CAIAction::FOLLOW,
+        CAIAction::MOVETOPOINTNORECTICLE, 215, 13, 33, 234, 273, 274, 293,
+        183, 233, 30, CAIAction::WAIT, 10, 257, 236, 249, 252,
+        CAIAction::CONTINUE, CAIAction::RANDOMWALK
+    };
+    for (SHORT nAction : modalActions) {
+        if (action.GetActionID() == nAction) {
+            bPreserveModal = TRUE;
+            break;
+        }
+    }
+    if (m_nModalState != 0 && !bPreserveModal) {
+        BYTE nOldModalState = m_nModalState;
+        SetModalState(0, TRUE);
+        if (nOldModalState == 2 || nOldModalState == 4) {
+            pGame->m_cButtonArray.m_nSelectedButton = 100;
+            SHORT nPortrait = pGame->GetCharacterPortraitNum(m_id);
+            if (g_pBaldurChitin->GetActiveEngine()->GetSelectedCharacter() == nPortrait) {
+                switch (pGame->m_cButtonArray.m_nState) {
+                case 0x66: case 0x65: case 0x68: case 0x67: case 0x69:
+                case 0x70: case 0x73: case 0x74: case 0x75: case 0x76:
+                case 0x77: case 0x78: case 0x79: case 0x7A: case 0x7B:
+                case 0x6A:
+                    break;
+                default:
+                    pGame->m_cButtonArray.ResetState();
+                    break;
+                }
+            }
+        }
+    }
 
     // 0x733BEB..0x733C14: resolve the incoming action before replacing the old one.
     if (m_curAction.GetActionID() != CAIAction::NO_ACTION

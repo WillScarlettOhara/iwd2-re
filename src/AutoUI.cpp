@@ -2921,6 +2921,8 @@ void Tick(CWarp* pActiveEngine)
         auto savedEA = source->m_typeAI.m_nEnemyAlly;
         auto savedAllow = source->m_bAllowDialogInterrupt;
         auto savedIgnore = source->m_derivedStats.m_bIgnoreDialogPause;
+        auto savedModal = source->m_nModalState;
+        auto savedHiding = source->m_bHiding;
         auto savedStop = game->m_nTimeStop;
         auto savedCaster = game->m_nTimeStopCaster;
         auto savedActive = game->GetWorldTimer()->m_active;
@@ -2940,6 +2942,7 @@ void Tick(CWarp* pActiveEngine)
         auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
         INT before = messages.GetCount();
         source->m_bSelected = FALSE;
+        source->m_nModalState = 0;
         game->GetWorldTimer()->m_active = TRUE;
         game->GetGameSave()->m_cutScene = FALSE;
         CPoint marker(savedStart.x + 3, savedStart.y + 5);
@@ -3267,6 +3270,69 @@ void Tick(CWarp* pActiveEngine)
         actionPanel->SetActive(savedActionActive);
         commandPanel->SetActive(savedCommandActive);
         container->RemoveFromArea();
+        auto& buttons = game->m_cButtonArray;
+        INT savedBarState = buttons.m_nState;
+        INT savedBarSelection = buttons.m_nSelectedButton;
+        auto savedBarStack = buttons.m_stateStack;
+        INT savedPortrait = world->m_nSelectedCharacter;
+        SHORT portrait = game->GetCharacterPortraitNum(id);
+        CTypedPtrList<CPtrList, LONG*> savedGroupMembers;
+        savedGroupMembers.AddTail(&game->m_group.m_memberList);
+        LONG otherId = game->GetCharacterId((portrait + 1) % game->GetNumCharacters());
+        auto modalCase = [&](BYTE mode, SHORT actionId, INT barState, BOOL selected,
+                             BOOL preserve, BOOL reset) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_nModalState = mode;
+            source->m_bHiding = mode == 3;
+            // World selection is derived from the group's actual leader.
+            game->m_group.m_memberList.RemoveAll();
+            game->m_group.m_memberList.AddTail(reinterpret_cast<LONG*>(selected ? id : otherId));
+            buttons.m_nState = barState;
+            buttons.m_nSelectedButton = 7;
+            buttons.m_stateStack.clear();
+            buttons.m_stateStack.push_front(0x72);
+            CAIAction incoming;
+            incoming.m_actionID = actionId;
+            incoming.m_dest = marker;
+            source->SetCurrAction(incoming);
+            BOOL special = mode == 2 || mode == 4;
+            BOOL passed = source->m_nModalState == (preserve ? mode : 0)
+                && source->m_curAction.GetActionID() == actionId
+                && buttons.m_stateStack.size() == (reset ? 0 : 1)
+                && buttons.m_nState == (reset ? 0x72 : barState)
+                && buttons.m_nSelectedButton == (!preserve && special ? 100 : 7)
+                && source->m_bHiding == (mode == 3 && preserve);
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"action-modal-transition\",\"mode\":%u,\"action\":%d,\"bar\":%d,\"selected\":%s,\"reset\":%s,\"passed\":%s}",
+                nStep, mode, actionId, barState, selected ? "true" : "false",
+                reset ? "true" : "false", passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        };
+        const SHORT modalActions[] = { 0, 23, 22, 84, 18, 83, 99, 89, 90, 215,
+            13, 33, 234, 273, 274, 293, 183, 233, 30, 63, 10, 257, 236, 249, 252, 36, 85 };
+        for (BYTE mode = 2; mode <= 4; ++mode) {
+            for (SHORT actionId : modalActions) modalCase(mode, actionId, 0x6E, TRUE, TRUE, FALSE);
+        }
+        const BYTE exitingModes[] = { 0, 2, 3, 4, 5 };
+        for (BYTE mode : exitingModes) {
+            modalCase(mode, CAIAction::ATTACK, 0x6E, TRUE, mode == 0, mode == 2 || mode == 4);
+        }
+        modalCase(2, CAIAction::ATTACK, 0x6E, FALSE, FALSE, FALSE);
+        modalCase(4, CAIAction::ATTACK, 0x6E, FALSE, FALSE, FALSE);
+        const INT protectedBars[] = { 0x66, 0x65, 0x68, 0x67, 0x69, 0x70, 0x73,
+            0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x6A };
+        for (INT bar : protectedBars) modalCase(2, CAIAction::ATTACK, bar, TRUE, FALSE, FALSE);
+        modalCase(4, CAIAction::ATTACK, 0x6B, TRUE, FALSE, TRUE);
+        source->m_nModalState = savedModal;
+        source->m_bHiding = savedHiding;
+        game->m_group.m_memberList.RemoveAll();
+        game->m_group.m_memberList.AddTail(&savedGroupMembers);
+        world->m_nSelectedCharacter = savedPortrait;
+        buttons.SetState(savedBarState, 0);
+        buttons.m_stateStack = savedBarStack;
+        buttons.m_nSelectedButton = savedBarSelection;
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         source->m_derivedStats.m_generalState = savedState;
