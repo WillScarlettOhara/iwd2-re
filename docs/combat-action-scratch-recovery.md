@@ -32,5 +32,5 @@ are restored and hashed. Parity remains YELLOW (191/240 and 17/35
 original/source calls); offset analysis is unavailable. This establishes separation of these two action
 buffers, not full ProcessAI or original/recovered differential equivalence.
 
-Next target: remaining direct action interruption and terminal return
-cases in ResolveInstants.
+The subsequent render-list gate correction is recovered in
+[combat-render-list-gate-recovery.md](combat-render-list-gate-recovery.md).

@@ -13824,7 +13824,7 @@ void CGameSprite::ProcessAI()
     }
 
     if (ProcessEffectList()
-        && m_pArea != NULL
+        && m_posVertList != NULL
         && (m_dialogWait < 1
             || m_typeAI.m_nEnemyAlly >= CAIObjectType::EA_EVILCUTOFF
             || m_bAllowDialogInterrupt == FALSE

@@ -3178,6 +3178,15 @@ void Tick(CWarp* pActiveEngine)
             while (messages.GetCount() > before) delete messages.RemoveTail();
         }
         CGameSprite::m_aiDoAction = savedResolveScratch;
+        POSITION savedVertList = source->m_posVertList;
+        for (INT listCase = 0; listCase < 4; ++listCase) {
+            BOOL registered = listCase % 2 == 0;
+            BOOL instant = listCase >= 2;
+            source->m_posVertList = registered ? savedVertList : NULL;
+            run(registered ? "render-list-present" : "render-list-absent",
+                0, -1, FALSE, 0, FALSE, instant, registered);
+            source->m_posVertList = savedVertList;
+        }
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         source->m_derivedStats.m_generalState = savedState;
