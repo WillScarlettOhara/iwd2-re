@@ -3106,7 +3106,7 @@ void Tick(CWarp* pActiveEngine)
             if (preview == 1) source->m_baseStats.m_flags |= 0x80000000;
             source->m_targetPoint = CPoint(-1, -1);
             source->ProcessAI();
-            BOOL passed = source->m_targetPoint == (preview == 0 ? marker : savedStart)
+            BOOL passed = source->m_targetPoint == (preview == 1 ? savedStart : marker)
                 && source->m_curAction.GetActionID() == (preview == 1 ? 23 : 27)
                 && source->m_interrupt == (preview == 1);
             valid = valid && passed;
@@ -3186,6 +3186,35 @@ void Tick(CWarp* pActiveEngine)
             run(registered ? "render-list-present" : "render-list-absent",
                 0, -1, FALSE, 0, FALSE, instant, registered);
             source->m_posVertList = savedVertList;
+        }
+        for (INT transition = 0; transition < 6; ++transition) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            if (transition == 1 || transition == 3) source->m_curAction.m_actionID = CAIAction::WAIT;
+            source->m_groupMove = transition == 5;
+            CPoint sentinel(123, 456);
+            source->m_targetPoint = sentinel;
+            CAIAction incoming;
+            incoming.m_actionID = transition == 2 || transition >= 4 ? CAIAction::MOVETOPOINT
+                : transition == 3 ? CAIAction::WAIT : CAIAction::NO_ACTION;
+            incoming.m_dest = marker;
+            if (transition >= 4) {
+                CAIAction queued;
+                queued.m_actionID = CAIAction::PROTECTPOINT;
+                queued.m_dest = savedStart;
+                source->AddAction(queued);
+            }
+            source->SetCurrAction(incoming);
+            CPoint expected = transition == 0 || transition == 5 ? sentinel
+                : transition == 1 || transition == 3 ? CPoint(-1, -1) : marker;
+            BOOL passed = source->m_targetPoint == expected
+                && source->m_curAction.GetActionID() == incoming.GetActionID()
+                && source->m_queuedActions.GetCount() == (transition >= 4 ? 1 : 0);
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"action-marker-transition\",\"case\":%d,\"x\":%ld,\"y\":%ld,\"passed\":%s}",
+                nStep, transition, source->m_targetPoint.x, source->m_targetPoint.y, passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
         }
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;

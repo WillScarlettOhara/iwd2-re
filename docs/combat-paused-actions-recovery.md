@@ -39,3 +39,9 @@ ProcessAI retains its floating-point warning. Offset analysis remains unavailabl
 so static equivalence is unproven.
 
 Next target: inactive-sprite routing in ProcessAI.
+
+Later [action-transition recovery](combat-action-marker-transition-recovery.md)
+restores SetCurrAction's marker write after paused interruption. The case
+without a positive command pause still previews the current action first,
+but its final marker follows the selected queued action. The fixture's final
+expectation is updated accordingly; the earlier run above remains historical.

@@ -18067,7 +18067,7 @@ void CGameSprite::ClearAI(BOOLEAN bSetSequence)
     }
 }
 
-// 0x7338E0
+// SetCurrAction entry: 0x7338E0.
 //
 // CGameSprite override of CGameAIBase::SetCurrAction (0x45D190): in addition to
 // the base copy/decode, the binary resets the sprite's per-action execution
@@ -18104,6 +18104,12 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
     field_5636 = 0;
     m_moveCount = 0;
     m_bInCasting = FALSE;
+
+    // 0x733BEB..0x733C14: resolve the incoming action before replacing the old one.
+    if (m_curAction.GetActionID() != CAIAction::NO_ACTION
+        || action.GetActionID() != CAIAction::NO_ACTION) {
+        ResolveTargetPoint(&action, m_queuedActions.GetHeadPosition());
+    }
 
     // 0x733D6B / 0x734056: a new action clears the encumbrance feedback latch,
     // then -- for a movement action -- re-announces the sprite's encumbrance so

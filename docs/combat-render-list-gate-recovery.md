@@ -28,4 +28,5 @@ are restored and hashed. Parity remains YELLOW (191/240 and 17/35
 original/source calls); offset analysis is unavailable. This establishes this field/branch routing, not full
 ProcessAI or original/recovered differential equivalence.
 
-Next target: terminal and protected-interruption bookkeeping in ResolveInstants.
+The subsequent action-transition marker call is recovered in
+[combat-action-marker-transition-recovery.md](combat-action-marker-transition-recovery.md).
