@@ -18080,8 +18080,8 @@ void CGameSprite::ClearAI(BOOLEAN bSetSequence)
 // override, fell through to the base (which never touches m_curDest), so blocked
 // members kept m_curDest == dest and stopped re-pathing.
 //
-// DEFERRED: for non-NULL actions the binary also closes any open container,
-// updates modal-state/quickbar, broadcasts CMessage action-change notifications
+// DEFERRED: the binary also updates modal-state/quickbar,
+// broadcasts CMessage action-change notifications
 // (0x84D424 / 0x84D22C), tears down the target marker + deny-list reservation
 // (m_targetId), releases the portrait resource request, emits encumbrance
 // feedback, randomizes the move-throttle phase (field_5616 = UtilRandInt) and
@@ -18091,6 +18091,15 @@ void CGameSprite::ClearAI(BOOLEAN bSetSequence)
 // 0x7338E0
 void CGameSprite::SetCurrAction(const CAIAction& action)
 {
+    // Container gate at 0x7338FD..0x733945; 0x691130 reads popup state (+0xEA4).
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    CScreenWorld* pWorld = g_pBaldurChitin->m_pEngineWorld;
+    if (action.GetActionID() != CAIAction::NO_ACTION
+        && pWorld->m_nPopupState == 8
+        && m_id == pGame->m_iContainerSprite) {
+        pWorld->StopContainer();
+    }
+
     m_curDest.x = -1;
     m_curDest.y = -1;
     field_7118 = 0;

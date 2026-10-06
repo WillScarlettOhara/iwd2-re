@@ -41,3 +41,6 @@ body and recursive marker helper. Marker-helper offset analysis is
 unavailable; complete static and differential equivalence are unproven.
 
 Next target: remaining SetCurrAction transition bookkeeping before action copy.
+
+Container closure is subsequently recovered in
+[combat-action-container-transition-recovery.md](combat-action-container-transition-recovery.md).

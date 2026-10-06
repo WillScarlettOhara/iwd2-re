@@ -110,6 +110,7 @@
 #include "CGameObjectArray.h"
 #include "CGameOptions.h"
 #include "CGameSprite.h"
+#include "CGameContainer.h"
 #include "CGameEffect.h"
 #include "CItem.h"
 #include "CMessage.h"
@@ -3216,6 +3217,56 @@ void Tick(CWarp* pActiveEngine)
                 nStep, transition, source->m_targetPoint.x, source->m_targetPoint.y, passed ? "true" : "false");
             while (messages.GetCount() > before) delete messages.RemoveTail();
         }
+        // Exercise StopContainer with a real registered, empty ground container.
+        auto* world = g_pBaldurChitin->m_pEngineWorld;
+        LONG savedContainer = game->m_iContainer;
+        LONG savedContainerSprite = game->m_iContainerSprite;
+        INT savedPopup = world->m_nPopupState;
+        BYTE savedAutoHide = world->m_nAutoHideInterface;
+        CRect savedView = world->m_newViewSize;
+        BYTE savedResize = world->m_waitingOnResize;
+        BOOL savedForceResize = world->m_bForceViewSize;
+        auto* containerPanel = world->GetManager()->GetPanel(8);
+        auto* actionPanel = world->GetManager()->GetPanel(1);
+        auto* commandPanel = world->GetManager()->GetPanel(world->GetPanel_22_0());
+        BOOL savedContainerActive = containerPanel->m_bActive;
+        BOOL savedActionActive = actionPanel->m_bActive;
+        BOOL savedCommandActive = commandPanel->m_bActive;
+        auto* container = new CGameContainer(source->m_pArea,
+            CRect(source->m_pos.x, source->m_pos.y, source->m_pos.x + 16, source->m_pos.y + 12));
+        game->m_iContainer = container->m_id;
+        world->m_nAutoHideInterface = 0;
+        for (INT containerCase = 0; containerCase < 4; ++containerCase) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            world->m_nPopupState = containerCase == 2 ? -1 : 8;
+            game->m_iContainerSprite = containerCase == 1 ? CGameObjectArray::INVALID_INDEX : id;
+            containerPanel->SetActive(TRUE);
+            CAIAction incoming;
+            incoming.m_actionID = containerCase == 0 ? CAIAction::NO_ACTION : CAIAction::WAIT;
+            source->SetCurrAction(incoming);
+            BOOL passed = world->m_nPopupState == (containerCase >= 2 ? -1 : 8)
+                && containerPanel->m_bActive == (containerCase != 3)
+                && source->m_curAction.GetActionID() == incoming.GetActionID()
+                && container->m_lstItems.IsEmpty();
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"action-container-transition\",\"case\":%d,\"popup\":%d,\"panelActive\":%s,\"passed\":%s}",
+                nStep, containerCase, world->m_nPopupState,
+                containerPanel->m_bActive ? "true" : "false", passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        }
+        game->m_iContainer = savedContainer;
+        game->m_iContainerSprite = savedContainerSprite;
+        world->m_nPopupState = savedPopup;
+        world->m_nAutoHideInterface = savedAutoHide;
+        world->m_newViewSize = savedView;
+        world->m_waitingOnResize = savedResize;
+        world->m_bForceViewSize = savedForceResize;
+        containerPanel->SetActive(savedContainerActive);
+        actionPanel->SetActive(savedActionActive);
+        commandPanel->SetActive(savedCommandActive);
+        container->RemoveFromArea();
         source->ClearActions(FALSE);
         source->m_curAction = CAIAction::NULL_ACTION;
         source->m_derivedStats.m_generalState = savedState;
