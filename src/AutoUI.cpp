@@ -2925,6 +2925,7 @@ void Tick(CWarp* pActiveEngine)
         auto savedHiding = source->m_bHiding;
         auto savedTempWeapon = source->m_nTempSelectedWeapon;
         auto savedTempAbility = source->m_nTempSelectedWeaponAbility;
+        auto savedTrackedAction = source->m_currentActionId;
         auto savedStop = game->m_nTimeStop;
         auto savedCaster = game->m_nTimeStopCaster;
         auto savedActive = game->GetWorldTimer()->m_active;
@@ -2945,6 +2946,7 @@ void Tick(CWarp* pActiveEngine)
         INT before = messages.GetCount();
         source->m_bSelected = FALSE;
         source->m_nModalState = 0;
+        source->m_currentActionId = 0;
         game->GetWorldTimer()->m_active = TRUE;
         game->GetGameSave()->m_cutScene = FALSE;
         CPoint marker(savedStart.x + 3, savedStart.y + 5);
@@ -3403,6 +3405,66 @@ void Tick(CWarp* pActiveEngine)
             Emit("{\"step\":%d,\"op\":\"trap-message-target\",\"case\":%d,\"flag\":%d,\"passed\":%s}",
                 nStep, messageCase, source->field_580, passed ? "true" : "false");
         }
+        auto notificationCase = [&](SHORT tracked, SHORT incomingId, BOOL special, BOOL leaveTraps) {
+            source->ClearActions(FALSE);
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = leaveTraps ? CAIAction::REMOVETRAPS : CAIAction::WAIT;
+            source->m_currentActionId = tracked;
+            source->m_bPlayedEncumberedStopped = TRUE;
+            source->m_bPlayedEncumberedSlowed = TRUE;
+            CAIAction incoming;
+            incoming.m_actionID = incomingId;
+            incoming.m_specificID = 101;
+            incoming.m_specificID2 = 202;
+            incoming.m_specificID3 = 303;
+            incoming.m_internalFlags = 0x10203040;
+            BOOL notify = tracked != incomingId && (special || tracked != 0);
+            INT expectedCount = (notify ? 1 : 0) + (leaveTraps ? 1 : 0);
+            source->SetCurrAction(incoming);
+            BOOL passed = messages.GetCount() - before == expectedCount
+                && source->m_currentActionId == tracked
+                && source->m_curAction.GetActionID() == incomingId
+                && source->m_curAction.m_specificID == 101
+                && source->m_curAction.m_specificID2 == 202
+                && source->m_curAction.m_specificID3 == 303
+                && source->m_curAction.m_internalFlags == 0x10203040
+                && !source->m_bPlayedEncumberedStopped && !source->m_bPlayedEncumberedSlowed;
+            POSITION pos = messages.FindIndex(before);
+            if (leaveTraps && pos != NULL) {
+                CMessage* trap = messages.GetNext(pos);
+                passed = passed && trap->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_107;
+            }
+            if (notify && pos != NULL) {
+                CMessage* message = messages.GetNext(pos);
+                BOOL isNotification = message->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_SET_CURRENT_ACTION_ID;
+                SHORT expected = special ? incomingId : 0;
+                passed = passed && isNotification && message->GetSource() == id && message->GetTarget() == id;
+                if (isNotification) {
+                    passed = passed && static_cast<CMessageSetCurrentActionId*>(message)->m_actionId == expected;
+                    message->Run();
+                    passed = passed && source->m_currentActionId == expected;
+                }
+            }
+            valid = valid && passed;
+            ++checks;
+            Emit("{\"step\":%d,\"op\":\"action-id-notification\",\"tracked\":%d,\"incoming\":%d,\"trapFirst\":%s,\"notify\":%s,\"passed\":%s}",
+                nStep, tracked, incomingId, leaveTraps ? "true" : "false", notify ? "true" : "false", passed ? "true" : "false");
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+        };
+        const SHORT notifiedActions[] = { 108, 176, 8, 137, 198 };
+        for (SHORT incoming : notifiedActions) {
+            notificationCase(0, incoming, TRUE, FALSE);
+            notificationCase(incoming, incoming, TRUE, FALSE);
+            notificationCase(777, incoming, TRUE, FALSE);
+        }
+        const SHORT ordinaryActions[] = { 0, 63, 3, 139 };
+        for (SHORT incoming : ordinaryActions) {
+            notificationCase(0, incoming, FALSE, FALSE);
+            notificationCase(incoming == 0 ? -1 : incoming, incoming, FALSE, FALSE);
+            notificationCase(777, incoming, FALSE, FALSE);
+        }
+        notificationCase(0, CAIAction::DIALOGUE, TRUE, TRUE);
+        source->m_currentActionId = savedTrackedAction;
         source->field_580 = savedTrapFlag;
         source->m_nModalState = savedModal;
         source->m_equipment.m_selectedWeapon = savedWeapon;

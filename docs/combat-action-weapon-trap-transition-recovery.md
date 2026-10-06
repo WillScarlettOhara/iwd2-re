@@ -40,3 +40,6 @@ layout audit skips because it does not recognize bare hexadecimal header
 comments. Full static and differential equivalence remain unproven.
 
 Next target: SetCurrAction current-action-ID notifications after action copy.
+
+That notification is subsequently recovered in
+[combat-current-action-notification-recovery.md](combat-current-action-notification-recovery.md).

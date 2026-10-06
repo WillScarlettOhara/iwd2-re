@@ -18080,13 +18080,12 @@ void CGameSprite::ClearAI(BOOLEAN bSetSequence)
 // override, fell through to the base (which never touches m_curDest), so blocked
 // members kept m_curDest == dest and stopped re-pathing.
 //
-// DEFERRED: the binary also broadcasts CMessage action-change notifications
-// (0x84D424 / 0x84D22C), tears down the target marker + deny-list reservation
+// DEFERRED: the binary also tears down the target marker + deny-list reservation
 // (m_targetId), releases the portrait resource request, emits encumbrance
 // feedback, randomizes the move-throttle phase (field_5616 = UtilRandInt) and
 // preloads the spell-action ResRef. Those are orthogonal to the movement
 // re-search and depend on still-unrecovered spell/resource machinery; the
-// recovered behavior is the action-state reset (below) plus the base copy/decode.
+// recovered transition blocks below include action assignment and conditional decode.
 // 0x7338E0
 void CGameSprite::SetCurrAction(const CAIAction& action)
 {
@@ -18168,6 +18167,9 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
         g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessage107(FALSE, m_id, m_id), FALSE);
     }
 
+    // Inlined action assignment at 0x733CCD..0x733D5E, before notifications.
+    m_curAction = action;
+
     // 0x733D6B / 0x734056: a new action clears the encumbrance feedback latch,
     // then -- for a movement action -- re-announces the sprite's encumbrance so
     // "Encumbered: Slowed/Can not move" prints once per move command (the only
@@ -18176,6 +18178,18 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
     m_bPlayedEncumberedSlowed = 0;
 
     SHORT nActionID = action.GetActionID();
+    // Current-action notification at 0x733D77..0x733E31.
+    if (m_currentActionId != nActionID) {
+        BOOL bNotifyAction = nActionID == 108 || nActionID == 176
+            || nActionID == CAIAction::DIALOGUE
+            || nActionID == CAIAction::STARTDIALOG
+            || nActionID == CAIAction::STARTDIALOGUENOSET;
+        if (bNotifyAction || m_currentActionId != 0) {
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                new CMessageSetCurrentActionId(bNotifyAction ? nActionID : 0, m_id, m_id), FALSE);
+        }
+    }
+
     if (nActionID == CAIAction::MOVETOPOINT
         || nActionID == CAIAction::MOVETOOBJECT
         || nActionID == CAIAction::FOLLOW
@@ -18189,7 +18203,10 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
         }
     }
 
-    CGameAIBase::SetCurrAction(action);
+    if (nActionID != CAIAction::NO_ACTION
+        && pGame->GetRuleTables().m_lNoDecodeList.Find(nActionID) == NULL) {
+        m_curAction.Decode(this);
+    }
 }
 
 // 0x7238C0
