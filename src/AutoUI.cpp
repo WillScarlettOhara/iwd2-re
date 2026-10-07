@@ -3810,6 +3810,55 @@ void Tick(CWarp* pActiveEngine)
             source->m_equipment.m_selectedWeaponAbility = ability;
             source->m_equipment.m_items[0] = slot;
         }
+        {
+            struct ArrivalState { INT callback = 0, delivered = 0, removed = 0, destroyed = 0, virtualRemove = 0; };
+            struct ArrivalProjectile : CProjectile {
+                ArrivalState* state;
+                INT* clock;
+                ArrivalProjectile(ArrivalState* s, INT* c) : state(s), clock(c) {}
+                ~ArrivalProjectile() override { state->destroyed = ++*clock; }
+                void CallBack() override { state->callback = ++*clock; }
+                void DeliverEffects() override { state->delivered = ++*clock; }
+                void RemoveFromArea() override { state->removed = ++*clock; }
+                void RemoveSelf() override { ++state->virtualRemove; }
+            };
+            for (INT test = 0; test < 9; ++test) {
+                INT callbackKind = test / 3;
+                INT attachedKind = test % 3;
+                INT clock = 0;
+                ArrivalState mainState, callbackState, attachedState;
+                auto* missile = new ArrivalProjectile(&mainState, &clock);
+                auto* callback = callbackKind == 1 ? new ArrivalProjectile(&callbackState, &clock) : NULL;
+                auto* attached = attachedKind == 1 ? new ArrivalProjectile(&attachedState, &clock) : NULL;
+                BOOL mainRegistered = objects->Add(&missile->m_id, missile, INFINITE) == CGameObjectArray::SUCCESS;
+                BOOL callbackRegistered = callback != NULL && objects->Add(&callback->m_id, callback, INFINITE) == CGameObjectArray::SUCCESS;
+                BOOL attachedRegistered = attached != NULL && objects->Add(&attached->m_id, attached, INFINITE) == CGameObjectArray::SUCCESS;
+                BOOL ready = mainRegistered && (callback == NULL || callbackRegistered) && (attached == NULL || attachedRegistered);
+                BOOL passed = ready;
+                if (ready) {
+                    missile->m_callBackProjectile = callbackKind == 0 ? CGameObjectArray::INVALID_INDEX
+                        : callbackKind == 1 ? callback->m_id : 0x7FFFFFFF;
+                    missile->m_nTargetId = attachedKind == 0 ? CGameObjectArray::INVALID_INDEX
+                        : attachedKind == 1 ? attached->m_id : 0x7FFFFFFF;
+                    missile->OnArrival();
+                    BOOL blocked = callbackKind == 2;
+                    passed = blocked ? mainState.delivered == 0 && mainState.removed == 0 && mainState.destroyed == 0
+                        : mainState.delivered > 0 && mainState.removed > mainState.delivered && mainState.destroyed > mainState.removed;
+                    passed = passed && callbackState.callback == (callbackKind == 1 ? 1 : 0)
+                        && attachedState.virtualRemove == 0
+                        && (attachedKind != 1 || (blocked ? attachedState.destroyed == 0
+                            : attachedState.removed > 0 && attachedState.destroyed > attachedState.removed
+                                && mainState.delivered > attachedState.destroyed));
+                }
+                valid = valid && passed;
+                ++checks;
+                Emit("{\"step\":%d,\"op\":\"projectile-arrival\",\"case\":%d,\"callback\":%d,\"delivered\":%d,\"destroyed\":%d,\"passed\":%s}",
+                    nStep, test, callbackState.callback, mainState.delivered, mainState.destroyed, passed ? "true" : "false");
+                if (!mainState.destroyed) { if (mainRegistered) missile->CProjectile::RemoveSelf(); else delete missile; }
+                if (callback != NULL) { if (callbackRegistered) callback->CProjectile::RemoveSelf(); else delete callback; }
+                if (attached != NULL && !attachedState.destroyed) { if (attachedRegistered) attached->CProjectile::RemoveSelf(); else delete attached; }
+            }
+        }
         source->m_userCommandPause = savedActionUserPause;
         source->m_marker.m_nRecticleForceRender = savedForceRender;
         source->m_noActionCount = savedNoActionCount;
