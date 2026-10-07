@@ -43,3 +43,5 @@ gates rerun. Static, runtime and differential evidence remain distinct.
 Next: extend runtime coverage of available/domain spell metadata and priest
 fallback, then resume combat action execution. No full differential
 equivalence claim is made for SetCurrAction.
+
+Further coverage: [spell-list integration](combat-action-spell-list-validation.md).

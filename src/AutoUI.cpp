@@ -3693,6 +3693,73 @@ void Tick(CWarp* pActiveEngine)
         }
         source->field_5616 = savedMovePhase;
         source->m_noActionCount = savedNoActionCount;
+        {
+            auto savedSpellLists = source->m_spells;
+            auto savedDomainList = source->m_domainSpells;
+            auto savedSpecialization = source->m_baseStats.m_specialization;
+            CSpell mageGuard(CResRef("SPWI112"));
+            CSpell priestGuard(CResRef("SPPR101"));
+            UINT mageId = 0, priestId = 0;
+            BOOL ready = game->m_spells.Find(CResRef("SPWI112"), mageId)
+                && game->m_spells.Find(CResRef("SPPR101"), priestId)
+                && mageGuard.pRes != NULL && priestGuard.pRes != NULL
+                && mageGuard.pRes->m_pDimmKeyTableEntry != NULL
+                && priestGuard.pRes->m_pDimmKeyTableEntry != NULL;
+            valid = valid && ready;
+            if (ready) {
+                auto* mageKey = mageGuard.pRes->m_pDimmKeyTableEntry;
+                auto* priestKey = priestGuard.pRes->m_pDimmKeyTableEntry;
+                INT mageRefs = mageKey->field_10, priestRefs = priestKey->field_10;
+                INT mageRequests = mageGuard.pRes->m_nLockCount;
+                INT priestRequests = priestGuard.pRes->m_nLockCount;
+                const SHORT actions[] = { CAIAction::SPELL, CAIAction::SPELLPOINT,
+                    CAIAction::FORCESPELL, CAIAction::FORCESPELLPOINT, CAIAction::REALLYFORCESPELL,
+                    CAIAction::SPELLNODEC, CAIAction::SPELLPOINTNODEC };
+                for (INT test = 0; test < 28; ++test) {
+                    INT kind = test % 4;
+                    for (UINT c = 0; c < CSPELLLIST_NUM_CLASSES; ++c) source->m_spells.Get(c)->Clear();
+                    source->m_domainSpells.Clear();
+                    source->m_baseStats.m_specialization = game->GetRuleTables().GetSpecializationMask(CAIOBJECTTYPE_C_CLERIC, 1);
+                    if (kind == 1 || kind == 2) {
+                        BYTE caster = kind == 1 ? CAIOBJECTTYPE_C_WIZARD : CAIOBJECTTYPE_C_CLERIC;
+                        source->m_spells.Get(game->GetSpellcasterIndex(caster))->Add(kind == 1 ? mageId : priestId, 0, 1, 1, 0);
+                    } else if (kind == 3) {
+                        source->m_domainSpells.Add(priestId, 0, 1, 1, 0);
+                    }
+                    CAIAction incoming;
+                    incoming.m_actionID = actions[test / 4];
+                    incoming.m_string1 = kind == 1 ? "SPWI112" : "SPPR101";
+                    // Domain selection bypasses ordinary lists when specialization is nonzero.
+                    incoming.m_specificID2 = kind == 3 ? 0x103 : 0;
+                    incoming.m_specificID3 = 0;
+                    source->SetCurrAction(incoming);
+                    LONG expectedClass = kind == 1 ? CAIOBJECTTYPE_C_WIZARD : kind == 3 ? 0x103 : CAIOBJECTTYPE_C_CLERIC;
+                    UINT index = 0;
+                    BOOL countPreserved = TRUE;
+                    if (kind == 1 || kind == 2) {
+                        auto* list = source->m_spells.Get(game->GetSpellcasterIndex(static_cast<BYTE>(expectedClass)))->GetSpellsAtLevel(0);
+                        countPreserved = list->Find(kind == 1 ? mageId : priestId, index) && list->Get(index)->m_nCurrent == 1;
+                    } else if (kind == 3) {
+                        auto* list = source->m_domainSpells.GetSpellsAtLevel(0);
+                        countPreserved = list->Find(priestId, index) && list->Get(index)->m_nCurrent == 1;
+                    }
+                    BOOL passed = source->m_curAction.m_specificID2 == expectedClass
+                        && source->m_curAction.m_specificID3 == 1 && source->m_curSpell == NULL
+                        && countPreserved && mageKey->field_10 == mageRefs && priestKey->field_10 == priestRefs
+                        && mageGuard.pRes->m_nLockCount == mageRequests && priestGuard.pRes->m_nLockCount == priestRequests;
+                    valid = valid && passed;
+                    ++checks;
+                    Emit("{\"step\":%d,\"op\":\"action-spell-lists\",\"case\":%d,\"class\":%ld,\"level\":%ld,\"passed\":%s}",
+                        nStep, test, source->m_curAction.m_specificID2, source->m_curAction.m_specificID3, passed ? "true" : "false");
+                    while (messages.GetCount() > before) delete messages.RemoveTail();
+                }
+            }
+            source->m_spells = savedSpellLists;
+            source->m_domainSpells = savedDomainList;
+            source->m_baseStats.m_specialization = savedSpecialization;
+        }
+        source->field_5616 = savedMovePhase;
+        source->m_noActionCount = savedNoActionCount;
         source->m_userCommandPause = savedActionUserPause;
         source->m_marker.m_nRecticleForceRender = savedForceRender;
         source->m_noActionCount = savedNoActionCount;
