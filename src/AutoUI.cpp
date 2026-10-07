@@ -3760,6 +3760,56 @@ void Tick(CWarp* pActiveEngine)
         }
         source->field_5616 = savedMovePhase;
         source->m_noActionCount = savedNoActionCount;
+        {
+            auto* area = source->m_pArea;
+            auto loaded = area->m_bAreaLoaded;
+            auto saveAllowed = area->field_B16;
+            auto loading = game->m_bInLoadGame;
+            auto selected = source->m_equipment.m_selectedWeapon;
+            auto ability = source->m_equipment.m_selectedWeaponAbility;
+            auto* slot = source->m_equipment.m_items[0];
+            auto* fist = source->m_equipment.m_items[CGameSpriteEquipment::SLOT_FIST];
+            CItem empty;
+            BOOL ready = fist != NULL;
+            if (ready) {
+                fist->Demand();
+                ready = fist->GetAbility(0) != NULL;
+                fist->Release();
+            }
+            valid = valid && ready;
+            if (ready) {
+                const BYTE sequences[] = { CGameSprite::SEQ_ATTACK, CGameSprite::SEQ_SHOOT,
+                    CGameSprite::SEQ_CAST, 255 };
+                game->m_bInLoadGame = FALSE;
+                source->m_equipment.m_selectedWeapon = 0;
+                for (INT test = 0; test < 64; ++test) {
+                    INT areaKind = test / 16;
+                    INT weaponKind = test / 4 % 4;
+                    BYTE sequence = sequences[test % 4];
+                    BYTE initial = sequence;
+                    source->m_pArea = areaKind == 0 ? NULL : area;
+                    area->m_bAreaLoaded = areaKind >= 2;
+                    area->field_B16 = areaKind == 3;
+                    source->m_equipment.m_items[0] = weaponKind == 0 ? NULL : weaponKind == 1 ? &empty : fist;
+                    source->m_equipment.m_selectedWeaponAbility = weaponKind == 3 ? 0xFFFF : 0;
+                    source->CheckSequence(sequence);
+                    BYTE expected = test % 4 >= 2 || weaponKind == 2 ? initial
+                        : areaKind == 3 ? CGameSprite::SEQ_READY : CGameSprite::SEQ_HEAD_TURN;
+                    BOOL passed = sequence == expected;
+                    valid = valid && passed;
+                    ++checks;
+                    Emit("{\"step\":%d,\"op\":\"check-attack-sequence\",\"case\":%d,\"sequence\":%d,\"passed\":%s}",
+                        nStep, test, sequence, passed ? "true" : "false");
+                }
+            }
+            source->m_pArea = area;
+            area->m_bAreaLoaded = loaded;
+            area->field_B16 = saveAllowed;
+            game->m_bInLoadGame = loading;
+            source->m_equipment.m_selectedWeapon = selected;
+            source->m_equipment.m_selectedWeaponAbility = ability;
+            source->m_equipment.m_items[0] = slot;
+        }
         source->m_userCommandPause = savedActionUserPause;
         source->m_marker.m_nRecticleForceRender = savedForceRender;
         source->m_noActionCount = savedNoActionCount;

@@ -12127,7 +12127,19 @@ BOOL CGameSprite::CanAct()
 // 0x720310
 void CGameSprite::CheckSequence(BYTE& sequence)
 {
-    // TODO: Incomplete.
+    if (sequence != SEQ_SHOOT && sequence != SEQ_ATTACK) {
+        return;
+    }
+    CItem* item = m_equipment.m_items[static_cast<BYTE>(m_equipment.m_selectedWeapon)];
+    if (item != NULL) {
+        item->Demand();
+        if (item->GetAbility(m_equipment.m_selectedWeaponAbility) == NULL) {
+            sequence = static_cast<BYTE>(GetIdleSequence());
+        }
+        item->Release();
+    } else {
+        sequence = static_cast<BYTE>(GetIdleSequence());
+    }
 }
 
 // 0x7204C0
