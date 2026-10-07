@@ -149,7 +149,7 @@ def resolve_source(addr: int):
     out = run(["python3", str(SRC_FIND), hex(addr)])
     m = re.search(r"(\S+\.cpp):(\d+)\s+0x[0-9a-fA-F]+\s+\[(\d+)-(\d+)\]", out)
     cls = None
-    cm = re.search(r"\b(\w+)::\w+", out)
+    cm = re.search(r"\b(\w+)::~?\w+", out)
     if cm:
         cls = cm.group(1)
     if not m:

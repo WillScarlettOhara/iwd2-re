@@ -37,3 +37,6 @@ bare hexadecimal header comments. Full static and differential equivalence
 remain unproven.
 
 Next target: SetCurrAction current spell/resource cleanup from 0x733F00.
+
+That cleanup is subsequently recovered in
+[combat-action-resource-cleanup-recovery.md](combat-action-resource-cleanup-recovery.md).

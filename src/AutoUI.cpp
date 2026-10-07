@@ -116,6 +116,8 @@
 #include "CMessage.h"
 #include "CVariableHash.h"
 #include "CProjectile.h"
+#include "CSpell.h"
+#include "CDimmKeyTable.h"
 #include "CInfGame.h"
 #include "CInfinity.h"
 #include "CScreenWorld.h"
@@ -2927,6 +2929,11 @@ void Tick(CWarp* pActiveEngine)
         auto savedTempAbility = source->m_nTempSelectedWeaponAbility;
         auto savedTrackedAction = source->m_currentActionId;
         auto savedActionTarget = source->m_targetId;
+        auto* savedCurrentSpell = source->m_curSpell;
+        auto* savedCurrentItem = source->m_curItem;
+        auto* savedCurrentProjectile = source->m_curProjectile;
+        auto savedCastPhase = source->field_710C;
+        auto savedActionPhase = source->field_5618;
         auto savedStop = game->m_nTimeStop;
         auto savedCaster = game->m_nTimeStopCaster;
         auto savedActive = game->GetWorldTimer()->m_active;
@@ -2949,6 +2956,9 @@ void Tick(CWarp* pActiveEngine)
         source->m_nModalState = 0;
         source->m_currentActionId = 0;
         source->m_targetId = CGameObjectArray::INVALID_INDEX;
+        source->m_curSpell = NULL;
+        source->m_curItem = NULL;
+        source->m_curProjectile = NULL;
         game->GetWorldTimer()->m_active = TRUE;
         game->GetGameSave()->m_cutScene = FALSE;
         CPoint marker(savedStart.x + 3, savedStart.y + 5);
@@ -3516,6 +3526,61 @@ void Tick(CWarp* pActiveEngine)
         }
         if (markerRc == CGameObjectArray::SUCCESS) objects->ReleaseDeny(markerTargetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         container->RemoveFromArea();
+        {
+            struct LifetimeProjectile : CProjectile {
+                BOOL* destroyed;
+                explicit LifetimeProjectile(BOOL* flag) : destroyed(flag) {}
+                ~LifetimeProjectile() override { *destroyed = TRUE; }
+            };
+            CSpell guard(CResRef("SPWI112"));
+            auto* resource = guard.pRes;
+            BOOL resourceValid = resource != NULL && resource->m_pDimmKeyTableEntry != NULL;
+            valid = valid && resourceValid;
+            if (resourceValid) {
+                auto* key = resource->m_pDimmKeyTableEntry;
+                INT refs = key->field_10;
+                INT requests = resource->m_nLockCount;
+                source->m_nModalState = 0;
+                source->m_currentActionId = 0;
+                for (INT cleanupCase = 0; cleanupCase < 8; ++cleanupCase) {
+                    INT kind = cleanupCase % 4;
+                    BOOL idle = cleanupCase < 4;
+                    source->m_curAction = CAIAction::NULL_ACTION;
+                    source->m_curSpell = kind == 0 ? NULL : new CSpell();
+                    if (kind >= 2) source->m_curSpell->SetResRef(CResRef("SPWI112"), kind == 3, TRUE);
+                    BOOL destroyed = FALSE;
+                    auto* projectile = kind == 0 ? NULL : new LifetimeProjectile(&destroyed);
+                    source->m_curProjectile = projectile;
+                    auto* item = new CItem();
+                    source->m_curItem = item;
+                    source->field_710C = 7;
+                    source->field_5618 = 123;
+                    CAIAction incoming;
+                    incoming.m_actionID = idle ? CAIAction::NO_ACTION : CAIAction::WAIT;
+                    source->SetCurrAction(incoming);
+                    BOOL passed = source->m_curSpell == NULL && source->m_curItem == NULL
+                        && item->cResRef == ""
+                        && source->m_curProjectile == (idle ? projectile : NULL)
+                        && destroyed == (!idle && projectile != NULL)
+                        && source->field_710C == (idle ? 7 : 0)
+                        && source->field_5618 == (idle ? 123 : 0)
+                        && key->field_10 == refs && resource->m_nLockCount == requests;
+                    valid = valid && passed;
+                    ++checks;
+                    Emit("{\"step\":%d,\"op\":\"action-resource-cleanup\",\"case\":%d,\"idle\":%s,\"destroyed\":%s,\"passed\":%s}",
+                        nStep, cleanupCase, idle ? "true" : "false", destroyed ? "true" : "false", passed ? "true" : "false");
+                    if (idle) delete projectile;
+                    source->m_curProjectile = NULL;
+                    delete item;
+                    while (messages.GetCount() > before) delete messages.RemoveTail();
+                }
+            }
+        }
+        source->m_curSpell = savedCurrentSpell;
+        source->m_curItem = savedCurrentItem;
+        source->m_curProjectile = savedCurrentProjectile;
+        source->field_710C = savedCastPhase;
+        source->field_5618 = savedActionPhase;
         source->m_targetId = savedActionTarget;
         source->m_currentActionId = savedTrackedAction;
         source->field_580 = savedTrapFlag;

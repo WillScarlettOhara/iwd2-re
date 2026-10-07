@@ -18080,8 +18080,7 @@ void CGameSprite::ClearAI(BOOLEAN bSetSequence)
 // override, fell through to the base (which never touches m_curDest), so blocked
 // members kept m_curDest == dest and stopped re-pathing.
 //
-// DEFERRED: the binary also releases the portrait resource request, emits encumbrance
-// feedback, randomizes the move-throttle phase (field_5616 = UtilRandInt) and
+// DEFERRED: the binary also randomizes the move-throttle phase (field_5616 = UtilRandInt) and
 // preloads the spell-action ResRef. Those are orthogonal to the movement
 // re-search and depend on still-unrecovered spell/resource machinery; the
 // recovered transition blocks below include action assignment and conditional decode.
@@ -18209,6 +18208,22 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
         m_targetId = CGameObjectArray::INVALID_INDEX;
     }
 
+    // Resource cleanup at 0x733F00..0x733FA7. The item is borrowed.
+    delete m_curSpell;
+    m_curSpell = NULL;
+    m_curItem = NULL;
+    if (nActionID == CAIAction::NO_ACTION) {
+        return;
+    }
+    field_710C = 0;
+    delete m_curProjectile;
+    m_curProjectile = NULL;
+    field_5618 = 0;
+
+    if (pGame->GetRuleTables().m_lNoDecodeList.Find(nActionID) == NULL) {
+        m_curAction.Decode(this);
+    }
+
     if (nActionID == CAIAction::MOVETOPOINT
         || nActionID == CAIAction::MOVETOOBJECT
         || nActionID == CAIAction::FOLLOW
@@ -18222,10 +18237,6 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
         }
     }
 
-    if (nActionID != CAIAction::NO_ACTION
-        && pGame->GetRuleTables().m_lNoDecodeList.Find(nActionID) == NULL) {
-        m_curAction.Decode(this);
-    }
 }
 
 // 0x7238C0
