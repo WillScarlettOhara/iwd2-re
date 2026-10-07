@@ -3912,6 +3912,42 @@ void Tick(CWarp* pActiveEngine)
             game->m_nTimeStop = stop;
             game->m_nTimeStopCaster = caster;
         }
+        {
+            struct LaunchProjectile : CProjectileTravelling {
+                LaunchProjectile(BOOL sound, BOOL loop) : CProjectileTravelling(CResRef("ARARROW")) {
+                    m_fireSoundRef = CResRef(sound ? "TRA_02" : "");
+                    m_loopFireSound = loop;
+                    m_bHasHeight = FALSE;
+                    m_bSparkleTrail = FALSE;
+                }
+                BOOL SoundMatches(BOOL sound, BOOL loop, CGameArea* area) {
+                    return m_sound.GetLooping() == (sound && loop)
+                        && !m_sound.m_bFireForget
+                        && (!sound || (m_sound.m_nChannel == 15
+                            && m_sound.m_nArea == reinterpret_cast<DWORD>(area)
+                            && m_sound.m_nXCoordinate == m_pos.x
+                            && m_sound.m_nYCoordinate == m_pos.y));
+                }
+            };
+            for (INT test = 0; test < 4; ++test) {
+                BOOL sound = (test & 1) != 0;
+                BOOL loop = (test & 2) != 0;
+                LaunchProjectile* missile = new LaunchProjectile(sound, loop);
+                missile->Fire(source->GetArea(), id, CGameObjectArray::INVALID_INDEX,
+                    source->GetPos(), 0, 0);
+                CGameObject* registered = NULL;
+                BOOL found = objects->GetShare(missile->m_id, CGameObjectArray::THREAD_ASYNCH,
+                    &registered, INFINITE) == CGameObjectArray::SUCCESS;
+                BOOL passed = found && registered == missile && missile->GetArea() == source->GetArea()
+                    && missile->m_posZ == 0 && missile->SoundMatches(sound, loop, source->GetArea());
+                if (found) objects->ReleaseShare(missile->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                valid = valid && passed;
+                ++checks;
+                Emit("{\"step\":%d,\"op\":\"projectile-launch\",\"case\":%d,\"passed\":%s}",
+                    nStep, test, passed ? "true" : "false");
+                missile->CProjectile::RemoveSelf();
+            }
+        }
         source->m_userCommandPause = savedActionUserPause;
         source->m_marker.m_nRecticleForceRender = savedForceRender;
         source->m_noActionCount = savedNoActionCount;

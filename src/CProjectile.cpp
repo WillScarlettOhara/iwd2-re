@@ -3778,17 +3778,10 @@ void CProjectileTravelling::AIUpdate()
     m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
 }
 
-// 0x52C050 (vtable slot 27 -- Fire; the launch)
-//
-// Ghidra recovers no function at the vtable target; transcribed from capstone
-// disassembly (0x85E bytes) with the field semantics Frida-confirmed. Records
-// the source/target/area, resolves the launch origin and the target point, and
-// computes the flight distance and lifetime.
-//
-// The launch-height (posZ), near-target snap, and attached-object create are
-// now recovered (0x52C26E–0x52C360, 0x52C3C9–0x52C56B).  The attached-object
-// factory (FUN_00554d20) remains a documented stub — no recovered projectile
-// leaf sets field_17E to a non-empty value.
+// Launch recovery remains partial: target-height interpolation and the trailing
+// object factory at 0x554D20 still need recovery. No recovered leaf currently
+// supplies a nonempty trailing resource in field_17E.
+// 0x52C050
 void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
                                  CPoint targetPos, LONG nHeight, SHORT nType)
 {
@@ -3915,17 +3908,16 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
     // Register in the global object array (assigns m_id), then add to the area
     // at the cast height — the original gates on m_bHasHeight and reads the
     // source creature's animation cast height (GetCastHeight vtable slot 0xC4).
-    g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE);
-    AddToArea(pArea, ptSource, nLaunchHeight, 0);
+    if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE)
+        != CGameObjectArray::SUCCESS) {
+        delete this;
+        return;
+    }
+    CGameObject::AddToArea(pArea, ptSource, nLaunchHeight, 0);
 
-    // Launch sound: the original inlines CProjectile::PlaySound's body here
-    // (0x52C6BA), immediately after the area insertion -- it plays m_fireSoundRef
-    // on the projectile's CSound at the launch position (m_pos, just set by
-    // AddToArea), channel 15. A Magic Missile sub-missile carries "TRA_02" (the
-    // travel whoosh); leaves with an empty fire-sound stay silent. The original
-    // reads a per-projectile fire-sound loop flag at +0x15A (FALSE for the
-    // recovered leaves), so the cue is one-shot here.
-    PlaySound(m_fireSoundRef, FALSE, FALSE);
+    // Launch block (0x52C6BA-0x52C805): stop the previous cue, then use the projectile's
+    // loop flag for a nonempty launch sound (channel 15, positioned).
+    PlaySound(m_fireSoundRef, m_loopFireSound, FALSE);
 
     // Subpixel launch position (1/1024 fixed point), seeded from the launch
     // origin. Frida-confirmed exact: X scaled << 10, Y also 4/3 y-scaled (the
