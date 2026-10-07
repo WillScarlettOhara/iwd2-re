@@ -36,3 +36,5 @@ subsequent SLEEP/AWAKE correction consistently in static and runtime checks.
 
 Next target: command-pause marker at 0x734037..0x734056, followed by the
 spell-action resource setup. Full SetCurrAction equivalence remains unproven.
+
+Subsequently recovered: [command-pause marker](combat-action-pause-marker-recovery.md).

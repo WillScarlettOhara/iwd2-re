@@ -18080,7 +18080,7 @@ void CGameSprite::ClearAI(BOOLEAN bSetSequence)
 // override, fell through to the base (which never touches m_curDest), so blocked
 // members kept m_curDest == dest and stopped re-pathing.
 //
-// DEFERRED: spell-action ResRef preloading and the command-pause marker.
+// DEFERRED: spell-action ResRef preloading.
 // 0x7338E0
 void CGameSprite::SetCurrAction(const CAIAction& action)
 {
@@ -18227,6 +18227,11 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
     if (m_nSequence != SEQ_DIE && m_nSequence != SEQ_SLEEP
         && m_nSequence != SEQ_TWITCH && m_nSequence != SEQ_WALK) {
         SetIdleSequence();
+    }
+
+    // Command-pause marker at 0x734037..0x734056, on this sprite.
+    if (m_userCommandPause > CTimerWorld::TIMESCALE_MSEC_PER_SEC * 5 - 2) {
+        m_marker.m_nRecticleForceRender = CTimerWorld::TIMESCALE_MSEC_PER_SEC;
     }
 
     if (nActionID == CAIAction::MOVETOPOINT

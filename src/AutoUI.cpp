@@ -2937,6 +2937,8 @@ void Tick(CWarp* pActiveEngine)
         auto savedMovePhase = source->field_5616;
         auto savedNoActionCount = source->m_noActionCount;
         auto savedActionLuck = source->m_derivedStats.m_nLuck;
+        auto savedActionUserPause = source->m_userCommandPause;
+        auto savedForceRender = source->m_marker.m_nRecticleForceRender;
         auto savedStop = game->m_nTimeStop;
         auto savedCaster = game->m_nTimeStopCaster;
         auto savedActive = game->GetWorldTimer()->m_active;
@@ -3610,6 +3612,36 @@ void Tick(CWarp* pActiveEngine)
             }
         }
         source->field_5616 = savedMovePhase;
+        {
+            const SHORT pauses[] = { -32768, -1, 0, 72, 73, 74, 75, 32767 };
+            auto markerType = source->m_marker.m_type;
+            auto markerCount = source->m_marker.m_nRecticleCounter;
+            auto targetForce = source->m_marker.m_nRecticleForceRenderTarget;
+            auto destForce = source->m_destMarker.m_nRecticleForceRender;
+            for (INT test = 0; test < 16; ++test) {
+                BOOL idle = test >= 8;
+                source->m_userCommandPause = pauses[test % 8];
+                source->m_marker.m_nRecticleForceRender = 99;
+                CAIAction incoming;
+                incoming.m_actionID = idle ? CAIAction::NO_ACTION : CAIAction::WAIT;
+                source->SetCurrAction(incoming);
+                BOOL passed = source->m_marker.m_nRecticleForceRender
+                        == (!idle && pauses[test % 8] > 73 ? 15 : 99)
+                    && source->m_userCommandPause == pauses[test % 8]
+                    && source->m_marker.m_type == markerType
+                    && source->m_marker.m_nRecticleCounter == markerCount
+                    && source->m_marker.m_nRecticleForceRenderTarget == targetForce
+                    && source->m_destMarker.m_nRecticleForceRender == destForce;
+                valid = valid && passed;
+                ++checks;
+                Emit("{\"step\":%d,\"op\":\"action-pause-marker\",\"case\":%d,\"force\":%d,\"passed\":%s}",
+                    nStep, test, source->m_marker.m_nRecticleForceRender, passed ? "true" : "false");
+                while (messages.GetCount() > before) delete messages.RemoveTail();
+            }
+        }
+        source->field_5616 = savedMovePhase;
+        source->m_userCommandPause = savedActionUserPause;
+        source->m_marker.m_nRecticleForceRender = savedForceRender;
         source->m_noActionCount = savedNoActionCount;
         source->m_derivedStats.m_nLuck = savedActionLuck;
         source->m_curSpell = savedCurrentSpell;
