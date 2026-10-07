@@ -2934,6 +2934,9 @@ void Tick(CWarp* pActiveEngine)
         auto* savedCurrentProjectile = source->m_curProjectile;
         auto savedCastPhase = source->field_710C;
         auto savedActionPhase = source->field_5618;
+        auto savedMovePhase = source->field_5616;
+        auto savedNoActionCount = source->m_noActionCount;
+        auto savedActionLuck = source->m_derivedStats.m_nLuck;
         auto savedStop = game->m_nTimeStop;
         auto savedCaster = game->m_nTimeStopCaster;
         auto savedActive = game->GetWorldTimer()->m_active;
@@ -3576,6 +3579,39 @@ void Tick(CWarp* pActiveEngine)
                 }
             }
         }
+        {
+            const SHORT sequences[] = { CGameSprite::SEQ_DIE, CGameSprite::SEQ_SLEEP,
+                CGameSprite::SEQ_TWITCH, CGameSprite::SEQ_WALK, CGameSprite::SEQ_ATTACK,
+                CGameSprite::SEQ_CAST, CGameSprite::SEQ_READY, CGameSprite::SEQ_HEAD_TURN,
+                CGameSprite::SEQ_AWAKE };
+            for (INT test = 0; test < 36; ++test) {
+                BOOL idle = test >= 27;
+                SHORT sequence = sequences[test % 9];
+                SHORT luck = test < 9 ? 8 : test < 18 ? -8 : 0;
+                source->m_derivedStats.m_nLuck = luck;
+                source->m_nSequence = sequence;
+                source->m_noActionCount = 123;
+                source->field_5616 = 99;
+                CAIAction incoming;
+                incoming.m_actionID = idle ? CAIAction::NO_ACTION : CAIAction::WAIT;
+                source->SetCurrAction(incoming);
+                BOOL preserve = idle || test % 9 < 4;
+                SHORT expected = preserve ? sequence : source->GetIdleSequence();
+                SHORT phase = source->field_5616;
+                BOOL passed = source->m_nSequence == expected
+                    && source->m_noActionCount == (idle ? 123 : 0)
+                    && (idle ? phase == 0 : luck == 8 ? phase == 0
+                        : luck == -8 ? phase == 7 : phase >= 0 && phase < 8);
+                valid = valid && passed;
+                ++checks;
+                Emit("{\"step\":%d,\"op\":\"action-idle-phase\",\"case\":%d,\"sequence\":%d,\"phase\":%d,\"passed\":%s}",
+                    nStep, test, source->m_nSequence, phase, passed ? "true" : "false");
+                while (messages.GetCount() > before) delete messages.RemoveTail();
+            }
+        }
+        source->field_5616 = savedMovePhase;
+        source->m_noActionCount = savedNoActionCount;
+        source->m_derivedStats.m_nLuck = savedActionLuck;
         source->m_curSpell = savedCurrentSpell;
         source->m_curItem = savedCurrentItem;
         source->m_curProjectile = savedCurrentProjectile;

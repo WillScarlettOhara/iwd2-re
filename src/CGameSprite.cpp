@@ -18080,10 +18080,7 @@ void CGameSprite::ClearAI(BOOLEAN bSetSequence)
 // override, fell through to the base (which never touches m_curDest), so blocked
 // members kept m_curDest == dest and stopped re-pathing.
 //
-// DEFERRED: the binary also randomizes the move-throttle phase (field_5616 = UtilRandInt) and
-// preloads the spell-action ResRef. Those are orthogonal to the movement
-// re-search and depend on still-unrecovered spell/resource machinery; the
-// recovered transition blocks below include action assignment and conditional decode.
+// DEFERRED: spell-action ResRef preloading and the command-pause marker.
 // 0x7338E0
 void CGameSprite::SetCurrAction(const CAIAction& action)
 {
@@ -18222,6 +18219,14 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
 
     if (pGame->GetRuleTables().m_lNoDecodeList.Find(nActionID) == NULL) {
         m_curAction.Decode(this);
+    }
+
+    // Idle phase at 0x733FCE..0x734037; range is the SHORT at 0x85BBA4.
+    field_5616 = static_cast<SHORT>(CUtil::UtilRandInt(8, -m_derivedStats.m_nLuck));
+    m_noActionCount = 0;
+    if (m_nSequence != SEQ_DIE && m_nSequence != SEQ_SLEEP
+        && m_nSequence != SEQ_TWITCH && m_nSequence != SEQ_WALK) {
+        SetIdleSequence();
     }
 
     if (nActionID == CAIAction::MOVETOPOINT

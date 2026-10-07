@@ -46,3 +46,5 @@ assertions establish the tested cleanup cases, not complete differential
 equivalence of SetCurrAction or visual projectile behavior.
 
 Next target: SetCurrAction post-decode random phase and idle-sequence setup.
+
+Subsequently recovered: [idle phase](combat-action-idle-phase-recovery.md).
