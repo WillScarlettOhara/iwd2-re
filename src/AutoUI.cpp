@@ -2926,6 +2926,7 @@ void Tick(CWarp* pActiveEngine)
         auto savedTempWeapon = source->m_nTempSelectedWeapon;
         auto savedTempAbility = source->m_nTempSelectedWeaponAbility;
         auto savedTrackedAction = source->m_currentActionId;
+        auto savedActionTarget = source->m_targetId;
         auto savedStop = game->m_nTimeStop;
         auto savedCaster = game->m_nTimeStopCaster;
         auto savedActive = game->GetWorldTimer()->m_active;
@@ -2947,6 +2948,7 @@ void Tick(CWarp* pActiveEngine)
         source->m_bSelected = FALSE;
         source->m_nModalState = 0;
         source->m_currentActionId = 0;
+        source->m_targetId = CGameObjectArray::INVALID_INDEX;
         game->GetWorldTimer()->m_active = TRUE;
         game->GetGameSave()->m_cutScene = FALSE;
         CPoint marker(savedStart.x + 3, savedStart.y + 5);
@@ -3273,7 +3275,6 @@ void Tick(CWarp* pActiveEngine)
         containerPanel->SetActive(savedContainerActive);
         actionPanel->SetActive(savedActionActive);
         commandPanel->SetActive(savedCommandActive);
-        container->RemoveFromArea();
         auto& buttons = game->m_cButtonArray;
         INT savedBarState = buttons.m_nState;
         INT savedBarSelection = buttons.m_nSelectedButton;
@@ -3464,6 +3465,58 @@ void Tick(CWarp* pActiveEngine)
             notificationCase(777, incoming, FALSE, FALSE);
         }
         notificationCase(0, CAIAction::DIALOGUE, TRUE, TRUE);
+        LONG markerTargetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* markerRaw = NULL;
+        BYTE markerRc = objects->GetDeny(markerTargetId, CGameObjectArray::THREAD_ASYNCH, &markerRaw, INFINITE);
+        if (markerRc == CGameObjectArray::SUCCESS && markerRaw->GetObjectType() == CGameObject::TYPE_SPRITE) {
+            auto* target = static_cast<CGameSprite*>(markerRaw);
+            CMarker savedTargetMarker = target->m_marker;
+            CMarker savedSourceMarker = source->m_marker;
+            source->m_currentActionId = 0;
+            source->m_nModalState = 0;
+            source->m_derivedStats.m_spellStates.reset();
+            source->m_nUnselectableCounter = 0;
+            source->m_typeAI.m_nEnemyAlly = CAIObjectType::EA_PC;
+            source->m_moraleFailure = FALSE;
+            game->m_nTimeStop = 0;
+            for (INT markerCase = 0; markerCase < 9; ++markerCase) {
+                source->m_curAction = CAIAction::NULL_ACTION;
+                source->m_bSelected = markerCase != 3;
+                source->m_derivedStats.m_generalState = markerCase == 4 ? STATE_HELPLESS : 0;
+                source->m_targetId = markerCase == 5 ? CGameObjectArray::INVALID_INDEX
+                    : markerCase == 6 ? 0x7FFFFFFF : markerCase == 7 ? id
+                    : markerCase == 8 ? container->m_id : markerTargetId;
+                target->m_marker.m_type = CMarker::RECTICLE;
+                SHORT initialCount = markerCase == 1 ? 2 : markerCase == 2 ? 0 : 1;
+                target->m_marker.m_nRecticleCounter = initialCount;
+                source->m_marker.m_type = CMarker::RECTICLE;
+                source->m_marker.m_nRecticleCounter = markerCase == 7 ? 1 : 3;
+                CAIAction incoming;
+                incoming.m_actionID = markerCase == 0 ? CAIAction::NO_ACTION : CAIAction::WAIT;
+                BOOL orderable = source->Orderable(FALSE);
+                source->SetCurrAction(incoming);
+                SHORT expectedCount = markerCase == 0 ? 0 : markerCase == 1 ? 1 : initialCount;
+                BOOL passed = source->m_targetId == CGameObjectArray::INVALID_INDEX
+                    && source->m_curAction.GetActionID() == incoming.GetActionID()
+                    && orderable == (markerCase != 4)
+                    && target->m_marker.m_nRecticleCounter == expectedCount
+                    && target->m_marker.m_type == (markerCase == 0 ? CMarker::ELLIPSE : CMarker::RECTICLE)
+                    && source->m_marker.m_nRecticleCounter == (markerCase == 7 ? 0 : 3)
+                    && source->m_marker.m_type == (markerCase == 7 ? CMarker::ELLIPSE : CMarker::RECTICLE);
+                valid = valid && passed;
+                ++checks;
+                Emit("{\"step\":%d,\"op\":\"action-target-release\",\"case\":%d,\"count\":%d,\"passed\":%s}",
+                    nStep, markerCase, target->m_marker.m_nRecticleCounter, passed ? "true" : "false");
+                while (messages.GetCount() > before) delete messages.RemoveTail();
+            }
+            target->m_marker = savedTargetMarker;
+            source->m_marker = savedSourceMarker;
+        } else {
+            valid = FALSE;
+        }
+        if (markerRc == CGameObjectArray::SUCCESS) objects->ReleaseDeny(markerTargetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        container->RemoveFromArea();
+        source->m_targetId = savedActionTarget;
         source->m_currentActionId = savedTrackedAction;
         source->field_580 = savedTrapFlag;
         source->m_nModalState = savedModal;

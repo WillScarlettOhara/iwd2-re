@@ -18080,8 +18080,7 @@ void CGameSprite::ClearAI(BOOLEAN bSetSequence)
 // override, fell through to the base (which never touches m_curDest), so blocked
 // members kept m_curDest == dest and stopped re-pathing.
 //
-// DEFERRED: the binary also tears down the target marker + deny-list reservation
-// (m_targetId), releases the portrait resource request, emits encumbrance
+// DEFERRED: the binary also releases the portrait resource request, emits encumbrance
 // feedback, randomizes the move-throttle phase (field_5616 = UtilRandInt) and
 // preloads the spell-action ResRef. Those are orthogonal to the movement
 // re-search and depend on still-unrecovered spell/resource machinery; the
@@ -18188,6 +18187,26 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
             g_pBaldurChitin->GetMessageHandler()->AddMessage(
                 new CMessageSetCurrentActionId(bNotifyAction ? nActionID : 0, m_id, m_id), FALSE);
         }
+    }
+
+    // Target-marker release at 0x733E31..0x733F00, including idle transitions.
+    if (m_targetId != CGameObjectArray::INVALID_INDEX) {
+        if (m_bSelected && Orderable(FALSE)) {
+            CGameObject* pTarget;
+            BYTE rc;
+            do {
+                rc = pGame->GetObjectArray()->GetDeny(m_targetId,
+                    CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
+            } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+            if (rc == CGameObjectArray::SUCCESS) {
+                if (pTarget->GetObjectType() == CGameObject::TYPE_SPRITE) {
+                    static_cast<CGameSprite*>(pTarget)->m_marker.SetType(CMarker::ELLIPSE);
+                }
+                pGame->GetObjectArray()->ReleaseDeny(m_targetId,
+                    CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            }
+        }
+        m_targetId = CGameObjectArray::INVALID_INDEX;
     }
 
     if (nActionID == CAIAction::MOVETOPOINT

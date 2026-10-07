@@ -41,3 +41,6 @@ layout audit does not recognize bare hexadecimal header comments.
 Full static and original/recovered differential equivalence remain unproven.
 
 Next target: SetCurrAction target-marker release at 0x733E31..0x733F00.
+
+That release is subsequently recovered in
+[combat-action-target-release-recovery.md](combat-action-target-release-recovery.md).
