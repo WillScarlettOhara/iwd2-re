@@ -18080,7 +18080,7 @@ void CGameSprite::ClearAI(BOOLEAN bSetSequence)
 // override, fell through to the base (which never touches m_curDest), so blocked
 // members kept m_curDest == dest and stopped re-pathing.
 //
-// DEFERRED: spell-action ResRef preloading.
+// Spell-action metadata setup is recovered below; runtime coverage remains partial.
 // 0x7338E0
 void CGameSprite::SetCurrAction(const CAIAction& action)
 {
@@ -18247,6 +18247,52 @@ void CGameSprite::SetCurrAction(const CAIAction& action)
         }
     }
 
+    // Spell metadata at 0x7340BD..0x734522. Only ordinary spells need inference.
+    if (nActionID == CAIAction::SPELL || nActionID == CAIAction::SPELLPOINT
+        || nActionID == CAIAction::FORCESPELL || nActionID == CAIAction::FORCESPELLPOINT
+        || nActionID == CAIAction::REALLYFORCESPELL || nActionID == CAIAction::SPELLNODEC
+        || nActionID == CAIAction::SPELLPOINTNODEC) {
+        CString spellName = m_curAction.GetString1();
+        if (spellName == "") {
+            SpellIdToResRef(m_curAction.m_specificID, spellName);
+        }
+        CResRef resRef(spellName);
+        if (pGame->GetSpellType(resRef) == 1) {
+            BYTE nClass = static_cast<BYTE>(m_curAction.m_specificID2);
+            DWORD specialization = pGame->GetRuleTables().GetSpecializationMask(nClass,
+                static_cast<BYTE>(m_curAction.m_specificID2 >> 8));
+            BYTE level = static_cast<BYTE>(m_curAction.m_specificID3);
+            if (nClass == 0 || level == 0) {
+                m_curSpell = new CSpell(resRef);
+                if (m_curSpell != NULL) {
+                    if (!FindAvailableSpell(resRef, nClass, specialization, level)) {
+                        if (m_curSpell->Demand() == TRUE) {
+                            SHORT casterType = m_curSpell->GetCasterType();
+                            if (casterType == 1) nClass = CAIOBJECTTYPE_C_WIZARD;
+                            else if (casterType == 2) nClass = CAIOBJECTTYPE_C_CLERIC;
+                            else UTIL_ASSERT_MSG(FALSE, "Invalid spell type");
+                            specialization = 0;
+                            level = static_cast<BYTE>(m_curSpell->GetLevel());
+                            m_curSpell->Release();
+                        }
+                        CString error;
+                        error.Format(_T("Error setting action for %s (%s): could not find spell (%s) in any spell casting class."), (LPCTSTR)m_sName,
+                            (LPCTSTR)m_resRef.GetResRefStr(), (LPCTSTR)resRef.GetResRefStr());
+                        UTIL_ASSERT_MSG(nClass == CAIOBJECTTYPE_C_BARD || nClass == CAIOBJECTTYPE_C_CLERIC
+                            || nClass == CAIOBJECTTYPE_C_DRUID || nClass == CAIOBJECTTYPE_C_PALADIN
+                            || nClass == CAIOBJECTTYPE_C_RANGER || nClass == CAIOBJECTTYPE_C_SORCERER
+                            || nClass == CAIOBJECTTYPE_C_WIZARD, (LPCTSTR)error);
+                        UTIL_ASSERT_MSG(level < CSPELLLIST_MAX_LEVELS, "Error setting action: Invalid spell level");
+                    }
+                    m_curAction.m_specificID2 = nClass
+                        | (pGame->GetRuleTables().GetSpecializationIndex(nClass, specialization) << 8);
+                    m_curAction.m_specificID3 = level;
+                }
+                delete m_curSpell;
+                m_curSpell = NULL;
+            }
+        }
+    }
 }
 
 // 0x7238C0

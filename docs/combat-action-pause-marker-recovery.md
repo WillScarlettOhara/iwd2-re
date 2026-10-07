@@ -25,3 +25,5 @@ and hashed. Static, observed-runtime and differential evidence remain separate.
 
 Next target: spell-action resource setup beginning at 0x7340BD. This does
 not establish full SetCurrAction parity or a visual marker differential.
+
+Subsequently recovered: [spell metadata](combat-action-spell-metadata-recovery.md).

@@ -3640,6 +3640,59 @@ void Tick(CWarp* pActiveEngine)
             }
         }
         source->field_5616 = savedMovePhase;
+        {
+            CSpell guard(CResRef("SPWI112"));
+            auto* resource = guard.pRes;
+            BOOL ready = resource != NULL && resource->m_pDimmKeyTableEntry != NULL;
+            valid = valid && ready;
+            if (ready) {
+                auto* key = resource->m_pDimmKeyTableEntry;
+                INT refs = key->field_10;
+                INT requests = resource->m_nLockCount;
+                BYTE expectedClass = 0;
+                DWORD expectedSpec = 0;
+                BYTE expectedLevel = 0;
+                BOOL available = source->FindAvailableSpell(CResRef("SPWI112"), expectedClass, expectedSpec, expectedLevel);
+                if (!available && guard.Demand()) {
+                    expectedClass = guard.GetCasterType() == 1 ? CAIOBJECTTYPE_C_WIZARD : CAIOBJECTTYPE_C_CLERIC;
+                    expectedLevel = static_cast<BYTE>(guard.GetLevel());
+                    guard.Release();
+                }
+                LONG expectedPacked = expectedClass
+                    | (game->GetRuleTables().GetSpecializationIndex(expectedClass, expectedSpec) << 8);
+                const SHORT spells[] = { CAIAction::SPELL, CAIAction::SPELLPOINT,
+                    CAIAction::FORCESPELL, CAIAction::FORCESPELLPOINT, CAIAction::REALLYFORCESPELL,
+                    CAIAction::SPELLNODEC, CAIAction::SPELLPOINTNODEC };
+                for (INT test = 0; test < 29; ++test) {
+                    INT kind = test % 4;
+                    CAIAction incoming;
+                    incoming.m_actionID = test == 28 ? CAIAction::WAIT : spells[test / 4];
+                    incoming.m_specificID = 2112;
+                    incoming.m_specificID2 = kind == 2 ? 0x1234000B : 0;
+                    incoming.m_specificID3 = kind == 2 ? 0x12340001 : 0;
+                    incoming.m_string1 = kind == 1 ? "" : kind == 3 ? "ZRCNONE" : "SPWI112";
+                    LONG packed = kind == 2 ? incoming.m_specificID2 : kind == 3 || test == 28 ? 0 : expectedPacked;
+                    LONG level = kind == 2 ? incoming.m_specificID3 : kind == 3 || test == 28 ? 0 : expectedLevel;
+                    source->SetCurrAction(incoming);
+                    BOOL passed = source->m_curAction.m_actionID == incoming.m_actionID
+                        && source->m_curAction.m_specificID == 2112
+                        && source->m_curAction.m_specificID2 == packed
+                        && source->m_curAction.m_specificID3 == level
+                        && source->m_curAction.m_string1 == incoming.m_string1
+                        && incoming.m_specificID2 == (kind == 2 ? 0x1234000B : 0)
+                        && source->m_curSpell == NULL && key->field_10 == refs
+                        && resource->m_nLockCount == requests;
+                    valid = valid && passed;
+                    ++checks;
+                    Emit("{\"step\":%d,\"op\":\"action-spell-metadata\",\"case\":%d,\"available\":%s,\"class\":%ld,\"level\":%ld,\"passed\":%s}",
+                        nStep, test, available ? "true" : "false", source->m_curAction.m_specificID2,
+                        source->m_curAction.m_specificID3, passed ? "true" : "false");
+                    while (messages.GetCount() > before) delete messages.RemoveTail();
+                }
+            }
+        }
+        source->field_5616 = savedMovePhase;
+        source->m_noActionCount = savedNoActionCount;
         source->m_userCommandPause = savedActionUserPause;
         source->m_marker.m_nRecticleForceRender = savedForceRender;
         source->m_noActionCount = savedNoActionCount;
