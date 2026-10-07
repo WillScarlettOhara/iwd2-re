@@ -3654,8 +3654,6 @@ CProjectileTravelling::~CProjectileTravelling()
     delete m_pShadowCell;
 }
 
-// 0x52B900 (vtable slot 3 -- AIUpdate)
-//
 // Per-tick flight. Field semantics confirmed by a Frida trace of a Magic
 // Missile cast on the original IWD2.exe: target (+0xC8/+0xCC) stays constant,
 // the position (CGameObject m_pos) closes on it at ~velocity (+0x70) per tick,
@@ -3666,6 +3664,7 @@ CProjectileTravelling::~CProjectileTravelling()
 // +0x4B40/+0x4B44), the homing branch (live-target position + height interp
 // via CalculateFxRect / delta-Z linear step), and the sparkle-trail spawn
 // (factory 0x51AE40 — documented stub, dead for Magic Missile).
+// 0x52B900 (vtable slot 3 -- AIUpdate)
 void CProjectileTravelling::AIUpdate()
 {
     // Time Stop gate (0x52B90E–0x52B93B): during Time Stop, only the
@@ -3714,32 +3713,28 @@ void CProjectileTravelling::AIUpdate()
         // it is still in the same area, read its current position, then
         // interpolate the projectile height toward the target and aim.
         CGameObject* pTarget;
-        BYTE rc;
-        do {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
-                CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
-        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+        BYTE rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
         if (rc != CGameObjectArray::SUCCESS) {
             RemoveSelf();
             return;
         }
 
-        // Area check: if the target left the projectile's area, the
-        // projectile self-destructs (0x52BBE5–0x52BBF9).
+        // Save the target id before RemoveSelf can delete this (0x52BAC8).
         if (m_pArea != pTarget->GetArea()) {
+            LONG targetId = m_targetId;
             RemoveSelf();
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(targetId,
                 CGameObjectArray::THREAD_ASYNCH, INFINITE);
             return;
         }
 
         CPoint ptLive = pTarget->GetPos();
 
-        // Height interpolation (0x52BC11–0x52BCD4).  When m_hasDrift is
+        // Height interpolation. When m_hasDrift is
         // false (plain Magic Missile), linearly step the projectile height
         // toward the target using the stored delta-Z and distance metric.
-        // When true (drifting/homing projectiles), read the target's live
-        // animation height rect and step m_posZ one unit per tick.
+        // With drift, the binary queries height but restores the old m_posZ.
         if (m_hasDrift == 0) {
             SHORT stepDeltaZ = static_cast<SHORT>(
                 (static_cast<int>(m_nDeltaZ) * dist) / m_flightDistSq);
@@ -3751,17 +3746,20 @@ void CProjectileTravelling::AIUpdate()
             do {
                 rcDeny = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_targetId,
                     CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
-            } while (rcDeny == CGameObjectArray::SHARED || rcDeny == CGameObjectArray::DENIED);
+            } while (rcDeny == CGameObjectArray::SHARED);
             if (rcDeny == CGameObjectArray::SUCCESS) {
                 CRect rHeight;
                 CPoint ptRef;
                 pTargetSprite->GetAnimation()->CalculateFxRect(rHeight, ptRef, pTargetSprite->m_posZ);
-                LONG targetHeight = (rHeight.bottom - ptRef.y) / 2;
-                if (m_posZ != targetHeight) {
-                    m_posZ += (m_nDeltaZ < 0) ? 1 : -1;
-                }
                 g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
                     CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                LONG targetHeight = (rHeight.bottom - ptRef.y) >> 1;
+                if (m_posZ != targetHeight) {
+                    LONG oldHeight = m_posZ;
+                    m_posZ += (m_nDeltaZ < 0) ? 1 : -1;
+                    // The original restores EAX at 0x52BC2A after either step.
+                    m_posZ = oldHeight;
+                }
             }
         }
 

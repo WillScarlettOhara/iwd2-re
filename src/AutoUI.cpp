@@ -3859,6 +3859,59 @@ void Tick(CWarp* pActiveEngine)
                 if (attached != NULL && !attachedState.destroyed) { if (attachedRegistered) attached->CProjectile::RemoveSelf(); else delete attached; }
             }
         }
+        {
+            struct FlightProjectile : CProjectileTravelling {
+                INT arrived = 0, removed = 0, aimed = 0;
+                CPoint aim;
+                FlightProjectile() : CProjectileTravelling(CResRef("ARARROW")) {}
+                void OnArrival() override { ++arrived; }
+                void RemoveSelf() override { ++removed; }
+                void AimAtPoint(int x, int y) override { ++aimed; aim = CPoint(x, y); }
+                void Prepare(CGameArea* area, LONG target, INT test) {
+                    m_pArea = test == 5 ? NULL : area;
+                    m_id = 123;
+                    m_pos = CPoint(160, 120);
+                    m_posZ = 30;
+                    m_targetX = test == 8 ? 160 : 320;
+                    m_targetY = test == 8 ? 120 : 240;
+                    m_targetId = test == 4 ? 0x7FFFFFFF : test == 6 ? CGameObjectArray::INVALID_INDEX : target;
+                    m_velocity = 1;
+                    m_flightDistSq = test == 11 ? 0 : 102400;
+                    m_lifetime = test == 7 ? 0 : 5;
+                    m_hasDrift = test == 2 || test == 3;
+                    m_nDeltaZ = test % 2 ? -10 : 10;
+                    m_nDeltaZLast = 2;
+                    m_bSparkleTrail = FALSE;
+                }
+                SHORT Life() const { return m_lifetime; }
+            };
+            auto stop = game->m_nTimeStop;
+            auto caster = game->m_nTimeStopCaster;
+            for (INT test = 0; test < 12; ++test) {
+                FlightProjectile missile;
+                missile.Prepare(source->GetArea(), id, test);
+                game->m_nTimeStop = test == 9 || test == 10 ? 1 : 0;
+                game->m_nTimeStopCaster = test == 10 ? 123 : -1;
+                missile.AIUpdate();
+                BOOL arrived = test == 8 || test == 11;
+                BOOL removed = test == 4 || test == 5 || test == 7;
+                BOOL frozen = test == 9;
+                BOOL aimed = !arrived && !removed && !frozen;
+                LONG height = test == 0 || test == 6 || test == 10 ? 33 : test == 1 ? 23 : 30;
+                // Untargeted travel does not interpolate height.
+                if (test == 6) height = 30;
+                BOOL passed = missile.arrived == arrived && missile.removed == removed
+                    && missile.aimed == aimed && missile.m_posZ == height
+                    && missile.Life() == (frozen || arrived ? 5 : test == 7 ? -1 : 4)
+                    && (!aimed || missile.aim == (test == 6 ? CPoint(320, 240) : source->GetPos()));
+                valid = valid && passed;
+                ++checks;
+                Emit("{\"step\":%d,\"op\":\"projectile-flight\",\"case\":%d,\"height\":%ld,\"arrived\":%d,\"removed\":%d,\"passed\":%s}",
+                    nStep, test, missile.m_posZ, missile.arrived, missile.removed, passed ? "true" : "false");
+            }
+            game->m_nTimeStop = stop;
+            game->m_nTimeStopCaster = caster;
+        }
         source->m_userCommandPause = savedActionUserPause;
         source->m_marker.m_nRecticleForceRender = savedForceRender;
         source->m_noActionCount = savedNoActionCount;
