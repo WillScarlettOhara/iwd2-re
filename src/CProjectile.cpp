@@ -3778,9 +3778,9 @@ void CProjectileTravelling::AIUpdate()
     m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
 }
 
-// Launch recovery remains partial: target-height interpolation and the trailing
-// object factory at 0x554D20 still need recovery. No recovered leaf currently
-// supplies a nonempty trailing resource in field_17E.
+// Launch recovery remains partial: the trailing object factory at 0x554D20
+// still needs recovery. No recovered leaf currently supplies a nonempty
+// trailing resource in field_17E.
 // 0x52C050
 void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
                                  CPoint targetPos, LONG nHeight, SHORT nType)
@@ -3793,18 +3793,30 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
     m_pArea = pArea;
 
     CPoint ptTarget;
+    BOOL bTargetCreature = FALSE;
+    CRect rHeight(0, 0, 0x40, 0x40);
+    CPoint ptRef(0x20, 0x32);
     if (m_targetId != CGameObjectArray::INVALID_INDEX) {
-        // Homing: aim at the live target object's current position.
         CGameObject* pTargetObj;
-        BYTE rc;
-        do {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
-                CGameObjectArray::THREAD_ASYNCH, &pTargetObj, INFINITE);
-        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+        BYTE rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &pTargetObj, INFINITE);
         if (rc != CGameObjectArray::SUCCESS) {
             return;
         }
+        bTargetCreature = pTargetObj->GetObjectType() == CGameObject::TYPE_SPRITE;
         ptTarget = pTargetObj->GetPos();
+        if (bTargetCreature) {
+            do {
+                rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_targetId,
+                    CGameObjectArray::THREAD_ASYNCH, &pTargetObj, INFINITE);
+            } while (rc == CGameObjectArray::SHARED);
+            if (rc == CGameObjectArray::SUCCESS) {
+                CGameSprite* pTargetSprite = static_cast<CGameSprite*>(pTargetObj);
+                pTargetSprite->GetAnimation()->CalculateFxRect(rHeight, ptRef, pTargetSprite->m_posZ);
+                g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
+                    CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            }
+        }
         g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
             CGameObjectArray::THREAD_ASYNCH, INFINITE);
     } else {
@@ -3820,11 +3832,11 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
     BOOL bSourceCreature = FALSE;
     {
         CGameObject* pSourceObj;
-        BYTE rcSrc;
-        do {
-            rcSrc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_sourceId,
-                CGameObjectArray::THREAD_ASYNCH, &pSourceObj, INFINITE);
-        } while (rcSrc == CGameObjectArray::SHARED || rcSrc == CGameObjectArray::DENIED);
+        BYTE rcSrc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_sourceId,
+            CGameObjectArray::THREAD_ASYNCH, &pSourceObj, INFINITE);
+        if (rcSrc != CGameObjectArray::SUCCESS) {
+            return;
+        }
         if (rcSrc == CGameObjectArray::SUCCESS) {
             if (m_bHasHeight) {
                 if (pSourceObj->GetObjectType() == CGameObject::TYPE_SPRITE) {
@@ -3904,6 +3916,17 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
                 m_nTargetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         }
     }
+
+    // Launch height block (0x52C621-0x52C657): use the animation rect's
+    // half-height, with arithmetic shift, and seed both interpolation terms.
+    SHORT nDeltaZ = 0;
+    if (bTargetCreature) {
+        nDeltaZ = static_cast<SHORT>(nLaunchHeight - ((rHeight.bottom - rHeight.top) >> 1));
+    } else {
+        m_flightDistSq = 1;
+    }
+    m_nDeltaZ = nDeltaZ;
+    m_nDeltaZLast = nDeltaZ;
 
     // Register in the global object array (assigns m_id), then add to the area
     // at the cast height — the original gates on m_bHasHeight and reads the

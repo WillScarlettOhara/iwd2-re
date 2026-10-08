@@ -93,6 +93,8 @@
 
 #include "AutoUI.h"
 
+#include <cmath>
+
 #include "mfc.h"
 
 #include "BalDataTypes.h"
@@ -3947,6 +3949,62 @@ void Tick(CWarp* pActiveEngine)
                     nStep, test, passed ? "true" : "false");
                 missile->CProjectile::RemoveSelf();
             }
+        }
+        {
+            struct HeightProjectile : CProjectileTravelling {
+                HeightProjectile(BOOL height) : CProjectileTravelling(CResRef("ARARROW")) {
+                    m_fireSoundRef = CResRef("");
+                    m_bHasHeight = height;
+                    m_bSparkleTrail = FALSE;
+                    m_distLifetime = 1;
+                    m_velocity = 20;
+                    m_nDeltaZ = 37;
+                    m_nDeltaZLast = -44;
+                    m_flightDistSq = 999;
+                }
+                BOOL Matches(SHORT delta, INT distance, SHORT lifetime, CPoint target) const {
+                    return m_nDeltaZ == delta && m_nDeltaZLast == delta
+                        && m_flightDistSq == distance && m_lifetime == lifetime
+                        && m_targetX == target.x && m_targetY == target.y;
+                }
+            };
+            LONG savedHeight = source->m_posZ;
+            for (INT test = 0; test < 10; ++test) {
+                BOOL height = (test & 1) != 0;
+                BOOL creature = test < 6;
+                BOOL missing = test >= 8;
+                source->m_posZ = test < 2 ? -13 : test < 4 ? 0 : 19;
+                CRect bounds;
+                CPoint reference;
+                source->GetAnimation()->CalculateFxRect(bounds, reference, source->m_posZ);
+                LONG launchHeight = height ? source->GetAnimation()->GetCastHeight() : 0;
+                CPoint target = source->GetPos();
+                if (test == 7) target += CPoint(160, 120);
+                HeightProjectile* missile = new HeightProjectile(height);
+                missile->Fire(source->GetArea(), test == 9 ? 0x7FFFFFFF : id,
+                    test == 8 ? 0x7FFFFFFF : creature ? id : CGameObjectArray::INVALID_INDEX,
+                    target, 123, 7);
+                BOOL registered = missile->m_id != CGameObjectArray::INVALID_INDEX;
+                BOOL passed;
+                if (missing) {
+                    passed = !registered && missile->GetArea() == NULL && missile->m_pos == CPoint(-1, -1);
+                } else {
+                    INT dx = target.x - missile->m_pos.x;
+                    INT dy = target.y - missile->m_pos.y;
+                    INT distance = dx * dx + dy * dy * 16 / 9;
+                    SHORT lifetime = static_cast<SHORT>(static_cast<INT>(std::sqrt(static_cast<double>(distance))) / 20 + 1);
+                    SHORT delta = creature ? static_cast<SHORT>(launchHeight - bounds.Height() / 2) : 0;
+                    passed = registered && missile->GetArea() == source->GetArea()
+                        && missile->m_posZ == launchHeight
+                        && missile->Matches(delta, creature ? distance : 1, lifetime, target);
+                }
+                valid = valid && passed;
+                ++checks;
+                Emit("{\"step\":%d,\"op\":\"projectile-launch-height\",\"case\":%d,\"passed\":%s}",
+                    nStep, test, passed ? "true" : "false");
+                if (registered) missile->CProjectile::RemoveSelf(); else delete missile;
+            }
+            source->m_posZ = savedHeight;
         }
         source->m_userCommandPause = savedActionUserPause;
         source->m_marker.m_nRecticleForceRender = savedForceRender;
