@@ -11,6 +11,9 @@
 #include "CGameAnimationTypeEffect.h"
 #include "IcewindCGameAnimationTypeEffect.h"
 #include "CGameArea.h"
+#include "CGameContainer.h"
+#include "CGameDoor.h"
+#include "CGameTrigger.h"
 #include "CGameFireball3d.h"
 #include "CMessage.h"
 #include "CGameObjectArray.h"
@@ -29,90 +32,79 @@
 // writes; DecodeProjectile case 0x118 is its only reader in the whole binary.
 static SHORT g_nSpellHitDefaultRange = 100;
 
-static LONG GetProjectileSourceDiagonalOffset(const CRect& rEllipse)
-{
-    LONG x = rEllipse.right;
-    LONG y = rEllipse.bottom;
-    LONG denom = x * x + y * y;
-    if (denom == 0) {
-        return 0;
-    }
-
-    return static_cast<LONG>(sqrt(static_cast<double>((x * x * y * y) / denom)));
-}
-
-static BOOL GetProjectileSourcePosition(LONG source, CPoint& pt)
+// 0x52A640
+void CProjectile::GetStart(LONG source, CPoint& pt, BYTE facingOffset)
 {
     CGameObject* pSource;
-
-    BYTE rc;
-    do {
-        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(source,
-            CGameObjectArray::THREAD_ASYNCH,
-            &pSource,
-            INFINITE);
-    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
-
+    BYTE rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(source,
+        CGameObjectArray::THREAD_ASYNCH, &pSource, INFINITE);
     if (rc != CGameObjectArray::SUCCESS) {
-        return FALSE;
+        return;
     }
 
-    pt = pSource->GetPos();
+    BYTE type = pSource->GetObjectType();
+    if (type == CGameObject::TYPE_NONE || type == CGameObject::TYPE_AIBASE
+        || type == CGameObject::TYPE_SOUND || type == CGameObject::TYPE_SPAWNING
+        || type == CGameObject::TYPE_STATIC || type == CGameObject::TYPE_SPRITE
+        || type == CGameObject::TYPE_OBJECT_MARKER || type == CGameObject::TYPE_TEXT) {
+        pt = pSource->GetPos();
+    } else if (type == CGameObject::TYPE_CONTAINER) {
+        pt = static_cast<CGameContainer*>(pSource)->m_posTrapOrigin;
+    } else if (type == CGameObject::TYPE_DOOR) {
+        CGameDoor* pDoor = static_cast<CGameDoor*>(pSource);
+        pt = CPoint(pDoor->m_posXTrapOrigin, pDoor->m_posYTrapOrigin);
+    } else if (type == CGameObject::TYPE_TRIGGER) {
+        pt = static_cast<CGameTrigger*>(pSource)->m_posTrapOrigin;
+    } else {
+        UTIL_ASSERT(FALSE);
+    }
 
-    if (pSource->GetObjectType() == CGameObject::TYPE_SPRITE) {
+    if (facingOffset && pSource->GetObjectType() == CGameObject::TYPE_SPRITE) {
         CGameSprite* pSprite = static_cast<CGameSprite*>(pSource);
-        const CRect& rEllipse = pSprite->GetAnimation()->GetEllipseRect();
-        LONG diagonalOffset = GetProjectileSourceDiagonalOffset(rEllipse);
-
-        switch (pSprite->GetDirection()) {
+        SHORT direction = pSprite->GetDirection();
+        switch (direction) {
         case 0:
         case 1:
-            pt.y += rEllipse.bottom / 2;
-            break;
-        case 2:
-        case 3:
-            pt.x -= 2 * diagonalOffset;
-            pt.y += 2 * diagonalOffset;
+            pt.y += pSprite->GetAnimation()->GetEllipseRect().bottom >> 1;
             break;
         case 4:
         case 5:
-            pt.x -= 2 * rEllipse.right;
-            pt.y += 1;
-            break;
-        case 6:
-        case 7:
-            pt.x -= 2 * diagonalOffset;
-            pt.y -= 2 * diagonalOffset;
+            pt.x -= 2 * pSprite->GetAnimation()->GetEllipseRect().right;
+            ++pt.y;
             break;
         case 8:
         case 9:
-            pt.y -= 2 * rEllipse.bottom;
-            break;
-        case 10:
-        case 11:
-            pt.x += 2 * diagonalOffset;
-            pt.y -= 2 * diagonalOffset;
+            pt.y -= 2 * pSprite->GetAnimation()->GetEllipseRect().bottom;
             break;
         case 12:
         case 13:
-            pt.x += 2 * rEllipse.right;
-            pt.y += 1;
+            pt.x += 2 * pSprite->GetAnimation()->GetEllipseRect().right;
+            ++pt.y;
             break;
+        case 2:
+        case 3:
+        case 6:
+        case 7:
+        case 10:
+        case 11:
         case 14:
-        case 15:
-            pt.x += 2 * diagonalOffset;
-            pt.y += 2 * diagonalOffset;
+        case 15: {
+            const CRect& ellipse = pSprite->GetAnimation()->GetEllipseRect();
+            SHORT xSquared = static_cast<SHORT>(static_cast<SHORT>(ellipse.right) * static_cast<SHORT>(ellipse.right));
+            SHORT ySquared = static_cast<SHORT>(static_cast<SHORT>(ellipse.bottom) * static_cast<SHORT>(ellipse.bottom));
+            SHORT diagonal = static_cast<SHORT>(sqrt(static_cast<double>(
+                (xSquared * ySquared) / (xSquared + ySquared))));
+            pt.x += (direction < 8 ? -2 : 2) * diagonal;
+            pt.y += (direction < 4 || direction >= 14 ? 2 : -2) * diagonal;
             break;
+        }
         default:
-            break;
+            UTIL_ASSERT(FALSE);
         }
     }
 
     g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(source,
-        CGameObjectArray::THREAD_ASYNCH,
-        INFINITE);
-
-    return TRUE;
+        CGameObjectArray::THREAD_ASYNCH, INFINITE);
 }
 
 // 0x51E9B0
@@ -2469,7 +2461,7 @@ void CProjectileBAM::Fire(CGameArea* pArea, LONG source, LONG target, CPoint tar
             INFINITE);
     }
 
-    GetProjectileSourcePosition(source, sourcePos);
+    GetStart(source, sourcePos, TRUE);
     m_sound.Play(sourcePos.x, sourcePos.y, 0, FALSE);
 
     rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE);
@@ -3855,9 +3847,7 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
 
     // Launch origin from the source (facing-adjusted).
     CPoint ptSource;
-    if (!GetProjectileSourcePosition(m_sourceId, ptSource)) {
-        return;
-    }
+    GetStart(m_sourceId, ptSource, TRUE);
 
     // Near-target snap: if the source is a creature and the launch point lands
     // within ~3 search cells of the target, snap to the source centre (the
@@ -4666,7 +4656,7 @@ void CProjectileExploding::Fire(CGameArea* pArea, LONG source, LONG target,
     }
 
     CPoint ptSource;
-    GetProjectileSourcePosition(m_sourceId, ptSource);
+    GetStart(m_sourceId, ptSource, TRUE);
 
     if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE)
         != CGameObjectArray::SUCCESS) {
@@ -5829,7 +5819,7 @@ void IcewindCProjectileTravellingVFX::Fire(CGameArea* pArea, LONG source, LONG t
     // Launch origin: the facing-adjusted source point, snapped to the source
     // centre when the target lands within ~3 search cells (a near / self cast).
     CPoint ptLaunch;
-    GetProjectileSourcePosition(m_sourceId, ptLaunch);
+    GetStart(m_sourceId, ptLaunch, TRUE);
     if (bSourceCreature) {
         int cellDX = ptTarget.x / 16 - ptLaunch.x / 16;   // 16-wide search cells
         int cellDY = ptTarget.y / 12 - ptLaunch.y / 12;   // 12-tall search cells
@@ -6394,7 +6384,7 @@ void IcewindCProjectileSpellHit::Render(CGameArea* pArea, CVidMode* pVidMode, in
 // -----------------------------------------------------------------------------
 
 // 0x56F820 (vtable slot 27). The launch. Records the source/target/area, shares
-// the caster to read the launch origin (GetProjectileSourcePosition) and the
+// the caster to read the launch origin (GetStart) and the
 // drop height (DetermineHeight), and pulls the lifetime (m_lifetime) from the
 // trailing effect on m_effectList through DetermineLifetime. A homing shot starts
 // at that origin; a non-homing one (m_bHasTravelCell == 0) starts on the target so it
@@ -6435,7 +6425,7 @@ void IcewindCProjectileSpellHit::Fire(CGameArea* pArea, LONG source, LONG target
     }
 
     CPoint ptLaunch;
-    GetProjectileSourcePosition(m_sourceId, ptLaunch);
+    GetStart(m_sourceId, ptLaunch, TRUE);
     if (m_bHasTravelCell == 0) {
         ptLaunch = targetPos;
     }
@@ -8519,7 +8509,7 @@ void CProjectileCone::Fire(CGameArea* pArea, LONG source, LONG target, CPoint ta
     m_sourceId = source;
     m_pArea = pArea;
 
-    // Caster must exist; GetProjectileSourcePosition re-shares it to read the
+    // Caster must exist; GetStart re-shares it to read the
     // facing-adjusted launch point into m_casterPos.
     CGameObject* pCaster;
     BYTE rc;
@@ -8531,7 +8521,7 @@ void CProjectileCone::Fire(CGameArea* pArea, LONG source, LONG target, CPoint ta
         return;
     }
 
-    GetProjectileSourcePosition(m_sourceId, m_casterPos);
+    GetStart(m_sourceId, m_casterPos, TRUE);
     g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceId,
         CGameObjectArray::THREAD_ASYNCH, INFINITE);
 

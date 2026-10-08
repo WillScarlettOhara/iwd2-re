@@ -26,6 +26,7 @@ class CResBitmap;
 #pragma pack(push, 2)
 class CProjectile : public CGameObject {
 public:
+    static void GetStart(LONG source, CPoint& pt, BYTE facingOffset); // 0x52A640
     static CProjectile* DecodeProjectile(USHORT projectileType, CGameAIBase* pCaster, BYTE castDelay);
 
     CProjectile();

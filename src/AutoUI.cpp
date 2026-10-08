@@ -4006,6 +4006,52 @@ void Tick(CWarp* pActiveEngine)
             }
             source->m_posZ = savedHeight;
         }
+        {
+            SHORT direction = source->m_nDirection;
+            const CRect& ellipse = source->GetAnimation()->GetEllipseRect();
+            INT x2 = static_cast<SHORT>(static_cast<SHORT>(ellipse.right) * static_cast<SHORT>(ellipse.right));
+            INT y2 = static_cast<SHORT>(static_cast<SHORT>(ellipse.bottom) * static_cast<SHORT>(ellipse.bottom));
+            INT diagonal = static_cast<SHORT>(std::sqrt(static_cast<double>(x2 * y2 / (x2 + y2))));
+            CPoint offsets[8] = {
+                CPoint(0, ellipse.bottom >> 1), CPoint(-2 * diagonal, 2 * diagonal),
+                CPoint(-2 * ellipse.right, 1), CPoint(-2 * diagonal, -2 * diagonal),
+                CPoint(0, -2 * ellipse.bottom), CPoint(2 * diagonal, -2 * diagonal),
+                CPoint(2 * ellipse.right, 1), CPoint(2 * diagonal, 2 * diagonal)
+            };
+            for (INT test = 0; test < 49; ++test) {
+                source->m_nDirection = test % 16;
+                BYTE offset = test < 16 ? 0 : test < 32 ? 1 : 255;
+                CPoint point(123, -456);
+                CProjectile::GetStart(test == 48 ? 0x7FFFFFFF : id, point, offset);
+                CPoint expected = test == 48 ? CPoint(123, -456) : source->GetPos();
+                if (test >= 16 && test < 48) expected += offsets[(test % 16) / 2];
+                BOOL passed = point == expected;
+                valid = valid && passed;
+                ++checks;
+                Emit("{\"step\":%d,\"op\":\"projectile-start\",\"case\":%d,\"passed\":%s}",
+                    nStep, test, passed ? "true" : "false");
+            }
+            CRect savedEllipse = ellipse;
+            CRect& mutableEllipse = const_cast<CRect&>(ellipse);
+            mutableEllipse = CRect(-256, -12, 256, 12);
+            // 256 squared truncates to zero in the PE's signed SHORT product.
+            CPoint wideOffsets[8] = {
+                CPoint(0, 6), CPoint(0, 0), CPoint(-512, 1), CPoint(0, 0),
+                CPoint(0, -24), CPoint(0, 0), CPoint(512, 1), CPoint(0, 0)
+            };
+            for (INT facing = 0; facing < 16; ++facing) {
+                source->m_nDirection = static_cast<SHORT>(facing);
+                CPoint point;
+                CProjectile::GetStart(id, point, 1);
+                BOOL passed = point == source->GetPos() + wideOffsets[facing / 2];
+                valid = valid && passed;
+                ++checks;
+                Emit("{\"step\":%d,\"op\":\"projectile-start-wide\",\"case\":%d,\"passed\":%s}",
+                    nStep, facing, passed ? "true" : "false");
+            }
+            mutableEllipse = savedEllipse;
+            source->m_nDirection = direction;
+        }
         source->m_userCommandPause = savedActionUserPause;
         source->m_marker.m_nRecticleForceRender = savedForceRender;
         source->m_noActionCount = savedNoActionCount;
