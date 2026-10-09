@@ -99,6 +99,6 @@ reconstructed capture is claimed. The dispatchers remain incomplete and the
 existing conversion helper still omits invalid-family diagnostic assertions;
 forced invalid numbers are only tested as marker values, not converted.
 Missing-resource demand failure is not exercised. Optional skipped offset
-analyses remain unproven. Next bounded recovery: target resolution at
-0x733340, including target-marker cleanup and sprite immunity, followed by
-SetSpellTarget (0x40F4) in the base status-trigger dispatcher.
+analyses remain unproven. The subsequent [target-resolution lot](combat-target-resolution-recovery.md)
+recovers 0x733340, target-marker cleanup, sprite immunity and formation movement.
+SetSpellTarget (0x40F4) in the base status-trigger dispatcher remains next.

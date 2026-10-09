@@ -18681,6 +18681,78 @@ BOOL CGameSprite::EvaluateStatusTrigger(const CAITrigger& trigger)
     return CGameAIBase::EvaluateStatusTrigger(trigger);
 }
 
+// 0x733340
+CGameObject* CGameSprite::ResolveCurrentActionTarget()
+{
+    CGameObject* pObject = m_curAction.m_acteeID.GetObject(this, FALSE);
+    if (pObject == NULL) {
+        if (m_targetId == CGameObjectArray::INVALID_INDEX) {
+            return NULL;
+        }
+        if (m_bSelected && Orderable(FALSE)) {
+            CGameObject* pPrevious;
+            BYTE rc;
+            do {
+                rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(
+                    m_targetId, CGameObjectArray::THREAD_ASYNCH, &pPrevious, INFINITE);
+            } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+            if (rc != CGameObjectArray::SUCCESS) {
+                return NULL;
+            }
+            if (pPrevious->GetObjectType() == CGameObject::TYPE_SPRITE) {
+                static_cast<CGameSprite*>(pPrevious)->m_marker.SetType(CMarker::ELLIPSE);
+            }
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(
+                m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        m_targetId = CGameObjectArray::INVALID_INDEX;
+        return NULL;
+    }
+
+    if (m_curAction.m_acteeID.m_nInstance == -1) {
+        CAIObjectType type(m_curAction.m_acteeID);
+        type.m_nInstance = pObject->m_id;
+        m_curAction.m_acteeID.Set(type);
+    }
+
+    if (m_targetId != pObject->m_id) {
+        BOOL update = TRUE;
+        if (m_targetId != CGameObjectArray::INVALID_INDEX) {
+            CGameObject* pPrevious;
+            BYTE rc;
+            do {
+                rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(
+                    m_targetId, CGameObjectArray::THREAD_ASYNCH, &pPrevious, INFINITE);
+            } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+            if (rc == CGameObjectArray::SUCCESS) {
+                if (m_bSelected && Orderable(FALSE)
+                    && pPrevious->GetObjectType() == CGameObject::TYPE_SPRITE) {
+                    static_cast<CGameSprite*>(pPrevious)->m_marker.SetType(CMarker::ELLIPSE);
+                }
+                g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(
+                    m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            } else {
+                update = FALSE;
+            }
+        }
+        if (update) {
+            if (m_bSelected && Orderable(FALSE)
+                && pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
+                static_cast<CGameSprite*>(pObject)->m_marker.SetType(CMarker::RECTICLE);
+            }
+            m_targetId = pObject->m_id;
+        }
+    }
+
+    if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE
+        && static_cast<CGameSprite*>(pObject)->m_derivedStats.m_cImmunitiesAIType.OnList(m_typeAI)) {
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(
+            pObject->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        return NULL;
+    }
+    return pObject;
+}
+
 // 0x733660
 void CGameSprite::UpdateTarget(CGameObject* pObject)
 {
@@ -22316,6 +22388,46 @@ SHORT CGameSprite::ExecuteAction()
         return result;
     }
 
+    // PE cases 0x0B/0x1F/0x71 use the sprite-specific untyped resolver.
+    if (m_curAction.m_actionID == 14 || m_curAction.m_actionID == 47
+        || m_curAction.m_actionID == 0x13D) {
+        CGameObject* object = ResolveCurrentActionTarget();
+        SHORT result = ACTION_DONE;
+        if (m_curAction.m_actionID == 47) {
+            result = Formation(static_cast<CGameSprite*>(object));
+        } else if (m_curAction.m_actionID == 0x13D && object != NULL) {
+            LONG x = object->GetPos().x;
+            LONG y = object->GetPos().y;
+            result = JumpToPoint(CPoint(x, y), TRUE);
+        }
+        if (object != NULL) {
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(
+                object->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        m_nLastActionReturn = result;
+        return result;
+    }
+
+    // PE case 0x20: the destination is an absolute world point.
+    if (m_curAction.m_actionID == CAIAction::JUMPTOPOINT) {
+        SHORT result = JumpToPoint(m_curAction.m_dest, TRUE);
+        m_nLastActionReturn = result;
+        return result;
+    }
+
+    // PE case 0x52: follow, uninterrupted movement and MoveToObjectUntilSee.
+    if (m_curAction.m_actionID == CAIAction::MOVETOOBJECTFOLLOW
+        || m_curAction.m_actionID == 0xD0 || m_curAction.m_actionID == 0x107) {
+        CGameObject* object = ResolveActionTarget(CGameObject::TYPE_AIBASE);
+        SHORT result = MoveToObject(object);
+        if (object != NULL) {
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(
+                object->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        m_nLastActionReturn = result;
+        return result;
+    }
+
     // Jump-table cases 2 (Attack/AttackNoSound) and 0x35 (AttackOneRound).
     if (m_curAction.m_actionID == CAIAction::ATTACK
         || m_curAction.m_actionID == CAIAction::ATTACKNOSOUND || m_curAction.m_actionID == CAIAction::ATTACKONEROUND) {
@@ -23240,6 +23352,79 @@ SHORT CGameSprite::PlayDead()
     g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
 
     return ACTION_DONE;
+}
+
+// 0x745450
+SHORT CGameSprite::Formation(CGameSprite* pTarget)
+{
+    CPoint offset = m_curAction.m_dest;
+    if (pTarget == NULL) {
+        return ACTION_ERROR;
+    }
+    CPoint targetDest = pTarget->m_curDest;
+    if (targetDest.x == -1 || targetDest.y == -1) {
+        targetDest = pTarget->GetPos();
+    }
+    CPoint dest(targetDest.x + CPathSearch::GRID_SQUARE_SIZEX * offset.x,
+        targetDest.y + CPathSearch::GRID_SQUARE_SIZEY * offset.y);
+    if (dest == m_curDest && field_5618 != 0) {
+        field_5616 = 0;
+        return ACTION_INTERRUPTABLE;
+    }
+
+    CPoint self = GetPos();
+    CPoint selfCell(self.x / CPathSearch::GRID_SQUARE_SIZEX,
+        self.y / CPathSearch::GRID_SQUARE_SIZEY);
+    CPoint destCell(dest.x / CPathSearch::GRID_SQUARE_SIZEX,
+        dest.y / CPathSearch::GRID_SQUARE_SIZEY);
+    LONG distance = CAIUtil::CountSquares(selfCell, destCell);
+    BYTE range = m_animation.GetPersonalSpace();
+    BYTE targetSpace = pTarget->m_animation.GetPersonalSpace();
+    range = static_cast<BYTE>(((targetSpace - 1) >> 1) + ((range - 1) >> 1) - 1);
+    if (distance * distance <= (range + 1) * (range + 1)) {
+        field_5616 = 0;
+        field_5618 = 0;
+        return ACTION_INTERRUPTABLE;
+    }
+
+    m_curDest = dest;
+    field_5618 = 0;
+    self = GetPos();
+    CPoint targetPos = pTarget->GetPos();
+    LONG dx = targetPos.x / CPathSearch::GRID_SQUARE_SIZEX - self.x / CPathSearch::GRID_SQUARE_SIZEX;
+    LONG dy = targetPos.y / CPathSearch::GRID_SQUARE_SIZEY - self.y / CPathSearch::GRID_SQUARE_SIZEY;
+    BOOL withinRange = dx * dx + dy * dy < 16 * 16;
+    if (field_5616 % 8 == 0) {
+        CSearchRequest* pRequest = new CSearchRequest();
+        if (pRequest == NULL) {
+            return ACTION_ERROR;
+        }
+        pRequest->m_searchBitmap = &(m_pArea->m_search);
+        memcpy(pRequest->m_terrainTable, m_terrainTable, sizeof(m_terrainTable));
+        pRequest->m_pathSmooth = m_animation.GetPathSmooth();
+        pRequest->m_sourceId = m_id;
+        pRequest->m_nTargetPoints = 2;
+        pRequest->m_exclusiveTargetPoints = TRUE;
+        pRequest->m_targetPoints = new POINT[2];
+        if (pRequest->m_targetPoints == NULL) {
+            delete pRequest;
+            return ACTION_ERROR;
+        }
+        pRequest->m_nPartyIds = g_pBaldurChitin->GetObjectGame()->m_group.GetCount();
+        pRequest->m_partyIds = g_pBaldurChitin->GetObjectGame()->m_group.GetGroupList();
+        pRequest->m_targetPoints[0] = m_curDest;
+        pRequest->m_targetPoints[1] = targetDest;
+        pRequest->m_sourceSide = m_typeAI.GetEnemyAlly();
+        if (!withinRange) {
+            field_5618 = 1;
+        }
+        SetTarget(pRequest, FALSE, CSearchRequest::LIST_FRONT);
+        if (withinRange) {
+            field_5618 = 1;
+        }
+    }
+    field_5616++;
+    return ACTION_INTERRUPTABLE;
 }
 
 // 0x745950

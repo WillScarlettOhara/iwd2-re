@@ -675,6 +675,8 @@ public:
     SHORT GetProficiencyTHAC0Bonus(CItem* curWeapon);
     SHORT MoveToPoint();
     SHORT MoveToObject(CGameObject* pTarget);
+    CGameObject* ResolveCurrentActionTarget(); // #guess: sprite-specific untyped resolver
+    SHORT Formation(CGameSprite* pTarget); // #guess: BG2 PDB name, action 47
     SHORT UseContainer();
     SHORT Dialogue(CGameSprite* pTarget);
     SHORT StartStore(CGameSprite* pTarget);

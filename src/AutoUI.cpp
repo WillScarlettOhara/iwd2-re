@@ -96,6 +96,8 @@
 //                                restore both actors in the same tick.
 //   spellusechecks              check spell usefulness, visibility and scripted
 //                                selection/trigger dispatch; restore all state.
+//   targetresolvechecks         check target fixation, markers and formation
+//                                requests through the real action dispatcher.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -117,6 +119,7 @@
 #include "CBaldurChitin.h"
 #include "CBaldurEngine.h"
 #include "CGameArea.h"
+#include "CGameAnimationType.h"
 #include "CGameObject.h"
 #include "CGameObjectArray.h"
 #include "CGameRemoteObjectArray.h"
@@ -1558,6 +1561,300 @@ void Tick(CWarp* pActiveEngine)
         Emit("{\"step\":%d,\"op\":\"combatteams\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
+    }
+
+    if (strcmp(step.op, "targetresolvechecks") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* rawSource = NULL;
+        CGameObject* rawTarget = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2
+            || objects->GetDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, &rawSource, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and two party members"); return;
+        }
+        if (objects->GetDeny(targetId, CGameObjectArray::THREAD_ASYNCH, &rawTarget, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable"); return;
+        }
+        auto* source = static_cast<CGameSprite*>(rawSource);
+        auto* target = static_cast<CGameSprite*>(rawTarget);
+        CSingleLock searchLock(&game->field_1B58, TRUE);
+        if (source->m_pArea == NULL || source->m_pPath != NULL || source->m_currentSearchRequest != NULL
+            || source->m_animation.m_animation == NULL || target->m_animation.m_animation == NULL) {
+            objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires idle actors with animations"); return;
+        }
+        HANDLE savedSearchSemaphore = game->m_hSearchThread;
+        HANDLE testSearchSemaphore = CreateSemaphore(NULL, 0, LONG_MAX, NULL);
+        if (testSearchSemaphore == NULL) {
+            objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "test semaphore unavailable"); return;
+        }
+        game->m_hSearchThread = testSearchSemaphore;
+        CAIAction savedAction;
+        savedAction = source->m_curAction;
+        auto savedSourceType = source->m_typeAI, savedTargetType = target->m_typeAI;
+        auto savedSourceMarker = source->m_marker, savedTargetMarker = target->m_marker;
+        auto savedState = source->m_derivedStats.m_generalState;
+        auto savedSpells = source->m_derivedStats.m_spellStates;
+        auto savedUnselectable = source->m_nUnselectableCounter;
+        auto savedMorale = source->m_moraleFailure;
+        auto savedSelected = source->m_bSelected;
+        auto savedTargetId = source->m_targetId;
+        auto savedReturn = source->m_nLastActionReturn;
+        auto savedPause = source->m_userCommandPause;
+        auto savedCount = source->m_actionCount;
+        auto savedPhase = source->field_5618;
+        auto savedThrottle = source->field_5616;
+        auto savedDest = source->m_curDest, savedTargetDest = target->m_curDest;
+        auto savedTargetPos = target->m_pos;
+        auto savedTargetObjectType = target->m_objectType;
+        auto* savedTargetArea = target->m_pArea;
+        auto savedEncumberance = source->m_derivedStats.m_nEncumberance;
+        auto savedSeen = source->m_lSeen;
+        auto savedSeenCount = source->m_canBeSeen;
+        auto savedSequence = source->m_nSequence;
+        auto savedInvalidDest = source->m_pathSearchInvalidDest;
+        auto savedStop = game->m_nTimeStop;
+        auto savedEmpty = game->m_searchRequestListEmpty;
+        auto* sourceAnimation = source->m_animation.m_animation;
+        auto* targetAnimation = target->m_animation.m_animation;
+        auto sourceSpace = sourceAnimation->m_personalSpace, targetSpace = targetAnimation->m_personalSpace;
+        std::vector<CAIObjectType*> savedImmunities;
+        auto& immunities = target->m_derivedStats.m_cImmunitiesAIType;
+        POSITION immunityPos = immunities.GetHeadPosition();
+        while (immunityPos != NULL) savedImmunities.push_back(immunities.GetNext(immunityPos));
+        immunities.RemoveAll();
+        CAIObjectType immune(savedSourceType);
+        LONG stale = 0x7FFF7FFE;
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT messageCount = messages.GetCount(), requestCount = game->m_searchRequests.GetCount();
+        BYTE sourceDenies = objects->m_pArray[(sourceId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH];
+        BYTE targetDenies = objects->m_pArray[(targetId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH];
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            valid = valid && passed; ++checks;
+            Emit("{\"step\":%d,\"op\":\"targetresolve-case\",\"case\":\"%s\",\"passed\":%s}",
+                nStep, name, passed ? "true" : "false");
+        };
+        auto discardRequest = [&]() {
+            if (source->m_currentSearchRequest != NULL) {
+                POSITION pos = game->m_searchRequests.Find(source->m_currentSearchRequest);
+                check("request-still-waiting-under-lock", pos != NULL
+                    && source->m_currentSearchRequest->m_serviceState == CSearchRequest::STATE_WAITING);
+                if (pos != NULL) game->m_searchRequests.RemoveAt(pos);
+                check("request-signals-private-semaphore", WaitForSingleObject(testSearchSemaphore, 0) == WAIT_OBJECT_0);
+                delete source->m_currentSearchRequest;
+                source->m_currentSearchRequest = NULL;
+            }
+            game->m_searchRequestListEmpty = savedEmpty;
+            while (messages.GetCount() > messageCount) delete messages.RemoveTail();
+        };
+        auto reset = [&]() {
+            discardRequest();
+            source->m_curAction = CAIAction::NULL_ACTION;
+            source->m_curAction.m_actionID = 14;
+            source->m_curAction.m_acteeID.Set(savedTargetType);
+            source->m_curAction.m_acteeID.m_nInstance = targetId;
+            source->m_typeAI.Set(savedSourceType); target->m_typeAI.Set(savedTargetType);
+            source->m_typeAI.m_nEnemyAlly = CAIObjectType::EA_PC;
+            source->m_derivedStats.m_generalState = 0; source->m_derivedStats.m_spellStates.reset();
+            source->m_derivedStats.m_nEncumberance = 0;
+            source->m_nUnselectableCounter = 0; source->m_moraleFailure = FALSE;
+            source->m_bSelected = TRUE; source->m_targetId = CGameObjectArray::INVALID_INDEX;
+            source->m_marker.m_type = target->m_marker.m_type = CMarker::ELLIPSE;
+            source->m_marker.m_nRecticleCounter = target->m_marker.m_nRecticleCounter = 0;
+            source->m_marker.m_nRecticleForceRenderTarget = target->m_marker.m_nRecticleForceRenderTarget = 7;
+            source->m_nLastActionReturn = 123; source->m_userCommandPause = 100; source->m_actionCount = 0;
+            source->field_5616 = 1; source->field_5618 = 0;
+            source->m_curDest = CPoint(-1, -1); target->m_curDest = savedTargetDest;
+            target->m_pos = savedTargetPos; target->m_pArea = savedTargetArea;
+            target->m_objectType = savedTargetObjectType;
+            sourceAnimation->m_personalSpace = targetAnimation->m_personalSpace = 3;
+            immunities.RemoveAll(); game->m_nTimeStop = 0;
+        };
+        auto resolve = [&]() {
+            CGameObject* result = source->ResolveCurrentActionTarget();
+            if (result != NULL) objects->ReleaseShare(result->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            return result;
+        };
+        reset();
+        check("selected-explicit-target", resolve() == target && source->m_targetId == targetId
+            && target->m_marker.m_nRecticleCounter == 1 && target->m_marker.m_type == CMarker::RECTICLE);
+        check("same-target-does-not-add-reticle", resolve() == target && target->m_marker.m_nRecticleCounter == 1);
+        check("no-force-render-extension", target->m_marker.m_nRecticleForceRenderTarget == 7);
+        reset(); source->m_targetId = sourceId; source->m_marker.SetType(CMarker::RECTICLE);
+        check("switch-removes-old-reticle", resolve() == target && source->m_marker.m_nRecticleCounter == 0
+            && source->m_marker.m_type == CMarker::ELLIPSE && target->m_marker.m_nRecticleCounter == 1);
+        reset(); source->m_targetId = sourceId;
+        source->m_marker.SetType(CMarker::RECTICLE); source->m_marker.SetType(CMarker::RECTICLE);
+        check("switch-releases-one-reticle-owner", resolve() == target && source->m_marker.m_nRecticleCounter == 1
+            && source->m_marker.m_type == CMarker::RECTICLE);
+        for (INT mode = 0; mode < 4; ++mode) {
+            reset(); source->m_targetId = sourceId; source->m_marker.SetType(CMarker::RECTICLE);
+            if (mode == 0) source->m_bSelected = FALSE;
+            if (mode == 1) source->m_derivedStats.m_generalState = STATE_DEAD;
+            if (mode == 2) source->m_nUnselectableCounter = 1;
+            if (mode == 3) source->m_moraleFailure = TRUE;
+            check("unorderable-switch-publishes-without-markers", resolve() == target && source->m_targetId == targetId
+                && source->m_marker.m_nRecticleCounter == 1 && target->m_marker.m_nRecticleCounter == 0);
+        }
+        reset(); immunities.AddTail(&immune);
+        check("immunity-after-marker-update", resolve() == NULL && source->m_targetId == targetId
+            && target->m_marker.m_nRecticleCounter == 1);
+        check("same-immune-target-keeps-marker", resolve() == NULL && target->m_marker.m_nRecticleCounter == 1);
+        reset(); source->m_targetId = stale;
+        check("stale-old-target-retains-id", resolve() == target && source->m_targetId == stale
+            && target->m_marker.m_nRecticleCounter == 0);
+        immunities.AddTail(&immune);
+        check("stale-old-target-still-checks-immunity", resolve() == NULL && source->m_targetId == stale);
+        for (INT selected = 0; selected < 2; ++selected) {
+            reset(); source->m_bSelected = selected;
+            source->m_targetId = targetId; target->m_marker.SetType(CMarker::RECTICLE);
+            source->m_curAction.m_acteeID.Set(CAIObjectType::NOONE);
+            check("null-clears-id", resolve() == NULL && source->m_targetId == CGameObjectArray::INVALID_INDEX);
+            check("null-clears-marker-only-when-selected", target->m_marker.m_nRecticleCounter == (selected ? 0 : 1));
+            reset(); source->m_bSelected = selected; source->m_targetId = stale;
+            source->m_curAction.m_acteeID.Set(CAIObjectType::NOONE);
+            check("null-stale-selected-retains-id", resolve() == NULL
+                && source->m_targetId == (selected ? stale : CGameObjectArray::INVALID_INDEX));
+        }
+        reset(); source->m_curAction.m_acteeID.Set(CAIObjectType::NOONE);
+        check("null-without-old-target", resolve() == NULL && source->m_targetId == CGameObjectArray::INVALID_INDEX);
+        reset(); target->m_objectType = CGameObject::TYPE_NONE; immunities.AddTail(&immune);
+        check("untyped-nonsprite-no-marker-or-immunity", resolve() == target && source->m_targetId == targetId
+            && target->m_marker.m_nRecticleCounter == 0);
+        reset(); target->m_typeAI.m_nSpecific = 253;
+        source->m_curAction.m_acteeID.Set(CAIObjectType::ANYONE);
+        source->m_curAction.m_acteeID.m_nSpecific = 253;
+        source->m_curAction.m_acteeID.m_nRadius = 9876;
+        source->m_curAction.m_acteeID.m_rect = CRect(1, 2, 3, 4);
+        check("nearest-selector-fixes-instance", resolve() == target
+            && source->m_curAction.m_acteeID.m_nInstance == targetId);
+        check("fixation-preserves-selector", source->m_curAction.m_acteeID.m_nSpecific == 253
+            && source->m_curAction.m_acteeID.m_nRadius == 9876 && source->m_curAction.m_acteeID.m_rect == CRect(1, 2, 3, 4)
+            && source->m_curAction.m_acteeID.m_nRace == 0);
+        reset();
+        check("action14-resolves-and-stores-done", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+            && source->m_nLastActionReturn == CGameAIBase::ACTION_DONE && source->m_targetId == targetId);
+        reset(); source->m_curAction.m_acteeID.Set(CAIObjectType::NOONE);
+        check("action14-null-is-done", source->ExecuteAction() == CGameAIBase::ACTION_DONE);
+        reset(); source->m_curAction.m_actionID = 47; source->m_curAction.m_acteeID.Set(CAIObjectType::NOONE);
+        check("formation-null-is-error", source->ExecuteAction() == CGameAIBase::ACTION_ERROR
+            && source->m_nLastActionReturn == CGameAIBase::ACTION_ERROR);
+        reset(); source->m_curAction.m_actionID = 0x13D; source->m_curAction.m_acteeID.Set(CAIObjectType::NOONE);
+        check("jump-object-null-is-done", source->ExecuteAction() == CGameAIBase::ACTION_DONE);
+        CGameArea* sourceArea = source->m_pArea;
+        source->m_pArea = NULL;
+        reset(); source->m_curAction.m_actionID = 0x13D;
+        check("jump-object-resolves-before-area-less-exit", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+            && source->m_targetId == targetId && source->m_nLastActionReturn == CGameAIBase::ACTION_DONE);
+        reset(); source->m_curAction.m_actionID = CAIAction::JUMPTOPOINT;
+        source->m_curAction.m_dest = CPoint(1234, 5678);
+        check("jump-point-dispatch-stores-return", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+            && source->m_targetId == CGameObjectArray::INVALID_INDEX && source->m_nLastActionReturn == CGameAIBase::ACTION_DONE);
+        source->m_pArea = sourceArea;
+        for (SHORT action : {static_cast<SHORT>(180), static_cast<SHORT>(208), static_cast<SHORT>(263)}) {
+            reset(); source->m_curAction.m_actionID = action; source->m_curAction.m_acteeID.Set(CAIObjectType::NOONE);
+            check("move-variant-null-is-error", source->ExecuteAction() == CGameAIBase::ACTION_ERROR
+                && source->m_nLastActionReturn == CGameAIBase::ACTION_ERROR);
+            reset(); source->m_curAction.m_actionID = action; target->m_pArea = NULL;
+            check("move-variant-area-less-is-done", source->ExecuteAction() == CGameAIBase::ACTION_DONE);
+            reset(); source->m_curAction.m_actionID = action; target->m_pos = source->m_pos;
+            source->m_bSelected = FALSE;
+            check("move-variant-close-return", source->ExecuteAction()
+                == (action == 180 ? CGameAIBase::ACTION_INTERRUPTABLE : CGameAIBase::ACTION_DONE));
+        }
+        // All requests stay queued under the same critical section until inspected and discarded.
+        for (INT cells : {15, 16, 17}) {
+            for (SHORT frame : {static_cast<SHORT>(-8), static_cast<SHORT>(-1), static_cast<SHORT>(0),
+                     static_cast<SHORT>(1), static_cast<SHORT>(7), static_cast<SHORT>(8), static_cast<SHORT>(32767)}) {
+                reset(); source->m_curAction.m_actionID = 47; source->m_bSelected = FALSE;
+                target->m_pos = CPoint(source->m_pos.x + cells * 16, source->m_pos.y);
+                target->m_curDest = CPoint(target->m_pos.x + 160, target->m_pos.y + 120);
+                source->m_curAction.m_dest = CPoint(3, -2); source->field_5616 = frame;
+                check("formation-dispatch-interruptable", source->ExecuteAction() == CGameAIBase::ACTION_INTERRUPTABLE
+                    && source->m_nLastActionReturn == CGameAIBase::ACTION_INTERRUPTABLE);
+                check("formation-offset-is-in-grid-cells", source->m_curDest == CPoint(target->m_curDest.x + 48, target->m_curDest.y - 24));
+                check("formation-short-counter", source->field_5616 == static_cast<SHORT>(frame + 1));
+                BOOL scheduled = frame == -8 || frame == 0 || frame == 8;
+                auto* request = source->m_currentSearchRequest;
+                check("formation-throttle", (request != NULL) == scheduled && source->field_5618 == (scheduled ? 1 : 0));
+                if (request != NULL) {
+                    check("formation-two-exclusive-goals", request->m_nTargetPoints == 2 && request->m_exclusiveTargetPoints == TRUE
+                        && request->m_targetPoints[0].x == source->m_curDest.x && request->m_targetPoints[0].y == source->m_curDest.y
+                        && request->m_targetPoints[1].x == target->m_curDest.x && request->m_targetPoints[1].y == target->m_curDest.y);
+                    check("formation-search-provenance", request->m_sourceId == sourceId && request->m_sourceSide == source->m_typeAI.m_nEnemyAlly
+                        && request->m_searchBitmap == &source->m_pArea->m_search
+                        && memcmp(request->m_terrainTable, source->m_terrainTable, 16) == 0
+                        && request->m_pathSmooth == source->m_animation.GetPathSmooth());
+                    BOOL sameParty = request->m_nPartyIds == game->m_group.GetCount();
+                    INT member = 0;
+                    POSITION partyPos = game->m_group.m_memberList.GetHeadPosition();
+                    while (partyPos != NULL) {
+                        LONG id = reinterpret_cast<LONG>(game->m_group.m_memberList.GetNext(partyPos));
+                        sameParty = sameParty && request->m_partyIds != NULL && request->m_partyIds[member++] == id;
+                    }
+                    check("formation-party-snapshot", sameParty);
+                    check("formation-front-request", request->m_frontList == CSearchRequest::LIST_FRONT
+                        && request->m_collisionSearch == FALSE && request->m_collisionDelay == 0);
+                }
+            }
+        }
+        reset(); target->m_curDest = CPoint(-1, 999); target->m_pos = CPoint(source->m_pos.x + 320, source->m_pos.y + 240);
+        source->m_curAction.m_dest = CPoint(-2, 3);
+        check("formation-partial-sentinel-uses-position", source->Formation(target) == CGameAIBase::ACTION_INTERRUPTABLE
+            && source->m_curDest == CPoint(target->m_pos.x - 32, target->m_pos.y + 36));
+        reset(); target->m_curDest = CPoint(999, -1); target->m_pos = CPoint(source->m_pos.x + 320, source->m_pos.y + 240);
+        source->m_curAction.m_dest = CPoint(65537, -65536);
+        check("formation-full-width-offset", source->Formation(target) == CGameAIBase::ACTION_INTERRUPTABLE
+            && source->m_curDest == CPoint(target->m_pos.x + 1048592, target->m_pos.y - 786432));
+        reset(); target->m_curDest = CPoint(-1, -1); target->m_pos = source->m_pos;
+        source->m_curAction.m_dest = CPoint(65536, -65536);
+        check("formation-distance-square-wraps", source->Formation(target) == CGameAIBase::ACTION_INTERRUPTABLE
+            && source->m_curDest == CPoint(-1, -1) && source->field_5616 == 0);
+        reset(); source->m_curDest = target->m_curDest = CPoint(2000, 2000); source->field_5618 = 1; source->field_5616 = 7;
+        check("formation-same-destination-resets-throttle", source->Formation(target) == CGameAIBase::ACTION_INTERRUPTABLE
+            && source->field_5616 == 0 && source->field_5618 == 1 && source->m_currentSearchRequest == NULL);
+        struct SpaceCase { BYTE source, target; INT cells; BOOL close; };
+        const SpaceCase spaces[] = {{3, 3, 2, TRUE}, {3, 3, 3, FALSE}, {0, 0, 254, TRUE}, {0, 0, 255, FALSE},
+            {1, 1, 256, TRUE}, {1, 1, 257, FALSE}, {2, 2, 256, TRUE}, {255, 255, 254, TRUE}, {255, 255, 255, FALSE}};
+        for (const auto& entry : spaces) {
+            reset(); sourceAnimation->m_personalSpace = entry.source; targetAnimation->m_personalSpace = entry.target;
+            target->m_curDest = CPoint(source->m_pos.x + entry.cells * 16, source->m_pos.y);
+            check("formation-byte-space-boundary", source->Formation(target) == CGameAIBase::ACTION_INTERRUPTABLE
+                && source->field_5616 == (entry.close ? 0 : 2));
+        }
+        discardRequest();
+        check("request-queue-restored", game->m_searchRequests.GetCount() == requestCount && messages.GetCount() == messageCount);
+        check("deny-counts-balanced", objects->m_pArray[(sourceId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == sourceDenies
+            && objects->m_pArray[(targetId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == targetDenies);
+        immunities.RemoveAll();
+        for (auto* entry : savedImmunities) immunities.AddTail(entry);
+        source->m_curAction = savedAction; source->m_typeAI.Set(savedSourceType); target->m_typeAI.Set(savedTargetType);
+        source->m_marker = savedSourceMarker; target->m_marker = savedTargetMarker;
+        source->m_derivedStats.m_generalState = savedState; source->m_derivedStats.m_spellStates = savedSpells;
+        source->m_nUnselectableCounter = savedUnselectable; source->m_moraleFailure = savedMorale; source->m_bSelected = savedSelected;
+        source->m_targetId = savedTargetId; source->m_nLastActionReturn = savedReturn;
+        source->m_userCommandPause = savedPause; source->m_actionCount = savedCount;
+        source->field_5618 = savedPhase; source->field_5616 = savedThrottle;
+        source->m_curDest = savedDest; target->m_curDest = savedTargetDest; target->m_pos = savedTargetPos;
+        target->m_objectType = savedTargetObjectType; target->m_pArea = savedTargetArea;
+        source->m_derivedStats.m_nEncumberance = savedEncumberance; source->m_lSeen.Set(savedSeen); source->m_canBeSeen = savedSeenCount;
+        sourceAnimation->m_personalSpace = sourceSpace; targetAnimation->m_personalSpace = targetSpace;
+        source->SetSequence(static_cast<BYTE>(savedSequence)); source->m_pathSearchInvalidDest = savedInvalidDest;
+        game->m_nTimeStop = savedStop; game->m_searchRequestListEmpty = savedEmpty;
+        game->m_hSearchThread = savedSearchSemaphore;
+        CloseHandle(testSearchSemaphore);
+        objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"targetresolvechecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "target/formation mismatch (state restored)"); return; }
+        s_pc++; return;
     }
 
     if (strcmp(step.op, "spellusechecks") == 0) {
