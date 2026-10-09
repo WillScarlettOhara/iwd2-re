@@ -190,6 +190,39 @@ CGameAIBase::~CGameAIBase()
     }
 }
 
+// 0x44DAC0
+// #guess name: same-area, target-state, search-grid range and LOS query.
+BOOL CGameAIBase::CheckTargetVisibility(CGameObject* pTarget, BOOL bAllowDead)
+{
+    if (pTarget == NULL || pTarget->m_pArea != m_pArea) {
+        return FALSE;
+    }
+    if (pTarget->GetObjectType() == CGameObject::TYPE_SPRITE) {
+        CGameSprite* sprite = static_cast<CGameSprite*>(pTarget);
+        if (sprite->m_baseStats.m_bStealthMode != FALSE
+            || (!bAllowDead && (sprite->m_derivedStats.m_generalState & STATE_DEAD) != 0)) {
+            return FALSE;
+        }
+    }
+    CPoint target = pTarget->GetPos();
+    CPoint source = GetPos();
+    INT dx = source.x / CPathSearch::GRID_SQUARE_SIZEX - target.x / CPathSearch::GRID_SQUARE_SIZEX;
+    INT dy = source.y / CPathSearch::GRID_SQUARE_SIZEY - target.y / CPathSearch::GRID_SQUARE_SIZEY;
+    BOOLEAN explored = FALSE;
+    if (pTarget->GetObjectType() == CGameObject::TYPE_SPRITE) {
+        explored = static_cast<CGameSprite*>(pTarget)->Orderable(FALSE);
+    }
+    SHORT range = GetVisualRange();
+    SHORT rangeAgain = GetVisualRange();
+    if (dx * dx + dy * dy > range * rangeAgain) {
+        return FALSE;
+    }
+    const BYTE* terrain = GetVisibleTerrainTable();
+    source = GetPos();
+    target = pTarget->GetPos();
+    return m_pArea->CheckLOS(target, source, terrain, explored) != FALSE;
+}
+
 // 0x44D100
 const BYTE* CGameAIBase::GetVisibleTerrainTable()
 {

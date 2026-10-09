@@ -1,5 +1,10 @@
 # Scripted spell target gate
 
+Follow-up: [spell usefulness and selection](combat-spell-usefulness-recovery.md)
+restores 0x764880, the visibility helper and the original IsSpellTargetValid /
+action-0x141 caller branches. The caller limitations below describe this lot's
+earlier state; the remaining dispatcher cases are still incomplete.
+
 This lot restores CGameSprite::CheckSpellTarget at 0x764810. The name is
 inferred from its role and marked #guess; no BG2 canonical name was found.
 The bridge address map resolves the name in the recovery context. The initial

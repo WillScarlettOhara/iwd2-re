@@ -72,6 +72,7 @@ public:
     void CheckTimers(LONG cycles);
     void ClearTriggers();
     BOOL CheckAppropriateTarget(CSpell* pSpell, CGameAIBase* pTarget);
+    BOOL CheckTargetVisibility(CGameObject* pTarget, BOOL bAllowDead); // #guess name
     BOOL PartyHasItem(const CResRef& resRef);
     void ApplyEffectToParty(CGameEffect* pEffect);
     SHORT GiveItemCreate(CGameSprite* pTarget);

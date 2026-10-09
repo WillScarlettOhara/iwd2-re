@@ -94,6 +94,8 @@
 //                                from that projectile on normal engine ticks.
 //   targetgatechecks            check recovered spell target/invisibility gates;
 //                                restore both actors in the same tick.
+//   spellusechecks              check spell usefulness, visibility and scripted
+//                                selection/trigger dispatch; restore all state.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -124,6 +126,7 @@
 #include "CGameEffect.h"
 #include "CItem.h"
 #include "CMessage.h"
+#include "CPathSearch.h"
 #include "CVariableHash.h"
 #include "CProjectile.h"
 #include "CSpell.h"
@@ -1555,6 +1558,429 @@ void Tick(CWarp* pActiveEngine)
         Emit("{\"step\":%d,\"op\":\"combatteams\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
+    }
+
+    if (strcmp(step.op, "spellusechecks") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2) {
+            Fail(nStep, step.op, "requires world and two party members");
+            return;
+        }
+        auto* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* sourceObject = NULL;
+        CGameObject* targetObject = NULL;
+        if (objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH, &sourceObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable"); return;
+        }
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &targetObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable"); return;
+        }
+        auto* source = static_cast<CGameSprite*>(sourceObject);
+        auto* target = static_cast<CGameSprite*>(targetObject);
+        CSpell guard(CResRef("SPWI112"));
+        if (!guard.Demand() || !guard.pRes->m_bParsed || source->m_pArea == NULL) {
+            objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "spell or source area unavailable"); return;
+        }
+        auto* resource = guard.pRes;
+        auto* oldHeader = resource->m_pHeader;
+        auto* oldAbilities = resource->m_pAbilities;
+        auto* oldEffects = resource->m_pEffects;
+        SPELL_HEADER header = *oldHeader;
+        SPELL_ABILITY abilities[2] = {};
+        ITEM_EFFECT effects[4] = {};
+        header.itemType = 1; header.spellLevel = 2; header.abilityCount = 1;
+        header.itemFlags = 0; header.school = 0;
+        abilities[0].minCasterLevel = 0; abilities[0].effectCount = 1;
+        abilities[1].minCasterLevel = 2; abilities[1].effectCount = 2; abilities[1].startingEffect = 2;
+        for (auto& effect : effects) {
+            effect.effectID = CGAMEEFFECT_DAMAGE; effect.probabilityUpper = 100;
+        }
+        resource->m_pHeader = &header; resource->m_pAbilities = abilities; resource->m_pEffects = effects;
+        auto sourceBase = source->m_baseStats, targetBase = target->m_baseStats;
+        auto sourceState = source->m_derivedStats.m_generalState, targetState = target->m_derivedStats.m_generalState;
+        auto sourceStates = source->m_derivedStats.m_spellStates, targetStates = target->m_derivedStats.m_spellStates;
+        auto sourceMask = source->m_derivedStats.m_classMask;
+        BYTE sourceLevels[CAIOBJECT_CLASS_MAX];
+        memcpy(sourceLevels, source->m_derivedStats.m_nClassLevels, sizeof(sourceLevels));
+        SHORT arcaneFailure = source->m_derivedStats.m_nSpellFailureArcane;
+        SHORT divineFailure = source->m_derivedStats.m_nSpellFailureDivine;
+        BOOL disabled[3], immuneLevels[10];
+        memcpy(disabled, source->m_derivedStats.m_disabledSpellTypes, sizeof(disabled));
+        memcpy(immuneLevels, target->m_derivedStats.m_cImmunitiesSpellLevel.m_levels, sizeof(immuneLevels));
+        auto sourceImmunities = source->m_derivedStats.m_cImmunitiesSpell;
+        auto targetImmunities = target->m_derivedStats.m_cImmunitiesSpell;
+        auto targetOpcodes = target->m_derivedStats.m_activeEffectOpcodes;
+        auto sourceSpells = source->m_spells;
+        auto sourceDomain = source->m_domainSpells;
+        CAIAction oldAction;
+        oldAction = source->m_curAction;
+        auto oldSelection = source->field_3BA;
+        INT oldSpell = source->field_588;
+        SHORT oldReturn = source->m_nLastActionReturn;
+        LONG oldTargetId = source->m_targetId;
+        BOOL oldSelected = source->m_bSelected;
+        source->m_targetId = CGameObjectArray::INVALID_INDEX;
+        source->m_bSelected = FALSE;
+        CPoint oldPos = target->m_pos;
+        CGameArea* oldArea = target->m_pArea;
+        WORD oldAreaType = source->m_pArea->m_header.m_areaType;
+        CSpellResRefList* lists[] = {&game->m_innateSpells, &game->m_songs, &game->m_shapeshifts};
+        CResRef* oldListData[3];
+        UINT oldListCounts[3];
+        for (INT index = 0; index < 3; ++index) {
+            oldListData[index] = lists[index]->m_pList; oldListCounts[index] = lists[index]->m_nCount;
+        }
+        INT demands = resource->m_nServiceCount, requests = resource->m_nLockCount;
+        INT refs = resource->m_pDimmKeyTableEntry->field_10;
+        INT queued = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"spelluse-case\",\"case\":\"%s\",\"passed\":%s}", nStep, name, passed ? "true" : "false");
+            valid = valid && passed; ++checks;
+        };
+        auto reset = [&]() {
+            source->m_derivedStats.m_generalState = target->m_derivedStats.m_generalState = STATE_NORMAL;
+            source->m_derivedStats.m_spellStates.reset(); target->m_derivedStats.m_spellStates.reset();
+            source->m_derivedStats.m_nSpellFailureArcane = source->m_derivedStats.m_nSpellFailureDivine = 0;
+            memset(source->m_derivedStats.m_disabledSpellTypes, 0, sizeof(disabled));
+            memset(target->m_derivedStats.m_cImmunitiesSpellLevel.m_levels, 0, sizeof(immuneLevels));
+            source->m_derivedStats.m_cImmunitiesSpell.clear(); target->m_derivedStats.m_cImmunitiesSpell.clear();
+            memset(source->m_baseStats.m_feats, 0, sizeof(source->m_baseStats.m_feats));
+            memset(source->m_derivedStats.m_nClassLevels, 3, sizeof(sourceLevels));
+            source->m_derivedStats.m_classMask = CLASSMASK_BARD | CLASSMASK_WIZARD;
+            source->m_baseStats.m_flags = target->m_baseStats.m_flags = 0;
+            target->m_baseStats.m_visible = 0; target->m_baseStats.m_bStealthMode = FALSE;
+            header.itemType = 1; header.spellLevel = 2; header.abilityCount = 1; header.itemFlags = 0;
+            abilities[0].minCasterLevel = 0; abilities[0].effectCount = 1;
+            effects[0].effectID = CGAMEEFFECT_DAMAGE; effects[0].dwFlags = 0;
+            effects[1].effectID = CGAMEEFFECT_DAMAGE; effects[1].dwFlags = 0;
+            target->m_pArea = oldArea; target->m_pos = source->m_pos;
+            source->m_pArea->m_header.m_areaType = oldAreaType;
+            for (INT index = 0; index < 3; ++index) lists[index]->m_nCount = 0;
+        };
+        auto useful = [&](DWORD flags = 0) { return source->CheckSpellUseful(target, 2112, flags); };
+        reset();
+        check("ordinary-damage-useful", useful());
+        check("null-target-diagnostic", !source->CheckSpellUseful(NULL, 2112, 0xFFFFFFFF));
+        check("zero-spell-diagnostic", !source->CheckSpellUseful(target, 0, 0x80000000));
+        for (DWORD flags : {1U, 2U, 0xFFFFFFFFU}) check("query-flags-do-not-bypass", useful(flags));
+        source->m_derivedStats.m_generalState = STATE_SILENCED;
+        check("silenced-source", !useful());
+        source->m_derivedStats.m_spellStates.set(SPLSTATE_VOCALIZE);
+        check("vocalize-state-bypasses-silence", useful());
+        source->m_derivedStats.m_spellStates.reset();
+        source->m_baseStats.m_feats[2] = 1U << (CGAMESPRITE_FEAT_SUBVOCAL_CASTING - 64);
+        check("subvocal-feat-bypasses-silence", useful());
+        reset();
+        {
+            CSpell vocalize(CResRef("SPWI219"));
+            BOOL ready = vocalize.Demand() && vocalize.pRes->m_bParsed;
+            check("silence-exemption-resource-available", ready);
+            if (ready) {
+                auto* vocalizeHeader = vocalize.pRes->m_pHeader;
+                auto* vocalizeAbilities = vocalize.pRes->m_pAbilities;
+                auto* vocalizeEffects = vocalize.pRes->m_pEffects;
+                vocalize.pRes->m_pHeader = &header;
+                vocalize.pRes->m_pAbilities = abilities;
+                vocalize.pRes->m_pEffects = effects;
+                source->m_derivedStats.m_generalState = STATE_SILENCED;
+                check("numeric-2219-bypasses-silence", source->CheckSpellUseful(target, 2219, 0));
+                vocalize.pRes->m_pHeader = vocalizeHeader;
+                vocalize.pRes->m_pAbilities = vocalizeAbilities;
+                vocalize.pRes->m_pEffects = vocalizeEffects;
+                vocalize.Release();
+            }
+        }
+        reset();
+        target->m_derivedStats.m_generalState = STATE_SILENCED;
+        check("silenced-target-not-caster", useful());
+        reset();
+        header.itemFlags = 0x2000; source->m_pArea->m_header.m_areaType &= ~1;
+        check("outdoor-spell-rejected-indoors", !useful());
+        source->m_pArea->m_header.m_areaType |= 1;
+        check("outdoor-spell-allowed-outdoors", useful());
+        reset();
+        for (SHORT caster : {1, 2}) {
+            header.itemType = caster;
+            source->m_derivedStats.m_disabledSpellTypes[caster] = 1;
+            check("disabled-spell-type-exact-true", !useful());
+            source->m_derivedStats.m_disabledSpellTypes[caster] = 2;
+            check("disabled-spell-type-two-not-true", useful());
+            source->m_derivedStats.m_disabledSpellTypes[caster] = 0;
+            SHORT& failure = caster == 1 ? source->m_derivedStats.m_nSpellFailureArcane : source->m_derivedStats.m_nSpellFailureDivine;
+            for (SHORT value : {-1, 99, 100, 101}) {
+                failure = value;
+                check("failure-threshold", useful() == (value < 100));
+            }
+            failure = 0;
+        }
+        reset();
+        TString key; key = "SPWI112";
+        source->m_derivedStats.m_cImmunitiesSpell.insert(key);
+        check("caster-resource-immunity-ignored", useful());
+        target->m_derivedStats.m_cImmunitiesSpell.insert(key);
+        check("target-resource-immunity", !useful());
+        reset();
+        for (DWORD level : {0U, 1U, 2U, 8U, 9U, 258U}) {
+            header.spellLevel = level;
+            memset(target->m_derivedStats.m_cImmunitiesSpellLevel.m_levels, 1, sizeof(immuneLevels));
+            check("byte-level-immunity-boundary", useful() == (static_cast<BYTE>(level) >= 9));
+        }
+        header.spellLevel = 1;
+        CResRef exception("SPWI112");
+        for (INT list = 0; list < 3; ++list) {
+            lists[list]->m_pList = &exception; lists[list]->m_nCount = 1;
+            check("level-one-catalog-exemption", useful());
+            lists[list]->m_nCount = 0;
+        }
+        reset();
+        header.abilityCount = 0;
+        check("no-abilities", !useful());
+        header.abilityCount = 1; abilities[0].minCasterLevel = 4;
+        check("caster-level-too-low", !useful());
+        abilities[0].minCasterLevel = 3;
+        check("caster-level-exact-threshold", useful());
+        abilities[0].minCasterLevel = 0; abilities[0].effectCount = 0;
+        check("eligible-empty-ability", useful());
+        abilities[0].effectCount = 1;
+        header.abilityCount = 2;
+        effects[0].effectID = CGAMEEFFECT_BERSERK;
+        effects[2].effectID = CGAMEEFFECT_DAMAGE;
+        target->m_derivedStats.m_generalState = STATE_BERSERK;
+        check("selected-count-uses-ability-zero-payload", !useful());
+        target->m_derivedStats.m_generalState = 0;
+        check("missing-second-ability-zero-effect-skipped", useful());
+        reset();
+        struct StateCase { WORD opcode; DWORD state; };
+        const StateCase generalCases[] = {
+            {CGAMEEFFECT_BERSERK, STATE_BERSERK},
+            {CGAMEEFFECT_CHARM, STATE_CHARMED},
+            {CGAMEEFFECT_HASTE, STATE_HASTED},
+            {CGAMEEFFECT_PANIC, STATE_PANIC},
+            {CGAMEEFFECT_POISON, STATE_POISONED},
+            {CGAMEEFFECT_SILENCE, STATE_SILENCED},
+            {CGAMEEFFECT_SLEEP, STATE_SLEEPING},
+            {CGAMEEFFECT_SLOW, STATE_SLOWED},
+            {CGAMEEFFECT_STUN, STATE_STUNNED},
+            {CGAMEEFFECT_INFRAVISION, STATE_INFRAVISION},
+            {CGAMEEFFECT_BLUR, STATE_BLUR},
+            {CGAMEEFFECT_NONDETECTION, STATE_NONDETECTION},
+            {CGAMEEFFECT_BLINDNESS, STATE_BLIND},
+            {CGAMEEFFECT_DISEASE, STATE_DISEASED},
+            {CGAMEEFFECT_MIRRORIMAGE, STATE_MIRRORIMAGE},
+            {CGAMEEFFECT_CONFUSION, STATE_CONFUSED},
+            {CGAMEEFFECT_NON_CUMULATIVEAID, STATE_AID},
+            {CGAMEEFFECT_NON_CUMULATIVEBLESS, STATE_BLESS},
+            {CGAMEEFFECT_NON_CUMULATIVECHANT, STATE_CHANT},
+            {ICEWIND_CGAMEEFFECT_UNCONSCIOUSNESS, STATE_SLEEPING},
+        };
+        for (const auto& entry : generalCases) {
+            reset(); effects[0].effectID = entry.opcode;
+            check("general-effect-absent", useful());
+            source->m_derivedStats.m_generalState = entry.state;
+            // Silence is a caster restriction even when testing its target effect.
+            if (entry.state == STATE_SILENCED) source->m_derivedStats.m_spellStates.set(SPLSTATE_VOCALIZE);
+            check("general-effect-caster-state-ignored", useful());
+            target->m_derivedStats.m_generalState = entry.state;
+            check("general-effect-already-active", !useful());
+        }
+        struct SpellCase { WORD opcode; UINT state; };
+        const SpellCase spellCases[] = {
+            {CGAMEEFFECT_DEAFNESS, SPLSTATE_DEAFENED},
+            {CGAMEEFFECT_NON_CUMULATIVEDRAWUPONHOLYMIGHT, SPLSTATE_DRAW_UPON_HOLY_MIGHT},
+            {CGAMEEFFECT_SANCTUARY, SPLSTATE_SANCTUARY},
+            {CGAMEEFFECT_ENTANGLE, SPLSTATE_ENTANGLE},
+            {CGAMEEFFECT_WEBHOLD, SPLSTATE_WEB},
+            {CGAMEEFFECT_GREASEPOOL, SPLSTATE_GREASE},
+            {CGAMEEFFECT_STONESKINS, SPLSTATE_STONESKIN},
+            {ICEWIND_CGAMEEFFECT_PRAYER, SPLSTATE_BENEFICIAL_PRAYER},
+            {ICEWIND_CGAMEEFFECT_RECITATION, SPLSTATE_BENEFICIAL_RECITATION},
+            {ICEWIND_CGAMEEFFECT_CLOAKOFFEAR, SPLSTATE_CLOAK_OF_FEAR},
+            {ICEWIND_CGAMEEFFECT_SHROUDOFFLAME, SPLSTATE_SHROUD_OF_FLAME},
+            {ICEWIND_CGAMEEFFECT_HOPELESSNESS, SPLSTATE_HOPELESSNESS},
+            {ICEWIND_CGAMEEFFECT_PROTECTIONFROMEVIL, SPLSTATE_PROTECTION_FROM_EVIL},
+            {ICEWIND_CGAMEEFFECT_ARMOROFFAITH, SPLSTATE_ARMOR_OF_FAITH},
+            {ICEWIND_CGAMEEFFECT_NAUSEA, SPLSTATE_NAUSEA},
+            {ICEWIND_CGAMEEFFECT_DEATHWARD, SPLSTATE_DEATH_WARD},
+            {ICEWIND_CGAMEEFFECT_HOLYPOWER, SPLSTATE_HOLY_POWER},
+            {ICEWIND_CGAMEEFFECT_CHARM, SPLSTATE_CONTROLLED},
+            {ICEWIND_CGAMEEFFECT_OTILUKESRESILIENTSPHERE, SPLSTATE_OTILUKES_RESILIENT_SPHERE},
+            {ICEWIND_CGAMEEFFECT_BARKSKIN, SPLSTATE_BARKSKIN},
+            {ICEWIND_CGAMEEFFECT_FREEACTION, SPLSTATE_FREE_ACTION},
+            {ICEWIND_CGAMEEFFECT_ENTROPYSHIELD, SPLSTATE_ENTROPY_SHIELD},
+            {ICEWIND_CGAMEEFFECT_STORMSHELL, SPLSTATE_STORM_SHELL},
+            {ICEWIND_CGAMEEFFECT_PROTECTIONFROMELEMENTS, SPLSTATE_PROTECTION_FROM_THE_ELEMENTS},
+            {CGAMEEFFECT_HOLDCREATURE, SPLSTATE_HELD},
+            {ICEWIND_CGAMEEFFECT_AEGIS, SPLSTATE_AEGIS},
+            {ICEWIND_CGAMEEFFECT_EXECUTIONERSEYES, SPLSTATE_EXECUTIONERS_EYES},
+            {ICEWIND_CGAMEEFFECT_TORTOISESHELL, SPLSTATE_TORTOISE_SHELL},
+            {ICEWIND_CGAMEEFFECT_BLINK, SPLSTATE_BLINK},
+            {ICEWIND_CGAMEEFFECT_PROTECTIONFORMARROWS, SPLSTATE_PROTECTION_FROM_NORMAL_MISSILES},
+            {ICEWIND_CGAMEEFFECT_TENSERSTRANSFORMATION, SPLSTATE_TENSERS_TRANSFORMATION},
+            {ICEWIND_CGAMEEFFECT_GLOBEOFINVULNERABILITY, SPLSTATE_GLOBE_OF_INVULNERABILITY},
+            {ICEWIND_CGAMEEFFECT_LOWERRESISTANCE, SPLSTATE_LOWER_RESISTANCE},
+            {ICEWIND_CGAMEEFFECT_BANE, SPLSTATE_BANE},
+            {ICEWIND_CGAMEEFFECT_CONTROLUNDEAD, SPLSTATE_CONTROLLED},
+            {ICEWIND_CGAMEEFFECT_HOLDUNDEAD, SPLSTATE_HELD},
+        };
+        for (const auto& entry : spellCases) {
+            reset(); effects[0].effectID = entry.opcode;
+            check("spell-effect-absent", useful());
+            source->m_derivedStats.m_spellStates.set(entry.state);
+            check("spell-effect-caster-state-ignored", useful());
+            target->m_derivedStats.m_spellStates.set(entry.state);
+            check("spell-effect-already-active", !useful());
+        }
+        reset(); effects[0].effectID = CGAMEEFFECT_INVISIBLE;
+        target->m_derivedStats.m_generalState = STATE_INVISIBLE;
+        check("invisibility-effect-already-active", !useful());
+        target->m_baseStats.m_visible = 1;
+        check("force-visible-invisibility-effect-useful", useful());
+        for (WORD opcode : {CGAMEEFFECT_FEEBLEMINDEDNESS, ICEWIND_CGAMEEFFECT_ENFEEBLEMENT}) {
+            reset(); effects[0].effectID = opcode;
+            check("enfeeblement-absent", useful());
+            target->m_derivedStats.m_generalState = STATE_FEEBLEMINDED;
+            check("enfeeblement-general-state", !useful());
+            target->m_derivedStats.m_generalState = 0;
+            target->m_derivedStats.m_spellStates.set(SPLSTATE_ENFEEBLED);
+            check("enfeeblement-spell-state", !useful());
+        }
+        for (DWORD flags : {0U, 1U, 0xFFFFFFFFU}) {
+            reset(); effects[0].effectID = ICEWIND_CGAMEEFFECT_FIRESHIELD; effects[0].dwFlags = flags;
+            UINT selected = flags == 0 ? SPLSTATE_RED_FIRESHIELD : SPLSTATE_BLUE_FIRESHIELD;
+            target->m_derivedStats.m_spellStates.set(selected == 5 ? 6 : 5);
+            check("opposite-fireshield-useful", useful());
+            target->m_derivedStats.m_spellStates.set(selected);
+            check("selected-fireshield-active", !useful());
+        }
+        for (UINT state : {16U, 17U}) {
+            reset(); effects[0].effectID = ICEWIND_CGAMEEFFECT_RIGHTEOUSWRATHOFFAITHFUL;
+            check("righteous-wrath-absent", useful());
+            target->m_derivedStats.m_spellStates.set(state);
+            check("either-righteous-wrath-state-blocks", !useful());
+        }
+        for (DWORD state : {0U, 31U, 32U, 157U, 255U}) {
+            reset(); effects[0].effectID = ICEWIND_CGAMEEFFECT_SETSPELLSTATE; effects[0].dwFlags = state;
+            check("arbitrary-spell-state-absent", useful());
+            target->m_derivedStats.m_spellStates.set(state);
+            check("arbitrary-spell-state-active", !useful());
+        }
+        for (WORD opcode : {CGAMEEFFECT_IMMUNITYSPELL, ICEWIND_CGAMEEFFECT_IMMUNITYSPELL}) {
+            reset(); effects[0].effectID = opcode;
+            check("zero-immunity-selector-ignored", useful());
+            effects[0].dwFlags = 63;
+            check("immunity-selector-true", useful());
+            effects[0].dwFlags = 66; target->m_derivedStats.m_spellStates.set(SPLSTATE_DEAFENED);
+            check("immunity-selector-false", !useful());
+        }
+        reset(); abilities[0].effectCount = 2;
+        effects[0].effectID = CGAMEEFFECT_DAMAGE; effects[1].effectID = CGAMEEFFECT_BERSERK;
+        target->m_derivedStats.m_generalState = STATE_BERSERK;
+        check("later-blocked-effect-rejects-whole-spell", !useful());
+        effects[0].effectID = CGAMEEFFECT_BERSERK; effects[1].effectID = CGAMEEFFECT_DAMAGE;
+        check("earlier-blocked-effect-rejects-whole-spell", !useful());
+        reset();
+        check("visibility-null-target", !source->CheckTargetVisibility(NULL, FALSE));
+        check("visibility-near-target", source->CheckTargetVisibility(target, FALSE));
+        target->m_pArea = NULL;
+        check("visibility-different-area", !source->CheckTargetVisibility(target, TRUE));
+        target->m_pArea = oldArea;
+        target->m_derivedStats.m_generalState = STATE_DEAD;
+        check("visibility-dead-target", !source->CheckTargetVisibility(target, FALSE));
+        check("visibility-allow-dead", source->CheckTargetVisibility(target, TRUE));
+        target->m_derivedStats.m_generalState = 0; target->m_baseStats.m_bStealthMode = TRUE;
+        check("visibility-stealth-mode-blocks", !source->CheckTargetVisibility(target, TRUE));
+        target->m_baseStats.m_bStealthMode = FALSE;
+        target->m_pos.x += (source->GetVisualRange() + 1) * CPathSearch::GRID_SQUARE_SIZEX;
+        check("visibility-search-grid-range", !source->CheckTargetVisibility(target, FALSE));
+        reset();
+        CAIObjectType selector(CAIObjectType::ANYONE); selector.SetInstance(targetId);
+        CAITrigger trigger(CAITRIGGER_ISSPELLTARGETVALID, selector, 2112);
+        trigger.m_specific2 = 0xFFFFFFFF;
+        check("script-trigger-combines-gates", source->EvaluateStatusTrigger(trigger));
+        target->m_derivedStats.m_spellStates.set(SPLSTATE_SANCTUARY);
+        check("script-trigger-sanctuary", !source->EvaluateStatusTrigger(trigger));
+        target->m_derivedStats.m_spellStates.reset();
+        effects[0].effectID = CGAMEEFFECT_BERSERK;
+        target->m_derivedStats.m_generalState = STATE_BERSERK;
+        check("script-trigger-already-affected", !source->EvaluateStatusTrigger(trigger));
+        reset();
+        CAIAction action;
+        action.m_actionID = 0x141; action.m_acteeID = selector;
+        auto select = [&](const char* text, DWORD flags) {
+            action.m_string1 = text; action.m_specificID = flags;
+            source->m_curAction = action; source->field_588 = 0;
+            return source->ExecuteAction();
+        };
+        check("script-action-selects-useful", select("2112", 9) == CGameAIBase::ACTION_DONE
+            && source->field_588 == 2112 && source->field_3BA.Equal(target->GetAIType()));
+        effects[0].effectID = CGAMEEFFECT_BERSERK; target->m_derivedStats.m_generalState = STATE_BERSERK;
+        check("script-action-skips-ineffective", select("2112", 9) == CGameAIBase::ACTION_DONE && source->field_588 == 0);
+        target->m_derivedStats.m_spellStates.set(SPLSTATE_SANCTUARY);
+        check("script-action-bit-two-bypasses-both-gates", select("2112", 11) == CGameAIBase::ACTION_DONE && source->field_588 == 2112);
+        reset();
+        target->m_baseStats.m_bStealthMode = TRUE;
+        check("script-action-enforces-visibility", select("2112", 8) == CGameAIBase::ACTION_DONE && source->field_588 == 0);
+        check("script-action-bit-one-bypasses-visibility", select("2112", 9) == CGameAIBase::ACTION_DONE && source->field_588 == 2112);
+        reset();
+        check("script-action-malformed-list", select("211", 9) == CGameAIBase::ACTION_ERROR);
+        check("script-action-empty-list", select("", 9) == CGameAIBase::ACTION_DONE && source->field_588 == 0);
+        check("script-action-zero-entry-skipped", select("00002112", 9) == CGameAIBase::ACTION_DONE && source->field_588 == 2112);
+        check("script-action-random-start-wraps", select("00002112", 13) == CGameAIBase::ACTION_DONE && source->field_588 == 2112);
+        source->m_nLastActionReturn = 123;
+        check("script-action-unresolved-entry-preserves-last-return", select("0000", 1) == CGameAIBase::ACTION_ERROR
+            && source->field_588 == 0 && source->m_nLastActionReturn == 123);
+        source->field_588 = 2112; source->m_curAction.m_string1 = "bad";
+        check("script-action-existing-selection-preserved", source->ExecuteAction() == CGameAIBase::ACTION_DONE && source->field_588 == 2112);
+        action.m_acteeID = CAIObjectType::NOONE;
+        check("script-action-no-target-default", select("2112", 9) == CGameAIBase::ACTION_DONE && source->field_588 == 0);
+        check("script-action-null-target-gate-error", select("2112", 0x29) == CGameAIBase::ACTION_ERROR && source->field_588 == 0);
+        check("script-action-no-target-explicit-bypass", select("2112", 0x2B) == CGameAIBase::ACTION_DONE
+            && source->field_588 == 2112 && source->field_3BA.Equal(CAIObjectType::NOONE));
+        trigger.m_triggerCause = CAIObjectType::NOONE;
+        check("script-trigger-no-target", !source->EvaluateStatusTrigger(trigger));
+        action.m_acteeID = selector;
+        UINT spellId = 0;
+        BOOL catalogued = game->m_spells.Find(CResRef("SPWI112"), spellId);
+        check("script-action-spell-catalogued", catalogued);
+        for (UINT index = 0; index < CSPELLLIST_NUM_CLASSES; ++index) source->m_spells.Get(index)->Clear();
+        source->m_domainSpells.Clear();
+        check("script-action-unmemorized", select("2112", 1) == CGameAIBase::ACTION_DONE && source->field_588 == 0);
+        if (catalogued) {
+            source->m_spells.Get(game->GetSpellcasterIndex(CAIOBJECTTYPE_C_WIZARD))->Add(spellId, 0, 1, 1, 0);
+            check("script-action-memorized", select("2112", 1) == CGameAIBase::ACTION_DONE && source->field_588 == 2112);
+        }
+        check("query-no-hp-change", source->m_baseStats.m_hitPoints == sourceBase.m_hitPoints && target->m_baseStats.m_hitPoints == targetBase.m_hitPoints);
+        check("query-no-messages", queued == g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount());
+        check("query-no-active-opcode-change", target->m_derivedStats.m_activeEffectOpcodes == targetOpcodes);
+        check("balanced-resource-ownership", demands == resource->m_nServiceCount && requests == resource->m_nLockCount
+            && refs == resource->m_pDimmKeyTableEntry->field_10);
+        source->m_baseStats = sourceBase; target->m_baseStats = targetBase;
+        source->m_derivedStats.m_generalState = sourceState; target->m_derivedStats.m_generalState = targetState;
+        source->m_derivedStats.m_spellStates = sourceStates; target->m_derivedStats.m_spellStates = targetStates;
+        source->m_derivedStats.m_classMask = sourceMask;
+        memcpy(source->m_derivedStats.m_nClassLevels, sourceLevels, sizeof(sourceLevels));
+        source->m_derivedStats.m_nSpellFailureArcane = arcaneFailure; source->m_derivedStats.m_nSpellFailureDivine = divineFailure;
+        memcpy(source->m_derivedStats.m_disabledSpellTypes, disabled, sizeof(disabled));
+        memcpy(target->m_derivedStats.m_cImmunitiesSpellLevel.m_levels, immuneLevels, sizeof(immuneLevels));
+        source->m_derivedStats.m_cImmunitiesSpell = sourceImmunities; target->m_derivedStats.m_cImmunitiesSpell = targetImmunities;
+        source->m_spells = sourceSpells; source->m_domainSpells = sourceDomain;
+        source->m_curAction = oldAction; source->field_588 = oldSpell; source->field_3BA = oldSelection; source->m_nLastActionReturn = oldReturn;
+        source->m_targetId = oldTargetId; source->m_bSelected = oldSelected;
+        target->m_pArea = oldArea; target->m_pos = oldPos; source->m_pArea->m_header.m_areaType = oldAreaType;
+        for (INT index = 0; index < 3; ++index) { lists[index]->m_pList = oldListData[index]; lists[index]->m_nCount = oldListCounts[index]; }
+        resource->m_pHeader = oldHeader; resource->m_pAbilities = oldAbilities; resource->m_pEffects = oldEffects;
+        guard.Release();
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) { Fail(nStep, step.op, "spell/visibility/script mismatch (all state restored)"); return; }
+        Emit("{\"step\":%d,\"op\":\"spellusechecks\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        ++s_pc; return;
     }
 
     if (strcmp(step.op, "targetgatechecks") == 0) {
