@@ -69,6 +69,7 @@ public:
     static const SHORT TAKEPARTYGOLD;
     static const SHORT STARTDIALOG;
     static const SHORT PLAYERDIALOG;
+    static const SHORT USEDOOR;
     static const SHORT PICKLOCK;
     static const SHORT BASHDOOR;
     static const SHORT APPLYSPELL;

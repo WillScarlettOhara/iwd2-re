@@ -6,6 +6,7 @@
 #include "CTiledObject.h"
 #include "FileFormat.h"
 
+#pragma pack(push, 2)
 class CGameDoor : public CGameAIBase {
 public:
     static const LONG RANGE_DOOR;
@@ -14,11 +15,16 @@ public:
     /* 0000 */ ~CGameDoor() override;
     /* 000C */ void AIUpdate() override;
     /* 0028 */ BOOLEAN CanSaveGame(STRREF& strError) override;
+    /* 002C */ BOOLEAN CompressTime(DWORD deltaTime) override;
     /* 0030 */ void DebugDump(const CString& message, BOOLEAN bEchoToScreen) override;
     /* 0034 */ BOOL IsOver(const CPoint& pt) override;
+    /* 0040 */ void OnActionButton(const CPoint& pt) override;
     /* 0048 */ void RemoveFromArea() override;
+    /* 004C */ void Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface) override;
     /* 0050 */ BOOLEAN DoAIUpdate(BOOLEAN active, LONG counter) override;
     /* 0058 */ void SetCursor(LONG nToolTip) override;
+    /* 00B8 */ virtual void RenderClosedPoly(CGameArea* pArea, CVidMode* pVidMode, int nSurface, COLORREF color); /*#guess*/
+    /* 00BC */ virtual void RenderOpenPoly(CGameArea* pArea, CVidMode* pVidMode, int nSurface, COLORREF color); /*#guess*/
 
     void OnDoorStatusUpdate(BOOLEAN bDoorOpened, DWORD dwFlags, WORD nTrapActivated, WORD nTrapDetected);
     void Marshal(CAreaFileDoorObject** pDoorObject);
@@ -68,5 +74,6 @@ public:
     /* 0706 */ CAreaPoint* m_pOpenPolygonPoints;
     /* 070A */ int m_nAICounter;
 };
+#pragma pack(pop)
 
 #endif /* CGAMEDOOR_H_ */

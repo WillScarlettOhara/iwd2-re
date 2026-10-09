@@ -1652,7 +1652,7 @@ BOOL CVidInf::BKRenderLine(int nXFrom, int nYFrom, int nXTo, int nYTo, const CRe
 }
 
 // 0x79D680
-BOOL CVidInf::RenderConvexPoly(const CRect& rClip, CVidPoly* pPoly, DWORD dwColor, DWORD dwFlags, const CPoint& ptRef, BOOL bConvex)
+BOOL CVidInf::RenderConvexPoly(CVidPoly* pPoly, const CRect& rClip, DWORD dwColor, DWORD dwFlags, const CPoint& ptRef, BOOL bConvex)
 {
     if (g_pChitin->cVideo.Is3dAccelerated()) {
         CVideo3d::glEnable(GL_TEXTURE_2D);

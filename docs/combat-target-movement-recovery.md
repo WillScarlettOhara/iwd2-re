@@ -122,3 +122,7 @@ OnActionButton (`0x487D10`). CompressTime and Render need function creation and
 fresh exports before recovery; their valid entries and vtable ownership are
 established. The following movement executor `0x73EA80` (caller `0x729646`)
 builds a formation offset from a resolved sprite and remains unrecovered.
+
+The following [door recovery lot](combat-door-recovery.md) implements those
+three virtuals and both polygon helpers. Its refreshed audit exposes the
+additional AddEffect override at `0x486860`, now the next door target.

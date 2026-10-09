@@ -138,6 +138,8 @@
 #include "IcewindCGameEffects.h"
 #include "CDimmKeyTable.h"
 #include "CInfGame.h"
+#include "CInfButtonArray.h"
+#include "CVidInf.h"
 #include "CInfinity.h"
 #include "CScreenWorld.h"
 #include "CUIControlBase.h"
@@ -1742,6 +1744,313 @@ void Tick(CWarp* pActiveEngine)
         objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         Emit("{\"step\":%d,\"op\":\"targettriggerchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
         if (!valid) { Fail(nStep, step.op, "target/health trigger mismatch (state restored)"); return; }
+        s_pc++; return;
+    }
+
+    if (strcmp(step.op, "doorchecks") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        CGameObject* raw = NULL;
+        LONG id = game->GetFixedOrderCharacterId(0);
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires loaded party"); return;
+        }
+        auto* actor = static_cast<CGameSprite*>(raw);
+        CGameDoor* door = NULL;
+        for (INT i = 0; i < objects->m_nArraySize && door == NULL; ++i) {
+            auto& entry = objects->m_pArray[i];
+            if (entry.m_objectId == -1 || entry.m_objectPtr == NULL
+                || entry.m_objectPtr->GetObjectType() != CGameObject::TYPE_DOOR
+                || entry.m_objectPtr->m_pArea != actor->m_pArea) continue;
+            CGameObject* object = NULL;
+            if (objects->GetDeny(entry.m_objectPtr->GetId(), CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) == CGameObjectArray::SUCCESS)
+                door = static_cast<CGameDoor*>(object);
+        }
+        if (door == NULL || g_pChitin->cVideo.Is3dAccelerated()) {
+            if (door != NULL) objects->ReleaseDeny(door->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires local door and software video"); return;
+        }
+        auto* area = door->m_pArea;
+        auto areaGroupMove = area->m_groupMove;
+        auto* group = game->GetGroup();
+        auto* buttons = game->GetButtonArray();
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT messageCount = messages.GetCount();
+        std::vector<LONG> members;
+        POSITION memberPos = group->m_memberList.GetHeadPosition();
+        while (memberPos != NULL) members.push_back(reinterpret_cast<LONG>(group->m_memberList.GetNext(memberPos)));
+        group->m_memberList.RemoveAll();
+        auto groupChanged = group->m_groupChanged;
+        auto state = game->m_nState;
+        auto button = buttons->m_nSelectedButton;
+        auto icon = game->m_iconIndex;
+        auto lastClick = game->m_lastClick;
+        auto lastTarget = game->m_lastTarget;
+        auto selectedPortrait = g_pBaldurChitin->m_pEngineWorld->m_nSelectedCharacter;
+        auto commandSounds = game->GetOptions()->m_nCommandSoundsFrequency;
+        game->GetOptions()->m_nCommandSoundsFrequency = 0;
+        CTypedPtrList<CPtrList, CAIAction*> queue;
+        while (!actor->m_queuedActions.IsEmpty()) queue.AddTail(actor->m_queuedActions.RemoveHead());
+        auto actorPos = actor->m_pos;
+        auto base = actor->m_baseStats;
+        auto interrupt = actor->m_interrupt, formation = actor->m_inFormation;
+        auto pause = actor->m_userCommandPause;
+        auto trigger = actor->m_triggerId;
+        auto response = actor->m_curResponseNum, responseSet = actor->m_curResponseSetNum, script = actor->m_curScriptNum;
+        auto useButton = actor->m_currentUseButton;
+        auto encumberance = actor->m_derivedStats.m_nEncumberance;
+        actor->m_derivedStats.m_nEncumberance = 0;
+        auto flags = door->m_dwFlags;
+        auto drawPoly = door->m_drawPoly;
+        auto doorPos = door->m_pos, first = door->m_ptDest1, second = door->m_ptDest2, openDest = door->m_ptOpenDest;
+        auto tile = door->m_tiledObject.m_wAIState;
+        auto activated = door->m_trapActivated, detected = door->m_trapDetected;
+        auto* openSearch = door->m_pOpenSearch;
+        auto* closedSearch = door->m_pClosedSearch;
+        auto openCount = door->m_nOpenSearch, closedCount = door->m_nClosedSearch;
+        auto host = g_pChitin->cNetwork.m_bIsHost;
+        auto picked = area->m_iPicked;
+        ULONG time = game->GetWorldTimer()->m_gameTime;
+        BYTE actorDenies = objects->m_pArray[(id >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH];
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            ++checks; valid = valid && passed;
+            Emit("{\"step\":%d,\"op\":\"door-case\",\"case\":\"%s\",\"passed\":%s}", nStep, name, passed ? "true" : "false");
+        };
+        auto discard = [&]() {
+            while (messages.GetCount() > messageCount) delete messages.RemoveTail();
+            while (!actor->m_queuedActions.IsEmpty()) delete actor->m_queuedActions.RemoveHead();
+        };
+        auto click = [&](SHORT clickState, BYTE clickIcon, DWORD doorFlags) {
+            discard(); game->m_nState = clickState; game->m_iconIndex = clickIcon;
+            game->m_lastClick = CPoint(99, 100); game->m_lastTarget = id;
+            buttons->m_nSelectedButton = 77;
+            door->m_dwFlags = doorFlags;
+            door->OnActionButton(CPoint(123, 124));
+        };
+        click(0, 0, 0);
+        check("empty-selection-clears-target", game->m_lastClick == CPoint(-1, -1)
+            && game->m_lastTarget == CGameObjectArray::INVALID_INDEX && messages.GetCount() == messageCount);
+        click(0, 0, 0x80);
+        check("undiscovered-secret-falls-back-to-ground", game->m_lastClick == CPoint(123, 124)
+            && messages.GetCount() == messageCount);
+        area->m_groupMove = TRUE;
+        click(3, 0, 0);
+        check("formation-click-falls-back-and-resets", game->m_nState == 0
+            && buttons->m_nSelectedButton == 100 && area->m_groupMove == FALSE);
+        group->m_memberList.AddTail(reinterpret_cast<LONG*>(id));
+        for (BYTE fallback : {static_cast<BYTE>(18), static_cast<BYTE>(40), static_cast<BYTE>(255)}) {
+            click(2, fallback, 0);
+            check("target-mode-ground-fallback-retains-state", game->m_nState == 2
+                && buttons->m_nSelectedButton == 77 && messages.GetCount() == messageCount);
+        }
+        for (DWORD doorFlags : {0UL, 1UL, 3UL}) {
+            click(2, 12, doorFlags);
+            check("bash-only-closed-and-locked", game->m_nState == 2 && messages.GetCount() == messageCount);
+        }
+        auto actionMessage = [&]() -> CMessageAddAction* {
+            if (messages.GetCount() != messageCount + 1) return NULL;
+            CMessage* message = messages.GetTail();
+            return message->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_ADD_ACTION
+                ? static_cast<CMessageAddAction*>(message) : NULL;
+        };
+        click(2, 12, 2);
+        auto* action = actionMessage();
+        check("bash-leader-payload", action != NULL && action->m_action.m_actionID == CAIAction::BASHDOOR
+            && action->m_action.m_acteeID.m_nInstance == door->m_typeAI.m_nInstance
+            && action->m_targetId == id && actor->m_interrupt && actor->m_inFormation);
+        check("bash-target-mode-reset", game->m_nState == 0 && buttons->m_nSelectedButton == 100);
+        for (INT disarm = 0; disarm < 2; ++disarm) {
+            door->m_trapActivated = door->m_trapDetected = static_cast<WORD>(disarm);
+            for (BYTE skill : {static_cast<BYTE>(0), static_cast<BYTE>(1), static_cast<BYTE>(255)}) {
+                actor->m_baseStats.m_skills[disarm ? 5 : 10] = skill;
+                click(2, 36, 2);
+                action = actionMessage();
+                check("skill-rank-gate", skill == 0 ? game->m_nState == 2 && messages.GetCount() == messageCount
+                    : game->m_nState == 0 && buttons->m_nSelectedButton == 100 && action != NULL
+                        && action->m_action.m_actionID == (disarm ? CAIAction::REMOVETRAPS : CAIAction::PICKLOCK)
+                        && action->m_action.m_acteeID.m_nInstance == door->m_typeAI.m_nInstance);
+            }
+        }
+        door->m_trapActivated = 1; door->m_trapDetected = 0;
+        click(2, 36, 0);
+        check("undetected-trap-unlocked-ground-fallback", game->m_nState == 2 && messages.GetCount() == messageCount);
+        actor->m_currentUseButton.m_abilityId.m_itemType = 2;
+        actor->m_currentUseButton.m_abilityId.m_itemNum = 3;
+        actor->m_currentUseButton.m_abilityId.m_abilityNum = 4;
+        click(2, 20, 0);
+        check("magic-item-queues-door-target", actor->m_queuedActions.GetCount() == 1
+            && actor->m_queuedActions.GetHead()->m_actionID == CAIAction::USEITEM
+            && actor->m_queuedActions.GetHead()->m_acteeID.m_nInstance == door->m_id
+            && game->m_nState == 0 && buttons->m_nSelectedButton == 100);
+        RESREF areaName;
+        memcpy(areaName, area->m_header.m_areaName, sizeof(areaName));
+        struct RangeCase { const char* areaName; LONG dx; BOOL close; };
+        const RangeCase ranges[] = {{"ar0000", 64, TRUE}, {"ar0000", 65, FALSE},
+            {"ar5004", 20, TRUE}, {"AR5004", 21, FALSE}, {"ar5202", 28, TRUE}, {"AR5202", 29, FALSE},
+            {"ar5004x", 21, TRUE}};
+        actor->m_pos = CPoint(160, 120);
+        for (const auto& entry : ranges) {
+            memset(area->m_header.m_areaName, 0, sizeof(RESREF));
+            memcpy(area->m_header.m_areaName, entry.areaName, strlen(entry.areaName));
+            door->m_ptDest1 = CPoint(160 + entry.dx, 120);
+            door->m_ptDest2 = CPoint(160 + entry.dx + 100, 120);
+            click(0, 0, 0x100);
+            check("door-order-and-range-message-count", messages.GetCount() == messageCount + (entry.close ? 1 : 2));
+            POSITION pos = messages.GetTailPosition();
+            if (!entry.close && messages.GetCount() == messageCount + 2) {
+                auto* move = static_cast<CMessageAddAction*>(messages.GetPrev(pos));
+                check("outside-range-followup-move", move->m_action.m_actionID == CAIAction::MOVETOPOINT
+                    && move->m_action.m_dest == door->m_ptDest1 && move->m_action.m_specificID == 0
+                    && move->m_action.m_specificID2 == -1 && move->m_action.m_specificID3 == -1);
+            }
+            if (messages.GetCount() >= messageCount + 1) {
+                auto* use = static_cast<CMessageAddAction*>(messages.GetPrev(pos));
+                check("ordinary-click-target-is-instance-selector", use->m_action.m_actionID == CAIAction::USEDOOR
+                    && use->m_action.m_acteeID.m_nInstance == door->m_id
+                    && use->m_action.m_acteeID.m_nEnemyAlly == 0 && use->m_targetId == id);
+            }
+        }
+        memcpy(area->m_header.m_areaName, areaName, sizeof(areaName));
+        discard();
+        door->m_pOpenSearch = door->m_pClosedSearch = NULL;
+        door->m_nOpenSearch = door->m_nClosedSearch = 0;
+        g_pChitin->cNetwork.m_bIsHost = FALSE;
+        const DWORD deltas[] = {0, 1, 10, 32767, 32768, 4500, 4501, 0xFFFFFFFF};
+        for (SHORT flash : {static_cast<SHORT>(0), static_cast<SHORT>(10), static_cast<SHORT>(32767),
+                 static_cast<SHORT>(-1), static_cast<SHORT>(-32768)}) {
+            for (DWORD delta : deltas) {
+                door->m_drawPoly = flash; door->m_dwFlags = 0x1021;
+                SHORT expected = static_cast<DWORD>(static_cast<LONG>(flash)) < delta
+                    ? 0 : static_cast<SHORT>(static_cast<DWORD>(flash) - delta);
+                check("compress-time-flash-unsigned-width", door->CompressTime(delta) == TRUE && door->m_drawPoly == expected);
+                check("compress-time-strict-hour-flag", door->m_dwFlags == (delta > 4500 ? 0x21 : 0x1021));
+            }
+        }
+        unsigned seedClose = 0, seedStay = 0;
+        for (unsigned seed = 1; seed < 100; ++seed) {
+            srand(seed);
+            if (rand() % 5 == 0) seedStay = seed; else seedClose = seed;
+            if (seedStay != 0 && seedClose != 0) break;
+        }
+        check("both-autoclose-random-outcomes-available", seedClose != 0 && seedStay != 0);
+        for (BOOL shouldClose : {FALSE, TRUE}) {
+            door->m_dwFlags = 0x1001; door->m_pos = doorPos; door->m_ptOpenDest = CPoint(321, 654);
+            door->m_tiledObject.m_wAIState = CTiledObject::STATE_PRIMARY_TILE;
+            srand(shouldClose ? seedClose : seedStay);
+            door->CompressTime(4501);
+            check("compress-time-random-close", door->m_dwFlags == (shouldClose ? 0 : 1)
+                && door->m_pos == (shouldClose ? CPoint(321, 654) : doorPos)
+                && door->m_tiledObject.m_wAIState == (shouldClose ? CTiledObject::STATE_SECONDARY_TILE : CTiledObject::STATE_PRIMARY_TILE));
+        }
+        CPoint blockedPoint(0, 0);
+        BYTE savedCost = area->m_search.m_pDynamicCost[0];
+        area->m_search.m_pDynamicCost[0] = savedCost | 2;
+        door->m_pClosedSearch = &blockedPoint; door->m_nClosedSearch = 1;
+        door->m_dwFlags = 0x1001; srand(seedClose); door->CompressTime(4501);
+        check("occupied-search-cell-prevents-close-clears-flag", door->m_dwFlags == 1);
+        area->m_search.m_pDynamicCost[0] = savedCost;
+        door->m_pClosedSearch = NULL; door->m_nClosedSearch = 0;
+        door->m_dwFlags = 0x1001; g_pChitin->cNetwork.m_bIsHost = TRUE;
+        srand(seedClose); door->CompressTime(4501);
+        check("host-enqueues-door-status", messages.GetCount() == messageCount + 1
+            && messages.GetTail()->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_DOOR_STATUS
+            && messages.GetTail()->m_sourceId == door->m_id && messages.GetTail()->m_targetId == door->m_id);
+        discard(); g_pChitin->cNetwork.m_bIsHost = host;
+        check("compress-time-does-not-advance-world-clock", game->GetWorldTimer()->m_gameTime == time);
+        // Render real, clipped geometry on the current software back surface.
+        auto* infinity = area->GetInfinity();
+        auto* video = static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+        CRect rect(infinity->nCurrentX + 20, infinity->nCurrentY + 20,
+            infinity->nCurrentX + 44, infinity->nCurrentY + 44);
+        CAreaPoint polygon[4] = {{static_cast<WORD>(rect.left), static_cast<WORD>(rect.top)},
+            {static_cast<WORD>(rect.right), static_cast<WORD>(rect.top)},
+            {static_cast<WORD>(rect.right), static_cast<WORD>(rect.bottom)},
+            {static_cast<WORD>(rect.left), static_cast<WORD>(rect.bottom)}};
+        std::vector<CRect*> closedGrid, openGrid;
+        for (INT i = 0; i < door->m_closedBoundingGrid.GetSize(); ++i) closedGrid.push_back(door->m_closedBoundingGrid[i]);
+        for (INT i = 0; i < door->m_openBoundingGrid.GetSize(); ++i) openGrid.push_back(door->m_openBoundingGrid[i]);
+        auto* closedPoints = door->m_pClosedPolygonPoints;
+        auto* openPoints = door->m_pOpenPolygonPoints;
+        auto nClosed = door->m_nClosedPolygon, nOpen = door->m_nOpenPolygon;
+        door->m_pClosedPolygonPoints = door->m_pOpenPolygonPoints = polygon;
+        door->m_nClosedPolygon = door->m_nOpenPolygon = 4;
+        door->m_closedBoundingGrid.SetSize(2); door->m_openBoundingGrid.SetSize(2);
+        door->m_closedBoundingGrid[0] = door->m_openBoundingGrid[0] = NULL;
+        door->m_closedBoundingGrid[1] = door->m_openBoundingGrid[1] = &rect;
+        auto pixel = [&](DWORD& result) -> BOOL {
+            CRect sample(infinity->rViewPort.left + 30, infinity->rViewPort.top + 30,
+                infinity->rViewPort.left + 31, infinity->rViewPort.top + 31);
+            if (!video->BKLock(sample)) return FALSE;
+            DWORD bytes = video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount / 8;
+            result = 0;
+            BOOL ok = bytes > 0 && bytes <= sizeof(result) && video->m_SurfaceDesc.lpSurface != NULL;
+            if (ok) memcpy(&result, video->m_SurfaceDesc.lpSurface, bytes);
+            video->BKUnlock(); return ok;
+        };
+        DWORD before = 0, after = 0;
+        BOOL readBefore = pixel(before);
+        door->RenderClosedPoly(area, video, CVIDINF_SURFACE_BACK, video->GetColor(RGB(0xF0, 0x20, 0xE0)));
+        check("closed-polygon-draw-changes-back-pixel", readBefore && pixel(after) && before != after);
+        before = after;
+        door->RenderOpenPoly(area, video, CVIDINF_SURFACE_BACK, video->GetColor(RGB(0x20, 0xE0, 0x30)));
+        check("open-polygon-draw-changes-back-pixel", pixel(after) && before != after);
+        door->m_closedBoundingGrid.SetSize(static_cast<INT>(closedGrid.size()));
+        door->m_openBoundingGrid.SetSize(static_cast<INT>(openGrid.size()));
+        for (INT i = 0; i < static_cast<INT>(closedGrid.size()); ++i) door->m_closedBoundingGrid[i] = closedGrid[i];
+        for (INT i = 0; i < static_cast<INT>(openGrid.size()); ++i) door->m_openBoundingGrid[i] = openGrid[i];
+        door->m_pClosedPolygonPoints = closedPoints; door->m_pOpenPolygonPoints = openPoints;
+        door->m_nClosedPolygon = nClosed; door->m_nOpenPolygon = nOpen;
+        door->m_pos = actorPos; area->m_iPicked = door->m_id;
+        for (DWORD renderFlags : {0UL, 1UL, 2UL, 3UL, 0x80UL, 0x180UL, 0x2000UL}) {
+            for (SHORT flash : {static_cast<SHORT>(0), static_cast<SHORT>(1), static_cast<SHORT>(-1)}) {
+                door->m_dwFlags = renderFlags; door->m_drawPoly = flash;
+                game->m_nState = 2; game->m_iconIndex = 36;
+                door->m_trapActivated = door->m_trapDetected = 1;
+                door->Render(area, video, CVIDINF_SURFACE_BACK);
+                check("render-does-not-change-door-state", door->m_dwFlags == renderFlags && door->m_drawPoly == flash
+                    && door->m_pos == actorPos && video->m_SurfaceDesc.lpSurface == NULL);
+            }
+        }
+        discard();
+        actor->m_pos = actorPos; actor->m_baseStats = base;
+        actor->m_interrupt = interrupt; actor->m_inFormation = formation;
+        actor->m_userCommandPause = pause; actor->m_triggerId = trigger;
+        actor->m_curResponseNum = response; actor->m_curResponseSetNum = responseSet; actor->m_curScriptNum = script;
+        actor->m_currentUseButton = useButton;
+        actor->m_derivedStats.m_nEncumberance = encumberance;
+        while (!queue.IsEmpty()) actor->m_queuedActions.AddTail(queue.RemoveHead());
+        group->m_memberList.RemoveAll();
+        actor->m_groupPosition = NULL;
+        for (LONG member : members) {
+            POSITION pos = group->m_memberList.AddTail(reinterpret_cast<LONG*>(member));
+            CGameObject* object = NULL;
+            if (objects->GetShare(member, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) == CGameObjectArray::SUCCESS) {
+                static_cast<CGameSprite*>(object)->m_groupPosition = pos;
+                objects->ReleaseShare(member, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            } else check("restore-group-member-available", FALSE);
+        }
+        group->m_groupChanged = groupChanged;
+        game->GetOptions()->m_nCommandSoundsFrequency = commandSounds;
+        buttons->m_nSelectedButton = button; buttons->UpdateState();
+        game->m_nState = state; game->m_iconIndex = icon;
+        game->m_lastClick = lastClick; game->m_lastTarget = lastTarget;
+        g_pBaldurChitin->m_pEngineWorld->m_nSelectedCharacter = selectedPortrait;
+        door->m_dwFlags = flags; door->m_drawPoly = drawPoly;
+        door->m_pos = doorPos; door->m_ptDest1 = first; door->m_ptDest2 = second; door->m_ptOpenDest = openDest;
+        door->m_tiledObject.m_wAIState = tile; door->m_trapActivated = activated; door->m_trapDetected = detected;
+        door->m_pOpenSearch = openSearch; door->m_pClosedSearch = closedSearch;
+        door->m_nOpenSearch = openCount; door->m_nClosedSearch = closedCount; area->m_iPicked = picked;
+        area->m_groupMove = areaGroupMove;
+        check("messages-and-denies-balanced", messages.GetCount() == messageCount
+            && objects->m_pArray[(id >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == actorDenies);
+        objects->ReleaseDeny(door->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"doorchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "door mismatch (state restored)"); return; }
         s_pc++; return;
     }
 

@@ -6,10 +6,14 @@
 #include "CGameSprite.h"
 #include "CInfCursor.h"
 #include "CInfGame.h"
+#include "CInfButtonArray.h"
+#include "CMessage.h"
 #include "CPathSearch.h"
 #include "CScreenWorld.h"
+#include "CTimerWorld.h"
 #include "CUtil.h"
 #include "CVidPoly.h"
+#include "CVidInf.h"
 
 // 0x8D41D8
 const LONG CGameDoor::RANGE_DOOR = 16
@@ -749,6 +753,290 @@ void CGameDoor::Marshal(CAreaFileDoorObject** pDoorObject)
     (*pDoorObject)->m_detectionDifficulty = m_detectionDifficulty;
     (*pDoorObject)->m_lockDifficulty = m_lockDifficulty;
     (*pDoorObject)->m_strNotPickable = m_strNotPickable;
+}
+
+// 0x487530
+BOOLEAN CGameDoor::CompressTime(DWORD deltaTime)
+{
+    if (static_cast<DWORD>(m_drawPoly) < deltaTime) {
+        m_drawPoly = 0;
+    } else {
+        m_drawPoly = static_cast<SHORT>(m_drawPoly - deltaTime);
+    }
+    if (deltaTime > static_cast<DWORD>(CTimerWorld::TIMESCALE_MSEC_PER_SEC
+            * CTimerWorld::TIMESCALE_SEC_PER_MIN * CTimerWorld::TIMESCALE_MIN_PER_HOUR)) {
+        if ((m_dwFlags & 1) != 0 && (m_dwFlags & 0x20) == 0
+            && m_pArea->m_search.CanToggleDoor(m_pClosedSearch, m_nClosedSearch)
+            && rand() % 5 != 0) {
+            m_dwFlags &= ~1;
+            m_pos = m_ptOpenDest;
+            m_tiledObject.m_wAIState = CTiledObject::STATE_SECONDARY_TILE;
+            if (m_pOpenSearch != NULL) {
+                m_pArea->m_search.RemoveDoor(m_pOpenSearch, m_nOpenSearch);
+            }
+            if (m_pClosedSearch != NULL) {
+                m_pArea->m_search.AddDoor(m_pClosedSearch, m_nClosedSearch, (m_dwFlags & 0x400) != 0);
+            }
+            if (g_pBaldurChitin->cNetwork.GetSessionHosting() == TRUE) {
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageDoorStatus(this, m_id, m_id), FALSE);
+            }
+        }
+        m_dwFlags &= ~0x1000;
+    }
+    return TRUE;
+}
+
+// 0x487D10
+void CGameDoor::OnActionButton(const CPoint& pt)
+{
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    CAIGroup* pGroup = pGame->GetGroup();
+    if ((m_dwFlags & 0x80) != 0 && (m_dwFlags & 0x100) == 0) {
+        pGame->SetLastClick(CPoint(-1, -1));
+        CGameObject::OnActionButton(pt);
+        return;
+    }
+
+    switch (pGame->m_nState) {
+    case 0: {
+        pGame->SetLastClick(CPoint(-1, -1));
+        if (static_cast<BYTE>(pGroup->GetCount()) == 0) {
+            return;
+        }
+        CAIObjectType target(0, 0, 0, 0, 0, 0, 0, 0, m_id);
+        CAIAction action(CAIAction::USEDOOR, target, 0, 0, 0);
+        pGroup->GroupAction(action, TRUE, NULL);
+
+        LONG* pMembers = pGroup->GetGroupList();
+        UTIL_ASSERT(pMembers != NULL);
+        if (pMembers == NULL) {
+            return;
+        }
+        LONG range = RANGE_DOOR;
+        CPoint dest;
+        SHORT member = 0;
+        for (; member < static_cast<BYTE>(pGroup->GetCount()); ++member) {
+            CGameObject* pMember;
+            BYTE rc = pGame->GetObjectArray()->GetShare(pMembers[member],
+                CGameObjectArray::THREAD_ASYNCH, &pMember, INFINITE);
+            if (rc != CGameObjectArray::SUCCESS) {
+                UTIL_ASSERT(FALSE);
+                continue;
+            }
+            CPoint pos = pMember->GetPos();
+            dest = GetMoveDest(pos);
+            const char* areaName = reinterpret_cast<const char*>(m_pArea->m_header.m_areaName);
+            if (_strnicmp(areaName, "ar5004", 7) == 0) {
+                range = RANGE_DOOR / 10;
+            } else if (_strnicmp(areaName, "ar5202", 7) == 0) {
+                range = RANGE_DOOR / 5;
+            }
+            LONG dx = pos.x - dest.x;
+            LONG dy = pos.y - dest.y;
+            BOOL close = dx * dx + dy * dy * 16 / 9 <= range;
+            pGame->GetObjectArray()->ReleaseShare(pMembers[member],
+                CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            if (close) {
+                break;
+            }
+        }
+        if (member == static_cast<BYTE>(pGroup->GetCount())) {
+            CAIAction move(CAIAction::MOVETOPOINT, dest, 0, -1);
+            move.m_specificID3 = 0;
+            pGroup->GroupAction(move, FALSE, NULL);
+        }
+        delete[] pMembers;
+        return;
+    }
+    case 2:
+        pGame->SetLastClick(CPoint(-1, -1));
+        switch (static_cast<BYTE>(pGame->m_iconIndex)) {
+        case 12: {
+            if ((m_dwFlags & 1) != 0 || (m_dwFlags & 2) == 0) {
+                CGameObject::OnActionButton(pt);
+                return;
+            }
+            CAIAction action(CAIAction::BASHDOOR, m_typeAI, 0, 0, 0);
+            pGroup->GroupAction(CAIAction::NULL_ACTION, TRUE, &action);
+            break;
+        }
+        case 18:
+        case 40:
+        case 255:
+            CGameObject::OnActionButton(pt);
+            return;
+        case 20:
+            pGame->UseMagicOnObject(m_id);
+            break;
+        case 36: {
+            BOOL disarm = m_trapActivated != 0 && m_trapDetected != 0;
+            if (!disarm && (m_dwFlags & 2) == 0) {
+                CGameObject::OnActionButton(pt);
+                return;
+            }
+            LONG id = pGame->GetCharacterId(g_pBaldurChitin->m_pEngineWorld->GetSelectedCharacter());
+            CGameObject* pObject;
+            BYTE rc;
+            do {
+                rc = pGame->GetObjectArray()->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &pObject, INFINITE);
+            } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+            if (rc == CGameObjectArray::SUCCESS) {
+                BYTE skill = static_cast<CGameSprite*>(pObject)->m_baseStats.m_skills[disarm ? 5 : 10];
+                pGame->GetObjectArray()->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                if (skill == 0) {
+                    return;
+                }
+            }
+            CAIAction action(disarm ? CAIAction::REMOVETRAPS : CAIAction::PICKLOCK, m_typeAI, 0, 0, 0);
+            pGroup->GroupAction(action, TRUE, NULL);
+            break;
+        }
+        default:
+            UTIL_ASSERT(FALSE);
+            return;
+        }
+        pGame->m_nState = 0;
+        pGame->GetButtonArray()->m_nSelectedButton = 100;
+        pGame->GetButtonArray()->UpdateState();
+        return;
+    case 3:
+        pGame->SetLastClick(CPoint(-1, -1));
+        CGameObject::OnActionButton(pt);
+        return;
+    default:
+        UTIL_ASSERT(FALSE);
+    }
+}
+
+// 0x488B30
+void CGameDoor::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
+{
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    SHORT state = pGame->m_nState;
+    UTIL_ASSERT(pVidMode != NULL);
+    if ((m_dwFlags & 0x2000) != 0) {
+        return;
+    }
+    BOOL drewFill = FALSE;
+    auto draw = [&](COLORREF color, BOOL fill) {
+        if (fill && CInfinity::TRANSLUCENT_BLTS_ON && !g_pChitin->cVideo.Is3dAccelerated()) {
+            COLORREF surfaceColor = g_pChitin->GetCurrentVideoMode()->GetColor(color);
+            if ((m_dwFlags & 1) != 0) {
+                RenderOpenPoly(pArea, pVidMode, nSurface, surfaceColor);
+            } else {
+                RenderClosedPoly(pArea, pVidMode, nSurface, surfaceColor);
+            }
+            drewFill = TRUE;
+        }
+        if ((m_dwFlags & 1) != 0) {
+            m_pArea->GetInfinity()->OutlinePoly(m_pOpenPolygon, m_nOpenPolygon, m_rOpenBounding, color);
+        } else {
+            m_pArea->GetInfinity()->OutlinePoly(m_pClosedPolygon, m_nClosedPolygon, m_rClosedBounding, color);
+        }
+    };
+    if (m_id == m_pArea->m_iPicked
+        && m_pArea->m_visibility.IsTileExplored(m_pArea->m_visibility.PointToTile(m_pos))
+        && (m_dwFlags & 0x80) == 0) {
+        if (static_cast<BYTE>(pGame->GetGroup()->GetCount()) != 0 && state == 0) {
+            draw(RGB(0x20, 0x40, 0xA0), TRUE);
+        }
+        if (pGame->m_nState == 2) {
+            if (pGame->m_iconIndex == 36
+                && ((m_trapActivated != 0 && m_trapDetected != 0) || (m_dwFlags & 2) != 0)) {
+                draw(RGB(0, 0xFA, 0), TRUE);
+            }
+            if (pGame->m_iconIndex == 12 && (m_dwFlags & 1) == 0 && (m_dwFlags & 2) != 0) {
+                draw(RGB(0, 0xFA, 0), TRUE);
+            }
+        }
+    }
+    COLORREF color;
+    if (m_drawPoly > 0) {
+        color = (m_dwFlags & 0x180) == 0x180 ? RGB(0xFF, 0, 0xFF) : RGB(0xFF, 0, 0);
+    } else {
+        if ((m_dwFlags & 0x80) != 0
+            || !m_pArea->m_visibility.IsTileExplored(m_pArea->m_visibility.PointToTile(m_pos))
+            || g_pBaldurChitin->pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || g_pBaldurChitin->m_pEngineWorld->GetMenuKey() != TRUE) {
+            return;
+        }
+        color = RGB(0xFF, 0, 0);
+    }
+    if (((m_dwFlags & 1) != 0 ? m_nOpenPolygon : m_nClosedPolygon) != 0) {
+        draw(color, !drewFill);
+    }
+}
+
+// 0x48B3C0
+void CGameDoor::RenderClosedPoly(CGameArea* pArea, CVidMode* pVidMode, int nSurface, COLORREF color)
+{
+    CInfinity* pInfinity = pArea->GetInfinity();
+    UTIL_ASSERT(pInfinity != NULL && pVidMode != NULL);
+    CInfinity* pOwnerInfinity = m_pArea->GetInfinity();
+    CRect rViewport(pOwnerInfinity->nCurrentX, pOwnerInfinity->nCurrentY,
+        pOwnerInfinity->nCurrentX + pOwnerInfinity->rViewPort.Width(),
+        pOwnerInfinity->nCurrentY + pOwnerInfinity->rViewPort.Height());
+    const INT count = m_closedBoundingGrid.GetSize();
+    CPoint ptReference(0, 0);
+    CVidPoly poly;
+    poly.SetPoly(reinterpret_cast<WORD*>(m_pClosedPolygonPoints), m_nClosedPolygon);
+    for (INT i = 0; i < count; ++i) {
+        CRect* pGridRect = m_closedBoundingGrid[i];
+        if (pGridRect == NULL) {
+            continue;
+        }
+        CRect rClip;
+        rClip.IntersectRect(&rViewport, pGridRect);
+        if (rClip.left == 0 && rClip.right == 0 && rClip.top == 0 && rClip.bottom == 0) {
+            continue;
+        }
+        CPoint ptPos(rClip.left, rClip.top);
+        CRect rFXRect(rClip);
+        rFXRect.OffsetRect(-rClip.left, -rClip.top);
+        if (pInfinity->FXPrep(rFXRect, CInfinity::FXPREP_COPYFROMBACK, nSurface, ptPos, ptReference)
+            && pInfinity->FXLock(rFXRect, 0)) {
+            static_cast<CVidInf*>(pVidMode)->RenderConvexPoly(&poly, rClip, color, CInfinity::MIRROR_FX, ptPos, FALSE);
+            if (pInfinity->FXUnlock(0, NULL, CPoint(0, 0))) {
+                pInfinity->FXBltFrom(nSurface, rFXRect, ptPos.x, ptPos.y, ptReference.x, ptReference.y, 0);
+            }
+        }
+    }
+}
+
+// 0x48B600
+void CGameDoor::RenderOpenPoly(CGameArea* pArea, CVidMode* pVidMode, int nSurface, COLORREF color)
+{
+    CInfinity* pInfinity = pArea->GetInfinity();
+    UTIL_ASSERT(pInfinity != NULL && pVidMode != NULL);
+    CInfinity* pOwnerInfinity = m_pArea->GetInfinity();
+    CRect rViewport(pOwnerInfinity->nCurrentX, pOwnerInfinity->nCurrentY,
+        pOwnerInfinity->nCurrentX + pOwnerInfinity->rViewPort.Width(),
+        pOwnerInfinity->nCurrentY + pOwnerInfinity->rViewPort.Height());
+    const INT count = m_openBoundingGrid.GetSize();
+    CPoint ptReference(0, 0);
+    CVidPoly poly;
+    poly.SetPoly(reinterpret_cast<WORD*>(m_pOpenPolygonPoints), m_nOpenPolygon);
+    for (INT i = 0; i < count; ++i) {
+        CRect* pGridRect = m_openBoundingGrid[i];
+        if (pGridRect == NULL) {
+            continue;
+        }
+        CRect rClip;
+        rClip.IntersectRect(&rViewport, pGridRect);
+        if (rClip.left == 0 && rClip.right == 0 && rClip.top == 0 && rClip.bottom == 0) {
+            continue;
+        }
+        CPoint ptPos(rClip.left, rClip.top);
+        CRect rFXRect(rClip);
+        rFXRect.OffsetRect(-rClip.left, -rClip.top);
+        if (pInfinity->FXPrep(rFXRect, CInfinity::FXPREP_COPYFROMBACK, nSurface, ptPos, ptReference)
+            && pInfinity->FXLock(rFXRect, 0)) {
+            static_cast<CVidInf*>(pVidMode)->RenderConvexPoly(&poly, rClip, color, CInfinity::MIRROR_FX, ptPos, FALSE);
+            if (pInfinity->FXUnlock(0, NULL, CPoint(0, 0))) {
+                pInfinity->FXBltFrom(nSurface, rFXRect, ptPos.x, ptPos.y, ptReference.x, ptReference.y, 0);
+            }
+        }
+    }
 }
 
 // 0x48B2C0

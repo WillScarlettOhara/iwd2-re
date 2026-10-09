@@ -328,7 +328,7 @@ void CGameTrigger::RenderClippedPoly(CGameArea* pArea, CVidMode* pVidMode, INT n
 
         if (pInfinity->FXPrep(rFXRect, CInfinity::FXPREP_COPYFROMBACK, nSurface, ptPos, ptReference)) {
             if (pInfinity->FXLock(rFXRect, 0)) {
-                static_cast<CVidInf*>(pVidMode)->RenderConvexPoly(rClip, &poly, color, CInfinity::MIRROR_FX, ptPos, FALSE);
+                static_cast<CVidInf*>(pVidMode)->RenderConvexPoly(&poly, rClip, color, CInfinity::MIRROR_FX, ptPos, FALSE);
 
                 CPoint ptZero(0, 0);
                 if (pInfinity->FXUnlock(0, NULL, ptZero)) {
