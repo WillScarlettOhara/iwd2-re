@@ -1,5 +1,7 @@
 # Sprite target fixation and formation movement
 
+Next lot: [script target and health predicates](combat-target-trigger-recovery.md).
+
 Recover the complete sprite-specific untyped target resolver at 0x733340 and
 the formation movement executor at 0x745450. The names
 ResolveCurrentActionTarget and Formation are marked #guess; BG2's PDB names

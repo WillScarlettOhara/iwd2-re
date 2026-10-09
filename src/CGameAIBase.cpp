@@ -258,6 +258,142 @@ BOOL CGameAIBase::EvaluateStatusTrigger(const CAITrigger& trigger)
         return cause.GetCause().GetEnemyAlly() == cause.GetSpecifics();
     }
 
+    case CAITRIGGER_ALIGNMENT:
+    case CAITRIGGER_GENERAL:
+    case CAITRIGGER_CLASS:
+    case CAITRIGGER_RACE:
+    case CAITRIGGER_SPECIFICS:
+    case CAITRIGGER_GENDER: {
+        CAITrigger cause(trigger);
+        cause.Decode(this);
+        const CAIObjectType& type = cause.GetCause();
+        LONG value = cause.GetSpecifics();
+        switch (cause.m_triggerID) {
+        case CAITRIGGER_ALIGNMENT:
+            switch (value) {
+            case 1:
+            case 2:
+            case 3:
+            case 0x10:
+            case 0x20:
+            case 0x30:
+                return (type.GetAlignment() & value) != 0;
+            default:
+                return type.GetAlignment() == value;
+            }
+        case CAITRIGGER_GENERAL:
+            return type.GetGeneral() == value;
+        case CAITRIGGER_CLASS:
+            return type.IsClassValid(static_cast<BYTE>(value));
+        case CAITRIGGER_RACE:
+            return type.GetRace() == value;
+        case CAITRIGGER_SPECIFICS:
+            return type.GetSpecific() == value;
+        default:
+            return type.GetGender() == value;
+        }
+    }
+
+    case CAITRIGGER_SETLASTMARKEDOBJECT:
+    case CAITRIGGER_SETSPELLTARGET: {
+        CAITrigger cause(trigger);
+        cause.Decode(this);
+        CGameObject* pObject = cause.GetCause().GetObject(this, FALSE);
+        const CAIObjectType& type = pObject != NULL ? pObject->GetAIType() : CAIObjectType::NOONE;
+        if (cause.m_triggerID == CAITRIGGER_SETSPELLTARGET) {
+            SetAIType3BA(type);
+        } else {
+            SetAIType342(type);
+        }
+        if (pObject != NULL) {
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(pObject->GetId(),
+                CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        return TRUE;
+    }
+
+    case CAITRIGGER_HP:
+    case CAITRIGGER_HPGT:
+    case CAITRIGGER_HPLT:
+    case CAITRIGGER_HPPERCENT:
+    case CAITRIGGER_HPPERCENTGT:
+    case CAITRIGGER_HPPERCENTLT:
+    case CAITRIGGER_HPLOST:
+    case CAITRIGGER_HPLOSTGT:
+    case CAITRIGGER_HPLOSTLT:
+    case CAITRIGGER_STATECHECK:
+    case CAITRIGGER_NOTSTATECHECK:
+    case CAITRIGGER_ISCREATUREAREAFLAG:
+    case CAITRIGGER_CHECKSTAT:
+    case CAITRIGGER_CHECKSTATGT:
+    case CAITRIGGER_CHECKSTATLT: {
+        CAITrigger cause(trigger);
+        CGameSprite* pSprite = NULL;
+        BOOL bQuick = QuickDecode(cause, pSprite);
+        if (pSprite == NULL) {
+            return FALSE;
+        }
+        LONG value;
+        BOOL bHolds;
+        switch (cause.m_triggerID) {
+        case CAITRIGGER_STATECHECK:
+            bHolds = (pSprite->GetDerivedStats()->m_generalState & cause.GetSpecifics()) != 0;
+            break;
+        case CAITRIGGER_NOTSTATECHECK:
+            bHolds = (pSprite->GetDerivedStats()->m_generalState & cause.GetSpecifics()) == 0;
+            break;
+        case CAITRIGGER_ISCREATUREAREAFLAG:
+            bHolds = (pSprite->GetBaseStats()->m_flags & cause.GetSpecifics()) != 0;
+            break;
+        default:
+            switch (cause.m_triggerID) {
+            case CAITRIGGER_CHECKSTAT:
+            case CAITRIGGER_CHECKSTATGT:
+            case CAITRIGGER_CHECKSTATLT:
+                value = pSprite->GetDerivedStats()->GetAtOffset(static_cast<SHORT>(cause.GetInt1()));
+                break;
+            default:
+                value = pSprite->GetBaseStats()->m_hitPoints;
+                switch (cause.m_triggerID) {
+                case CAITRIGGER_HPPERCENT:
+                case CAITRIGGER_HPPERCENTGT:
+                case CAITRIGGER_HPPERCENTLT:
+                    value = value * 100 / pSprite->GetDerivedStats()->m_nMaxHitPoints;
+                    break;
+                case CAITRIGGER_HPLOST:
+                case CAITRIGGER_HPLOSTGT:
+                case CAITRIGGER_HPLOSTLT:
+                    value = pSprite->GetDerivedStats()->m_nMaxHitPoints - value;
+                    break;
+                }
+                break;
+            }
+            switch (cause.m_triggerID) {
+            case CAITRIGGER_HPGT:
+            case CAITRIGGER_HPPERCENTGT:
+            case CAITRIGGER_HPLOSTGT:
+            case CAITRIGGER_CHECKSTATGT:
+                bHolds = value > cause.GetSpecifics();
+                break;
+            case CAITRIGGER_HPLT:
+            case CAITRIGGER_HPPERCENTLT:
+            case CAITRIGGER_HPLOSTLT:
+            case CAITRIGGER_CHECKSTATLT:
+                bHolds = value < cause.GetSpecifics();
+                break;
+            default:
+                bHolds = value == cause.GetSpecifics();
+                break;
+            }
+            break;
+        }
+        if (!bQuick) {
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(pSprite->GetId(),
+                CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        return bHolds;
+    }
+
     case CAITRIGGER_EXISTS: {
         CAITrigger cause(trigger);
         cause.Decode(this);

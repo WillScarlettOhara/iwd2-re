@@ -98,6 +98,7 @@
 //                                selection/trigger dispatch; restore all state.
 //   targetresolvechecks         check target fixation, markers and formation
 //                                requests through the real action dispatcher.
+//   targettriggerchecks         check stored targets, selector predicates and HP
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -1561,6 +1562,186 @@ void Tick(CWarp* pActiveEngine)
         Emit("{\"step\":%d,\"op\":\"combatteams\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
+    }
+
+    if (strcmp(step.op, "targettriggerchecks") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* rawSource = NULL;
+        CGameObject* rawTarget = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2
+            || objects->GetDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, &rawSource, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires world and two party members"); return;
+        }
+        if (objects->GetDeny(targetId, CGameObjectArray::THREAD_ASYNCH, &rawTarget, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable"); return;
+        }
+        auto* source = static_cast<CGameSprite*>(rawSource);
+        auto* target = static_cast<CGameSprite*>(rawTarget);
+        auto sourceType = source->m_typeAI, targetType = target->m_typeAI;
+        auto marked = source->field_342, spellTarget = source->field_3BA;
+        SHORT hp = target->m_baseStats.m_hitPoints, maxHp = target->m_derivedStats.m_nMaxHitPoints;
+        DWORD flags = target->m_baseStats.m_flags, state = target->m_derivedStats.m_generalState;
+        auto sourceMarker = source->m_marker, targetMarker = target->m_marker;
+        LONG targetIdBefore = source->m_targetId;
+        BYTE sourceDenies = objects->m_pArray[(sourceId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH];
+        BYTE targetDenies = objects->m_pArray[(targetId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH];
+        INT queued = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            valid = valid && passed; ++checks;
+            Emit("{\"step\":%d,\"op\":\"targettrigger-case\",\"case\":\"%s\",\"passed\":%s}",
+                nStep, name, passed ? "true" : "false");
+        };
+        auto evaluate = [&](SHORT id, const CAIObjectType& type, LONG specific, LONG stat = 0) {
+            CAITrigger cause(id, type, specific);
+            cause.SetInt1(stat);
+            CAITrigger before(cause);
+            BOOL result = source->EvaluateStatusTrigger(cause);
+            check("input-trigger-remains-unchanged", cause.m_triggerID == before.m_triggerID
+                && cause.m_specificID == before.m_specificID && cause.m_specific2 == before.m_specific2
+                && cause.m_triggerCause.Equal(before.m_triggerCause));
+            return result;
+        };
+        CAIObjectType explicitTarget(CAIObjectType::ANYONE);
+        explicitTarget.m_nInstance = targetId;
+        explicitTarget.SetRadius(9876);
+        explicitTarget.SetRect(CRect(1, 2, 3, 4));
+        CAIObjectType stale(explicitTarget);
+        stale.m_nInstance = 0x7FFF7FFE;
+        for (SHORT id : {static_cast<SHORT>(CAITRIGGER_SETLASTMARKEDOBJECT), static_cast<SHORT>(CAITRIGGER_SETSPELLTARGET)}) {
+            target->m_typeAI.Set(targetType);
+            if (id == CAITRIGGER_SETSPELLTARGET) {
+                target->m_typeAI.SetRect(CRect(22, 33, 44, 55));
+            } else {
+                target->m_typeAI.SetCenter(CPoint(17, 31)); target->m_typeAI.SetRadius(444);
+            }
+            source->field_342.Set(sourceType); source->field_3BA.Set(sourceType);
+            check("set-explicit-target-always-true", evaluate(id, explicitTarget, 123) == TRUE);
+            auto& changed = id == CAITRIGGER_SETSPELLTARGET ? source->field_3BA : source->field_342;
+            auto& untouched = id == CAITRIGGER_SETSPELLTARGET ? source->field_342 : source->field_3BA;
+            check("set-copies-object-ai-type", changed.Equal(target->m_typeAI)
+                && changed.m_nLocationType == target->m_typeAI.m_nLocationType
+                && (id == CAITRIGGER_SETSPELLTARGET ? changed.m_rect == CRect(22, 33, 44, 55)
+                    : changed.m_nRadius == 444 && changed.m_ptCenter == CPoint(17, 31)));
+            check("set-keeps-other-marker", untouched.Equal(sourceType));
+            BYTE special[5] = {static_cast<BYTE>(id == CAITRIGGER_SETSPELLTARGET ? 55 : 51), 0, 0, 0, 0};
+            CAIObjectType stored(CAIObjectType::ANYONE);
+            stored.SetSpecialCase(special); stored.Decode(source);
+            check("stored-selector-resolves-target", stored.GetInstance() == targetId);
+            check("set-stale-target-always-true", evaluate(id, stale, 0) == TRUE);
+            check("set-stale-target-clears-to-noone", changed.Equal(CAIObjectType::NOONE));
+            stored.Set(CAIObjectType::ANYONE); stored.SetSpecialCase(special); stored.Decode(source);
+            check("cleared-selector-stays-noone", stored.Equal(CAIObjectType::NOONE));
+            check("set-noone-always-true", evaluate(id, CAIObjectType::NOONE, 0) == TRUE);
+            check("set-myself-always-true", evaluate(id, CAIObjectType::OBJECT_MYSELF, 0) == TRUE);
+            check("set-myself-copies-source", changed.Equal(sourceType));
+            CAIObjectType immune(sourceType);
+            auto& immunities = target->m_derivedStats.m_cImmunitiesAIType;
+            POSITION immunePos = immunities.AddTail(&immune);
+            check("set-target-does-not-reject-ai-immunity", evaluate(id, explicitTarget, 0) == TRUE
+                && changed.Equal(target->m_typeAI));
+            immunities.RemoveAt(immunePos);
+            BYTE objectType = target->m_objectType;
+            target->m_objectType = CGameObject::TYPE_NONE;
+            check("set-target-does-not-require-sprite-type", evaluate(id, explicitTarget, 0) == TRUE
+                && changed.Equal(target->m_typeAI));
+            target->m_objectType = objectType;
+        }
+        target->m_typeAI.Set(targetType);
+        source->m_typeAI.Set(CAIObjectType::ANYONE);
+        source->m_typeAI.m_nInstance = sourceId;
+        source->m_typeAI.m_nEnemyAlly = 255; source->m_typeAI.m_nGeneral = 4;
+        source->m_typeAI.m_nRace = 7; source->m_typeAI.m_nSpecific = 253;
+        source->m_typeAI.m_nGender = 2; source->m_typeAI.m_nAlignment = 0x23;
+        source->m_typeAI.m_nClassMask = CLASSMASK_BARBARIAN | CLASSMASK_WIZARD;
+        struct AttributeCase { SHORT id; LONG value; BOOL expected; };
+        const AttributeCase attributes[] = {
+            {CAITRIGGER_ALLEGIANCE, 255, TRUE}, {CAITRIGGER_ALLEGIANCE, 511, FALSE},
+            {CAITRIGGER_GENERAL, 4, TRUE}, {CAITRIGGER_GENERAL, 260, FALSE},
+            {CAITRIGGER_RACE, 7, TRUE}, {CAITRIGGER_RACE, 263, FALSE},
+            {CAITRIGGER_SPECIFICS, 253, TRUE}, {CAITRIGGER_SPECIFICS, 509, FALSE},
+            {CAITRIGGER_GENDER, 2, TRUE}, {CAITRIGGER_GENDER, 258, FALSE},
+            {CAITRIGGER_CLASS, 1, TRUE}, {CAITRIGGER_CLASS, 11, TRUE}, {CAITRIGGER_CLASS, 2, FALSE},
+            {CAITRIGGER_CLASS, 257, TRUE}, {CAITRIGGER_CLASS, 267, TRUE},
+            {CAITRIGGER_ALIGNMENT, 1, TRUE}, {CAITRIGGER_ALIGNMENT, 2, TRUE}, {CAITRIGGER_ALIGNMENT, 3, TRUE},
+            {CAITRIGGER_ALIGNMENT, 0x10, FALSE}, {CAITRIGGER_ALIGNMENT, 0x20, TRUE}, {CAITRIGGER_ALIGNMENT, 0x30, TRUE},
+            {CAITRIGGER_ALIGNMENT, 0x23, TRUE}, {CAITRIGGER_ALIGNMENT, 0x21, FALSE},
+            {CAITRIGGER_ALIGNMENT, 0x123, FALSE}, {CAITRIGGER_ALIGNMENT, 0, FALSE},
+        };
+        for (const auto& item : attributes)
+            check("decoded-attribute-width-or-mask", evaluate(item.id, CAIObjectType::OBJECT_MYSELF, item.value) == item.expected);
+        source->m_typeAI.Set(sourceType);
+        struct HealthCase { SHORT current; SHORT maximum; LONG percent; LONG lost; };
+        const HealthCase health[] = {
+            {7, 20, 35, 13}, {1, 3, 33, 2}, {2, 3, 66, 1}, {0, 20, 0, 20},
+            {-1, 20, -5, 21}, {-1, 3, -33, 4}, {21, 20, 105, -1},
+            {32767, 32767, 100, 0}, {-32768, 32767, -100, 65535},
+            {32767, -32768, -99, -65535}, {-32768, -32768, 100, 0},
+            {1, -3, -33, -4}, {-2, -3, 66, -1},
+        };
+        const SHORT healthIds[3][3] = {
+            {CAITRIGGER_HP, CAITRIGGER_HPGT, CAITRIGGER_HPLT},
+            {CAITRIGGER_HPPERCENT, CAITRIGGER_HPPERCENTGT, CAITRIGGER_HPPERCENTLT},
+            {CAITRIGGER_HPLOST, CAITRIGGER_HPLOSTGT, CAITRIGGER_HPLOSTLT},
+        };
+        for (const auto& item : health) {
+            target->m_baseStats.m_hitPoints = item.current; target->m_derivedStats.m_nMaxHitPoints = item.maximum;
+            LONG values[] = {item.current, item.percent, item.lost};
+            for (INT group = 0; group < 3; ++group) {
+                for (INT offset = -1; offset <= 1; ++offset) {
+                    for (INT relation = 0; relation < 3; ++relation) {
+                        BOOL expected = relation == 0 ? offset == 0 : relation == 1 ? offset < 0 : offset > 0;
+                        check("health-signed-boundary", evaluate(healthIds[group][relation], explicitTarget, values[group] + offset) == expected);
+                    }
+                }
+            }
+        }
+        for (const auto& ids : healthIds) for (SHORT id : ids)
+            check("missing-health-target-false", evaluate(id, stale, 0) == FALSE);
+        target->m_baseStats.m_hitPoints = 7; target->m_derivedStats.m_nMaxHitPoints = 20;
+        target->m_baseStats.m_flags = 0x80000000; target->m_derivedStats.m_generalState = STATE_SLEEPING;
+        const AttributeCase states[] = {
+            {CAITRIGGER_STATECHECK, STATE_SLEEPING, TRUE}, {CAITRIGGER_STATECHECK, STATE_DEAD, FALSE},
+            {CAITRIGGER_STATECHECK, STATE_SLEEPING | STATE_DEAD, TRUE}, {CAITRIGGER_STATECHECK, 0, FALSE},
+            {CAITRIGGER_NOTSTATECHECK, STATE_SLEEPING, FALSE}, {CAITRIGGER_NOTSTATECHECK, STATE_DEAD, TRUE},
+            {CAITRIGGER_NOTSTATECHECK, 0, TRUE},
+            {CAITRIGGER_ISCREATUREAREAFLAG, static_cast<LONG>(0x80000000), TRUE},
+            {CAITRIGGER_ISCREATUREAREAFLAG, STATE_SLEEPING, FALSE}, {CAITRIGGER_ISCREATUREAREAFLAG, 0, FALSE},
+        };
+        for (const auto& item : states)
+            check("derived-state-versus-base-flags", evaluate(item.id, explicitTarget, item.value) == item.expected);
+        for (SHORT id : {static_cast<SHORT>(CAITRIGGER_STATECHECK), static_cast<SHORT>(CAITRIGGER_NOTSTATECHECK),
+                 static_cast<SHORT>(CAITRIGGER_ISCREATUREAREAFLAG), static_cast<SHORT>(CAITRIGGER_CHECKSTAT),
+                 static_cast<SHORT>(CAITRIGGER_CHECKSTATGT), static_cast<SHORT>(CAITRIGGER_CHECKSTATLT)})
+            check("missing-stat-or-state-target-false", evaluate(id, stale, 0, STAT_MAXHITPOINTS) == FALSE);
+        for (INT offset = -1; offset <= 1; ++offset) {
+            check("checkstat-equal", evaluate(CAITRIGGER_CHECKSTAT, explicitTarget, 20 + offset, STAT_MAXHITPOINTS) == (offset == 0));
+            check("checkstat-greater", evaluate(CAITRIGGER_CHECKSTATGT, explicitTarget, 20 + offset, STAT_MAXHITPOINTS) == (offset < 0));
+            check("checkstat-less", evaluate(CAITRIGGER_CHECKSTATLT, explicitTarget, 20 + offset, STAT_MAXHITPOINTS) == (offset > 0));
+        }
+        check("checkstat-narrows-stat-id-to-short", evaluate(CAITRIGGER_CHECKSTAT, explicitTarget, 20, 65537) == TRUE);
+        target->m_typeAI.Set(CAIObjectType::NOT_SPRITE);
+        check("quickdecode-rejects-not-sprite-sentinel", evaluate(CAITRIGGER_HP, explicitTarget, 7) == FALSE);
+        source->m_typeAI.Set(sourceType); target->m_typeAI.Set(targetType);
+        source->field_342.Set(marked); source->field_3BA.Set(spellTarget);
+        target->m_baseStats.m_hitPoints = hp; target->m_derivedStats.m_nMaxHitPoints = maxHp;
+        target->m_baseStats.m_flags = flags; target->m_derivedStats.m_generalState = state;
+        check("no-combat-marker-side-effects", source->m_targetId == targetIdBefore
+            && source->m_marker.m_type == sourceMarker.m_type && target->m_marker.m_type == targetMarker.m_type
+            && source->m_marker.m_nRecticleCounter == sourceMarker.m_nRecticleCounter
+            && target->m_marker.m_nRecticleCounter == targetMarker.m_nRecticleCounter);
+        check("no-new-messages", g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount() == queued);
+        check("deny-counts-balanced", objects->m_pArray[(sourceId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == sourceDenies
+            && objects->m_pArray[(targetId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == targetDenies);
+        objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"targettriggerchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "target/health trigger mismatch (state restored)"); return; }
+        s_pc++; return;
     }
 
     if (strcmp(step.op, "targetresolvechecks") == 0) {
@@ -6863,7 +7044,8 @@ void Tick(CWarp* pActiveEngine)
                 Fail(nStep, "weaponpayload", "target unavailable after launch");
                 return;
             }
-            SHORT hp = static_cast<CGameSprite*>(object)->m_baseStats.m_hitPoints;
+            auto* defender = static_cast<CGameSprite*>(object);
+            SHORT hp = defender->m_baseStats.m_hitPoints;
             objects->ReleaseShare(s_payloadTarget, CGameObjectArray::THREAD_ASYNCH, INFINITE);
             if (s_payloadHP - hp < s_payloadDamage && ++s_waited < 600) {
                 return;
@@ -6871,6 +7053,21 @@ void Tick(CWarp* pActiveEngine)
             if (s_payloadHP - hp != s_payloadDamage) {
                 Fail(nStep, "weaponpayload", "unexpected HP delta or projectile did not arrive");
                 return;
+            }
+            if (swingDamage) {
+                CAIObjectType targetType(CAIObjectType::ANYONE);
+                targetType.SetInstance(s_payloadTarget);
+                SHORT maximum = defender->m_derivedStats.m_nMaxHitPoints;
+                BOOL healthValid = defender->EvaluateStatusTrigger(CAITrigger(CAITRIGGER_HP, targetType, hp)) == TRUE
+                    && defender->EvaluateStatusTrigger(CAITrigger(CAITRIGGER_HPLT, targetType, s_payloadHP)) == TRUE
+                    && defender->EvaluateStatusTrigger(CAITrigger(CAITRIGGER_HPLOST, targetType, maximum - hp)) == TRUE;
+                if (maximum != 0) {
+                    healthValid = healthValid
+                        && defender->EvaluateStatusTrigger(CAITrigger(CAITRIGGER_HPPERCENT, targetType, hp * 100 / maximum)) == TRUE;
+                }
+                Emit("{\"step\":%d,\"op\":\"damage-health-triggers\",\"hp\":%d,\"maximum\":%d,\"checks\":%d,\"valid\":%s}",
+                    nStep, hp, maximum, maximum != 0 ? 4 : 3, healthValid ? "true" : "false");
+                if (!healthValid) { Fail(nStep, step.op, "health triggers disagree after actual Swing damage"); return; }
             }
             if (swingOnHit) {
                 CGameObject* sourceObject = NULL;
