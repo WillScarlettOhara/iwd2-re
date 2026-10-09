@@ -1,6 +1,7 @@
 # Script target and health predicates
 
 Recovery lot following [sprite target resolution](combat-target-resolution-recovery.md).
+Next lot: [object and door approach movement](combat-target-movement-recovery.md).
 `CGameAIBase::EvaluateStatusTrigger` (`0x453840`) remains a partial dispatcher;
 this lot restores 23 additional cases. `QuickDecode` (`0x45D050`) is an unchanged,
 fully recovered dependency included in the runtime symbol gate.

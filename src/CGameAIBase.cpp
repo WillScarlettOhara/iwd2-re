@@ -540,9 +540,13 @@ BOOL CGameAIBase::EvaluateStatusTrigger(const CAITrigger& trigger)
             return FALSE;
         }
 
-        // DEFERRED: doors (TYPE 0x21) use the door-center helper 0x48B2C0; the
-        // plain position is close enough until that helper is recovered.
-        CPoint ptTarget = pObject->GetPos();
+        CPoint ptTarget;
+        if (pObject->GetObjectType() == CGameObject::TYPE_DOOR) {
+            // The PE passes this default-constructed point before writing it.
+            ptTarget = static_cast<CGameDoor*>(pObject)->GetMoveDest(ptTarget);
+        } else {
+            ptTarget = pObject->GetPos();
+        }
         CPoint gridTarget(ptTarget.x / CPathSearch::GRID_SQUARE_SIZEX,
             ptTarget.y / CPathSearch::GRID_SQUARE_SIZEY);
 

@@ -751,6 +751,18 @@ void CGameDoor::Marshal(CAreaFileDoorObject** pDoorObject)
     (*pDoorObject)->m_strNotPickable = m_strNotPickable;
 }
 
+// 0x48B2C0
+const CPoint& CGameDoor::GetMoveDest(const CPoint& pt)
+{
+    LONG dx1 = pt.x - m_ptDest1.x;
+    LONG dy1 = pt.y - m_ptDest1.y;
+    LONG dx2 = pt.x - m_ptDest2.x;
+    LONG dy2 = pt.y - m_ptDest2.y;
+    LONG distance1 = dx1 * dx1 + dy1 * dy1 * 16 / 9;
+    LONG distance2 = dx2 * dx2 + dy2 * dy2 * 16 / 9;
+    return distance1 < distance2 ? m_ptDest1 : m_ptDest2;
+}
+
 // 0x48B350
 void CGameDoor::SetDrawPoly(SHORT time)
 {

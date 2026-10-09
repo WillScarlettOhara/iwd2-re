@@ -22172,7 +22172,7 @@ SHORT CGameSprite::MoveToPointRange(const CPoint& dest, LONG range)
         }
     } else {
         LONG dx = dest.x / CPathSearch::GRID_SQUARE_SIZEX - m_pos.x / CPathSearch::GRID_SQUARE_SIZEX;
-        LONG dy = (dest.y / CPathSearch::GRID_SQUARE_SIZEY == m_pos.y / CPathSearch::GRID_SQUARE_SIZEY) ? 0 : 1;
+        LONG dy = (dest.y / CPathSearch::GRID_SQUARE_SIZEY == m_pos.y / CPathSearch::GRID_SQUARE_SIZEY) ? 1 : 0;
         if (dx * dx + dy * dy <= range * range) {
             return ACTION_DONE;
         }
@@ -22186,11 +22186,13 @@ SHORT CGameSprite::MoveToPointRange(const CPoint& dest, LONG range)
         return ACTION_ERROR;
     }
 
-    if ((m_pPath != NULL || m_currentSearchRequest != NULL)
-        || (m_actionCount < 1 || m_curAction.m_specificID == CAIAction::BACKGROUND)) {
-        if (x == m_curDest.x && y == m_curDest.y) {
-            return ACTION_INTERRUPTABLE;
-        }
+    if (m_pPath == NULL && m_currentSearchRequest == NULL
+        && m_actionCount >= 1 && m_curAction.m_specificID == CAIAction::BACKGROUND) {
+        return ACTION_ERROR;
+    }
+
+    if (x == m_curDest.x && y == m_curDest.y) {
+        return ACTION_INTERRUPTABLE;
     }
 
     m_curDest.x = x;
@@ -22411,6 +22413,40 @@ SHORT CGameSprite::ExecuteAction()
     // PE case 0x20: the destination is an absolute world point.
     if (m_curAction.m_actionID == CAIAction::JUMPTOPOINT) {
         SHORT result = JumpToPoint(m_curAction.m_dest, TRUE);
+        m_nLastActionReturn = result;
+        return result;
+    }
+
+    // PE case 0x12: untyped movement to a sprite, door or other object.
+    if (m_curAction.m_actionID == CAIAction::MOVETOOBJECT) {
+        SHORT result = ACTION_DONE;
+        if (GetObjectType() != CGameObject::TYPE_SPRITE) {
+            result = ACTION_ERROR;
+        } else {
+            CGameObject* object = ResolveCurrentActionTarget();
+            if (object != NULL) {
+                BYTE type = object->GetObjectType();
+                if (type == CGameObject::TYPE_SPRITE) {
+                    if ((m_baseStats.m_flags & 0x100000) == 0
+                        && object->GetAIType().GetEnemyAlly() <= CAIOBJECTTYPE_EA_GOODCUTOFF) {
+                        m_baseStats.m_flags |= 0x100000;
+                    }
+                    result = MoveToObject(object);
+                    m_lastActionID = CAIAction::MOVETOOBJECT;
+                } else {
+                    CPoint destination;
+                    if (type == CGameObject::TYPE_DOOR) {
+                        // The PE passes this default-constructed point before writing it.
+                        destination = static_cast<CGameDoor*>(object)->GetMoveDest(destination);
+                    } else {
+                        destination = object->GetPos();
+                    }
+                    result = MoveToPointRange(destination, 0);
+                }
+                g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(
+                    object->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            }
+        }
         m_nLastActionReturn = result;
         return result;
     }

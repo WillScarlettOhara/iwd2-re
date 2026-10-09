@@ -127,6 +127,7 @@
 #include "CGameOptions.h"
 #include "CGameSprite.h"
 #include "CGameContainer.h"
+#include "CGameDoor.h"
 #include "CGameEffect.h"
 #include "CItem.h"
 #include "CMessage.h"
@@ -1761,7 +1762,7 @@ void Tick(CWarp* pActiveEngine)
         auto* source = static_cast<CGameSprite*>(rawSource);
         auto* target = static_cast<CGameSprite*>(rawTarget);
         CSingleLock searchLock(&game->field_1B58, TRUE);
-        if (source->m_pArea == NULL || source->m_pPath != NULL || source->m_currentSearchRequest != NULL
+        if (source->m_pArea == NULL || source->m_pPath != NULL || target->m_pPath != NULL || source->m_currentSearchRequest != NULL
             || source->m_animation.m_animation == NULL || target->m_animation.m_animation == NULL) {
             objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
             objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
@@ -1795,6 +1796,11 @@ void Tick(CWarp* pActiveEngine)
         auto savedTargetObjectType = target->m_objectType;
         auto* savedTargetArea = target->m_pArea;
         auto savedEncumberance = source->m_derivedStats.m_nEncumberance;
+        auto savedBaseFlags = source->m_baseStats.m_flags;
+        auto savedLastAction = source->m_lastActionID;
+        auto savedFollowRange = source->m_followRange;
+        auto savedSourcePos = source->m_pos;
+        auto savedSourceObjectType = source->m_objectType;
         auto savedSeen = source->m_lSeen;
         auto savedSeenCount = source->m_canBeSeen;
         auto savedSequence = source->m_nSequence;
@@ -1813,6 +1819,7 @@ void Tick(CWarp* pActiveEngine)
         LONG stale = 0x7FFF7FFE;
         auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
         INT messageCount = messages.GetCount(), requestCount = game->m_searchRequests.GetCount();
+        INT backRequestCount = game->m_searchRequestsBack.GetCount();
         BYTE sourceDenies = objects->m_pArray[(sourceId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH];
         BYTE targetDenies = objects->m_pArray[(targetId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH];
         BOOL valid = TRUE;
@@ -1825,9 +1832,11 @@ void Tick(CWarp* pActiveEngine)
         auto discardRequest = [&]() {
             if (source->m_currentSearchRequest != NULL) {
                 POSITION pos = game->m_searchRequests.Find(source->m_currentSearchRequest);
-                check("request-still-waiting-under-lock", pos != NULL
+                POSITION backPos = game->m_searchRequestsBack.Find(source->m_currentSearchRequest);
+                check("request-still-waiting-under-lock", (pos != NULL || backPos != NULL)
                     && source->m_currentSearchRequest->m_serviceState == CSearchRequest::STATE_WAITING);
                 if (pos != NULL) game->m_searchRequests.RemoveAt(pos);
+                if (backPos != NULL) game->m_searchRequestsBack.RemoveAt(backPos);
                 check("request-signals-private-semaphore", WaitForSingleObject(testSearchSemaphore, 0) == WAIT_OBJECT_0);
                 delete source->m_currentSearchRequest;
                 source->m_currentSearchRequest = NULL;
@@ -1845,6 +1854,9 @@ void Tick(CWarp* pActiveEngine)
             source->m_typeAI.m_nEnemyAlly = CAIObjectType::EA_PC;
             source->m_derivedStats.m_generalState = 0; source->m_derivedStats.m_spellStates.reset();
             source->m_derivedStats.m_nEncumberance = 0;
+            source->m_baseStats.m_flags = savedBaseFlags & ~0x100000;
+            source->m_lastActionID = 123; source->m_followRange = 123;
+            source->m_pos = savedSourcePos; source->m_objectType = savedSourceObjectType;
             source->m_nUnselectableCounter = 0; source->m_moraleFailure = FALSE;
             source->m_bSelected = TRUE; source->m_targetId = CGameObjectArray::INVALID_INDEX;
             source->m_marker.m_type = target->m_marker.m_type = CMarker::ELLIPSE;
@@ -1951,6 +1963,156 @@ void Tick(CWarp* pActiveEngine)
                 == (action == 180 ? CGameAIBase::ACTION_INTERRUPTABLE : CGameAIBase::ACTION_DONE));
         }
         // All requests stay queued under the same critical section until inspected and discarded.
+        reset(); source->m_curAction.m_actionID = CAIAction::MOVETOOBJECT;
+        source->m_curAction.m_acteeID.Set(CAIObjectType::NOONE);
+        check("move22-missing-is-done", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+            && source->m_nLastActionReturn == CGameAIBase::ACTION_DONE && source->m_lastActionID == 123);
+        reset(); source->m_curAction.m_actionID = CAIAction::MOVETOOBJECT;
+        source->m_curAction.m_acteeID.m_nInstance = stale;
+        check("move22-stale-is-done", source->ExecuteAction() == CGameAIBase::ACTION_DONE);
+        reset(); source->m_curAction.m_actionID = CAIAction::MOVETOOBJECT; source->m_objectType = CGameObject::TYPE_NONE;
+        check("move22-requires-sprite-source", source->ExecuteAction() == CGameAIBase::ACTION_ERROR
+            && source->m_nLastActionReturn == CGameAIBase::ACTION_ERROR && source->m_targetId == CGameObjectArray::INVALID_INDEX);
+        for (BYTE allegiance : {static_cast<BYTE>(30), static_cast<BYTE>(31), static_cast<BYTE>(255)}) {
+            reset(); source->m_curAction.m_actionID = CAIAction::MOVETOOBJECT;
+            target->m_typeAI.m_nEnemyAlly = allegiance; target->m_pArea = NULL;
+            check("move22-flags-good-target-and-stores-action", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+                && ((source->m_baseStats.m_flags & 0x100000) != 0) == (allegiance == 30)
+                && source->m_lastActionID == CAIAction::MOVETOOBJECT && source->m_targetId == targetId);
+        }
+        reset(); source->m_curAction.m_actionID = CAIAction::MOVETOOBJECT;
+        source->m_baseStats.m_flags |= 0x100000; target->m_typeAI.m_nEnemyAlly = 255; target->m_pArea = NULL;
+        check("move22-keeps-existing-base-flag", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+            && (source->m_baseStats.m_flags & 0x100000) != 0);
+        reset(); source->m_curAction.m_actionID = CAIAction::MOVETOOBJECT; immunities.AddTail(&immune);
+        check("move22-immunity-after-target-publication", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+            && source->m_targetId == targetId && source->m_lastActionID == 123);
+        reset(); source->m_curAction.m_actionID = CAIAction::MOVETOOBJECT;
+        target->m_objectType = CGameObject::TYPE_NONE; target->m_pos = source->m_pos;
+        check("move22-nonsprite-uses-position", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+            && source->m_lastActionID == 123 && source->m_targetId == targetId
+            && target->m_marker.m_nRecticleCounter == 0 && (source->m_baseStats.m_flags & 0x100000) == 0);
+        const SHORT movementActions[] = {CAIAction::MOVETOOBJECT, 180, 208};
+        for (SHORT action : movementActions) for (SHORT frame : {static_cast<SHORT>(-8), static_cast<SHORT>(-1),
+                static_cast<SHORT>(0), static_cast<SHORT>(1), static_cast<SHORT>(8), static_cast<SHORT>(32767)}) {
+            reset(); source->m_curAction.m_actionID = action; source->m_bSelected = FALSE;
+            source->m_pos = CPoint(160, 120); target->m_pos = CPoint(480, 120);
+            source->field_5616 = frame;
+            check("move-object-dispatch-return", source->ExecuteAction()
+                == (action == 208 ? CGameAIBase::ACTION_NORMAL : CGameAIBase::ACTION_INTERRUPTABLE));
+            check("move-object-short-throttle-wrap", source->field_5616 == static_cast<SHORT>(frame + 1));
+            BOOL scheduled = frame == -8 || frame == 0 || frame == 8;
+            auto* request = source->m_currentSearchRequest;
+            check("move-object-throttle-and-phase", (request != NULL) == scheduled && source->field_5618 == (scheduled ? 1 : 0)
+                && source->m_followRange == 0);
+            if (request != NULL) {
+                check("move-object-searches-target-id", request->m_nTargetIds == 1 && request->m_targetIds != NULL
+                    && request->m_targetIds[0] == targetId && request->m_nTargetPoints == 0
+                    && source->m_curDest == target->m_pos);
+                check("move-object-search-provenance", request->m_sourceId == sourceId
+                    && request->m_sourceSide == source->m_typeAI.GetEnemyAlly() && request->m_searchBitmap == &source->m_pArea->m_search
+                    && memcmp(request->m_terrainTable, source->m_terrainTable, 16) == 0
+                    && request->m_frontList == CSearchRequest::LIST_FRONT);
+            }
+        }
+        // MoveToPointRange preserves the original boolean Y-distance quirk.
+        struct PointRangeCase { LONG x, y, range; SHORT expected; };
+        const PointRangeCase pointRanges[] = {
+            {160, 120, 0, CGameAIBase::ACTION_DONE}, {175, 131, 0, CGameAIBase::ACTION_DONE},
+            {176, 120, 0, CGameAIBase::ACTION_INTERRUPTABLE}, {160, 132, 0, CGameAIBase::ACTION_INTERRUPTABLE},
+            {176, 120, 1, CGameAIBase::ACTION_INTERRUPTABLE}, {176, 132, 1, CGameAIBase::ACTION_DONE},
+            {176, 360, 1, CGameAIBase::ACTION_DONE}, {192, 120, 2, CGameAIBase::ACTION_INTERRUPTABLE},
+            {192, 132, 2, CGameAIBase::ACTION_DONE}, {176, 120, -1, CGameAIBase::ACTION_INTERRUPTABLE},
+            {176, 132, -1, CGameAIBase::ACTION_DONE}, {-1, 120, 0, CGameAIBase::ACTION_ERROR},
+            {160, -1, 0, CGameAIBase::ACTION_ERROR}, {160, 120, 65536, CGameAIBase::ACTION_INTERRUPTABLE},
+            {160, 132, 65536, CGameAIBase::ACTION_DONE},
+        };
+        for (const auto& entry : pointRanges) {
+            reset(); source->m_pos = CPoint(160, 120);
+            CPoint destination(entry.x, entry.y);
+            SHORT result = source->MoveToPointRange(destination, entry.range);
+            check("point-range-literal-threshold", result == entry.expected);
+            auto* request = source->m_currentSearchRequest;
+            check("point-range-request-only-when-moving", (request != NULL) == (entry.expected == CGameAIBase::ACTION_INTERRUPTABLE));
+            if (request != NULL) {
+                check("point-range-one-exclusive-goal", request->m_nTargetPoints == 1 && request->m_exclusiveTargetPoints == TRUE
+                    && request->m_targetPoints[0].x == entry.x && request->m_targetPoints[0].y == entry.y
+                    && request->m_nTargetIds == 0 && source->m_curDest == destination);
+                check("point-range-search-provenance", request->m_sourceId == sourceId
+                    && request->m_sourceSide == source->m_typeAI.GetEnemyAlly() && request->m_removeSelf == TRUE
+                    && request->m_searchBitmap == &source->m_pArea->m_search && request->m_frontList == CSearchRequest::LIST_FRONT);
+            }
+        }
+        for (INT count : {0, 1, 32767}) for (INT background : {0, 1}) for (INT same : {0, 1}) {
+            reset(); source->m_pos = CPoint(160, 120); source->m_actionCount = static_cast<SHORT>(count);
+            source->m_curAction.m_specificID = background ? CAIAction::BACKGROUND : 0;
+            CPoint destination(480, 360);
+            if (same) source->m_curDest = destination;
+            BOOL allowed = !background || count == 0;
+            SHORT expected = allowed ? CGameAIBase::ACTION_INTERRUPTABLE : CGameAIBase::ACTION_ERROR;
+            check("point-range-background-action-gate", source->MoveToPointRange(destination, 0) == expected);
+            check("point-range-same-destination-or-rejected-has-no-request", (source->m_currentSearchRequest != NULL) == (allowed && !same));
+            if (source->m_currentSearchRequest != NULL && background) {
+                auto* request = source->m_currentSearchRequest;
+                check("point-range-background-request", request->m_frontList == CSearchRequest::LIST_BACK
+                    && request->m_minNodesBack == 110 && request->m_maxNodesBack == CSearchRequest::MINNODESBACK
+                    && request->m_sourcePt.x == 10 && request->m_sourcePt.y == 10);
+            }
+        }
+        reset(); source->m_pos = CPoint(160, 120);
+        CPoint edgeX(source->m_pArea->GetInfinity()->nAreaX, 120), edgeY(160, source->m_pArea->GetInfinity()->nAreaY);
+        check("point-range-area-right-boundary", source->MoveToPointRange(edgeX, 0) == CGameAIBase::ACTION_ERROR);
+        check("point-range-area-bottom-boundary", source->MoveToPointRange(edgeY, 0) == CGameAIBase::ACTION_ERROR);
+        reset();
+        CGameDoor* door = NULL;
+        for (INT slot = 0; slot < objects->m_nArraySize && door == NULL; ++slot) {
+            auto& entry = objects->m_pArray[slot];
+            if (entry.m_objectId == -1 || entry.m_objectPtr == NULL
+                || entry.m_objectPtr->GetObjectType() != CGameObject::TYPE_DOOR) continue;
+            CGameObject* object = NULL;
+            if (objects->GetDeny(entry.m_objectPtr->GetId(), CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) == CGameObjectArray::SUCCESS)
+                door = static_cast<CGameDoor*>(object);
+        }
+        check("loaded-door-available", door != NULL);
+        if (door != NULL) {
+            CPoint savedFirst = door->m_ptDest1, savedSecond = door->m_ptDest2, savedDoorPos = door->m_pos;
+            struct DoorCase { LONG x1, y1, x2, y2, x, y; BOOL first; };
+            const DoorCase doors[] = {
+                {0, 0, 10, 0, 0, 0, TRUE}, {0, 0, 10, 0, 10, 0, FALSE},
+                {0, 0, 10, 0, 5, 0, FALSE}, {0, 0, 0, 0, 77, -99, FALSE},
+                {0, 3, 4, 0, 0, 0, FALSE}, {0, 3, 4, 1, 0, 0, TRUE},
+                {0, 6, 7, 0, 0, 0, FALSE}, {0, -6, -7, 0, 0, 0, FALSE},
+                {-10, -10, 10, 10, -9, -9, TRUE}, {-10, -10, 10, 10, 0, 0, FALSE},
+                {65536, 0, 1, 0, 0, 0, TRUE}, {0, 16384, 1, 0, 0, 0, TRUE},
+                {46341, 0, 0, 0, 0, 0, TRUE}, {0, 12000, 0, 0, 0, 0, TRUE},
+            };
+            for (const auto& entry : doors) {
+                door->m_ptDest1 = CPoint(entry.x1, entry.y1); door->m_ptDest2 = CPoint(entry.x2, entry.y2);
+                CPoint point(entry.x, entry.y), before(point);
+                const CPoint& destination = door->GetMoveDest(point);
+                check("door-weighted-distance-tie-and-long-wrap", &destination == (entry.first ? &door->m_ptDest1 : &door->m_ptDest2));
+                check("door-helper-keeps-input-and-destinations", point == before
+                    && door->m_ptDest1 == CPoint(entry.x1, entry.y1) && door->m_ptDest2 == CPoint(entry.x2, entry.y2));
+            }
+            // Identical approach points make the original uninitialized caller input irrelevant.
+            reset(); source->m_curAction.m_actionID = CAIAction::MOVETOOBJECT;
+            source->m_curAction.m_acteeID.Set(CAIObjectType::ANYONE); source->m_curAction.m_acteeID.SetInstance(door->GetId());
+            door->m_ptDest1 = door->m_ptDest2 = source->m_pos; door->m_pos = CPoint(-999, -999);
+            check("move22-door-uses-approach-point", source->ExecuteAction() == CGameAIBase::ACTION_DONE
+                && source->m_lastActionID == 123 && source->m_targetId == door->GetId()
+                && source->m_currentSearchRequest == NULL);
+            CAIObjectType doorSelector(CAIObjectType::ANYONE); doorSelector.SetInstance(door->GetId());
+            auto savedMarked = source->field_342;
+            for (INT mode : {1, 2, 3, 0}) {
+                CAITrigger cause(CAITRIGGER_RANGE, doorSelector, 0); cause.SetInt1(mode);
+                check("range-door-uses-approach-point", source->EvaluateStatusTrigger(cause) == (mode == 2));
+            }
+            check("range-door-publishes-marked-type", source->field_342.Equal(door->GetAIType()));
+            source->field_342.Set(savedMarked);
+            door->m_ptDest1 = savedFirst; door->m_ptDest2 = savedSecond; door->m_pos = savedDoorPos;
+            objects->ReleaseDeny(door->GetId(), CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        discardRequest();
         for (INT cells : {15, 16, 17}) {
             for (SHORT frame : {static_cast<SHORT>(-8), static_cast<SHORT>(-1), static_cast<SHORT>(0),
                      static_cast<SHORT>(1), static_cast<SHORT>(7), static_cast<SHORT>(8), static_cast<SHORT>(32767)}) {
@@ -2011,7 +2173,8 @@ void Tick(CWarp* pActiveEngine)
                 && source->field_5616 == (entry.close ? 0 : 2));
         }
         discardRequest();
-        check("request-queue-restored", game->m_searchRequests.GetCount() == requestCount && messages.GetCount() == messageCount);
+        check("request-queue-restored", game->m_searchRequests.GetCount() == requestCount
+            && game->m_searchRequestsBack.GetCount() == backRequestCount && messages.GetCount() == messageCount);
         check("deny-counts-balanced", objects->m_pArray[(sourceId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == sourceDenies
             && objects->m_pArray[(targetId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == targetDenies);
         immunities.RemoveAll();
@@ -2026,6 +2189,8 @@ void Tick(CWarp* pActiveEngine)
         source->m_curDest = savedDest; target->m_curDest = savedTargetDest; target->m_pos = savedTargetPos;
         target->m_objectType = savedTargetObjectType; target->m_pArea = savedTargetArea;
         source->m_derivedStats.m_nEncumberance = savedEncumberance; source->m_lSeen.Set(savedSeen); source->m_canBeSeen = savedSeenCount;
+        source->m_baseStats.m_flags = savedBaseFlags; source->m_lastActionID = savedLastAction; source->m_followRange = savedFollowRange;
+        source->m_pos = savedSourcePos; source->m_objectType = savedSourceObjectType;
         sourceAnimation->m_personalSpace = sourceSpace; targetAnimation->m_personalSpace = targetSpace;
         source->SetSequence(static_cast<BYTE>(savedSequence)); source->m_pathSearchInvalidDest = savedInvalidDest;
         game->m_nTimeStop = savedStop; game->m_searchRequestListEmpty = savedEmpty;
