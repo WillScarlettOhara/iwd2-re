@@ -14686,8 +14686,6 @@ STRREF CGameSprite::GetNameRef()
     return strName;
 }
 
-// 0x727B80
-//
 // Visibility filter used by every targeting / "find-nearest" path. Returns
 // FALSE if this sprite is hidden from an observer described by
 // `bSeesInvisible`, TRUE otherwise.
@@ -14698,6 +14696,7 @@ STRREF CGameSprite::GetNameRef()
 // re-exposed: bit 0 of `m_baseStats.m_visible` is the force-visible
 // flag CGameEffectForceVisible::ApplyEffect sets on an improved-invisible
 // target and CGameEffectInvisible::ApplyEffect clears.
+// 0x727B80
 BOOL CGameSprite::CheckInvisibility(BOOL bSeesInvisible)
 {
     if (bSeesInvisible == FALSE
@@ -14706,6 +14705,22 @@ BOOL CGameSprite::CheckInvisibility(BOOL bSeesInvisible)
         return FALSE;
     }
     return TRUE;
+}
+
+// 0x764810
+// #guess name: shared target gate for scripted casting and its status trigger.
+BOOL CGameSprite::CheckSpellTarget(CGameSprite* pTarget, DWORD a2)
+{
+    if ((m_derivedStats.m_generalState & STATE_DEAD) != 0
+        || pTarget == NULL
+        || (pTarget->m_derivedStats.m_generalState & STATE_DEAD) != 0
+        || (pTarget->m_baseStats.m_flags & 0x20000) != 0
+        || m_derivedStats.m_spellStates[SPLSTATE_HELD]
+        || (m_derivedStats.m_generalState & STATE_HELPLESS) != 0) {
+        return FALSE;
+    }
+    return pTarget->CheckInvisibility(GetCanSeeInvisible())
+        && !pTarget->m_derivedStats.m_spellStates[SPLSTATE_SANCTUARY];
 }
 
 // Followup half of `CGameSprite::ApplyCastingEffect`.  Called when the cast

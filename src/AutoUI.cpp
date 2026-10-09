@@ -92,6 +92,8 @@
 //   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
+//   targetgatechecks            check recovered spell target/invisibility gates;
+//                                restore both actors in the same tick.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -1552,6 +1554,142 @@ void Tick(CWarp* pActiveEngine)
         }
         Emit("{\"step\":%d,\"op\":\"combatteams\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "targetgatechecks") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2) {
+            Fail(nStep, step.op, "requires world and two party members");
+            return;
+        }
+        auto* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* sourceObject = NULL;
+        CGameObject* targetObject = NULL;
+        if (objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH, &sourceObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable");
+            return;
+        }
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &targetObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(sourceObject);
+        auto* target = static_cast<CGameSprite*>(targetObject);
+        DWORD sourceState = source->m_derivedStats.m_generalState;
+        DWORD targetState = target->m_derivedStats.m_generalState;
+        DWORD sourceFlags = source->m_baseStats.m_flags, targetFlags = target->m_baseStats.m_flags;
+        DWORD sourceBaseState = source->m_baseStats.m_generalState, targetBaseState = target->m_baseStats.m_generalState;
+        auto sourceSpells = source->m_derivedStats.m_spellStates, targetSpells = target->m_derivedStats.m_spellStates;
+        auto targetVisible = target->m_baseStats.m_visible;
+        BOOL sourceSee = source->m_derivedStats.m_bSeeInvisible;
+        SHORT sourceAction = source->m_curAction.m_actionID;
+        INT queueCount = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"targetgate-case\",\"case\":\"%s\",\"passed\":%s}", nStep, name, passed ? "true" : "false");
+            valid = valid && passed;
+            ++checks;
+        };
+        auto reset = [&]() {
+            source->m_derivedStats.m_generalState = target->m_derivedStats.m_generalState = STATE_NORMAL;
+            source->m_baseStats.m_generalState = target->m_baseStats.m_generalState = STATE_NORMAL;
+            source->m_baseStats.m_flags = target->m_baseStats.m_flags = 0;
+            source->m_derivedStats.m_spellStates.reset();
+            target->m_derivedStats.m_spellStates.reset();
+            source->m_derivedStats.m_bSeeInvisible = FALSE;
+            source->m_curAction.m_actionID = 0;
+            target->m_baseStats.m_visible = 0;
+        };
+        reset();
+        check("normal-target", source->CheckSpellTarget(target, 0));
+        check("null-target", !source->CheckSpellTarget(NULL, 0));
+        check("self-target-is-permitted", source->CheckSpellTarget(source, 0));
+        const DWORD ignored[] = {1, 2, 0x80000000, 0xFFFFFFFF};
+        for (DWORD argument : ignored) check("second-stack-argument-ignored", source->CheckSpellTarget(target, argument));
+        source->m_derivedStats.m_generalState = STATE_DEAD;
+        check("dead-source", !source->CheckSpellTarget(target, 0));
+        reset();
+        target->m_derivedStats.m_generalState = STATE_DEAD;
+        check("dead-target", !source->CheckSpellTarget(target, 0));
+        reset();
+        target->m_baseStats.m_flags = 0x20000;
+        check("target-base-flag-blocks", !source->CheckSpellTarget(target, 0));
+        reset();
+        source->m_baseStats.m_flags = 0x20000;
+        check("same-source-base-flag-does-not-block", source->CheckSpellTarget(target, 0));
+        reset();
+        source->m_derivedStats.m_spellStates.set(SPLSTATE_HELD);
+        check("held-source", !source->CheckSpellTarget(target, 0));
+        reset();
+        target->m_derivedStats.m_spellStates.set(SPLSTATE_HELD);
+        check("held-target-remains-permitted", source->CheckSpellTarget(target, 0));
+        reset();
+        source->m_derivedStats.m_generalState = STATE_HELPLESS;
+        check("helpless-source", !source->CheckSpellTarget(target, 0));
+        reset();
+        target->m_derivedStats.m_generalState = STATE_HELPLESS;
+        check("helpless-target-remains-permitted", source->CheckSpellTarget(target, 0));
+        reset();
+        source->m_baseStats.m_generalState = target->m_baseStats.m_generalState = STATE_DEAD;
+        check("derived-state-used-instead-of-base", source->CheckSpellTarget(target, 0));
+        reset();
+        source->m_derivedStats.m_generalState = STATE_STUNNED | STATE_SILENCED | STATE_PANIC;
+        check("unlisted-source-states-remain-permitted", source->CheckSpellTarget(target, 0));
+        reset();
+        source->m_derivedStats.m_spellStates.set(SPLSTATE_SANCTUARY);
+        check("source-sanctuary-remains-permitted", source->CheckSpellTarget(target, 0));
+        reset();
+        target->m_derivedStats.m_spellStates.set(SPLSTATE_SANCTUARY);
+        check("target-sanctuary-blocks", !source->CheckSpellTarget(target, 0));
+        reset();
+        target->m_derivedStats.m_generalState = STATE_IMPROVEDINVISIBILITY;
+        check("improved-state-alone-is-not-regular-invisibility", source->CheckSpellTarget(target, 0));
+        target->m_derivedStats.m_generalState = STATE_INVISIBLE;
+        check("invisible-target-blocks", !source->CheckSpellTarget(target, 0));
+        const BYTE visible[] = {1, 2, 3, 0x80};
+        for (BYTE flag : visible) {
+            target->m_baseStats.m_visible = flag;
+            check("only-force-visible-bit-exposes-target", source->CheckSpellTarget(target, 0) == ((flag & 1) != 0));
+        }
+        target->m_baseStats.m_visible = 0;
+        source->m_derivedStats.m_bSeeInvisible = TRUE;
+        check("derived-see-invisible", source->CheckSpellTarget(target, 0));
+        source->m_derivedStats.m_bSeeInvisible = FALSE;
+        source->m_baseStats.m_flags = 0x10000;
+        check("base-see-invisible", source->CheckSpellTarget(target, 0));
+        source->m_baseStats.m_flags = 0;
+        const SHORT dialogues[] = {CAIAction::DIALOGUE, CAIAction::STARTDIALOG, CAIAction::STARTDIALOGUENOSET};
+        for (SHORT action : dialogues) {
+            source->m_curAction.m_actionID = action;
+            check("dialogue-can-see-invisible", source->GetCanSeeInvisible() && source->CheckSpellTarget(target, 0));
+            target->m_derivedStats.m_spellStates.set(SPLSTATE_SANCTUARY);
+            check("dialogue-does-not-bypass-sanctuary", !source->CheckSpellTarget(target, 0));
+            target->m_derivedStats.m_spellStates.reset(SPLSTATE_SANCTUARY);
+        }
+        source->m_curAction.m_actionID = CAIAction::ATTACK;
+        check("attack-action-has-no-invisibility-exemption", !source->GetCanSeeInvisible() && !source->CheckSpellTarget(target, 0));
+        check("direct-visibility-nonzero-bool", target->CheckInvisibility(0x100));
+        check("pure-query-no-messages", queueCount == g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount());
+        source->m_derivedStats.m_generalState = sourceState;
+        target->m_derivedStats.m_generalState = targetState;
+        source->m_baseStats.m_generalState = sourceBaseState;
+        target->m_baseStats.m_generalState = targetBaseState;
+        source->m_baseStats.m_flags = sourceFlags;
+        target->m_baseStats.m_flags = targetFlags;
+        source->m_derivedStats.m_spellStates = sourceSpells;
+        target->m_derivedStats.m_spellStates = targetSpells;
+        source->m_derivedStats.m_bSeeInvisible = sourceSee;
+        source->m_curAction.m_actionID = sourceAction;
+        target->m_baseStats.m_visible = targetVisible;
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) { Fail(nStep, step.op, "target gate mismatch (actors restored)"); return; }
+        Emit("{\"step\":%d,\"op\":\"targetgatechecks\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        ++s_pc;
         return;
     }
 

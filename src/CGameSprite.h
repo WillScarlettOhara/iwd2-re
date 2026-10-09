@@ -500,6 +500,7 @@ public:
     void ChangeDirection();
     void CheckIfVisible();
     BOOL CheckInvisibility(BOOL bSeesInvisible);
+    BOOL CheckSpellTarget(CGameSprite* pTarget, DWORD a2); // #guess name
     void ApplyCastingEffectPost(CSpell* pSpell, const Spell_ability_st* pAbility);
     void ApplyCastingEffect(CSpell* pSpell, const Spell_ability_st* pAbility, const CPoint& targetPos);
     SHORT Spell(CGameAIBase* target);
