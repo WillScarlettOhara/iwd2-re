@@ -2846,7 +2846,7 @@ SHORT CGameAIBase::SetGlobal()
     return ACTION_DONE;
 }
 
-// 0x45D3E0 - decodes a numeric spell id into a resref string of the form
+// Decodes a numeric spell id into a resref string of the form
 // "SP" + family + "%03d" where family is one of:
 //   1xxx -> SPPR (priest)
 //   2xxx -> SPWI (wizard / arcane)
@@ -2855,6 +2855,7 @@ SHORT CGameAIBase::SetGlobal()
 // spell id); if both are zero the output is the empty string.  Invalid
 // family ids fall through to an empty prefix and the binary logs an
 // "Invalid or missing spell ID" assert -- skipped here.
+// 0x45D3E0
 void CGameAIBase::SpellIdToResRef(int spellId, CString& outResRef)
 {
     if (spellId == 0 && field_588 == 0) {

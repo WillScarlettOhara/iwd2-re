@@ -1608,6 +1608,8 @@ void Tick(CWarp* pActiveEngine)
         memcpy(sourceLevels, source->m_derivedStats.m_nClassLevels, sizeof(sourceLevels));
         SHORT arcaneFailure = source->m_derivedStats.m_nSpellFailureArcane;
         SHORT divineFailure = source->m_derivedStats.m_nSpellFailureDivine;
+        SHORT mentalSpeed = source->m_derivedStats.m_nMentalSpeed;
+        SHORT oldActionCount = source->m_actionCount;
         BOOL disabled[3], immuneLevels[10];
         memcpy(disabled, source->m_derivedStats.m_disabledSpellTypes, sizeof(disabled));
         memcpy(immuneLevels, target->m_derivedStats.m_cImmunitiesSpellLevel.m_levels, sizeof(immuneLevels));
@@ -1955,6 +1957,134 @@ void Tick(CWarp* pActiveEngine)
             source->m_spells.Get(game->GetSpellcasterIndex(CAIOBJECTTYPE_C_WIZARD))->Add(spellId, 0, 1, 1, 0);
             check("script-action-memorized", select("2112", 1) == CGameAIBase::ACTION_DONE && source->field_588 == 2112);
         }
+        // Marking is script state: these original triggers succeed even when
+        // they cannot select an available spell. None consumes a spell charge.
+        auto markedTrigger = [&](SHORT id, LONG spell) {
+            CAITrigger query(id, CAIObjectType::NOONE, spell);
+            query.m_specific2 = 0xFFFFFFFF;
+            return source->EvaluateStatusTrigger(query);
+        };
+        auto markedAction = [&](SHORT id, LONG spell) {
+            CAIAction query;
+            query.m_actionID = id; query.m_specificID = spell;
+            source->m_curAction = query; source->m_nLastActionReturn = 123;
+            return source->ExecuteAction();
+        };
+        source->field_3BA = selector;
+        source->field_588 = 0;
+        check("marked-zero-equals-zero", markedTrigger(CAITRIGGER_ISMARKEDSPELL, 0));
+        check("marked-zero-has-no-spell", !markedTrigger(CAITRIGGER_HAVESPELL, 0));
+        for (LONG number : {0L, 2112L, -123L, 0x12345678L}) {
+            check("force-marked-trigger-succeeds", markedTrigger(CAITRIGGER_FORCEMARKEDSPELL, number) && source->field_588 == number);
+            check("marked-trigger-full-width-match", markedTrigger(CAITRIGGER_ISMARKEDSPELL, number));
+            check("marked-trigger-mismatch", !markedTrigger(CAITRIGGER_ISMARKEDSPELL, number + 1));
+            check("force-marked-action-succeeds", markedAction(0x13F, number) == CGameAIBase::ACTION_DONE
+                && source->field_588 == number && source->m_nLastActionReturn == CGameAIBase::ACTION_DONE);
+            check("numeric-mark-keeps-target", source->field_3BA.Equal(selector));
+        }
+        for (UINT index = 0; index < CSPELLLIST_NUM_CLASSES; ++index) source->m_spells.Get(index)->Clear();
+        source->m_domainSpells.Clear();
+        source->field_588 = 0;
+        check("have-spell-explicit-unavailable", !markedTrigger(CAITRIGGER_HAVESPELL, 2112));
+        check("set-marked-trigger-unavailable-still-true", markedTrigger(CAITRIGGER_SETMARKEDSPELL, 2112) && source->field_588 == 0);
+        check("set-marked-action-unavailable-done", markedAction(0x135, 2112) == CGameAIBase::ACTION_DONE && source->field_588 == 0);
+        source->field_588 = 2112;
+        check("have-spell-marked-unavailable", !markedTrigger(CAITRIGGER_HAVESPELL, 0));
+        check("set-marked-trigger-retains-selection", markedTrigger(CAITRIGGER_SETMARKEDSPELL, 2220) && source->field_588 == 2112);
+        check("set-marked-action-retains-selection", markedAction(0x135, 2220) == CGameAIBase::ACTION_DONE && source->field_588 == 2112);
+        check("set-marked-trigger-clears", markedTrigger(CAITRIGGER_SETMARKEDSPELL, 0) && source->field_588 == 0);
+        source->field_588 = 2112;
+        check("set-marked-action-clears", markedAction(0x135, 0) == CGameAIBase::ACTION_DONE && source->field_588 == 0);
+        if (catalogued) {
+            auto* wizard = source->m_spells.Get(game->GetSpellcasterIndex(CAIOBJECTTYPE_C_WIZARD));
+            wizard->Add(spellId, 0, 1, 0, 0);
+            check("have-spell-known-but-exhausted", !markedTrigger(CAITRIGGER_HAVESPELL, 2112));
+            source->field_588 = 0;
+            check("set-marked-exhausted-still-true", markedTrigger(CAITRIGGER_SETMARKEDSPELL, 2112) && source->field_588 == 0);
+            for (UINT level = 0; level < CSPELLLIST_MAX_LEVELS; ++level) {
+                wizard->Clear(); wizard->Add(spellId, level, 1, 1, 0);
+                source->field_588 = 0;
+                check("have-spell-all-nine-levels", markedTrigger(CAITRIGGER_HAVESPELL, 2112));
+                check("set-marked-all-nine-levels", markedTrigger(CAITRIGGER_SETMARKEDSPELL, 2112) && source->field_588 == 2112);
+            }
+            for (BYTE nClass : {CAIOBJECTTYPE_C_BARD, CAIOBJECTTYPE_C_CLERIC, CAIOBJECTTYPE_C_DRUID,
+                     CAIOBJECTTYPE_C_PALADIN, CAIOBJECTTYPE_C_RANGER, CAIOBJECTTYPE_C_SORCERER, CAIOBJECTTYPE_C_WIZARD}) {
+                for (UINT index = 0; index < CSPELLLIST_NUM_CLASSES; ++index) source->m_spells.Get(index)->Clear();
+                source->m_spells.Get(game->GetSpellcasterIndex(nClass))->Add(spellId, 0, 1, 1, 0);
+                source->field_588 = 0;
+                check("have-spell-any-casting-class", markedTrigger(CAITRIGGER_HAVESPELL, 2112));
+                check("set-marked-trigger-selects-available", markedTrigger(CAITRIGGER_SETMARKEDSPELL, 2112) && source->field_588 == 2112);
+                check("have-spell-zero-uses-marker", markedTrigger(CAITRIGGER_HAVESPELL, 0));
+                source->field_588 = 0;
+                check("set-marked-action-selects-available", markedAction(0x135, 2112) == CGameAIBase::ACTION_DONE && source->field_588 == 2112);
+                // No-usefulness gate on marking/HaveSpell: silence and existing
+                // target effects do not turn a memorized spell into unavailable.
+                source->m_derivedStats.m_generalState = STATE_SILENCED;
+                target->m_derivedStats.m_generalState = STATE_BERSERK;
+                check("have-spell-availability-only", markedTrigger(CAITRIGGER_HAVESPELL, 0));
+                source->m_derivedStats.m_generalState = target->m_derivedStats.m_generalState = STATE_NORMAL;
+                check("marking-does-not-consume-memorized-spell", markedTrigger(CAITRIGGER_HAVESPELL, 2112));
+            }
+        }
+        reset();
+        source->field_588 = 2112;
+        CAIObjectType spellTarget(CAIObjectType::ANYONE);
+        spellTarget.m_SpecialCase[0] = 55;
+        spellTarget.Decode(source);
+        check("marked-spell-target-selector-decodes", spellTarget.Equal(target->GetAIType()));
+        CString markedResRef;
+        source->SpellIdToResRef(0, markedResRef);
+        check("marked-spell-zero-resolves-resource", markedResRef == "SPWI112");
+        auto preparation = [&](LONG numeric, WORD speed, SHORT mental, SHORT count) {
+            abilities[0].speedFactor = speed;
+            source->m_derivedStats.m_nMentalSpeed = mental;
+            source->m_actionCount = count;
+            return markedAction(0x137, numeric);
+        };
+        struct DelayCase { WORD speed; SHORT mental; BOOL waits; LONG ticks; };
+        const DelayCase delayCases[] = {
+            {0, 0, FALSE, 0}, {1, 0, FALSE, 0}, {2, 0, TRUE, 14},
+            {6, 0, TRUE, 74}, {6, 1, TRUE, 44}, {6, 2, TRUE, 14},
+            {6, 3, FALSE, 0}, {1, 2, FALSE, 0}, {0, -1, TRUE, 14},
+            {6, -2, TRUE, 134}, {0, 32767, FALSE, 0},
+            {65535, 0, FALSE, 0}, {32768, 0, TRUE, 491504},
+            {32769, 0, FALSE, 0}, {0, -32768, FALSE, 0},
+            {65535, 32767, FALSE, 0}, {65535, -32768, FALSE, 0},
+        };
+        for (const auto& entry : delayCases) {
+            SHORT result = preparation(0, entry.speed, entry.mental, 0);
+            check("preparation-short-boundary-return", result == (entry.waits ? CGameAIBase::ACTION_INTERRUPTABLE : CGameAIBase::ACTION_DONE));
+            check("preparation-short-boundary-action", source->m_curAction.m_actionID == (entry.waits ? CAIAction::WAIT : 0x137));
+            check("preparation-short-boundary-count", source->m_curAction.m_specificID == (entry.waits ? entry.ticks : 2112));
+            check("preparation-stores-last-return", source->m_nLastActionReturn == result);
+        }
+        source->field_588 = 2219;
+        check("preparation-explicit-id-ignores-marker", preparation(2112, 6, 0, 1) == CGameAIBase::ACTION_INTERRUPTABLE
+            && source->m_curAction.m_specificID == 4 && source->field_588 == 2219);
+        source->field_588 = 0;
+        check("preparation-explicit-id-without-marker", preparation(2112, 2, 0, 1) == CGameAIBase::ACTION_DONE
+            && source->m_curAction.m_actionID == CAIAction::WAIT && source->m_curAction.m_specificID == 0);
+        check("preparation-no-spell-direct-error", preparation(0, 6, 0, 0) == CGameAIBase::ACTION_ERROR && source->m_nLastActionReturn == 123);
+        source->field_588 = 2112;
+        header.abilityCount = 0;
+        check("preparation-no-abilities", preparation(0, 6, 0, 0) == CGameAIBase::ACTION_DONE && source->m_curAction.m_actionID == 0x137);
+        header.abilityCount = 1; abilities[0].minCasterLevel = 4;
+        check("preparation-too-low-caster", preparation(0, 6, 0, 0) == CGameAIBase::ACTION_DONE && source->m_curAction.m_actionID == 0x137);
+        header.abilityCount = 2; abilities[0].minCasterLevel = 0; abilities[1].minCasterLevel = 2; abilities[1].speedFactor = 6;
+        check("preparation-last-eligible-ability", preparation(0, 2, 0, 0) == CGameAIBase::ACTION_INTERRUPTABLE && source->m_curAction.m_specificID == 74);
+        abilities[1].minCasterLevel = 4;
+        check("preparation-stops-at-first-ineligible", preparation(0, 2, 0, 0) == CGameAIBase::ACTION_INTERRUPTABLE && source->m_curAction.m_specificID == 14);
+        abilities[0].minCasterLevel = 4; abilities[1].minCasterLevel = 0;
+        check("preparation-does-not-skip-first-ineligible", preparation(0, 6, 0, 0) == CGameAIBase::ACTION_DONE && source->m_curAction.m_actionID == 0x137);
+        header.abilityCount = 1; abilities[0].minCasterLevel = 0;
+        check("preparation-enters-real-wait-dispatch", preparation(0, 2, 0, 0) == CGameAIBase::ACTION_INTERRUPTABLE
+            && source->m_curAction.m_specificID == 14);
+        source->m_actionCount = 1;
+        for (INT tick = 0; tick < 14; ++tick) {
+            SHORT result = source->ExecuteAction();
+            check("prepared-wait-countdown", result == (tick == 13 ? CGameAIBase::ACTION_DONE : CGameAIBase::ACTION_INTERRUPTABLE)
+                && source->m_curAction.m_specificID == 13 - tick);
+        }
         check("query-no-hp-change", source->m_baseStats.m_hitPoints == sourceBase.m_hitPoints && target->m_baseStats.m_hitPoints == targetBase.m_hitPoints);
         check("query-no-messages", queued == g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount());
         check("query-no-active-opcode-change", target->m_derivedStats.m_activeEffectOpcodes == targetOpcodes);
@@ -1966,6 +2096,8 @@ void Tick(CWarp* pActiveEngine)
         source->m_derivedStats.m_classMask = sourceMask;
         memcpy(source->m_derivedStats.m_nClassLevels, sourceLevels, sizeof(sourceLevels));
         source->m_derivedStats.m_nSpellFailureArcane = arcaneFailure; source->m_derivedStats.m_nSpellFailureDivine = divineFailure;
+        source->m_derivedStats.m_nMentalSpeed = mentalSpeed;
+        source->m_actionCount = oldActionCount;
         memcpy(source->m_derivedStats.m_disabledSpellTypes, disabled, sizeof(disabled));
         memcpy(target->m_derivedStats.m_cImmunitiesSpellLevel.m_levels, immuneLevels, sizeof(immuneLevels));
         source->m_derivedStats.m_cImmunitiesSpell = sourceImmunities; target->m_derivedStats.m_cImmunitiesSpell = targetImmunities;

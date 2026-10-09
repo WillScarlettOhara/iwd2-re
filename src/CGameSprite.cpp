@@ -18594,10 +18594,45 @@ void CGameSprite::DebugDump(const CString& a1, BOOLEAN a2)
 BOOL CGameSprite::EvaluateStatusTrigger(const CAITrigger& trigger)
 {
     // TODO INCOMPLETE: original 0x731B30 is a large status-trigger dispatcher.
-    // This recovers the NumTimesTalkedTo block at 0x731F9F..0x731FCD, needed by
-    // the prologue 10HEDRON dialog entry condition, and the TimerActive case
-    // (gates the ambient RandomWalk loop in 00AMVW*.BCS).
+    // Recovered cases include dialogue counts, timers and scripted spell
+    // selection. Other original status-trigger cases remain deferred.
     switch (trigger.m_triggerID) {
+    case CAITRIGGER_HAVESPELL: {
+        // 0x731C09: zero resolves the marked spell, unless both are zero.
+        if (trigger.m_specificID == 0 && field_588 == 0) {
+            return FALSE;
+        }
+        CString resRef;
+        SpellIdToResRef(trigger.m_specificID, resRef);
+        if (resRef == "") {
+            return FALSE;
+        }
+        DWORD classes = 0xFFF;
+        return HasSpell(CResRef(resRef), classes, 9, TRUE) != FALSE;
+    }
+    case CAITRIGGER_ISMARKEDSPELL:
+        return trigger.m_specificID == field_588;
+    case CAITRIGGER_SETMARKEDSPELL: {
+        // 0x731CA6: always true, even when the requested spell is unavailable.
+        if (trigger.m_specificID == 0) {
+            field_588 = 0;
+        } else if (field_588 == 0) {
+            CString resRef;
+            SpellIdToResRef(trigger.m_specificID, resRef);
+            if (resRef != "") {
+                DWORD classes = 0xFFF;
+                if (HasSpell(CResRef(resRef), classes, 9, TRUE)) {
+                    field_588 = trigger.m_specificID;
+                }
+            }
+        }
+        return TRUE;
+    }
+    case CAITRIGGER_FORCEMARKEDSPELL:
+        if (field_588 != trigger.m_specificID) {
+            field_588 = trigger.m_specificID;
+        }
+        return TRUE;
     case CAITRIGGER_ISSPELLTARGETVALID: {
         CAIObjectType targetType(trigger.m_triggerCause);
         targetType.Decode(this);
@@ -22324,6 +22359,71 @@ SHORT CGameSprite::ExecuteAction()
         if (object != NULL) {
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(
                 object->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        m_nLastActionReturn = result;
+        return result;
+    }
+
+    // PE 0x135 -> case 0x6E (0x7296FA): mark only an available spell.
+    if (m_curAction.m_actionID == 0x135) {
+        if (m_curAction.m_specificID == 0) {
+            field_588 = 0;
+        } else if (field_588 == 0) {
+            CString resRef;
+            SpellIdToResRef(m_curAction.m_specificID, resRef);
+            if (resRef != "") {
+                DWORD classes = 0xFFF;
+                if (HasSpell(CResRef(resRef), classes, 9, TRUE)) {
+                    field_588 = m_curAction.m_specificID;
+                }
+            }
+        }
+        m_nLastActionReturn = ACTION_DONE;
+        return ACTION_DONE;
+    }
+    // PE 0x13F -> case 0x72 (0x7297AC): force the numeric marker.
+    if (m_curAction.m_actionID == 0x13F) {
+        if (field_588 != m_curAction.m_specificID) {
+            field_588 = m_curAction.m_specificID;
+        }
+        m_nLastActionReturn = ACTION_DONE;
+        return ACTION_DONE;
+    }
+    // PE 0x137 -> case 0x70 (0x72AEE4): wait from selected ability speed.
+    if (m_curAction.m_actionID == 0x137) {
+        if (m_curAction.m_specificID == 0) {
+            m_curAction.m_specificID = field_588;
+        }
+        CString resRef;
+        SpellIdToResRef(m_curAction.m_specificID, resRef);
+        if (resRef == "") {
+            // Original direct error exit does not update m_nLastActionReturn.
+            return ACTION_ERROR;
+        }
+        SHORT result = ACTION_DONE;
+        CSpell spell{CResRef(resRef)};
+        if (spell.Demand()) {
+            SHORT casterLevel = GetCasterLevel(&spell, 0, 0);
+            const Spell_ability_st* ability = NULL;
+            for (INT index = 0; index < spell.GetAbilityCount(); ++index) {
+                if (spell.GetAbility(index)->minCasterLevel > casterLevel) {
+                    break;
+                }
+                ability = spell.GetAbility(index);
+            }
+            if (ability != NULL) {
+                // 0x72B166..0x72B18D: clamp the first subtraction, then
+                // subtract mental speed again and compare the wrapped SHORT.
+                INT delay = ability->speedFactor - m_derivedStats.m_nMentalSpeed;
+                if (delay < 0) delay = 0;
+                SHORT wait = static_cast<SHORT>(delay - 1 - m_derivedStats.m_nMentalSpeed);
+                if (wait > 0) {
+                    m_curAction.m_actionID = CAIAction::WAIT;
+                    m_curAction.m_specificID = wait;
+                    result = Wait();
+                }
+            }
+            spell.Release();
         }
         m_nLastActionReturn = result;
         return result;

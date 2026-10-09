@@ -1,5 +1,8 @@
 # Scripted spell usefulness and selection
 
+Follow-up: [marked spell state and preparation delay](combat-marked-spell-recovery.md)
+recovers the numeric marker triggers/actions and ability-based Wait preparation.
+
 This lot restores two complete helpers and their original script branches:
 CGameSprite::CheckSpellUseful (0x764880), CGameAIBase::CheckTargetVisibility
 (0x44DAC0), IsSpellTargetValid in EvaluateStatusTrigger (0x731B30), and action
