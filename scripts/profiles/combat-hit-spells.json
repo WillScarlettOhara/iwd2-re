@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-hit-spells.txt",
+  "hold": 60,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Center the loaded save on the party before combat tests.",
+    "Pin ZRCHIT and substitute typed local spell tables for metadata, ability levels and special save-bonus cases; restore tables and actor state in the same tick.",
+    "Exercise full signed levels through on-hit message dispatch, including 256, 257 and a negative level.",
+    "Run melee, bow, crossbow and sling on normal projectile ticks with deterministic fixtures and actual HP loss.",
+    "A second melee Swing installs a transient defender on-hit spell: require seven damage on the defender (six weapon plus one self effect) and two retaliation damage on the attacker.",
+    "Queue the fixture on-hit spell through ApplyOnHitSpells and require normal message processing to inflict one damage on the source and two on the target.",
+    "Never save the disposable process; restore save, config and fixture paths transactionally."
+  ]
+}

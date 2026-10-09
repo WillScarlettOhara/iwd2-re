@@ -119,6 +119,7 @@
 #include "CVariableHash.h"
 #include "CProjectile.h"
 #include "CSpell.h"
+#include "IcewindCGameEffects.h"
 #include "CDimmKeyTable.h"
 #include "CInfGame.h"
 #include "CInfinity.h"
@@ -172,6 +173,8 @@ BOOL s_attackOrderSeen = FALSE;
 CPoint s_attackStart;
 BOOL s_attackRequireMove = FALSE;
 BOOL s_attackMoved = FALSE;
+SHORT s_onHitSourceHP = 0;
+SHORT s_onHitTargetHP = 0;
 
 DWORD GetEnv(const char* name, char* value, DWORD size)
 {
@@ -1539,6 +1542,332 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         Emit("{\"step\":%d,\"op\":\"combatteams\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "hitspellchecks") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2) {
+            Fail(nStep, step.op, "requires world and two party members");
+            return;
+        }
+        CGameObjectArray* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0);
+        CGameObject* object = NULL;
+        if (objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable");
+            return;
+        }
+        CGameSprite* source = static_cast<CGameSprite*>(object);
+        CSpell spell(CResRef("ZRCHIT"));
+        if (!spell.Demand() || !spell.pRes->m_bParsed) {
+            objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "ZRCHIT fixture unavailable");
+            return;
+        }
+        // Keep the resource demanded while substituting typed local tables.
+        // Nested Demand calls then retain these tables. Restore before Release.
+        CResSpell* resource = spell.pRes;
+        SPELL_HEADER* originalHeader = resource->m_pHeader;
+        SPELL_ABILITY* originalAbilities = resource->m_pAbilities;
+        ITEM_EFFECT* originalEffects = resource->m_pEffects;
+        SPELL_HEADER header = *originalHeader;
+        SPELL_ABILITY abilities[3] = {};
+        ITEM_EFFECT effects[6] = {};
+        for (INT index = 0; index < 3; ++index) {
+            abilities[index] = originalAbilities[0];
+            abilities[index].minCasterLevel = index == 0 ? 1 : index == 1 ? 3 : 257;
+            abilities[index].startingEffect = index * 2;
+            for (INT e = 0; e < 2; ++e) {
+                effects[index * 2 + e] = originalEffects[e];
+                effects[index * 2 + e].effectAmount = index * 10 + e + 1;
+                effects[index * 2 + e].saveMod = -3;
+            }
+        }
+        header.abilityCount = 3;
+        header.school = 0;
+        header.secondaryType = 37;
+        header.itemFlags = 0x1234;
+        resource->m_pHeader = &header;
+        resource->m_pAbilities = abilities;
+        resource->m_pEffects = effects;
+        auto savedBase = source->m_baseStats;
+        auto savedSpells = source->m_spells;
+        auto savedDomain = source->m_domainSpells;
+        SHORT savedInt = source->m_derivedStats.m_nINT;
+        SHORT savedWis = source->m_derivedStats.m_nWIS;
+        SHORT savedChr = source->m_derivedStats.m_nCHR;
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"hitspell-case\",\"case\":\"%s\",\"passed\":%s}", nStep, name, passed ? "true" : "false");
+            valid = valid && passed;
+            ++checks;
+        };
+        memset(source->m_baseStats.m_feats, 0, sizeof(source->m_baseStats.m_feats));
+        memset(source->m_baseStats.m_classLevels, 0, sizeof(source->m_baseStats.m_classLevels));
+        source->m_baseStats.m_specialization = 0;
+        CGameEffect* effect = spell.BuildAbilityEffect(0, 0, NULL, 3, 0x40000, 17);
+        check("null-caster-metadata", effect && effect->m_school == 0 && effect->field_48 == 37
+            && effect->m_sourceType == 1 && effect->m_sourceFlags == 0x1234
+            && effect->m_sourceRes == CResRef("ZRCHIT"));
+        check("null-caster-unpacked", effect && effect->m_casterLevel == 0 && effect->m_firstCall == 0);
+        check("decode-coordinates", effect && effect->m_source == CPoint(-1, -1)
+            && effect->m_target == CPoint(-1, -1) && effect->m_sourceID == -1 && effect->m_saveMod == -3);
+        delete effect;
+        CGameObject nonSprite;
+        effect = spell.BuildAbilityEffect(0, 0, &nonSprite, 11, 0, 17);
+        check("non-sprite-level-one", effect && effect->m_casterLevel == 0xB01 && effect->m_firstCall == 0);
+        delete effect;
+        check("invalid-ability", spell.BuildAbilityEffect(3, 0, source, 0, 0, 17) == NULL);
+        check("invalid-effect", spell.BuildAbilityEffect(0, 2, source, 0, 0, 17) == NULL);
+        header.itemFlags = 0x4000;
+        header.field_72 = 2;
+        header.field_73 = 3;
+        effect = spell.BuildAbilityEffect(0, 0, NULL, 3, 0x40000, 0);
+        check("null-caster-default-duration-level", effect && effect->m_duration == 161 && effect->m_casterLevel == 0);
+        delete effect;
+        effect = spell.BuildAbilityEffect(0, 0, &nonSprite, 11, 0, 0);
+        check("non-sprite-default-duration-level", effect && effect->m_duration == 161 && effect->m_casterLevel == 0xB01);
+        delete effect;
+        effect = spell.BuildAbilityEffect(0, 0, source, 11, 0, 255);
+        check("explicit-byte-level-duration", effect && effect->m_duration == 3591 && effect->m_casterLevel == 0xBFF);
+        delete effect;
+        header.itemFlags = 0x1234;
+        source->m_baseStats.m_feats[2] = 1;
+        source->m_baseStats.m_featSpellPenetration = 2;
+        effect = spell.BuildAbilityEffect(0, 0, source, 11, 0, 17);
+        check("sprite-level-and-penetration", effect && effect->m_casterLevel == 0xB11 && effect->m_firstCall == 4);
+        delete effect;
+        effect = spell.BuildAbilityEffect(0, 0, source, 3, 0x40000, 17);
+        BYTE domainIndex = game->GetRuleTables().GetSpecializationIndex(3, 0x40000);
+        check("cleric-domain-packed", effect && effect->m_casterLevel == (17 | 3 << 8 | DWORD(domainIndex) << 16));
+        delete effect;
+        const BYTE schools[] = {4, 6, 7, 8};
+        const DWORD specializations[] = {0x200, 0x800, 0x1000, 0x2000};
+        source->m_baseStats.m_featFocusEnchantment = 2;
+        source->m_baseStats.m_featFocusEvocation = 2;
+        source->m_baseStats.m_featFocusNecromancy = 2;
+        source->m_baseStats.m_featFocusTransmutation = 2;
+        for (INT index = 0; index < 4; ++index) {
+            header.school = schools[index];
+            source->m_baseStats.m_specialization = specializations[index];
+            source->m_baseStats.m_feats[1] = 1U << (28 + index);
+            effect = spell.BuildAbilityEffect(0, 0, source, 11, 0, 17);
+            check("focus-and-matching-school", effect && effect->m_school == schools[index] && effect->m_saveMod == 3);
+            delete effect;
+            source->m_baseStats.m_specialization = 0;
+            effect = spell.BuildAbilityEffect(0, 0, source, 11, 0, 17);
+            check("focus-without-specialization", effect && effect->m_saveMod == 1);
+            delete effect;
+            source->m_baseStats.m_feats[1] = 0;
+            source->m_baseStats.m_specialization = specializations[index];
+            effect = spell.BuildAbilityEffect(0, 0, source, 11, 0, 17);
+            check("specialization-without-focus", effect && effect->m_saveMod == -1);
+            delete effect;
+        }
+        header.school = 0;
+        source->m_baseStats.m_specialization = 0;
+        const INT levels[] = {-1, 0, 1, 2, 3, 255, 256, 257, 65535, 0x10001};
+        const INT amounts[] = {0, 0, 1, 1, 11, 11, 11, 21, 21, 21};
+        for (INT index = 0; index < 10; ++index) {
+            std::list<CGameEffect*> built = BuildSubSpellEffects(source, CResRef("ZRCHIT"), levels[index]);
+            check("signed-level-ability-selection", amounts[index] == 0 ? built.empty()
+                : built.size() == 2 && built.front()->m_effectAmount == amounts[index]
+                    && built.back()->m_effectAmount == amounts[index] + 1);
+            if (!built.empty()) {
+                check("subspell-source-provenance", built.front()->m_source == source->GetPos()
+                    && built.back()->m_sourceID == sourceId && built.front()->m_sourceRes == CResRef("ZRCHIT"));
+            }
+            for (CGameEffect* payload : built) delete payload;
+        }
+        abilities[1].effectCount = 0;
+        auto empty = BuildSubSpellEffects(source, CResRef("ZRCHIT"), 3);
+        check("empty-selected-ability", empty.empty());
+        for (CGameEffect* payload : empty) delete payload;
+        abilities[1].effectCount = 2;
+        CGameObject* targetObject = NULL;
+        LONG targetId = game->GetFixedOrderCharacterId(1);
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &targetObject, INFINITE) == CGameObjectArray::SUCCESS) {
+            auto savedOnHit = source->m_derivedStats.m_onHitSpells;
+            auto& queue = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+            INT before = queue.GetCount();
+            const INT onHitLevels[] = {-1, 256, 257};
+            const INT onHitAmounts[] = {0, 11, 21};
+            for (INT index = 0; index < 3; ++index) {
+                source->m_derivedStats.m_onHitSpells.clear();
+                COnHitSpell entry;
+                entry.m_sourceRes = "ZRCLEVEL";
+                entry.m_spellRes = "ZRCHIT";
+                entry.m_level = onHitLevels[index];
+                entry.m_target = CPoint(678, 901);
+                source->m_derivedStats.m_onHitSpells.push_back(entry);
+                source->ApplyOnHitSpells(static_cast<CGameSprite*>(targetObject));
+                check("onhit-full-width-level", queue.GetCount() == before + (index == 0 ? 0 : 2));
+                for (INT e = queue.GetCount() - before - 1; e >= 0; --e) {
+                    CMessage* raw = queue.RemoveTail();
+                    CMessageAddEffect* message = dynamic_cast<CMessageAddEffect*>(raw);
+                    check("onhit-level-payload-and-recipient", message && message->m_effect->m_effectAmount == onHitAmounts[index] + e
+                        && message->GetTarget() == (e == 0 ? sourceId : targetId)
+                        && message->m_effect->m_sourceRes == CResRef("ZRCLEVEL")
+                        && message->m_effect->m_target == CPoint(678, 901));
+                    delete raw;
+                }
+            }
+            source->m_derivedStats.m_onHitSpells = savedOnHit;
+            objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        } else {
+            check("onhit-target-available", FALSE);
+        }
+        header.abilityCount = 0;
+        empty = BuildSubSpellEffects(source, CResRef("ZRCHIT"), 3);
+        check("zero-abilities", empty.empty());
+        for (CGameEffect* payload : empty) delete payload;
+        header.abilityCount = 3;
+
+        UINT requiredId = 0;
+        BOOL found = game->m_spells.Find(CResRef("SPWI710"), requiredId);
+        check("required-spell-catalogued", found);
+        source->m_derivedStats.m_nINT = 18;
+        source->m_derivedStats.m_nCHR = 16;
+        source->m_derivedStats.m_nWIS = 20;
+        for (UINT cls = 0; cls < CSPELLLIST_NUM_CLASSES; ++cls) {
+            source->m_spells.m_spellsByClass[cls].Clear();
+            DWORD mask = game->GetSpellcasterClassMask(cls);
+            if (found && (mask & (CLASSMASK_WIZARD | CLASSMASK_SORCERER)) != 0) {
+                CGameSpriteSpellListEntry entry = {requiredId, 1, 1, 0};
+                source->m_spells.m_spellsByClass[cls].m_lists[0].m_List.push_back(entry);
+            }
+        }
+        source->m_domainSpells.Clear();
+        if (found) {
+            CGameSpriteSpellListEntry entry = {requiredId, 1, 1, 0};
+            source->m_domainSpells.m_lists[0].m_List.push_back(entry);
+        }
+        const char* specialSpells[] = {"SPIN126", "SPIN127", "SPIN128", "SPIN129", "SPIN130", "SPIN131", "SPIN132"};
+        // Alias only the helper's resref, retaining the pinned fixture resource.
+        // This tests SPIN metadata branches without overriding installed assets.
+        for (INT index = 0; index < 7; ++index) {
+            spell.cResRef = specialSpells[index];
+            source->m_baseStats.m_wizardLevel = 1;
+            source->m_baseStats.m_sorcererLevel = 0;
+            source->m_baseStats.m_clericLevel = 0;
+            effect = spell.BuildAbilityEffect(0, 0, source, 11, 0, 17);
+            check("special-wizard-save-modifier", effect && effect->m_saveMod == 1);
+            delete effect;
+        }
+        source->m_baseStats.m_wizardLevel = 0;
+        source->m_baseStats.m_sorcererLevel = 1;
+        effect = spell.BuildAbilityEffect(0, 0, source, 10, 0, 17);
+        check("special-sorcerer-save-modifier", effect && effect->m_saveMod == 0);
+        delete effect;
+        source->m_baseStats.m_sorcererLevel = 0;
+        source->m_baseStats.m_clericLevel = 1;
+        source->m_baseStats.m_specialization = 0x40000;
+        effect = spell.BuildAbilityEffect(0, 0, source, 3, 0x40000, 17);
+        check("special-domain-save-modifier", effect && effect->m_saveMod == 2);
+        delete effect;
+        source->m_baseStats.m_specialization = 0x80000;
+        effect = spell.BuildAbilityEffect(0, 0, source, 3, 0x80000, 17);
+        check("wrong-domain-no-bonus", effect && effect->m_saveMod == -3);
+        delete effect;
+        source->m_baseStats.m_specialization = 0x40000;
+        source->m_baseStats.m_wizardLevel = 1;
+        source->m_baseStats.m_sorcererLevel = 1;
+        effect = spell.BuildAbilityEffect(0, 0, source, 3, 0x40000, 17);
+        check("three-class-average", effect && effect->m_saveMod == 1);
+        delete effect;
+        source->m_derivedStats.m_nINT = 8;
+        source->m_derivedStats.m_nCHR = 8;
+        source->m_baseStats.m_clericLevel = 0;
+        effect = spell.BuildAbilityEffect(0, 0, source, 11, 0, 17);
+        check("unsigned-negative-average", effect && effect->m_saveMod == 0x7FFFFFFC);
+        delete effect;
+        source->m_baseStats.m_wizardLevel = 0;
+        source->m_baseStats.m_sorcererLevel = 0;
+        effect = spell.BuildAbilityEffect(0, 0, source, 11, 0, 17);
+        check("no-class-no-special-bonus", effect && effect->m_saveMod == -3);
+        delete effect;
+        source->m_baseStats.m_wizardLevel = 1;
+        for (UINT cls = 0; cls < CSPELLLIST_NUM_CLASSES; ++cls) {
+            source->m_spells.m_spellsByClass[cls].Clear();
+        }
+        effect = spell.BuildAbilityEffect(0, 0, source, 11, 0, 17);
+        check("missing-required-spell-no-bonus", effect && effect->m_saveMod == -3);
+        delete effect;
+        source->m_baseStats = savedBase;
+        source->m_spells = savedSpells;
+        source->m_domainSpells = savedDomain;
+        source->m_derivedStats.m_nINT = savedInt;
+        source->m_derivedStats.m_nWIS = savedWis;
+        source->m_derivedStats.m_nCHR = savedChr;
+        spell.cResRef = "ZRCHIT";
+        resource->m_pHeader = originalHeader;
+        resource->m_pAbilities = originalAbilities;
+        resource->m_pEffects = originalEffects;
+        spell.Release();
+        objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            Fail(nStep, step.op, "spell payload mismatch (resource and actor restored)");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"hitspellchecks\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "onhitdamage") == 0 || strcmp(step.op, "onhitwait") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2) {
+            Fail(nStep, step.op, "requires world and two party members");
+            return;
+        }
+        CGameObjectArray* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* sourceObject = NULL;
+        CGameObject* targetObject = NULL;
+        if (objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH, &sourceObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable");
+            return;
+        }
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &targetObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable");
+            return;
+        }
+        CGameSprite* source = static_cast<CGameSprite*>(sourceObject);
+        CGameSprite* target = static_cast<CGameSprite*>(targetObject);
+        BOOL fire = strcmp(step.op, "onhitdamage") == 0;
+        INT sourceLoss = 0, targetLoss = 0;
+        if (fire) {
+            s_onHitSourceHP = source->m_baseStats.m_hitPoints;
+            s_onHitTargetHP = target->m_baseStats.m_hitPoints;
+            auto saved = source->m_derivedStats.m_onHitSpells;
+            source->m_derivedStats.m_onHitSpells.clear();
+            COnHitSpell entry;
+            entry.m_sourceRes = "ZRCORIG1";
+            entry.m_spellRes = "ZRCHIT";
+            entry.m_level = 1;
+            entry.m_target = target->GetPos();
+            source->m_derivedStats.m_onHitSpells.push_back(entry);
+            source->ApplyOnHitSpells(target);
+            source->m_derivedStats.m_onHitSpells = saved;
+        } else {
+            sourceLoss = s_onHitSourceHP - source->m_baseStats.m_hitPoints;
+            targetLoss = s_onHitTargetHP - target->m_baseStats.m_hitPoints;
+        }
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!fire && (sourceLoss != 1 || targetLoss != 2)) {
+            if (sourceLoss > 1 || targetLoss > 2 || ++s_waited > DEFAULT_WAIT_TICKS) {
+                Fail(nStep, step.op, "expected one self damage and two target damage");
+            }
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"%s\",\"sourceLoss\":%d,\"targetLoss\":%d,\"checks\":%d}",
+            nStep, step.op, sourceLoss, targetLoss, fire ? 0 : 2);
+        s_waited = 0;
         s_pc++;
         return;
     }
@@ -5096,12 +5425,14 @@ void Tick(CWarp* pActiveEngine)
 
     if (strcmp(step.op, "weaponpayload") == 0 || strcmp(step.op, "weapondamage") == 0
         || strcmp(step.op, "swingdamage") == 0 || strcmp(step.op, "attackdamage") == 0
+        || strcmp(step.op, "swingonhit") == 0
         || strcmp(step.op, "finalshotdamage") == 0) {
+        BOOL swingOnHit = strcmp(step.op, "swingonhit") == 0;
         BOOL baseDamage = strcmp(step.op, "weapondamage") == 0;
         BOOL finalShot = strcmp(step.op, "finalshotdamage") == 0;
         INT finalMode = finalShot && step.nCount > 1 ? step.n[1] : 0;
         BOOL attackDamage = strcmp(step.op, "attackdamage") == 0 || finalShot;
-        BOOL swingDamage = strcmp(step.op, "swingdamage") == 0 || attackDamage;
+        BOOL swingDamage = strcmp(step.op, "swingdamage") == 0 || swingOnHit || attackDamage;
         CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
         if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
             || pGame->GetNumCharacters() < 2
@@ -5125,12 +5456,28 @@ void Tick(CWarp* pActiveEngine)
             if (s_payloadHP - hp < s_payloadDamage && ++s_waited < 600) {
                 return;
             }
-            Emit("{\"step\":%d,\"op\":\"%s\",\"item\":\"%s\",\"hpBefore\":%d,\"hpAfter\":%d,\"expectedDamage\":%d}",
-                nStep, step.op, step.s[0], s_payloadHP, hp, s_payloadDamage);
             if (s_payloadHP - hp != s_payloadDamage) {
                 Fail(nStep, "weaponpayload", "unexpected HP delta or projectile did not arrive");
                 return;
             }
+            if (swingOnHit) {
+                CGameObject* sourceObject = NULL;
+                LONG sourceId = pGame->GetFixedOrderCharacterId(0);
+                if (objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH, &sourceObject, INFINITE) != CGameObjectArray::SUCCESS) {
+                    Fail(nStep, step.op, "retaliation target unavailable");
+                    return;
+                }
+                INT loss = s_onHitSourceHP - static_cast<CGameSprite*>(sourceObject)->m_baseStats.m_hitPoints;
+                objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                if (loss < 2 && ++s_waited < 600) return;
+                Emit("{\"step\":%d,\"op\":\"swingonhit-retaliation\",\"sourceLoss\":%d,\"targetLoss\":%d,\"checks\":2}", nStep, loss, s_payloadHP - hp);
+                if (loss != 2) {
+                    Fail(nStep, step.op, "melee hit did not trigger exactly two retaliation damage");
+                    return;
+                }
+            }
+            Emit("{\"step\":%d,\"op\":\"%s\",\"item\":\"%s\",\"hpBefore\":%d,\"hpAfter\":%d,\"expectedDamage\":%d}",
+                nStep, step.op, step.s[0], s_payloadHP, hp, s_payloadDamage);
             s_payloadTarget = -1;
             s_waited = 0;
             s_pc++;
@@ -5232,6 +5579,19 @@ void Tick(CWarp* pActiveEngine)
                 source->m_typeAI.m_nClass = 0;
                 source->m_typeAI.m_nClassMask = 0;
                 target->m_derivedStats.m_onHitSpells.clear();
+                if (swingOnHit) {
+                    s_onHitSourceHP = source->m_baseStats.m_hitPoints;
+                    Emit("{\"step\":%d,\"op\":\"swingonhit-context\",\"hp\":%d,\"crushing\":%d,\"tempCrushing\":%d,\"resistMagic\":%d,\"sphere\":%d,\"invulnerable\":%d,\"generalState\":%lu,\"baseState\":%lu}",
+                        nStep, s_onHitSourceHP, savedStats.m_nResistCrushing, source->m_tempStats.m_nResistCrushing,
+                        savedStats.m_nResistMagic, source->m_derivedStats.m_spellStates[SPLSTATE_OTILUKES_RESILIENT_SPHERE] ? 1 : 0,
+                        source->m_animation.IsInvulnerable(), savedStats.m_generalState, source->m_baseStats.m_generalState);
+                    COnHitSpell entry;
+                    entry.m_sourceRes = "ZRCORIG2";
+                    entry.m_spellRes = "ZRCHIT";
+                    entry.m_level = 1;
+                    entry.m_target = source->GetPos();
+                    target->m_derivedStats.m_onHitSpells.push_back(entry);
+                }
                 target->field_58C = 0x200000;
                 source->m_equipment.m_items[11] = finalShot ? lastUnit : (hasLauncher ? &weapon : oldAmmo);
                 source->m_equipment.m_items[43] = hasLauncher ? &launcher : &weapon;
@@ -5457,6 +5817,7 @@ void Tick(CWarp* pActiveEngine)
         s_payloadHP = hp;
         s_payloadDamage = swingDamage ? (hasLauncher ? (finalMode == 3 ? 24 : 12) : 6)
             : (baseDamage ? (hasLauncher ? 9 : 5) : (hasLauncher ? 3 : 1));
+        if (swingOnHit) ++s_payloadDamage;
         s_payloadTarget = targetId;
         if (!swingDamage) projectile->Fire(area, sourceId, targetId, targetPos, height, 0);
         return;

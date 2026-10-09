@@ -27736,7 +27736,7 @@ void CGameSprite::ApplyOnHitSpells(CGameSprite* pTarget)
     for (const COnHitSpell& spell : m_derivedStats.m_onHitSpells) {
         std::list<CGameEffect*> effects = BuildSubSpellEffects(this,
             CResRef(const_cast<BYTE*>(spell.m_spellRes.GetResRef())),
-            static_cast<BYTE>(spell.m_level));
+            static_cast<INT>(spell.m_level));
         for (CGameEffect* effect : effects) {
             effect->m_sourceRes = spell.m_sourceRes;
             effect->m_target = spell.m_target;

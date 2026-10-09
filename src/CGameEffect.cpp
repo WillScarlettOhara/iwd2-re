@@ -3003,8 +3003,6 @@ void CGameEffectDamage::DisplayString(CGameSprite* pSprite)
 {
 }
 
-// 0x4A7900
-//
 // CGameEffectDamage::ApplyEffect -- opcode #12, the core combat-damage handler.
 // Rolls the effect's dice, scales and reduces the total (difficulty, Tortoise
 // Shell absorption, per-type resistances with the caster's +20% elemental
@@ -3016,6 +3014,7 @@ void CGameEffectDamage::DisplayString(CGameSprite* pSprite)
 // +0x28, 0x4AA6D0), the Tortoise-Shell hit feedback (0x4AB0A0) and its
 // "shell destroyed" log line, the stunning add-immunity check, and the
 // chunked-death debris spawner (0x586220).
+// 0x4A7900
 BOOL CGameEffectDamage::ApplyEffect(CGameSprite* pSprite)
 {
     pSprite->m_hasColorEffects = TRUE;

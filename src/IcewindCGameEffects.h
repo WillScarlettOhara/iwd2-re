@@ -5,7 +5,7 @@
 #include <list>
 
 std::list<CGameEffect*> BuildSubSpellEffects(CGameSprite* pCaster,
-    const CResRef& spellRes, BYTE level);
+    const CResRef& spellRes, INT level);
 
 #define ICEWIND_CGAMEEFFECT_COLORGLOWDISSIPATE 232
 #define ICEWIND_CGAMEEFFECT_VISUALSPELLHIT 233

@@ -71,6 +71,9 @@ def on_hit_spell():
     for target in (1, 2):
         effect = bytearray(0x30)
         struct.pack_into("<HBBi", effect, 0, 12, target, 0, target)
+        # Flat magic damage isolates on-hit delivery from the loaded party's
+        # physical resistance (portrait 0 absorbs four crushing damage).
+        struct.pack_into("<I", effect, 8, 0x400000)
         effect[0x12] = 100
         struct.pack_into("<i", effect, 0x2C, -1)
         effects.extend(effect)

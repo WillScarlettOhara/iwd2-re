@@ -988,7 +988,7 @@ public:
 // bolt hits a single victim instead of the whole gather.  The ctor only sets
 // m_aoeRange = 0x113; the per-strike visual/target/effects are filled by the
 // engine (init 0x5704E0 sets the strike target-AI m_targetType, builder
-// 0x586220 loads the EffCL sub-spell's effects onto it).
+// BuildSubSpellEffects loads the EffCL sub-spell's effects onto it).
 class CProjectileCallLightningStrike /*#guess*/ : public IcewindCProjectileSpellHit {
 public:
     CProjectileCallLightningStrike();    // 0x574A70

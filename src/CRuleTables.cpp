@@ -3584,8 +3584,6 @@ INT CRuleTables::GetIterativeAttackBonus(INT nBaseAttack, INT nAttackStep, INT n
     return nBonus;
 }
 
-// 0x547040
-//
 // Returns the governing spellcasting ability modifier for `pSprite`, used by
 // the caster (CSpell::BuildAbilityEffect) and effect-immunity (0x4A3310) paths
 // as a per-class caster-level / spell-value contribution.  `nClass` selects
@@ -3602,6 +3600,7 @@ INT CRuleTables::GetIterativeAttackBonus(INT nBaseAttack, INT nAttackStep, INT n
 // lands on the floored value for odd sub-10 scores.
 //
 // `resRef` and `nCasterLevel` are part of the call ABI but are not read here.
+// 0x547040
 int CRuleTables::GetSpellAbilityValue(CGameSprite* pSprite, const CResRef& resRef, int nSaveMod, BYTE nClass, DWORD nSpecialization, BYTE nCasterLevel)
 {
     if (pSprite == NULL) {

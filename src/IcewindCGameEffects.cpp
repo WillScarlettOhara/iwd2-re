@@ -1192,14 +1192,13 @@ CGameEffect* IcewindCGameEffectCallLightning::Copy()
     return copy;
 }
 
-// 0x586220.  Load the sub-spell named by the resource (EffCL) and return its
-// level-appropriate ability's effects -- the per-strike payload (the EffCL
-// visual + electrical damage) each Call Lightning bolt carries.  The spell
-// stores one ability per caster level; the highest whose minimum level is still
-// reached is chosen.  Each built effect is stamped with the caster's position
-// and id before delivery.
+// 0x586220. Load a sub-spell for a strike, on-hit spell or effects-list payload.
+// Select the last ability whose minimum level is reached, comparing against
+// the full signed level argument. Stamp each effect with the caster's position
+// and id before delivery. The selected ability's level is not forwarded as the
+// BuildAbilityEffect level argument; that call computes its own caster level.
 std::list<CGameEffect*> BuildSubSpellEffects(CGameSprite* pCaster,
-    const CResRef& spellRes, BYTE level)
+    const CResRef& spellRes, INT level)
 {
     std::list<CGameEffect*> effects;
 
@@ -1215,6 +1214,7 @@ std::list<CGameEffect*> BuildSubSpellEffects(CGameSprite* pCaster,
             if (level < pAbility->minCasterLevel) {
                 break;
             }
+            cSpell.GetAbility(i);
             ++abilityNum;
             i = abilityNum;
             count = cSpell.GetAbilityCount();
