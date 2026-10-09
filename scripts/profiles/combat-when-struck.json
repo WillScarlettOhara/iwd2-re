@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-when-struck.txt",
+  "hold": 60,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Center the loaded save on the party before combat tests.",
+    "Exercise the decoded When Struck opcode and its Copy override, byte-level installation, append ordering and closed-session non-null-provider branch; restore the actor and provider in the same tick.",
+    "Verify message 117's preallocated 36-byte wire payload, mapped and unmapped decoding, full-width levels, invalid/non-sprite targets and replacement through the normal message drain; restore the temporary remote mapping and pending queue.",
+    "Repeat the metadata, ability-selection and combat regressions from combat-hit-spells.",
+    "Install the defender's retaliation through DecodeEffect and virtual ApplyEffect before a real melee Swing; require seven defender damage and two attacker damage.",
+    "Run melee, bow, crossbow and sling on normal projectile ticks with deterministic fixtures and actual HP loss, spending one ranged charge per shot.",
+    "Never save the disposable process; restore save, config and fixture paths transactionally."
+  ]
+}

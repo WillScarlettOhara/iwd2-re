@@ -2003,4 +2003,24 @@ public:
 };
 #pragma pack(pop)
 
+#pragma pack(push, 2)
+// Vtable 0x84D45C; constructor inlined in WhenStruck::ApplyEffect.
+class CMessage117 : public CMessage {
+public:
+    CMessage117(const CResRef& sourceRes, const CResRef& spellRes,
+        DWORD level, const CPoint& targetPoint, LONG caller, LONG target);
+    SHORT GetCommType() override;
+    BYTE GetMsgType() override;
+    BYTE GetMsgSubType() override;
+    void MarshalMessage(BYTE** pData, DWORD* dwSize) override;
+    BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
+    void Run() override;
+
+    /* 000C */ CResRef m_sourceRes;
+    /* 0014 */ CResRef m_spellRes;
+    /* 001C */ DWORD m_level;
+    /* 0020 */ CPoint m_target;
+};
+#pragma pack(pop)
+
 #endif /* CMESSAGE_H_ */

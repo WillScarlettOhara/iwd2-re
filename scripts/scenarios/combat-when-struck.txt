@@ -1,0 +1,24 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+whenstruckchecks
+hitspellchecks
+combatonhit
+actiongates
+fatiguechecks
+protectchecks
+tickcounters
+resume
+expect partyvisible 1
+swingdamage ZRCMELEE
+swingonhit ZRCMELEE
+attackplace 232 1002
+sleep 15
+swingdamage ZRCARROW ZRCBOW
+swingdamage ZRCBOLT ZRCXBOW
+swingdamage ZRCSTONE ZRCSLING
+onhitdamage
+onhitwait

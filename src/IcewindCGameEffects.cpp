@@ -3104,6 +3104,23 @@ CGameEffect* IcewindCGameEffectWhenStruck::Copy()
     return copy;
 }
 
+// 0x56A5A0
+BOOL IcewindCGameEffectWhenStruck::ApplyEffect(CGameSprite* pSprite)
+{
+    COnHitSpell spell;
+    spell.m_sourceRes = m_sourceRes;
+    spell.m_spellRes = m_res;
+    spell.m_level = static_cast<BYTE>(m_casterLevel);
+    spell.m_target = m_target;
+    pSprite->m_derivedStats.m_onHitSpells.push_back(spell);
+
+    if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL) {
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessage117(m_sourceRes,
+            m_res, static_cast<BYTE>(m_casterLevel), m_target, pSprite->m_id, pSprite->m_id), FALSE);
+    }
+    return TRUE;
+}
+
 // -----------------------------------------------------------------------------
 
 // 0x4A1C30

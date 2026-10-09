@@ -110,6 +110,7 @@
 #include "CGameArea.h"
 #include "CGameObject.h"
 #include "CGameObjectArray.h"
+#include "CGameRemoteObjectArray.h"
 #include "CGameOptions.h"
 #include "CGameSprite.h"
 #include "CGameContainer.h"
@@ -1542,6 +1543,179 @@ void Tick(CWarp* pActiveEngine)
             return;
         }
         Emit("{\"step\":%d,\"op\":\"combatteams\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "whenstruckchecks") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2
+            || g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL) {
+            Fail(nStep, step.op, "requires world, party and local service provider");
+            return;
+        }
+        CGameObjectArray* objects = game->GetObjectArray();
+        LONG id = game->GetFixedOrderCharacterId(1);
+        CGameObject* object = NULL;
+        if (objects->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "defender unavailable");
+            return;
+        }
+        CGameSprite* sprite = static_cast<CGameSprite*>(object);
+        auto saved = sprite->m_derivedStats.m_onHitSpells;
+        auto savedPlayer = sprite->m_remotePlayerID;
+        auto savedRemote = sprite->m_remoteObjectID;
+        INT provider = g_pChitin->cNetwork.m_nServiceProvider;
+        BOOLEAN connected = g_pChitin->cNetwork.m_bConnectionEstablished;
+        // The loaded local save can mark its dummy session established. Keep
+        // the provider test closed without opening/closing an actual session.
+        g_pChitin->cNetwork.m_bConnectionEstablished = FALSE;
+        auto& queue = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT queued = queue.GetCount();
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"whenstruck-case\",\"case\":\"%s\",\"passed\":%s}", nStep, name, passed ? "true" : "false");
+            valid = valid && passed;
+            ++checks;
+        };
+        ITEM_EFFECT item = {};
+        item.effectID = ICEWIND_CGAMEEFFECT_WHENSTRUCK;
+        CGameEffect* effect = CGameEffect::DecodeEffect(&item, CPoint(123, 456), id, CPoint(-678, 901));
+        check("decode-virtual-installer", dynamic_cast<IcewindCGameEffectWhenStruck*>(effect) != NULL);
+        if (effect != NULL) {
+            effect->m_sourceRes = "ZRCORIG2";
+            effect->m_res = "ZRCHIT";
+            g_pChitin->cNetwork.m_nServiceProvider = CNetwork::SERV_PROV_NULL;
+            sprite->m_derivedStats.m_onHitSpells.clear();
+            const DWORD levels[] = {0, 1, 255, 256, 257, 0x112FF};
+            for (INT index = 0; index < 6; ++index) {
+                effect->m_casterLevel = levels[index];
+                BOOL done = effect->m_done;
+                check("installer-success", effect->ApplyEffect(sprite));
+                const COnHitSpell& tail = sprite->m_derivedStats.m_onHitSpells.back();
+                check("append-retains-earlier-records", sprite->m_derivedStats.m_onHitSpells.size() == index + 1
+                    && sprite->m_derivedStats.m_onHitSpells.front().m_level == 0);
+                check("installer-byte-level-and-provenance", tail.m_level == static_cast<BYTE>(levels[index])
+                    && tail.m_sourceRes == CResRef("ZRCORIG2") && tail.m_spellRes == CResRef("ZRCHIT")
+                    && tail.m_target == CPoint(-678, 901) && effect->m_done == done);
+                check("local-no-message", queue.GetCount() == queued);
+            }
+            CGameEffect* copy = effect->Copy();
+            check("copy-concrete-type", dynamic_cast<IcewindCGameEffectWhenStruck*>(copy) != NULL);
+            check("copy-payload", copy && copy->m_casterLevel == 0x112FF && copy->m_sourceID == id
+                && copy->m_source == CPoint(123, 456) && copy->m_target == CPoint(-678, 901)
+                && copy->m_sourceRes == CResRef("ZRCORIG2") && copy->m_res == CResRef("ZRCHIT"));
+            if (copy) check("copy-virtual-installer", copy->ApplyEffect(sprite));
+            delete copy;
+            g_pChitin->cNetwork.m_nServiceProvider = 1;
+            check("provider-with-closed-session", effect->ApplyEffect(sprite)
+                && sprite->m_derivedStats.m_onHitSpells.size() == 8 && queue.GetCount() == queued);
+            // BROADCAST_FORCED_OTHERS deletes the outgoing message when the
+            // session is closed. It must not run locally and replace the list.
+            g_pChitin->cNetwork.m_nServiceProvider = provider;
+            delete effect;
+        }
+        CMessage117 message(CResRef("ZRCORIG2"), CResRef("ZRCHIT"), 0x1000101,
+            CPoint(-678, 901), 77, id);
+        check("message-routing", message.GetCommType() == CMessage::BROADCAST_FORCED_OTHERS
+            && message.GetMsgType() == CBaldurMessage::MSG_TYPE_CMESSAGE && message.GetMsgSubType() == 117
+            && message.GetSource() == 77 && message.GetTarget() == id);
+        BYTE buffer[64];
+        memset(buffer, 0xA5, sizeof(buffer));
+        BYTE* data = buffer;
+        DWORD size = 999;
+        message.MarshalMessage(&data, &size);
+        check("marshal-preallocated-buffer", data == buffer && size == 36 && buffer[36] == 0xA5);
+        check("marshal-object-identity", *reinterpret_cast<PLAYER_ID*>(buffer) == savedPlayer
+            && *reinterpret_cast<LONG*>(buffer + 4) == savedRemote);
+        check("marshal-exact-payload", memcmp(buffer + 8, "ZRCORIG2", 8) == 0
+            && memcmp(buffer + 16, "ZRCHIT\0\0", 8) == 0
+            && *reinterpret_cast<DWORD*>(buffer + 24) == 0x1000101
+            && *reinterpret_cast<LONG*>(buffer + 28) == -678
+            && *reinterpret_cast<LONG*>(buffer + 32) == 901);
+        message.m_targetId = CGameObjectArray::INVALID_INDEX;
+        BYTE unchanged[64];
+        memcpy(unchanged, buffer, sizeof(buffer));
+        size = 999;
+        message.MarshalMessage(&data, &size);
+        check("marshal-invalid-target", size == 0 && data == buffer && memcmp(buffer, unchanged, sizeof(buffer)) == 0);
+        message.Run();
+        check("run-invalid-target", sprite->m_derivedStats.m_onHitSpells.size() == 8);
+        message.m_targetId = id;
+
+        // Install one typed remote mapping in bucket zero for the duration of
+        // this tick. Restore the exact head instead of deleting actor mappings.
+        CGameRemoteObjectArray* remotes = game->GetRemoteObjectArray();
+        CGameRemoteObjectListEntry mapping;
+        mapping.remotePlayerID = 0xF1234567;
+        mapping.remoteObjectID = 0x1234;
+        mapping.localObjectID = id;
+        mapping.pNext = remotes->m_pArray[0];
+        remotes->m_pArray[0] = &mapping;
+        BYTE wire[64] = {};
+        DWORD header = CNetwork::SPEC_MSG_HEADER_LENGTH;
+        memcpy(wire + header, buffer, 36);
+        *reinterpret_cast<PLAYER_ID*>(wire + header) = mapping.remotePlayerID;
+        *reinterpret_cast<LONG*>(wire + header + 4) = mapping.remoteObjectID;
+        CMessage117 received(CResRef("OLDRES"), CResRef("OLDSPELL"), 3, CPoint(4, 5), 88, -1);
+        check("unmarshal-mapped", received.UnmarshalMessage(wire, header + 36));
+        check("unmarshal-full-width-and-provenance", received.GetTarget() == id && received.GetSource() == 88
+            && received.m_sourceRes == CResRef("ZRCORIG2") && received.m_spellRes == CResRef("ZRCHIT")
+            && received.m_level == 0x1000101 && received.m_target == CPoint(-678, 901));
+        *reinterpret_cast<PLAYER_ID*>(wire + header) = 0xF7654321;
+        check("unmarshal-unmapped", !received.UnmarshalMessage(wire, header + 36));
+        check("unmapped-leaves-message-unchanged", received.GetTarget() == id && received.GetSource() == 88
+            && received.m_sourceRes == CResRef("ZRCORIG2") && received.m_spellRes == CResRef("ZRCHIT")
+            && received.m_level == 0x1000101 && received.m_target == CPoint(-678, 901));
+        remotes->m_pArray[0] = mapping.pNext;
+        received.Run();
+        check("run-replaces-all-records", sprite->m_derivedStats.m_onHitSpells.size() == 1);
+        const COnHitSpell& installed = sprite->m_derivedStats.m_onHitSpells.front();
+        check("run-full-width-and-provenance", installed.m_level == 0x1000101
+            && installed.m_sourceRes == CResRef("ZRCORIG2") && installed.m_spellRes == CResRef("ZRCHIT")
+            && installed.m_target == CPoint(-678, 901));
+        sprite->m_derivedStats.m_onHitSpells.clear();
+        received.m_level = 0;
+        received.Run();
+        check("run-empty-list-level-zero", sprite->m_derivedStats.m_onHitSpells.size() == 1
+            && sprite->m_derivedStats.m_onHitSpells.front().m_level == 0);
+
+        std::list<CMessage*> pending;
+        while (!queue.IsEmpty()) pending.push_back(queue.RemoveHead());
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessage117(CResRef("ZRCORIG1"),
+            CResRef("ZRCHIT"), 257, CPoint(12, -34), 99, id), TRUE);
+        g_pBaldurChitin->GetMessageHandler()->AsynchronousUpdate();
+        check("message-drain-installs-riposte", queue.IsEmpty() && sprite->m_derivedStats.m_onHitSpells.size() == 1
+            && sprite->m_derivedStats.m_onHitSpells.front().m_sourceRes == CResRef("ZRCORIG1")
+            && sprite->m_derivedStats.m_onHitSpells.front().m_level == 257
+            && sprite->m_derivedStats.m_onHitSpells.front().m_target == CPoint(12, -34));
+        for (CMessage* entry : pending) queue.AddTail(entry);
+
+        CGameObject nonSprite;
+        LONG other = -1;
+        BOOL added = objects->Add(&other, &nonSprite, INFINITE) == CGameObjectArray::SUCCESS;
+        check("non-sprite-registration", added);
+        if (added) {
+            received.m_targetId = other;
+            received.Run();
+            check("run-non-sprite-keeps-defender", sprite->m_derivedStats.m_onHitSpells.size() == 1
+                && sprite->m_derivedStats.m_onHitSpells.front().m_level == 257);
+            CGameObject* removed = NULL;
+            check("non-sprite-released-and-removed", objects->Delete(other, CGameObjectArray::THREAD_ASYNCH,
+                &removed, INFINITE) == CGameObjectArray::SUCCESS && removed == &nonSprite);
+        }
+        sprite->m_derivedStats.m_onHitSpells = saved;
+        sprite->m_remotePlayerID = savedPlayer;
+        sprite->m_remoteObjectID = savedRemote;
+        g_pChitin->cNetwork.m_nServiceProvider = provider;
+        g_pChitin->cNetwork.m_bConnectionEstablished = connected;
+        objects->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            Fail(nStep, step.op, "installer/message mismatch (actor, mapping and queue restored)");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"whenstruckchecks\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
         return;
     }
@@ -5585,12 +5759,16 @@ void Tick(CWarp* pActiveEngine)
                         nStep, s_onHitSourceHP, savedStats.m_nResistCrushing, source->m_tempStats.m_nResistCrushing,
                         savedStats.m_nResistMagic, source->m_derivedStats.m_spellStates[SPLSTATE_OTILUKES_RESILIENT_SPHERE] ? 1 : 0,
                         source->m_animation.IsInvulnerable(), savedStats.m_generalState, source->m_baseStats.m_generalState);
-                    COnHitSpell entry;
-                    entry.m_sourceRes = "ZRCORIG2";
-                    entry.m_spellRes = "ZRCHIT";
-                    entry.m_level = 1;
-                    entry.m_target = source->GetPos();
-                    target->m_derivedStats.m_onHitSpells.push_back(entry);
+                    ITEM_EFFECT struck = {};
+                    struck.effectID = ICEWIND_CGAMEEFFECT_WHENSTRUCK;
+                    CGameEffect* effect = CGameEffect::DecodeEffect(&struck, target->GetPos(), targetId, source->GetPos());
+                    effect->m_sourceRes = "ZRCORIG2";
+                    effect->m_res = "ZRCHIT";
+                    effect->m_casterLevel = 0xB01;
+                    valid = valid && effect->ApplyEffect(target)
+                        && target->m_derivedStats.m_onHitSpells.size() == 1
+                        && target->m_derivedStats.m_onHitSpells.front().m_level == 1;
+                    delete effect;
                 }
                 target->field_58C = 0x200000;
                 source->m_equipment.m_items[11] = finalShot ? lastUnit : (hasLauncher ? &weapon : oldAmmo);

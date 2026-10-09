@@ -18416,6 +18416,127 @@ void CMessageProjectileTrailingVFX::Run()
     // modification in IcewindCProjectileTravellingVFX::Fire.
 }
 
+// Constructor inlined in IcewindCGameEffectWhenStruck::ApplyEffect.
+CMessage117::CMessage117(const CResRef& sourceRes, const CResRef& spellRes,
+    DWORD level, const CPoint& targetPoint, LONG caller, LONG target)
+    : CMessage(caller, target)
+{
+    m_sourceRes = sourceRes;
+    m_spellRes = spellRes;
+    m_level = level;
+    m_target = targetPoint;
+}
+
+// 0x4536E0
+SHORT CMessage117::GetCommType()
+{
+    return BROADCAST_FORCED_OTHERS;
+}
+
+// 0x40A0E0
+BYTE CMessage117::GetMsgType()
+{
+    return CBaldurMessage::MSG_TYPE_CMESSAGE;
+}
+
+// 0x4F6FA0
+BYTE CMessage117::GetMsgSubType()
+{
+    return 117;
+}
+
+// 0x516910
+void CMessage117::MarshalMessage(BYTE** pData, DWORD* dwSize)
+{
+    UTIL_ASSERT(pData != NULL && dwSize != NULL);
+    CGameObject* object;
+    BYTE rc;
+    do {
+        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) {
+        *dwSize = 0;
+        return;
+    }
+    PLAYER_ID player = object->m_remotePlayerID;
+    LONG remote = object->m_remoteObjectID;
+    g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+        CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    *dwSize = 36;
+    UTIL_ASSERT(*dwSize <= STATICBUFFERSIZE);
+    DWORD cnt = 0;
+    *reinterpret_cast<PLAYER_ID*>(*pData + cnt) = player;
+    cnt += sizeof(PLAYER_ID);
+    *reinterpret_cast<LONG*>(*pData + cnt) = remote;
+    cnt += sizeof(LONG);
+    memcpy(*pData + cnt, m_sourceRes.GetResRef(), RESREF_SIZE);
+    cnt += RESREF_SIZE;
+    memcpy(*pData + cnt, m_spellRes.GetResRef(), RESREF_SIZE);
+    cnt += RESREF_SIZE;
+    *reinterpret_cast<DWORD*>(*pData + cnt) = m_level;
+    cnt += sizeof(DWORD);
+    *reinterpret_cast<LONG*>(*pData + cnt) = m_target.x;
+    cnt += sizeof(LONG);
+    *reinterpret_cast<LONG*>(*pData + cnt) = m_target.y;
+    cnt += sizeof(LONG);
+    UTIL_ASSERT(cnt == *dwSize);
+}
+
+// 0x516A80
+BOOL CMessage117::UnmarshalMessage(BYTE* pData, DWORD dwSize)
+{
+    UTIL_ASSERT(pData != NULL);
+    DWORD cnt = CNetwork::SPEC_MSG_HEADER_LENGTH;
+    PLAYER_ID player = *reinterpret_cast<PLAYER_ID*>(pData + cnt);
+    cnt += sizeof(PLAYER_ID);
+    LONG remote = *reinterpret_cast<LONG*>(pData + cnt);
+    cnt += sizeof(LONG);
+    LONG local;
+    if (g_pBaldurChitin->GetObjectGame()->GetRemoteObjectArray()->Find(player, remote, local) != TRUE) {
+        return FALSE;
+    }
+    m_targetId = local;
+    m_sourceRes = pData + cnt;
+    cnt += RESREF_SIZE;
+    m_spellRes = pData + cnt;
+    cnt += RESREF_SIZE;
+    m_level = *reinterpret_cast<DWORD*>(pData + cnt);
+    cnt += sizeof(DWORD);
+    m_target.x = *reinterpret_cast<LONG*>(pData + cnt);
+    cnt += sizeof(LONG);
+    m_target.y = *reinterpret_cast<LONG*>(pData + cnt);
+    cnt += sizeof(LONG);
+    UTIL_ASSERT(cnt == dwSize);
+    return TRUE;
+}
+
+// 0x516B70
+void CMessage117::Run()
+{
+    CGameObject* object;
+    BYTE rc;
+    do {
+        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) {
+        return;
+    }
+    if (object->GetObjectType() == CGameObject::TYPE_SPRITE) {
+        CGameSprite* sprite = static_cast<CGameSprite*>(object);
+        sprite->m_derivedStats.m_onHitSpells.clear();
+        COnHitSpell spell;
+        spell.m_sourceRes = m_sourceRes;
+        spell.m_spellRes = m_spellRes;
+        spell.m_level = m_level;
+        spell.m_target = m_target;
+        sprite->m_derivedStats.m_onHitSpells.push_back(spell);
+    }
+    g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
+        CGameObjectArray::THREAD_ASYNCH, INFINITE);
+}
+
 // Constructor is inlined at 0x6F5235..0x6F52AC.
 CMessageSetVariable::CMessageSetVariable(const CString& area, const CString& name,
     LONG value, BYTE increment, LONG caller, LONG target)
