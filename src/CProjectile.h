@@ -62,6 +62,11 @@ public:
     // 6=purple 7=red 9=ice 10=stone 11=magenta 12=orange), row index into the
     // travel palette bitmap; written by the DecodeProjectile sparkle cases.
     /* 009A */ SHORT m_sparkleColor;
+    // Shared launch state: both travelling and BAM Fire write these fields.
+    /* 009C */ INT m_posAccumX;
+    /* 00A0 */ INT m_posAccumY;
+    /* 00C8 */ INT m_targetX;
+    /* 00CC */ INT m_targetY;
     // BG2 PDB: CProjectile::m_terrainTable. Render's passability gate feeds
     // it to CSearchBitmap::GetMobileCost; the wandering leaves pass it to
     // GetLOSCost to bounce off walls. Seeded by the CProjectileTravelling and
@@ -118,9 +123,13 @@ public:
 
 protected:
     /* 0192 */ CVidCell m_vidCell;
-    /* 026C */ IcewindCVisualEffect m_visualEffect;
+    /* 026C */ CVidBitmap m_bitmap;
+    /* 0326 */ BOOL field_326;
+    /* 032A */ BYTE field_32A;
+    /* 032B */ BYTE field_32B;
     /* 032C */ BYTE m_sequenceDelay;
     /* 032D */ BYTE m_initialDelay;
+    /* 032E */ IcewindCVisualEffect m_visualEffect;
 };
 
 class CProjectileSummonVFX : public CProjectile {
@@ -182,8 +191,6 @@ protected:
     CVidBitmap m_bitmap;
     CVidCell* m_pShadowCell;    // +0x196 secondary "shadow" cell (drawn when m_hasShadowCell)
     SHORT m_velocity;           // +0x70 -- Frida-confirmed (arrival radius = velocity+1)
-    int m_posAccumX;            // +0x9C -- subpixel position accumulator (1/1024 fixed point)
-    int m_posAccumY;            // +0xA0 -- subpixel position (4/3 y-scaled, 1/1024)
     int m_stepX;                // +0xA4 -- per-tick velocity step x
     int m_stepY;                // +0xA8 -- per-tick velocity step y
     int m_driftX;               // +0xAC -- per-tick lateral drift carry X (bled off by m_driftDecay)
@@ -195,8 +202,6 @@ protected:
     int m_hasDrift;             // +0xC4 -- lateral-offset flag (1 if the launcher gave a perpendicular spread step)
     USHORT m_driftDecay;        // +0xE0 -- drift carry decay modulus per tick (launch velocity for odd-man)
     DWORD m_renderFlags;        // +0xE6 -- base blit flags (GetRenderFlags, slot 32)
-    int m_targetX;              // +0xC8 -- Frida-confirmed (target point)
-    int m_targetY;              // +0xCC -- Frida-confirmed
     int m_flightDistSq;         // +0x170 -- flight distance^2 computed at Fire; 0 => arrived
     int m_tinted;               // +0x1BE -- Frida-confirmed (apply area tint colour)
     int m_useHeightOffset;      // +0x1C2 -- Frida-confirmed (add area height offset)

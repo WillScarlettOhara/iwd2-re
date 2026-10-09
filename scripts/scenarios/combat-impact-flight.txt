@@ -1,0 +1,19 @@
+waitgo
+wait world
+enddialog
+center
+sleep 15
+expect partyvisible 0
+actiongates
+fatiguechecks
+protectchecks
+tickcounters
+resume
+expect partyvisible 1
+swingdamage ZRCMELEE
+# Proven placement from combat-pursuit: require flight beyond the arrival radius.
+attackplace 232 1002
+sleep 15
+swingdamage ZRCARROW ZRCBOW
+swingdamage ZRCBOLT ZRCXBOW
+swingdamage ZRCSTONE ZRCSLING

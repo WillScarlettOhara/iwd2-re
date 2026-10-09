@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-impact-flight.txt",
+  "hold": 60,
+  "fixtures": [
+    "combat-payload"
+  ],
+  "preserve": [],
+  "preconditions": [
+    "Center the camera and require both party members to be visible.",
+    "Run typed impact ownership and BAM launch/delay cases, restoring transient actor fields before the next tick.",
+    "After melee, JumpToPoint places the shooter away from the companion so ranged projectiles must execute AimAtPoint on normal ticks.",
+    "Exercise Swing with deterministic melee, bow, crossbow and sling fixtures through normal projectile flight and real HP loss.",
+    "Never save the disposable process; profile restores save/config and fixture paths transactionally."
+  ]
+}

@@ -4052,6 +4052,182 @@ void Tick(CWarp* pActiveEngine)
             mutableEllipse = savedEllipse;
             source->m_nDirection = direction;
         }
+        {
+            struct BatchCanary : CMessage {
+                INT value, *order, *destroyed;
+                BatchCanary(INT n, INT* run, INT* death) : CMessage(0, 0), value(n), order(run), destroyed(death) {}
+                ~BatchCanary() override { ++*destroyed; }
+                void Run() override { *order = *order * 10 + value; }
+            };
+            for (INT test = 0; test < 6; ++test) {
+                INT count = test / 2 == 0 ? 0 : test / 2 == 1 ? 1 : 3;
+                INT order = 0, destroyed = 0;
+                CMessage105::Node head = { &head, &head, NULL };
+                CMessage105::Node nodes[3];
+                for (INT i = 0; i < count; ++i) {
+                    nodes[i] = { &head, head.m_pPrev, new BatchCanary(i + 1, &order, &destroyed) };
+                    head.m_pPrev->m_pNext = &nodes[i];
+                    head.m_pPrev = &nodes[i];
+                }
+                CMessage105* batch = new CMessage105(&head, id, id);
+                for (INT i = 0; i < count; ++i) nodes[i].m_pMessage = NULL;
+                if (test & 1) batch->Run();
+                BOOL passed = batch->m_nCount == count && destroyed == 0
+                    && order == ((test & 1) ? (count == 3 ? 123 : count) : 0);
+                delete batch;
+                passed = passed && destroyed == count;
+                valid = valid && passed; ++checks;
+                Emit("{\"step\":%d,\"op\":\"impact-batch-ownership\",\"case\":%d,\"passed\":%s}", nStep, test, passed ? "true" : "false");
+            }
+            CProjectile* ordinary = new CProjectile();
+            BOOL ordinaryRegistered = objects->Add(&ordinary->m_id, ordinary, INFINITE) == CGameObjectArray::SUCCESS;
+            auto savedImmunity = source->m_derivedStats.m_cImmunitiesSpellLevel.m_levels[5];
+            for (INT test = 0; test < 12; ++test) {
+                INT mode = test / 3, count = test % 3 == 2 ? 3 : test % 3;
+                CProjectile missile;
+                missile.m_sourceId = id;
+                missile.m_targetId = mode == 1 ? 0x7FFFFFFF : mode == 2 ? ordinary->m_id : id;
+                missile.m_nSpellLevel = 5;
+                missile.m_casterResRef = CResRef("");
+                source->m_derivedStats.m_cImmunitiesSpellLevel.m_levels[5] = mode == 3 ? 1 : 0;
+                CGameEffect* effects[3] = {};
+                for (INT i = 0; i < count; ++i) {
+                    effects[i] = new CGameEffect();
+                    missile.m_effectList.AddTail(effects[i]);
+                }
+                INT queued = messages.GetCount();
+                missile.DeliverEffects();
+                BOOL passed = ordinaryRegistered && missile.m_effectList.GetCount() == (mode == 1 ? count : 0)
+                    && messages.GetCount() == queued + (mode == 0 ? 1 : 0);
+                if (mode == 0 && messages.GetCount() > queued) {
+                    CMessage105* batch = dynamic_cast<CMessage105*>(messages.GetTail());
+                    passed = passed && batch != NULL && batch->m_nCount == count;
+                    if (batch != NULL) {
+                        CMessage105::Node* node = batch->m_pNodeHead->m_pNext;
+                        for (INT i = 0; i < count && node != batch->m_pNodeHead; ++i) {
+                            CMessageAddEffect* child = dynamic_cast<CMessageAddEffect*>(node->m_pMessage);
+                            passed = passed && child != NULL && child->m_effect == effects[i]
+                                && child->GetSource() == id && child->GetTarget() == id;
+                            node = node->m_pNext;
+                        }
+                        passed = passed && node == batch->m_pNodeHead;
+                    }
+                }
+                valid = valid && passed; ++checks;
+                Emit("{\"step\":%d,\"op\":\"impact-delivery\",\"case\":%d,\"passed\":%s}", nStep, test, passed ? "true" : "false");
+                while (messages.GetCount() > queued) delete messages.RemoveTail();
+                missile.ClearEffects();
+            }
+            source->m_derivedStats.m_cImmunitiesSpellLevel.m_levels[5] = savedImmunity;
+            if (ordinaryRegistered) ordinary->CProjectile::RemoveSelf(); else delete ordinary;
+        }
+        {
+            struct BAMProbe : CProjectileBAM {
+                using CProjectileBAM::m_vidCell;
+                using CProjectileBAM::m_sequenceDelay;
+                using CProjectileBAM::m_initialDelay;
+                INT delivered = 0, arrived = 0;
+                BAMProbe() : CProjectileBAM(CResRef("ARARROW"), CResRef(""), 0, 0, IcewindCVisualEffect()) {}
+                BAMProbe(BYTE delay, BYTE initial, const IcewindCVisualEffect& visual)
+                    : CProjectileBAM(CResRef("ARARROW"), CResRef("TRA_02"), delay, initial, visual) {}
+                void DeliverEffects() override { ++delivered; }
+                void OnArrival() override { ++arrived; }
+                BOOL ConstructorState(BYTE initial, const IcewindCVisualEffect& visual) {
+                    return m_initialDelay == initial && m_vidCell.m_nCurrentFrame == 0
+                        && m_sourceId == 0 && m_targetId == 0 && m_bHasHeight && !m_bSparkleTrail
+                        && m_fireSoundRef == CResRef("TRA_02") && m_arrivalSoundRef == CResRef("")
+                        && m_sound.GetResRef() == CResRef("TRA_02") && m_sound.m_nChannel == 4 && m_sound.m_nArea == 0
+                        && m_bitmap.m_nBitCount == 8 && !m_bitmap.m_bDoubleSize
+                        && !field_326 && !field_32A && !field_32B
+                        && memcmp(&m_visualEffect, &visual, sizeof(visual)) == 0;
+                }
+                void PrepareRender(CGameArea* area, CPoint pos, BYTE initial) {
+                    m_pArea = area; m_pos = pos; m_posZ = 0; m_listType = CGameObject::LIST_FRONT;
+                    m_initialDelay = initial; m_vidCell.SequenceSet(2); m_vidCell.FrameSet(0);
+                }
+                void Prepare(INT test) {
+                    m_id = 123;
+                    m_pos = CPoint(160, 120); m_posZ = 30;
+                    m_initialDelay = test <= 2 ? 3 : test == 11 ? 255 : 0;
+                    m_sequenceDelay = test == 6 ? 1 : test == 7 ? 2 : test == 10 ? 255 : 0;
+                    m_vidCell.SequenceSet(test == 4 || test == 5 ? 2 : 0);
+                    m_vidCell.FrameSet(test == 5 || test == 6 ? 32767 : test == 4 || test == 7 || test == 10 ? -1 : 77);
+                    m_sound.SetCoordinates(-1, -2, -3);
+                }
+                BOOL Matches(INT initial, INT delay, INT sequence, INT frame, BOOL sound) {
+                    return m_initialDelay == initial && m_sequenceDelay == delay
+                        && m_vidCell.m_nCurrentSequence == sequence && m_vidCell.m_nCurrentFrame == frame
+                        && m_sound.m_nXCoordinate == (sound ? 160 : -1)
+                        && m_sound.m_nYCoordinate == (sound ? 120 : -2)
+                        && m_sound.m_nZCoordinate == (sound ? 30 : -3);
+                }
+            };
+            IcewindCVisualEffect visual;
+            visual.m_bTintEnabled = 1; visual.m_bCopyFromBack = 1; visual.field_2 = 17;
+            visual.m_bTransparent = 1; visual.m_nTransValue = 93; visual.m_dwFlags = 0x42;
+            BAMProbe measure;
+            BYTE length = measure.m_vidCell.GetSequenceLength(2, FALSE);
+            for (INT test = 0; test < 3; ++test) {
+                BYTE delay = test == 0 ? 0 : test == 1 ? length : 255;
+                BYTE initial = test == 0 ? 0 : test == 1 ? 1 : 255;
+                BAMProbe missile(delay, initial, visual);
+                BOOL passed = missile.ConstructorState(initial, visual)
+                    && missile.m_sequenceDelay == (delay > length ? delay - length : 0)
+                    && missile.m_vidCell.m_nCurrentSequence == (delay > length ? 0 : 2)
+                    && missile.m_sound.m_nXCoordinate == 0 && missile.m_sound.m_nYCoordinate == 0;
+                valid = valid && passed; ++checks;
+                Emit("{\"step\":%d,\"op\":\"bam-constructor\",\"case\":%d,\"passed\":%s}", nStep, test, passed ? "true" : "false");
+            }
+            CGameArea* renderArea = source->GetArea();
+            CInfinity* infinity = renderArea->GetInfinity();
+            auto savedX = infinity->nCurrentX; auto savedY = infinity->nCurrentY;
+            for (INT test = 0; test < 4; ++test) {
+                BAMProbe missile;
+                missile.PrepareRender(renderArea, test == 1 ? CPoint(-32, -32) : source->m_pos, test == 0 ? 1 : 0);
+                if (test == 2) { infinity->nCurrentX = 1000000; infinity->nCurrentY = 1000000; }
+                // NULL deliberately verifies that Render uses its own area.
+                missile.Render(NULL, g_pBaldurChitin->GetCurrentVideoMode(), 0);
+                infinity->nCurrentX = savedX; infinity->nCurrentY = savedY;
+                BOOL passed = missile.m_initialDelay == (test == 0 ? 1 : 0)
+                    && missile.m_vidCell.m_nCurrentFrame == 0 && missile.delivered == 0 && missile.arrived == 0;
+                valid = valid && passed; ++checks;
+                Emit("{\"step\":%d,\"op\":\"bam-render\",\"case\":%d,\"passed\":%s}", nStep, test, passed ? "true" : "false");
+            }
+            for (INT test = 0; test < 4; ++test) {
+                BAMProbe* missile = new BAMProbe();
+                missile->Fire(source->GetArea(), id, test == 3 ? 0x7FFFFFFF : id, CPoint(-700, -800), test - 1, 0);
+                BOOL registered = missile->m_id != CGameObjectArray::INVALID_INDEX;
+                BOOL passed = test == 3 ? !registered && missile->delivered == 0 : registered
+                    && missile->GetArea() == source->GetArea() && missile->m_posZ == test - 1
+                    && missile->m_targetX == source->m_pos.x && missile->m_targetY == source->m_pos.y
+                    && missile->m_posAccumX == missile->m_pos.x * 1024
+                    && missile->m_posAccumY == missile->m_pos.y * 4096 / 3 && missile->delivered == 1;
+                valid = valid && passed; ++checks;
+                Emit("{\"step\":%d,\"op\":\"bam-launch\",\"case\":%d,\"passed\":%s}", nStep, test, passed ? "true" : "false");
+                if (registered) missile->CProjectile::RemoveSelf(); else delete missile;
+            }
+            auto stop = game->m_nTimeStop; auto caster = game->m_nTimeStopCaster;
+            for (INT test = 0; test < 12; ++test) {
+                BAMProbe missile; missile.Prepare(test);
+                game->m_nTimeStop = test == 0 || test == 1 || test == 8 || test == 9 ? 1 : 0;
+                game->m_nTimeStopCaster = test == 1 || test == 9 ? 123 : -1;
+                missile.AIUpdate();
+                BOOL passed = test == 0 ? missile.Matches(3, 0, 0, 77, FALSE)
+                    : test == 1 || test == 2 ? missile.Matches(2, 0, 0, 77, FALSE)
+                    : test == 4 ? missile.Matches(0, 0, 2, 0, TRUE)
+                    : test == 5 ? missile.Matches(0, 0, 2, 32767, FALSE)
+                    : test == 6 ? missile.Matches(0, 0, 1, 0, TRUE)
+                    : test == 7 ? missile.Matches(0, 1, 0, 0, TRUE)
+                    : test == 8 ? missile.Matches(0, 0, 0, 77, FALSE)
+                    : test == 10 ? missile.Matches(0, 254, 0, 0, TRUE)
+                    : test == 11 ? missile.Matches(254, 0, 0, 77, FALSE)
+                    : missile.Matches(0, 0, 2, 0, TRUE);
+                passed = passed && missile.arrived == (test == 5);
+                valid = valid && passed; ++checks;
+                Emit("{\"step\":%d,\"op\":\"bam-flight\",\"case\":%d,\"passed\":%s}", nStep, test, passed ? "true" : "false");
+            }
+            game->m_nTimeStop = stop; game->m_nTimeStopCaster = caster;
+        }
         source->m_userCommandPause = savedActionUserPause;
         source->m_marker.m_nRecticleForceRender = savedForceRender;
         source->m_noActionCount = savedNoActionCount;

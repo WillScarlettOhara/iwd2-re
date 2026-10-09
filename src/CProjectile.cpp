@@ -248,23 +248,8 @@ void CProjectile::OnArrival()
     }
 }
 
+// Dispatch an impact's ordered effect messages together (subtype 105).
 // 0x52A1A0
-//
-// Delivers the projectile's accumulated gameplay effects to its target on
-// Delivers the projectile's effect payload to the target.  Shared by every
-// projectile leaf — called from OnArrival (vtable slot 28).
-//
-// The original (0x52A1A0):
-//   1. Immunity gate (TYPE_SPRITE only): calls IsTargetImmune
-//      (FUN_004E7120 for projectile-type immunity + the target's per-spell-level
-//      immunity array at +0x2BF), then FeedBackImmuneToResource.
-//   2. Batches all per-effect CMessageAddEffect instances into a single
-//      CMessageAddEffects wrapper (subtype 105, ctor 0x5152C0,
-//      vtable 0x84D564, Run 0x5157F0) and dispatches once.
-//
-// We dispatch individual CMessageAddEffect messages (same application path;
-// ADD_EFFECT is in the Iwd2MessageRunRecovered whitelist). The wrapper
-// class (CMessageAddEffects) remains unrecovered — functionally identical.
 void CProjectile::DeliverEffects()
 {
     CGameObject* pTarget;
@@ -277,35 +262,36 @@ void CProjectile::DeliverEffects()
         return;
     }
 
-    // Non-AI objects cannot hold effects — discard (0x52A1FC-0x52A21B).
     if ((pTarget->GetObjectType() & CGameObject::TYPE_AIBASE) == 0) {
         ClearEffects();
-    } else if (pTarget->GetObjectType() == CGameObject::TYPE_SPRITE) {
-        // Immunity gate (0x52A228-0x52A26B): for creature targets, check
-        // projectile-type immunity and per-spell-level immunity.  If
-        // immune, discard all effects and show the "Immune" feedback.
-        CGameSprite* pSprite = static_cast<CGameSprite*>(pTarget);
-        if (IsTargetImmune(pSprite)) {
-            ClearEffects();
-            CGameEffect::FeedBackImmuneToResource(pSprite, m_casterResRef);
-        } else {
-            POSITION pos = m_effectList.GetHeadPosition();
-            while (pos != NULL) {
-                CGameEffect* pEffect = m_effectList.GetNext(pos);
-                CMessage* pMsg = new CMessageAddEffect(pEffect, m_sourceId, m_targetId);
-                g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
-            }
-            m_effectList.RemoveAll();
-        }
+    } else if (pTarget->GetObjectType() == CGameObject::TYPE_SPRITE
+        && IsTargetImmune(static_cast<CGameSprite*>(pTarget))) {
+        ClearEffects();
+        CGameEffect::FeedBackImmuneToResource(static_cast<CGameSprite*>(pTarget), m_casterResRef);
     } else {
-        // Non-sprite AI objects (doors, containers, etc.) — apply directly.
+        // The impact owns one message containing the ordered effect messages.
+        // Its constructor copies nodes; it takes ownership of their messages.
+        CMessage105::Node head = { &head, &head, NULL };
         POSITION pos = m_effectList.GetHeadPosition();
         while (pos != NULL) {
-            CGameEffect* pEffect = m_effectList.GetNext(pos);
-            CMessage* pMsg = new CMessageAddEffect(pEffect, m_sourceId, m_targetId);
-            g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
+            CMessage105::Node* node = new CMessage105::Node;
+            node->m_pNext = &head;
+            node->m_pPrev = head.m_pPrev;
+            node->m_pMessage = new CMessageAddEffect(m_effectList.GetNext(pos), m_sourceId, m_targetId);
+            head.m_pPrev->m_pNext = node;
+            head.m_pPrev = node;
         }
         m_effectList.RemoveAll();
+        CMessage105* message = new CMessage105(&head, m_sourceId, m_targetId);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        while (head.m_pNext != &head) {
+            CMessage105::Node* node = head.m_pNext;
+            head.m_pNext = node->m_pNext;
+            delete node;
+        }
+        return;
     }
 
     g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
@@ -2264,11 +2250,6 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
     return pProjectile;
 }
 
-// -----------------------------------------------------------------------------
-// INCOMPLETE: only CProjectileBAM subclass recovered; the global projectile
-// dispatch switch (0x57B0C0) and remaining projectile types are not yet
-// implemented. Fire/AIUpdate/Render mapped from Ghidra.
-
 // 0x530790
 //
 // Default constructor, used by DecodeProjectile's default case (every
@@ -2305,35 +2286,43 @@ CProjectile::CProjectile()
 CProjectileBAM::CProjectileBAM(const CResRef& visualResRef, const CResRef& arrivalSoundRef, BYTE sequenceDelay, BYTE initialDelay, const IcewindCVisualEffect& visualEffect)
     : m_visualEffect(visualEffect)
 {
-    m_projectileType = 0;
-    m_sourceId = CGameObjectArray::INVALID_INDEX;
-    m_targetId = CGameObjectArray::INVALID_INDEX;
-    m_callBackProjectile = CGameObjectArray::INVALID_INDEX;
-    m_pArea = NULL;
-    m_arrivalSoundRef = arrivalSoundRef;
-    m_loopArrivalSound = FALSE;
-    m_bHasHeight = TRUE;
-    m_nTargetId = CGameObjectArray::INVALID_INDEX;
+    field_326 = FALSE;
+    field_32A = 0;
+    field_32B = 0;
+    m_bSparkleTrail = FALSE;
 
     m_vidCell.SetResRef(visualResRef, FALSE, TRUE, TRUE);
     m_vidCell.FrameSet(0);
+    m_sound.Stop();
+    m_sound.SetResRef(arrivalSoundRef, TRUE, TRUE);
+    if (!m_sound.GetLooping()) {
+        m_sound.SetFireForget(TRUE);
+    }
+    m_sound.SetChannel(4, reinterpret_cast<DWORD>(m_pArea));
+    m_fireSoundRef = arrivalSoundRef;
 
     m_sequenceDelay = sequenceDelay;
     BYTE sequenceLength = m_vidCell.GetSequenceLength(2, FALSE);
     if (sequenceLength < m_sequenceDelay) {
         m_vidCell.SequenceSet(0);
-        m_sequenceDelay -= sequenceLength;
+        m_sequenceDelay -= static_cast<BYTE>(m_vidCell.GetSequenceLength(2, FALSE));
     } else {
         m_vidCell.SequenceSet(2);
         m_sequenceDelay = 0;
     }
 
     m_initialDelay = initialDelay;
+    m_bHasHeight = TRUE;
 }
 
 // 0x57CEE0 (virtual)
 void CProjectileBAM::AIUpdate()
 {
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    if (pGame->m_nTimeStop != 0 && pGame->m_nTimeStopCaster != m_id) {
+        return;
+    }
+
     if (m_initialDelay != 0) {
         m_initialDelay--;
         return;
@@ -2374,13 +2363,19 @@ void CProjectileBAM::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
     CPoint ptReference;
     CInfinity* pInfinity;
 
-    (void)pVidMode;
-
-    if (pArea == NULL || m_initialDelay != 0) {
+    (void)pArea;
+    UTIL_ASSERT(pVidMode != NULL);
+    if (m_initialDelay != 0) {
+        return;
+    }
+    if (!m_pArea->m_visibility.IsTileVisible(m_pArea->m_visibility.PointToTile(m_pos))) {
         return;
     }
 
-    pInfinity = pArea->GetInfinity();
+    pInfinity = m_pArea->GetInfinity();
+    CRect viewport(pInfinity->nCurrentX, pInfinity->nCurrentY,
+        pInfinity->nCurrentX + pInfinity->rViewPort.Width(),
+        pInfinity->nCurrentY + pInfinity->rViewPort.Height());
 
     m_vidCell.GetCurrentCenterPoint(ptReference, FALSE);
     m_vidCell.GetCurrentFrameSize(frameSize, FALSE);
@@ -2388,7 +2383,7 @@ void CProjectileBAM::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
     rFX.SetRect(0, 0, frameSize.cx, frameSize.cy);
 
     newPos.x = m_pos.x;
-    newPos.y = pArea->GetHeightOffset(m_pos, m_listType) + m_pos.y - m_posZ;
+    newPos.y = m_pArea->GetHeightOffset(m_pos, m_listType) + m_pos.y - m_posZ;
 
     DWORD dwPrepFlags;
     if (m_visualEffect.m_dwFlags != 0) {
@@ -2401,6 +2396,12 @@ void CProjectileBAM::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
     rGCBounds.top = newPos.y - ptReference.y;
     rGCBounds.right = rGCBounds.left + rFX.Width();
     rGCBounds.bottom = rGCBounds.top + rFX.Height();
+
+    CRect intersection;
+    intersection.IntersectRect(rGCBounds, viewport);
+    if (intersection.IsRectEmpty()) {
+        return;
+    }
 
     pInfinity->FXPrep(rFX,
         dwPrepFlags,
@@ -2437,40 +2438,36 @@ void CProjectileBAM::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
 // 0x57D230 (virtual)
 void CProjectileBAM::Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType)
 {
-    CGameObject* pTarget;
-    CPoint sourcePos;
-    BYTE rc;
-
+    (void)targetPos;
     (void)nType;
-
     m_sourceId = source;
     m_targetId = target;
     m_pArea = pArea;
-    sourcePos = targetPos;
 
-    do {
-        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(target,
-            CGameObjectArray::THREAD_ASYNCH,
-            &pTarget,
-            INFINITE);
-    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
-
-    if (rc == CGameObjectArray::SUCCESS) {
-        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(target,
-            CGameObjectArray::THREAD_ASYNCH,
-            INFINITE);
+    CGameObject* pTarget;
+    BYTE rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(target,
+        CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
+    if (rc != CGameObjectArray::SUCCESS) {
+        return;
     }
+    CPoint liveTarget = pTarget->GetPos();
+    g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(target,
+        CGameObjectArray::THREAD_ASYNCH, INFINITE);
 
+    CPoint sourcePos;
     GetStart(source, sourcePos, TRUE);
     m_sound.Play(sourcePos.x, sourcePos.y, 0, FALSE);
-
     rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE);
-    if (rc == CGameObjectArray::SUCCESS) {
-        CGameObject::AddToArea(pArea, sourcePos, nHeight, LIST_FRONT);
-        DeliverEffects();
-    } else {
+    if (rc != CGameObjectArray::SUCCESS) {
         delete this;
+        return;
     }
+    CGameObject::AddToArea(pArea, sourcePos, nHeight, LIST_FRONT);
+    m_targetX = liveTarget.x;
+    m_targetY = liveTarget.y;
+    m_posAccumX = sourcePos.x << 10;
+    m_posAccumY = (sourcePos.y << 12) / 3;
+    DeliverEffects();
 }
 
 // -----------------------------------------------------------------------------
@@ -3951,7 +3948,7 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
     m_facing = static_cast<SHORT>(CGameSprite::GetDirection(ptStartScaled, ptTargetScaled));
 }
 
-// 0x52BD20 (vtable slot 33 -- the per-tick motion integrator; AIUpdate's "aim")
+// Vtable slot 33 -- the per-tick motion integrator; AIUpdate's "aim".
 //
 // Ghidra recovers no function at the vtable target; transcribed from capstone
 // disassembly (0x323 bytes, ret 8 -> __thiscall(this, int x, int y)). Steps the
@@ -3961,13 +3958,14 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
 // object's height.
 //
 // All work fields live in the CProjectile gap region in the binary
-// (+0x9C..0xE0, +0x1DC) and are modelled by-name on CProjectileTravelling per
-// the layout-drift note. The y axis is pre-scaled 4/3 to undo the isometric
+// (+0x9C..0xE0, +0x1DC); shared launch fields are on CProjectile and travelling
+// fields on CProjectileTravelling. The y axis is pre-scaled 4/3 to undo the isometric
 // squash before the facing/distance maths (CGameSprite::GetDirection then
 // applies its own iso ratios). The rand() term (_rand 0x7E8160) spreads the
 // step within the [m_jitterMinX, m_jitterMaxX) band when set -- 0 for Magic Missile, so
 // the path stays straight. Depends on Fire seeding the subpixel position
-// (m_posAccumX/Y), which is currently stubbed.
+// (m_posAccumX/Y).
+// 0x52BD20
 void CProjectileTravelling::AimAtPoint(int x, int y)
 {
     // Facing toward the target; both points y-scaled 4/3 (undo the iso squash).
