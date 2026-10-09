@@ -3139,6 +3139,30 @@ CGameEffect* IcewindCGameEffectProjectile::Copy()
     return copy;
 }
 
+// 0x56A730
+BOOL IcewindCGameEffectProjectile::ApplyEffect(CGameSprite* pSprite)
+{
+    CGameObjectArray* objects = g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+    CGameObject* pSource;
+    if (objects->GetShare(m_sourceID, CGameObjectArray::THREAD_ASYNCH,
+            &pSource, INFINITE) == CGameObjectArray::SUCCESS) {
+        CProjectile* projectile = CProjectile::DecodeProjectile(m_dwFlags + 1, pSprite, 0);
+        std::list<CGameEffect*> effects = BuildSubSpellEffects(
+            static_cast<CGameSprite*>(pSource), m_res, 1);
+        for (CGameEffect* effect : effects) {
+            effect->m_sourceRes = m_res;
+            effect->m_target = m_target;
+            effect->m_casterLevel = m_casterLevel;
+            projectile->AddEffect(effect);
+        }
+        projectile->Fire(pSprite->m_pArea, pSource->m_id, pSprite->m_id,
+            pSprite->GetPos(), 0, 0);
+        objects->ReleaseShare(m_sourceID, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+    m_done = TRUE;
+    return TRUE;
+}
+
 // -----------------------------------------------------------------------------
 
 // 0x4A1D20

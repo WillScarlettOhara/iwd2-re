@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-projectile-opcode.txt",
+  "hold": 60,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Center the loaded save on the party before combat tests.",
+    "Decode opcode 430 and its Copy, then apply virtually to the defender. Verify immediate delivery, ordered level-one ability selection even at high outer levels, full-width caster level, resource provenance and target point.",
+    "Inspect arrow, bolt and sling payloads before their first tick, including DWORD-to-WORD factory wrapping; remove these test projectiles through RemoveSelf and restore pinned resource tables and the pending queue.",
+    "Verify empty payload and invalid/stale source completion without launches.",
+    "Repeat all When Struck, metadata, ability-selection, combat action, fatigue, protection and tick regressions.",
+    "Run melee, bow, crossbow and sling with deterministic fixtures, requiring real HP loss and one ammunition charge per ranged Swing.",
+    "Launch instant, arrow, bolt and sling through opcode 430; require three target damage and no source damage through ordinary projectile/message ticks.",
+    "Never save the disposable process; restore save, config and fixture paths transactionally."
+  ]
+}

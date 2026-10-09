@@ -87,6 +87,11 @@
 //   attackmark [requireMove]    remember target HP and the attacker's position.
 //   attackwait                  require a normal attack order and HP loss, plus
 //                                movement if marked; stop the attack on completion.
+//   projectilechecks            verify opcode 430 payloads, source failures and
+//                                concrete missile types; restore resource/queue.
+//   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
+//   projectilewait              require three target damage and no source damage
+//                                from that projectile on normal engine ticks.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -176,6 +181,9 @@ BOOL s_attackRequireMove = FALSE;
 BOOL s_attackMoved = FALSE;
 SHORT s_onHitSourceHP = 0;
 SHORT s_onHitTargetHP = 0;
+SHORT s_projectileSourceHP = 0;
+SHORT s_projectileTargetHP = 0;
+INT s_projectileFlags = 0;
 
 DWORD GetEnv(const char* name, char* value, DWORD size)
 {
@@ -1717,6 +1725,243 @@ void Tick(CWarp* pActiveEngine)
         }
         Emit("{\"step\":%d,\"op\":\"whenstruckchecks\",\"checks\":%d,\"restored\":true}", nStep, checks);
         s_pc++;
+        return;
+    }
+
+    if (strcmp(step.op, "projectilechecks") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2) {
+            Fail(nStep, step.op, "requires world and two party members");
+            return;
+        }
+        CGameObjectArray* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* sourceObject = NULL;
+        CGameObject* targetObject = NULL;
+        if (objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH, &sourceObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable");
+            return;
+        }
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &targetObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable");
+            return;
+        }
+        CGameSprite* source = static_cast<CGameSprite*>(sourceObject);
+        CGameSprite* target = static_cast<CGameSprite*>(targetObject);
+        CSpell spell(CResRef("ZRCHIT"));
+        if (!spell.Demand() || !spell.pRes->m_bParsed) {
+            objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "ZRCHIT fixture unavailable");
+            return;
+        }
+        CResSpell* resource = spell.pRes;
+        SPELL_HEADER* originalHeader = resource->m_pHeader;
+        SPELL_ABILITY* originalAbilities = resource->m_pAbilities;
+        ITEM_EFFECT* originalEffects = resource->m_pEffects;
+        SPELL_HEADER header = *originalHeader;
+        SPELL_ABILITY abilities[2] = {originalAbilities[0], originalAbilities[0]};
+        ITEM_EFFECT effects[4] = {originalEffects[0], originalEffects[1], originalEffects[0], originalEffects[1]};
+        header.abilityCount = 2;
+        abilities[1].minCasterLevel = 2;
+        abilities[1].startingEffect = 2;
+        effects[2].effectAmount = 11;
+        effects[3].effectAmount = 12;
+        resource->m_pHeader = &header;
+        resource->m_pAbilities = abilities;
+        resource->m_pEffects = effects;
+        auto& queue = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        std::list<CMessage*> pending;
+        while (!queue.IsEmpty()) pending.push_back(queue.RemoveHead());
+        BOOL valid = TRUE;
+        INT checks = 0;
+        auto check = [&](const char* name, BOOL passed) {
+            Emit("{\"step\":%d,\"op\":\"projectile-case\",\"case\":\"%s\",\"passed\":%s}", nStep, name, passed ? "true" : "false");
+            valid = valid && passed;
+            ++checks;
+        };
+        auto discardMessages = [&]() {
+            while (!queue.IsEmpty()) delete queue.RemoveHead();
+        };
+        ITEM_EFFECT item = {};
+        item.effectID = ICEWIND_CGAMEEFFECT_PROJECTILE;
+        CGameEffect* effect = CGameEffect::DecodeEffect(&item, CPoint(123, 456), sourceId, CPoint(-678, 901));
+        check("decode-concrete-projectile", dynamic_cast<IcewindCGameEffectProjectile*>(effect) != NULL);
+        if (effect) {
+            effect->m_res = "ZRCHIT";
+            effect->m_sourceRes = "ZRCORIG2";
+            effect->m_casterLevel = 0x112FF;
+            CGameEffect* copy = effect->Copy();
+            check("copy-concrete-type", dynamic_cast<IcewindCGameEffectProjectile*>(copy) != NULL);
+            check("copy-payload", copy && copy->m_res == CResRef("ZRCHIT")
+                && copy->m_sourceRes == CResRef("ZRCORIG2") && copy->m_casterLevel == 0x112FF
+                && copy->m_sourceID == sourceId && copy->m_source == CPoint(123, 456)
+                && copy->m_target == CPoint(-678, 901));
+            const DWORD levels[] = {0, 1, 255, 256, 257, 0x112FF};
+            for (INT index = 0; index < 6; ++index) {
+                CGameEffect* current = index == 5 && copy ? copy : effect;
+                current->m_casterLevel = levels[index];
+                current->m_done = FALSE;
+                check("instant-virtual-apply-done", current->ApplyEffect(target) && current->m_done);
+                check("instant-one-grouped-message", queue.GetCount() == 1);
+                CMessage105* message = queue.IsEmpty() ? NULL : dynamic_cast<CMessage105*>(queue.GetHead());
+                check("grouped-target-routing", message && message->GetSource() == sourceId
+                    && message->GetTarget() == targetId && message->m_nCount == 2);
+                INT count = 0;
+                if (message) {
+                    for (auto* node = message->m_pNodeHead->m_pNext; node != message->m_pNodeHead; node = node->m_pNext) {
+                        auto* child = dynamic_cast<CMessageAddEffect*>(node->m_pMessage);
+                        CGameEffect* payload = child ? child->m_effect : NULL;
+                        check("forced-level-one-ability-order", payload && payload->m_effectAmount == count + 1);
+                        check("payload-full-level-and-origin", payload && payload->m_casterLevel == levels[index]
+                            && payload->m_sourceID == sourceId && payload->m_source == source->GetPos()
+                            && payload->m_sourceRes == CResRef("ZRCHIT") && payload->m_target == CPoint(-678, 901)
+                            && payload->m_projectileType == 0);
+                        check("both-target-types-delivered-to-defender", child && child->GetSource() == sourceId
+                            && child->GetTarget() == targetId && payload && payload->m_targetType == count + 1);
+                        ++count;
+                    }
+                }
+                check("instant-payload-count", count == 2);
+                discardMessages();
+            }
+            delete copy;
+            // Compare the live travelling objects before any engine tick, then
+            // remove them through their recovered ownership path.
+            effect->m_casterLevel = 0x112FF;
+            const DWORD flags[] = {1, 11, 16, 0x10001};
+            for (INT index = 0; index < 4; ++index) {
+                std::set<CGameObject*> before;
+                for (INT slot = 0; slot < objects->m_nArraySize; ++slot) {
+                    if (objects->m_pArray[slot].m_objectId != -1) before.insert(objects->m_pArray[slot].m_objectPtr);
+                }
+                effect->m_dwFlags = flags[index];
+                effect->m_done = FALSE;
+                check("travelling-virtual-apply-done", effect->ApplyEffect(target) && effect->m_done);
+                CProjectile* projectile = NULL;
+                INT created = 0;
+                for (INT slot = 0; slot < objects->m_nArraySize; ++slot) {
+                    auto& entry = objects->m_pArray[slot];
+                    if (entry.m_objectId == -1 || before.count(entry.m_objectPtr)) continue;
+                    CProjectile* candidate = dynamic_cast<CProjectile*>(entry.m_objectPtr);
+                    if (candidate) { projectile = candidate; ++created; }
+                }
+                check("one-travelling-object-no-early-message", created == 1 && queue.IsEmpty());
+                check("word-factory-selects-concrete-type", projectile && (index == 1
+                    ? dynamic_cast<CProjectileBolt*>(projectile) != NULL : index == 2
+                    ? dynamic_cast<CProjectileSlingStone*>(projectile) != NULL
+                    : dynamic_cast<CProjectileArrow*>(projectile) != NULL));
+                check("fire-source-target-area", projectile && projectile->m_sourceId == sourceId
+                    && projectile->m_targetId == targetId && projectile->m_pArea == target->m_pArea
+                    && projectile->CGameObject::m_pArea == target->m_pArea
+                    && projectile->m_targetX == target->GetPos().x && projectile->m_targetY == target->GetPos().y);
+                check("travelling-retains-two-effects", projectile && projectile->m_effectList.GetCount() == 2);
+                if (projectile) {
+                    POSITION pos = projectile->m_effectList.GetHeadPosition();
+                    INT count = 0;
+                    while (pos) {
+                        CGameEffect* payload = projectile->m_effectList.GetNext(pos);
+                        check("travelling-payload-metadata", payload && payload->m_effectAmount == ++count
+                            && payload->m_casterLevel == 0x112FF && payload->m_sourceRes == CResRef("ZRCHIT")
+                            && payload->m_sourceID == sourceId && payload->m_source == source->GetPos()
+                            && payload->m_target == CPoint(-678, 901)
+                            && payload->m_projectileType == static_cast<WORD>(flags[index]));
+                    }
+                    projectile->RemoveSelf();
+                }
+            }
+            effect->m_dwFlags = 0;
+            abilities[0].effectCount = 0;
+            check("empty-payload-still-finishes", effect->ApplyEffect(target) && effect->m_done);
+            auto* empty = queue.IsEmpty() ? NULL : dynamic_cast<CMessage105*>(queue.GetHead());
+            check("empty-grouped-message", queue.GetCount() == 1 && empty && empty->m_nCount == 0);
+            discardMessages();
+            abilities[0].effectCount = originalAbilities[0].effectCount;
+            const LONG invalidIds[] = {CGameObjectArray::INVALID_INDEX, sourceId ^ 0x10000};
+            for (LONG invalidId : invalidIds) {
+                effect->m_sourceID = invalidId;
+                effect->m_done = FALSE;
+                SHORT nextId = objects->m_nNextObjectId;
+                check("missing-source-finishes-without-firing", effect->ApplyEffect(target) && effect->m_done
+                    && queue.IsEmpty() && objects->m_nNextObjectId == nextId);
+            }
+            delete effect;
+        }
+        discardMessages();
+        for (CMessage* message : pending) queue.AddTail(message);
+        resource->m_pHeader = originalHeader;
+        resource->m_pAbilities = originalAbilities;
+        resource->m_pEffects = originalEffects;
+        spell.Release();
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            Fail(nStep, step.op, "projectile payload mismatch (resource and queue restored)");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"projectilechecks\",\"checks\":%d,\"restored\":true}", nStep, checks);
+        ++s_pc;
+        return;
+    }
+
+    if (strcmp(step.op, "projectiledamage") == 0 || strcmp(step.op, "projectilewait") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld || game->GetNumCharacters() < 2) {
+            Fail(nStep, step.op, "requires world and two party members");
+            return;
+        }
+        CGameObjectArray* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* sourceObject = NULL;
+        CGameObject* targetObject = NULL;
+        if (objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH, &sourceObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "source unavailable");
+            return;
+        }
+        if (objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &targetObject, INFINITE) != CGameObjectArray::SUCCESS) {
+            objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "target unavailable");
+            return;
+        }
+        auto* source = static_cast<CGameSprite*>(sourceObject);
+        auto* target = static_cast<CGameSprite*>(targetObject);
+        BOOL fire = strcmp(step.op, "projectiledamage") == 0;
+        BOOL applied = TRUE;
+        INT sourceLoss = 0, targetLoss = 0;
+        if (fire) {
+            s_projectileFlags = Num(step, 0, 0);
+            s_projectileSourceHP = source->m_baseStats.m_hitPoints;
+            s_projectileTargetHP = target->m_baseStats.m_hitPoints;
+            ITEM_EFFECT item = {};
+            item.effectID = ICEWIND_CGAMEEFFECT_PROJECTILE;
+            item.dwFlags = s_projectileFlags;
+            CGameEffect* effect = CGameEffect::DecodeEffect(&item, source->GetPos(), sourceId, target->GetPos());
+            if (effect) {
+                effect->m_res = "ZRCHIT";
+                effect->m_casterLevel = 257;
+                applied = effect->ApplyEffect(target) && effect->m_done;
+                delete effect;
+            } else applied = FALSE;
+        } else {
+            sourceLoss = s_projectileSourceHP - source->m_baseStats.m_hitPoints;
+            targetLoss = s_projectileTargetHP - target->m_baseStats.m_hitPoints;
+        }
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!applied) {
+            Fail(nStep, step.op, "decoded projectile did not finish");
+            return;
+        }
+        if (!fire && (sourceLoss != 0 || targetLoss != 3)) {
+            if (sourceLoss != 0 || targetLoss > 3 || ++s_waited > DEFAULT_WAIT_TICKS)
+                Fail(nStep, step.op, "expected three target damage and no source damage");
+            return;
+        }
+        Emit("{\"step\":%d,\"op\":\"%s\",\"flags\":%d,\"sourceLoss\":%d,\"targetLoss\":%d,\"checks\":%d}",
+            nStep, step.op, s_projectileFlags, sourceLoss, targetLoss, fire ? 1 : 2);
+        s_waited = 0;
+        ++s_pc;
         return;
     }
 
