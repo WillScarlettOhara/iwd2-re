@@ -23,6 +23,7 @@ public:
     /* 004C */ void Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface) override;
     /* 0050 */ BOOLEAN DoAIUpdate(BOOLEAN active, LONG counter) override;
     /* 0058 */ void SetCursor(LONG nToolTip) override;
+    /* 0078 */ void AddEffect(CGameEffect* pEffect, BYTE list, BOOL noSave, BOOL immediateApply) override;
     /* 00B8 */ virtual void RenderClosedPoly(CGameArea* pArea, CVidMode* pVidMode, int nSurface, COLORREF color); /*#guess*/
     /* 00BC */ virtual void RenderOpenPoly(CGameArea* pArea, CVidMode* pVidMode, int nSurface, COLORREF color); /*#guess*/
 

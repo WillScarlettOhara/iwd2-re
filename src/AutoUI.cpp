@@ -106,6 +106,7 @@
 #include "AutoUI.h"
 
 #include <cmath>
+#include <algorithm>
 
 #include "mfc.h"
 
@@ -131,6 +132,9 @@
 #include "CGameEffect.h"
 #include "CItem.h"
 #include "CMessage.h"
+#include "CMessageDoorOpen.h"
+#include "CProjectileSPBOOM.h"
+#include "CNetwork.h"
 #include "CPathSearch.h"
 #include "CVariableHash.h"
 #include "CProjectile.h"
@@ -1744,6 +1748,273 @@ void Tick(CWarp* pActiveEngine)
         objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         Emit("{\"step\":%d,\"op\":\"targettriggerchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
         if (!valid) { Fail(nStep, step.op, "target/health trigger mismatch (state restored)"); return; }
+        s_pc++; return;
+    }
+
+    if (strcmp(step.op, "dooreffectchecks") == 0) {
+        auto* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        auto* remote = game->GetRemoteObjectArray();
+        CGameObject* raw = NULL;
+        LONG actorId = game->GetFixedOrderCharacterId(0);
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || objects->GetDeny(actorId, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires loaded party"); return;
+        }
+        auto* actor = static_cast<CGameSprite*>(raw);
+        CGameDoor* door = NULL;
+        for (INT i = 0; i < objects->m_nArraySize && door == NULL; ++i) {
+            auto& entry = objects->m_pArray[i];
+            if (entry.m_objectId == -1 || entry.m_objectPtr == NULL
+                || entry.m_objectPtr->GetObjectType() != CGameObject::TYPE_DOOR
+                || entry.m_objectPtr->m_pArea != actor->m_pArea) continue;
+            CGameObject* object = NULL;
+            if (objects->GetDeny(entry.m_objectPtr->GetId(), CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) == CGameObjectArray::SUCCESS)
+                door = static_cast<CGameDoor*>(object);
+        }
+        if (door == NULL) {
+            objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires local door"); return;
+        }
+        auto flags = door->m_dwFlags;
+        auto difficulty = door->m_lockDifficulty;
+        auto detectionDifficulty = door->m_trapDetectionDifficulty;
+        auto activated = door->m_trapActivated, detected = door->m_trapDetected;
+        auto draw = door->m_drawPoly;
+        auto drawMessage = g_pBaldurChitin->GetBaldurMessage()->m_bInMessageSetDrawPoly;
+        auto actorPlayer = actor->m_remotePlayerID, doorPlayer = door->m_remotePlayerID;
+        auto actorRemote = actor->m_remoteObjectID, doorRemote = door->m_remoteObjectID;
+        ULONG time = game->GetWorldTimer()->m_gameTime;
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT messageCount = messages.GetCount();
+        INT checks = 0;
+        BOOL valid = TRUE;
+        auto check = [&](const char* name, BOOL ok) {
+            ++checks; valid = valid && ok;
+            if (!ok) Emit("{\"step\":%d,\"op\":\"door-effect-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+        };
+        auto discard = [&]() { while (messages.GetCount() > messageCount) delete messages.RemoveTail(); };
+        auto effect = [&](DWORD opcode) {
+            auto* result = new CGameEffect();
+            result->m_effectID = opcode;
+            result->m_sourceID = actorId;
+            return result;
+        };
+        CGameAIBase* target = door;
+        for (DWORD lock : {0UL, 99UL, 100UL, 101UL, 0xFFFFFFFFUL}) {
+            for (DWORD bits : {0UL, 1UL, 2UL, 3UL, 0xFFFFFFFFUL}) {
+                discard(); door->m_dwFlags = bits; door->m_lockDifficulty = lock;
+                target->AddEffect(effect(CGAMEEFFECT_KNOCK), 255, FALSE, FALSE);
+                check("knock-lock-sentinel", door->m_dwFlags == (lock == 100 ? bits : bits & ~2U));
+                if (lock != 100) {
+                    check("knock-opens-with-distinct-message", messages.GetCount() == messageCount + 1
+                        && messages.GetTail()->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_DOOR_OPEN
+                        && static_cast<CMessageDoorOpen*>(messages.GetTail())->m_bOpenDoor == TRUE
+                        && messages.GetTail()->m_sourceId == door->m_id && messages.GetTail()->m_targetId == door->m_id);
+                }
+            }
+        }
+        for (WORD active : {static_cast<WORD>(0), static_cast<WORD>(1), static_cast<WORD>(65535)}) {
+            for (WORD wasDetected : {static_cast<WORD>(0), static_cast<WORD>(1), static_cast<WORD>(65535)}) {
+                for (WORD rank : {static_cast<WORD>(0), static_cast<WORD>(99), static_cast<WORD>(100), static_cast<WORD>(65535)}) {
+                    for (DWORD bits : {0UL, 8UL}) {
+                        for (SHORT flash : {static_cast<SHORT>(0), static_cast<SHORT>(400), static_cast<SHORT>(-1)}) {
+                            for (BOOL inMessage : {FALSE, TRUE}) {
+                                discard(); door->m_dwFlags = bits;
+                                door->m_trapActivated = active; door->m_trapDetected = wasDetected;
+                                door->m_trapDetectionDifficulty = rank; door->m_drawPoly = flash;
+                                g_pBaldurChitin->GetBaldurMessage()->m_bInMessageSetDrawPoly = inMessage;
+                                target->AddEffect(effect(CGAMEEFFECT_DETECTTRAPS), 0, TRUE, TRUE);
+                                BOOL newly = active != 0 && wasDetected == 0 && rank < 100 && bits == 8;
+                                BOOL highlighted = active != 0 && (wasDetected != 0 || newly);
+                                BOOL sendFlash = highlighted && flash != 400 && !inMessage;
+                                check("detect-unsigned-rank-and-active-gates", door->m_trapDetected == (newly ? 1 : wasDetected)
+                                    && door->m_trapActivated == active && door->m_dwFlags == bits
+                                    && door->m_drawPoly == (highlighted ? 400 : flash));
+                                check("detect-message-count", messages.GetCount() == messageCount + (newly ? 3 : 0) + (sendFlash ? 1 : 0));
+                                POSITION pos = messages.GetHeadPosition();
+                                for (INT i = 0; i < messageCount; ++i) messages.GetNext(pos);
+                                if (newly && pos != NULL) {
+                                    auto* trigger = messages.GetNext(pos);
+                                    check("detect-trigger-first", trigger->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_SET_TRIGGER
+                                        && static_cast<CMessageSetTrigger*>(trigger)->m_trigger.m_triggerID == CAITRIGGER_DETECTED);
+                                    if (pos != NULL) {
+                                        auto* status = messages.GetNext(pos);
+                                        check("detect-uses-trigger-status", status->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_TRIGGER_STATUS
+                                            && static_cast<CMessageTriggerStatus*>(status)->m_trapDetected == 1
+                                            && static_cast<CMessageTriggerStatus*>(status)->m_trapActivated == active);
+                                    }
+                                }
+                                if (newly) check("detect-door-status-last", messages.GetTail()->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_DOOR_STATUS);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (LONG amount : {0L, -1L, 255L, LONG_MIN, LONG_MAX}) {
+            discard(); auto* cast = effect(CGAMEEFFECT_CASTSPELL);
+            cast->m_res = CResRef("ZRCHIT"); cast->m_effectAmount = amount;
+            target->AddEffect(cast, 2, FALSE, FALSE);
+            auto* message = messages.GetCount() == messageCount + 1 ? messages.GetTail() : NULL;
+            check("forced-cast-message", message != NULL && message->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_ADD_ACTION);
+            if (message != NULL && message->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_ADD_ACTION) {
+                auto* action = static_cast<CMessageAddAction*>(message);
+                check("forced-cast-payload-and-routing", action->m_action.m_actionID == CAIAction::FORCESPELL
+                    && action->m_action.m_specificID == amount && action->m_action.m_string1 == CString(_T("ZRCHIT"))
+                    && action->m_action.m_acteeID.m_nInstance == door->GetAIType().m_nInstance
+                    && message->m_targetId == actorId && message->m_sourceId == door->m_id);
+            }
+        }
+        for (DWORD opcode : {0UL, static_cast<DWORD>(CGAMEEFFECT_DAMAGE), 430UL, 0xFFFFFFFFUL}) {
+            discard(); door->m_dwFlags = flags; door->m_drawPoly = draw;
+            target->AddEffect(effect(opcode), 1, TRUE, TRUE);
+            check("unsupported-effect-discarded", messages.GetCount() == messageCount && door->m_dwFlags == flags && door->m_drawPoly == draw);
+        }
+        discard();
+        const PLAYER_ID testPlayer = 0x0F170001;
+        const LONG testActor = 0x7EFD0001, testDoor = 0x7EFD0002;
+        LONG found;
+        BOOL isolated = !remote->Find(testPlayer, 1, found) && !remote->Find(testPlayer, 2, found);
+        check("isolated-remote-keys", isolated);
+        if (isolated) {
+            remote->Add(testPlayer, 1, testActor, FALSE); remote->Add(testPlayer, 2, testDoor, FALSE);
+            actor->m_remotePlayerID = door->m_remotePlayerID = testPlayer;
+            actor->m_remoteObjectID = 1; door->m_remoteObjectID = 2;
+            for (BOOLEAN open : {static_cast<BOOLEAN>(0), static_cast<BOOLEAN>(1), static_cast<BOOLEAN>(255)}) {
+                for (LONG source : {actorId, -1L}) {
+                    for (LONG recipient : {door->m_id, -1L}) {
+                        BYTE bytes[32]; memset(bytes, 0xA5, sizeof(bytes));
+                        BYTE* payload = bytes + CNetwork::SPEC_MSG_HEADER_LENGTH;
+                        DWORD length = 0;
+                        CMessageDoorOpen original(open, source, recipient);
+                        check("door-open-message-tags", original.GetCommType() == CMessage::SEND
+                            && original.GetMsgType() == CBaldurMessage::MSG_TYPE_CMESSAGE && original.GetMsgSubType() == 18);
+                        original.MarshalMessage(&payload, &length);
+                        DWORD words[4]; memcpy(words, payload, sizeof(words));
+                        check("door-open-wire-format", length == 17 && payload[16] == open && payload[17] == 0xA5
+                            && words[0] == (recipient == -1 ? 0 : testPlayer) && static_cast<LONG>(words[1]) == (recipient == -1 ? -1 : 2)
+                            && words[2] == (source == -1 ? 0 : testPlayer) && static_cast<LONG>(words[3]) == (source == -1 ? -1 : 1));
+                        CMessageDoorOpen decoded(99, 77, 88);
+                        BOOL result = decoded.UnmarshalMessage(bytes, CNetwork::SPEC_MSG_HEADER_LENGTH + length);
+                        check("door-open-decode-routing", result == (recipient != -1)
+                            && decoded.m_targetId == (recipient == -1 ? -1 : testDoor)
+                            && decoded.m_sourceId == (recipient == -1 ? 77 : source == -1 ? -1 : testActor)
+                            && decoded.m_bOpenDoor == (recipient == -1 ? 99 : open));
+                    }
+                }
+            }
+            remote->Delete(testActor); remote->Delete(testDoor);
+            check("remote-mappings-removed", !remote->Find(testPlayer, 1, found) && !remote->Find(testPlayer, 2, found));
+        }
+        actor->m_remotePlayerID = actorPlayer; actor->m_remoteObjectID = actorRemote;
+        door->m_remotePlayerID = doorPlayer; door->m_remoteObjectID = doorRemote;
+        // Spawn from an existing CRE, inspect the real object and removal effect,
+        // then remove every newly registered projectile and sprite before ticks.
+        std::vector<LONG> existing;
+        for (INT i = 0; i < objects->m_nArraySize; ++i)
+            if (objects->m_pArray[i].m_objectId != -1 && objects->m_pArray[i].m_objectPtr != NULL)
+                existing.push_back(objects->m_pArray[i].m_objectPtr->GetId());
+        auto* summon = effect(CGAMEEFFECT_SUMMON);
+        summon->m_res = CResRef("00SZMBL2");
+        summon->m_target = actor->m_pos; summon->m_durationType = 0;
+        summon->m_duration = time + 15000; summon->m_casterLevel = 0x12345678;
+        Emit("{\"step\":%d,\"op\":\"door-effect-summon\",\"phase\":\"begin\"}", nStep);
+        target->AddEffect(summon, 255, FALSE, FALSE);
+        Emit("{\"step\":%d,\"op\":\"door-effect-summon\",\"phase\":\"returned\"}", nStep);
+        INT sprites = 0, projectiles = 0;
+        std::vector<LONG> created;
+        LONG summonedId = -1;
+        for (INT i = 0; i < objects->m_nArraySize; ++i) {
+            auto& entry = objects->m_pArray[i];
+            if (entry.m_objectId == -1 || entry.m_objectPtr == NULL) continue;
+            LONG id = entry.m_objectPtr->GetId();
+            if (std::find(existing.begin(), existing.end(), id) != existing.end()) continue;
+            auto* object = entry.m_objectPtr; created.push_back(id);
+            if (object->GetObjectType() == CGameObject::TYPE_SPRITE) {
+                ++sprites; summonedId = id; auto* spawned = static_cast<CGameSprite*>(object);
+                check("summon-resource-and-area", spawned->m_resRef == CResRef("00SZMBL2") && spawned->m_pArea == door->m_pArea);
+                check("summon-grid-position-and-facing", spawned->m_pos.x % CPathSearch::GRID_SQUARE_SIZEX == 0
+                    && spawned->m_pos.y % CPathSearch::GRID_SQUARE_SIZEY == 0 && spawned->m_nDirection >= 0 && spawned->m_nDirection < 16);
+                CGameEffect* removal = NULL;
+                POSITION pos = spawned->m_timedEffectList.GetHeadPosition();
+                while (pos != NULL) {
+                    auto* entry = spawned->m_timedEffectList.GetNext(pos);
+                    if (entry->m_effectID == 68) removal = entry;
+                }
+                check("summon-removal-effect", removal != NULL && removal->m_effectAmount == 1
+                    && removal->m_casterLevel == 0x12345678 && removal->m_sourceID == -1);
+            } else if (object->IsProjectile()) {
+                ++projectiles; auto* projectile = static_cast<CProjectile*>(object);
+                check("summon-visual-projectile", projectile->m_projectileType == 143 && projectile->m_sourceId == projectile->m_targetId);
+            }
+        }
+        check("summon-created-sprite-and-projectile", sprites == 1 && projectiles >= 1);
+        INT fireMessages = 0;
+        POSITION queuedPos = messages.GetHeadPosition();
+        for (INT index = 0; queuedPos != NULL; ++index) {
+            auto* message = messages.GetNext(queuedPos);
+            if (index < messageCount || message->GetMsgSubType() != CBaldurMessage::MSG_SUBTYPE_CMESSAGE_FIRE_PROJECTILE) continue;
+            auto* fire = static_cast<CMessageFireProjectile*>(message);
+            ++fireMessages;
+            check("summon-fire-message", fire->m_projectileType == 144 && fire->m_projectileTargetId == summonedId
+                && fire->m_projectileTarget == CPoint(0, 0) && fire->m_height == 30
+                && fire->m_sourceId == summonedId && fire->m_targetId == summonedId && fire->field_1E == 0);
+        }
+        check("summon-fire-message-count", fireMessages == 1);
+        auto stop = game->m_nTimeStop, stopCaster = game->m_nTimeStopCaster;
+        // Inspect the leaf animation through a test-only derived object, then
+        // run the actual summoned visual through its full removal lifecycle.
+        struct SummonVisualProbe : CProjectileSPBOOM {
+            SHORT Frame() const { return m_pVidCell->m_nCurrentFrame; }
+            void ResetFrame() { m_pVidCell->FrameSet(0); }
+            BOOL Defaults() const { return m_dirCount == 1 && m_tinted == 0 && m_mirror == 0
+                && m_useHeightOffset == 0 && m_hasShadowCell == 0 && m_fireSoundRef == CResRef(""); }
+        } probe;
+        check("summon-visual-constructor", probe.Defaults());
+        probe.m_id = -1; probe.ResetFrame();
+        game->m_nTimeStop = 1; game->m_nTimeStopCaster = actorId;
+        SHORT frame = probe.Frame(); probe.AIUpdate();
+        check("summon-visual-time-stop", probe.Frame() == frame);
+        game->m_nTimeStopCaster = -1; probe.AIUpdate();
+        check("summon-visual-time-stop-owner", probe.Frame() == frame + 1);
+        game->m_nTimeStop = 0;
+        for (LONG id : created) {
+            CGameObject* object = NULL;
+            if (objects->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) continue;
+            if (!object->IsProjectile()) continue;
+            CPoint pos = object->m_pos;
+            INT ticks = 0;
+            do {
+                check("summon-visual-stationary", object->m_pos == pos);
+                object->AIUpdate();
+                ++ticks;
+            } while (ticks < 512 && objects->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) == CGameObjectArray::SUCCESS);
+            check("summon-visual-animation-removal", objects->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS);
+        }
+        game->m_nTimeStop = stop; game->m_nTimeStopCaster = stopCaster;
+        Emit("{\"step\":%d,\"op\":\"door-effect-summon\",\"sprites\":%d,\"projectiles\":%d,\"fireMessages\":%d}", nStep, sprites, projectiles, fireMessages);
+        for (LONG id : created) {
+            CGameObject* object = NULL;
+            if (objects->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) != CGameObjectArray::SUCCESS) continue;
+            if (object->IsProjectile()) {
+                static_cast<CProjectile*>(object)->RemoveSelf();
+            } else {
+                if (object->GetObjectType() == CGameObject::TYPE_SPRITE) static_cast<CGameSprite*>(object)->m_bDeleteOnRemove = FALSE;
+                object->RemoveFromArea();
+                if (objects->Delete(object->m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE) == CGameObjectArray::SUCCESS) delete object;
+            }
+        }
+        discard();
+        check("world-clock-unchanged", game->GetWorldTimer()->m_gameTime == time);
+        door->m_dwFlags = flags; door->m_lockDifficulty = difficulty;
+        door->m_trapDetectionDifficulty = detectionDifficulty; door->m_trapActivated = activated;
+        door->m_trapDetected = detected; door->m_drawPoly = draw;
+        g_pBaldurChitin->GetBaldurMessage()->m_bInMessageSetDrawPoly = drawMessage;
+        objects->ReleaseDeny(door->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"dooreffectchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "door effect mismatch (state restored)"); return; }
         s_pc++; return;
     }
 

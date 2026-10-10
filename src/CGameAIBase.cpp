@@ -2063,8 +2063,8 @@ void CGameAIBase::AddEffect(CGameEffect* pEffect, BYTE list, BOOL noSave, BOOL i
     // The base handler discards effects on AI objects without a specific override.
     // CGameSprite overrides slot 0x78 (0x733050) with timed/equipped list management;
     // doors, containers and triggers also have distinct handlers in the binary.
-    // CGameDoor's handler (0x486860) remains unrecovered, so its inherited source
-    // behavior is an explicit gap, not evidence that doors discard every effect.
+    // CGameDoor's handler (0x486860) handles knock, trap detection, forced casting
+    // and summoning; it does not store arbitrary sprite effects.
     // The earlier stopgap wrongly ran the sprite
     // list path in this base, static_cast-ing a non-sprite to CGameSprite and
     // AddTail-ing onto a garbage list -- the Fireball-on-non-sprite heap fault

@@ -14,6 +14,10 @@
 #include "CUtil.h"
 #include "CVidPoly.h"
 #include "CVidInf.h"
+#include "CGameEffect.h"
+#include "CProjectile.h"
+#include "CCreatureFile.h"
+#include "CMessageDoorOpen.h"
 
 // 0x8D41D8
 const LONG CGameDoor::RANGE_DOOR = 16
@@ -784,6 +788,112 @@ BOOLEAN CGameDoor::CompressTime(DWORD deltaTime)
         m_dwFlags &= ~0x1000;
     }
     return TRUE;
+}
+
+// 0x486860
+void CGameDoor::AddEffect(CGameEffect* pEffect, BYTE list, BOOL noSave, BOOL immediateApply)
+{
+    switch (pEffect->m_effectID) {
+    case CGAMEEFFECT_KNOCK:
+        if (m_lockDifficulty == 100) {
+            g_pBaldurChitin->GetBaldurMessage()->DisplayTextRef(
+                static_cast<STRREF>(-1), 0x5A81, 0, 0xD7C8A0, -1, m_id, m_id);
+        } else {
+            m_dwFlags &= ~2U;
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageDoorOpen(TRUE, m_id, m_id), FALSE);
+        }
+        break;
+    case CGAMEEFFECT_DETECTTRAPS: {
+        if (m_trapActivated == 0) break;
+        BOOL newlyDetected = FALSE;
+        if (m_trapDetected == 0 && m_trapDetectionDifficulty < 100 && (m_dwFlags & 8) != 0) {
+            CAITrigger trigger(CAITRIGGER_DETECTED, m_typeAI, 0);
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetTrigger(trigger, m_id, m_id), FALSE);
+            m_trapDetected = 1;
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                new CMessageTriggerStatus(m_dwFlags, m_trapActivated, m_trapDetected, m_id, m_id), FALSE);
+            newlyDetected = TRUE;
+            CGameObject* pObject = m_typeAI.GetObject(reinterpret_cast<CGameAIBase*>(m_id), FALSE);
+            if (pObject != NULL) {
+                CAIObjectType spriteType(CGameObject::TYPE_SPRITE, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0);
+                if (pObject->GetAIType().Equal(spriteType)) static_cast<CGameAIBase*>(pObject)->AutoPause(0x80);
+            }
+        }
+        if (m_trapDetected != 0) {
+            if (m_drawPoly != 400 && !g_pBaldurChitin->GetBaldurMessage()->m_bInMessageSetDrawPoly)
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetDrawPoly(400, m_id, m_id), FALSE);
+            m_drawPoly = 400;
+        }
+        if (newlyDetected)
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageDoorStatus(this, m_id, m_id), FALSE);
+        break;
+    }
+    case CGAMEEFFECT_CASTSPELL: {
+        CAIObjectType target;
+        target.Set(GetAIType());
+        CAIAction action;
+        action.m_actionID = CAIAction::FORCESPELL;
+        action.m_acteeID.Set(target);
+        CString spell;
+        pEffect->m_res.CopyToString(spell);
+        action.SetString1(spell);
+        action.m_specificID = pEffect->m_effectAmount;
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddAction(action, m_id, pEffect->m_sourceID), FALSE);
+        break;
+    }
+    case CGAMEEFFECT_SUMMON: {
+        ITEM_EFFECT removal;
+        CGameEffect::ClearItemEffect(&removal, 68);
+        removal.durationType = 4;
+        removal.duration = (pEffect->m_duration - g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime) / 15;
+        removal.effectAmount = 1;
+        CGameEffect* pRemoval = CGameEffect::DecodeEffect(&removal, CPoint(-1, -1), -1, CPoint(-1, -1));
+        LONG x = pEffect->m_target.x / CPathSearch::GRID_SQUARE_SIZEX;
+        LONG y = pEffect->m_target.y / CPathSearch::GRID_SQUARE_SIZEY;
+        CCreatureFile creature;
+        creature.SetResRef(pEffect->m_res, TRUE, TRUE);
+        DWORD size = creature.GetDataSize();
+        BYTE* data = creature.GetData();
+        CGameSprite* pSprite = new CGameSprite(data, size, 0, 0, static_cast<DWORD>(-1),
+            0, 0, 0x7FFFFFFF, CPoint(-1, -1), 0);
+        pSprite->SetResRef(CResRef(creature.GetResRef().GetResRefStr()));
+        creature.ReleaseData();
+        if (pSprite != NULL) {
+            LONG id = pSprite->GetId();
+            CString res;
+            pEffect->m_res.CopyToString(res);
+            pSprite->SetResRef(CResRef(res));
+            BYTE rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(id,
+                CGameObjectArray::THREAD_ASYNCH, reinterpret_cast<CGameObject**>(&pSprite), INFINITE);
+            if (rc == CGameObjectArray::SUCCESS) {
+                POINT grid;
+                m_pArea->m_search.FindNearbyPassablePoint(&grid, x, y, GetTerrainTable(),
+                    pSprite->GetAnimation()->GetPersonalSpace(), -1);
+                CPoint pos(grid.x * CPathSearch::GRID_SQUARE_SIZEX, grid.y * CPathSearch::GRID_SQUARE_SIZEY);
+                pSprite->AddToArea(m_pArea, pos, 0, pSprite->GetAnimation()->GetListType());
+                CProjectile* pProjectile = CProjectile::DecodeProjectile(144, pSprite, 0);
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                    new CMessageFireProjectile(pProjectile->m_projectileType, id, CPoint(0, 0), 30, id, id, 0), FALSE);
+                pProjectile->Fire(m_pArea, id, id, CPoint(0, 0), 0, 0);
+                CAIObjectType type;
+                type.Set(pSprite->GetAIType());
+                CAIObjectType live;
+                live.Set(pSprite->m_liveTypeAI);
+                CAIObjectType start;
+                start.Set(pSprite->m_liveTypeAI);
+                if (pEffect->m_durationType != 1) {
+                    pRemoval->m_casterLevel = pEffect->m_casterLevel;
+                    pSprite->AddEffect(pRemoval, 1, TRUE, TRUE);
+                }
+                pSprite->SetSequence(1);
+                pSprite->SetFacing(rand() % 16);
+                g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            }
+        }
+        break;
+    }
+    }
+    delete pEffect;
 }
 
 // 0x487D10

@@ -1,4 +1,5 @@
 #include "CProjectile.h"
+#include "CProjectileSPBOOM.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -378,8 +379,6 @@ void CProjectileInstant::Fire(CGameArea* pArea, LONG source, LONG target,
     delete this;
 }
 
-// 0x51EAF0
-//
 // Factory that maps a numeric projectile type to a concrete CProjectile
 // subclass. The original dispatches ~327 hardcoded types (projectileType - 1
 // indexes a 386-entry jump table) plus a generic path for types > 0x1000
@@ -387,6 +386,7 @@ void CProjectileInstant::Fire(CGameArea* pArea, LONG source, LONG target,
 // overlays (CProjectileBAM), the summon/spell-hit VFX (CProjectileSummonVFX) and
 // the canonical travelling arrow (CProjectileArrow) are recovered here; the
 // remaining hardcoded classes are left unimplemented rather than guessed.
+// 0x51EAF0
 CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* pCaster, BYTE castDelay)
 {
     IcewindCVisualEffect visualEffect;
@@ -801,6 +801,18 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
         }
         BYTE sequenceDelay = castDelay ? castDelay : 0x32;
         pProjectile = new CProjectileBAM(visualResRef, CResRef(""), sequenceDelay, 0, visualEffect);
+        break;
+    }
+
+    case 0x90: {
+        CProjectileSPBOOM* pBoom = new CProjectileSPBOOM();
+        pBoom->m_dirCount = 1;
+        // Inlined SetPalette/SetRange helper at 0x52B150, in this order.
+        pBoom->m_pVidCell->SetPalette(pBoom->m_palette);
+        pBoom->m_palette.SetRange(0, 0x41, *g_pBaldurChitin->GetObjectGame()->GetMasterBitmap());
+        pBoom->m_fireSoundRef = CResRef("");
+        pBoom->m_arrivalSoundRef = CResRef("");
+        pProjectile = pBoom;
         break;
     }
 

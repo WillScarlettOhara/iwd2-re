@@ -56,13 +56,12 @@ restored and hashed preserved files. CompressTime/Render parity is GREEN;
 click/polygon helpers and ConvexPoly are YELLOW on call counts. Optional offset
 and automatic layout checks were skipped; no differential equivalence is claimed.
 
-The global class audit fails on the pre-existing CGameDoor::AddEffect omission,
-0x486860 (slot 0x78), without suppression or placeholder override. The generic
-handler's comment now identifies the gap.
+This run's global class audit failed on the then-missing CGameDoor::AddEffect,
+0x486860 (slot 0x78), without suppression or a placeholder override. The following
+lot fills that slot.
 
 ## Continuation
 
-Next: AddEffect (knock, traps, forced casting, summoning). Preliminary decompile/
-callset `tmp_door_effect_ctx.md` needs a named marker and complete class/header
-bundle before implementation. Formation executor 0x73EA80 (caller 0x729646)
-remains a subsequent combat movement target.
+The [door effect lot](combat-door-effects-recovery.md) implements AddEffect,
+the DoorOpen packet and summon visual. Next: ToggleDoor and DoorOpen::Run,
+then formation executor 0x73EA80 (caller 0x729646).
