@@ -5333,6 +5333,20 @@ void CMessageHandler::AsynchronousUpdate()
                 }
                 break;
             }
+            case 117:
+                if (immediate) {
+                    CMessage117 message(CResRef(), CResRef(), 0, CPoint(0, 0), 0, 0);
+                    if (message.UnmarshalMessage(data, size)) {
+                        message.Run();
+                    } else {
+                        // The original retries on the heap only after an
+                        // immediate decode failure; blocked reception is dropped.
+                        CMessage* retry = new CMessage117(CResRef(), CResRef(), 0, CPoint(0, 0), 0, 0);
+                        if (retry->UnmarshalMessage(data, size)) m_messageList.AddTail(retry);
+                        else delete retry;
+                    }
+                }
+                break;
             default:
                 // TODO: Remaining incoming CMessage factories are unimplemented.
                 break;
@@ -18700,6 +18714,7 @@ void CMessageProjectileTrailingVFX::Run()
 }
 
 // Constructor inlined in IcewindCGameEffectWhenStruck::ApplyEffect.
+// 0x4F6EF0
 CMessage117::CMessage117(const CResRef& sourceRes, const CResRef& spellRes,
     DWORD level, const CPoint& targetPoint, LONG caller, LONG target)
     : CMessage(caller, target)

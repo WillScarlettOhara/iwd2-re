@@ -95,6 +95,8 @@
 //                                three HP lost and no damage to portrait 0.
 //   groupedpacketdamage         receive two damage effects immediately and
 //                                deferred; require five HP per ordered batch.
+//   receivedonhitdamage         receive message 117, trigger its installed spell
+//                                and use onhitwait to require real HP loss.
 //   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
@@ -1758,7 +1760,7 @@ void Tick(CWarp* pActiveEngine)
     }
 
     if (strcmp(step.op, "combatmessagechecks") == 0 || strcmp(step.op, "effectpacketdamage") == 0
-        || strcmp(step.op, "groupedpacketdamage") == 0) {
+        || strcmp(step.op, "groupedpacketdamage") == 0 || strcmp(step.op, "receivedonhitdamage") == 0) {
         auto* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();
         auto* remotes = game->GetRemoteObjectArray();
@@ -1781,6 +1783,9 @@ void Tick(CWarp* pActiveEngine)
         };
         BOOL damage = strcmp(step.op, "combatmessagechecks") != 0;
         BOOL groupedDamage = strcmp(step.op, "groupedpacketdamage") == 0;
+        BOOL onHitDamage = strcmp(step.op, "receivedonhitdamage") == 0;
+        auto sourceOnHit = source->m_derivedStats.m_onHitSpells;
+        auto targetOnHit = target->m_derivedStats.m_onHitSpells;
         SHORT sourceHP = source->m_baseStats.m_hitPoints, targetHP = target->m_baseStats.m_hitPoints;
         ULONG time = game->GetWorldTimer()->m_gameTime;
         PLAYER_ID sourcePlayer = source->m_remotePlayerID, targetPlayer = target->m_remotePlayerID;
@@ -2015,6 +2020,37 @@ void Tick(CWarp* pActiveEngine)
             for (INT i = 0; i < 2; ++i) static_cast<CMessageAddEffect*>(groupNodes[i].m_pMessage)->m_effect->m_effectID = CGAMEEFFECT_DETECTTRAPS;
             grouped.MarshalMessage(&groupPayload, &groupSize);
         }
+        CMessage117 onHit(CResRef("ZRCORIG1"), CResRef("ZRCHIT"), 1, target->GetPos(), 99, sourceId);
+        BYTE onHitBytes[64] = {}; BYTE* onHitPayload = onHitBytes + header; DWORD onHitSize = 0;
+        static_cast<CMessage*>(&onHit)->MarshalMessage(&onHitPayload, &onHitSize);
+        if (!damage) {
+            onHit.m_sourceRes = "SRC12345"; onHit.m_spellRes = "DST67890";
+            onHit.m_level = 0x89ABCDEF; onHit.m_target = CPoint(LONG_MIN, LONG_MAX);
+            static_cast<CMessage*>(&onHit)->MarshalMessage(&onHitPayload, &onHitSize);
+            const BYTE golden[] = {0x10,0x32,0x54,0x76,0x78,0x56,0,0,
+                'S','R','C','1','2','3','4','5','D','S','T','6','7','8','9','0',
+                0xEF,0xCD,0xAB,0x89,0,0,0,0x80,0xFF,0xFF,0xFF,0x7F};
+            check("onhit-golden-packet-full-resrefs-level-points-and-guards", onHitSize == sizeof(golden)
+                && onHitPayload == onHitBytes + header && memcmp(onHitPayload, golden, sizeof(golden)) == 0 && onHitPayload[36] == 0);
+            CMessage117 decoded(CResRef("OLD"), CResRef("OLD2"), 7, CPoint(8, 9), 88, targetId);
+            check("onhit-virtual-decode-keeps-caller-and-all-widths", static_cast<CMessage*>(&decoded)->UnmarshalMessage(onHitBytes, header + onHitSize)
+                && decoded.GetSource() == 88 && decoded.GetTarget() == sourceId && decoded.m_sourceRes == "SRC12345"
+                && decoded.m_spellRes == "DST67890" && decoded.m_level == 0x89ABCDEF && decoded.m_target == CPoint(LONG_MIN, LONG_MAX));
+            PLAYER_ID missing = 0x24681357; memcpy(onHitPayload, &missing, 4);
+            check("onhit-unmapped-header-only-leaves-all-state", !decoded.UnmarshalMessage(onHitBytes, header + 8)
+                && decoded.GetSource() == 88 && decoded.GetTarget() == sourceId && decoded.m_sourceRes == "SRC12345"
+                && decoded.m_spellRes == "DST67890" && decoded.m_level == 0x89ABCDEF && decoded.m_target == CPoint(LONG_MIN, LONG_MAX));
+            onHit.m_targetId = -1; memset(onHitBytes, 0xA5, sizeof(onHitBytes)); onHitSize = 999;
+            onHit.MarshalMessage(&onHitPayload, &onHitSize);
+            check("onhit-missing-marshal-target-zero-size-untouched", onHitSize == 0 && onHitPayload[0] == 0xA5);
+            onHit.m_targetId = sourceId; onHit.m_sourceRes = ""; onHit.m_spellRes = ""; onHit.m_level = 0; onHit.m_target = CPoint(0, 0);
+            onHit.MarshalMessage(&onHitPayload, &onHitSize);
+            const BYTE zeros[28] = {};
+            check("onhit-empty-resrefs-zero-level-and-point", onHitSize == 36 && memcmp(onHitPayload + 8, zeros, sizeof(zeros)) == 0);
+            onHit.m_sourceRes = "ZRCORIG1"; onHit.m_spellRes = "ZRCHIT";
+            onHit.m_level = 0x1000101; onHit.m_target = CPoint(-123, 456);
+            onHit.MarshalMessage(&onHitPayload, &onHitSize);
+        }
         CNetwork& network = g_pChitin->cNetwork;
         auto* settings = game->GetMultiplayerSettings();
         INT provider = network.m_nServiceProvider;
@@ -2050,7 +2086,15 @@ void Tick(CWarp* pActiveEngine)
         };
         {
             CMessageHandler handler;
-            if (groupedDamage) {
+            if (onHitDamage) {
+                s_onHitSourceHP = sourceHP; s_onHitTargetHP = targetHP;
+                network.m_nServiceProvider = CNetwork::SERV_PROV_TCP_IP; game->field_4BD4 = 0;
+                receive(onHitBytes, header + onHitSize, 117); handler.AsynchronousUpdate();
+                auto& spells = source->m_derivedStats.m_onHitSpells;
+                check("received-onhit-installs-actual-spell-before-trigger", incoming.IsEmpty() && handler.m_messageList.IsEmpty()
+                    && spells.size() == 1 && spells.front().m_sourceRes == "ZRCORIG1" && spells.front().m_spellRes == "ZRCHIT"
+                    && spells.front().m_level == 1 && spells.front().m_target == target->GetPos());
+            } else if (groupedDamage) {
                 network.m_nServiceProvider = CNetwork::SERV_PROV_NULL; game->field_4BD4 = 255;
                 receive(groupBytes, header + groupSize, 105); handler.AsynchronousUpdate();
                 check("received-group-immediate-damage-with-null-provider", incoming.IsEmpty() && handler.m_messageList.IsEmpty()
@@ -2083,6 +2127,57 @@ void Tick(CWarp* pActiveEngine)
                         check("received-effect-unblocked-run", handler.m_messageList.IsEmpty());
                     }
                 }
+                auto& spells = source->m_derivedStats.m_onHitSpells;
+                auto seedSpells = [&]() {
+                    spells.clear();
+                    COnHitSpell entry;
+                    entry.m_sourceRes = "OLD"; entry.m_spellRes = "OLD2";
+                    entry.m_level = 7; entry.m_target = CPoint(8, 9);
+                    spells.push_back(entry); spells.push_back(entry);
+                };
+                auto installed = [&]() {
+                    return spells.size() == 1 && spells.front().m_sourceRes == onHit.m_sourceRes
+                        && spells.front().m_spellRes == onHit.m_spellRes && spells.front().m_level == onHit.m_level
+                        && spells.front().m_target == onHit.m_target;
+                };
+                for (INT mode = 0; mode < 4; ++mode) {
+                    seedSpells();
+                    network.m_nServiceProvider = mode == 3 ? CNetwork::SERV_PROV_NULL : CNetwork::SERV_PROV_TCP_IP;
+                    game->field_4BD4 = mode == 0 ? 0 : mode == 1 ? 1 : 255;
+                    receive(onHitBytes, header + onHitSize, 117); handler.AsynchronousUpdate();
+                    BOOL immediate = mode == 0 || mode == 3;
+                    check("received-onhit-replaces-list-or-drops-when-blocked", incoming.IsEmpty() && handler.m_messageList.IsEmpty()
+                        && (immediate ? installed() : spells.size() == 2 && spells.front().m_sourceRes == "OLD"));
+                    game->field_4BD4 = 0; handler.AsynchronousUpdate();
+                    check("received-onhit-blocked-packet-never-runs-later", handler.m_messageList.IsEmpty()
+                        && (immediate ? installed() : spells.size() == 2 && spells.front().m_level == 7));
+                }
+                network.m_nServiceProvider = CNetwork::SERV_PROV_TCP_IP; game->field_4BD4 = 0;
+                receive(onHitBytes, header + onHitSize, 117);
+                onHit.m_sourceRes = "SECOND"; onHit.m_level = 0xFFFFFFFF; onHit.m_target = CPoint(LONG_MAX, LONG_MIN);
+                onHit.MarshalMessage(&onHitPayload, &onHitSize);
+                receive(onHitBytes, header + onHitSize, 117); handler.AsynchronousUpdate();
+                check("received-onhit-fifo-last-replaces-first-full-width", incoming.IsEmpty() && handler.m_messageList.IsEmpty() && installed());
+                onHit.m_sourceRes = ""; onHit.m_spellRes = ""; onHit.m_level = 0; onHit.m_target = CPoint(0, 0);
+                onHit.MarshalMessage(&onHitPayload, &onHitSize);
+                receive(onHitBytes, header + onHitSize, 117); handler.AsynchronousUpdate();
+                check("received-onhit-empty-metadata-still-installs-one-record", installed() && handler.m_messageList.IsEmpty());
+                seedSpells(); game->field_4BD4 = 255;
+                receive(effectBytes, effectSize, 1); receive(onHitBytes, header + onHitSize, 117); handler.AsynchronousUpdate();
+                check("received-onhit-drop-does-not-disturb-deferred-effect", incoming.IsEmpty() && handler.m_messageList.GetCount() == 1
+                    && dynamic_cast<CMessageAddEffect*>(handler.m_messageList.GetHead()) && spells.size() == 2);
+                game->field_4BD4 = 0; handler.AsynchronousUpdate();
+                check("received-onhit-stays-dropped-after-mixed-unblock", handler.m_messageList.IsEmpty() && spells.size() == 2);
+                PLAYER_ID missingOnHit = 0x24681357; memcpy(onHitPayload, &missingOnHit, 4);
+                receive(onHitBytes, header + 8, 117); handler.AsynchronousUpdate();
+                check("received-onhit-unmapped-immediate-and-heap-retry-discard", incoming.IsEmpty() && handler.m_messageList.IsEmpty()
+                    && spells.size() == 2 && spells.front().m_sourceRes == "OLD");
+                onHit.MarshalMessage(&onHitPayload, &onHitSize);
+                network.m_bConnectionEstablished = FALSE;
+                receive(onHitBytes, header + onHitSize, 117); handler.AsynchronousUpdate();
+                check("disconnected-onhit-remains-in-network-queue", incoming.GetCount() == 1 && handler.m_messageList.IsEmpty() && spells.size() == 2);
+                network.m_bConnectionEstablished = TRUE; handler.AsynchronousUpdate();
+                check("reconnected-onhit-consumes-and-replaces-list", incoming.IsEmpty() && handler.m_messageList.IsEmpty() && installed());
                 for (INT mode = 0; mode < 3; ++mode) {
                     network.m_nServiceProvider = mode == 2 ? CNetwork::SERV_PROV_NULL : CNetwork::SERV_PROV_TCP_IP;
                     game->field_4BD4 = mode == 0 ? 0 : 255;
@@ -2174,8 +2269,10 @@ void Tick(CWarp* pActiveEngine)
                 memcpy(groupPayload, &targetMap.remotePlayerID, 4);
                 for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) settings->m_pnPlayerReady[i] = network.m_idLocalPlayer ^ 0xFFFFFFFF;
                 game->field_4BD4 = 0; receive(effectBytes, effectSize, 1); receive(projectileBytes, header + size, 26);
-                receive(groupBytes, header + groupSize, 105); handler.AsynchronousUpdate();
-                check("not-ready-discards-combat-packets", incoming.IsEmpty() && handler.m_messageList.IsEmpty());
+                receive(groupBytes, header + groupSize, 105); seedSpells();
+                receive(onHitBytes, header + onHitSize, 117); handler.AsynchronousUpdate();
+                check("not-ready-discards-combat-packets", incoming.IsEmpty() && handler.m_messageList.IsEmpty()
+                    && spells.size() == 2 && spells.front().m_sourceRes == "OLD");
                 check("packet-and-launch-checks-do-not-damage-party", source->m_baseStats.m_hitPoints == sourceHP && target->m_baseStats.m_hitPoints == targetHP);
             }
         }
@@ -2193,6 +2290,12 @@ void Tick(CWarp* pActiveEngine)
         source->m_remotePlayerID = sourcePlayer; source->m_remoteObjectID = sourceRemote;
         target->m_remotePlayerID = targetPlayer; target->m_remoteObjectID = targetRemote;
         remotes->m_critSect.Unlock();
+        if (onHitDamage) {
+            if (valid) source->ApplyOnHitSpells(target);
+            check("received-onhit-trigger-queues-two-owned-effect-messages", outgoing.GetCount() == queued + 2);
+        }
+        source->m_derivedStats.m_onHitSpells = sourceOnHit;
+        target->m_derivedStats.m_onHitSpells = targetOnHit;
         check("network-fixtures-and-clock-restored", game->GetWorldTimer()->m_gameTime == time && (damage || outgoing.GetCount() == queued));
         INT sourceLoss = sourceHP - source->m_baseStats.m_hitPoints, targetLoss = targetHP - target->m_baseStats.m_hitPoints;
         objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);

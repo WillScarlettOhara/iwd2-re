@@ -2020,7 +2020,7 @@ public:
 #pragma pack(pop)
 
 #pragma pack(push, 2)
-// Vtable 0x84D45C; constructor inlined in WhenStruck::ApplyEffect.
+// Vtable 0x84D45C; constructor 0x4F6EF0 also inlined in WhenStruck::ApplyEffect.
 class CMessage117 : public CMessage {
 public:
     CMessage117(const CResRef& sourceRes, const CResRef& spellRes,

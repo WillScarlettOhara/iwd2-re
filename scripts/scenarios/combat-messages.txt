@@ -33,6 +33,8 @@ swingdamage ZRCBOLT ZRCXBOW
 swingdamage ZRCSTONE ZRCSLING
 effectpacketdamage
 groupedpacketdamage
+receivedonhitdamage
+onhitwait
 onhitdamage
 onhitwait
 projectiledamage 0
