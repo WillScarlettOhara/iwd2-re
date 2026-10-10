@@ -22,6 +22,7 @@
 #include "CPathSearch.h"
 #include "CProjectile.h"
 #include "CScreenCharacter.h"
+#include "CScreenInventory.h"
 #include "CScreenChapter.h"
 #include "CScreenWorld.h"
 #include "CSpell.h"
@@ -4999,4 +5000,143 @@ BOOLEAN CGameAIGame::CanSaveGame(STRREF& strError)
 BOOLEAN CGameAIGame::CompressTime(DWORD deltaTime)
 {
     return TRUE;
+}
+
+// 0x463B30
+SHORT CGameAIBase::TakePartyItem()
+{
+    CString name = m_curAction.GetString1();
+    LONG number = m_curAction.m_actionID == 204 ? m_curAction.m_specificID : 1;
+    BOOL numbered = m_curAction.m_actionID == 204;
+    BOOL ranged = m_curAction.m_actionID == 193;
+    LONG range = ranged ? m_curAction.m_specificID : 0;
+    CItem* lastItem = NULL;
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CGameObjectArray* array = game->GetObjectArray();
+    for (int index = 0; index < game->GetNumCharacters(); index++) {
+        LONG id = game->GetCharacterId(static_cast<SHORT>(index));
+        CGameSprite* sprite;
+        BYTE rc;
+        do {
+            rc = array->GetShare(id, CGameObjectArray::THREAD_ASYNCH, reinterpret_cast<CGameObject**>(&sprite), INFINITE);
+        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+        if (rc != CGameObjectArray::SUCCESS) return 0;
+        BOOL inRange = TRUE;
+        if (ranged) {
+            if (sprite->m_pArea != m_pArea) inRange = FALSE;
+            else {
+                const CPoint& pos = sprite->GetPos();
+                LONG dx = m_pos.x / CPathSearch::GRID_SQUARE_SIZEX - pos.x / CPathSearch::GRID_SQUARE_SIZEX;
+                LONG dy = m_pos.y / CPathSearch::GRID_SQUARE_SIZEY - pos.y / CPathSearch::GRID_SQUARE_SIZEY;
+                LONG distance = static_cast<LONG>(static_cast<DWORD>(dx) * static_cast<DWORD>(dx) + static_cast<DWORD>(dy) * static_cast<DWORD>(dy));
+                inRange = distance <= range;
+            }
+        }
+        if (inRange) {
+            int match = 0;
+            SHORT slot = sprite->FindItemPersonal(name, match, FALSE);
+            while (slot != -1) {
+                CItem* item = new CItem(*sprite->m_equipment.m_items[slot]);
+                lastItem = item;
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageRemoveItem(slot, m_id, id), FALSE);
+                CAbilityId ability;
+                ability.m_itemType = 2;
+                ability.m_itemNum = slot;
+                for (SHORT i = 0; i < 3; i++) {
+                    ability.m_abilityNum = i;
+                    sprite->UpdateQuickButtons(ability, 0, TRUE, FALSE);
+                }
+                if (numbered) {
+                    if (static_cast<SHORT>(item->GetMaxStackable()) <= 1) number--;
+                    else if (number < item->GetUsageCount(0)) {
+                        item->SetUsageCount(0, static_cast<WORD>(item->GetUsageCount(0) - number));
+                        number = 0;
+                        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddItem(*item, m_id, id), FALSE);
+                    } else number -= item->GetUsageCount(0);
+                }
+                PlaceItem(item, TRUE, TRUE, 1, TRUE);
+                if ((m_curAction.m_actionID != 188 && m_curAction.m_actionID != 204) || (m_curAction.m_actionID == 204 && number <= 0)) {
+                    array->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                    return ACTION_DONE;
+                }
+                slot = sprite->FindItemPersonal(name, ++match, FALSE);
+            }
+            if (lastItem == NULL || m_curAction.m_actionID == 188 || (m_curAction.m_actionID == 204 && number > 0)) {
+                SHORT taken = sprite->TakeItemBags(name, number, -1);
+                if (taken > 0) {
+                    number -= taken;
+                    PlaceItem(new CItem(CResRef(name), 1, 0, 0, 0, 0), TRUE, TRUE, taken, TRUE);
+                }
+                if (m_curAction.m_actionID == 204 && number <= 0) {
+                    array->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                    return ACTION_DONE;
+                }
+            }
+        }
+        array->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+    return lastItem != NULL ? ACTION_DONE : ACTION_ERROR;
+}
+
+// 0x464950
+BOOL CGameAIBase::PlaceItem(CItem* item, BOOL deny, BOOL drop, DWORD count, BOOL feedback)
+{
+    if (item == NULL) return TRUE;
+    if (count > 1) PlaceItem(new CItem(*item), deny, drop, count - 1, TRUE);
+    item->m_flags |= 2;
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CGameObjectArray* array = game->GetObjectArray();
+    if (game->m_familiars.Find(reinterpret_cast<int*>(m_id), NULL) != NULL) {
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddItem(*item, m_id, game->GetProtagonist()), FALSE);
+        return TRUE;
+    }
+    BOOL party = game->GetCharacterPortraitNum(m_id) != -1;
+    if (!party && GetObjectType() != CGameObject::TYPE_SPRITE) {
+        if (GetObjectType() == CGameObject::TYPE_CONTAINER) {
+            static_cast<CGameContainer*>(this)->PlaceItemInBlankSlot(item, TRUE, SHORT_MAX);
+            return TRUE;
+        }
+        if (drop) delete item;
+        return FALSE;
+    }
+    CGameSprite* sprite = static_cast<CGameSprite*>(this);
+    int index;
+    if (party) {
+        for (index = 0; index < CScreenInventory::PERSONAL_INVENTORY_SIZE; index++) {
+            if (sprite->m_equipment.m_items[index + 18] == NULL) break;
+        }
+    } else {
+        if (feedback) game->FeedBack(CInfGame::FEEDBACK_ITEMLOST, 0, TRUE);
+        for (index = 27; index >= 0; index--) {
+            if (sprite->m_equipment.m_items[index + 15] == NULL) break;
+        }
+    }
+    if ((party && index < CScreenInventory::PERSONAL_INVENTORY_SIZE) || (!party && index >= 0)) {
+        if (deny) {
+            sprite->m_equipment.m_items[index + (party ? 18 : 15)] = item;
+            return TRUE;
+        }
+        CGameObject* object;
+        BYTE rc;
+        do {
+            rc = array->GetDeny(m_id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+        if (rc == CGameObjectArray::SUCCESS) {
+            sprite->m_equipment.m_items[index + 18] = item;
+            array->ReleaseDeny(m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+        if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL && g_pChitin->cNetwork.m_idLocalPlayer != m_remotePlayerID) {
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddItem(*item, m_id, m_id), FALSE);
+        }
+        return TRUE;
+    }
+    if (drop) {
+        LONG pileId = game->GetGroundPile(m_id);
+        CGameContainer* pile;
+        if (pileId != CGameObjectArray::INVALID_INDEX && array->GetDeny(pileId, CGameObjectArray::THREAD_ASYNCH, reinterpret_cast<CGameObject**>(&pile), INFINITE) == CGameObjectArray::SUCCESS) {
+            pile->PlaceItemInBlankSlot(item, TRUE, SHORT_MAX);
+            array->ReleaseDeny(pileId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+    }
+    return FALSE;
 }

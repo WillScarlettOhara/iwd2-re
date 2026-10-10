@@ -2024,4 +2024,26 @@ public:
 };
 #pragma pack(pop)
 
+#pragma pack(push, 2)
+class CMessageAddItem : public CMessage {
+public:
+    CMessageAddItem(const CItem& item, LONG caller, LONG target) : CMessage(caller, target), m_item() { m_item = item; }
+    SHORT GetCommType() override { return SEND; }
+    BYTE GetMsgType() override { return CBaldurMessage::MSG_TYPE_CMESSAGE; }
+    BYTE GetMsgSubType() override { return 2; }
+    void Run() override;
+    // Marshal/Unmarshal remain inherited until their separate recovery.
+    /* 000C */ CItem m_item;
+};
+class CMessageRemoveItem : public CMessage {
+public:
+    CMessageRemoveItem(SHORT slot, LONG caller, LONG target) : CMessage(caller, target), m_slot(slot) {}
+    SHORT GetCommType() override { return SEND; }
+    BYTE GetMsgType() override { return CBaldurMessage::MSG_TYPE_CMESSAGE; }
+    BYTE GetMsgSubType() override { return 34; }
+    void Run() override;
+    // Marshal/Unmarshal remain inherited until their separate recovery.
+    /* 000C */ SHORT m_slot;
+};
+#pragma pack(pop)
 #endif /* CMESSAGE_H_ */

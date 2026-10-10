@@ -771,6 +771,7 @@ public:
     INT GetMaxDexterityBonus(INT a1);
     INT GetSkillModifier(INT iSkillNumber);
     void UpdateQuickButtons(const CAbilityId& cAbility, SHORT nDelta, BOOL bRemove, BOOL bRemoveOnEmpty);
+    void UpdateQuickWeaponData(); /*#guess*/
     INT GetArmorCheckPenalty();
     INT GetShieldCheckPenalty();
     INT GetShieldSpellFailure();

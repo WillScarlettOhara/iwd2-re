@@ -1751,6 +1751,257 @@ void Tick(CWarp* pActiveEngine)
         s_pc++; return;
     }
 
+    if (strcmp(step.op, "doortogglechecks") == 0) {
+        auto* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG actorId = game->GetFixedOrderCharacterId(0);
+        CGameObject* raw = NULL;
+        if (pActiveEngine != g_pBaldurChitin->m_pEngineWorld
+            || objects->GetDeny(actorId, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS) {
+            Fail(nStep, step.op, "requires loaded party"); return;
+        }
+        auto* actor = static_cast<CGameSprite*>(raw);
+        CGameDoor* door = NULL;
+        for (INT i = 0; i < objects->m_nArraySize && door == NULL; i++) {
+            auto& entry = objects->m_pArray[i];
+            if (entry.m_objectId == -1 || entry.m_objectPtr == NULL || entry.m_objectPtr->GetObjectType() != CGameObject::TYPE_DOOR
+                || entry.m_objectPtr->m_pArea != actor->m_pArea) continue;
+            CGameObject* object = NULL;
+            if (objects->GetDeny(entry.m_objectPtr->m_id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) == CGameObjectArray::SUCCESS) door = static_cast<CGameDoor*>(object);
+        }
+        if (door == NULL) {
+            objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires local door"); return;
+        }
+        auto* area = door->m_pArea;
+        auto flags = door->m_dwFlags;
+        auto pos = door->m_pos, openDest = door->m_ptOpenDest, closedDest = door->m_ptClosedDest;
+        auto tile = door->m_tiledObject.m_wAIState;
+        auto key = door->m_keyType, openSound = door->m_openSound, closeSound = door->m_closeSound;
+        auto str = door->m_strNotPickable;
+        auto activated = door->m_trapActivated;
+        auto* openSearch = door->m_pOpenSearch;
+        auto* closedSearch = door->m_pClosedSearch;
+        auto openCount = door->m_nOpenSearch, closedCount = door->m_nClosedSearch;
+        auto sound = door->m_sndDoor.GetResRef();
+        auto channel = door->m_sndDoor.m_nChannel, priority = door->m_sndDoor.m_nPriority;
+        auto soundArea = door->m_sndDoor.m_nArea;
+        auto soundX = door->m_sndDoor.m_nXCoordinate, soundY = door->m_sndDoor.m_nYCoordinate, soundZ = door->m_sndDoor.m_nZCoordinate;
+        auto action = door->m_curAction;
+        auto action3 = door->m_curAction.m_specificID3;
+        auto gridSize = area->m_search.m_GridSquareDimensions;
+        ULONG time = game->GetWorldTimer()->m_gameTime;
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT messageCount = messages.GetCount(), triggerCount = door->m_pendingTriggers.GetCount();
+        INT checks = 0;
+        BOOL valid = TRUE;
+        auto check = [&](const char* name, BOOL ok) {
+            checks++; valid = valid && ok;
+            if (!ok) Emit("{\"step\":%d,\"op\":\"door-toggle-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+        };
+        auto discard = [&]() {
+            while (messages.GetCount() > messageCount) delete messages.RemoveTail();
+            while (door->m_pendingTriggers.GetCount() > triggerCount) delete door->m_pendingTriggers.RemoveTail();
+        };
+        auto reset = [&](DWORD bits) {
+            discard(); door->m_sndDoor.Stop(); door->m_dwFlags = bits;
+            door->m_trapActivated = 0; door->m_keyType = ""; door->m_strNotPickable = -1;
+            door->m_pOpenSearch = door->m_pClosedSearch = NULL;
+            door->m_nOpenSearch = door->m_nClosedSearch = 0;
+            door->m_ptOpenDest = CPoint(111, 112); door->m_ptClosedDest = CPoint(211, 212);
+            door->m_openSound = door->m_closeSound = "";
+        };
+        area->m_search.m_GridSquareDimensions = CSize(20, 20);
+        for (BYTE space : {static_cast<BYTE>(0), static_cast<BYTE>(1), static_cast<BYTE>(2), static_cast<BYTE>(3), static_cast<BYTE>(5)}) {
+            int radius = (static_cast<int>(space) - 1) / 2;
+            for (LONG dx : {-3L, -2L, -1L, 0L, 1L, 2L, 3L}) {
+                CPoint point(10 + dx, 10);
+                check("door-overlap-radius", area->m_search.IsOverDoor(CPoint(10, 10), space, &point, 1) == (dx >= -radius && dx <= radius));
+            }
+        }
+        CPoint point(0, 0);
+        for (CPoint origin : {CPoint(-1, 0), CPoint(0, -1), CPoint(320, 0), CPoint(0, 320)}) check("door-overlap-hard-limit", !area->m_search.IsOverDoor(origin, 255, &point, 1));
+        check("door-overlap-empty", !area->m_search.IsOverDoor(CPoint(0, 0), 1, NULL, 0));
+        area->m_search.m_GridSquareDimensions = CSize(2, 2);
+        point = CPoint(3, 0);
+        check("door-overlap-asymmetric-negative-clipping", area->m_search.IsOverDoor(CPoint(0, 0), 7, &point, 1));
+        point = CPoint(3, 1);
+        check("door-overlap-positive-clipping", !area->m_search.IsOverDoor(CPoint(1, 1), 3, &point, 1));
+        area->m_search.m_GridSquareDimensions = gridSize;
+        check("occupant-missing-door", area->FindDoorOccupant(CGameObjectArray::INVALID_INDEX, NULL, 0) == NULL);
+        check("occupant-empty-footprint", area->FindDoorOccupant(door->m_id, NULL, 0) == NULL);
+        for (DWORD bits : {0UL, 1UL, 0x80UL, 0x81UL, 0x400UL, 0x401UL}) {
+            for (WORD trap : {static_cast<WORD>(0), static_cast<WORD>(1), static_cast<WORD>(65535)}) {
+                for (DWORD repeat : {0UL, 4UL}) {
+                    reset(bits | repeat); door->m_trapActivated = trap;
+                    door->ToggleDoor(actor->GetAIType(), FALSE);
+                    BOOL opening = !(bits & 1);
+                    check("toggle-state-and-destination", (door->m_dwFlags & 1) == (opening ? 1 : 0)
+                        && door->m_pos == (opening ? CPoint(211, 212) : CPoint(111, 112))
+                        && door->m_tiledObject.m_wAIState == (opening ? CTiledObject::STATE_PRIMARY_TILE : CTiledObject::STATE_SECONDARY_TILE));
+                    check("toggle-trap-word-and-repeat", door->m_trapActivated == ((repeat || !trap) ? trap : 0)
+                        && door->m_pendingTriggers.GetCount() == triggerCount + (trap ? 1 : 0));
+                    if (trap) {
+                        auto* trigger = door->m_pendingTriggers.GetTail();
+                        check("toggle-trigger-cause", trigger->m_triggerID == (opening ? CAITRIGGER_OPENED : CAITRIGGER_CLOSED)
+                            && trigger->m_triggerCause.m_nInstance == actorId);
+                    }
+                    check("toggle-sound-channel", door->m_sndDoor.m_nChannel == 2 && door->m_sndDoor.m_nArea == reinterpret_cast<DWORD>(area));
+                }
+            }
+        }
+        for (DWORD bits : {2UL, 3UL, 0x202UL}) {
+            reset(bits); door->ToggleDoor(actor->GetAIType(), FALSE);
+            check("locked-without-key", door->m_dwFlags == bits && messages.GetCount() == messageCount + 1
+                && messages.GetTail()->GetMsgSubType() == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_DISPLAY_TEXTREF_SEND);
+            reset(bits); door->ToggleDoor(actor->GetAIType(), TRUE);
+            check("force-unlocks-and-toggles", !(door->m_dwFlags & 2) && (door->m_dwFlags & 1) == ((bits & 1) ? 0 : 1));
+        }
+        reset(0x800); door->ToggleDoor(actor->GetAIType(), TRUE);
+        check("special-first-open-refusal", door->m_dwFlags == 0x1800 && messages.GetCount() == messageCount);
+        door->ToggleDoor(actor->GetAIType(), TRUE);
+        check("special-second-open", door->m_dwFlags == 0x1801);
+        for (BYTE requested : {static_cast<BYTE>(0), static_cast<BYTE>(1), static_cast<BYTE>(255)}) {
+            for (DWORD opened : {0UL, 1UL}) {
+                reset(opened);
+                CMessageDoorOpen message(requested, actorId, door->m_id);
+                message.Run();
+                check("open-message-preserves-raw-byte", (door->m_dwFlags & 1) == (opened == requested ? opened : opened ^ 1));
+            }
+        }
+        reset(0);
+        CMessageDoorOpen missingSource(TRUE, CGameObjectArray::INVALID_INDEX, door->m_id); missingSource.Run();
+        check("open-message-missing-source", door->m_dwFlags == 0);
+        CMessageDoorOpen missingTarget(TRUE, actorId, CGameObjectArray::INVALID_INDEX); missingTarget.Run();
+        check("open-message-missing-target", door->m_dwFlags == 0);
+        reset(2);
+        auto lockDifficulty = door->m_lockDifficulty;
+        door->m_lockDifficulty = 25;
+        auto* knock = new CGameEffect(); knock->m_effectID = CGAMEEFFECT_KNOCK; knock->m_sourceID = actorId;
+        door->AddEffect(knock, 0, TRUE, TRUE);
+        if (messages.GetCount() == messageCount + 1 && dynamic_cast<CMessageDoorOpen*>(messages.GetTail()) != NULL) {
+            CMessage* request = messages.RemoveTail(); request->Run(); delete request;
+            check("knock-dooropen-toggle-chain", door->m_dwFlags == 1);
+        } else check("knock-dooropen-toggle-chain", FALSE);
+        door->m_lockDifficulty = lockDifficulty;
+        CPoint masks[2] = {CPoint(0, 0), CPoint(1, 0)};
+        BYTE oldMask[2] = {area->m_search.m_pDynamicCost[0], area->m_search.m_pDynamicCost[1]};
+        for (DWORD opaque : {0UL, 0x400UL}) {
+            reset(opaque);
+            door->m_pClosedSearch = &masks[0]; door->m_nClosedSearch = 1;
+            door->m_pOpenSearch = &masks[1]; door->m_nOpenSearch = 1;
+            area->m_search.m_pDynamicCost[0] = 0x80; area->m_search.m_pDynamicCost[1] = 0;
+            door->ToggleDoor(actor->GetAIType(), FALSE);
+            check("opening-moves-search-mask", area->m_search.m_pDynamicCost[0] == 0 && area->m_search.m_pDynamicCost[1] == (opaque ? 0x81 : 0x80));
+            door->ToggleDoor(actor->GetAIType(), FALSE);
+            check("closing-moves-search-mask", area->m_search.m_pDynamicCost[0] == (opaque ? 0x81 : 0x80) && area->m_search.m_pDynamicCost[1] == 0);
+        }
+        area->m_search.m_pDynamicCost[0] = oldMask[0]; area->m_search.m_pDynamicCost[1] = oldMask[1];
+        CPoint occupied(actor->m_pos.x / 16, actor->m_pos.y / 12);
+        LONG cell = occupied.y * gridSize.cx + occupied.x;
+        BYTE cost = area->m_search.m_pDynamicCost[cell];
+        area->m_search.m_pDynamicCost[cell] |= 2;
+        reset(1); door->m_pClosedSearch = &occupied; door->m_nClosedSearch = 1;
+        door->ToggleDoor(actor->GetAIType(), FALSE);
+        check("occupied-close-remains-open", door->m_dwFlags == 1);
+        CGameObject* occupant = area->FindDoorOccupant(door->m_id, &occupied, 1);
+        check("occupied-footprint-finds-sprite", occupant != NULL && occupant->GetObjectType() == CGameObject::TYPE_SPRITE);
+        if (occupant != NULL) objects->ReleaseShare(occupant->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        area->m_search.m_pDynamicCost[cell] = cost;
+        reset(0);
+        CItem* equipment[51];
+        memcpy(equipment, actor->m_equipment.m_items, sizeof(equipment));
+        memset(actor->m_equipment.m_items, 0, sizeof(equipment));
+        CButtonData quick[8]; BYTE quickAmmo[8];
+        for (int i = 0; i < 8; i++) quick[i] = actor->m_quickWeapons[i];
+        memcpy(quickAmmo, actor->field_3D3A, sizeof(quickAmmo));
+        game->m_disposableItemsCritSect.Lock();
+        int disposables = game->m_lDisposableItems.GetCount();
+        auto inventoryCleanup = [&]() {
+            discard();
+            for (int i = 0; i < 51; i++) { delete actor->m_equipment.m_items[i]; actor->m_equipment.m_items[i] = NULL; }
+            while (game->m_lDisposableItems.GetCount() > disposables) delete game->m_lDisposableItems.RemoveTail();
+        };
+        auto runInventory = [&]() {
+            while (messages.GetCount() > messageCount) {
+                POSITION at = messages.FindIndex(messageCount);
+                auto* message = messages.GetAt(at); messages.RemoveAt(at);
+                if (dynamic_cast<CMessageRemoveItem*>(message) != NULL || dynamic_cast<CMessageAddItem*>(message) != NULL) message->Run();
+                delete message;
+            }
+        };
+        CItem packedItem;
+        check("item-packed-tail", sizeof(CItem) == reinterpret_cast<const BYTE*>(&packedItem.m_numSounds) - reinterpret_cast<const BYTE*>(&packedItem) + sizeof(packedItem.m_numSounds));
+        check("place-null", actor->PlaceItem(NULL, TRUE, TRUE, 5, TRUE));
+        CItem* item = new CItem(CResRef("ZRCMELEE"), 1, 0, 0, 0, 0);
+        check("place-party-inventory", actor->PlaceItem(item, TRUE, FALSE, 1, FALSE) && actor->m_equipment.m_items[18] == item && (item->m_flags & 2));
+        check("find-item-case-insensitive", actor->FindItemPersonal("zrcmelee", 0, FALSE) == 18);
+        check("find-item-missing-sentinel", actor->FindItemPersonal("ZRNOITEM", 0, FALSE) == -1 && actor->FindItemPersonal("ZRCMELEE", 0, TRUE) == -1);
+        CMessageRemoveItem remove(18, door->m_id, actorId); remove.Run();
+        check("remove-item-runs", actor->m_equipment.m_items[18] == NULL && game->m_lDisposableItems.GetCount() == disposables + 1);
+        discard();
+        CItem fixture(CResRef("ZRCMELEE"), 1, 0, 0, 0, 0);
+        CMessageAddItem add(fixture, door->m_id, actorId); add.Run();
+        check("add-item-runs", actor->m_equipment.m_items[18] != NULL && actor->m_equipment.m_items[18]->GetResRef() == CResRef("ZRCMELEE"));
+        discard();
+        door->m_keyType = "ZRCMELEE"; door->m_dwFlags = 0x4002;
+        door->ToggleDoor(actor->GetAIType(), FALSE);
+        check("key-unlocks-opens-and-enqueues-removal", door->m_dwFlags == 0x4001 && door->m_curAction.m_actionID == 116 && door->m_curAction.GetString1() == "ZRCMELEE");
+        runInventory();
+        check("key-consumed-from-party", actor->m_equipment.m_items[18] == NULL);
+        inventoryCleanup();
+        check("place-party-recursive-count", actor->PlaceItem(new CItem(fixture), TRUE, FALSE, 3, FALSE)
+            && actor->m_equipment.m_items[18] != NULL && actor->m_equipment.m_items[19] != NULL && actor->m_equipment.m_items[20] != NULL);
+        check("find-item-ordinal", actor->FindItemPersonal("ZRCMELEE", 1, FALSE) == 19 && actor->FindItemPersonal("ZRCMELEE", 3, FALSE) == -1);
+        door->m_curAction.m_actionID = 188; door->m_curAction.SetString1("ZRCMELEE");
+        check("take-all-return", door->TakePartyItem() == CGameAIBase::ACTION_DONE);
+        runInventory();
+        check("take-all-removes-each-match", actor->m_equipment.m_items[18] == NULL && actor->m_equipment.m_items[19] == NULL && actor->m_equipment.m_items[20] == NULL);
+        inventoryCleanup();
+        actor->m_equipment.m_items[18] = new CItem(CResRef("ZRCARROW"), 7, 0, 0, 0, 0);
+        door->m_curAction.m_actionID = 204; door->m_curAction.m_specificID = 3; door->m_curAction.SetString1("ZRCARROW");
+        check("take-number-partial-return", door->TakePartyItem() == CGameAIBase::ACTION_DONE);
+        runInventory();
+        check("take-number-retains-stack-remainder", actor->m_equipment.m_items[18] != NULL && actor->m_equipment.m_items[18]->GetUsageCount(0) == 4);
+        inventoryCleanup();
+        SHORT portrait = game->GetCharacterPortraitNum(actorId);
+        if (portrait != -1) {
+            LONG portraitId = game->m_characterPortraits[portrait];
+            game->m_characterPortraits[portrait] = CGameObjectArray::INVALID_INDEX;
+            CItem* direct = new CItem(fixture);
+            check("nonparty-direct-slot", actor->PlaceItem(direct, TRUE, FALSE, 1, FALSE) && actor->m_equipment.m_items[42] == direct);
+            inventoryCleanup();
+            CItem* acquired = new CItem(fixture);
+            check("nonparty-acquired-slot-quirk", actor->PlaceItem(acquired, FALSE, FALSE, 1, FALSE) && actor->m_equipment.m_items[45] == acquired);
+            inventoryCleanup();
+            game->m_characterPortraits[portrait] = portraitId;
+        }
+        actor->UpdateQuickWeaponData();
+        check("quick-weapon-empty-refresh", actor->m_quickWeapons[1].m_abilityId.m_itemNum == -1 && actor->field_3D3A[1] == 0);
+        inventoryCleanup();
+        memcpy(actor->m_equipment.m_items, equipment, sizeof(equipment));
+        for (int i = 0; i < 8; i++) actor->m_quickWeapons[i] = quick[i];
+        memcpy(actor->field_3D3A, quickAmmo, sizeof(quickAmmo));
+        game->m_disposableItemsCritSect.Unlock();
+        reset(0); door->m_dwFlags = flags; door->m_pos = pos;
+        door->m_ptOpenDest = openDest; door->m_ptClosedDest = closedDest;
+        door->m_tiledObject.m_wAIState = tile; door->m_keyType = key; door->m_strNotPickable = str;
+        door->m_trapActivated = activated;
+        door->m_pOpenSearch = openSearch; door->m_pClosedSearch = closedSearch;
+        door->m_nOpenSearch = openCount; door->m_nClosedSearch = closedCount;
+        door->m_openSound = openSound; door->m_closeSound = closeSound;
+        door->m_sndDoor.SetResRef(sound, TRUE, TRUE); door->m_sndDoor.m_nChannel = channel;
+        door->m_sndDoor.m_nPriority = priority; door->m_sndDoor.m_nArea = soundArea;
+        door->m_sndDoor.m_nXCoordinate = soundX; door->m_sndDoor.m_nYCoordinate = soundY; door->m_sndDoor.m_nZCoordinate = soundZ;
+        door->m_curAction = action; door->m_curAction.m_specificID3 = action3;
+        check("world-time-unchanged", game->GetWorldTimer()->m_gameTime == time);
+        objects->ReleaseDeny(door->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"doortogglechecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "door toggle/inventory mismatch (state restored)"); return; }
+        s_pc++; return;
+    }
+
     if (strcmp(step.op, "dooreffectchecks") == 0) {
         auto* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();

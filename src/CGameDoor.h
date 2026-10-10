@@ -4,6 +4,7 @@
 #include "CGameAIBase.h"
 #include "CResRef.h"
 #include "CTiledObject.h"
+#include "CSound.h"
 #include "FileFormat.h"
 
 #pragma pack(push, 2)
@@ -34,6 +35,7 @@ public:
     DWORD GetFlags();
     void SetFlags(DWORD dwFlags);
     BOOL IsOpen();
+    void ToggleDoor(const CAIObjectType& type, BOOL force);
 
     /* 0598 */ CResRef m_resID;
     /* 05A0 */ CRect m_rOpenBounding;
@@ -69,6 +71,7 @@ public:
     /* 0664 */ SHORT m_drawPoly;
     /* 0666 */ CPoint m_ptOpenDest;
     /* 066E */ CPoint m_ptClosedDest;
+    /* 0676 */ CSound m_sndDoor;
     /* 06DA */ CArray<CRect*> m_closedBoundingGrid;
     /* 06EE */ CAreaPoint* m_pClosedPolygonPoints;
     /* 06F2 */ CArray<CRect*> m_openBoundingGrid;

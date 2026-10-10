@@ -21,6 +21,7 @@
 #include "CScreenConnection.h"
 #include "CScreenCreateChar.h"
 #include "CScreenLoad.h"
+#include "CScreenInventory.h"
 #include "CScreenMultiPlayer.h"
 #include "CScreenSinglePlayer.h"
 #include "CScreenStore.h"
@@ -18704,3 +18705,72 @@ void CMessageSetVariable::Run()
         CGameObjectArray::THREAD_ASYNCH, INFINITE);
 }
 
+
+// 0x4F9150
+void CMessageAddItem::Run()
+{
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CGameObjectArray* array = game->GetObjectArray();
+    CGameObject* object;
+    BYTE rc;
+    do {
+        rc = array->GetDeny(m_targetId, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) return;
+    if (object->GetObjectType() == CGameObject::TYPE_SPRITE) {
+        CGameSprite* sprite = static_cast<CGameSprite*>(object);
+        BOOL placed = FALSE;
+        for (int index = 0; index < CScreenInventory::PERSONAL_INVENTORY_SIZE && !placed; index++) {
+            if (sprite->m_equipment.m_items[index + 18] == NULL) {
+                sprite->m_equipment.m_items[index + 18] = new CItem(m_item);
+                sprite->Equip(static_cast<SHORT>(index + 18));
+                placed = TRUE;
+            }
+        }
+        if (!placed) {
+            CItem* item = new CItem(m_item);
+            sprite->FeedBack(CGameSprite::FEEDBACK_ITEM_DROPPED_FULL, 0, 0, 0, -1, 0, 0);
+            sprite->PutItemGround(item);
+            if (game->GetCharacterPortraitNum(sprite->m_id) != -1) game->FeedBack(CInfGame::FEEDBACK_INVENTORYFULL_ITEMDROPPED, 0, TRUE);
+        } else {
+            CMessage* message = new CMessageSpriteEquipment(sprite, sprite->m_id, sprite->m_id);
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE, message->GetCommType());
+        }
+        static_cast<CBaldurEngine*>(g_pBaldurChitin->pActiveEngine)->UpdatePersonalItemStatus(m_targetId);
+    }
+    array->ReleaseDeny(m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+}
+
+// 0x504250
+void CMessageRemoveItem::Run()
+{
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CGameObjectArray* array = game->GetObjectArray();
+    CGameObject* object;
+    BYTE rc;
+    do {
+        rc = array->GetDeny(m_targetId, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) return;
+    if (object->GetObjectType() == CGameObject::TYPE_SPRITE) {
+        CGameSprite* sprite = static_cast<CGameSprite*>(object);
+        if (sprite->m_equipment.m_items[m_slot] != NULL) {
+            sprite->Unequip(m_slot);
+            game->AddDisposableItem(sprite->m_equipment.m_items[m_slot]);
+            sprite->m_equipment.m_items[m_slot] = NULL;
+            if (m_slot == sprite->m_equipment.m_selectedWeapon) sprite->EquipMostDamagingMelee();
+        }
+        CMessage* message = new CMessageSpriteEquipment(sprite, sprite->m_id, sprite->m_id);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE, message->GetCommType());
+        static_cast<CBaldurEngine*>(g_pBaldurChitin->pActiveEngine)->UpdatePersonalItemStatus(m_targetId);
+        if (m_slot >= 43 && m_slot <= 50) {
+            sprite->SetQuickWeapon(static_cast<BYTE>(m_slot - 43), CButtonData());
+            sprite->SetQuickWeapon(static_cast<BYTE>(m_slot - 43), static_cast<BYTE>(0));
+        } else if (m_slot >= 15 && m_slot <= 17) sprite->SetQuickItem(static_cast<BYTE>(m_slot - 15), CButtonData());
+        if ((static_cast<int>(m_slot) - 43) / 2 == sprite->m_nWeaponSet) {
+            sprite->UpdateQuickWeaponData();
+            if (game->GetCharacterPortraitNum(sprite->m_id) == g_pBaldurChitin->m_pEngineWorld->GetSelectedCharacter()) game->GetButtonArray()->UpdateButtons();
+        }
+    }
+    array->ReleaseDeny(m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+}

@@ -11,6 +11,7 @@ class CGameSprite;
 class CUIControlTextDisplay;
 class CWeaponIdentification;
 
+#pragma pack(push, 2)
 class CItem : public CResHelper<CResItem, 1005> {
 public:
     static const CString VALUE;
@@ -78,4 +79,5 @@ public:
     /* 00EC */ SHORT m_numSounds;
 };
 
+#pragma pack(pop)
 #endif /* CITEM_H_ */

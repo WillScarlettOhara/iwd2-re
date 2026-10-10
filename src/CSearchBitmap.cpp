@@ -1145,3 +1145,26 @@ void SearchThreadMain(void* userInfo)
     g_pBaldurChitin->GetObjectGame()->m_hSearchThread = NULL;
     searchLock.Unlock();
 }
+
+// 0x54A210
+BOOLEAN CSearchBitmap::IsOverDoor(const CPoint& point, BYTE personalSpace, const CPoint* points, USHORT count)
+{
+    if (point.x < 0 || point.y < 0 || point.x >= 320 || point.y >= 320) {
+        return FALSE;
+    }
+    int radius = (static_cast<int>(personalSpace) - 1) / 2;
+    LONG left = point.x - radius, right = point.x + radius;
+    LONG top = point.y - radius, bottom = point.y + radius;
+    if (left < 0) left = 0;
+    else if (right >= m_GridSquareDimensions.cx) right = m_GridSquareDimensions.cx - 1;
+    if (top < 0) top = 0;
+    else if (bottom >= m_GridSquareDimensions.cy) bottom = m_GridSquareDimensions.cy - 1;
+    for (LONG y = top; y <= bottom; y++) {
+        for (LONG x = left; x <= right; x++) {
+            for (USHORT i = 0; i < count; i++) {
+                if (points[i].x == x && points[i].y == y) return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}

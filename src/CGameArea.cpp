@@ -5558,3 +5558,42 @@ void CAreaFile::ReleaseData()
         pRes->Release();
     }
 }
+
+// 0x47A1C0
+CGameObject* CGameArea::FindDoorOccupant(LONG id, const CPoint* points, USHORT count)
+{
+    CAIObjectType type;
+    CGameObjectArray* array = m_pGame->GetObjectArray();
+    CGameObject* door;
+    if (array->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &door, INFINITE) != CGameObjectArray::SUCCESS) return NULL;
+    type.Set(door->GetAIType());
+    UTIL_ASSERT(door->GetVertListType() == CGameObject::LIST_FRONT);
+    door->GetPos();
+    POSITION previous = door->GetVertListPos();
+    POSITION next = previous;
+    array->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    m_lVertSort.GetPrev(previous);
+    m_lVertSort.GetNext(next);
+    while (previous != NULL || next != NULL) {
+        for (int side = 0; side < 2; side++) {
+            POSITION& position = side == 0 ? previous : next;
+            if (position == NULL) continue;
+            LONG candidate = reinterpret_cast<LONG>(side == 0 ? m_lVertSort.GetPrev(position) : m_lVertSort.GetNext(position));
+            CGameObject* object;
+            BYTE rc = array->GetShare(candidate, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+            if (rc != CGameObjectArray::SUCCESS) break;
+            if (object->GetObjectType() != CGameObject::TYPE_SPRITE) {
+                array->ReleaseShare(candidate, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                break;
+            }
+            CGameSprite* sprite = static_cast<CGameSprite*>(object);
+            if (sprite->m_active && sprite->m_activeAI && sprite->m_activeImprisonment && sprite->GetVertListPos() != NULL) {
+                const CPoint& pos = sprite->GetPos();
+                CPoint grid(pos.x / CPathSearch::GRID_SQUARE_SIZEX, pos.y / CPathSearch::GRID_SQUARE_SIZEY);
+                if (m_search.IsOverDoor(grid, sprite->GetAnimation()->GetPersonalSpace(), points, count)) return sprite;
+            }
+            array->ReleaseShare(candidate, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+    }
+    return NULL;
+}

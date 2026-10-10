@@ -11,6 +11,7 @@
 #include "CResRef.h"
 #include "CResWave.h"
 
+#pragma pack(push, 2)
 class CSound : public CObject, public CResHelper<CResWave, 4> {
 public:
     CSound();
@@ -65,4 +66,5 @@ public:
     /* 0060 */ DWORD m_nArea;
 };
 
+#pragma pack(pop)
 #endif /* CSOUND_H_ */

@@ -13,7 +13,7 @@ public:
     BYTE GetMsgSubType() override;
     void MarshalMessage(BYTE** pData, DWORD* dwSize) override;
     BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
-    // Slot 0x18 / 0x4FD1D0 remains inherited until ToggleDoor is recovered.
+    void Run() override;
     /* 000C */ BOOLEAN m_bOpenDoor;
 };
 #pragma pack(pop)

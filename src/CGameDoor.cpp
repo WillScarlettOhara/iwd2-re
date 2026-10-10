@@ -1,6 +1,7 @@
 #include "CGameDoor.h"
 
 #include "CAIScript.h"
+#include "CAITrigger.h"
 #include "CBaldurChitin.h"
 #include "CGameArea.h"
 #include "CGameSprite.h"
@@ -1196,4 +1197,115 @@ BOOLEAN CGameDoor::DoAIUpdate(BOOLEAN active, LONG counter)
 {
     // Folded with CGameContainer::DoAIUpdate at 0x47D7F0.
     return active && (counter & m_AISpeed) == (m_AISpeed & m_id);
+}
+
+// 0x489680
+void CGameDoor::ToggleDoor(const CAIObjectType& type, BOOL force)
+{
+    CString unused;
+    CSound unusedSound;
+    CMessageHandler* handler = g_pBaldurChitin->GetMessageHandler();
+    CGameObjectArray* array = g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+    if (!force && (m_dwFlags & 2)) {
+        BOOL key = FALSE;
+        if (m_keyType != "") {
+            key = PartyHasItem(m_keyType);
+            if (!key) {
+                CGameObject* source;
+                if (array->GetShare(type.m_nInstance, CGameObjectArray::THREAD_ASYNCH, &source, INFINITE) == CGameObjectArray::SUCCESS) {
+                    if (source->GetObjectType() == CGameObject::TYPE_SPRITE) {
+                        CGameSprite* sprite = static_cast<CGameSprite*>(source);
+                        CString name = m_keyType.GetResRefStr();
+                        key = sprite->FindItemPersonal(name, 0, FALSE) != -1;
+                        if (!key) key = sprite->FindItemBags(name, 0, FALSE) != -1;
+                    }
+                    array->ReleaseShare(type.m_nInstance, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                }
+            }
+        }
+        if (!key) {
+            STRREF text = (m_dwFlags & 0x200) && static_cast<LONG>(m_strNotPickable) > -1 ? m_strNotPickable : 0x3E02;
+            handler->AddMessage(new CMessageDisplayTextRefSend(-1, text, 0, RGB(215, 215, 190), -1, m_id, type.m_nInstance), FALSE);
+            return;
+        }
+    }
+    BOOL opening = (m_dwFlags & 1) == 0;
+    if (opening && (m_dwFlags & 0x1800) == 0x800) {
+        if (static_cast<LONG>(m_strNotPickable) > -1) {
+            if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL) FloatText(m_strNotPickable, 10, 5);
+            else handler->AddMessage(new CMessageFloatText(m_id, m_id, m_strNotPickable, FALSE), FALSE);
+            handler->AddMessage(new CMessageDisplayTextRefSend(-1, m_strNotPickable, 0, RGB(215, 215, 190), -1, m_id, type.m_nInstance), FALSE);
+        }
+        m_dwFlags |= 0x1000;
+        return;
+    }
+    if (!opening && !m_pArea->m_search.CanToggleDoor(m_pClosedSearch, m_nClosedSearch)) {
+        if (_strnicmp(reinterpret_cast<const char*>(m_pArea->m_header.m_areaName), "ar5004", 7) != 0) {
+            CAIObjectType anyone;
+            anyone.Set(CAIObjectType::ANYONE);
+            CAIAction action;
+            CGameObject* occupant = m_pArea->FindDoorOccupant(m_id, m_pClosedSearch, m_nClosedSearch);
+            if (occupant != NULL) {
+                action.m_actionID = 292;
+                action.m_acteeID.Set(occupant->GetAIType());
+                handler->AddMessage(new CMessageAddAction(action, m_id, m_id), FALSE);
+                array->ReleaseShare(occupant->m_id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                action.m_actionID = 144;
+                action.m_acteeID.Set(GetAIType());
+                handler->AddMessage(new CMessageAddAction(action, m_id, type.m_nInstance), FALSE);
+            }
+        }
+        return;
+    }
+    if (!m_sndDoor.IsSoundPlaying()) {
+        const CResRef& explicitSound = opening ? m_openSound : m_closeSound;
+        if (explicitSound != "") m_sndDoor.SetResRef(explicitSound, TRUE, TRUE);
+        else m_sndDoor.SetResRef(CResRef(opening ? ((m_dwFlags & 0x80) ? "AMB_D04A" : "AMB_D03A") : ((m_dwFlags & 0x80) ? "AMB_D04B" : "AMB_D03B")), TRUE, TRUE);
+        m_sndDoor.SetChannel(2, reinterpret_cast<DWORD>(m_pArea));
+        CPoint listener;
+        LONG z;
+        g_pBaldurChitin->cSoundMixer.GetListenPosition(listener, z);
+        LONG dx = listener.x - m_pos.x, dy = listener.y - m_pos.y;
+        LONG dx2 = static_cast<LONG>(static_cast<DWORD>(dx) * static_cast<DWORD>(dx));
+        LONG dy2 = static_cast<LONG>(static_cast<DWORD>(dy) * static_cast<DWORD>(dy));
+        LONG distance = static_cast<LONG>(static_cast<DWORD>(dx2 / 256) + static_cast<DWORD>(dy2 / 144));
+        LONG priority = static_cast<LONG>(99U - static_cast<DWORD>(static_cast<LONG>(static_cast<DWORD>(distance) * 99U) / 6400));
+        m_sndDoor.SetPriority(static_cast<BYTE>(priority < 0 ? 0 : priority));
+        m_sndDoor.Play(m_pos.x, m_pos.y, m_posZ, FALSE);
+        CMessagePlaySoundRef* message = new CMessagePlaySoundRef(m_sndDoor.GetResRef(), m_id, m_id);
+        message->m_nChannel = 2;
+        handler->AddMessage(message, FALSE);
+    }
+    if (opening) {
+        m_dwFlags |= 1;
+        m_pos = m_ptClosedDest;
+        m_tiledObject.m_wAIState = CTiledObject::STATE_PRIMARY_TILE;
+        if (m_pClosedSearch != NULL) m_pArea->m_search.RemoveDoor(m_pClosedSearch, m_nClosedSearch);
+        if (m_pOpenSearch != NULL) m_pArea->m_search.AddDoor(m_pOpenSearch, m_nOpenSearch, (m_dwFlags & 0x400) != 0);
+    } else {
+        m_dwFlags &= ~1U;
+        m_pos = m_ptOpenDest;
+        m_tiledObject.m_wAIState = CTiledObject::STATE_SECONDARY_TILE;
+        if (m_pOpenSearch != NULL) m_pArea->m_search.RemoveDoor(m_pOpenSearch, m_nOpenSearch);
+        if (m_pClosedSearch != NULL) m_pArea->m_search.AddDoor(m_pClosedSearch, m_nClosedSearch, (m_dwFlags & 0x400) != 0);
+    }
+    if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL || g_pChitin->cNetwork.m_idLocalPlayer == m_remotePlayerID) {
+        handler->AddMessage(new CMessageDoorStatus(this, m_id, m_id), FALSE);
+    }
+    if (m_trapActivated != 0) {
+        CAITrigger trigger(opening ? CAITrigger::OPENED : CAITRIGGER_CLOSED, type, 0);
+        m_pendingTriggers.AddTail(new CAITrigger(trigger));
+        if ((m_dwFlags & 4) == 0) {
+            m_trapActivated = 0;
+            handler->AddMessage(new CMessageDoorStatus(this, m_id, m_id), FALSE);
+        }
+    }
+    if (m_dwFlags & 2) {
+        m_dwFlags &= ~2U;
+        if ((m_dwFlags & 0x4000) && m_keyType != "" && PartyHasItem(m_keyType)) {
+            m_curAction.m_actionID = 116;
+            m_curAction.SetString1(m_keyType.GetResRefStr());
+            TakePartyItem();
+        }
+    }
 }

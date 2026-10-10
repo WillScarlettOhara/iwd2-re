@@ -151,6 +151,7 @@ public:
     /* 00B8 */ DWORD m_notUsed[11];
 };
 
+#pragma pack(push, 2)
 class CGameArea {
 public:
     CGameArea(BYTE id);
@@ -164,6 +165,7 @@ public:
     BOOL CheckLOS(const CPoint& start, const CPoint& goal, const BYTE* terrainTable, BOOLEAN bCheckIfExplored);
     BOOL CheckWalkable(const CPoint& start, const CPoint& goal, const BYTE* terrainTable, BYTE personalSpace, BOOLEAN bCheckIfExplored);
     LONG GetGroundPile(const CPoint& ptPos);
+    CGameObject* FindDoorOccupant(LONG id, const CPoint* points, USHORT count); /*#guess*/
     LONG GetNearest(LONG startObject, const CAIObjectType& type, SHORT range, const BYTE* terrainTable, BOOL checkLOS, BOOL seeInvisible, BOOL ignoreSleeping, BYTE nNearest, BOOL ignoreDead);
     void GetAllInRange(const CPoint& center, const CAIObjectType& type, SHORT range, const BYTE* terrainTable, CTypedPtrList<CPtrList, LONG*>& targets, BOOL lineOfSight, BOOL checkForNonSprites);
     void GetCloseObjects(POSITION posStart, const CPoint& center, const CAIObjectType& type, SHORT range, const BYTE* terrainTable, CTypedPtrList<CPtrList, LONG*>& targets, BOOL lineOfSight, BOOL checkForNonSprites);
@@ -313,6 +315,7 @@ public:
     /* 0B16 */ BOOL field_B16;
 };
 
+#pragma pack(pop)
 class CAreaFile : public CResHelper<CResArea, 1010> {
 public:
     BYTE* GetData();

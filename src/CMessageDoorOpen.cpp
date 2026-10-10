@@ -3,6 +3,7 @@
 #include "CInfGame.h"
 #include "CGameObjectArray.h"
 #include "CGameObject.h"
+#include "CGameDoor.h"
 #include "CGameRemoteObjectArray.h"
 #include "CNetwork.h"
 #include "CUtil.h"
@@ -78,4 +79,31 @@ BOOL CMessageDoorOpen::UnmarshalMessage(BYTE* pData, DWORD dwSize)
     m_bOpenDoor = pData[cnt++];
     UTIL_ASSERT(cnt == dwSize);
     return TRUE;
+}
+
+// 0x4FD1D0
+void CMessageDoorOpen::Run()
+{
+    CAIObjectType type;
+    CGameObjectArray* array = g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+    CGameObject* target;
+    BYTE rc;
+    do {
+        rc = array->GetDeny(m_targetId, CGameObjectArray::THREAD_ASYNCH, &target, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc == CGameObjectArray::SUCCESS) {
+        CGameDoor* door = static_cast<CGameDoor*>(target);
+        if ((door->m_dwFlags & 1) != m_bOpenDoor) {
+            CGameObject* source;
+            do {
+                rc = array->GetShare(m_sourceId, CGameObjectArray::THREAD_ASYNCH, &source, INFINITE);
+            } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+            if (rc == CGameObjectArray::SUCCESS) {
+                type.Set(source->GetAIType());
+                door->ToggleDoor(type, FALSE);
+                array->ReleaseShare(m_sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            }
+        }
+        array->ReleaseDeny(m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
 }

@@ -11468,7 +11468,7 @@ SHORT CGameSprite::FindItemPersonal(const CString& sName, int number, BOOL restr
 
     for (SHORT slot = 0; slot < end; slot++) {
         if (m_equipment.m_items[slot] != NULL
-            && m_equipment.m_items[slot]->cResRef == sName) {
+            && m_equipment.m_items[slot]->cResRef == sMutableName) {
             if (number > 0) {
                 number--;
             } else {
@@ -11477,7 +11477,7 @@ SHORT CGameSprite::FindItemPersonal(const CString& sName, int number, BOOL restr
         }
     }
 
-    return 0;
+    return -1;
 }
 
 // 0x71D3D0
@@ -28878,4 +28878,90 @@ CDerivedStats* CGameSprite::GetActiveStats()
     } else {
         return &m_tempStats;
     }
+}
+
+// 0x726F20
+void CGameSprite::UpdateQuickWeaponData()
+{
+    for (int set = 0; set < 4; set++) {
+        SHORT mainSlot = static_cast<SHORT>(43 + 2 * set);
+        BYTE mainButton = static_cast<BYTE>(2 * set);
+        CButtonData oldButton;
+        GetQuickWeapon(mainButton, oldButton);
+        CItem* item = m_equipment.m_items[mainSlot];
+        SHORT abilityNum = 0;
+        SHORT ammoSlot = 0;
+        if (item != NULL) {
+            BYTE type = 0;
+            item->Demand();
+            ITEM_ABILITY* ability = item->GetAbility(0);
+            if (ability != NULL) type = static_cast<BYTE>(ability->type);
+            item->Release();
+            if (type == 4) {
+                UTIL_ASSERT(mainButton < 8);
+                BYTE ammo = field_3D3A[mainButton];
+                if (ammo >= 11 && ammo <= 14 && m_equipment.m_items[ammo] != NULL) {
+                    CItem* ammunition = m_equipment.m_items[ammo];
+                    SHORT launcherSlot = 0;
+                    ammunition->Demand();
+                    GetLauncher(ammunition->GetAbility(0), launcherSlot);
+                    ammunition->Release();
+                    ammoSlot = ammo;
+                    abilityNum = oldButton.m_abilityId.m_abilityNum;
+                }
+            } else abilityNum = oldButton.m_abilityId.m_abilityNum;
+        }
+        CGameButtonList* buttons = GetItemUsages(mainSlot, 1, abilityNum);
+        POSITION position = buttons->GetHeadPosition();
+        if (position == NULL) {
+            SetQuickWeapon(mainButton, CButtonData());
+            SetQuickWeapon(mainButton, static_cast<BYTE>(0));
+        } else {
+            while (position != NULL) {
+                CButtonData* button = buttons->GetNext(position);
+                if (button != NULL && button->m_abilityId.m_itemNum == ammoSlot) {
+                    SetQuickWeapon(mainButton, *button);
+                    SetQuickWeapon(mainButton, static_cast<BYTE>(ammoSlot));
+                }
+                delete button;
+            }
+        }
+        buttons->RemoveAll();
+        delete buttons;
+        SHORT offSlot = mainSlot + 1;
+        BYTE offButton = mainButton + 1;
+        buttons = GetItemUsages(offSlot, 1, 0);
+        position = buttons->GetHeadPosition();
+        if (position == NULL) {
+            CButtonData empty;
+            UTIL_ASSERT(offButton < 8);
+            m_quickWeapons[offButton].m_icon = empty.m_icon;
+            m_quickWeapons[offButton].m_name = empty.m_name;
+            m_quickWeapons[offButton].m_launcherIcon = empty.m_launcherIcon;
+            m_quickWeapons[offButton].m_launcherName = empty.m_launcherName;
+            m_quickWeapons[offButton].m_count = empty.m_count;
+            m_quickWeapons[offButton].m_abilityId = empty.m_abilityId;
+            m_quickWeapons[offButton].m_bDisabled = empty.m_bDisabled;
+            m_quickWeapons[offButton].m_bDisplayCount = empty.m_bDisplayCount;
+            SetQuickWeapon(offButton, static_cast<BYTE>(0));
+        } else {
+            CButtonData* button = buttons->GetNext(position);
+            UTIL_ASSERT(offButton < 8);
+            m_quickWeapons[offButton].m_icon = button->m_icon;
+            m_quickWeapons[offButton].m_name = button->m_name;
+            m_quickWeapons[offButton].m_launcherIcon = button->m_launcherIcon;
+            m_quickWeapons[offButton].m_launcherName = button->m_launcherName;
+            m_quickWeapons[offButton].m_count = button->m_count;
+            m_quickWeapons[offButton].m_abilityId = button->m_abilityId;
+            m_quickWeapons[offButton].m_bDisabled = button->m_bDisabled;
+            m_quickWeapons[offButton].m_bDisplayCount = button->m_bDisplayCount;
+            SHORT slot = button->m_abilityId.m_itemNum;
+            SetQuickWeapon(offButton, static_cast<BYTE>(slot >= 11 && slot <= 14 ? slot : 0));
+            delete button;
+            while (position != NULL) delete buttons->GetNext(position);
+        }
+        buttons->RemoveAll();
+        delete buttons;
+    }
+    g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSpriteEquipment(this, m_id, m_id), FALSE);
 }

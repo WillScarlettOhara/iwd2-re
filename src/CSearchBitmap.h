@@ -7,6 +7,7 @@
 
 class CGameArea;
 
+#pragma pack(push, 2)
 class CSearchBitmap {
 public:
     static const BYTE COST_BASE_MELEE;
@@ -36,6 +37,7 @@ public:
     void AddDoor(CPoint* pPoints, USHORT nPoints, BOOL bOpaque);
     void RemoveDoor(CPoint* pPoints, USHORT nPoints);
     BOOLEAN CanToggleDoor(const CPoint* pPoints, USHORT nPoints);
+    BOOLEAN IsOverDoor(const CPoint& point, BYTE personalSpace, const CPoint* points, USHORT count); /*#guess*/
 
     SHORT GetTableIndex(const CPoint& pt);
 
@@ -52,6 +54,7 @@ public:
     /* 00F3 */ BYTE m_sourceSide;
 };
 
+#pragma pack(pop)
 class CSearchRequest {
 public:
     static const BYTE STATE_WAITING;
