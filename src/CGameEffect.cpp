@@ -2943,6 +2943,12 @@ CGameEffectDamage::CGameEffectDamage(ITEM_EFFECT* effect, const CPoint& source, 
     }
 }
 
+// 0x49FC40
+BOOL CGameEffectDamage::UsesDice()
+{
+    return TRUE;
+}
+
 // 0x494090
 CGameEffect* CGameEffectDamage::Copy()
 {

@@ -89,6 +89,10 @@
 //                                movement if marked; stop the attack on completion.
 //   projectilechecks            verify opcode 430 payloads, source failures and
 //                                concrete missile types; restore resource/queue.
+//   combatmessagechecks         verify effect/projectile packets and network
+//                                receipt; remove launches and restore fixtures.
+//   effectpacketdamage          receive a damage effect on portrait 1; require
+//                                three HP lost and no damage to portrait 0.
 //   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
@@ -1751,6 +1755,304 @@ void Tick(CWarp* pActiveEngine)
         s_pc++; return;
     }
 
+    if (strcmp(step.op, "combatmessagechecks") == 0 || strcmp(step.op, "effectpacketdamage") == 0) {
+        auto* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        auto* remotes = game->GetRemoteObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* sourceRaw = NULL; CGameObject* targetRaw = NULL;
+        BYTE sourceRC = objects->GetDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, &sourceRaw, INFINITE);
+        BYTE targetRC = objects->GetDeny(targetId, CGameObjectArray::THREAD_ASYNCH, &targetRaw, INFINITE);
+        if (sourceRC != CGameObjectArray::SUCCESS || targetRC != CGameObjectArray::SUCCESS
+            || !sourceRaw || !targetRaw || sourceRaw->GetObjectType() != CGameObject::TYPE_SPRITE
+            || targetRaw->GetObjectType() != CGameObject::TYPE_SPRITE) {
+            if (targetRC == CGameObjectArray::SUCCESS) objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            if (sourceRC == CGameObjectArray::SUCCESS) objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires two party sprites"); return;
+        }
+        auto* source = static_cast<CGameSprite*>(sourceRaw); auto* target = static_cast<CGameSprite*>(targetRaw);
+        INT checks = 0; BOOL valid = TRUE;
+        auto check = [&](const char* name, BOOL ok) {
+            ++checks; valid = valid && ok;
+            if (!ok) Emit("{\"step\":%d,\"op\":\"combat-message-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+        };
+        BOOL damage = strcmp(step.op, "effectpacketdamage") == 0;
+        SHORT sourceHP = source->m_baseStats.m_hitPoints, targetHP = target->m_baseStats.m_hitPoints;
+        ULONG time = game->GetWorldTimer()->m_gameTime;
+        PLAYER_ID sourcePlayer = source->m_remotePlayerID, targetPlayer = target->m_remotePlayerID;
+        LONG sourceRemote = source->m_remoteObjectID, targetRemote = target->m_remoteObjectID;
+        remotes->m_critSect.Lock();
+        CGameRemoteObjectListEntry sourceMap, targetMap;
+        sourceMap.remotePlayerID = 0x76543210; sourceMap.remoteObjectID = 0x5678; sourceMap.localObjectID = sourceId;
+        targetMap.remotePlayerID = 0x89ABCDEF; targetMap.remoteObjectID = 0x1234; targetMap.localObjectID = targetId;
+        sourceMap.pNext = &targetMap; targetMap.pNext = remotes->m_pArray[0]; remotes->m_pArray[0] = &sourceMap;
+        source->m_remotePlayerID = sourceMap.remotePlayerID; source->m_remoteObjectID = sourceMap.remoteObjectID;
+        target->m_remotePlayerID = targetMap.remotePlayerID; target->m_remoteObjectID = targetMap.remoteObjectID;
+        auto& outgoing = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT queued = outgoing.GetCount();
+        const DWORD header = CNetwork::SPEC_MSG_HEADER_LENGTH;
+        BYTE effectBytes[128] = {}, projectileBytes[64] = {};
+        BYTE* payload = effectBytes + header; DWORD size = 0;
+        ITEM_EFFECT item = {}; item.effectID = CGAMEEFFECT_DAMAGE; item.durationType = 1;
+        item.probabilityUpper = 100; item.effectAmount = 3; item.dwFlags = 0x800000;
+        CMessageAddEffect sending(CGameEffect::DecodeEffect(&item, source->GetPos(), sourceId, target->GetPos()), 99, targetId);
+        sending.m_effect->m_sourceRes = "ZRCHIT";
+        if (!damage) {
+            auto* effect = sending.m_effect;
+            check("damage-virtual-uses-dice", effect->UsesDice() == TRUE);
+            effect->m_effectID = 0x1234000C; effect->m_targetType = 0x11223344; effect->m_spellLevel = 0x22334455;
+            effect->m_effectAmount = 0x12345678; effect->m_dwFlags = 0xDEADBEEF;
+            effect->m_durationType = 0x12348000; effect->m_duration = 0x87654321;
+            effect->m_probabilityUpper = 0x1280; effect->m_probabilityLower = 0x23FF;
+            effect->m_res = "ABC"; effect->m_numDice = 0x01020304; effect->m_diceSize = 0x05060708;
+            effect->m_savingThrow = 0xAABBCCDD; effect->m_saveMod = -2; effect->m_special = 0x11223344;
+            effect->m_source = CPoint(0x01020304, -1); effect->m_target = CPoint(LONG_MIN, -1); effect->field_188 = 0x1234AA;
+            const BYTE golden[] = {
+                0xEF,0xCD,0xAB,0x89,0x34,0x12,0,0,0x0C,0,0x44,0x55,0x78,0x56,0x34,0x12,
+                0xEF,0xBE,0xAD,0xDE,0,0x80,0x21,0x43,0x65,0x87,0x80,0xFF,
+                'A','B','C',0,0,0,0,0,'Z','R','C','H','I','T',0,0,
+                4,3,2,1,8,7,6,5,0xDD,0xCC,0xBB,0xAA,0xFE,0xFF,0xFF,0xFF,0x44,0x33,0x22,0x11,
+                4,3,2,1,0xFF,0xFF,0xFF,0xFF,0x10,0x32,0x54,0x76,0x78,0x56,0,0,
+                0,0,0,0x80,0xFF,0xFF,0xFF,0xFF,0xAA};
+            memset(effectBytes, 0xA5, sizeof(effectBytes));
+            static_cast<CMessage*>(&sending)->MarshalMessage(&payload, &size);
+            check("effect-golden-widths-resrefs-dice-and-guards", size == sizeof(golden) && size == 89
+                && payload == effectBytes + header && memcmp(payload, golden, sizeof(golden)) == 0
+                && effectBytes[0] == 0xA5 && payload[size] == 0xA5);
+            ITEM_EFFECT ac = {}; ac.effectID = CGAMEEFFECT_AC;
+            CMessageAddEffect nonDice(CGameEffect::DecodeEffect(&ac, CPoint(1, 2), sourceId, CPoint(3, 4)), 77, targetId);
+            nonDice.m_effect->m_res = ""; nonDice.m_effect->m_sourceRes = "";
+            nonDice.m_effect->m_minLevel = 0x01020304; nonDice.m_effect->m_maxLevel = 0x11223344;
+            nonDice.m_effect->m_numDice = 9; nonDice.m_effect->m_diceSize = 10;
+            nonDice.m_effect->m_flags = 3; nonDice.m_effect->m_durationType = 1;
+            static_cast<CMessage*>(&nonDice)->MarshalMessage(&payload, &size);
+            DWORD maxLevel, minLevel; WORD duration;
+            memcpy(&maxLevel, payload + 44, 4); memcpy(&minLevel, payload + 48, 4); memcpy(&duration, payload + 20, 2);
+            const BYTE zeros[16] = {};
+            check("non-dice-level-bounds-empty-resrefs-and-no-flag-merging", size == 89 && maxLevel == 0x11223344
+                && minLevel == 0x01020304 && duration == 1 && memcmp(payload + 28, zeros, sizeof(zeros)) == 0);
+            for (LONG missing : {-1L, 0x7FFF0001L}) {
+                sending.m_targetId = missing; memset(effectBytes, 0xA5, sizeof(effectBytes)); size = 999;
+                static_cast<CMessage*>(&sending)->MarshalMessage(&payload, &size);
+                check("effect-missing-target-zero-size-buffer-untouched", size == 0 && payload[0] == 0xA5);
+            }
+            sending.m_targetId = targetId;
+            // Return to a valid, deterministic damage effect before decoding.
+            delete sending.m_effect;
+            sending.m_effect = CGameEffect::DecodeEffect(&item, source->GetPos(), sourceId, target->GetPos());
+            sending.m_effect->m_sourceRes = "ZRCHIT"; sending.m_effect->m_special = 0x12345678; sending.m_effect->field_188 = 255;
+        }
+        static_cast<CMessage*>(&sending)->MarshalMessage(&payload, &size);
+        DWORD effectSize = size + header;
+        if (!damage) {
+            CSpell spell(CResRef("ZRCHIT"));
+            LONG casterLevel = source->GetCasterLevel(&spell, 0, 0);
+            DWORD firstCall = static_cast<DWORD>(source->GetFeatValue(0x40)) << 1;
+            CMessageAddEffect received(NULL, 88, -1);
+            check("effect-virtual-decode", static_cast<CMessage*>(&received)->UnmarshalMessage(effectBytes, effectSize));
+            auto* effect = received.m_effect;
+            check("effect-decode-damage-special-origin-and-caster", effect && dynamic_cast<CGameEffectDamage*>(effect)
+                && effect->m_effectAmount == 3 && effect->m_special == 0x12345678 && effect->m_sourceID == sourceId
+                && effect->m_source == source->GetPos() && effect->m_target == target->GetPos()
+                && effect->m_sourceRes == "ZRCHIT" && effect->m_casterLevel == casterLevel && effect->m_firstCall == firstCall
+                && effect->field_188 == 255 && received.GetSource() == 88 && received.GetTarget() == targetId);
+            PLAYER_ID missingPlayer = 0x24681357;
+            memcpy(payload, &missingPlayer, 4);
+            CMessageAddEffect rejected(NULL, 88, sourceId);
+            check("effect-unmapped-header-only-keeps-state", !rejected.UnmarshalMessage(effectBytes, header + 8)
+                && rejected.GetTarget() == sourceId && rejected.m_effect == NULL && rejected.GetSource() == 88);
+            memcpy(payload, &targetMap.remotePlayerID, 4); memcpy(payload + 72, &missingPlayer, 4);
+            check("effect-unmapped-source-retargets-without-replacing-effect", !rejected.UnmarshalMessage(effectBytes, header + 80)
+                && rejected.GetTarget() == targetId && rejected.m_effect == NULL);
+            PLAYER_ID noPlayer = 0; LONG noObject = -1;
+            memcpy(payload + 72, &noPlayer, 4); memcpy(payload + 76, &noObject, 4);
+            check("effect-sentinel-source-decodes", rejected.UnmarshalMessage(effectBytes, effectSize));
+            check("effect-sentinel-source-default-level", rejected.m_effect && rejected.m_effect->m_sourceID == -1
+                && rejected.m_effect->m_casterLevel == 1 && rejected.m_effect->m_sourceRes == "ZRCHIT");
+            static_cast<CMessage*>(&sending)->MarshalMessage(&payload, &size);
+        }
+        CMessageFireProjectile projectile(1, targetId, CPoint(LONG_MIN, LONG_MAX), -2, 99, sourceId, 255);
+        projectile.field_20 = 0x12345678;
+        BYTE* projectilePayload = projectileBytes + header; DWORD projectileSize = 0;
+        static_cast<CMessage*>(&projectile)->MarshalMessage(&projectilePayload, &projectileSize);
+        if (!damage) {
+            const BYTE golden[] = {0x10,0x32,0x54,0x76,0x78,0x56,0,0,2,0,
+                0xEF,0xCD,0xAB,0x89,0x34,0x12,0,0,0,0,0,0x80,0xFF,0xFF,0xFF,0x7F,
+                0xFE,0xFF,0xFF,0xFF,0x78,0x56,0x34,0x12,0xFF};
+            check("projectile-golden-pack2-fields", projectileSize == sizeof(golden)
+                && memcmp(projectilePayload, golden, sizeof(golden)) == 0 && projectilePayload[35] == 0);
+            CMessageFireProjectile decoded(7, sourceId, CPoint(9, 10), 11, 88, targetId, 12);
+            check("projectile-virtual-decode", static_cast<CMessage*>(&decoded)->UnmarshalMessage(projectileBytes, header + projectileSize));
+            check("projectile-decode-raw-type-and-full-tail", decoded.GetTarget() == sourceId && decoded.GetSource() == 88
+                && decoded.m_projectileType == 2 && decoded.m_projectileTargetId == targetId
+                && decoded.m_projectileTarget == CPoint(LONG_MIN, LONG_MAX) && decoded.m_height == -2
+                && decoded.field_20 == 0x12345678 && decoded.field_1E == 255);
+            for (WORD type : {static_cast<WORD>(0), static_cast<WORD>(1), static_cast<WORD>(11), static_cast<WORD>(16), static_cast<WORD>(65535)}) {
+                projectile.m_projectileType = type; projectile.MarshalMessage(&projectilePayload, &projectileSize);
+                check("projectile-decode-does-not-add-one", decoded.UnmarshalMessage(projectileBytes, header + projectileSize) && decoded.m_projectileType == type);
+            }
+            PLAYER_ID missing = 0x24681357;
+            memcpy(projectilePayload, &missing, 4);
+            check("projectile-unmapped-caster-still-accepts", decoded.UnmarshalMessage(projectileBytes, header + projectileSize) && decoded.GetTarget() == -1);
+            memcpy(projectilePayload + 10, &missing, 4);
+            decoded.m_projectileTargetId = sourceId; decoded.m_projectileTarget = CPoint(9, 10);
+            check("projectile-unmapped-target-fails-after-caster-and-type", !decoded.UnmarshalMessage(projectileBytes, header + 18)
+                && decoded.GetTarget() == -1 && decoded.m_projectileType == 65535 && decoded.m_projectileTargetId == sourceId
+                && decoded.m_projectileTarget == CPoint(9, 10));
+            PLAYER_ID noPlayer = 0; LONG noObject = -1;
+            memcpy(projectilePayload + 10, &noPlayer, 4); memcpy(projectilePayload + 14, &noObject, 4);
+            check("projectile-sentinel-target-accepts", decoded.UnmarshalMessage(projectileBytes, header + projectileSize) && decoded.m_projectileTargetId == -1);
+            projectile.m_targetId = -1; memset(projectileBytes, 0xA5, sizeof(projectileBytes)); projectileSize = 999;
+            projectile.MarshalMessage(&projectilePayload, &projectileSize);
+            check("projectile-missing-caster-zero-size-buffer-untouched", projectileSize == 0 && projectilePayload[0] == 0xA5);
+            projectile.m_targetId = sourceId; projectile.m_projectileType = 2;
+            projectile.m_projectileTargetId = -1; projectile.MarshalMessage(&projectilePayload, &projectileSize);
+            memcpy(&noPlayer, projectilePayload + 10, 4); memcpy(&noObject, projectilePayload + 14, 4);
+            check("projectile-missing-target-serializes-sentinel", noPlayer == 0 && noObject == -1 && projectileSize == 35);
+            projectile.m_projectileTargetId = targetId; projectile.m_projectileTarget = target->GetPos();
+            projectile.m_height = 0; projectile.field_1E = 0;
+            projectile.MarshalMessage(&projectilePayload, &projectileSize);
+        }
+        projectileSize += header;
+        CNetwork& network = g_pChitin->cNetwork;
+        auto* settings = game->GetMultiplayerSettings();
+        INT provider = network.m_nServiceProvider;
+        PLAYER_ID localPlayer = network.m_idLocalPlayer;
+        BOOLEAN connected = network.m_bConnectionEstablished, hosting = network.m_bIsHost;
+        BOOLEAN initialized = network.m_SystemWindow.m_bInitialized;
+        BYTE blocked = game->field_4BD4;
+        BOOLEAN returned = g_pBaldurChitin->GetBaldurMessage()->m_bDialogReplyReturned;
+        PLAYER_ID ready[CNETWORK_MAX_PLAYERS]; memcpy(ready, settings->m_pnPlayerReady, sizeof(ready));
+        BOOLEAN windows[CNETWORK_MAX_PLAYERS];
+        EnterCriticalSection(&network.m_critSectQueue);
+        // MessageThreadMain waits for a nonzero local player before entering
+        // ThreadLoop. Keep the transport thread asleep during fake sessions.
+        network.m_idLocalPlayer = 0;
+        for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) {
+            windows[i] = network.m_pSlidingWindow[i].m_bInitialized; network.m_pSlidingWindow[i].m_bInitialized = FALSE;
+        }
+        auto& incoming = network.m_SystemWindow.m_lQueueIncomingMessages;
+        std::list<CNETWORKWINDOW_QUEUEENTRY*> savedIncoming;
+        while (!incoming.IsEmpty()) savedIncoming.push_back(incoming.RemoveHead());
+        network.m_bIsHost = FALSE; network.m_SystemWindow.m_bInitialized = TRUE; network.m_bConnectionEstablished = TRUE;
+        settings->m_pnPlayerReady[0] = network.m_idLocalPlayer;
+        g_pBaldurChitin->GetBaldurMessage()->m_bDialogReplyReturned = FALSE;
+        auto receive = [&](BYTE* packet, DWORD length, BYTE subtype) {
+            packet[CNetwork::SPEC_MSG_FLAG] = CNetwork::SPEC_MSG_FLAG_ENABLED;
+            packet[CNetwork::SPEC_MSG_TYPE] = CBaldurMessage::MSG_TYPE_CMESSAGE;
+            packet[CNetwork::SPEC_MSG_SUBTYPE] = subtype;
+            auto* node = new CNETWORKWINDOW_QUEUEENTRY;
+            node->idFrom = 0xABCDEF12; node->idTo = network.m_idLocalPlayer;
+            node->dwSize = CNetwork::dword_85E694 + length; node->pData = new BYTE[node->dwSize]; memset(node->pData, 0, node->dwSize);
+            memcpy(node->pData + CNetwork::dword_85E698, (LPCTSTR)CNetwork::MG, CNetwork::dword_85E69C);
+            memcpy(node->pData + CNetwork::dword_85E694, packet, length); incoming.AddTail(node);
+        };
+        {
+            CMessageHandler handler;
+            if (damage) {
+                network.m_nServiceProvider = CNetwork::SERV_PROV_NULL; game->field_4BD4 = 0;
+                receive(effectBytes, effectSize, 1); handler.AsynchronousUpdate();
+                check("received-damage-reaches-defender-only", incoming.IsEmpty() && handler.m_messageList.IsEmpty()
+                    && source->m_baseStats.m_hitPoints == sourceHP && targetHP - target->m_baseStats.m_hitPoints == 3);
+            } else {
+                WORD trap = CGAMEEFFECT_DETECTTRAPS; memcpy(payload + 8, &trap, 2);
+                for (BYTE block : {static_cast<BYTE>(0), static_cast<BYTE>(255)}) {
+                    network.m_nServiceProvider = CNetwork::SERV_PROV_TCP_IP; game->field_4BD4 = block;
+                    receive(effectBytes, effectSize, 1); handler.AsynchronousUpdate();
+                    check("received-effect-immediate-or-owned-queue", incoming.IsEmpty() && (block == 0 ? handler.m_messageList.IsEmpty()
+                        : handler.m_messageList.GetCount() == 1 && dynamic_cast<CMessageAddEffect*>(handler.m_messageList.GetHead())));
+                    if (block) {
+                        auto* effectMessage = dynamic_cast<CMessageAddEffect*>(handler.m_messageList.GetHead());
+                        check("received-effect-retains-owned-payload", effectMessage && effectMessage->m_effect
+                            && effectMessage->m_effect->m_sourceID == sourceId && effectMessage->GetTarget() == targetId);
+                        game->field_4BD4 = 0; handler.AsynchronousUpdate();
+                        check("received-effect-unblocked-run", handler.m_messageList.IsEmpty());
+                    }
+                }
+                // Inspect real launches before their first tick, then remove them.
+                for (WORD type : {static_cast<WORD>(2), static_cast<WORD>(12), static_cast<WORD>(17), static_cast<WORD>(0x131)}) {
+                    for (BYTE block : {static_cast<BYTE>(0), static_cast<BYTE>(255)}) {
+                        std::set<CGameObject*> before;
+                        for (INT i = 0; i < objects->m_nArraySize; ++i) if (objects->m_pArray[i].m_objectId != -1) before.insert(objects->m_pArray[i].m_objectPtr);
+                        projectile.m_projectileType = type; projectile.MarshalMessage(&projectilePayload, &size);
+                        game->field_4BD4 = block; receive(projectileBytes, header + size, 26); handler.AsynchronousUpdate();
+                        if (block) {
+                            auto* message = handler.m_messageList.IsEmpty() ? NULL : dynamic_cast<CMessageFireProjectile*>(handler.m_messageList.GetHead());
+                            check("deferred-projectile-retains-raw-payload", handler.m_messageList.GetCount() == 1 && message
+                                && message->m_projectileType == type && message->GetTarget() == sourceId && message->m_projectileTargetId == targetId);
+                            game->field_4BD4 = 0; handler.AsynchronousUpdate();
+                        }
+                        CProjectile* launched = NULL; INT created = 0;
+                        for (INT i = 0; i < objects->m_nArraySize; ++i) {
+                            auto& entry = objects->m_pArray[i];
+                            if (entry.m_objectId == -1 || before.count(entry.m_objectPtr)) continue;
+                            auto* candidate = dynamic_cast<CProjectile*>(entry.m_objectPtr);
+                            if (candidate) { launched = candidate; ++created; }
+                        }
+                        check("received-projectile-launches-once-with-source-target", created == 1 && incoming.IsEmpty() && handler.m_messageList.IsEmpty()
+                            && launched && launched->m_projectileType == type - 1 && launched->m_sourceId == sourceId
+                            && launched->m_targetId == (type == 0x131 ? -1 : targetId) && launched->m_pArea == source->m_pArea);
+                        if (launched) {
+                            auto* whirlwind = dynamic_cast<CProjectileWhirlwind*>(launched);
+                            check("received-projectile-concrete-type-and-whirlwind-seed", type == 2 ? dynamic_cast<CProjectileArrow*>(launched) != NULL
+                                : type == 12 ? dynamic_cast<CProjectileBolt*>(launched) != NULL : type == 17 ? dynamic_cast<CProjectileSlingStone*>(launched) != NULL
+                                : whirlwind && whirlwind->m_wanderSeed == 0x12345678);
+                            launched->RemoveSelf();
+                        }
+                    }
+                }
+                projectile.m_projectileType = 2; projectile.MarshalMessage(&projectilePayload, &size);
+                for (INT gate = 0; gate < 3; ++gate) {
+                    SHORT nextId = objects->m_nNextObjectId;
+                    auto* area = source->m_pArea;
+                    auto owner = source->m_remotePlayerID;
+                    network.m_nServiceProvider = gate == 0 ? CNetwork::SERV_PROV_NULL : CNetwork::SERV_PROV_TCP_IP;
+                    if (gate == 1) source->m_remotePlayerID = network.m_idLocalPlayer;
+                    if (gate == 2) source->m_pArea = NULL;
+                    game->field_4BD4 = 0; receive(projectileBytes, header + size, 26); handler.AsynchronousUpdate();
+                    check("received-projectile-owner-and-area-gates", objects->m_nNextObjectId == nextId
+                        && handler.m_messageList.IsEmpty() && incoming.IsEmpty());
+                    source->m_pArea = area; source->m_remotePlayerID = owner;
+                }
+                network.m_nServiceProvider = CNetwork::SERV_PROV_TCP_IP;
+                PLAYER_ID missing = 0x24681357;
+                memcpy(payload + 72, &missing, 4); memcpy(projectilePayload + 10, &missing, 4);
+                for (BYTE block : {static_cast<BYTE>(0), static_cast<BYTE>(255)}) {
+                    game->field_4BD4 = block;
+                    receive(effectBytes, header + 80, 1); receive(projectileBytes, header + 18, 26); handler.AsynchronousUpdate();
+                    check("failed-incoming-decode-discards-owned-messages", incoming.IsEmpty() && handler.m_messageList.IsEmpty());
+                }
+                memcpy(payload + 72, &sourceMap.remotePlayerID, 4); memcpy(projectilePayload + 10, &targetMap.remotePlayerID, 4);
+                for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) settings->m_pnPlayerReady[i] = network.m_idLocalPlayer ^ 0xFFFFFFFF;
+                game->field_4BD4 = 0; receive(effectBytes, effectSize, 1); receive(projectileBytes, header + size, 26); handler.AsynchronousUpdate();
+                check("not-ready-discards-combat-packets", incoming.IsEmpty() && handler.m_messageList.IsEmpty());
+                check("packet-and-launch-checks-do-not-damage-party", source->m_baseStats.m_hitPoints == sourceHP && target->m_baseStats.m_hitPoints == targetHP);
+            }
+        }
+        while (!incoming.IsEmpty()) { auto* node = incoming.RemoveHead(); delete node->pData; delete node; }
+        for (auto* node : savedIncoming) incoming.AddTail(node);
+        for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) network.m_pSlidingWindow[i].m_bInitialized = windows[i];
+        network.m_nServiceProvider = provider; network.m_bConnectionEstablished = connected;
+        network.m_idLocalPlayer = localPlayer;
+        network.m_bIsHost = hosting; network.m_SystemWindow.m_bInitialized = initialized;
+        memcpy(settings->m_pnPlayerReady, ready, sizeof(ready)); game->field_4BD4 = blocked;
+        g_pBaldurChitin->GetBaldurMessage()->m_bDialogReplyReturned = returned;
+        LeaveCriticalSection(&network.m_critSectQueue);
+        if (!damage) while (outgoing.GetCount() > queued) delete outgoing.RemoveTail();
+        remotes->m_pArray[0] = targetMap.pNext;
+        source->m_remotePlayerID = sourcePlayer; source->m_remoteObjectID = sourceRemote;
+        target->m_remotePlayerID = targetPlayer; target->m_remoteObjectID = targetRemote;
+        remotes->m_critSect.Unlock();
+        check("network-fixtures-and-clock-restored", game->GetWorldTimer()->m_gameTime == time && (damage || outgoing.GetCount() == queued));
+        INT sourceLoss = sourceHP - source->m_baseStats.m_hitPoints, targetLoss = targetHP - target->m_baseStats.m_hitPoints;
+        objects->ReleaseDeny(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"%s\",\"checks\":%d,\"sourceLoss\":%d,\"targetLoss\":%d,\"restored\":true,\"valid\":%s}",
+            nStep, step.op, checks, sourceLoss, targetLoss, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "combat message mismatch (fixtures restored)"); return; }
+        s_pc++; return;
+    }
+
     if (strcmp(step.op, "itemreceivechecks") == 0) {
         auto* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();
@@ -1772,6 +2074,7 @@ void Tick(CWarp* pActiveEngine)
         auto* baldur = g_pBaldurChitin->GetBaldurMessage();
         auto* settings = game->GetMultiplayerSettings();
         INT provider = network.m_nServiceProvider;
+        PLAYER_ID localPlayer = network.m_idLocalPlayer;
         BOOLEAN connected = network.m_bConnectionEstablished, hosting = network.m_bIsHost;
         BOOLEAN initialized = network.m_SystemWindow.m_bInitialized;
         BYTE blocked = game->field_4BD4;
@@ -1781,6 +2084,7 @@ void Tick(CWarp* pActiveEngine)
         memcpy(ready, settings->m_pnPlayerReady, sizeof(ready));
         BOOLEAN windows[CNETWORK_MAX_PLAYERS];
         EnterCriticalSection(&network.m_critSectQueue);
+        network.m_idLocalPlayer = 0;
         for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) {
             windows[i] = network.m_pSlidingWindow[i].m_bInitialized;
             network.m_pSlidingWindow[i].m_bInitialized = FALSE;
@@ -1942,6 +2246,7 @@ void Tick(CWarp* pActiveEngine)
         for (auto* node : savedIncoming) incoming.AddTail(node);
         for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) network.m_pSlidingWindow[i].m_bInitialized = windows[i];
         network.m_nServiceProvider = provider; network.m_bConnectionEstablished = connected;
+        network.m_idLocalPlayer = localPlayer;
         network.m_bIsHost = hosting; network.m_SystemWindow.m_bInitialized = initialized;
         memcpy(settings->m_pnPlayerReady, ready, sizeof(ready)); game->field_4BD4 = blocked;
         baldur->m_bDialogReplyReturned = returned; baldur->m_bDialogRequestPending = pending; baldur->m_nDialogReplyUpdates = updates;

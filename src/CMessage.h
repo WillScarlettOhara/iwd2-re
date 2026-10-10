@@ -477,6 +477,7 @@ public:
     /* 000C */ CAIAction m_action;
 };
 
+#pragma pack(push, 2)
 class CMessageAddEffect : public CMessage {
 public:
     CMessageAddEffect(CGameEffect* effect, LONG caller, LONG target);
@@ -484,10 +485,13 @@ public:
     SHORT GetCommType() override;
     BYTE GetMsgType() override;
     BYTE GetMsgSubType() override;
+    void MarshalMessage(BYTE** pData, DWORD* dwSize) override;
+    BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;
 
     /* 000C */ CGameEffect* m_effect;
 };
+#pragma pack(pop)
 
 class CMessageAnimationChange : public CMessage {
 public:
@@ -1625,12 +1629,15 @@ public:
     /* 0015 */ BYTE m_nLevel;
 };
 
+#pragma pack(push, 2)
 class CMessageFireProjectile : public CMessage {
 public:
     CMessageFireProjectile(WORD projectileType, LONG projectileTargetId, const CPoint& projectileTarget, LONG height, LONG caller, LONG target, unsigned char a7);
     SHORT GetCommType() override;
     BYTE GetMsgType() override;
     BYTE GetMsgSubType() override;
+    void MarshalMessage(BYTE** pData, DWORD* dwSize) override;
+    BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;
 
     /* 000C */ WORD m_projectileType;
@@ -1640,6 +1647,7 @@ public:
     /* 001E */ unsigned char field_1E;
     /* 0020 */ int field_20;
 };
+#pragma pack(pop)
 
 class CMessageStopEscapeArea : public CMessage {
 public:
