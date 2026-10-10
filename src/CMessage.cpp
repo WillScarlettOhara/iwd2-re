@@ -5321,6 +5321,18 @@ void CMessageHandler::AsynchronousUpdate()
                     else delete message;
                 }
                 break;
+            case 105: {
+                CMessage105::Node head = { &head, &head, NULL };
+                if (immediate) {
+                    CMessage105 message(&head, 0, 0);
+                    if (message.UnmarshalMessage(data, size)) message.Run();
+                } else {
+                    CMessage* message = new CMessage105(&head, 0, 0);
+                    if (message->UnmarshalMessage(data, size)) m_messageList.AddTail(message);
+                    else delete message;
+                }
+                break;
+            }
             default:
                 // TODO: Remaining incoming CMessage factories are unimplemented.
                 break;
@@ -17229,12 +17241,11 @@ void CMessageProjectileImmumityUpdate::Run()
 
 // -----------------------------------------------------------------------------
 
-// 0x5152C0
-//
 // Build the message and take over the source list's sub-messages.  The source
 // list is the engine's circular sentinel+count list (see the class comment);
 // pSourceHead is its sentinel node.  Only the CMessage* pointers are copied --
 // this message owns them from here on.
+// 0x5152C0
 CMessage105::CMessage105(Node* pSourceHead, LONG caller, LONG target)
     : CMessage(caller, target)
 {
@@ -17302,13 +17313,11 @@ BYTE CMessage105::GetMsgSubType()
     return CBaldurMessage::MSG_SUBTYPE_CMESSAGE_105;
 }
 
-// 0x5154E0
-//
 // Network form: resolve the target's remote ids, write a 13-byte header (remote
 // player id, remote object id, sub-message count, per-sub-message marshalled
 // size), then let each sub-message marshal its own bytes after it.  The
-// per-sub-message serialisation belongs to CMessageAddEffect (vtable slot 0x10,
-// not yet recovered); this routine only frames the list.
+// per-sub-message serialisation belongs to CMessageAddEffect (vtable slot 0x10).
+// 0x5154E0
 void CMessage105::MarshalMessage(BYTE** pData, DWORD* dwSize)
 {
     UTIL_ASSERT(pData != NULL && dwSize != NULL);
@@ -17355,22 +17364,22 @@ void CMessage105::MarshalMessage(BYTE** pData, DWORD* dwSize)
     *reinterpret_cast<DWORD*>(*pData + cnt) = SUBMESSAGE_SIZE;
     cnt += sizeof(DWORD);
 
+    BYTE* pSubData = *pData + cnt;
     for (Node* pNode = m_pNodeHead->m_pNext; pNode != m_pNodeHead; pNode = pNode->m_pNext) {
-        BYTE* pSubData = *pData + cnt;
         DWORD subSize = 0;
         pNode->m_pMessage->MarshalMessage(&pSubData, &subSize);
+        pSubData += subSize;
         cnt += subSize;
     }
 
     UTIL_ASSERT(cnt == *dwSize);
 }
 
-// 0x515670
-//
 // Inverse of MarshalMessage: resolve the local target id, then rebuild one
 // CMessageAddEffect per serialised entry.  Each entry's bytes are copied into a
 // scratch buffer past the spec-message header that the sub-message's own
 // UnmarshalMessage (vtable slot 0x14) skips.
+// 0x515670
 BOOL CMessage105::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 {
     UTIL_ASSERT(pData != NULL);

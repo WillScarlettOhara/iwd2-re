@@ -8,6 +8,7 @@
   ],
   "preserve": [],
   "preconditions": [
+    "Exercise message 105 framing and ordered owned child effects, append/empty/failed-child decoder behavior, and immediate/deferred MG reception including FIFO, disconnection and not-ready rejection. Receive two damage effects of two and three HP through each execution path; require five HP per batch and no source damage. Keep the local player ID zero during simulated sessions so the transport thread stays asleep.",
     "Exercise AddEffect and FireProjectile packet overrides virtually against golden bytes; validate truncation, padding, dice/level fields, damage special, source metadata, caster/feat reconstruction and missing remote identifiers. Receive effects and arrow/bolt/sling/Whirlwind launches immediately and deferred through MG frames; remove test projectiles before ordinary ticks and restore network state in the same tick.",
     "Receive a deterministic damage effect through the network dispatcher, requiring three defender HP lost and no source damage in the disposable process.",
     "Receive MG-framed AddItem/RemoveItem through the system network window and AsynchronousUpdate; test immediate/deferred dispatch, FIFO, disconnected/not-ready/unmapped paths, raw constructor state, handler ownership and dialogue countdown. Remaining ready-player factories/protocol handlers are explicitly unimplemented.",

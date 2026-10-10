@@ -1793,6 +1793,7 @@ public:
 // CTypedPtrList, which is 28 bytes and would not fit the 0x18-byte message.  It
 // is modelled here with explicit nodes so the 8-byte header (m_pNodeHead@0x10,
 // m_nCount@0x14) stays binary-faithful.
+#pragma pack(push, 2)
 class CMessage105 : public CMessage {
 public:
     struct Node {
@@ -1816,9 +1817,11 @@ public:
     void Run() override;
 
     /* 000C */ BYTE field_C;
+    /* 000D */ BYTE m_paddingD[3];
     /* 0010 */ Node* m_pNodeHead;
     /* 0014 */ INT m_nCount;
 };
+#pragma pack(pop)
 
 class CMessage103 : public CMessage {
 public:

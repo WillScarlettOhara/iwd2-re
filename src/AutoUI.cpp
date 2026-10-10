@@ -93,6 +93,8 @@
 //                                receipt; remove launches and restore fixtures.
 //   effectpacketdamage          receive a damage effect on portrait 1; require
 //                                three HP lost and no damage to portrait 0.
+//   groupedpacketdamage         receive two damage effects immediately and
+//                                deferred; require five HP per ordered batch.
 //   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
@@ -1755,7 +1757,8 @@ void Tick(CWarp* pActiveEngine)
         s_pc++; return;
     }
 
-    if (strcmp(step.op, "combatmessagechecks") == 0 || strcmp(step.op, "effectpacketdamage") == 0) {
+    if (strcmp(step.op, "combatmessagechecks") == 0 || strcmp(step.op, "effectpacketdamage") == 0
+        || strcmp(step.op, "groupedpacketdamage") == 0) {
         auto* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();
         auto* remotes = game->GetRemoteObjectArray();
@@ -1776,7 +1779,8 @@ void Tick(CWarp* pActiveEngine)
             ++checks; valid = valid && ok;
             if (!ok) Emit("{\"step\":%d,\"op\":\"combat-message-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
         };
-        BOOL damage = strcmp(step.op, "effectpacketdamage") == 0;
+        BOOL damage = strcmp(step.op, "combatmessagechecks") != 0;
+        BOOL groupedDamage = strcmp(step.op, "groupedpacketdamage") == 0;
         SHORT sourceHP = source->m_baseStats.m_hitPoints, targetHP = target->m_baseStats.m_hitPoints;
         ULONG time = game->GetWorldTimer()->m_gameTime;
         PLAYER_ID sourcePlayer = source->m_remotePlayerID, targetPlayer = target->m_remotePlayerID;
@@ -1914,6 +1918,103 @@ void Tick(CWarp* pActiveEngine)
             projectile.MarshalMessage(&projectilePayload, &projectileSize);
         }
         projectileSize += header;
+        CMessage105::Node emptyHead = { &emptyHead, &emptyHead, NULL };
+        CMessage105::Node groupHead, groupNodes[2];
+        groupHead.m_pNext = &groupNodes[0]; groupHead.m_pPrev = &groupNodes[1]; groupHead.m_pMessage = NULL;
+        for (INT i = 0; i < 2; ++i) {
+            groupNodes[i].m_pNext = i == 0 ? &groupNodes[1] : &groupHead;
+            groupNodes[i].m_pPrev = i == 0 ? &groupHead : &groupNodes[0];
+            ITEM_EFFECT part = item; part.effectAmount = i + 2;
+            auto* message = new CMessageAddEffect(CGameEffect::DecodeEffect(&part, source->GetPos(), sourceId, target->GetPos()), 123, targetId);
+            message->m_effect->m_sourceRes = "ZRCHIT";
+            groupNodes[i].m_pMessage = message;
+        }
+        CMessage105 grouped(&groupHead, 0x1234, targetId);
+        BYTE groupBytes[512] = {}; BYTE* groupPayload = groupBytes + header; DWORD groupSize = 0;
+        static_cast<CMessage*>(&grouped)->MarshalMessage(&groupPayload, &groupSize);
+        if (!damage) {
+            const BYTE goldenHeader[] = {0xEF,0xCD,0xAB,0x89,0x34,0x12,0,0,2,89,0,0,0};
+            check("group-constructor-copies-nodes-and-owns-original-messages", grouped.field_C == 0x34
+                && grouped.GetSource() == 0x1234 && grouped.GetTarget() == targetId && grouped.m_nCount == 2
+                && grouped.m_pNodeHead != &groupHead && grouped.m_pNodeHead->m_pNext->m_pMessage == groupNodes[0].m_pMessage
+                && grouped.m_pNodeHead->m_pPrev->m_pMessage == groupNodes[1].m_pMessage
+                && groupHead.m_pNext == &groupNodes[0] && groupHead.m_pPrev == &groupNodes[1]);
+            check("group-golden-header-size-and-buffer-guards", groupSize == 191 && groupPayload == groupBytes + header
+                && memcmp(groupPayload, goldenHeader, sizeof(goldenHeader)) == 0 && groupPayload[groupSize] == 0);
+            for (INT i = 0; i < 2; ++i) {
+                BYTE child[128] = {}; BYTE* childPayload = child; DWORD childSize = 0;
+                groupNodes[i].m_pMessage->MarshalMessage(&childPayload, &childSize);
+                check("group-preserves-child-packets-in-order", childSize == 89 && memcmp(groupPayload + 13 + i * 89, child, 89) == 0);
+            }
+            CMessage105 decoded(&emptyHead, 0x5678, sourceId);
+            check("group-virtual-decode-and-message-origin", static_cast<CMessage*>(&decoded)->UnmarshalMessage(groupBytes, header + groupSize)
+                && decoded.GetTarget() == targetId && decoded.GetSource() == 0x5678 && decoded.field_C == 0x78 && decoded.m_nCount == 2);
+            auto* node = decoded.m_pNodeHead->m_pNext;
+            for (INT i = 0; i < 2 && node != decoded.m_pNodeHead; ++i, node = node->m_pNext) {
+                auto* child = dynamic_cast<CMessageAddEffect*>(node->m_pMessage);
+                check("group-decodes-concrete-child-effects-and-metadata", child && child->m_effect && dynamic_cast<CGameEffectDamage*>(child->m_effect)
+                    && child->GetSource() == 0 && child->GetTarget() == targetId && child->m_effect->m_sourceID == sourceId
+                    && child->m_effect->m_effectAmount == i + 2 && child->m_effect->m_sourceRes == "ZRCHIT");
+            }
+            auto* first = decoded.m_pNodeHead->m_pNext;
+            check("group-decode-appends-and-ignores-outer-size", decoded.UnmarshalMessage(groupBytes, 0)
+                && decoded.m_nCount == 4 && decoded.m_pNodeHead->m_pNext == first
+                && decoded.m_pNodeHead->m_pPrev->m_pNext == decoded.m_pNodeHead);
+            PLAYER_ID missing = 0x24681357; memcpy(groupPayload, &missing, 4);
+            check("group-unmapped-outer-header-leaves-existing-list", !decoded.UnmarshalMessage(groupBytes, header + 8)
+                && decoded.m_nCount == 4 && decoded.m_pNodeHead->m_pNext == first && decoded.GetTarget() == targetId);
+            memcpy(groupPayload, &targetMap.remotePlayerID, 4);
+            groupPayload[8] = 0; DWORD oddStride = 7; memcpy(groupPayload + 9, &oddStride, 4);
+            check("group-empty-decode-retains-list-and-accepts-unused-stride", decoded.UnmarshalMessage(groupBytes, header + 13)
+                && decoded.m_nCount == 4 && decoded.m_pNodeHead->m_pNext == first);
+            CMessage105 empty(&emptyHead, 99, targetId);
+            BYTE emptyBytes[32] = {}; BYTE* emptyPayload = emptyBytes; DWORD emptySize = 0;
+            static_cast<CMessage*>(&empty)->MarshalMessage(&emptyPayload, &emptySize);
+            check("group-empty-marshal-is-thirteen-bytes", emptySize == 13 && emptyPayload[8] == 0
+                && memcmp(emptyPayload, goldenHeader, 8) == 0 && emptyPayload[9] == 89 && emptyPayload[13] == 0);
+            empty.m_targetId = -1; memset(emptyBytes, 0xA5, sizeof(emptyBytes)); emptySize = 999;
+            empty.MarshalMessage(&emptyPayload, &emptySize);
+            check("group-missing-marshal-target-zero-size-untouched", emptySize == 0 && emptyPayload[0] == 0xA5);
+            INT runOrder = 0, destroyed = 0;
+            struct GroupProbe : CMessage {
+                INT digit; INT* order; INT* destroyed;
+                GroupProbe(INT digit, INT* order, INT* destroyed) : CMessage(0, 0), digit(digit), order(order), destroyed(destroyed) {}
+                void MarshalMessage(BYTE** data, DWORD* size) override {
+                    ++*data; memset(*data, digit, 89); *size = 89;
+                }
+                void Run() override { *order = *order * 10 + digit; }
+                ~GroupProbe() override { ++*destroyed; }
+            };
+            {
+                CMessage105::Node probeHead, probeNodes[2];
+                probeHead = { &probeNodes[0], &probeNodes[1], NULL };
+                probeNodes[0] = { &probeNodes[1], &probeHead, new GroupProbe(1, &runOrder, &destroyed) };
+                probeNodes[1] = { &probeHead, &probeNodes[0], new GroupProbe(2, &runOrder, &destroyed) };
+                CMessage105 probe(&probeHead, 0, targetId);
+                BYTE bytes[256] = {}; BYTE* cursor = bytes; DWORD length = 0;
+                static_cast<CMessage*>(&probe)->MarshalMessage(&cursor, &length);
+                check("group-preserves-virtual-child-buffer-pointer-updates", cursor == bytes && length == 191
+                    && bytes[13] == 0 && bytes[14] == 1 && bytes[102] == 1 && bytes[103] == 0
+                    && bytes[104] == 2 && bytes[192] == 2 && bytes[193] == 0);
+                static_cast<CMessage*>(&probe)->Run();
+                check("group-run-keeps-order-and-retains-children", runOrder == 12 && destroyed == 0 && probe.m_nCount == 2);
+                probe.Run();
+                check("group-repeat-run-preserves-list", runOrder == 1212 && destroyed == 0 && probe.m_nCount == 2);
+            }
+            check("group-destructor-deletes-each-owned-child-once", destroyed == 2);
+            // The original deliberately keeps a child even if its decoder fails.
+            groupPayload[8] = 2; DWORD headerOnly = 8; memcpy(groupPayload + 9, &headerOnly, 4);
+            for (INT i = 0; i < 2; ++i) { memcpy(groupPayload + 13 + i * 8, &missing, 4); memcpy(groupPayload + 17 + i * 8, &targetRemote, 4); }
+            CMessage105 failedChildren(&emptyHead, 77, sourceId);
+            check("group-ignores-child-decode-failure", failedChildren.UnmarshalMessage(groupBytes, header + 29)
+                && failedChildren.GetTarget() == targetId && failedChildren.m_nCount == 2);
+            for (auto* part = failedChildren.m_pNodeHead->m_pNext; part != failedChildren.m_pNodeHead; part = part->m_pNext) {
+                auto* child = dynamic_cast<CMessageAddEffect*>(part->m_pMessage);
+                check("group-retains-failed-child-with-null-effect", child && child->GetTarget() == 0 && child->m_effect == NULL);
+            }
+            for (INT i = 0; i < 2; ++i) static_cast<CMessageAddEffect*>(groupNodes[i].m_pMessage)->m_effect->m_effectID = CGAMEEFFECT_DETECTTRAPS;
+            grouped.MarshalMessage(&groupPayload, &groupSize);
+        }
         CNetwork& network = g_pChitin->cNetwork;
         auto* settings = game->GetMultiplayerSettings();
         INT provider = network.m_nServiceProvider;
@@ -1949,7 +2050,20 @@ void Tick(CWarp* pActiveEngine)
         };
         {
             CMessageHandler handler;
-            if (damage) {
+            if (groupedDamage) {
+                network.m_nServiceProvider = CNetwork::SERV_PROV_NULL; game->field_4BD4 = 255;
+                receive(groupBytes, header + groupSize, 105); handler.AsynchronousUpdate();
+                check("received-group-immediate-damage-with-null-provider", incoming.IsEmpty() && handler.m_messageList.IsEmpty()
+                    && source->m_baseStats.m_hitPoints == sourceHP && targetHP - target->m_baseStats.m_hitPoints == 5);
+                network.m_nServiceProvider = CNetwork::SERV_PROV_TCP_IP;
+                receive(groupBytes, header + groupSize, 105); handler.AsynchronousUpdate();
+                auto* pending = handler.m_messageList.IsEmpty() ? NULL : dynamic_cast<CMessage105*>(handler.m_messageList.GetHead());
+                check("received-group-deferred-damage-waits", incoming.IsEmpty() && handler.m_messageList.GetCount() == 1
+                    && pending && pending->m_nCount == 2 && targetHP - target->m_baseStats.m_hitPoints == 5);
+                game->field_4BD4 = 0; handler.AsynchronousUpdate();
+                check("received-group-unblocked-delivers-both-effects", handler.m_messageList.IsEmpty()
+                    && source->m_baseStats.m_hitPoints == sourceHP && targetHP - target->m_baseStats.m_hitPoints == 10);
+            } else if (damage) {
                 network.m_nServiceProvider = CNetwork::SERV_PROV_NULL; game->field_4BD4 = 0;
                 receive(effectBytes, effectSize, 1); handler.AsynchronousUpdate();
                 check("received-damage-reaches-defender-only", incoming.IsEmpty() && handler.m_messageList.IsEmpty()
@@ -1969,6 +2083,38 @@ void Tick(CWarp* pActiveEngine)
                         check("received-effect-unblocked-run", handler.m_messageList.IsEmpty());
                     }
                 }
+                for (INT mode = 0; mode < 3; ++mode) {
+                    network.m_nServiceProvider = mode == 2 ? CNetwork::SERV_PROV_NULL : CNetwork::SERV_PROV_TCP_IP;
+                    game->field_4BD4 = mode == 0 ? 0 : 255;
+                    receive(groupBytes, header + groupSize, 105); handler.AsynchronousUpdate();
+                    check("received-group-immediate-or-owned-queue", incoming.IsEmpty() && (mode == 1
+                        ? handler.m_messageList.GetCount() == 1 && dynamic_cast<CMessage105*>(handler.m_messageList.GetHead())
+                        : handler.m_messageList.IsEmpty()));
+                    if (mode == 1) {
+                        auto* message = dynamic_cast<CMessage105*>(handler.m_messageList.GetHead());
+                        check("received-group-retains-two-ordered-owned-effects", message && message->m_nCount == 2
+                            && message->GetSource() == 0 && message->GetTarget() == targetId
+                            && dynamic_cast<CMessageAddEffect*>(message->m_pNodeHead->m_pNext->m_pMessage)
+                            && dynamic_cast<CMessageAddEffect*>(message->m_pNodeHead->m_pPrev->m_pMessage)
+                            && static_cast<CMessageAddEffect*>(message->m_pNodeHead->m_pNext->m_pMessage)->m_effect->m_effectAmount == 2
+                            && static_cast<CMessageAddEffect*>(message->m_pNodeHead->m_pPrev->m_pMessage)->m_effect->m_effectAmount == 3);
+                        game->field_4BD4 = 0; handler.AsynchronousUpdate();
+                        check("received-group-unblocked-run-and-release", handler.m_messageList.IsEmpty());
+                    }
+                }
+                network.m_nServiceProvider = CNetwork::SERV_PROV_TCP_IP;
+                game->field_4BD4 = 255;
+                receive(effectBytes, effectSize, 1); receive(groupBytes, header + groupSize, 105); handler.AsynchronousUpdate();
+                check("mixed-single-and-grouped-message-fifo", handler.m_messageList.GetCount() == 2
+                    && dynamic_cast<CMessageAddEffect*>(handler.m_messageList.GetHead())
+                    && dynamic_cast<CMessage105*>(handler.m_messageList.GetTail()));
+                game->field_4BD4 = 0; handler.AsynchronousUpdate();
+                check("mixed-single-and-grouped-message-unblock", handler.m_messageList.IsEmpty());
+                network.m_bConnectionEstablished = FALSE;
+                receive(groupBytes, header + groupSize, 105); handler.AsynchronousUpdate();
+                check("disconnected-group-remains-in-network-queue", incoming.GetCount() == 1 && handler.m_messageList.IsEmpty());
+                network.m_bConnectionEstablished = TRUE; handler.AsynchronousUpdate();
+                check("reconnected-group-consumes-and-runs", incoming.IsEmpty() && handler.m_messageList.IsEmpty());
                 // Inspect real launches before their first tick, then remove them.
                 for (WORD type : {static_cast<WORD>(2), static_cast<WORD>(12), static_cast<WORD>(17), static_cast<WORD>(0x131)}) {
                     for (BYTE block : {static_cast<BYTE>(0), static_cast<BYTE>(255)}) {
@@ -2019,12 +2165,16 @@ void Tick(CWarp* pActiveEngine)
                 memcpy(payload + 72, &missing, 4); memcpy(projectilePayload + 10, &missing, 4);
                 for (BYTE block : {static_cast<BYTE>(0), static_cast<BYTE>(255)}) {
                     game->field_4BD4 = block;
-                    receive(effectBytes, header + 80, 1); receive(projectileBytes, header + 18, 26); handler.AsynchronousUpdate();
+                    memcpy(groupPayload, &missing, 4);
+                    receive(effectBytes, header + 80, 1); receive(projectileBytes, header + 18, 26);
+                    receive(groupBytes, header + 8, 105); handler.AsynchronousUpdate();
                     check("failed-incoming-decode-discards-owned-messages", incoming.IsEmpty() && handler.m_messageList.IsEmpty());
                 }
                 memcpy(payload + 72, &sourceMap.remotePlayerID, 4); memcpy(projectilePayload + 10, &targetMap.remotePlayerID, 4);
+                memcpy(groupPayload, &targetMap.remotePlayerID, 4);
                 for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) settings->m_pnPlayerReady[i] = network.m_idLocalPlayer ^ 0xFFFFFFFF;
-                game->field_4BD4 = 0; receive(effectBytes, effectSize, 1); receive(projectileBytes, header + size, 26); handler.AsynchronousUpdate();
+                game->field_4BD4 = 0; receive(effectBytes, effectSize, 1); receive(projectileBytes, header + size, 26);
+                receive(groupBytes, header + groupSize, 105); handler.AsynchronousUpdate();
                 check("not-ready-discards-combat-packets", incoming.IsEmpty() && handler.m_messageList.IsEmpty());
                 check("packet-and-launch-checks-do-not-damage-party", source->m_baseStats.m_hitPoints == sourceHP && target->m_baseStats.m_hitPoints == targetHP);
             }
