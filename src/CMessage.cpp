@@ -5139,7 +5139,7 @@ BOOLEAN CBaldurMessage::GetDialogRequestPending()
     return m_bDialogRequestPending;
 }
 
-// 0x4F4F50
+// 0x4F4F60
 BOOLEAN CBaldurMessage::GetDialogReplyReturned()
 {
     return m_bDialogReplyReturned;
@@ -5227,7 +5227,14 @@ CMessageHandler::CMessageHandler()
 // 0x4F7490
 CMessageHandler::~CMessageHandler()
 {
-    // TODO: Incomplete.
+    POSITION pos = m_messageList.GetHeadPosition();
+    while (pos != NULL) {
+        CMessage* message = m_messageList.GetNext(pos);
+        if (message != NULL) {
+            delete message;
+        }
+    }
+    m_messageList.RemoveAll();
 }
 
 static BOOL Iwd2MessageRunHeldBack(BYTE subType);
@@ -5235,14 +5242,81 @@ static BOOL Iwd2MessageRunHeldBack(BYTE subType);
 // 0x4EE020
 void CMessageHandler::AsynchronousUpdate()
 {
-    while (!m_messageList.IsEmpty()) {
-        CMessage* pMsg = m_messageList.RemoveHead();
-        if (pMsg != NULL) {
-            if (!Iwd2MessageRunHeldBack(pMsg->GetMsgSubType())) {
-                pMsg->Run();
+    // PARTIAL: Incoming inventory factories; remaining ready-player handlers below are unimplemented.
+    CNetwork& network = g_pChitin->cNetwork;
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CBaldurMessage* baldurMessage = g_pBaldurChitin->GetBaldurMessage();
+    if (network.GetServiceProvider() == CNetwork::SERV_PROV_NULL || !game->field_4BD4) {
+        while (!m_messageList.IsEmpty()) {
+            CMessage* pMsg = m_messageList.RemoveHead();
+            if (pMsg != NULL) {
+                if (!Iwd2MessageRunHeldBack(pMsg->GetMsgSubType())) {
+                    pMsg->Run();
+                }
+                delete pMsg;
             }
-            delete pMsg;
         }
+    }
+
+    while (network.m_bConnectionEstablished == TRUE && network.PeekMessage_() == TRUE) {
+        INT from, to;
+        DWORD size;
+        BYTE* data = network.FetchMessage(from, to, size);
+        if (data[CNetwork::SPEC_MSG_FLAG] != CNetwork::SPEC_MSG_FLAG_ENABLED) {
+            baldurMessage->OnChatMessage(from, data, size);
+        } else if (game->GetMultiplayerSettings()->GetPlayerReady(network.m_idLocalPlayer) != TRUE) {
+            if (data[CNetwork::SPEC_MSG_TYPE] == CBaldurMessage::MSG_TYPE_MPSETTINGS
+                && data[CNetwork::SPEC_MSG_SUBTYPE] == CBaldurMessage::MSG_SUBTYPE_MPSETTINGS_FULLSET) {
+                baldurMessage->OnSettingsFullSet(from, data, size);
+            }
+            if (data[CNetwork::SPEC_MSG_TYPE] == CBaldurMessage::MSG_TYPE_VERSION
+                && data[CNetwork::SPEC_MSG_SUBTYPE] == CBaldurMessage::MSG_SUBTYPE_VERSION_SERVER) {
+                baldurMessage->OnVersionServer(from, data, size);
+            }
+            if (data[CNetwork::SPEC_MSG_TYPE] == CBaldurMessage::MSG_TYPE_PLAYERCHAR
+                && data[CNetwork::SPEC_MSG_SUBTYPE] == CBaldurMessage::MSG_SUBTYPE_PLAYERCHAR_DEMAND_REPLY) {
+                baldurMessage->OnDemandCharacterSlotReply(from, data, size);
+            }
+        } else if (data[CNetwork::SPEC_MSG_TYPE] == CBaldurMessage::MSG_TYPE_CMESSAGE) {
+            BOOL immediate = network.GetServiceProvider() == CNetwork::SERV_PROV_NULL || !game->field_4BD4;
+            switch (data[CNetwork::SPEC_MSG_SUBTYPE]) {
+            case 2:
+                if (immediate) {
+                    CMessageAddItem message(CItem(), 0, 0);
+                    if (message.UnmarshalMessage(data, size)) message.Run();
+                } else {
+                    CMessage* message = new CMessageAddItem(CItem(), 0, 0);
+                    if (message->UnmarshalMessage(data, size)) m_messageList.AddTail(message);
+                    else delete message;
+                }
+                break;
+            case 34:
+                if (immediate) {
+                    CMessageRemoveItem message(0, 0, 0);
+                    if (message.UnmarshalMessage(data, size)) message.Run();
+                } else {
+                    CMessage* message = new CMessageRemoveItem(0, 0, 0);
+                    if (message->UnmarshalMessage(data, size)) m_messageList.AddTail(message);
+                    else delete message;
+                }
+                break;
+            default:
+                // TODO: Remaining incoming CMessage factories are unimplemented.
+                break;
+            }
+        } else {
+            // TODO: Remaining ready-player protocol handlers are unimplemented.
+        }
+        delete data;
+    }
+
+    if (network.GetSessionHosting() == TRUE) {
+        baldurMessage->PurgeDroppedPlayers();
+        baldurMessage->ObjectControl();
+    }
+    if (baldurMessage->GetDialogRequestPending() == TRUE && baldurMessage->GetDialogReplyReturned() == TRUE) {
+        baldurMessage->SetDialogReplyUpdates(static_cast<INT>(static_cast<DWORD>(baldurMessage->GetDialogReplyUpdates()) - 1));
+        if (baldurMessage->GetDialogReplyUpdates() < 0) baldurMessage->CancelDialogRequestToServer();
     }
 }
 
@@ -18705,6 +18779,24 @@ void CMessageSetVariable::Run()
         CGameObjectArray::THREAD_ASYNCH, INFINITE);
 }
 
+
+// 0x4F5130
+CMessageAddItem::CMessageAddItem(const CItem& item, LONG caller, LONG target)
+    : CMessage(caller, target), m_item()
+{
+    m_item.SetResRef(item.cResRef, TRUE);
+    m_item.m_useCount1 = item.m_useCount1;
+    m_item.m_useCount2 = item.m_useCount2;
+    m_item.m_useCount3 = item.m_useCount3;
+    m_item.m_wear = item.m_wear;
+    m_item.m_flags = item.m_flags;
+}
+
+// 0x4F5C70
+CMessageRemoveItem::CMessageRemoveItem(SHORT slot, LONG caller, LONG target)
+    : CMessage(caller, target), m_slot(slot)
+{
+}
 
 // 0x4F8D60
 void CMessageAddItem::MarshalMessage(BYTE** pData, DWORD* dwSize)

@@ -1751,6 +1751,209 @@ void Tick(CWarp* pActiveEngine)
         s_pc++; return;
     }
 
+    if (strcmp(step.op, "itemreceivechecks") == 0) {
+        auto* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        auto* remotes = game->GetRemoteObjectArray();
+        LONG actorId = game->GetFixedOrderCharacterId(0);
+        CGameObject* raw = NULL;
+        if (objects->GetDeny(actorId, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS
+            || raw == NULL || raw->GetObjectType() != CGameObject::TYPE_SPRITE) {
+            if (raw != NULL) objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires party sprite"); return;
+        }
+        auto* actor = static_cast<CGameSprite*>(raw);
+        INT checks = 0; BOOL valid = TRUE;
+        auto check = [&](const char* name, BOOL ok) {
+            ++checks; valid = valid && ok;
+            if (!ok) Emit("{\"step\":%d,\"op\":\"item-receive-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+        };
+        CNetwork& network = g_pChitin->cNetwork;
+        auto* baldur = g_pBaldurChitin->GetBaldurMessage();
+        auto* settings = game->GetMultiplayerSettings();
+        INT provider = network.m_nServiceProvider;
+        BOOLEAN connected = network.m_bConnectionEstablished, hosting = network.m_bIsHost;
+        BOOLEAN initialized = network.m_SystemWindow.m_bInitialized;
+        BYTE blocked = game->field_4BD4;
+        BOOLEAN returned = baldur->m_bDialogReplyReturned, pending = baldur->m_bDialogRequestPending;
+        INT updates = baldur->m_nDialogReplyUpdates;
+        PLAYER_ID ready[CNETWORK_MAX_PLAYERS];
+        memcpy(ready, settings->m_pnPlayerReady, sizeof(ready));
+        BOOLEAN windows[CNETWORK_MAX_PLAYERS];
+        EnterCriticalSection(&network.m_critSectQueue);
+        for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) {
+            windows[i] = network.m_pSlidingWindow[i].m_bInitialized;
+            network.m_pSlidingWindow[i].m_bInitialized = FALSE;
+        }
+        auto& incoming = network.m_SystemWindow.m_lQueueIncomingMessages;
+        std::list<CNETWORKWINDOW_QUEUEENTRY*> savedIncoming;
+        while (!incoming.IsEmpty()) savedIncoming.push_back(incoming.RemoveHead());
+        network.m_bIsHost = FALSE;
+        network.m_SystemWindow.m_bInitialized = TRUE; network.m_bConnectionEstablished = TRUE;
+        settings->m_pnPlayerReady[0] = network.m_idLocalPlayer;
+        baldur->m_bDialogReplyReturned = FALSE;
+        ULONG time = game->GetWorldTimer()->m_gameTime;
+        auto& outgoing = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT queued = outgoing.GetCount();
+        CItem* original = actor->m_equipment.m_items[18];
+        actor->m_equipment.m_items[18] = NULL;
+        game->m_disposableItemsCritSect.Lock();
+        INT disposable = game->m_lDisposableItems.GetCount();
+        PLAYER_ID player = actor->m_remotePlayerID;
+        LONG remote = actor->m_remoteObjectID;
+        remotes->m_critSect.Lock();
+        CGameRemoteObjectListEntry mapping;
+        mapping.remotePlayerID = network.m_idLocalPlayer ^ 0x89ABCDEF; mapping.remoteObjectID = 0x1234;
+        mapping.localObjectID = actorId; mapping.pNext = remotes->m_pArray[0];
+        remotes->m_pArray[0] = &mapping;
+        actor->m_remotePlayerID = mapping.remotePlayerID; actor->m_remoteObjectID = mapping.remoteObjectID;
+        CItem fixture(CResRef("ZRCARROW"), 1, 1, 1, 0, 1);
+        fixture.m_nAbilities = 77; fixture.m_numSounds = 2;
+        fixture.m_useCount1 = 0; fixture.m_useCount2 = 0x8000; fixture.m_useCount3 = 0xFFFF;
+        fixture.m_wear = 0xBEEF; fixture.m_flags = 0xDEADBEEF;
+        {
+            CMessageAddItem copy(fixture, 0x12345678, actorId);
+            check("constructor-resource-raw-words-and-flags", copy.m_item.cResRef == "ZRCARROW"
+                && copy.m_item.m_useCount1 == 0 && copy.m_item.m_useCount2 == 0x8000
+                && copy.m_item.m_useCount3 == 0xFFFF && copy.m_item.m_wear == 0xBEEF
+                && copy.m_item.m_flags == 0xDEADBEEF && copy.GetSource() == 0x12345678 && copy.GetTarget() == actorId);
+            check("constructor-does-not-copy-ability-or-sound-cache", copy.m_item.m_nAbilities == 0 && copy.m_item.m_numSounds == 0);
+        }
+        BYTE add[64] = {}, remove[64] = {};
+        DWORD addSize = 0, removeSize = 0;
+        BYTE* data = add + CNetwork::SPEC_MSG_HEADER_LENGTH;
+        CMessageAddItem addMessage(fixture, 99, actorId);
+        addMessage.MarshalMessage(&data, &addSize);
+        data = remove + CNetwork::SPEC_MSG_HEADER_LENGTH;
+        CMessageRemoveItem removeMessage(18, 99, actorId);
+        removeMessage.MarshalMessage(&data, &removeSize);
+        addSize += CNetwork::SPEC_MSG_HEADER_LENGTH; removeSize += CNetwork::SPEC_MSG_HEADER_LENGTH;
+        for (BYTE* packet : {add, remove}) {
+            packet[CNetwork::SPEC_MSG_FLAG] = CNetwork::SPEC_MSG_FLAG_ENABLED;
+            packet[CNetwork::SPEC_MSG_TYPE] = CBaldurMessage::MSG_TYPE_CMESSAGE;
+        }
+        add[CNetwork::SPEC_MSG_SUBTYPE] = 2; remove[CNetwork::SPEC_MSG_SUBTYPE] = 34;
+        auto receive = [&](BYTE* packet, DWORD size) {
+            auto* node = new CNETWORKWINDOW_QUEUEENTRY;
+            node->idFrom = 0xABCDEF12; node->idTo = network.m_idLocalPlayer;
+            node->dwSize = CNetwork::dword_85E694 + size;
+            node->pData = new BYTE[node->dwSize]; memset(node->pData, 0, node->dwSize);
+            memcpy(node->pData + CNetwork::dword_85E698, (LPCTSTR)CNetwork::MG, CNetwork::dword_85E69C);
+            memcpy(node->pData + CNetwork::dword_85E694, packet, size);
+            incoming.AddTail(node);
+        };
+        auto cleanup = [&]() {
+            delete actor->m_equipment.m_items[18]; actor->m_equipment.m_items[18] = NULL;
+            while (game->m_lDisposableItems.GetCount() > disposable) delete game->m_lDisposableItems.RemoveTail();
+            while (outgoing.GetCount() > queued) delete outgoing.RemoveTail();
+        };
+        {
+            CMessageHandler handler;
+            // Each condition independently selects immediate delivery. A
+            // nonzero synchronization byte blocks both receipt and local Run.
+            const INT providers[] = {CNetwork::SERV_PROV_NULL, 1, 1};
+            const BYTE blocks[] = {255, 0, 255};
+            for (INT mode = 0; mode < 3; ++mode) {
+                network.m_nServiceProvider = providers[mode]; game->field_4BD4 = blocks[mode];
+                receive(add, addSize); handler.AsynchronousUpdate();
+                check("network-frame-consumed", incoming.IsEmpty());
+                if (mode < 2) {
+                    check("immediate-receive-delivers-item", handler.m_messageList.IsEmpty()
+                        && actor->m_equipment.m_items[18] && actor->m_equipment.m_items[18]->cResRef == "ZRCARROW");
+                } else {
+                    auto* decoded = handler.m_messageList.IsEmpty() ? NULL
+                        : dynamic_cast<CMessageAddItem*>(handler.m_messageList.GetHead());
+                    check("deferred-receive-retains-decoded-message", handler.m_messageList.GetCount() == 1
+                        && decoded && decoded->GetSource() == 0 && decoded->GetTarget() == actorId
+                        && decoded->m_item.m_nAbilities == 0 && decoded->m_item.m_numSounds == 0
+                        && actor->m_equipment.m_items[18] == NULL);
+                    handler.AsynchronousUpdate();
+                    check("blocked-local-queue-kept", handler.m_messageList.GetCount() == 1 && actor->m_equipment.m_items[18] == NULL);
+                    game->field_4BD4 = 0; handler.AsynchronousUpdate();
+                    check("unblocked-local-queue-delivers", handler.m_messageList.IsEmpty() && actor->m_equipment.m_items[18] != NULL);
+                }
+                receive(remove, removeSize); handler.AsynchronousUpdate();
+                check("received-remove-retires-item", incoming.IsEmpty() && handler.m_messageList.IsEmpty()
+                    && actor->m_equipment.m_items[18] == NULL && game->m_lDisposableItems.GetCount() == disposable + 1);
+                cleanup();
+            }
+            network.m_nServiceProvider = 1; game->field_4BD4 = 1;
+            receive(add, addSize); receive(remove, removeSize); handler.AsynchronousUpdate();
+            check("deferred-pair-preserves-fifo-types", handler.m_messageList.GetCount() == 2
+                && dynamic_cast<CMessageAddItem*>(handler.m_messageList.GetHead())
+                && dynamic_cast<CMessageRemoveItem*>(handler.m_messageList.GetTail()) && actor->m_equipment.m_items[18] == NULL);
+            game->field_4BD4 = 0; handler.AsynchronousUpdate();
+            check("fifo-pair-adds-then-retires", handler.m_messageList.IsEmpty() && actor->m_equipment.m_items[18] == NULL
+                && game->m_lDisposableItems.GetCount() == disposable + 1); cleanup();
+            for (BYTE connection : {static_cast<BYTE>(0), static_cast<BYTE>(255)}) {
+                network.m_bConnectionEstablished = connection; receive(add, addSize); handler.AsynchronousUpdate();
+                check("connection-requires-exact-true", incoming.GetCount() == 1 && actor->m_equipment.m_items[18] == NULL);
+                network.m_bConnectionEstablished = TRUE; handler.AsynchronousUpdate();
+                check("connection-resumed-delivers", incoming.IsEmpty() && actor->m_equipment.m_items[18] != NULL); cleanup();
+            }
+            for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) settings->m_pnPlayerReady[i] = network.m_idLocalPlayer ^ 0xFFFFFFFF;
+            receive(add, addSize); handler.AsynchronousUpdate();
+            check("not-ready-discards-inventory-packet", incoming.IsEmpty() && actor->m_equipment.m_items[18] == NULL && handler.m_messageList.IsEmpty());
+            settings->m_pnPlayerReady[0] = network.m_idLocalPlayer;
+            PLAYER_ID missing = 0x76543210;
+            for (BYTE* packet : {add, remove}) {
+                memcpy(packet + CNetwork::SPEC_MSG_HEADER_LENGTH, &missing, sizeof(missing));
+                for (BYTE block : {static_cast<BYTE>(0), static_cast<BYTE>(1)}) {
+                    game->field_4BD4 = block;
+                    receive(packet, CNetwork::SPEC_MSG_HEADER_LENGTH + 8); handler.AsynchronousUpdate();
+                    check("unmapped-header-only-fails-without-queue-or-run", incoming.IsEmpty()
+                        && handler.m_messageList.IsEmpty() && actor->m_equipment.m_items[18] == NULL);
+                }
+            }
+            network.m_bConnectionEstablished = FALSE;
+            for (BYTE flag : {static_cast<BYTE>(0), static_cast<BYTE>(1), static_cast<BYTE>(255)}) {
+                baldur->m_bDialogReplyReturned = flag;
+                check("reply-getter-retains-raw-byte", baldur->GetDialogReplyReturned() == flag);
+                baldur->m_bDialogRequestPending = TRUE; baldur->m_nDialogReplyUpdates = 7;
+                handler.AsynchronousUpdate();
+                check("reply-countdown-requires-exact-true", baldur->m_nDialogReplyUpdates == (flag == TRUE ? 6 : 7));
+            }
+            baldur->m_bDialogRequestPending = 255; baldur->m_bDialogReplyReturned = TRUE; baldur->m_nDialogReplyUpdates = 7;
+            handler.AsynchronousUpdate(); check("reply-pending-requires-exact-true", baldur->m_nDialogReplyUpdates == 7);
+            baldur->m_bDialogRequestPending = TRUE; baldur->m_nDialogReplyUpdates = INT_MIN;
+            handler.AsynchronousUpdate(); check("reply-countdown-wraps-full-width", baldur->m_nDialogReplyUpdates == INT_MAX);
+            baldur->m_nDialogReplyUpdates = INT_MAX;
+            handler.AsynchronousUpdate(); check("reply-countdown-keeps-high-word", baldur->m_nDialogReplyUpdates == INT_MAX - 1);
+        }
+        struct OwnedMessage : CMessage {
+            CMessageHandler* handler; INT* destroyed; INT* ran; BOOL* order;
+            OwnedMessage(CMessageHandler* h, INT* d, INT* r, BOOL* o) : CMessage(0, 0), handler(h), destroyed(d), ran(r), order(o) {}
+            ~OwnedMessage() override { *order = *order && handler->m_messageList.GetCount() == 3; ++*destroyed; }
+            void Run() override { ++*ran; }
+        };
+        INT destroyed = 0, ran = 0; BOOL order = TRUE;
+        {
+            CMessageHandler handler;
+            handler.m_messageList.AddTail(new OwnedMessage(&handler, &destroyed, &ran, &order));
+            handler.m_messageList.AddTail(static_cast<CMessage*>(NULL));
+            handler.m_messageList.AddTail(new OwnedMessage(&handler, &destroyed, &ran, &order));
+        }
+        check("handler-destructor-owns-messages-without-running-or-unlinking-early", destroyed == 2 && ran == 0 && order);
+        cleanup(); actor->m_equipment.m_items[18] = original;
+        game->m_disposableItemsCritSect.Unlock();
+        remotes->m_pArray[0] = mapping.pNext; actor->m_remotePlayerID = player; actor->m_remoteObjectID = remote;
+        remotes->m_critSect.Unlock();
+        while (!incoming.IsEmpty()) { auto* node = incoming.RemoveHead(); delete node->pData; delete node; }
+        for (auto* node : savedIncoming) incoming.AddTail(node);
+        for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) network.m_pSlidingWindow[i].m_bInitialized = windows[i];
+        network.m_nServiceProvider = provider; network.m_bConnectionEstablished = connected;
+        network.m_bIsHost = hosting; network.m_SystemWindow.m_bInitialized = initialized;
+        memcpy(settings->m_pnPlayerReady, ready, sizeof(ready)); game->field_4BD4 = blocked;
+        baldur->m_bDialogReplyReturned = returned; baldur->m_bDialogRequestPending = pending; baldur->m_nDialogReplyUpdates = updates;
+        LeaveCriticalSection(&network.m_critSectQueue);
+        check("queue-disposal-and-clock-restored", outgoing.GetCount() == queued && game->m_lDisposableItems.GetCount() == disposable
+            && game->GetWorldTimer()->m_gameTime == time);
+        objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"itemreceivechecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "item receive mismatch (state restored)"); return; }
+        s_pc++; return;
+    }
+
     if (strcmp(step.op, "itempacketchecks") == 0) {
         auto* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();

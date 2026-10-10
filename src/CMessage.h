@@ -25,6 +25,7 @@ class CGameContainer;
 class CGameDoor;
 class CGameEffect;
 
+#pragma pack(push, 2)
 class CBaldurMessage {
 public:
     static const BYTE MSG_TYPE_PROGRESSBAR;
@@ -420,6 +421,7 @@ public:
     /* 00F5 */ BOOLEAN m_bInReputationChange;
     /* 00F6 */ BOOLEAN m_bInMessageSetDrawPoly;
 };
+#pragma pack(pop)
 
 class CMessage {
 public:
@@ -445,6 +447,7 @@ public:
     /* 0008 */ LONG m_sourceId;
 };
 
+#pragma pack(push, 2)
 class CMessageHandler {
 public:
     CMessageHandler();
@@ -460,6 +463,7 @@ public:
     /* 0000 */ CTypedPtrList<CPtrList, CMessage*> m_messageList;
     /* 001C */ BOOLEAN m_bLastArbitrationLockStatus;
 };
+#pragma pack(pop)
 
 class CMessageAddAction : public CMessage {
 public:
@@ -2027,7 +2031,7 @@ public:
 #pragma pack(push, 2)
 class CMessageAddItem : public CMessage {
 public:
-    CMessageAddItem(const CItem& item, LONG caller, LONG target) : CMessage(caller, target), m_item() { m_item = item; }
+    CMessageAddItem(const CItem& item, LONG caller, LONG target);
     SHORT GetCommType() override { return SEND; }
     BYTE GetMsgType() override { return CBaldurMessage::MSG_TYPE_CMESSAGE; }
     BYTE GetMsgSubType() override { return 2; }
@@ -2038,7 +2042,7 @@ public:
 };
 class CMessageRemoveItem : public CMessage {
 public:
-    CMessageRemoveItem(SHORT slot, LONG caller, LONG target) : CMessage(caller, target), m_slot(slot) {}
+    CMessageRemoveItem(SHORT slot, LONG caller, LONG target);
     SHORT GetCommType() override { return SEND; }
     BYTE GetMsgType() override { return CBaldurMessage::MSG_TYPE_CMESSAGE; }
     BYTE GetMsgSubType() override { return 34; }
