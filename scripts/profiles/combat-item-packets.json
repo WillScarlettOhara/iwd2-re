@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/combat-item-packets.txt",
+  "hold": 60,
+  "fixtures": [
+    "combat-payload"
+  ],
+  "preserve": [],
+  "preconditions": [
+    "Exercise all four inventory packet overrides virtually, golden AddItem bytes, variable resref lengths, all three WORD charges, wear/flags, signed removal slots, constructor normalization and unmapped header-only failures; restore resource header and remote mapping in the same tick.",
+    "Exercise actual door toggle, force/lock/key consumption, traps, sound channel, raw DoorOpen BYTE and missing IDs, occupied footprint, item placement/messages and empty weapon refresh; restore state in the same tick.",
+    "Deliver door effects virtually: knock sentinel, trap WORD thresholds and reentrancy, forced-cast payload/routing, unsupported-opcode discard; restore door state and discard messages.",
+    "Marshal/decode DoorOpen 17-byte packets, preserving BYTE values and missing target/source behavior; isolate and remove remote mappings.",
+    "Invoke an existing Greater Zombie Lord CRE through the recovered door summon branch; inspect removal and FireProjectile payloads, exercise SPBOOM Time Stop and animation retirement, then delete new objects before ordinary ticks.",
+    "Exercise loaded-door normal orders, instance selectors, bash/picklock/disarm/magic modes and skill-rank guards; discard generated messages and restore the group and actor state in the same tick.",
+    "Exercise CompressTime signed flash wrapping, strict hour threshold, random close/keep-open, occupied-cell guard and host status message without advancing the world clock; restore search pointers and flags.",
+    "Exercise both clipped door polygon renderers on the software back surface; require changed pixels and unlocked surfaces. Cover hidden/secret/open/locked and timed Render branches on the loaded door.",
+    "Exercise ordinary MoveToObject action 22 for missing, stale, immune, non-sprite and sprite targets, flags and m_lastActionID; inspect actual throttled target-ID requests.",
+    "Exercise MoveToPointRange boolean Y-distance, strict area bounds, signed range square wrapping and background eligibility; inspect and remove front/back requests under the private semaphore.",
+    "Exercise GetMoveDest weighted distance, tie preference, reference identity and LONG wrapping on a real loaded door; test door callers with identical approach points because their original input is uninitialized.",
+    "Exercise SetSpellTarget and SetLastMarkedObject, stored selector decode, full-width attribute comparisons and alignment masks without combat-marker or message side effects.",
+    "Exercise nine HP predicates at signed SHORT boundaries and percent truncation, derived states versus base flags, CheckStat and missing/NOT_SPRITE targets; restore actors in the same tick.",
+    "After each actual melee, bow, crossbow and sling Swing, require HP/HPLT/HPLost/HPPercent to reflect delivered damage.",
+    "Exercise sprite-specific target fixation, marker ownership, post-update immunity and stale previous IDs; restore both actors and verify deny counts balance.",
+    "Inspect real formation requests under the search critical section with a private test semaphore; delete requests and restore the original handle before unlocking. Cover distance, SHORT throttle, two exclusive goals, party ownership and BYTE space wrapping.",
+    "Dispatch actions 14/47/48/317 and movement variants 180/208/263 through ExecuteAction; repeat all marked-spell, target, projectile and actual damage regressions.",
+    "Run HaveSpell, IsMarkedSpell, SetMarkedSpell and ForceMarkedSpell and actions 0x135/0x13F through real dispatchers, covering all seven caster lists, unavailable/retained/cleared markers and non-consumption.",
+    "Exercise action 0x137 through ability selection, WORD speed/SHORT mental-speed boundaries, selected-ID fallback and the normal Wait countdown; restore action count and mental speed in the same tick.",
+    "Exercise spell usefulness against every PE state/opcode mapping, source restrictions, resource and level immunities, each level-one catalogue exemption, and the selected-count/ability-zero payload behavior.",
+    "Run IsSpellTargetValid and the 0x141 action through their real dispatchers, including visibility, availability, flags, malformed lists and random start/wrapping; restore actors, catalogues and pinned SPL tables in the same tick.",
+    "Exercise the recovered sprite target-permission helper and its existing visibility dependencies, including ignored DWORD argument, source/target state asymmetry, all three dialogue exemptions and sanctuary; restore both actors in the same tick.",
+    "Center the loaded save on the party before combat tests.",
+    "Decode opcode 430 and its Copy, then apply virtually to the defender. Verify immediate delivery, ordered level-one ability selection even at high outer levels, full-width caster level, resource provenance and target point.",
+    "Inspect arrow, bolt and sling payloads before their first tick, including DWORD-to-WORD factory wrapping; remove these test projectiles through RemoveSelf and restore pinned resource tables and the pending queue.",
+    "Verify empty payload and invalid/stale source completion without launches.",
+    "Repeat all When Struck, metadata, ability-selection, combat action, fatigue, protection and tick regressions.",
+    "Run melee, bow, crossbow and sling with deterministic fixtures, requiring real HP loss and one ammunition charge per ranged Swing.",
+    "Launch instant, arrow, bolt and sling through opcode 430; require three target damage and no source damage through ordinary projectile/message ticks.",
+    "Never save the disposable process; restore save, config and fixture paths transactionally."
+  ]
+}

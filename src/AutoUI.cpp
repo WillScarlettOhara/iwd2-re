@@ -1751,6 +1751,161 @@ void Tick(CWarp* pActiveEngine)
         s_pc++; return;
     }
 
+    if (strcmp(step.op, "itempacketchecks") == 0) {
+        auto* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        auto* remotes = game->GetRemoteObjectArray();
+        LONG actorId = game->GetFixedOrderCharacterId(0);
+        CGameObject* raw = NULL;
+        if (objects->GetDeny(actorId, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE) != CGameObjectArray::SUCCESS
+            || raw == NULL || raw->GetObjectType() != CGameObject::TYPE_SPRITE) {
+            if (raw != NULL) objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires party sprite"); return;
+        }
+        auto* actor = static_cast<CGameSprite*>(raw);
+        INT checks = 0; BOOL valid = TRUE;
+        auto check = [&](const char* name, BOOL ok) {
+            checks++; valid = valid && ok;
+            if (!ok) Emit("{\"step\":%d,\"op\":\"item-packet-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+        };
+        PLAYER_ID oldPlayer = actor->m_remotePlayerID;
+        LONG oldObject = actor->m_remoteObjectID;
+        actor->m_remotePlayerID = 0x89ABCDEF; actor->m_remoteObjectID = 0x1234;
+        remotes->m_critSect.Lock();
+        CGameRemoteObjectListEntry mapping;
+        mapping.remotePlayerID = actor->m_remotePlayerID; mapping.remoteObjectID = actor->m_remoteObjectID;
+        mapping.localObjectID = actorId; mapping.pNext = remotes->m_pArray[0];
+        remotes->m_pArray[0] = &mapping;
+        const DWORD header = CNetwork::SPEC_MSG_HEADER_LENGTH;
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT queued = messages.GetCount();
+        ULONG time = game->GetWorldTimer()->m_gameTime;
+        CItem fixture(CResRef("ZRCARROW"), 1, 1, 1, 0, 1);
+        fixture.Demand();
+        ITEM_HEADER* itemHeader = fixture.pRes->m_pHeader;
+        WORD abilities = itemHeader->abilityCount, stack = itemHeader->maxStackable, lore = itemHeader->loreValue;
+        itemHeader->abilityCount = 3; itemHeader->maxStackable = 2;
+        CMessageAddItem sending(fixture, 99, actorId);
+        sending.m_item.m_useCount1 = 0x1234; sending.m_item.m_useCount2 = 0x8000; sending.m_item.m_useCount3 = 0xFFFF;
+        sending.m_item.m_wear = 0xFFFF; sending.m_item.m_flags = 0xDEADBEEF;
+        const BYTE golden[] = {0xEF,0xCD,0xAB,0x89,0x34,0x12,0,0,8,'Z','R','C','A','R','R','O','W',
+            0x34,0x12,0,0x80,0xFF,0xFF,0xFF,0xFF,0xEF,0xBE,0xAD,0xDE};
+        BYTE bytes[64]; memset(bytes, 0xA5, sizeof(bytes));
+        BYTE* payload = bytes + header; DWORD length = 0;
+        CMessage* virtualMessage = &sending;
+        virtualMessage->MarshalMessage(&payload, &length);
+        check("add-golden-packet-and-guards", length == sizeof(golden) && payload == bytes + header
+            && memcmp(payload, golden, sizeof(golden)) == 0 && bytes[0] == 0xA5 && payload[length] == 0xA5);
+        for (const char* name : {"", "A", "ZRCBOLT", "ZRCARROW"}) {
+            sending.m_item.cResRef = name;
+            memset(bytes, 0xA5, sizeof(bytes)); length = 0;
+            virtualMessage->MarshalMessage(&payload, &length);
+            DWORD nameLength = static_cast<DWORD>(strlen(name));
+            WORD uses[3]; memcpy(uses, payload + 9 + nameLength, sizeof(uses));
+            check("add-resource-length-and-no-terminator", length == 21 + nameLength && payload[8] == nameLength
+                && memcmp(payload + 9, name, nameLength) == 0 && payload[length] == 0xA5);
+            check("add-usage-count-api", uses[0] == (nameLength ? 0x1234 : 0)
+                && uses[1] == (nameLength ? 0x8000 : 0) && uses[2] == (nameLength ? 0xFFFF : 0));
+        }
+        sending.m_item.cResRef = "ZRCARROW";
+        for (LONG target : {-1L, 0x7FFF0001L}) {
+            sending.m_targetId = target; memset(bytes, 0xA5, sizeof(bytes)); length = 999;
+            virtualMessage->MarshalMessage(&payload, &length);
+            check("add-missing-target-zero-size-untouched-buffer", length == 0 && payload == bytes + header && payload[0] == 0xA5);
+            CMessageRemoveItem removal(18, 99, target); length = 999;
+            static_cast<CMessage*>(&removal)->MarshalMessage(&payload, &length);
+            check("remove-missing-target-zero-size-untouched-buffer", length == 0 && payload[0] == 0xA5);
+        }
+        sending.m_targetId = actorId;
+        for (SHORT slot : {static_cast<SHORT>(0), static_cast<SHORT>(18), static_cast<SHORT>(50),
+                 static_cast<SHORT>(-1), static_cast<SHORT>(SHORT_MIN), static_cast<SHORT>(SHORT_MAX)}) {
+            memset(bytes, 0xA5, sizeof(bytes));
+            CMessageRemoveItem removal(slot, 99, actorId);
+            static_cast<CMessage*>(&removal)->MarshalMessage(&payload, &length);
+            SHORT wireSlot; memcpy(&wireSlot, payload + 8, sizeof(wireSlot));
+            check("remove-signed-short-packet", length == 10 && memcmp(payload, golden, 8) == 0
+                && wireSlot == slot && payload[10] == 0xA5 && bytes[0] == 0xA5);
+            CMessageRemoveItem received(7, 88, -1);
+            check("remove-decode-mapped", static_cast<CMessage*>(&received)->UnmarshalMessage(bytes, header + length)
+                && received.m_targetId == actorId && received.m_sourceId == 88 && received.m_slot == slot);
+        }
+        for (const char* name : {"ZRCARROW", "", "NO_DROP"}) {
+            for (WORD use : {static_cast<WORD>(0), static_cast<WORD>(1), static_cast<WORD>(7),
+                     static_cast<WORD>(32768), static_cast<WORD>(65535)}) {
+                for (DWORD flags : {0UL, 1UL, 0x80000000UL, 0xFFFFFFFFUL}) {
+                    for (WORD loreValue : {static_cast<WORD>(0), static_cast<WORD>(100)}) {
+                        itemHeader->loreValue = loreValue;
+                        memcpy(payload, golden, 8); DWORD cnt = 8;
+                        BYTE nameLength = static_cast<BYTE>(strlen(name)); payload[cnt++] = nameLength;
+                        memcpy(payload + cnt, name, nameLength); cnt += nameLength;
+                        WORD uses[] = {use, static_cast<WORD>(65535 - use), static_cast<WORD>(use ^ 0x8000)};
+                        memcpy(payload + cnt, uses, sizeof(uses)); cnt += sizeof(uses);
+                        WORD wear = use; memcpy(payload + cnt, &wear, sizeof(wear)); cnt += sizeof(wear);
+                        memcpy(payload + cnt, &flags, sizeof(flags)); cnt += sizeof(flags);
+                        CMessageAddItem received(fixture, 88, -1);
+                        received.m_item.m_nAbilities = 77;
+                        check("add-decode-mapped", static_cast<CMessage*>(&received)->UnmarshalMessage(bytes, header + cnt));
+                        BOOL bound = nameLength && strcmp(name, "NO_DROP") != 0;
+                        DWORD normalized = flags;
+                        if (!bound || loreValue == 0) normalized |= 1;
+                        if (!(normalized & 1)) normalized |= 8;
+                        check("add-constructor-normalizes-resource-charges-and-flags", received.m_targetId == actorId
+                            && received.m_sourceId == 88 && received.m_item.cResRef == (bound ? "ZRCARROW" : "")
+                            && received.m_item.m_useCount1 == (bound ? max(uses[0], 1) : uses[0])
+                            && received.m_item.m_useCount2 == (bound ? max(uses[1], 1) : uses[1])
+                            && received.m_item.m_useCount3 == (bound ? max(uses[2], 1) : uses[2])
+                            && received.m_item.m_wear == wear && received.m_item.m_flags == normalized
+                            && received.m_item.m_nAbilities == 77);
+                    }
+                }
+            }
+        }
+        CMessageAddItem rejected(fixture, 88, actorId);
+        rejected.m_item.m_useCount1 = 9; rejected.m_item.m_useCount2 = 8; rejected.m_item.m_useCount3 = 7;
+        rejected.m_item.m_wear = 6; rejected.m_item.m_flags = 5;
+        CMessageRemoveItem rejectedRemove(18, 88, actorId);
+        PLAYER_ID missing = 0x76543210; memcpy(payload, &missing, sizeof(missing));
+        check("unmapped-header-only-add-rejected", !static_cast<CMessage*>(&rejected)->UnmarshalMessage(bytes, header + 8));
+        check("unmapped-add-leaves-all-state", rejected.m_targetId == actorId && rejected.m_sourceId == 88
+            && rejected.m_item.cResRef == "ZRCARROW" && rejected.m_item.m_useCount1 == 9 && rejected.m_item.m_useCount2 == 8
+            && rejected.m_item.m_useCount3 == 7 && rejected.m_item.m_wear == 6 && rejected.m_item.m_flags == 5);
+        check("unmapped-header-only-remove-rejected", !static_cast<CMessage*>(&rejectedRemove)->UnmarshalMessage(bytes, header + 8));
+        check("unmapped-remove-leaves-all-state", rejectedRemove.m_targetId == actorId && rejectedRemove.m_sourceId == 88 && rejectedRemove.m_slot == 18);
+        itemHeader->abilityCount = abilities; itemHeader->maxStackable = stack; itemHeader->loreValue = lore;
+        fixture.Release();
+        CItem* originalItem = actor->m_equipment.m_items[18];
+        actor->m_equipment.m_items[18] = NULL;
+        game->m_disposableItemsCritSect.Lock();
+        INT disposableCount = game->m_lDisposableItems.GetCount();
+        memcpy(payload, golden, sizeof(golden));
+        CMessageAddItem delivered(fixture, 88, -1);
+        BOOL decoded = static_cast<CMessage*>(&delivered)->UnmarshalMessage(bytes, header + sizeof(golden));
+        if (decoded) static_cast<CMessage*>(&delivered)->Run();
+        check("decoded-add-delivers-to-real-inventory", decoded && actor->m_equipment.m_items[18] != NULL
+            && actor->m_equipment.m_items[18]->cResRef == "ZRCARROW"
+            && actor->m_equipment.m_items[18]->m_useCount1 == 0x1234 && actor->m_equipment.m_items[18]->m_wear == 0xFFFF);
+        CMessageRemoveItem outgoingRemove(18, actorId, actorId);
+        static_cast<CMessage*>(&outgoingRemove)->MarshalMessage(&payload, &length);
+        CMessageRemoveItem deliveredRemove(7, 88, -1);
+        decoded = static_cast<CMessage*>(&deliveredRemove)->UnmarshalMessage(bytes, header + length);
+        if (decoded) static_cast<CMessage*>(&deliveredRemove)->Run();
+        check("decoded-remove-retires-delivered-item", decoded && actor->m_equipment.m_items[18] == NULL
+            && game->m_lDisposableItems.GetCount() == disposableCount + 1);
+        delete actor->m_equipment.m_items[18];
+        actor->m_equipment.m_items[18] = originalItem;
+        while (game->m_lDisposableItems.GetCount() > disposableCount) delete game->m_lDisposableItems.RemoveTail();
+        game->m_disposableItemsCritSect.Unlock();
+        while (messages.GetCount() > queued) delete messages.RemoveTail();
+        check("no-message-or-clock-side-effects", messages.GetCount() == queued && game->GetWorldTimer()->m_gameTime == time);
+        remotes->m_pArray[0] = mapping.pNext;
+        actor->m_remotePlayerID = oldPlayer; actor->m_remoteObjectID = oldObject;
+        remotes->m_critSect.Unlock();
+        objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"itempacketchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "item packet mismatch (state restored)"); return; }
+        s_pc++; return;
+    }
+
     if (strcmp(step.op, "doortogglechecks") == 0) {
         auto* game = g_pBaldurChitin->GetObjectGame();
         auto* objects = game->GetObjectArray();

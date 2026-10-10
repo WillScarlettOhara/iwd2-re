@@ -2031,8 +2031,9 @@ public:
     SHORT GetCommType() override { return SEND; }
     BYTE GetMsgType() override { return CBaldurMessage::MSG_TYPE_CMESSAGE; }
     BYTE GetMsgSubType() override { return 2; }
+    void MarshalMessage(BYTE** pData, DWORD* dwSize) override;
+    BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;
-    // Marshal/Unmarshal remain inherited until their separate recovery.
     /* 000C */ CItem m_item;
 };
 class CMessageRemoveItem : public CMessage {
@@ -2041,8 +2042,9 @@ public:
     SHORT GetCommType() override { return SEND; }
     BYTE GetMsgType() override { return CBaldurMessage::MSG_TYPE_CMESSAGE; }
     BYTE GetMsgSubType() override { return 34; }
+    void MarshalMessage(BYTE** pData, DWORD* dwSize) override;
+    BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;
-    // Marshal/Unmarshal remain inherited until their separate recovery.
     /* 000C */ SHORT m_slot;
 };
 #pragma pack(pop)

@@ -18706,6 +18706,118 @@ void CMessageSetVariable::Run()
 }
 
 
+// 0x4F8D60
+void CMessageAddItem::MarshalMessage(BYTE** pData, DWORD* dwSize)
+{
+    CResRef res;
+    CString name;
+    UTIL_ASSERT(pData != NULL && dwSize != NULL);
+    CGameObjectArray* array = g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+    CGameObject* object;
+    BYTE rc;
+    do {
+        rc = array->GetShare(m_targetId, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) {
+        *dwSize = 0;
+        return;
+    }
+    PLAYER_ID player = object->m_remotePlayerID;
+    LONG id = object->m_remoteObjectID;
+    array->ReleaseShare(m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    res = m_item.cResRef;
+    res.CopyToString(name);
+    BYTE length = static_cast<BYTE>(name.GetLength());
+    *dwSize = 21 + length;
+    UTIL_ASSERT(*dwSize <= STATICBUFFERSIZE);
+    DWORD cnt = 0;
+    memcpy(*pData + cnt, &player, sizeof(player)); cnt += sizeof(player);
+    memcpy(*pData + cnt, &id, sizeof(id)); cnt += sizeof(id);
+    (*pData)[cnt++] = length;
+    memcpy(*pData + cnt, name.GetBuffer(name.GetLength()), name.GetLength()); cnt += name.GetLength();
+    for (INT ability = 0; ability < 3; ability++) {
+        WORD uses = m_item.GetUsageCount(ability);
+        memcpy(*pData + cnt, &uses, sizeof(uses)); cnt += sizeof(uses);
+    }
+    memcpy(*pData + cnt, &m_item.m_wear, sizeof(m_item.m_wear)); cnt += sizeof(m_item.m_wear);
+    memcpy(*pData + cnt, &m_item.m_flags, sizeof(m_item.m_flags)); cnt += sizeof(m_item.m_flags);
+    UTIL_ASSERT(cnt == *dwSize);
+}
+
+// 0x4F8FA0
+BOOL CMessageAddItem::UnmarshalMessage(BYTE* pData, DWORD dwSize)
+{
+    UTIL_ASSERT(pData != NULL);
+    DWORD cnt = CNetwork::SPEC_MSG_HEADER_LENGTH;
+    PLAYER_ID player;
+    LONG id, local;
+    memcpy(&player, pData + cnt, sizeof(player)); cnt += sizeof(player);
+    memcpy(&id, pData + cnt, sizeof(id)); cnt += sizeof(id);
+    if (g_pBaldurChitin->GetObjectGame()->GetRemoteObjectArray()->Find(player, id, local) != TRUE) return FALSE;
+    m_targetId = local;
+    BYTE length = pData[cnt++];
+    char name[9] = {0};
+    memcpy(name, pData + cnt, length); cnt += length;
+    WORD uses[3], wear;
+    DWORD flags;
+    memcpy(uses, pData + cnt, sizeof(uses)); cnt += sizeof(uses);
+    memcpy(&wear, pData + cnt, sizeof(wear)); cnt += sizeof(wear);
+    memcpy(&flags, pData + cnt, sizeof(flags)); cnt += sizeof(flags);
+    {
+        CItem item(CResRef(reinterpret_cast<BYTE*>(name)), uses[0], uses[1], uses[2], wear, flags);
+        m_item.SetResRef(item.cResRef, TRUE);
+        m_item.m_useCount1 = item.m_useCount1;
+        m_item.m_useCount2 = item.m_useCount2;
+        m_item.m_useCount3 = item.m_useCount3;
+        m_item.m_wear = item.m_wear;
+        m_item.m_flags = item.m_flags;
+    }
+    UTIL_ASSERT(cnt == dwSize);
+    return TRUE;
+}
+
+// 0x504070
+void CMessageRemoveItem::MarshalMessage(BYTE** pData, DWORD* dwSize)
+{
+    UTIL_ASSERT(pData != NULL && dwSize != NULL);
+    CGameObjectArray* array = g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+    CGameObject* object;
+    BYTE rc;
+    do {
+        rc = array->GetShare(m_targetId, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) {
+        *dwSize = 0;
+        return;
+    }
+    PLAYER_ID player = object->m_remotePlayerID;
+    LONG id = object->m_remoteObjectID;
+    array->ReleaseShare(m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    *dwSize = sizeof(player) + sizeof(id) + sizeof(m_slot);
+    UTIL_ASSERT(*dwSize <= STATICBUFFERSIZE);
+    DWORD cnt = 0;
+    memcpy(*pData + cnt, &player, sizeof(player)); cnt += sizeof(player);
+    memcpy(*pData + cnt, &id, sizeof(id)); cnt += sizeof(id);
+    memcpy(*pData + cnt, &m_slot, sizeof(m_slot)); cnt += sizeof(m_slot);
+    UTIL_ASSERT(cnt == *dwSize);
+}
+
+// 0x5041A0
+BOOL CMessageRemoveItem::UnmarshalMessage(BYTE* pData, DWORD dwSize)
+{
+    UTIL_ASSERT(pData != NULL);
+    DWORD cnt = CNetwork::SPEC_MSG_HEADER_LENGTH;
+    PLAYER_ID player;
+    LONG id, local;
+    memcpy(&player, pData + cnt, sizeof(player)); cnt += sizeof(player);
+    memcpy(&id, pData + cnt, sizeof(id)); cnt += sizeof(id);
+    if (g_pBaldurChitin->GetObjectGame()->GetRemoteObjectArray()->Find(player, id, local) != TRUE) return FALSE;
+    m_targetId = local;
+    memcpy(&m_slot, pData + cnt, sizeof(m_slot)); cnt += sizeof(m_slot);
+    UTIL_ASSERT(cnt == dwSize);
+    return TRUE;
+}
+
 // 0x4F9150
 void CMessageAddItem::Run()
 {
