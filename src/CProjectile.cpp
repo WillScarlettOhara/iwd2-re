@@ -1,4 +1,5 @@
 #include "CProjectile.h"
+#include "CSparkleCluster.h"
 #include "CProjectileSPBOOM.h"
 
 #include <math.h>
@@ -3567,7 +3568,6 @@ void CProjectileCallLightning::Render(CGameArea* pArea, CVidMode* pVidMode, int 
     }
 }
 
-// 0x52AD60
 //
 // CProjectileTravelling -- shared base ctor for the travelling weapon/spell
 // projectiles. Builds the heap CVidCell animation cell from the visual resref,
@@ -3585,6 +3585,7 @@ void CProjectileCallLightning::Render(CGameArea* pArea, CVidMode* pVidMode, int 
 // omitted. m_driftDecay (the carry modulus) is left unwritten by the original; it
 // is only consulted when a carry is non-zero, which the zeroed carries prevent,
 // so it is zero-seeded here for definedness.
+// 0x52AD60
 CProjectileTravelling::CProjectileTravelling(const CResRef& resRef)
     : m_palette(CVidPalette::TYPE_RANGE)
 {
@@ -3627,6 +3628,7 @@ CProjectileTravelling::CProjectileTravelling(const CResRef& resRef)
     m_targetX = 0;
     m_targetY = 0;
     m_flightDistSq = 0;
+    m_bSparkleTrail = FALSE;
 
     // Default projectile terrain-cost table (.data 0x8A8154): terrain types
     // 0, 10 and 13 are impassable, everything else costs 5.
@@ -3673,8 +3675,7 @@ CProjectileTravelling::~CProjectileTravelling()
 //
 // Recovered: the Time Stop gate (CInfGame::m_nTimeStop/m_nTimeStopCaster at
 // +0x4B40/+0x4B44), the homing branch (live-target position + height interp
-// via CalculateFxRect / delta-Z linear step), and the sparkle-trail spawn
-// (factory 0x51AE40 — documented stub, dead for Magic Missile).
+// via CalculateFxRect / delta-Z linear step), and the sparkle-trail spawn.
 // 0x52B900 (vtable slot 3 -- AIUpdate)
 void CProjectileTravelling::AIUpdate()
 {
@@ -3780,18 +3781,17 @@ void CProjectileTravelling::AIUpdate()
         AimAtPoint(ptLive.x, ptLive.y);
     }
 
-    // Sparkle trail: when m_bSparkleTrail is set the original spawns a
-    // sub-projectile at the current position through factory 0x51AE40
-    // (0x52BD12–0x52BD5E, new(0xCA) + AddToArea).  Disabled for plain
-    // Magic Missile (m_bSparkleTrail stays 0); factory left unrecovered.
-    // PARTIAL: sparkle-trail factory 0x51AE40 — documented stub.
+    if (m_bSparkleTrail != FALSE) {
+        CSparkleCluster* trail = new CSparkleCluster(m_sparkleColor,
+            CSparkleCluster::TYPE_TRAVEL, CSparkleCluster::DEFAULT_CONJURE_DURATION);
+        trail->AddToArea(m_pArea, m_pos, m_posZ, CGameObject::LIST_FRONT);
+    }
 
     m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
 }
 
-// Launch recovery remains partial: the trailing object factory at 0x554D20
-// still needs recovery. No recovered leaf currently supplies a nonempty
-// trailing resource in field_17E.
+// Launch uses the recovered VEF loader and subtype-86 message when a trailing
+// resource is supplied in field_17E.
 // 0x52C050
 void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
                                  CPoint targetPos, LONG nHeight, SHORT nType)
@@ -8465,8 +8465,11 @@ void CProjectileReboundingBolt::AIUpdate()
             m_targetX = next.x;
             m_targetY = next.y;
         }
-        // PARTIAL: the optional sparkle trail still needs factory 0x51AE40,
-        // as in the travelling base. This leaf's ctor/factory leave it disabled.
+        if (m_bSparkleTrail != FALSE) {
+            CSparkleCluster* trail = new CSparkleCluster(m_sparkleColor,
+                CSparkleCluster::TYPE_TRAVEL, CSparkleCluster::DEFAULT_CONJURE_DURATION);
+            trail->AddToArea(m_pArea, m_pos, m_posZ, CGameObject::LIST_FRONT);
+        }
     }
     m_targetMap.Service();
     m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);

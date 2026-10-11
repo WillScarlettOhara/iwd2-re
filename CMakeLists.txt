@@ -64,6 +64,8 @@ target_sources(${EXECUTABLE_NAME} PUBLIC
     "src/CBaldurProjector.h"
     "src/CBlood.cpp"
     "src/CBlood.h"
+    "src/CSparkleCluster.cpp"
+    "src/CSparkleCluster.h"
     "src/CBounceList.cpp"
     "src/CBounceList.h"
     "src/CButtonData.cpp"

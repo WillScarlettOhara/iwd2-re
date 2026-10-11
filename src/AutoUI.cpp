@@ -109,9 +109,13 @@
 //                                receipt; restore remote identifiers and network state.
 //   reboundchecks              exercise bolt launch, expiry and wall/corner rebounds;
 //                                restore search data, actors, objects and queues.
+//   sparklechecks              exercise palettes, particle lifecycle and projectile
+//                                trail creation; restore objects, search and queues.
+//   sparklewait                require emitted clusters to leave all area lists.
 //   rebounddamage              service a registered bolt beside portrait 1, then
 //                                use projectilewait to require actual payload damage.
-//   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
+//   projectiledamage <flags> [trail] decode/apply opcode 430 with ZRCHIT on portrait 1;
+//                                optional test-only activation of the native trail flag.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
 //   targetgatechecks            check recovered spell target/invisibility gates;
@@ -169,6 +173,8 @@
 #include "CInfGame.h"
 #include "CInfButtonArray.h"
 #include "CVidInf.h"
+#include "CSparkleCluster.h"
+#include "CParticle.h"
 #include "CInfinity.h"
 #include "CScreenWorld.h"
 #include "CUIControlBase.h"
@@ -961,6 +967,238 @@ void EffectControllerChecks(INT nStep)
     if (!valid) Fail(nStep, "effectcontrollerchecks", "effect controller mismatch");
 }
 
+void SparkleChecks(INT nStep)
+{
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CGameObjectArray* objects = game->GetObjectArray();
+    LONG actorId = game->GetFixedOrderCharacterId(0);
+    CGameObject* actor = NULL;
+    if (objects->GetShare(actorId, CGameObjectArray::THREAD_ASYNCH, &actor, INFINITE)
+        != CGameObjectArray::SUCCESS) {
+        Fail(nStep, "sparklechecks", "requires loaded actor and area"); return;
+    }
+    if (actor->m_pArea == NULL) {
+        objects->ReleaseShare(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Fail(nStep, "sparklechecks", "requires loaded area"); return;
+    }
+    CGameArea* area = actor->m_pArea;
+    CPoint origin = actor->m_pos;
+    objects->ReleaseShare(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    INT checks = 0; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"sparkle-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+    };
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    INT messages = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    INT front = area->m_lVertSortAdd.GetCount(), back = area->m_lVertSortBackAdd.GetCount(), flight = area->m_lVertSortFlightAdd.GetCount();
+    auto unqueue = [&](LONG id) {
+        POSITION p = area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortAdd.RemoveAt(p);
+        p = area->m_lVertSortBackAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortBackAdd.RemoveAt(p);
+        p = area->m_lVertSortFlightAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortFlightAdd.RemoveAt(p);
+    };
+    auto retire = [&](CGameObject* object) {
+        unqueue(object->m_id); object->RemoveFromArea();
+        objects->Delete(object->m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE); delete object;
+    };
+    struct Cluster : CSparkleCluster {
+        BOOL* dead;
+        Cluster(SHORT color, USHORT type, BOOL* d) : CSparkleCluster(color, type, 8), dead(d) {}
+        ~Cluster() override { *dead = TRUE; }
+    };
+    const SHORT rows[12] = {5,0,6,1,8,2,7,9,3,4,10,11};
+    for (SHORT color = 1; color <= 12; ++color) {
+        BOOL dead = FALSE; Cluster* c = new Cluster(color, 1, &dead);
+        check("ctor-state", c->m_particleList.IsEmpty() && c->m_nTimer == 0 && c->m_nGravity == 50
+            && c->m_wType == 1 && c->m_nConjureDuration == 8 && c->m_rBounding.IsRectEmpty()
+            && c->m_pVidMode == g_pBaldurChitin->GetCurrentVideoMode());
+        COLORREF palette[] = {c->m_colorStart,c->m_colorFade1,c->m_colorFade2,c->m_colorFade3,c->m_colorFade4};
+        for (LONG i = 0; i < 5; ++i) {
+            UINT red, green, blue;
+            sscanf(game->GetRuleTables().m_tSparkleColors.GetAt(CPoint(i,rows[color-1])), "RGB(%u,%u,%u)", &red,&green,&blue);
+            check("palette-row", palette[i] == RGB(red,green,blue));
+        }
+        delete c; check("empty-dtor", dead);
+    }
+    for (LONG height : {25L,100L,500L,-7L}) {
+        BOOL dead = FALSE; Cluster* c = new Cluster(2, 1, &dead);
+        c->AddToArea(area, origin, height, CGameObject::LIST_FRONT);
+        check("registered-front", area->m_lVertSortAdd.Find(reinterpret_cast<int*>(c->m_id)) != NULL
+            && c->m_pArea == area && c->m_pos == origin && c->m_posZ == height);
+        unqueue(c->m_id);
+        check("travel-count-and-fade-heights", c->m_particleList.GetCount() == 14
+            && c->m_fade1Height == static_cast<BYTE>(height*99/100)
+            && c->m_fade2Height == static_cast<BYTE>(height*85/100)
+            && c->m_fade3Height == static_cast<BYTE>(height*75/100)
+            && c->m_fade4Height == static_cast<BYTE>(height*55/100));
+        check("travel-bounds", c->m_rBounding == CRect(max(origin.x-5,0),max(origin.y-5-height,0),origin.x+4,origin.y+4));
+        POSITION p = c->m_particleList.GetHeadPosition(); INT i = 0;
+        while (p != NULL) {
+            CParticle* particle = c->m_particleList.GetNext(p);
+            check("initial-particle-contract", particle->m_pos.z == static_cast<LONG>(static_cast<DWORD>(height)<<10)
+                && particle->m_vel.x == ((i&1) == 0 ? 4 : -4) && particle->m_vel.y == 0 && particle->m_vel.z == 0
+                && particle->m_nGravity == 50+10*i && particle->m_nTailLength == 0
+                && particle->m_wType == CParticle::CONSTANT_VELOCITY);
+            ++i;
+        }
+        retire(c); check("populated-dtor", dead);
+    }
+    // Exact threshold equality selects the preceding band; color saturation,
+    // height integration and unrelated particle clocks have independent sentinels.
+    for (LONG height : {54L,55L,74L,75L,84L,85L,98L,99L,100L}) {
+        BOOL dead = FALSE; Cluster* c = new Cluster(2, 4, &dead);
+        objects->Add(&c->m_id, c, INFINITE); c->m_pArea = area; c->m_pos = origin;
+        c->m_fade1Height=99; c->m_fade2Height=85; c->m_fade3Height=75; c->m_fade4Height=55;
+        c->m_colorFade1=RGB(70,2,3); c->m_colorFade2=RGB(2,80,4);
+        c->m_colorFade3=RGB(3,4,90); c->m_colorFade4=RGB(100,5,6);
+        CParticle* p = new CParticle(1000,2000,height<<10,7,-9,30,RGB(11,12,13),17,5,1);
+        p->m_nTimeStamp=23; p->m_nLifeSpan=31; c->m_particleList.AddTail(p);
+        c->AIUpdate();
+        COLORREF base = height<55 ? RGB(100,5,6) : height<75 ? RGB(3,4,90) : height<85 ? RGB(2,80,4) : RGB(70,2,3);
+        INT scale=(height&3)+1;
+        COLORREF expected = height>=99 ? RGB(11,12,13)
+            : RGB(min(GetRValue(base)*scale,255),min(GetGValue(base)*scale,255),min(GetBValue(base)*scale,255));
+        check("fade-boundaries-and-motion", !dead && p->m_rgbColor==expected && p->m_pos.x==1007
+            && p->m_pos.y==1991 && p->m_pos.z==(height<<10)+25 && p->m_vel.z==25 && p->m_vel.x==7 && p->m_vel.y==-9);
+        check("particle-clock-not-advanced", p->m_nTimeStamp==23 && p->m_nLifeSpan==31 && p->m_nTailLength==17);
+        retire(c);
+    }
+    {
+        BOOL dead=FALSE; Cluster* c=new Cluster(2,2,&dead);
+        c->AddToArea(area,origin,100,CGameObject::LIST_FRONT); unqueue(c->m_id);
+        check("conjure-bounds", c->m_rBounding==CRect(max(origin.x-13,0),max(origin.y-113,0),origin.x+13,origin.y+13));
+        POSITION pos=c->m_particleList.GetHeadPosition();
+        while(pos) c->m_particleList.GetNext(pos)->m_nGravity=0;
+        static const CPoint minimum[] = {CPoint(3,-5),CPoint(5,5),CPoint(-5,3),CPoint(-15,5),
+            CPoint(-13,-5),CPoint(-15,-15),CPoint(-5,-13),CPoint(5,-15)};
+        for(INT tick=0;tick<9;++tick) {
+            c->AIUpdate();
+            check("conjure-duration", !dead && c->m_nTimer==min(tick+1,8)
+                && c->m_particleList.GetCount()==14+14*min(tick+1,8));
+            if(tick<8) {
+                POSITION p=c->m_particleList.GetTailPosition();
+                for(INT i=0;i<14;++i) {
+                    CParticle* particle=c->m_particleList.GetPrev(p);
+                    LONG x=particle->m_pos.x>>10; LONG y=particle->m_pos.y>>10;
+                    LONG ymin=(origin.y+minimum[tick].y)*4/3;
+                    check("conjure-eight-origins", x>=origin.x+minimum[tick].x && x<origin.x+minimum[tick].x+10
+                        && y>=ymin && y<=(origin.y+minimum[tick].y+9)*4/3 && particle->m_pos.z==102400);
+                }
+            }
+        }
+        retire(c);
+    }
+    // Eight headings, three velocity streams and fourteen distinct gravities.
+    const CPoint directions[] = {CPoint(0,100),CPoint(-100,100),CPoint(-100,0),CPoint(-100,-100),
+        CPoint(0,-100),CPoint(100,-100),CPoint(100,0),CPoint(100,100)};
+    const SHORT velocities[][6]={{700,700,0,1000,-700,700},{0,1000,-700,700,-1000,0},
+        {-700,700,-1000,0,-700,-700},{-1000,0,-700,-700,0,-1000},
+        {-700,-700,0,-1000,700,-700},{0,-1000,700,-700,1000,0},
+        {700,-700,1000,0,700,700},{1000,0,700,700,0,1000}};
+    for(INT heading=0;heading<8;++heading) {
+        BOOL dead=FALSE; Cluster* c=new Cluster(7,4,&dead);
+        c->m_explosionDir=origin+directions[heading];
+        c->AddToArea(area,origin,25,CGameObject::LIST_FRONT); unqueue(c->m_id);
+        check("explosion-bounds-count", c->m_particleList.GetCount()==42
+            && c->m_rBounding==CRect(max(origin.x-50,0),max(origin.y-75,0),origin.x+50,origin.y+25));
+        POSITION p=c->m_particleList.GetHeadPosition(); INT i=0;
+        while(p) {
+            CParticle* particle=c->m_particleList.GetNext(p);
+            check("explosion-stream-contract", particle->m_vel.x==velocities[heading][(i/14)*2]
+                && particle->m_vel.y==velocities[heading][(i/14)*2+1] && particle->m_vel.z==1000
+                && particle->m_nGravity==50+10*(i%14)); ++i;
+        }
+        // Native ignores the passed area/video; render restores all particle colors.
+        COLORREF color=c->m_particleList.GetHead()->m_rgbColor;
+        c->Render(NULL,NULL,CVIDINF_SURFACE_BACK);
+        check("render-color-restored", c->m_particleList.GetHead()->m_rgbColor==color);
+        retire(c);
+    }
+    for(BOOL hold : {FALSE,TRUE}) {
+        BOOL dead=FALSE; Cluster* c=new Cluster(2,2,&dead);
+        c->AddToArea(area,origin,25,CGameObject::LIST_FRONT); unqueue(c->m_id);
+        LONG id=c->m_id; CGameObject* shared=NULL;
+        if(hold) check("delete-blocked-share", objects->GetShare(id,CGameObjectArray::THREAD_1,&shared,INFINITE)==CGameObjectArray::SUCCESS);
+        POSITION pos=c->m_particleList.GetHeadPosition();
+        while(pos) { CParticle* p=c->m_particleList.GetNext(pos); p->m_pos.z=1; p->m_nGravity=1; p->m_vel.z=0; }
+        c->AIUpdate();
+        check("last-particle-immediate-retirement", hold ? !dead && c->m_particleList.IsEmpty()
+            && c->m_nTimer==0 && c->m_pArea==NULL : dead);
+        if(hold) { objects->ReleaseShare(id,CGameObjectArray::THREAD_1,INFINITE); retire(c); }
+    }
+    // Exercise both production spawn branches through the projectile virtual.
+    // Consume only the trail each invocation added, before ordinary area ticks.
+    auto consumeTrail = [&](CPoint point) {
+        check("one-trail-queued", area->m_lVertSortAdd.GetCount()==front+1);
+        if(area->m_lVertSortAdd.GetCount()!=front+1) return;
+        LONG id=reinterpret_cast<LONG>(area->m_lVertSortAdd.GetTail());
+        CGameObject* object=NULL;
+        BYTE rc=objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE);
+        CSparkleCluster* c=rc==CGameObjectArray::SUCCESS ? dynamic_cast<CSparkleCluster*>(object) : NULL;
+        check("projectile-trail-contract", c && c->m_pos==point && c->m_posZ==25
+            && c->m_wType==1 && c->m_nConjureDuration==25 && c->m_particleList.GetCount()==14);
+        if(rc==CGameObjectArray::SUCCESS) {
+            objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE); retire(object);
+        }
+    };
+    auto savedStop=game->m_nTimeStop; auto savedCaster=game->m_nTimeStopCaster;
+    game->m_nTimeStop=0;
+    struct Travel : CProjectileTravelling {
+        INT aims=0, arrivals=0;
+        Travel() : CProjectileTravelling(CResRef("SPMAGMIS")) {}
+        void AimAtPoint(int, int) override { ++aims; m_pos.x+=16; }
+        void OnArrival() override { ++arrivals; }
+        void Seed(CGameArea* area) {
+            m_pArea=area; CGameObject::m_pArea=area; m_pos=CPoint(40,36); m_posZ=25;
+            m_targetX=400; m_targetY=36; m_velocity=1; m_flightDistSq=1;
+            m_targetId=-1; m_lifetime=100; m_sparkleColor=2;
+        }
+    };
+    {
+        Travel* t=new Travel; check("travel-default-no-trail", !t->m_bSparkleTrail);
+        objects->Add(&t->m_id,t,INFINITE); t->Seed(area);
+        CProjectile* dispatch=t; dispatch->AIUpdate();
+        check("disabled-trail-no-spawn", t->aims==1 && area->m_lVertSortAdd.GetCount()==front);
+        t->m_bSparkleTrail=TRUE; dispatch->AIUpdate(); consumeTrail(CPoint(72,36));
+        game->m_nTimeStop=1; game->m_nTimeStopCaster=-1;
+        dispatch->AIUpdate();
+        check("time-stop-no-trail", t->aims==2 && area->m_lVertSortAdd.GetCount()==front);
+        game->m_nTimeStop=0; t->Seed(area); t->m_pos=CPoint(400,36); dispatch->AIUpdate();
+        check("arrival-no-trail", t->arrivals==1 && t->aims==2 && area->m_lVertSortAdd.GetCount()==front);
+        retire(t);
+    }
+    struct BoltTrail : CProjectileReboundingBolt {
+        void Seed(CGameArea* area, LONG step) {
+            m_pArea=area; CGameObject::m_pArea=area; m_pos=CPoint(40,36); m_posZ=25;
+            m_posAccumX=40*1024; m_posAccumY=36*4096/3;
+            m_stepX=step; m_stepY=0; m_nDuration=60; m_nBounces=-1;
+            m_targetMap.m_serviceCountdown=5; memset(m_terrainTable,1,sizeof(m_terrainTable));
+            m_bSparkleTrail=TRUE; m_sparkleColor=2;
+        }
+    };
+    {
+        BYTE dynamic[64]; memset(dynamic,0x80,sizeof(dynamic));
+        CSingleLock lock(&area->m_search.m_critSect,TRUE);
+        BYTE* saved=area->m_search.m_pDynamicCost; CSize grid=area->m_search.m_GridSquareDimensions;
+        area->m_search.m_pDynamicCost=dynamic; area->m_search.m_GridSquareDimensions=CSize(8,8);
+        BoltTrail* b=new BoltTrail; objects->Add(&b->m_id,b,INFINITE);
+        b->Seed(area,1024); CProjectile* dispatch=b; dispatch->AIUpdate();
+        check("same-cell-no-trail", b->m_pos==CPoint(41,36) && area->m_lVertSortAdd.GetCount()==front);
+        b->Seed(area,16*1024); dispatch->AIUpdate(); consumeTrail(CPoint(56,36));
+        b->Seed(area,16*1024); dynamic[3+3*8]=1; dispatch->AIUpdate(); consumeTrail(CPoint(24,36));
+        retire(b);
+        area->m_search.m_pDynamicCost=saved; area->m_search.m_GridSquareDimensions=grid;
+    }
+    game->m_nTimeStop=savedStop; game->m_nTimeStopCaster=savedCaster;
+    check("same-tick-restoration", game->GetWorldTimer()->m_gameTime==clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount()==messages
+        && area->m_lVertSortAdd.GetCount()==front && area->m_lVertSortBackAdd.GetCount()==back
+        && area->m_lVertSortFlightAdd.GetCount()==flight);
+    srand(1);
+    Emit("{\"step\":%d,\"op\":\"sparklechecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep,checks,valid?"true":"false");
+    if(!valid) Fail(nStep,"sparklechecks","particle lifecycle mismatch");
+}
+
 void ReboundChecks(INT nStep)
 {
     CInfGame* game = g_pBaldurChitin->GetObjectGame();
@@ -1705,6 +1943,29 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "reboundchecks") == 0) {
         ReboundChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "sparklechecks") == 0) {
+        SparkleChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "sparklewait") == 0) {
+        CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
+        if(area==NULL) { Fail(nStep,step.op,"requires visible area"); return; }
+        INT active=0;
+        auto count=[&](CTypedPtrList<CPtrList,int*>& list) {
+            POSITION p=list.GetHeadPosition();
+            while(p) {
+                LONG id=reinterpret_cast<LONG>(list.GetNext(p)); CGameObject* object=NULL;
+                if(game->GetObjectArray()->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS) {
+                    if(dynamic_cast<CSparkleCluster*>(object)!=NULL) ++active;
+                    game->GetObjectArray()->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                }
+            }
+        };
+        count(area->m_lVertSort); count(area->m_lVertSortBack); count(area->m_lVertSortFlight);
+        count(area->m_lVertSortAdd); count(area->m_lVertSortBackAdd); count(area->m_lVertSortFlightAdd);
+        if(active!=0) { if(++s_waited>DEFAULT_WAIT_TICKS) Fail(nStep,step.op,"trail clusters did not retire"); return; }
+        Emit("{\"step\":%d,\"op\":\"sparklewait\",\"active\":0,\"valid\":true}",nStep);
+        s_waited=0; ++s_pc; return;
     }
 
     if (strcmp(step.op, "combatrules") == 0) {
@@ -6393,6 +6654,7 @@ void Tick(CWarp* pActiveEngine)
         INT sourceLoss = 0, targetLoss = 0;
         if (fire) {
             s_projectileFlags = Num(step, 0, 0);
+            INT queuedBefore=target->m_pArea->m_lVertSortAdd.GetCount();
             s_projectileSourceHP = source->m_baseStats.m_hitPoints;
             s_projectileTargetHP = target->m_baseStats.m_hitPoints;
             ITEM_EFFECT item = {};
@@ -6405,6 +6667,19 @@ void Tick(CWarp* pActiveEngine)
                 applied = effect->ApplyEffect(target) && effect->m_done;
                 delete effect;
             } else applied = FALSE;
+            if(applied && strcmp(step.s[0],"trail")==0) {
+                auto& queue=target->m_pArea->m_lVertSortAdd;
+                applied=queue.GetCount()==queuedBefore+1;
+                if(applied) {
+                    LONG id=reinterpret_cast<LONG>(queue.GetTail()); CGameObject* object=NULL;
+                    BYTE rc=objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE);
+                    auto* projectile=rc==CGameObjectArray::SUCCESS ? dynamic_cast<CProjectileTravelling*>(object) : NULL;
+                    applied=projectile!=NULL;
+                    if(projectile) { projectile->m_bSparkleTrail=TRUE; projectile->m_sparkleColor=2; }
+                    if(rc==CGameObjectArray::SUCCESS) objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                }
+                Emit("{\"step\":%d,\"op\":\"projectile-trail-enabled\",\"valid\":%s}",nStep,applied?"true":"false");
+            }
         } else {
             sourceLoss = s_projectileSourceHP - source->m_baseStats.m_hitPoints;
             targetLoss = s_projectileTargetHP - target->m_baseStats.m_hitPoints;

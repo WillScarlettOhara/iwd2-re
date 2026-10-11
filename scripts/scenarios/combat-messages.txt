@@ -9,6 +9,7 @@ effectcontrollerchecks
 vefloadchecks
 vefmessagechecks
 reboundchecks
+sparklechecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks
@@ -53,3 +54,7 @@ projectiledamage 11
 projectilewait
 projectiledamage 16
 projectilewait
+projectiledamage 1 trail
+projectilewait
+sleep 30
+sparklewait

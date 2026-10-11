@@ -39,8 +39,8 @@ on each reflected axis. X-major fallback checks cost and index 8; Y-major's
 second fallback checks ONLY cost (57DE8A), an intentional native asymmetry.
 A bounce updates next target point and facing before tracker service/sound.
 
-PARTIAL: optional sparkle trail factory 51AE40 remains unrecovered, as in
-the travelling base. This leaf leaves it disabled. Slot 19 inherits 578480.
+Sparkle trails now use the recovered CSparkleCluster lifecycle; see
+[the emitter lot](sparkle-cluster-recovery.md). Slot 19 inherits 578480.
 Hits use the existing proximity tracker, not OnArrival.
 
 AutoUI reboundchecks: controlled terrain, golden wall choices across 3 axis
@@ -59,4 +59,4 @@ Hits: ctor 414, Fire 15, AIUpdate 398, base ctor 421. All 2168 checks and
 55 UI steps PASS; 60-second hold CLEAN. Bolt payload: target -3 HP,
 source unchanged; Swing: melee -6, arrow/bolt/sling -12 each. Offset
 oracles are not analysable; no original/reconstruction differential.
-Next: recover the shared sparkle emitter 51AE40 or its enclosing lifecycle.
+Next: remaining projectile-family trail sites; investigate factory 2F expiry.
