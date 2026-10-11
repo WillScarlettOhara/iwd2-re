@@ -6998,7 +6998,65 @@ void CGameSprite::RenderSpriteCover(CVidMode* pVidMode, INT nSurface, CVidCell* 
 // 0x708FC0
 void CGameSprite::RenderDamageArrow(CGameArea* pArea, CVidMode* pVidMode, INT nSurface)
 {
-    // TODO: Incomplete.
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    DWORD level = pGame->GetOptions()->m_nLocatorFeedbackLevel;
+    if (pGame->GetCharacterPortraitNum(m_id) == -1) return;
+    switch (level) {
+    case 2:
+        if (!m_bBloodFlashOn || m_nDamageLocatorTime == 0
+            || g_pBaldurChitin->nAUCounter % CMarker::PICKED_FLASH_PERIOD < CMarker::PICKED_FLASH_PERIOD / 2) return;
+        // Fall through to the picked-or-flashing rule.
+    case 3:
+        if ((!m_bBloodFlashOn || m_nDamageLocatorTime == 0
+                || g_pBaldurChitin->nAUCounter % CMarker::PICKED_FLASH_PERIOD < CMarker::PICKED_FLASH_PERIOD / 2)
+            && m_id != pArea->m_iPicked) return;
+        break;
+    case 4:
+    case 5:
+        break;
+    default:
+        return;
+    }
+    if (!m_active || !m_activeAI || !m_activeImprisonment
+        || m_baseStats.m_bStealthMode == 1 || (m_derivedStats.m_generalState & STATE_DEAD) != 0
+        || m_pArea != pArea) return;
+
+    const CRect& viewport = m_pArea->m_cInfinity.rViewPort;
+    CRect worldView(m_pArea->m_cInfinity.nCurrentX, m_pArea->m_cInfinity.nCurrentY,
+        m_pArea->m_cInfinity.nCurrentX + viewport.Width(), m_pArea->m_cInfinity.nCurrentY + viewport.Height());
+    CPoint pos = m_pos;
+    pos.y += m_pArea->GetHeightOffset(m_pos, m_listType);
+    CRect fx, bounds, visible;
+    CPoint reference;
+    m_animation.CalculateFxRect(fx, reference, m_posZ);
+    m_animation.CalculateGCBoundsRect(bounds, pos, reference, m_posZ, fx.Width(), fx.Height());
+    visible.IntersectRect(worldView, bounds);
+    if (!visible.IsRectEmpty()) return;
+
+    LONG x, y;
+    SHORT sequence;
+    LONG anchorY = pos.y + m_posZ;
+    if (pos.x < worldView.left) {
+        x = viewport.left;
+        if (anchorY < worldView.top) { y = viewport.top; sequence = 3; }
+        else if (anchorY > worldView.bottom) { y = viewport.bottom; sequence = 5; }
+        else { y = viewport.top - worldView.top + pos.y; sequence = 4; }
+    } else if (pos.x > worldView.right) {
+        x = viewport.right;
+        if (anchorY < worldView.top) { y = viewport.top; sequence = 1; }
+        else if (anchorY > worldView.bottom) { y = viewport.bottom; sequence = 7; }
+        else { y = viewport.top - worldView.top + pos.y; sequence = 0; }
+    } else {
+        x = viewport.left - worldView.left + pos.x;
+        if (anchorY < worldView.top) { y = viewport.top; sequence = 2; }
+        else if (anchorY > worldView.bottom) { y = viewport.bottom; sequence = 6; }
+        else return;
+    }
+    pGame->m_vcLocator.SequenceSet(sequence);
+    pGame->m_vcLocator.FrameSet(0);
+    COLORREF color = m_bBloodFlashOn && m_nDamageLocatorTime > 0 ? m_nDamageLocatorColor : m_marker.m_rgbColor;
+    pGame->m_vcLocator.SetTintColor(g_pChitin->GetCurrentVideoMode()->ApplyFadeAmount(color));
+    pGame->m_vcLocator.Render(nSurface, x, y, viewport, NULL, 0, 0x20000, -1);
 }
 
 // 0x7093E0

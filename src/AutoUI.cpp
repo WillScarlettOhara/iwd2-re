@@ -99,6 +99,8 @@
 //                                and use onhitwait to require real HP loss.
 //   weaponsoundchecks          verify pending attack sounds and animation frames;
 //                                restore creature lists, speech and item headers.
+//   damagearrowchecks          verify offscreen party locators on the back surface;
+//                                restore camera, actor, locator and sampled pixels.
 //   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
@@ -2305,6 +2307,162 @@ void Tick(CWarp* pActiveEngine)
         Emit("{\"step\":%d,\"op\":\"%s\",\"checks\":%d,\"sourceLoss\":%d,\"targetLoss\":%d,\"restored\":true,\"valid\":%s}",
             nStep, step.op, checks, sourceLoss, targetLoss, valid ? "true" : "false");
         if (!valid) { Fail(nStep, step.op, "combat message mismatch (fixtures restored)"); return; }
+        s_pc++; return;
+    }
+
+    if (strcmp(step.op, "damagearrowchecks") == 0) {
+        auto* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        auto* video = static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+        LONG id = game->GetFixedOrderCharacterId(0);
+        CGameObject* raw = NULL;
+        BYTE rc = objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE);
+        if (rc != CGameObjectArray::SUCCESS || !raw || raw->GetObjectType() != CGameObject::TYPE_SPRITE
+            || !raw->m_pArea || g_pChitin->cVideo.m_bIs3dAccelerated) {
+            if (rc == CGameObjectArray::SUCCESS) objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires party actor and software back surface"); return;
+        }
+        auto* actor = static_cast<CGameSprite*>(raw);
+        auto* area = actor->m_pArea;
+        auto& infinity = area->m_cInfinity;
+        auto& cell = game->m_vcLocator;
+        CPoint savedPos = actor->m_pos; LONG savedZ = actor->m_posZ;
+        BYTE savedList = actor->m_listType;
+        BOOL active = actor->m_active, ai = actor->m_activeAI, imprisoned = actor->m_activeImprisonment;
+        BOOLEAN stealth = actor->m_baseStats.m_bStealthMode;
+        DWORD state = actor->m_derivedStats.m_generalState;
+        BOOL blood = actor->m_bBloodFlashOn; SHORT time = actor->m_nDamageLocatorTime;
+        COLORREF damageColor = actor->m_nDamageLocatorColor, markerColor = actor->m_marker.m_rgbColor;
+        LONG picked = area->m_iPicked, counter = g_pBaldurChitin->nAUCounter;
+        DWORD level = game->GetOptions()->m_nLocatorFeedbackLevel;
+        CRect savedView = infinity.rViewPort;
+        INT savedX = infinity.nCurrentX, savedY = infinity.nCurrentY;
+        SHORT sequence = cell.m_nCurrentSequence, frame = cell.m_nCurrentFrame;
+        COLORREF tint = cell.GetTintColor();
+        ULONG clock = game->GetWorldTimer()->m_gameTime;
+        INT queued = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+        CRect patch(64, 64, 416, 336);
+        std::vector<BYTE> savedPixels;
+        // Read/write rows without copying pitch padding. Every lock is balanced.
+        auto pixels = [&](std::vector<BYTE>* read, const std::vector<BYTE>* write, BOOL clear) -> BOOL {
+            if (!video->BKLock(patch)) return FALSE;
+            DWORD bytes = video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount / 8;
+            INT row = patch.Width() * bytes;
+            BOOL ok = bytes >= 2 && bytes <= 4 && video->m_SurfaceDesc.lpSurface != NULL;
+            if (ok && read) read->resize(row * patch.Height());
+            if (ok && write) ok = write->size() == static_cast<size_t>(row * patch.Height());
+            if (ok) for (INT y = 0; y < patch.Height(); ++y) {
+                BYTE* pRow = static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface) + y * video->m_SurfaceDesc.lPitch;
+                if (read) memcpy(read->data() + y * row, pRow, row);
+                if (write) memcpy(pRow, write->data() + y * row, row);
+                if (clear) memset(pRow, 0, row);
+            }
+            video->BKUnlock(); return ok;
+        };
+        BOOL valid = TRUE; INT checks = 0;
+        auto check = [&](const char* name, BOOL ok) {
+            ++checks; valid = valid && ok;
+            if (!ok) Emit("{\"step\":%d,\"op\":\"damage-arrow-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+        };
+        BOOL backedUp = pixels(&savedPixels, NULL, FALSE);
+        check("back-surface-pixels-backed-up", backedUp);
+        auto reset = [&]() {
+            actor->m_id = id; actor->m_pArea = area;
+            actor->m_active = actor->m_activeAI = actor->m_activeImprisonment = 1;
+            actor->m_baseStats.m_bStealthMode = 0; actor->m_derivedStats.m_generalState = 0;
+            actor->m_bBloodFlashOn = FALSE; actor->m_nDamageLocatorTime = 0;
+            actor->m_marker.m_rgbColor = RGB(80, 230, 100); actor->m_nDamageLocatorColor = RGB(250, 40, 70);
+            actor->m_pos = CPoint(1500, 1120); actor->m_posZ = 0; actor->m_listType = CGameObject::LIST_FLIGHT;
+            infinity.rViewPort = CRect(80, 80, 400, 320); infinity.nCurrentX = infinity.nCurrentY = 1000;
+            game->GetOptions()->m_nLocatorFeedbackLevel = 4; area->m_iPicked = -1;
+        };
+        // Expected screen anchors/sequences are fixed by the PE's eight branches.
+        // Compare the complete patch to a direct BAM render, including its clip.
+        auto render = [&](const char* name, SHORT expectedSequence, INT x, INT y, COLORREF color) {
+            if (!backedUp) return;
+            std::vector<BYTE> expected, actual;
+            BOOL ok = pixels(NULL, NULL, TRUE);
+            COLORREF faded = video->ApplyFadeAmount(color);
+            if (expectedSequence != -1) {
+                cell.SequenceSet(expectedSequence); cell.FrameSet(0); cell.SetTintColor(faded);
+                ok = cell.Render(CVIDINF_SURFACE_BACK, x, y, infinity.rViewPort, NULL, 0, 0x20000, -1) && ok;
+            }
+            ok = pixels(&expected, NULL, TRUE) && ok;
+            BOOL drawn = std::any_of(expected.begin(), expected.end(), [](BYTE value) { return value != 0; });
+            cell.SequenceSet(-12); cell.FrameSet(-13); cell.SetTintColor(RGB(11, 22, 33));
+            actor->RenderDamageArrow(area, NULL, CVIDINF_SURFACE_BACK);
+            ok = pixels(&actual, NULL, FALSE) && ok;
+            check(name, ok && actual == expected && drawn == (expectedSequence != -1));
+            check("locator-sequence-frame-tint-and-unlocked-surface", expectedSequence == -1
+                ? cell.m_nCurrentSequence == -12 && cell.m_nCurrentFrame == -13 && cell.GetTintColor() == RGB(11, 22, 33)
+                : cell.m_nCurrentSequence == expectedSequence && cell.m_nCurrentFrame == 0 && cell.GetTintColor() == faded);
+            check("back-surface-unlocked", video->m_SurfaceDesc.lpSurface == NULL);
+        };
+        struct Direction { LONG x, y, z; SHORT sequence; INT screenX, screenY; };
+        const Direction directions[] = {
+            {1500,1120,0,0,400,200}, {1500,800,0,1,400,80}, {1160,800,0,2,240,80},
+            {800,800,0,3,80,80}, {800,1120,0,4,80,200}, {800,1500,0,5,80,320},
+            {1160,1500,0,6,240,320}, {1500,1500,0,7,400,320},
+            {800,1120,24,4,80,200}, {800,1120,-500,3,80,80}, {800,1120,500,5,80,320},
+            {1000,800,0,2,80,80}, {1320,800,0,2,400,80},
+            {800,1000,0,4,80,80}, {800,1240,0,4,80,320}};
+        for (const auto& direction : directions) {
+            reset(); actor->m_pos = CPoint(direction.x, direction.y); actor->m_posZ = direction.z;
+            render("direction-anchor-and-full-clipped-pixels", direction.sequence, direction.screenX, direction.screenY, actor->m_marker.m_rgbColor);
+        }
+        struct Gate { DWORD level; BOOL blood; SHORT time; LONG counter; BOOL picked; BOOL draw; BOOL damageTint; };
+        const Gate gates[] = {
+            {0,1,1,10,TRUE,FALSE,FALSE}, {1,1,1,10,TRUE,FALSE,FALSE}, {6,1,1,10,TRUE,FALSE,FALSE},
+            {0xFFFFFFFF,1,1,10,TRUE,FALSE,FALSE}, {2,0,1,10,TRUE,FALSE,FALSE}, {2,1,0,10,TRUE,FALSE,FALSE},
+            {2,1,1,9,TRUE,FALSE,FALSE}, {2,1,1,10,FALSE,TRUE,TRUE}, {2,2,-1,19,FALSE,TRUE,FALSE},
+            {2,1,1,20,TRUE,FALSE,FALSE}, {2,1,1,-1,TRUE,FALSE,FALSE},
+            {3,0,0,0,FALSE,FALSE,FALSE}, {3,0,0,0,TRUE,TRUE,FALSE}, {3,1,1,9,TRUE,TRUE,TRUE},
+            {3,1,1,10,FALSE,TRUE,TRUE}, {3,1,-1,10,FALSE,TRUE,FALSE}, {4,0,0,0,FALSE,TRUE,FALSE},
+            {5,2,1,0,FALSE,TRUE,TRUE}};
+        for (const auto& gate : gates) {
+            reset(); game->GetOptions()->m_nLocatorFeedbackLevel = gate.level;
+            actor->m_bBloodFlashOn = gate.blood; actor->m_nDamageLocatorTime = gate.time;
+            g_pBaldurChitin->nAUCounter = gate.counter; area->m_iPicked = gate.picked ? id : -1;
+            render("feedback-blink-pick-and-signed-time", gate.draw ? 0 : -1, 400, 200,
+                gate.damageTint ? actor->m_nDamageLocatorColor : actor->m_marker.m_rgbColor);
+        }
+        for (INT guard = 0; guard < 8; ++guard) {
+            reset();
+            switch (guard) {
+            case 0: actor->m_id = -1; break;
+            case 1: actor->m_active = 0; break;
+            case 2: actor->m_activeAI = 0; break;
+            case 3: actor->m_activeImprisonment = 0; break;
+            case 4: actor->m_baseStats.m_bStealthMode = 1; break;
+            case 5: actor->m_derivedStats.m_generalState = STATE_DEAD; break;
+            case 6: actor->m_pArea = NULL; break;
+            case 7: actor->m_pos = CPoint(1160,1120); break;
+            }
+            render("nonparty-inactive-stealth-dead-otherarea-visible", -1, 0, 0, 0);
+        }
+        reset(); actor->m_baseStats.m_bStealthMode = 2; actor->m_active = -1;
+        render("stealth-byte-is-exact-one-and-active-is-truthy", 0, 400, 200, actor->m_marker.m_rgbColor);
+        reset(); actor->m_pos = CPoint(999,1120);
+        render("partially-visible-body-suppresses-offscreen-anchor", -1, 0, 0, 0);
+        reset(); actor->m_pos = savedPos; actor->m_posZ = 24; actor->m_listType = savedList;
+        infinity.nCurrentX = savedPos.x + 500; infinity.nCurrentY = savedPos.y - 120;
+        INT height = area->GetHeightOffset(savedPos, savedList);
+        render("real-terrain-height-and-horizontal-anchor-excludes-z", 4, 80, 200 + height, actor->m_marker.m_rgbColor);
+        actor->m_id = id; actor->m_pArea = area; actor->m_pos = savedPos; actor->m_posZ = savedZ; actor->m_listType = savedList;
+        actor->m_active = active; actor->m_activeAI = ai; actor->m_activeImprisonment = imprisoned;
+        actor->m_baseStats.m_bStealthMode = stealth; actor->m_derivedStats.m_generalState = state;
+        actor->m_bBloodFlashOn = blood; actor->m_nDamageLocatorTime = time;
+        actor->m_nDamageLocatorColor = damageColor; actor->m_marker.m_rgbColor = markerColor;
+        infinity.rViewPort = savedView; infinity.nCurrentX = savedX; infinity.nCurrentY = savedY;
+        area->m_iPicked = picked; g_pBaldurChitin->nAUCounter = counter;
+        game->GetOptions()->m_nLocatorFeedbackLevel = level;
+        cell.SequenceSet(sequence); cell.FrameSet(frame); cell.SetTintColor(tint);
+        check("sampled-pixels-restored", backedUp && pixels(NULL, &savedPixels, FALSE));
+        check("locator-does-not-post-messages-or-advance-clock", queued == g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount()
+            && clock == game->GetWorldTimer()->m_gameTime);
+        objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"damagearrowchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "damage locator mismatch (state restored)"); return; }
         s_pc++; return;
     }
 
