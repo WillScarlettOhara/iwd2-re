@@ -33,6 +33,7 @@
 #include "CUtil.h"
 #include "CVariableHash.h"
 #include "CVidInf.h"
+#include "CVisualEffect.h"
 #include "Icewind586B70.h"
 #include "IcewindCGameEffects.h"
 #include "IcewindCVisualEffect.h"
@@ -19098,13 +19099,26 @@ BOOL CGameSprite::HandleEffects()
 
         m_activeImprisonment = TRUE;
 
-        // TODO: Incomplete.  Original handles many more passes and status
-        // side-effects (e.g. the portrait/button refresh at 0x7346c5); this
-        // restores the core equipped/timed list pass and the skill-modifier fold.
+        CGameObjectArray* objects = g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+        CGameObject* visual;
+        BYTE rc;
+        do {
+            rc = objects->GetDeny(field_72E2, CGameObjectArray::THREAD_ASYNCH, &visual, INFINITE);
+        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+        if (rc == CGameObjectArray::SUCCESS) {
+            static_cast<CVisualEffect*>(visual)->SetAllDelete();
+            objects->ReleaseDeny(field_72E2, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
         m_bonusStats.BonusInit();
 
         v1 = m_equipedEffectList.HandleList(this);
+        if (m_equipedEffectList.m_retry) {
+            bRetry = TRUE;
+        }
         v2 = m_timedEffectList.HandleList(this);
+        if (m_timedEffectList.m_retry) {
+            bRetry = TRUE;
+        }
 
         m_derivedStats += m_bonusStats;
 
@@ -19124,10 +19138,13 @@ BOOL CGameSprite::HandleEffects()
             m_derivedStats.m_nSkills[index] = (nSkill > 0) ? static_cast<BYTE>(nSkill) : 0;
         }
 
-        bRetry = m_equipedEffectList.m_retry || m_timedEffectList.m_retry;
+        SHORT portrait = g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(m_id);
+        if (static_cast<CBaldurEngine*>(g_pBaldurChitin->pActiveEngine)->GetPickedCharacter() == portrait) {
+            g_pBaldurChitin->GetObjectGame()->m_cButtonArray.UpdateState();
+        }
     } while (bRetry);
 
-    return v1 && v2;
+    return v1 & 1 & v2;
 }
 
 // 0x7349A0

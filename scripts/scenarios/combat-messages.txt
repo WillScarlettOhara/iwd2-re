@@ -5,6 +5,7 @@ center
 sleep 15
 expect partyvisible 0
 combatmessagechecks
+effectcontrollerchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

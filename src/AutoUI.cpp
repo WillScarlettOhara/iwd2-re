@@ -101,6 +101,8 @@
 //                                restore creature lists, speech and item headers.
 //   damagearrowchecks          verify offscreen party locators on the back surface;
 //                                restore camera, actor, locator and sampled pixels.
+//   effectcontrollerchecks     verify VEF updates and complete HandleEffects passes;
+//                                restore owning stats, lists and registered fixtures.
 //   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
@@ -116,6 +118,9 @@
 // verdict. A failed assertion stops the script.
 
 #include "AutoUI.h"
+
+#include "CVisualEffect.h"
+#include <new>
 
 #include <cmath>
 #include <algorithm>
@@ -179,6 +184,65 @@ const int MAX_NUMS = 3;
 // Ticks to let the engine settle after a click before the next step runs.
 const int CLICK_SETTLE_TICKS = 2;
 const int DEFAULT_WAIT_TICKS = 3000;
+
+// These animation fixtures exercise the recovered prefix only. They supply
+// explicit state and object-array retirement while VEF resource loading and the
+// full CVEFVidCell constructor/destructor remain unrecovered.
+class VefCellFixture : public CVidCell {
+public:
+    INT advances = 0;
+    BOOL FrameAdvance() override { ++advances; return TRUE; }
+};
+
+class VefAnimationFixture : public CVEFVidCell {
+public:
+    INT* deleted;
+    explicit VefAnimationFixture(INT* count) : deleted(count)
+    {
+        m_bltFlagsExtra = 1;
+        m_offset = CPoint(0, 0);
+        m_offsetFlags = 0;
+        m_animationSpeed = 15;
+        m_direction = 0;
+        m_directionFlags = 0;
+        m_nDuration = -1;
+        m_cVidCell = NULL;
+        m_cShadowVidCell = NULL;
+        m_done = FALSE;
+        m_newDirection = 0;
+    }
+    ~VefAnimationFixture() override
+    {
+        if (deleted != NULL) ++*deleted;
+        if (m_id != CGameObjectArray::INVALID_INDEX) {
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Delete(
+                m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE);
+        }
+    }
+};
+
+class EffectPassFixture : public CGameEffect {
+public:
+    INT calls = 0;
+    INT retryPasses = 0;
+    BOOL result = TRUE;
+    BOOL clearEquippedRetry = FALSE;
+    SHORT bonus = 0;
+    CVEFVidCell* animation = NULL;
+    BOOL sawDeleteOnEveryPass = TRUE;
+    BOOL ResolveEffect(CGameSprite* actor) override
+    {
+        ++calls;
+        m_forceRepass = calls <= retryPasses;
+        if (clearEquippedRetry) actor->m_equipedEffectList.m_retry = FALSE;
+        actor->m_bonusStats.m_nDamageBonus += bonus;
+        if (animation != NULL) {
+            sawDeleteOnEveryPass = sawDeleteOnEveryPass && (animation->m_bltFlagsExtra & 0x20) != 0;
+            animation->m_bltFlagsExtra &= ~0x20u;
+        }
+        return result;
+    }
+};
 
 struct Step {
     char op[MAX_TOKEN];
@@ -626,6 +690,269 @@ void LoadScript()
     Emit("{\"op\":\"load\",\"status\":\"ok\",\"steps\":%d}", s_count);
 }
 
+void EffectControllerChecks(INT nStep)
+{
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CGameObjectArray* objects = game->GetObjectArray();
+    LONG actorId = game->GetFixedOrderCharacterId(0);
+    CGameObject* raw = NULL;
+    BYTE rc = objects->GetDeny(actorId, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE);
+    if (rc != CGameObjectArray::SUCCESS || raw == NULL || raw->GetObjectType() != CGameObject::TYPE_SPRITE) {
+        if (rc == CGameObjectArray::SUCCESS) objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Fail(nStep, "effectcontrollerchecks", "requires party sprite"); return;
+    }
+    CGameSprite* actor = static_cast<CGameSprite*>(raw);
+    BOOL valid = TRUE;
+    INT checks = 0;
+    auto check = [&](const char* name, BOOL passed) {
+        valid = valid && passed; ++checks;
+        Emit("{\"step\":%d,\"op\":\"effectcontroller-case\",\"case\":\"%s\",\"passed\":%s}", nStep, name, passed ? "true" : "false");
+    };
+    auto balanced = [&](LONG id) {
+        auto& entry = objects->m_pArray[(id >> 16) & 0x7FFF];
+        return entry.m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == 0;
+    };
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    INT messages = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    INT deleted = 0;
+    CVisualEffect controller;
+    check("constructor", controller.m_activeAnimations.IsEmpty() && controller.m_timedEvents.IsEmpty()
+        && controller.m_triggeredEvents.IsEmpty() && controller.m_nTargetId == -1
+        && controller.m_nSpeed == -1 && controller.m_nDuration == -1 && controller.m_flags == 0
+        && controller.m_ptStartDeltaV == CPoint(0, 0) && controller.m_nDeltaVDec == 0
+        && controller.m_posExact == CPoint(0, 0) && controller.m_posOld == CPoint(0, 0)
+        && controller.m_posDelta == CPoint(0, 0) && controller.m_ptTargetPos == CPoint(0, 0)
+        && controller.m_nExistanceCounter == 0 && controller.m_nDirection == 0 && controller.m_nNewDirection == 0
+        && memcmp(controller.m_terrainTable, CGameObject::DEFAULT_TERRAIN_TABLE, 16) == 0);
+    check("base-layout", sizeof(CVisualEffectBase) == 0x1C0 && sizeof(CVEFVidCellBase) == 0x1E4 && sizeof(CVEFEvent) == 0xE0
+        && reinterpret_cast<BYTE*>(static_cast<CVisualEffectBase*>(&controller)) - reinterpret_cast<BYTE*>(&controller) == sizeof(CGameObject));
+    VefCellFixture cell, shadow;
+    VefAnimationFixture animation(NULL);
+    animation.m_cVidCell = &cell; animation.m_cShadowVidCell = &shadow;
+    check("animation-prefix-layout", reinterpret_cast<BYTE*>(static_cast<CVEFVidCellBase*>(&animation)) - reinterpret_cast<BYTE*>(&animation) == sizeof(CGameObject)
+        && reinterpret_cast<BYTE*>(&animation.m_cVidCell) - reinterpret_cast<BYTE*>(static_cast<CVEFVidCellBase*>(&animation)) == 0x1E4);
+    const INT expectedAdvances[29] = {2, 4, 6, 9, 10, 12, 15, 20, 20, 20, 30, 30, 30, 30, 30, 30, 30, 30, 30, 40, 40, 40, 45, 48, 50, 51, 54, 56, 58};
+    for (INT speed = 1; speed < 30; ++speed) {
+        animation.m_animationSpeed = speed; cell.advances = shadow.advances = 0;
+        for (INT tick = 0; tick < 60; ++tick) animation.FrameAdvance(tick);
+        check("frame-positive-cadence", cell.advances == expectedAdvances[speed - 1] && shadow.advances == cell.advances && animation.m_done == FALSE);
+        cell.advances = shadow.advances = 0;
+        for (INT tick = -59; tick <= 0; ++tick) animation.FrameAdvance(tick);
+        check("frame-negative-cadence", cell.advances == expectedAdvances[speed - 1] && shadow.advances == cell.advances);
+    }
+    animation.m_animationSpeed = 1; animation.m_cShadowVidCell = NULL;
+    cell.advances = 0; animation.FrameAdvance(1);
+    check("skipped-no-shadow", cell.advances == 0);
+    animation.FrameAdvance(0);
+    check("advanced-no-shadow", cell.advances == 1);
+    animation.m_nDuration = 4; animation.m_done = FALSE; animation.FrameAdvance(4);
+    check("duration-strict-boundary", animation.m_done == FALSE);
+    animation.FrameAdvance(5);
+    check("duration-on-skipped-frame", animation.m_done == TRUE && cell.advances == 1);
+    animation.m_nDuration = -1; animation.m_done = 7; animation.FrameAdvance(0x7FFFFFFF);
+    check("negative-duration-preserves-done", animation.m_done == 7);
+    animation.m_nDuration = 0; animation.m_done = FALSE; animation.FrameAdvance(0x7FFFFFFF);
+    check("zero-duration-never-expires", animation.m_done == FALSE);
+    CVidCell realCell(game->m_vcLocator.cResRef, FALSE);
+    BYTE frameCount = realCell.GetSequenceLength(0, FALSE);
+    check("real-bam-available", frameCount != 0);
+    if (frameCount != 0) {
+        realCell.SequenceSet(0); realCell.FrameSet(frameCount - 1);
+        animation.m_cVidCell = &realCell; animation.m_bltFlagsExtra = 0; animation.FrameAdvance(0);
+        check("nonloop-end-completion", animation.m_done == TRUE);
+        animation.m_done = FALSE; animation.m_bltFlagsExtra = 1;
+        realCell.FrameSet(frameCount - 1); animation.FrameAdvance(0);
+        check("loop-end-retained", animation.m_done == FALSE);
+    }
+    animation.m_cVidCell = &cell; animation.m_nDuration = -1; animation.m_done = FALSE;
+    const CPoint rotated[16] = {CPoint(1000,1000), CPoint(541,1307), CPoint(0,1414), CPoint(-541,1307),
+        CPoint(-1000,1000), CPoint(-1307,541), CPoint(-1414,0), CPoint(-1307,-541),
+        CPoint(-1000,-1000), CPoint(-541,-1307), CPoint(0,-1414), CPoint(541,-1307),
+        CPoint(1000,-1000), CPoint(1307,-541), CPoint(1414,0), CPoint(1307,541)};
+    animation.m_offset = CPoint(1000, 1000); animation.m_offsetFlags = 1;
+    for (INT direction = 0; direction < 16; ++direction) {
+        animation.m_newDirection = direction; animation.CalculatePos(CPoint(0, 0));
+        check("position-all-directions", animation.m_pos == rotated[direction]);
+    }
+    animation.m_offset = CPoint(3, -2); animation.m_newDirection = 1;
+    animation.CalculatePos(CPoint(100, 200));
+    check("position-signed-truncation", animation.m_pos == CPoint(103, 200));
+    animation.m_offsetFlags = 2; animation.CalculatePos(CPoint(100, 200));
+    check("position-bit-one-only", animation.m_pos == CPoint(103, 198));
+    animation.m_offset = CPoint(1, -1); animation.CalculatePos(CPoint(0x7FFFFFFF, static_cast<LONG>(0x80000000u)));
+    check("position-long-wrap", animation.m_pos == CPoint(static_cast<LONG>(0x80000000u), 0x7FFFFFFF));
+    animation.m_direction = 0x1234FFFF; animation.m_directionFlags = 3; animation.m_pos = CPoint(100, 200);
+    animation.SetDirection(CPoint(0, 0), CPoint(10, 0), CPoint(100, 200), 6);
+    check("direction-target-precedence-signed-word", animation.m_newDirection == -1);
+    animation.SetDirection(CPoint(0, 0), CPoint(10, 0), CPoint(200, 200), 6);
+    check("direction-target-east", animation.m_newDirection == 12);
+    animation.m_directionFlags = 2; animation.SetDirection(CPoint(0, 0), CPoint(10, 0), CPoint(200, 200), -1234);
+    check("direction-explicit-word", animation.m_newDirection == -1234);
+    animation.m_directionFlags = 0; animation.m_direction = 0x12348000;
+    animation.SetDirection(CPoint(10, 0), CPoint(10, 0), CPoint(200, 200), 6);
+    check("direction-stationary-word", animation.m_newDirection == -32768);
+    animation.SetDirection(CPoint(10, 0), CPoint(0, 0), CPoint(200, 200), 6);
+    check("direction-movement-east", animation.m_newDirection == 12);
+    check("direction-static-stationary", CVEFVidCell::GetDirection(CPoint(-5, 2), CPoint(-5, 2), -1234) == -1234);
+    check("direction-static-south", CVEFVidCell::GetDirection(CPoint(0, 0), CPoint(0, 10), 6) == 0);
+    controller.m_pos = controller.m_posExact = CPoint(0, 0); controller.m_nSpeed = 4;
+    controller.Move(CPoint(5, 0));
+    check("move-strict-stop-radius", controller.m_pos == CPoint(0, 0) && controller.m_posDelta == CPoint(0, 0));
+    controller.Move(CPoint(6, 0));
+    check("move-axis-fixed-point", controller.m_pos == CPoint(4, 0) && controller.m_posExact == CPoint(4096, 0) && controller.m_nNewDirection == 12);
+    controller.m_pos = controller.m_posExact = CPoint(0, 0); controller.m_nSpeed = 1;
+    controller.Move(CPoint(2, 2));
+    check("move-rounded-distance", controller.m_posDelta == CPoint(682, 682) && controller.m_pos == CPoint(0, 0));
+    controller.m_pos = CPoint(0, 0); controller.m_posExact = CPoint(-1, -1); controller.m_nSpeed = 0;
+    controller.Move(CPoint(100, 0));
+    check("move-negative-exact-y-truncation", controller.m_pos == CPoint(-1, 0));
+    controller.m_pos = controller.m_posExact = CPoint(0, 0); controller.m_nSpeed = 46340;
+    controller.Move(CPoint(65536, 0));
+    check("move-wrapped-zero-length", controller.m_posDelta == CPoint(1, 1));
+    const CPoint velocity[4] = {CPoint(-1, 1), CPoint(-4, 4), CPoint(-5, 5), CPoint(0, 0)};
+    const CPoint decayed[4] = {CPoint(0, 0), CPoint(0, 0), CPoint(-1, 1), CPoint(0, 0)};
+    for (INT i = 0; i < 4; ++i) {
+        controller.m_pos = controller.m_posExact = CPoint(0, 0); controller.m_nSpeed = 0;
+        controller.m_ptStartDeltaV = velocity[i]; controller.m_nDeltaVDec = 4;
+        controller.Move(CPoint(0, 100));
+        check("move-velocity-decay", controller.m_ptStartDeltaV == decayed[i]);
+    }
+    rc = objects->Add(&controller.m_id, &controller, INFINITE);
+    check("controller-registration", rc == CGameObjectArray::SUCCESS);
+    auto addAnimation = [&]() -> VefAnimationFixture* {
+        auto* child = new VefAnimationFixture(&deleted);
+        child->m_cVidCell = &cell;
+        BYTE added = objects->Add(&child->m_id, child, INFINITE);
+        check("animation-registration", added == CGameObjectArray::SUCCESS);
+        if (added != CGameObjectArray::SUCCESS) { delete child; return NULL; }
+        controller.m_activeAnimations.AddTail(child->m_id);
+        return child;
+    };
+    auto* child = addAnimation();
+    if (rc == CGameObjectArray::SUCCESS && child != NULL) {
+        LONG childId = child->m_id;
+        controller.m_activeAnimations.AddHead(-1);
+        child->m_bltFlagsExtra = 0x80000004u;
+        controller.SetAllDelete();
+        check("delete-flag-preserves-dword-and-list", child->m_bltFlagsExtra == 0x80000024u && controller.m_activeAnimations.GetCount() == 2 && deleted == 0 && balanced(childId));
+        controller.SetAllDelete();
+        check("delete-flag-idempotent", child->m_bltFlagsExtra == 0x80000024u && balanced(childId));
+        controller.m_pos = controller.m_ptTargetPos = CPoint(0, 0); controller.m_nSpeed = 0;
+        controller.m_nExistanceCounter = 0x7FFFFFFF; controller.AIUpdate();
+        check("flagged-child-retirement", deleted == 1 && controller.m_activeAnimations.GetCount() == 1 && controller.m_activeAnimations.GetHead() == -1);
+        check("update-counter-wrap", controller.m_nExistanceCounter == static_cast<LONG>(0x80000000u) && controller.m_posOld == controller.m_pos);
+        controller.m_activeAnimations.RemoveAll();
+        child = addAnimation();
+        if (child != NULL) {
+            childId = child->m_id;
+            controller.m_pos = controller.m_ptTargetPos = CPoint(20, 30); controller.m_posOld = CPoint(10, 30);
+            controller.m_nExistanceCounter = 0; controller.m_flags = 1; controller.m_posZ = 123;
+            child->m_bltFlagsExtra = 5; child->m_offset = CPoint(3, -2); cell.advances = 0;
+            controller.AIUpdate();
+            check("live-child-update", child->m_pos == CPoint(23, 28) && child->m_posZ == 123 && child->m_newDirection == 12
+                && cell.advances == 1 && controller.m_nExistanceCounter == 1 && controller.m_posOld == CPoint(20, 30) && balanced(childId));
+            controller.m_flags = 0; controller.m_posZ = 456; child->m_nDuration = 1;
+            controller.AIUpdate();
+            check("height-gated-and-duration-boundary", child->m_posZ == 123 && deleted == 1 && balanced(childId));
+            controller.AIUpdate();
+            check("completed-child-retirement", deleted == 2 && controller.m_activeAnimations.IsEmpty());
+        }
+        child = addAnimation();
+        if (child != NULL) {
+            // Park the two owning stats objects at their original addresses.
+            // The recovered assignment is partial and MFC list copies are not
+            // safe snapshots. Fresh stats own only fixture allocations; those
+            // are destroyed before restoring the exact parked bytes/resources.
+            std::vector<BYTE> derived(sizeof(CDerivedStats)), bonus(sizeof(CDerivedStats));
+            memcpy(derived.data(), &actor->m_derivedStats, derived.size());
+            memcpy(bonus.data(), &actor->m_bonusStats, bonus.size());
+            new (&actor->m_derivedStats) CDerivedStats;
+            new (&actor->m_bonusStats) CDerivedStats;
+            std::vector<CGameEffect*> equipped, timed;
+            while (!actor->m_equipedEffectList.IsEmpty()) equipped.push_back(actor->m_equipedEffectList.RemoveHead());
+            while (!actor->m_timedEffectList.IsEmpty()) timed.push_back(actor->m_timedEffectList.RemoveHead());
+            auto base = actor->m_baseStats;
+            auto ai = actor->m_typeAI; auto liveAi = actor->m_liveTypeAI;
+            BOOL imprisoned = actor->m_activeImprisonment;
+            LONG visualId = actor->field_72E2;
+            BOOL eqRetry = actor->m_equipedEffectList.m_retry, timeRetry = actor->m_timedEffectList.m_retry;
+            auto* engine = static_cast<CBaldurEngine*>(g_pBaldurChitin->pActiveEngine);
+            INT picked = engine->m_nPickedCharacter;
+            auto& bar = game->m_cButtonArray;
+            INT barState = bar.m_nState; INT barTypes[12]; memcpy(barTypes, bar.m_buttonTypes, sizeof(barTypes));
+            EffectPassFixture eq, time;
+            eq.retryPasses = 1; eq.bonus = 3; eq.animation = child;
+            time.clearEquippedRetry = TRUE; time.bonus = 5;
+            actor->m_equipedEffectList.AddTail(&eq); actor->m_timedEffectList.AddTail(&time);
+            actor->field_72E2 = controller.m_id; actor->m_activeImprisonment = FALSE;
+            engine->m_nPickedCharacter = -1; bar.m_nState = 0x6F; bar.m_buttonTypes[0] = -1234;
+            BOOL handled = actor->HandleEffects();
+            check("effects-retry-captured-before-timed", handled == TRUE && eq.calls == 2 && time.calls == 2 && eq.sawDeleteOnEveryPass);
+            check("effects-bonus-reset-each-pass", actor->m_derivedStats.m_nDamageBonus == 8 && actor->m_activeImprisonment == TRUE);
+            check("unpicked-bar-unchanged", bar.m_buttonTypes[0] == -1234);
+            eq.retryPasses = 0; eq.animation = NULL; eq.result = 2;
+            check("effects-even-bool-mask", actor->HandleEffects() == FALSE);
+            eq.result = 3; time.result = 2;
+            check("effects-timed-even-bool-mask", actor->HandleEffects() == FALSE);
+            time.result = 3;
+            check("effects-odd-bool-mask", actor->HandleEffects() == TRUE);
+            eq.result = time.result = TRUE;
+            actor->m_baseStats.m_skills[CGAMESPRITE_SKILL_DISABLE_DEVICE] = 255;
+            actor->m_baseStats.m_INTBase = 10;
+            actor->HandleEffects();
+            check("effects-signed-byte-skill-floor", actor->m_derivedStats.m_nSkills[CGAMESPRITE_SKILL_DISABLE_DEVICE] == 0);
+            actor->m_baseStats.m_skills[CGAMESPRITE_SKILL_DISABLE_DEVICE] = 126;
+            actor->m_baseStats.m_INTBase = 14;
+            actor->HandleEffects();
+            check("effects-skill-positive-overflow-floor", actor->m_derivedStats.m_nSkills[CGAMESPRITE_SKILL_DISABLE_DEVICE] == 0);
+            actor->m_baseStats.m_skills[CGAMESPRITE_SKILL_DISABLE_DEVICE] = 4;
+            actor->HandleEffects();
+            check("effects-normal-skill-fold", actor->m_derivedStats.m_nSkills[CGAMESPRITE_SKILL_DISABLE_DEVICE] == 6);
+            engine->m_nPickedCharacter = game->GetCharacterPortraitNum(actorId); bar.m_buttonTypes[0] = -1234;
+            actor->HandleEffects(); check("picked-bar-refreshed", bar.m_buttonTypes[0] == 100);
+            actor->m_id = -1; engine->m_nPickedCharacter = -1; bar.m_buttonTypes[0] = -1234;
+            actor->HandleEffects(); check("minus-one-portrait-refresh", bar.m_buttonTypes[0] == 100);
+            actor->m_id = actorId; actor->field_72E2 = -1;
+            check("missing-controller-effects-still-run", actor->HandleEffects() == TRUE);
+            actor->m_equipedEffectList.RemoveAll(); actor->m_timedEffectList.RemoveAll();
+            for (auto* effect : equipped) actor->m_equipedEffectList.AddTail(effect);
+            for (auto* effect : timed) actor->m_timedEffectList.AddTail(effect);
+            actor->m_equipedEffectList.m_retry = eqRetry; actor->m_timedEffectList.m_retry = timeRetry;
+            actor->m_baseStats = base; actor->m_typeAI = ai; actor->m_liveTypeAI = liveAi;
+            actor->m_activeImprisonment = imprisoned; actor->field_72E2 = visualId;
+            actor->m_derivedStats.~CDerivedStats(); actor->m_bonusStats.~CDerivedStats();
+            memcpy(&actor->m_derivedStats, derived.data(), derived.size());
+            memcpy(&actor->m_bonusStats, bonus.data(), bonus.size());
+            engine->m_nPickedCharacter = picked; bar.SetState(barState, 0); memcpy(bar.m_buttonTypes, barTypes, sizeof(barTypes));
+            check("effects-controller-deny-balanced", balanced(controller.m_id) && balanced(child->m_id));
+        }
+    }
+    controller.Render(raw->m_pArea, g_pChitin->GetCurrentVideoMode(), 0);
+    controller.SetAllDelete(); controller.AIUpdate();
+    check("remaining-controller-child-retired", controller.m_activeAnimations.IsEmpty());
+    if (controller.m_id != -1) { objects->Delete(controller.m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE); controller.m_id = -1; }
+    // Destructor owns the remaining child, both event lists and the area link.
+    {
+        CVisualEffect* owned = new CVisualEffect;
+        owned->m_activeAnimations.AddTail(-1);
+        auto* remaining = new VefAnimationFixture(&deleted);
+        if (objects->Add(&remaining->m_id, remaining, INFINITE) == CGameObjectArray::SUCCESS) {
+            owned->m_activeAnimations.AddTail(remaining->m_id);
+            owned->m_timedEvents.AddTail(new CVEFEvent); owned->m_timedEvents.AddTail(new CVEFEvent);
+            owned->m_triggeredEvents.AddTail(new CVEFEvent);
+            owned->m_pArea = raw->m_pArea;
+            INT before = deleted; delete owned;
+            check("destructor-owned-child-and-events", deleted == before + 1);
+        } else { delete remaining; delete owned; check("destructor-fixture-registration", FALSE); }
+    }
+    check("same-tick-no-clock-or-messages", game->GetWorldTimer()->m_gameTime == clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount() == messages);
+    objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    check("actor-deny-balanced", balanced(actorId));
+    Emit("{\"step\":%d,\"op\":\"effectcontrollerchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+    if (!valid) Fail(nStep, "effectcontrollerchecks", "effect controller mismatch");
+}
+
 } // namespace
 
 bool IsEnabled()
@@ -678,6 +1005,10 @@ void Tick(CWarp* pActiveEngine)
 
     const Step& step = s_steps[s_pc];
     const int nStep = s_pc + 1;
+
+    if (strcmp(step.op, "effectcontrollerchecks") == 0) {
+        EffectControllerChecks(nStep); ++s_pc; return;
+    }
 
     if (strcmp(step.op, "combatrules") == 0) {
         CInfGame* game = g_pBaldurChitin->GetObjectGame();
