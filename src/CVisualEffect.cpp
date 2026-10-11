@@ -7,6 +7,98 @@
 #include "CGameSprite.h"
 #include "CInfGame.h"
 
+// 0x5544C0
+CVisualEffectFile::CVisualEffectFile(CResRef res)
+{
+    // The binary inlines the helper's initial SetResRef operation here.
+    if (cResRef != res) {
+        if (pRes != NULL && cResRef != "" && bLoading) {
+            static_cast<CRes*>(pRes)->CancelRequest();
+        }
+        if (res == "") {
+            pRes = NULL;
+            cResRef = "";
+        } else {
+            pRes = static_cast<CResBinary*>(g_pChitin->cDimm.GetResObject(res, 1020, TRUE));
+            if (pRes == NULL) {
+                cResRef = "";
+            } else {
+                bLoading = TRUE;
+                static_cast<CRes*>(pRes)->Request();
+                cResRef = res;
+            }
+        }
+    }
+}
+
+// 0x5545E0
+CVisualEffect* CVisualEffectFile::GetVEF()
+{
+    if (pRes == NULL) {
+        return NULL;
+    }
+    BYTE* data = static_cast<BYTE*>(pRes->Demand());
+    if (data == NULL) {
+        pRes->Release();
+        return NULL;
+    }
+    const CVEFHeader* header = reinterpret_cast<const CVEFHeader*>(data);
+    CVisualEffect* effect = new CVisualEffect;
+    for (DWORD i = 0; i < header->timedCount; ++i) {
+        const CVEFEvent* record = reinterpret_cast<const CVEFEvent*>(data + header->timedOffset) + i;
+        CVEFEvent* event = new CVEFEvent;
+        *event = *record;
+        event->m_res.MakeUpper();
+        effect->m_timedEvents.AddTail(event);
+    }
+    for (DWORD i = 0; i < header->triggeredCount; ++i) {
+        const CVEFEvent* record = reinterpret_cast<const CVEFEvent*>(data + header->triggeredOffset) + i;
+        CVEFEvent* event = new CVEFEvent;
+        *event = *record;
+        event->m_res.MakeUpper();
+        // Both native append calls address +0x24A, including this second array.
+        effect->m_timedEvents.AddTail(event);
+    }
+    effect->m_nTargetType = header->targetType;
+    effect->m_nSpeed = header->speed;
+    effect->m_nDuration = header->duration;
+    pRes->Release();
+    return effect;
+}
+
+// 0x554D20
+LONG CVisualEffect::Load(CString res, CGameArea* pArea, const CPoint& pos,
+    LONG targetId, const CPoint& targetPos, LONG height)
+{
+    CPoint target = targetPos == CPoint(-1, -1) ? pos : targetPos;
+    res.MakeUpper();
+    CResRef ref(res);
+    if (g_pBaldurChitin->cDimm.m_cKeyTable.FindKey(ref, 1020, TRUE) == NULL) {
+        return CGameObjectArray::INVALID_INDEX;
+    }
+    LONG id = CGameObjectArray::INVALID_INDEX;
+    {
+        CVisualEffectFile file(ref);
+        CVisualEffect* effect = file.GetVEF();
+        if (effect != NULL) {
+            effect->m_nTargetId = targetId;
+            effect->m_ptTargetPos = target;
+            if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&effect->m_id, effect, INFINITE) == CGameObjectArray::SUCCESS) {
+                effect->AddToArea(pArea, pos, height, LIST_FRONT);
+                effect->m_posExact.x = static_cast<LONG>(static_cast<DWORD>(effect->m_pos.x) << 10);
+                effect->m_posExact.y = static_cast<LONG>(static_cast<DWORD>(static_cast<LONG>(static_cast<DWORD>(effect->m_pos.y) << 2) / 3) << 10);
+                id = effect->m_id;
+            } else {
+                // Native 0x554EC5 reads this unchanged ID after deleting the
+                // controller; capture the same value while it is still alive.
+                id = effect->m_id;
+                delete effect;
+            }
+        }
+    }
+    return id;
+}
+
 // 0x84EDF8
 const LONG CVisualEffect::MAX_FRAME_RATE = 30;
 

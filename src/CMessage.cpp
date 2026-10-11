@@ -18654,21 +18654,18 @@ void CMessageChangeStat::Run()
 // CMessageProjectileTrailingVFX (vtable 0x84D328)
 // ---------------------------------------------------------------------------
 
-// 0x554D20 (factory stub — see CProjectile.cpp)
-CMessageProjectileTrailingVFX::CMessageProjectileTrailingVFX(LONG target, LONG flightDistSq,
-    const CResRef& resRef, LONG launchX, LONG launchY,
-    LONG nHeight, LONG nType, SHORT launchHeight)
-    : CMessage(target, target)
+// Inlined message constructor. 0x554D20 belongs to CVisualEffect::Load.
+CMessageProjectileTrailingVFX::CMessageProjectileTrailingVFX(LONG caller, LONG target,
+    const CResRef& resRef, const CString& area,
+    const CPoint& launch, const CPoint& targetPoint, SHORT launchHeight)
+    : CMessage(caller, target)
 {
-    // m_sourceId is repurposed as m_flightDistSq.
-    m_sourceId = flightDistSq;
-
     m_resRef = resRef;
-    m_resRef2 = "";
-    m_launchX = launchX;
-    m_launchY = launchY;
-    m_nHeight = nHeight;
-    m_nType = nType;
+    m_resRef2 = area;
+    m_launchX = launch.x;
+    m_launchY = launch.y;
+    m_targetX = targetPoint.x;
+    m_targetY = targetPoint.y;
     m_launchHeight = launchHeight;
 }
 

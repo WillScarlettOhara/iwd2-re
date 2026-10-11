@@ -10,3 +10,4 @@
 # if the lint is wrong about this specific site, record why here.
 
 src/CSpawn.cpp:949: lint_stuck_loop_index   # bit-shift loop; the binary genuinely has no advance in the body
+src/CResBinary.cpp:4: lint_uninit_member   # 0x4028F0..0x402908 clears only +0x54; the version pointer at +0x50 is first written by Demand (0x402940), not the constructor

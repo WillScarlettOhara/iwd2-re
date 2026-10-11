@@ -103,6 +103,8 @@
 //                                restore camera, actor, locator and sampled pixels.
 //   effectcontrollerchecks     verify VEF updates and complete HandleEffects passes;
 //                                restore owning stats, lists and registered fixtures.
+//   vefloadchecks              verify raw VEF resources and both projectile factories;
+//                                restore the temporary key, resources, objects and queues.
 //   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
@@ -953,6 +955,268 @@ void EffectControllerChecks(INT nStep)
     if (!valid) Fail(nStep, "effectcontrollerchecks", "effect controller mismatch");
 }
 
+void VefLoadChecks(INT nStep)
+{
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CGameObjectArray* objects = game->GetObjectArray();
+    LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+    CGameObject* actor = NULL;
+    BYTE rc = objects->GetDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, &actor, INFINITE);
+    if (rc != CGameObjectArray::SUCCESS || actor == NULL || actor->m_pArea == NULL) {
+        if (rc == CGameObjectArray::SUCCESS) objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Fail(nStep, "vefloadchecks", "requires loaded party area"); return;
+    }
+    CGameArea* area = actor->m_pArea;
+    BOOL valid = TRUE;
+    INT checks = 0;
+    auto check = [&](const char* name, BOOL passed) {
+        valid = valid && passed; ++checks;
+        Emit("{\"step\":%d,\"op\":\"vefload-case\",\"case\":\"%s\",\"passed\":%s}", nStep, name, passed ? "true" : "false");
+    };
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+    INT messageCount = messages.GetCount();
+    INT front = area->m_lVertSortAdd.GetCount(), back = area->m_lVertSortBackAdd.GetCount(), flight = area->m_lVertSortFlightAdd.GetCount();
+    auto balanced = [&](LONG id) { return objects->m_pArray[(id >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == 0; };
+    auto retire = [&](LONG id) {
+        CGameObject* object = NULL;
+        if (objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) == CGameObjectArray::SUCCESS) {
+            // AddToArea has queued these objects, but the area has not ticked.
+            POSITION pos = area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id));
+            if (pos != NULL) area->m_lVertSortAdd.RemoveAt(pos);
+            pos = area->m_lVertSortBackAdd.Find(reinterpret_cast<int*>(id));
+            if (pos != NULL) area->m_lVertSortBackAdd.RemoveAt(pos);
+            pos = area->m_lVertSortFlightAdd.Find(reinterpret_cast<int*>(id));
+            if (pos != NULL) area->m_lVertSortFlightAdd.RemoveAt(pos);
+            object->RemoveFromArea();
+            objects->Delete(id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE);
+            delete object;
+            objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+    };
+    for (USHORT type : {USHORT(1019), USHORT(1020)}) {
+        CRes* resource = g_pBaldurChitin->AllocResObject(type);
+        auto* binary = dynamic_cast<CResBinary*>(resource);
+        check("binary-resource-factory", binary != NULL && binary->m_bParsed == FALSE);
+        delete resource;
+    }
+    check("binary-header-helper-layout", sizeof(CResBinary) == sizeof(CRes) + 8 && sizeof(CVEFHeader) == 0x24
+        && sizeof(CVisualEffectFile) == 16 && sizeof(CMessageProjectileTrailingVFX) == sizeof(CMessage) + 0x1E);
+    CVEFEvent zeroEvent;
+    BYTE zeroBytes[0xE0] = {};
+    check("event-constructor-complete-zero", memcmp(&zeroEvent, zeroBytes, 0xE0) == 0);
+    CVisualEffectFile empty;
+    check("absent-helper-resource", empty.GetVEF() == NULL);
+    CVisualEffectFile blank(CResRef("")), missing(CResRef("ZRCNONE"));
+    check("empty-and-missing-helper-constructors", blank.pRes == NULL && !blank.bLoading
+        && blank.cResRef == "" && missing.pRes == NULL && !missing.bLoading && missing.cResRef == "");
+    check("missing-resource", CVisualEffect::Load("ZRCNONE", area, actor->m_pos, targetId, CPoint(-1, -1), 123) == -1);
+
+    // A unique temporary KEY slot owns a pinned, already-loaded resource.
+    // Keep one lock, one demand and one reference so no loader queue owns it.
+    CDimm& dimm = g_pChitin->cDimm;
+    auto& keys = dimm.m_cKeyTable;
+    CResRef ref("ZRCVEF");
+    EnterCriticalSection(&g_pChitin->m_critSectDimm);
+    EnterCriticalSection(&g_pChitin->m_critSectService);
+    UINT hash = keys.Hash(ref, 1020), slot = hash;
+    while (keys.m_pEntries[slot].resRef != "") {
+        slot = (slot + 1) % keys.m_nEntries;
+        if (slot == hash) break;
+    }
+    BOOL available = keys.m_pEntries[slot].resRef == "" && keys.FindKey(ref, 1020, FALSE) == NULL;
+    check("temporary-key-available", available);
+    if (available) {
+        CDimmKeyTableEntry savedKey = keys.m_pEntries[slot];
+        short demands = dimm.field_8;
+        int demandFlag = dimm.field_4, demandedBytes = dimm.field_29C;
+        std::vector<BYTE> data(0x410, 0xCD);
+        auto* header = reinterpret_cast<CVEFHeader*>(data.data());
+        memcpy(header->signature, "VEF ", 4); memcpy(header->version, "V1.0", 4);
+        header->timedOffset = 0x50; header->timedCount = 2;
+        header->triggeredOffset = 0x240; header->triggeredCount = 2;
+        header->targetType = 0xFEDCBA98u; header->speed = -32768; header->duration = 0x7FFFFFFF;
+        CVEFEvent golden[4];
+        for (INT i = 0; i < 4; ++i) {
+            CVEFEvent record;
+            record.m_nTimeFrame = i == 0 ? static_cast<LONG>(0x80000000u) : i * 7;
+            record.m_dwFlags = 0xF0000000u + i; record.m_nRepeatRate = -1234 - i;
+            record.m_nResType = 1018 + i; record.m_specialFlags = 0x89ABCDEFu + i;
+            memcpy(&record.m_res, "aBcDeF12", 8);
+            for (INT j = 0; j < 49; ++j) record.m_pad[j] = 0xDEAD0000u + i * 100 + j;
+            memcpy(data.data() + (i < 2 ? 0x50 + i * 0xE0 : 0x240 + (i - 2) * 0xE0), &record, 0xE0);
+            golden[i] = record; golden[i].m_res.MakeUpper();
+        }
+        auto originalData = data;
+        CResBinary resource;
+        resource.m_nID = static_cast<RESID>(-1);
+        resource.dwFlags = 0x14; resource.nSize = static_cast<DWORD>(data.size());
+        resource.m_nResSizeActual = resource.nSize; resource.m_pData = data.data();
+        resource.m_nLockCount = 1; resource.m_nServiceCount = 1;
+        auto& key = keys.m_pEntries[slot];
+        key.resRef = ref; key.pRes = &resource; key.nID = static_cast<RESID>(-1);
+        key.field_10 = 1; key.nResType = 1020; key.bUpdated = TRUE;
+        resource.m_pDimmKeyTableEntry = &key;
+        check("temporary-key-resolves", keys.FindKey(ref, 1020, FALSE) == &key);
+
+        // First demand parses; nested demand preserves the previous pointer.
+        resource.m_nServiceCount = 0;
+        check("first-demand-version", resource.Demand() == data.data() && resource.m_bParsed == TRUE && resource.m_resVersion == reinterpret_cast<char*>(data.data()) + 4);
+        resource.m_resVersion = reinterpret_cast<char*>(0x12345678);
+        check("nested-demand-retains-version", resource.Demand() == data.data() && resource.m_resVersion == reinterpret_cast<char*>(0x12345678) && resource.GetDemands() == 2);
+        resource.Release(); check("nested-release-retains-parsed", resource.m_bParsed == TRUE && resource.GetDemands() == 1);
+        resource.Release(); check("last-release-clears-parsed", resource.m_bParsed == FALSE && resource.GetDemands() == 0 && resource.m_resVersion == reinterpret_cast<char*>(0x12345678));
+        resource.m_nServiceCount = 1;
+        {
+            CVisualEffectFile file(ref);
+            check("helper-request-reference", file.pRes == &resource && file.bLoading == TRUE && resource.m_nLockCount == 2 && key.field_10 == 2);
+            for (INT mode = 0; mode < 5; ++mode) {
+                header->timedCount = mode == 1 || mode == 3 ? 0 : 2;
+                header->triggeredCount = mode == 2 || mode == 3 ? 0 : 2;
+                // The native loader ignores both signature and version.
+                if (mode == 4) { memcpy(header->signature, "????", 4); memcpy(header->version, "!!!!", 4); }
+                DWORD timedOffset = header->timedOffset, triggeredOffset = header->triggeredOffset;
+                if (header->timedCount == 0) header->timedOffset = 0xFFFFFFFFu;
+                if (header->triggeredCount == 0) header->triggeredOffset = 0xFFFFFFFFu;
+                CVisualEffect* effect = file.GetVEF();
+                BOOL passed = effect != NULL;
+                if (effect != NULL) {
+                    CVisualEffectBase expectedBase;
+                    memset(&expectedBase, 0, sizeof(expectedBase));
+                    expectedBase.m_nTargetType = header->targetType;
+                    expectedBase.m_nSpeed = header->speed; expectedBase.m_nDuration = header->duration;
+                    passed = passed && effect->m_timedEvents.GetCount() == header->timedCount + header->triggeredCount
+                        && effect->m_triggeredEvents.IsEmpty() && effect->m_activeAnimations.IsEmpty()
+                        && effect->m_nTargetType == header->targetType && effect->m_nSpeed == -32768 && effect->m_nDuration == 0x7FFFFFFF
+                        && effect->m_nTimedEventOffset == 0 && effect->m_nTimedEventCount == 0
+                        && effect->m_nTriggeredEventOffset == 0 && effect->m_nTriggeredEventCount == 0
+                        && effect->m_flags == 0 && effect->m_nHeight == 0 && effect->m_ptStartDeltaV == CPoint(0, 0)
+                        && effect->m_nTargetId == -1 && effect->m_posExact == CPoint(0, 0)
+                        && memcmp(static_cast<CVisualEffectBase*>(effect), &expectedBase, sizeof(expectedBase)) == 0;
+                    POSITION pos = effect->m_timedEvents.GetHeadPosition();
+                    for (INT i = 0; i < 4; ++i) {
+                        if ((i < 2 && header->timedCount == 0) || (i >= 2 && header->triggeredCount == 0)) continue;
+                        if (pos == NULL) { passed = FALSE; break; }
+                        CVEFEvent* event = effect->m_timedEvents.GetNext(pos);
+                        passed = passed && memcmp(event, &golden[i], 0xE0) == 0;
+                        event->m_pad[48] ^= 0xFFFFFFFFu;
+                    }
+                    delete effect;
+                }
+                check("event-arrays-order-copy-and-header", passed && resource.m_nServiceCount == 1);
+                header->timedOffset = timedOffset; header->triggeredOffset = triggeredOffset;
+            }
+        }
+        check("helper-cancel-reference-balanced", resource.m_nLockCount == 1 && key.field_10 == 1);
+        // Restore the header; copied event mutation must not touch source bytes.
+        memcpy(header, originalData.data(), sizeof(CVEFHeader));
+        check("source-resource-unchanged", data == originalData);
+        {
+            CVisualEffectFile file(ref);
+            CVisualEffect* first = file.GetVEF(); CVisualEffect* second = file.GetVEF();
+            BOOL independent = first != NULL && second != NULL && first != second;
+            if (independent) {
+                CVEFEvent* event = first->m_timedEvents.GetHead();
+                CVEFEvent* other = second->m_timedEvents.GetHead();
+                independent = event != other;
+                event->m_nRepeatRate = 87654;
+                independent = independent && other->m_nRepeatRate == golden[0].m_nRepeatRate;
+            }
+            delete first; delete second;
+            check("repeated-load-independent-ownership", independent && resource.m_nServiceCount == 1);
+        }
+        resource.m_pData = NULL; resource.m_bParsed = FALSE;
+        {
+            CVisualEffectFile file(ref);
+            check("null-demand-released", file.GetVEF() == NULL && resource.m_nServiceCount == 1);
+        }
+        check("null-load", CVisualEffect::Load("zrcvef", area, actor->m_pos, targetId, CPoint(-1, -1), 99) == -1
+            && resource.m_nLockCount == 1 && key.field_10 == 1);
+        resource.m_bParsed = TRUE; resource.m_resVersion = reinterpret_cast<char*>(0x12345678);
+        check("null-nested-demand-keeps-version", resource.Demand() == NULL && resource.m_bParsed == TRUE
+            && resource.m_resVersion == reinterpret_cast<char*>(0x12345678));
+        resource.Release(); resource.m_bParsed = FALSE;
+        resource.m_pData = data.data();
+        const CPoint origins[6] = {actor->m_pos, CPoint(-7, -2), CPoint(7, 2), CPoint(123, 456),
+            CPoint(0x7FFFFFFF, 0x7FFFFFFF), CPoint(static_cast<LONG>(0x80000000u), static_cast<LONG>(0x80000000u))};
+        const CPoint expectedExact[6] = {CPoint(static_cast<LONG>(static_cast<DWORD>(actor->m_pos.x) << 10), (actor->m_pos.y * 4 / 3) * 1024),
+            CPoint(-7168, -2048), CPoint(7168, 2048), CPoint(125952, 622592), CPoint(-1024, -1024), CPoint(0, 0)};
+        for (INT i = 0; i < 6; ++i) {
+            CPoint target = i == 0 ? CPoint(-1, -1) : i == 1 ? CPoint(-1, 123) : i == 2 ? CPoint(123, -1) : CPoint(333, 444);
+            CString name(_T("zrcvef"));
+            LONG id = CVisualEffect::Load(name, area, origins[i], targetId, target, -12345);
+            CGameObject* object = NULL;
+            BYTE got = objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+            auto* effect = got == CGameObjectArray::SUCCESS ? dynamic_cast<CVisualEffect*>(object) : NULL;
+            check("load-target-origin-height-exact", effect != NULL && effect->m_nTargetId == targetId
+                && effect->m_ptTargetPos == (i == 0 ? origins[i] : target) && effect->m_pos == origins[i]
+                && effect->m_posZ == -12345 && effect->m_listType == CGameObject::LIST_FRONT
+                && effect->m_posExact == expectedExact[i] && effect->m_posOld == CPoint(0, 0)
+                && effect->m_nSpeed == -32768 && effect->m_timedEvents.GetCount() == 4 && name == "zrcvef"
+                && area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id)) != NULL);
+            if (got == CGameObjectArray::SUCCESS) objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            if (id != -1) { check("load-deny-balanced", balanced(id)); retire(id); }
+        }
+        struct BaseMissile : CProjectileTravelling {
+            BaseMissile(SHORT speed) : CProjectileTravelling(CResRef("ARARROW")) { m_velocity = speed; }
+        };
+        struct IceMissile : IcewindCProjectileTravellingVFX {
+            IceMissile(SHORT speed) : IcewindCProjectileTravellingVFX(CResRef("ARARROW")) { m_velocity = speed; }
+            BOOL PackedPrefix() const {
+                const BYTE* north = reinterpret_cast<const BYTE*>(&m_bMirrorNorth);
+                return reinterpret_cast<const BYTE*>(&m_bMirrorEast) - north == 1
+                    && reinterpret_cast<const BYTE*>(&m_visualEffect) - north == 2;
+            }
+        };
+        for (INT family = 0; family < 2; ++family) {
+            for (INT mode = 0; mode < 5; ++mode) {
+                SHORT speed = mode == 0 ? 4 : mode == 1 ? -1 : -32768;
+                CProjectile* missile = family == 0 ? static_cast<CProjectile*>(new BaseMissile(speed)) : static_cast<CProjectile*>(new IceMissile(speed));
+                if (family == 1 && mode == 0) check("vfx-prefix-packed-two", static_cast<IceMissile*>(missile)->PackedPrefix());
+                missile->field_17E = mode == 3 ? "" : mode == 4 ? "ZRCNONE" : "zrcvef";
+                missile->m_nTargetId = 0x12345678; // A previous ID does not gate the native branch.
+                LONG caller = missile->m_id;
+                missile->Fire(area, sourceId, targetId, CPoint(333, 444), 123456, 2345);
+                LONG id = missile->m_nTargetId;
+                BOOL loaded = mode < 3;
+                CGameObject* object = NULL;
+                BYTE got = loaded ? objects->GetDeny(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE) : CGameObjectArray::BAD_INDEX;
+                auto* effect = got == CGameObjectArray::SUCCESS ? dynamic_cast<CVisualEffect*>(object) : NULL;
+                check("projectile-controller-speed-and-flag", loaded ? effect != NULL && effect->m_nSpeed == speed && effect->m_flags == 1
+                    && effect->m_ptTargetPos == CPoint(333, 444) && effect->m_nTargetId == targetId
+                    && effect->m_pos == missile->m_pos && effect->m_posZ == missile->m_posZ
+                    : id == (mode == 3 ? 0x12345678 : -1));
+                CString areaName; area->m_resRef.CopyToString(areaName);
+                CMessageProjectileTrailingVFX* msg = messages.GetCount() > messageCount ? dynamic_cast<CMessageProjectileTrailingVFX*>(messages.GetTail()) : NULL;
+                check("projectile-message-metadata", mode == 3 ? messages.GetCount() == messageCount : msg != NULL
+                    && msg->m_sourceId == caller && msg->m_targetId == targetId && msg->m_resRef == CResRef(missile->field_17E)
+                    && msg->m_resRef2 == areaName && CPoint(msg->m_launchX, msg->m_launchY) == missile->m_pos
+                    && CPoint(msg->m_targetX, msg->m_targetY) == CPoint(333, 444) && msg->m_launchHeight == missile->m_posZ);
+                if (got == CGameObjectArray::SUCCESS) objects->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                while (messages.GetCount() > messageCount) delete messages.RemoveTail();
+                if (loaded && id != -1) { check("projectile-controller-deny-balanced", balanced(id)); retire(id); }
+                LONG missileId = missile->m_id; retire(missileId);
+                check("projectile-resource-balanced", resource.m_nLockCount == 1 && resource.m_nServiceCount == 1 && key.field_10 == 1);
+                check("projectile-target-deny-balanced", balanced(targetId));
+            }
+        }
+        check("all-source-events-unchanged", data == originalData);
+        keys.m_pEntries[slot] = savedKey;
+        resource.m_pData = NULL; resource.m_pDimmKeyTableEntry = NULL; resource.dwFlags = 0;
+        resource.m_nServiceCount = resource.m_nLockCount = 0; resource.nSize = resource.m_nResSizeActual = 0;
+        dimm.field_8 = demands; dimm.field_4 = demandFlag; dimm.field_29C = demandedBytes;
+        check("temporary-key-restored", keys.FindKey(ref, 1020, FALSE) == NULL);
+    }
+    LeaveCriticalSection(&g_pChitin->m_critSectService);
+    LeaveCriticalSection(&g_pChitin->m_critSectDimm);
+    check("same-tick-queue-clock-restored", game->GetWorldTimer()->m_gameTime == clock && messages.GetCount() == messageCount
+        && area->m_lVertSortAdd.GetCount() == front && area->m_lVertSortBackAdd.GetCount() == back && area->m_lVertSortFlightAdd.GetCount() == flight);
+    objects->ReleaseDeny(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    check("actor-deny-balanced", balanced(sourceId));
+    Emit("{\"step\":%d,\"op\":\"vefloadchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+    if (!valid) Fail(nStep, "vefloadchecks", "VEF load or projectile connection mismatch");
+}
+
 } // namespace
 
 bool IsEnabled()
@@ -1008,6 +1272,9 @@ void Tick(CWarp* pActiveEngine)
 
     if (strcmp(step.op, "effectcontrollerchecks") == 0) {
         EffectControllerChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "vefloadchecks") == 0) {
+        VefLoadChecks(nStep); ++s_pc; return;
     }
 
     if (strcmp(step.op, "combatrules") == 0) {

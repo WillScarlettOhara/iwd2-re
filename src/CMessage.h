@@ -1970,15 +1970,15 @@ public:
 // (0x5794CF-0x5796BC).  Carries the launch parameters to the trailing
 // visual-effect object created by the factory at 0x554D20.
 //
-// The Run() virtual is a no-op (0x799CA0) -- the message is a data-carrier;
-// the actual attachment work happens in the factory + the post-dispatch
-// object-flag modification (set +0x82 = projectile type, +0x9A |= 1).
+// The Run() virtual is a no-op (0x799CA0). Fire creates the controller locally,
+// then copies the signed projectile velocity to +0x82 and sets +0x9A bit 0.
 // ---------------------------------------------------------------------------
+#pragma pack(push, 2)
 class CMessageProjectileTrailingVFX : public CMessage {
 public:
-    CMessageProjectileTrailingVFX(LONG target, LONG flightDistSq,
-        const CResRef& resRef, LONG launchX, LONG launchY,
-        LONG nHeight, LONG nType, SHORT launchHeight);
+    CMessageProjectileTrailingVFX(LONG caller, LONG target,
+        const CResRef& resRef, const CString& area,
+        const CPoint& launch, const CPoint& targetPoint, SHORT launchHeight);
 
     SHORT GetCommType() override;       // returns SEND (3)
     BYTE GetMsgType() override;         // returns MSG_TYPE_CMESSAGE (0x43)
@@ -1987,17 +1987,16 @@ public:
     BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
     void Run() override;                // no-op
 
-    // m_sourceId (at +0x08, inherited from CMessage) is repurposed as the
-    // projectile's flight distance^2 for the trailing-object factory.
-    // Own data fields follow the base (12 bytes):
+    // The caller is the projectile's ID before Fire registers it.
     /* 000C */ CResRef m_resRef;        // resource name from field_17E (8 bytes)
-    /* 0014 */ CString m_resRef2;       // secondary resref — empty-string sentinel (4 bytes; CString ptr, not CResRef)
+    /* 0014 */ CString m_resRef2;       // area resource name
     /* 0018 */ LONG m_launchX;          // launch position x
     /* 001C */ LONG m_launchY;          // launch position y
-    /* 0020 */ LONG m_nHeight;          // launch height (from DetermineHeight)
-    /* 0024 */ LONG m_nType;            // projectile type
+    /* 0020 */ LONG m_targetX;          // original Fire target point x
+    /* 0024 */ LONG m_targetY;          // original Fire target point y
     /* 0028 */ SHORT m_launchHeight;    // launch height (from DetermineHeight, SHORT copy)
 };
+#pragma pack(pop)
 
 #pragma pack(push, 2)
 class CMessageSetVariable : public CMessage {

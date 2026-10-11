@@ -490,6 +490,7 @@ private:
 // m_useHeightOffset), the four +0xD0 colors seeded, the +0x2A0/+0x2A1 flags,
 // and the visual-effect member. The already-recovered chainers
 // (CProjectileSummonVFX) keep their independent minimal models for now.
+#pragma pack(push, 2)
 class IcewindCProjectileTravellingVFX : public CProjectileTravelling {
     // The strike tracker's gather pass reads m_terrainTable off its owner.
     friend class IcewindCProjectileTargetMap;
@@ -513,10 +514,11 @@ protected:
 
     // The BAM has no north/east-half sequences: fold those facings onto the
     // south/west ones and blit with CInfinity::MIRROR_FX.
-    /* 02A0 */ BYTE m_bMirrorNorth/*#guess*/;
-    /* 02A1 */ BYTE m_bMirrorEast/*#guess*/;
+    /* 02A0 */ BYTE m_bMirrorNorth; // #guess
+    /* 02A1 */ BYTE m_bMirrorEast; // #guess
     /* 02A2 */ IcewindCVisualEffect m_visualEffect;
 };
+#pragma pack(pop)
 
 // Intermediate base 0x56EDD0 -- the large spell-hit / area-of-effect projectile
 // (vtable 0x84F1C4; : IcewindCProjectileTravellingVFX). Unnamed in the binary

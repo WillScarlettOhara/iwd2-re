@@ -3,12 +3,27 @@
 
 #include "CGameObject.h"
 #include "CResRef.h"
+#include "CResBinary.h"
 #include "CVidBitmap.h"
 #include "CVidCell.h"
 
 #pragma pack(push, 2)
+// IWD2 reads this 0x24-byte prefix; event offsets are from the resource start.
+struct CVEFHeader {
+    /* 0000 */ char signature[4];
+    /* 0004 */ char version[4];
+    /* 0008 */ DWORD timedOffset;
+    /* 000C */ DWORD timedCount;
+    /* 0010 */ DWORD triggeredOffset;
+    /* 0014 */ DWORD triggeredCount;
+    /* 0018 */ DWORD targetType;
+    /* 001C */ LONG speed;
+    /* 0020 */ LONG duration;
+};
+
 class CVEFEvent {
 public:
+    CVEFEvent() { memset(this, 0, sizeof(CVEFEvent)); }
     /* 0x0000 */ LONG m_nTimeFrame;
     /* 0x0004 */ DWORD m_dwFlags;
     /* 0x0008 */ LONG m_nRepeatRate;
@@ -98,6 +113,8 @@ public:
     void Render(CGameArea* pArea, CVidMode* pVidMode, int a3) override;
     void SetAllDelete();
     void Move(const CPoint& targetPos);
+    static LONG Load(CString res, CGameArea* pArea, const CPoint& pos,
+        LONG targetId, const CPoint& targetPos, LONG height);
 
     /* 0x022E */ CList<LONG, LONG> m_activeAnimations;
     /* 0x024A */ CTypedPtrList<CPtrList, CVEFEvent*> m_timedEvents;
@@ -111,6 +128,13 @@ public:
     /* 0x02A6 */ LONG m_nNewDirection;
     /* 0x02AA */ CPoint m_posDelta;
     /* 0x02B2 */ BYTE m_terrainTable[16];
+};
+
+class CVisualEffectFile : public CResHelper<CResBinary, 1020> {
+public:
+    CVisualEffectFile() = default;
+    explicit CVisualEffectFile(CResRef res);
+    CVisualEffect* GetVEF();
 };
 #pragma pack(pop)
 
