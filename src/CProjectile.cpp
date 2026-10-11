@@ -3878,8 +3878,8 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
         CString areaName;
         pArea->m_resRef.CopyToString(areaName);
         CMessageProjectileTrailingVFX* pMsg = new CMessageProjectileTrailingVFX(
-            m_id, m_targetId, CResRef(field_17E), areaName,
-            ptSource, targetPos, static_cast<SHORT>(nLaunchHeight));
+            CResRef(field_17E), areaName, ptSource, targetPos,
+            static_cast<SHORT>(nLaunchHeight), m_id, m_targetId);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
 
         CGameObject* pTrailingObj;
@@ -5829,8 +5829,8 @@ void IcewindCProjectileTravellingVFX::Fire(CGameArea* pArea, LONG source, LONG t
         CString areaName;
         pArea->m_resRef.CopyToString(areaName);
         CMessageProjectileTrailingVFX* pMsg = new CMessageProjectileTrailingVFX(
-            m_id, m_targetId, CResRef(field_17E), areaName,
-            ptLaunch, targetPos, static_cast<SHORT>(nLaunchHeight));
+            CResRef(field_17E), areaName, ptLaunch, targetPos,
+            static_cast<SHORT>(nLaunchHeight), m_id, m_targetId);
         g_pBaldurChitin->GetMessageHandler()->AddMessage(pMsg, FALSE);
 
         CGameObject* pTrailingObj;

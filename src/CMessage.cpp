@@ -5321,6 +5321,16 @@ void CMessageHandler::AsynchronousUpdate()
                     else delete message;
                 }
                 break;
+            case 86:
+                if (immediate) {
+                    CMessageProjectileTrailingVFX message(CResRef(), CString(), CPoint(0, 0), CPoint(0, 0), 0, 0, 0);
+                    if (message.UnmarshalMessage(data, size)) message.Run();
+                } else {
+                    CMessage* message = new CMessageProjectileTrailingVFX(CResRef(), CString(), CPoint(0, 0), CPoint(0, 0), 0, 0, 0);
+                    if (message->UnmarshalMessage(data, size)) m_messageList.AddTail(message);
+                    else delete message;
+                }
+                break;
             case 105: {
                 CMessage105::Node head = { &head, &head, NULL };
                 if (immediate) {
@@ -5543,7 +5553,6 @@ static BOOL Iwd2MessageRunHeldBack(BYTE subType)
         || subType == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_CONTAINER_STATUS
         || subType == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_DOOR_STATUS
         || subType == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_FADE_COLOR
-        || subType == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_PROJECTILE_TRAILING_VFX
         || subType == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_SET_ACTIVE
         || subType == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_SET_AREA_EXPLORED
         || subType == CBaldurMessage::MSG_SUBTYPE_CMESSAGE_SET_COMMAND_PAUSE
@@ -18654,10 +18663,10 @@ void CMessageChangeStat::Run()
 // CMessageProjectileTrailingVFX (vtable 0x84D328)
 // ---------------------------------------------------------------------------
 
-// Inlined message constructor. 0x554D20 belongs to CVisualEffect::Load.
-CMessageProjectileTrailingVFX::CMessageProjectileTrailingVFX(LONG caller, LONG target,
-    const CResRef& resRef, const CString& area,
-    const CPoint& launch, const CPoint& targetPoint, SHORT launchHeight)
+// 0x4F69B0
+CMessageProjectileTrailingVFX::CMessageProjectileTrailingVFX(const CResRef& resRef,
+    const CString& area, const CPoint& launch, CPoint targetPoint,
+    SHORT launchHeight, LONG caller, LONG target)
     : CMessage(caller, target)
 {
     m_resRef = resRef;
@@ -18690,16 +18699,91 @@ BYTE CMessageProjectileTrailingVFX::GetMsgSubType()
 // 0x511D00
 void CMessageProjectileTrailingVFX::MarshalMessage(BYTE** pData, DWORD* dwSize)
 {
-    // STUB: network serialisation not yet recovered (0x511D00, ~100 bytes).
-    // Not exercised by single-player / local-object messages.
+    UTIL_ASSERT(pData != NULL && dwSize != NULL);
+    PLAYER_ID remotePlayerID = 0;
+    LONG remoteObjectID = CGameObjectArray::INVALID_INDEX;
+    CGameObject* object;
+    BYTE rc;
+    do {
+        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &object, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc == CGameObjectArray::SUCCESS) {
+        remotePlayerID = object->m_remotePlayerID;
+        remoteObjectID = object->m_remoteObjectID;
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+
+    CString resName;
+    m_resRef.CopyToString(resName);
+    DWORD resLength = resName.GetLength();
+    DWORD areaLength = m_resRef2.GetLength();
+    *dwSize = 28 + resLength + areaLength;
+    UTIL_ASSERT(*dwSize <= STATICBUFFERSIZE);
+    DWORD cnt = 0;
+    *reinterpret_cast<PLAYER_ID*>(*pData + cnt) = remotePlayerID;
+    cnt += sizeof(PLAYER_ID);
+    *reinterpret_cast<LONG*>(*pData + cnt) = remoteObjectID;
+    cnt += sizeof(LONG);
+    (*pData)[cnt++] = static_cast<BYTE>(resLength);
+    memcpy(*pData + cnt, resName.GetBuffer(resLength), resLength);
+    cnt += resLength;
+    (*pData)[cnt++] = static_cast<BYTE>(areaLength);
+    memcpy(*pData + cnt, m_resRef2.GetBuffer(areaLength), areaLength);
+    cnt += areaLength;
+    *reinterpret_cast<LONG*>(*pData + cnt) = m_launchX;
+    cnt += sizeof(LONG);
+    *reinterpret_cast<LONG*>(*pData + cnt) = m_launchY;
+    cnt += sizeof(LONG);
+    *reinterpret_cast<LONG*>(*pData + cnt) = m_targetX;
+    cnt += sizeof(LONG);
+    *reinterpret_cast<LONG*>(*pData + cnt) = m_targetY;
+    cnt += sizeof(LONG);
+    *reinterpret_cast<SHORT*>(*pData + cnt) = m_launchHeight;
+    cnt += sizeof(SHORT);
+    UTIL_ASSERT(cnt == *dwSize);
 }
 
 // 0x511F40
 BOOL CMessageProjectileTrailingVFX::UnmarshalMessage(BYTE* pData, DWORD dwSize)
 {
-    // STUB: network deserialisation not yet recovered (0x511F40, ~111 bytes).
-    // Not exercised by single-player / local-object messages.
-    return FALSE;
+    CString unusedString;
+    CAIObjectType unusedType;
+    UTIL_ASSERT(pData != NULL);
+    DWORD cnt = CNetwork::SPEC_MSG_HEADER_LENGTH;
+    PLAYER_ID remotePlayerID = *reinterpret_cast<PLAYER_ID*>(pData + cnt);
+    cnt += sizeof(PLAYER_ID);
+    LONG remoteObjectID = *reinterpret_cast<LONG*>(pData + cnt);
+    cnt += sizeof(LONG);
+    LONG localObjectID;
+    if (g_pBaldurChitin->GetObjectGame()->GetRemoteObjectArray()->Find(remotePlayerID, remoteObjectID, localObjectID) == TRUE)
+        m_targetId = localObjectID;
+    else
+        m_targetId = CGameObjectArray::INVALID_INDEX;
+
+    BYTE resLength = pData[cnt++];
+    CHAR resName[9] = {};
+    memcpy(resName, pData + cnt, resLength);
+    cnt += resLength;
+    CString resString(resName, resLength);
+    m_resRef = resString;
+    BYTE areaLength = pData[cnt++];
+    CHAR areaName[9] = {};
+    memcpy(areaName, pData + cnt, areaLength);
+    cnt += areaLength;
+    CString areaString(areaName, areaLength);
+    m_resRef2 = areaString;
+    m_launchX = *reinterpret_cast<LONG*>(pData + cnt);
+    cnt += sizeof(LONG);
+    m_launchY = *reinterpret_cast<LONG*>(pData + cnt);
+    cnt += sizeof(LONG);
+    m_targetX = *reinterpret_cast<LONG*>(pData + cnt);
+    cnt += sizeof(LONG);
+    m_targetY = *reinterpret_cast<LONG*>(pData + cnt);
+    cnt += sizeof(LONG);
+    m_launchHeight = *reinterpret_cast<SHORT*>(pData + cnt);
+    return TRUE;
 }
 
 // 0x799CA0

@@ -105,6 +105,8 @@
 //                                restore owning stats, lists and registered fixtures.
 //   vefloadchecks              verify raw VEF resources and both projectile factories;
 //                                restore the temporary key, resources, objects and queues.
+//   vefmessagechecks           verify trailing VEF packets and immediate/deferred MG
+//                                receipt; restore remote identifiers and network state.
 //   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
@@ -1217,6 +1219,189 @@ void VefLoadChecks(INT nStep)
     if (!valid) Fail(nStep, "vefloadchecks", "VEF load or projectile connection mismatch");
 }
 
+void VefMessageChecks(INT nStep)
+{
+    auto* game = g_pBaldurChitin->GetObjectGame();
+    auto* objects = game->GetObjectArray();
+    auto* remotes = game->GetRemoteObjectArray();
+    LONG actorId = game->GetFixedOrderCharacterId(0);
+    CGameObject* actor = NULL;
+    if (objects->GetDeny(actorId, CGameObjectArray::THREAD_ASYNCH, &actor, INFINITE) != CGameObjectArray::SUCCESS || actor == NULL) {
+        Fail(nStep, "vefmessagechecks", "requires party actor"); return;
+    }
+    INT checks = 0; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"vef-message-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+    };
+    PLAYER_ID oldPlayer = actor->m_remotePlayerID;
+    LONG oldRemote = actor->m_remoteObjectID;
+    remotes->m_critSect.Lock();
+    CGameRemoteObjectListEntry mapping;
+    mapping.remotePlayerID = 0x89ABCDEF; mapping.remoteObjectID = 0x1234;
+    mapping.localObjectID = actorId; mapping.pNext = remotes->m_pArray[0];
+    remotes->m_pArray[0] = &mapping;
+    actor->m_remotePlayerID = mapping.remotePlayerID; actor->m_remoteObjectID = mapping.remoteObjectID;
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    auto* area = actor->GetArea();
+    INT front = area->m_lVertSortAdd.GetCount(), back = area->m_lVertSortBackAdd.GetCount(), flight = area->m_lVertSortFlightAdd.GetCount();
+    INT queued = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    // Golden payload uses explicit little-endian bytes and is independent of
+    // the serializer. Packet storage includes the network's specific header.
+    auto golden = [&](const CString& resource, const CString& areaName, CPoint origin, CPoint target, SHORT height, PLAYER_ID player, LONG remote) {
+        std::vector<BYTE> bytes(CNetwork::SPEC_MSG_HEADER_LENGTH, 0);
+        bytes[CNetwork::SPEC_MSG_FLAG] = CNetwork::SPEC_MSG_FLAG_ENABLED;
+        bytes[CNetwork::SPEC_MSG_TYPE] = CBaldurMessage::MSG_TYPE_CMESSAGE;
+        bytes[CNetwork::SPEC_MSG_SUBTYPE] = 86;
+        auto word = [&](DWORD value, INT count) { for (INT i = 0; i < count; ++i) bytes.push_back(static_cast<BYTE>(value >> (8 * i))); };
+        word(player, 4); word(remote, 4);
+        bytes.push_back(static_cast<BYTE>(resource.GetLength()));
+        for (INT i = 0; i < resource.GetLength(); ++i) bytes.push_back(resource[i]);
+        bytes.push_back(static_cast<BYTE>(areaName.GetLength()));
+        for (INT i = 0; i < areaName.GetLength(); ++i) bytes.push_back(areaName[i]);
+        word(origin.x, 4); word(origin.y, 4); word(target.x, 4); word(target.y, 4); word(static_cast<WORD>(height), 2);
+        return bytes;
+    };
+    auto fields = [&](CMessageProjectileTrailingVFX* msg, const CResRef& resource, const CString& areaName, CPoint origin, CPoint target, SHORT height, LONG source, LONG id) {
+        return msg && msg->m_resRef == resource && msg->m_resRef2 == areaName
+            && msg->m_launchX == origin.x && msg->m_launchY == origin.y
+            && msg->m_targetX == target.x && msg->m_targetY == target.y
+            && msg->m_launchHeight == height && msg->GetSource() == source && msg->GetTarget() == id;
+    };
+    BYTE storage[640];
+    const char* names = "AbCdEfGh";
+    for (INT resLength = 0; resLength <= 8; ++resLength) {
+        for (INT areaLength = 0; areaLength <= 8; ++areaLength) {
+            CResRef resource(CString(names, resLength));
+            CString resourceName; resource.CopyToString(resourceName);
+            CString areaName(names, areaLength);
+            CPoint origin(INT_MIN, 0x12345678), target(-1, INT_MAX);
+            CMessageProjectileTrailingVFX message(resource, areaName, origin, target, SHRT_MIN, -12345, actorId);
+            check("constructor-complete-fields-and-identity", fields(&message, resource, areaName, origin, target, SHRT_MIN, -12345, actorId));
+            CMessage* virtualMessage = &message;
+            memset(storage, 0xA5, sizeof(storage)); BYTE* data = storage + CNetwork::SPEC_MSG_HEADER_LENGTH;
+            BYTE* originalData = data; DWORD size = 0;
+            virtualMessage->MarshalMessage(&data, &size);
+            auto expected = golden(resourceName, areaName, origin, target, SHRT_MIN, mapping.remotePlayerID, mapping.remoteObjectID);
+            check("virtual-marshal-golden-and-exact-write", data == originalData && size == expected.size() - CNetwork::SPEC_MSG_HEADER_LENGTH
+                && memcmp(data, expected.data() + CNetwork::SPEC_MSG_HEADER_LENGTH, size) == 0
+                && storage[CNetwork::SPEC_MSG_HEADER_LENGTH - 1] == 0xA5 && data[size] == 0xA5);
+            CMessageProjectileTrailingVFX decoded(CResRef("OLD"), CString(_T("OLD")), CPoint(1, 2), CPoint(3, 4), 5, 0x12345678, -1);
+            CMessage* decoder = &decoded;
+            check("virtual-decode-full-width-fields", decoder->UnmarshalMessage(expected.data(), static_cast<DWORD>(expected.size()))
+                && fields(&decoded, resource, areaName, origin, target, SHRT_MIN, 0x12345678, actorId));
+        }
+    }
+    auto packet = golden(CString(_T("aBcDeFgH")), CString(_T("aR10mIx")), CPoint(-87654321, INT_MAX), CPoint(INT_MIN, -1), SHRT_MAX, mapping.remotePlayerID, mapping.remoteObjectID);
+    for (DWORD declaredSize : {0UL, 1UL, static_cast<DWORD>(packet.size() - 1), static_cast<DWORD>(packet.size() + 100)}) {
+        CMessageProjectileTrailingVFX decoded(CResRef(), CString(), CPoint(0, 0), CPoint(0, 0), 0, -77, -1);
+        check("native-decoder-ignores-declared-size-on-backed-buffer", decoded.UnmarshalMessage(packet.data(), declaredSize)
+            && fields(&decoded, CResRef("ABCDEFGH"), CString(_T("aR10mIx")), CPoint(-87654321, INT_MAX), CPoint(INT_MIN, -1), SHRT_MAX, -77, actorId));
+    }
+    for (LONG id : {CGameObjectArray::INVALID_INDEX, static_cast<LONG>(0x7FFF1234)}) {
+        CMessageProjectileTrailingVFX missing(CResRef("X"), CString(_T("AR")), CPoint(-1, 2), CPoint(3, -4), -1, 99, id);
+        BYTE* data = storage; DWORD size = 0; missing.MarshalMessage(&data, &size);
+        auto expected = golden(CString(_T("X")), CString(_T("AR")), CPoint(-1, 2), CPoint(3, -4), -1, 0, -1);
+        check("missing-target-still-marshals-entire-payload", size == expected.size() - CNetwork::SPEC_MSG_HEADER_LENGTH
+            && memcmp(data, expected.data() + CNetwork::SPEC_MSG_HEADER_LENGTH, size) == 0);
+    }
+    CString longArea('q', 256);
+    CMessageProjectileTrailingVFX longName(CResRef("X"), longArea, CPoint(1, 2), CPoint(3, 4), 5, 0, actorId);
+    BYTE* data = storage; DWORD size = 0; longName.MarshalMessage(&data, &size);
+    auto longExpected = golden(CString(_T("X")), longArea, CPoint(1, 2), CPoint(3, 4), 5, mapping.remotePlayerID, mapping.remoteObjectID);
+    check("marshal-uses-full-string-length-but-byte-prefix-wraps", size == 285 && data[10] == 0
+        && memcmp(data, longExpected.data() + CNetwork::SPEC_MSG_HEADER_LENGTH, size) == 0);
+    // The original decoder's two nine-byte buffers trust their lengths. Only
+    // valid resource-name lengths are decoded here; long names test Marshal.
+    auto missingPacket = golden(CString(_T("x")), CString(_T("MiXeD")), CPoint(-1, -2), CPoint(3, 4), -1, 0x76543210, 0x1234);
+    CMessageProjectileTrailingVFX missingDecode(CResRef(), CString(), CPoint(0, 0), CPoint(0, 0), 0, 88, actorId);
+    check("unmapped-target-decodes-successfully-with-invalid-id", missingDecode.UnmarshalMessage(missingPacket.data(), static_cast<DWORD>(missingPacket.size()))
+        && fields(&missingDecode, CResRef("X"), CString(_T("MiXeD")), CPoint(-1, -2), CPoint(3, 4), -1, 88, -1));
+
+    CNetwork& network = g_pChitin->cNetwork;
+    auto* settings = game->GetMultiplayerSettings();
+    auto* baldur = g_pBaldurChitin->GetBaldurMessage();
+    INT provider = network.m_nServiceProvider; PLAYER_ID local = network.m_idLocalPlayer;
+    BOOLEAN connected = network.m_bConnectionEstablished, host = network.m_bIsHost, initialized = network.m_SystemWindow.m_bInitialized;
+    BOOLEAN reply = baldur->m_bDialogReplyReturned; BYTE blocked = game->field_4BD4;
+    PLAYER_ID ready[CNETWORK_MAX_PLAYERS]; memcpy(ready, settings->m_pnPlayerReady, sizeof(ready));
+    BOOLEAN windows[CNETWORK_MAX_PLAYERS];
+    EnterCriticalSection(&network.m_critSectQueue);
+    network.m_idLocalPlayer = 0; network.m_bIsHost = FALSE; network.m_bConnectionEstablished = TRUE;
+    network.m_SystemWindow.m_bInitialized = TRUE; baldur->m_bDialogReplyReturned = FALSE;
+    for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) {
+        windows[i] = network.m_pSlidingWindow[i].m_bInitialized; network.m_pSlidingWindow[i].m_bInitialized = FALSE;
+        settings->m_pnPlayerReady[i] = 0xFFFFFFFF;
+    }
+    settings->m_pnPlayerReady[0] = 0;
+    auto& incoming = network.m_SystemWindow.m_lQueueIncomingMessages;
+    std::list<CNETWORKWINDOW_QUEUEENTRY*> savedIncoming;
+    while (!incoming.IsEmpty()) savedIncoming.push_back(incoming.RemoveHead());
+    auto receive = [&](const std::vector<BYTE>& bytes) {
+        auto* node = new CNETWORKWINDOW_QUEUEENTRY;
+        node->idFrom = 0xABCDEF12; node->idTo = 0; node->dwSize = CNetwork::dword_85E694 + static_cast<DWORD>(bytes.size());
+        node->pData = new BYTE[node->dwSize]; memset(node->pData, 0, node->dwSize);
+        memcpy(node->pData + CNetwork::dword_85E698, (LPCTSTR)CNetwork::MG, CNetwork::dword_85E69C);
+        memcpy(node->pData + CNetwork::dword_85E694, bytes.data(), bytes.size()); incoming.AddTail(node);
+    };
+    {
+        CMessageHandler handler;
+        for (INT mode = 0; mode < 3; ++mode) {
+            network.m_nServiceProvider = mode == 0 ? CNetwork::SERV_PROV_NULL : 1;
+            game->field_4BD4 = mode == 1 ? 0 : 255;
+            receive(packet); handler.AsynchronousUpdate();
+            check("mg-frame-consumed", incoming.IsEmpty());
+            if (mode < 2) check("immediate-reception-runs-and-retires", handler.m_messageList.IsEmpty());
+            else {
+                auto* decoded = handler.m_messageList.IsEmpty() ? NULL : dynamic_cast<CMessageProjectileTrailingVFX*>(handler.m_messageList.GetHead());
+                check("deferred-reception-retains-all-decoded-fields", handler.m_messageList.GetCount() == 1
+                    && fields(decoded, CResRef("ABCDEFGH"), CString(_T("aR10mIx")), CPoint(-87654321, INT_MAX), CPoint(INT_MIN, -1), SHRT_MAX, 0, actorId));
+                handler.AsynchronousUpdate(); check("blocked-queue-retained", handler.m_messageList.GetCount() == 1);
+                game->field_4BD4 = 0; handler.AsynchronousUpdate(); check("unblocked-queue-retired", handler.m_messageList.IsEmpty());
+            }
+        }
+        network.m_nServiceProvider = 1; game->field_4BD4 = 1;
+        receive(packet); receive(missingPacket); receive(packet); handler.AsynchronousUpdate();
+        POSITION pos = handler.m_messageList.GetHeadPosition();
+        const LONG ids[] = {actorId, -1, actorId};
+        BOOL fifo = handler.m_messageList.GetCount() == 3;
+        for (INT i = 0; i < 3 && pos != NULL; ++i) {
+            auto* msg = dynamic_cast<CMessageProjectileTrailingVFX*>(handler.m_messageList.GetNext(pos));
+            fifo = fifo && msg && msg->GetTarget() == ids[i];
+        }
+        check("deferred-fifo-includes-unmapped-message", fifo);
+        game->field_4BD4 = 0; handler.AsynchronousUpdate(); check("fifo-drain-retired-all", handler.m_messageList.IsEmpty());
+        settings->m_pnPlayerReady[0] = 0xFFFFFFFF;
+        receive(packet); handler.AsynchronousUpdate(); check("not-ready-drops-vef-frame", incoming.IsEmpty() && handler.m_messageList.IsEmpty());
+        settings->m_pnPlayerReady[0] = 0;
+        for (BYTE state : {static_cast<BYTE>(0), static_cast<BYTE>(255)}) {
+            network.m_bConnectionEstablished = state; receive(packet); handler.AsynchronousUpdate();
+            check("connection-requires-exact-true", incoming.GetCount() == 1 && handler.m_messageList.IsEmpty());
+            network.m_bConnectionEstablished = TRUE; handler.AsynchronousUpdate(); check("resumed-connection-consumes-frame", incoming.IsEmpty());
+        }
+        struct ObservedVEF : CMessageProjectileTrailingVFX {
+            INT* count;
+            ObservedVEF(INT* value) : CMessageProjectileTrailingVFX(CResRef(), CString(), CPoint(0, 0), CPoint(0, 0), 0, 0, 0), count(value) {}
+            void Run() override { ++*count; CMessageProjectileTrailingVFX::Run(); }
+        };
+        INT ran = 0; handler.m_messageList.AddTail(new ObservedVEF(&ran)); handler.AsynchronousUpdate();
+        check("subtype-86-actually-reaches-local-run", ran == 1 && handler.m_messageList.IsEmpty());
+    }
+    while (!incoming.IsEmpty()) { auto* node = incoming.RemoveHead(); delete node->pData; delete node; }
+    for (auto* node : savedIncoming) incoming.AddTail(node);
+    for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) network.m_pSlidingWindow[i].m_bInitialized = windows[i];
+    network.m_nServiceProvider = provider; network.m_idLocalPlayer = local; network.m_bConnectionEstablished = connected;
+    network.m_bIsHost = host; network.m_SystemWindow.m_bInitialized = initialized; baldur->m_bDialogReplyReturned = reply;
+    game->field_4BD4 = blocked; memcpy(settings->m_pnPlayerReady, ready, sizeof(ready)); LeaveCriticalSection(&network.m_critSectQueue);
+    remotes->m_pArray[0] = mapping.pNext; actor->m_remotePlayerID = oldPlayer; actor->m_remoteObjectID = oldRemote;
+    remotes->m_critSect.Unlock(); objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    check("same-tick-clock-queues-and-area-restored", game->GetWorldTimer()->m_gameTime == clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount() == queued
+        && area->m_lVertSortAdd.GetCount() == front && area->m_lVertSortBackAdd.GetCount() == back && area->m_lVertSortFlightAdd.GetCount() == flight);
+    Emit("{\"step\":%d,\"op\":\"vefmessagechecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+    if (!valid) Fail(nStep, "vefmessagechecks", "VEF packet or receiver mismatch");
+}
+
 } // namespace
 
 bool IsEnabled()
@@ -1275,6 +1460,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "vefloadchecks") == 0) {
         VefLoadChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "vefmessagechecks") == 0) {
+        VefMessageChecks(nStep); ++s_pc; return;
     }
 
     if (strcmp(step.op, "combatrules") == 0) {

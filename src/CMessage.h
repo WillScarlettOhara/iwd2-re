@@ -1976,9 +1976,9 @@ public:
 #pragma pack(push, 2)
 class CMessageProjectileTrailingVFX : public CMessage {
 public:
-    CMessageProjectileTrailingVFX(LONG caller, LONG target,
-        const CResRef& resRef, const CString& area,
-        const CPoint& launch, const CPoint& targetPoint, SHORT launchHeight);
+    CMessageProjectileTrailingVFX(const CResRef& resRef, const CString& area,
+        const CPoint& launch, CPoint targetPoint, SHORT launchHeight,
+        LONG caller, LONG target);
 
     SHORT GetCommType() override;       // returns SEND (3)
     BYTE GetMsgType() override;         // returns MSG_TYPE_CMESSAGE (0x43)
