@@ -695,7 +695,7 @@ public:
     SHORT Enemy();
     SHORT SetDialog();
     void SelectWeaponAbility(unsigned char a1, unsigned char a2, unsigned char a3, unsigned char a4);
-    void sub_756930(CItem* pItem, CItem* pLauncher);
+    void DecodeSwingSound(CItem* pItem, CItem* pLauncher); // BG2 PDB name, selects pending attack sound/frame.
     SHORT EquipItem();
     SHORT FindTraps();
     SHORT RemoveTraps(CGameAIBase* pTarget);

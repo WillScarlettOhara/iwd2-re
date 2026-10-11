@@ -97,6 +97,8 @@
 //                                deferred; require five HP per ordered batch.
 //   receivedonhitdamage         receive message 117, trigger its installed spell
 //                                and use onhitwait to require real HP loss.
+//   weaponsoundchecks          verify pending attack sounds and animation frames;
+//                                restore creature lists, speech and item headers.
 //   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
@@ -2303,6 +2305,138 @@ void Tick(CWarp* pActiveEngine)
         Emit("{\"step\":%d,\"op\":\"%s\",\"checks\":%d,\"sourceLoss\":%d,\"targetLoss\":%d,\"restored\":true,\"valid\":%s}",
             nStep, step.op, checks, sourceLoss, targetLoss, valid ? "true" : "false");
         if (!valid) { Fail(nStep, step.op, "combat message mismatch (fixtures restored)"); return; }
+        s_pc++; return;
+    }
+
+    if (strcmp(step.op, "weaponsoundchecks") == 0) {
+        auto* game = g_pBaldurChitin->GetObjectGame();
+        auto* objects = game->GetObjectArray();
+        LONG actorId = game->GetFixedOrderCharacterId(0);
+        CItem weapon(CResRef("ZRCMELEE"), 1, 1, 1, 0, 1);
+        CItem launcher(CResRef("ZRCBOW"), 1, 1, 1, 0, 1);
+        BOOL weaponDemanded = weapon.Demand(), launcherDemanded = launcher.Demand();
+        if (!weaponDemanded || !launcherDemanded || !weapon.pRes->m_pHeader || !launcher.pRes->m_pHeader) {
+            if (weaponDemanded) weapon.Release();
+            if (launcherDemanded) launcher.Release();
+            Fail(nStep, step.op, "requires combat item fixtures"); return;
+        }
+        CGameObject* raw = NULL;
+        BYTE rc = objects->GetDeny(actorId, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE);
+        if (rc != CGameObjectArray::SUCCESS || !raw || raw->GetObjectType() != CGameObject::TYPE_SPRITE) {
+            if (rc == CGameObjectArray::SUCCESS) objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            weapon.Release(); launcher.Release();
+            Fail(nStep, step.op, "requires party sprite"); return;
+        }
+        auto* actor = static_cast<CGameSprite*>(raw);
+        BOOL valid = TRUE; INT checks = 0;
+        auto check = [&](const char* name, BOOL ok) {
+            ++checks; valid = valid && ok;
+            if (!ok) Emit("{\"step\":%d,\"op\":\"weapon-sound-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+        };
+        CString savedSound = actor->field_7408; INT savedFrame = actor->field_740C;
+        DWORD savedState = actor->m_derivedStats.m_generalState;
+        BOOLEAN custom = actor->field_70FB;
+        SHORT animationSequence = actor->m_animation.m_nSequence, actorSequence = actor->m_nSequence;
+        WORD weaponType = weapon.pRes->m_pHeader->itemType, launcherType = launcher.pRes->m_pHeader->itemType;
+        STRREF speech[3];
+        for (INT i = 0; i < 3; ++i) { speech[i] = actor->m_baseStats.m_speech[40 + i]; actor->m_baseStats.m_speech[40 + i] = -1; }
+        CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry>* lists[] = {
+            &actor->field_72F0, &actor->field_730C, &actor->field_7328, &actor->field_7344 };
+        std::list<CGameSpriteSoundEntry> savedLists[4];
+        for (INT i = 0; i < 4; ++i) {
+            for (POSITION pos = lists[i]->GetHeadPosition(); pos != NULL;) savedLists[i].push_back(lists[i]->GetNext(pos));
+            lists[i]->RemoveAll();
+        }
+        ULONG time = game->GetWorldTimer()->m_gameTime;
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList; INT queued = messages.GetCount();
+        actor->field_7408 = "CANARY"; actor->field_740C = -123;
+        actor->m_derivedStats.m_generalState = STATE_SILENCED;
+        actor->DecodeSwingSound(NULL, NULL);
+        check("silenced-preserves-selection-before-item-access", actor->field_7408 == "CANARY" && actor->field_740C == -123);
+        actor->m_derivedStats.m_generalState = 0; actor->field_70FB = FALSE;
+        actor->m_animation.m_nSequence = CGAMESPRITE_SEQ_AWAKE;
+        struct Family { WORD type; const char* prefix; INT first; INT last; INT width; };
+        const Family families[] = {
+            {0,"Sw_Swd",1,5,2}, {15,"Sw_Ms",1,5,2}, {16,"Sw_Sm",1,7,2}, {17,"Sw_Sm",1,7,2},
+            {18,"Sw_Slg",1,5,2}, {19,"Sw_Swd",1,5,2}, {20,"Sw_Swd",1,5,2}, {21,"Sw_Lg",1,6,2},
+            {22,"Sw_Sm",1,7,2}, {23,"Sw_Flal",0,4,1}, {24,"Sw_Fist",0,2,1}, {25,"Sw_Lg",1,6,2},
+            {26,"Sw_Lg",1,6,2}, {27,"Sw_Xbow",0,4,1}, {28,"Sw_Fist",0,2,1}, {29,"Sw_Sm",1,7,2},
+            {30,"Sw_Lg",1,6,2}, {44,"Sw_Lg",1,6,2}, {57,"Sw_Swd",1,5,2}, {69,"Sw_Swd",1,5,2}
+        };
+        for (const auto& family : families) {
+            weapon.pRes->m_pHeader->itemType = family.type;
+            actor->field_7408 = "CANARY";
+            for (INT repeat = 0; repeat < 16; ++repeat) {
+                CString previous = actor->field_7408; actor->field_740C = -123;
+                actor->DecodeSwingSound(&weapon, NULL);
+                CString suffix = actor->field_7408.Mid(static_cast<INT>(strlen(family.prefix)));
+                INT number = atoi(suffix);
+                check("weapon-family-range-format-and-no-repeat", actor->field_7408.Left(static_cast<INT>(strlen(family.prefix))) == family.prefix
+                    && suffix.GetLength() == family.width && number >= family.first && number <= family.last
+                    && actor->field_7408 != previous && actor->field_740C == 0);
+            }
+        }
+        weapon.pRes->m_pHeader->itemType = 16; launcher.pRes->m_pHeader->itemType = 27;
+        actor->DecodeSwingSound(&weapon, &launcher);
+        check("launcher-type-overrides-ammunition-type", actor->field_7408.Left(7) == "Sw_Xbow" && actor->field_740C == 0);
+        const char* creatureItems[] = {"WYVERN1", "WYVERN2", "WOLFWI1", "WOLFWI2"};
+        const char* creatureSounds[] = {"WYVER05", "WYVER06", "WWOLF07", "WWOLF06"};
+        for (INT i = 0; i < 4; ++i) {
+            weapon.cResRef = creatureItems[i]; actor->DecodeSwingSound(&weapon, &launcher);
+            check("creature-item-exemption-precedes-launcher", actor->field_7408 == creatureSounds[i] && actor->field_740C == 0);
+        }
+        weapon.cResRef = "ZRCMELEE";
+        for (WORD type : {static_cast<WORD>(31), static_cast<WORD>(0xFFFF)}) {
+            weapon.pRes->m_pHeader->itemType = type;
+            actor->field_7408 = "CANARY"; actor->field_740C = -123;
+            actor->DecodeSwingSound(&weapon, NULL);
+            check("unknown-type-without-speech-preserves-selection", actor->field_7408 == "CANARY" && actor->field_740C == -123);
+        }
+        actor->field_70FB = 2; actor->m_nSequence = CGAMESPRITE_SEQ_DIE;
+        const SHORT sequences[] = {CGAMESPRITE_SEQ_ATTACK_SLASH, CGAMESPRITE_SEQ_ATTACK_BACKSLASH,
+            CGAMESPRITE_SEQ_ATTACK_JAB, CGAMESPRITE_SEQ_SHOOT};
+        for (INT i = 0; i < 4; ++i) {
+            CGameSpriteSoundEntry first, second;
+            first.field_0 = "FIRST"; first.field_4 = LONG_MIN;
+            second.field_0 = "SECOND"; second.field_4 = LONG_MAX;
+            lists[i]->AddTail(first); lists[i]->AddTail(second);
+            actor->m_animation.m_nSequence = sequences[i]; actor->field_7408 = "FIRST";
+            actor->DecodeSwingSound(NULL, NULL);
+            check("custom-list-uses-animation-sequence-and-avoids-repeat", actor->field_7408 == "SECOND" && actor->field_740C == LONG_MAX);
+            actor->DecodeSwingSound(NULL, NULL);
+            check("custom-list-wraps-to-first-with-signed-frame", actor->field_7408 == "FIRST" && actor->field_740C == LONG_MIN);
+            lists[i]->RemoveAll(); first.field_0 = ""; first.field_4 = -7; lists[i]->AddTail(first);
+            actor->DecodeSwingSound(NULL, NULL);
+            check("custom-empty-record-still-overwrites-and-keeps-frame", actor->field_7408 == "" && actor->field_740C == -7);
+            lists[i]->RemoveAll();
+        }
+        actor->field_70FB = FALSE;
+        for (INT i = 0; i < 3; ++i) {
+            actor->m_animation.m_nSequence = sequences[i];
+            actor->m_baseStats.m_speech[40 + i] = 0xFF000000;
+            actor->field_7408 = "CANARY"; actor->field_740C = -123;
+            actor->DecodeSwingSound(&weapon, NULL);
+            check("empty-tlk-fallback-preserves-old-selection", actor->field_7408 == "CANARY" && actor->field_740C == -123);
+            // Reuse the character's actual voice entry as the expected TLK sound.
+            STR_RES entry;
+            g_pBaldurChitin->GetTlkTable().Fetch(actor->m_baseStats.m_speech[9], entry);
+            CString expected; entry.cSound.cResRef.CopyToString(expected);
+            actor->m_baseStats.m_speech[40 + i] = actor->m_baseStats.m_speech[9];
+            actor->DecodeSwingSound(&weapon, NULL);
+            check("attack-sequence-selects-matching-tlk-slot", expected.IsEmpty()
+                ? actor->field_7408 == "CANARY" && actor->field_740C == -123 : actor->field_7408 == expected && actor->field_740C == 0);
+        }
+        for (INT i = 0; i < 4; ++i) { lists[i]->RemoveAll(); for (const auto& entry : savedLists[i]) lists[i]->AddTail(entry); }
+        for (INT i = 0; i < 3; ++i) actor->m_baseStats.m_speech[40 + i] = speech[i];
+        actor->m_animation.m_nSequence = animationSequence; actor->m_nSequence = actorSequence;
+        actor->m_derivedStats.m_generalState = savedState; actor->field_70FB = custom;
+        actor->field_7408 = savedSound; actor->field_740C = savedFrame;
+        weapon.pRes->m_pHeader->itemType = weaponType; launcher.pRes->m_pHeader->itemType = launcherType;
+        weapon.Release(); launcher.Release();
+        check("sound-checks-do-not-post-messages-or-advance-clock", messages.GetCount() == queued && game->GetWorldTimer()->m_gameTime == time);
+        objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Emit("{\"step\":%d,\"op\":\"weaponsoundchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+        if (!valid) { Fail(nStep, step.op, "weapon sound mismatch (fixtures restored)"); return; }
         s_pc++; return;
     }
 

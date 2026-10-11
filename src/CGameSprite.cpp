@@ -2178,7 +2178,7 @@ void CGameSprite::AIUpdate()
                     SHORT lSlot;
                     CItem* pItem = m_equipment.m_items[m_equipment.m_selectedWeapon];
                     pItem->Demand();
-                    sub_756930(pItem, GetLauncher(pItem->GetAbility(m_equipment.m_selectedWeaponAbility), lSlot));
+                    DecodeSwingSound(pItem, GetLauncher(pItem->GetAbility(m_equipment.m_selectedWeaponAbility), lSlot));
                     pItem->Release();
                 }
                 switch (m_nSequence) {
@@ -23997,9 +23997,103 @@ void CGameSprite::SelectWeaponAbility(unsigned char slotNum, unsigned char abili
 }
 
 // 0x756930
-void CGameSprite::sub_756930(CItem* pItem, CItem* pLauncher)
+void CGameSprite::DecodeSwingSound(CItem* pItem, CItem* pLauncher)
 {
-    // TODO: Incomplete.
+    if ((m_derivedStats.m_generalState & STATE_SILENCED) != 0) return;
+
+    CString sound(_T(""));
+    if (field_70FB) {
+        UTIL_ASSERT(m_animation.m_animation != NULL);
+        CList<CGameSpriteSoundEntry, CGameSpriteSoundEntry>* entries;
+        switch (m_animation.m_nSequence) {
+        case CGAMESPRITE_SEQ_ATTACK_SLASH: entries = &field_72F0; break;
+        case CGAMESPRITE_SEQ_ATTACK_BACKSLASH: entries = &field_730C; break;
+        case CGAMESPRITE_SEQ_ATTACK_JAB: entries = &field_7328; break;
+        default: entries = &field_7344; break;
+        }
+        INT count = entries->GetCount();
+        if (count != 0) {
+            INT index = rand() % count;
+            CGameSpriteSoundEntry entry = entries->GetAt(entries->FindIndex(index));
+            if (entry.field_0.Compare(field_7408) == 0) {
+                index = index == count - 1 ? 0 : index + 1;
+                entry = entries->GetAt(entries->FindIndex(index));
+            }
+            field_7408 = entry.field_0;
+            field_740C = entry.field_4;
+            return;
+        }
+    }
+
+    CResRef res = pItem->GetResRef();
+    BOOL unknown = FALSE;
+    if (res == "WYVERN1") sound = "WYVER05";
+    else if (res == "WYVERN2") sound = "WYVER06";
+    else if (res == "WOLFWI1") sound = "WWOLF07";
+    else if (res == "WOLFWI2") sound = "WWOLF06";
+    else {
+        WORD type = pItem->GetItemType();
+        if (pLauncher != NULL) type = pLauncher->GetItemType();
+        if (type == 0) type = 20;
+        CString prefix(_T("Sw_"));
+        INT count = 0;
+        BOOL padded = TRUE;
+        switch (type) {
+        case 15: prefix += "Ms"; count = 5; break;
+        case 18: prefix += "Slg"; count = 5; break;
+        case 19: case 20: case 69: case 57:
+            prefix += "Swd"; count = 5; break;
+        case 16: case 17: case 22: case 29:
+            prefix += "Sm"; count = 7; break;
+        case 21: case 25: case 26: case 30: case 44:
+            prefix += "Lg"; count = 6; break;
+        case 23: prefix += "Flal"; count = 5; padded = FALSE; break;
+        case 24: case 28: prefix += "Fist"; count = 3; padded = FALSE; break;
+        case 27: prefix += "Xbow"; count = 5; padded = FALSE; break;
+        default: unknown = TRUE; break;
+        }
+        if (!unknown) {
+            INT index = rand() % count;
+            auto suffix = [&](INT value, CHAR* text) {
+                if (padded && value < 10) {
+                    text[0] = '0'; text[1] = static_cast<CHAR>('1' + value); text[2] = 0;
+                } else {
+                    _itoa(value, text, 10);
+                }
+            };
+            CHAR number[12] = {};
+            suffix(index, number);
+            CString candidate = prefix;
+            candidate += number;
+            if (candidate.Compare(field_7408) == 0) {
+                index = index == count - 1 ? 0 : index + 1;
+                suffix(index, number);
+                sound = prefix;
+                sound += number;
+            } else {
+                sound = candidate;
+            }
+        }
+    }
+    CString soundPrefix = sound.Left(7);
+    if (unknown || soundPrefix.Compare("Sw_Fist") == 0) {
+        UTIL_ASSERT(m_animation.m_animation != NULL);
+        INT slot = -1;
+        switch (m_animation.m_nSequence) {
+        case CGAMESPRITE_SEQ_ATTACK_SLASH: slot = 40; break;
+        case CGAMESPRITE_SEQ_ATTACK_BACKSLASH: slot = 41; break;
+        case CGAMESPRITE_SEQ_ATTACK_JAB: slot = 42; break;
+        }
+        if (slot != -1 && m_baseStats.m_speech[slot] != -1) {
+            STR_RES entry;
+            g_pBaldurChitin->GetTlkTable().Fetch(m_baseStats.m_speech[slot], entry);
+            entry.cSound.cResRef.CopyToString(sound);
+        }
+    }
+    if (sound.Compare("") != 0) {
+        field_7408 = sound;
+        field_740C = 0;
+    }
 }
 
 // 0x7579C0
