@@ -758,6 +758,23 @@ public:
     /* 0356 */ LONG m_wanderSeed;
 };
 
+// vtable 0x85101C, sizeof 0x2EC. The older, wall-rebounding LightnT carrier.
+// The exported CProjectileBAM::MoveUpdate name at 0x57D9F0 is stale: slot 3
+// of this leaf is AIUpdate, and +0x2B6 is a target scheduler, not a vid cell.
+#pragma pack(push, 2)
+class CProjectileReboundingBolt /*#guess*/ : public IcewindCProjectileTravellingVFX {
+public:
+    CProjectileReboundingBolt(); // 0x57D390
+    void AIUpdate() override; // 0x57D9F0
+    void Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos,
+        LONG nHeight, SHORT nType) override; // 0x57D700
+
+    /* 02AE */ LONG m_nDuration;
+    /* 02B2 */ LONG m_nBounces;
+    /* 02B6 */ IcewindCProjectileTargetMap m_targetMap;
+};
+#pragma pack(pop)
+
 // Leaf 0x5806C0 -- the straight-line beam that strikes everything along its
 // path (vtable 0x8513BC; ctor takes the travelling BAM). DecodeProjectile
 // builds it for Lightning Bolt (type 0x28, "LightnT"; SPWI002/308/997 + Eye of

@@ -107,6 +107,10 @@
 //                                restore the temporary key, resources, objects and queues.
 //   vefmessagechecks           verify trailing VEF packets and immediate/deferred MG
 //                                receipt; restore remote identifiers and network state.
+//   reboundchecks              exercise bolt launch, expiry and wall/corner rebounds;
+//                                restore search data, actors, objects and queues.
+//   rebounddamage              service a registered bolt beside portrait 1, then
+//                                use projectilewait to require actual payload damage.
 //   projectiledamage <flags>     decode/apply opcode 430 with ZRCHIT on portrait 1.
 //   projectilewait              require three target damage and no source damage
 //                                from that projectile on normal engine ticks.
@@ -957,6 +961,241 @@ void EffectControllerChecks(INT nStep)
     if (!valid) Fail(nStep, "effectcontrollerchecks", "effect controller mismatch");
 }
 
+void ReboundChecks(INT nStep)
+{
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CGameObjectArray* objects = game->GetObjectArray();
+    LONG actorId = game->GetFixedOrderCharacterId(0);
+    CGameObject* actor = NULL;
+    if (objects->GetDeny(actorId, CGameObjectArray::THREAD_ASYNCH, &actor, INFINITE)
+        != CGameObjectArray::SUCCESS) {
+        Fail(nStep, "reboundchecks", "requires loaded actor"); return;
+    }
+    CGameArea* area = actor->m_pArea;
+    if (area == NULL) {
+        objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Fail(nStep, "reboundchecks", "requires loaded area"); return;
+    }
+    INT checks = 0; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"rebound-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+    };
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    auto stop = game->m_nTimeStop; auto stopCaster = game->m_nTimeStopCaster;
+    auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+    INT messageCount = messages.GetCount();
+    INT front = area->m_lVertSortAdd.GetCount(), back = area->m_lVertSortBackAdd.GetCount(), flight = area->m_lVertSortFlightAdd.GetCount();
+    struct Bolt : CProjectileReboundingBolt {
+        BOOL* dead; INT* removed;
+        Bolt(BOOL* d, INT* r) : dead(d), removed(r) { m_fireSoundRef = ""; }
+        ~Bolt() override { *dead = TRUE; }
+        void RemoveFromArea() override { ++*removed; CGameObject::RemoveFromArea(); }
+        void Seed(CGameArea* area, LONG x, LONG y, LONG sx, LONG sy) {
+            m_pArea = area; CGameObject::m_pArea = area;
+            m_pos = CPoint(x, y); m_posZ = -7;
+            m_posAccumX = static_cast<LONG>(static_cast<DWORD>(x) << 10);
+            m_posAccumY = static_cast<LONG>(static_cast<DWORD>(y) << 12) / 3;
+            m_stepX = sx; m_stepY = sy;
+            m_targetX = 111; m_targetY = 112; m_facing = 13;
+            m_pVidCell->m_nCurrentFrame = 10;
+            m_targetMap.m_serviceCountdown = 5;
+            memset(m_terrainTable, 1, sizeof(m_terrainTable));
+        }
+        CPoint Delta() const { return CPoint(m_stepX, m_stepY); }
+        CPoint Exact() const { return CPoint(m_posAccumX, m_posAccumY); }
+        CPoint Target() const { return CPoint(m_targetX, m_targetY); }
+        SHORT Facing() const { return m_facing; }
+        SHORT Frame() const { return m_pVidCell->m_nCurrentFrame; }
+        SHORT Speed() const { return m_velocity; }
+        void Speed(SHORT speed) { m_velocity = speed; }
+        BOOL Defaults() const { return m_dirCount == 16 && m_tinted == 0 && m_useHeightOffset == 0
+            && m_hasShadowCell == 0 && (m_renderFlags & 8) != 0 && m_bSparkleTrail == FALSE; }
+    };
+    auto unqueue = [&](LONG id) {
+        POSITION p = area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortAdd.RemoveAt(p);
+        p = area->m_lVertSortBackAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortBackAdd.RemoveAt(p);
+        p = area->m_lVertSortFlightAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortFlightAdd.RemoveAt(p);
+    };
+    auto retire = [&](Bolt* bolt) {
+        unqueue(bolt->m_id); bolt->RemoveFromArea();
+        objects->Delete(bolt->m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE);
+        delete bolt;
+    };
+    game->m_nTimeStop = 0;
+    {
+        BOOL dead = FALSE; INT removed = 0; Bolt* b = new Bolt(&dead, &removed);
+        check("constructor-defaults", b->Defaults() && b->m_nDuration == 60 && b->m_nBounces == -1
+            && b->m_targetMap.m_pOwner == b && b->m_targetMap.m_nRange == 50
+            && b->m_targetMap.m_servicePeriod == 2 && b->m_targetMap.m_strikeInterval == 33);
+        delete b;
+        CProjectile* decoded = CProjectile::DecodeProjectile(0xCF, NULL, 0);
+        auto* concrete = dynamic_cast<CProjectileReboundingBolt*>(decoded);
+        check("factory-CF-first-wall", concrete && concrete->m_nBounces == 1 && concrete->m_projectileType == 0xCE);
+        delete decoded;
+    }
+    // Fire is tested through the public virtual, including its unusual +0x72
+    // argument and the registration that precedes the second share failure.
+    CPoint oldActorPos = actor->m_pos;
+    actor->m_pos = CPoint(128, 96);
+    for (LONG third : {actorId, -1L}) {
+        BOOL dead = FALSE; INT removed = 0; Bolt* b = new Bolt(&dead, &removed);
+        CProjectile* virtualBolt = b;
+        virtualBolt->Fire(area, actorId, third, CPoint(256, 192), -123, 7);
+        check("launch-third-argument-and-invalid-target", !dead && b->m_sourceId == third && b->m_targetId == -1);
+        check("launch-registers-before-second-share", b->m_id != -1);
+        if (third != -1) {
+            CPoint start = b->m_pos;
+            LONG dx = 256 - start.x, dy = 256 - (start.y * 4) / 3;
+            LONG length = static_cast<LONG>(sqrt(static_cast<double>(dx * dx + dy * dy)) + 0.5);
+            check("launch-area-height-fixedpoint", b->CGameObject::m_pArea == area && b->m_posZ == -123
+                && b->Exact() == CPoint(start.x * 1024, (start.y * 4096) / 3) && b->field_17C == 1);
+            check("launch-normalized-velocity", b->Delta() == CPoint(dx * 1024 * b->Speed() / length,
+                dy * 1024 * b->Speed() / length));
+        } else check("launch-missing-third-does-not-add-area", b->CGameObject::m_pArea == NULL);
+        retire(b);
+    }
+    {
+        BOOL dead = FALSE; INT removed = 0; Bolt* b = new Bolt(&dead, &removed);
+        b->Fire(area, -1, actorId, CPoint(256, 192), 0, 0);
+        check("launch-missing-second-does-not-register", !dead && b->m_id == -1);
+        delete b;
+    }
+    actor->m_pos = oldActorPos;
+
+    // Plain object launch origins avoid sprite-facing offsets. Fixed golden
+    // lengths cover the zero vector, fallback origin and sqrt + 0.5 rounding.
+    CGameObject* origin = new CGameObject;
+    CGameObject* fallback = new CGameObject;
+    origin->m_pos = CPoint(128, 96); fallback->m_pos = CPoint(124, 93);
+    objects->Add(&origin->m_id, origin, INFINITE); objects->Add(&fallback->m_id, fallback, INFINITE);
+    for (SHORT speed : {SHORT(4), SHORT(-1), SHORT(-32768)}) {
+        struct LaunchCase { CPoint point; LONG third; LONG dx; LONG dy; LONG length; };
+        LaunchCase cases[] = {
+            {CPoint(128, 96), origin->m_id, 0, 0, 0},
+            {CPoint(128, 96), fallback->m_id, 4, 4, 6},
+            {CPoint(131, 99), fallback->m_id, 3, 4, 5},
+            {CPoint(127, 95), fallback->m_id, -1, -2, 2},
+        };
+        for (const auto& test : cases) {
+            BOOL dead = FALSE; INT removed = 0; Bolt* b = new Bolt(&dead, &removed); b->Speed(speed);
+            b->Fire(area, origin->m_id, test.third, test.point, 17, -1);
+            check("golden-launch-rounding-and-fallback", !dead && b->m_pos == CPoint(128, 96)
+                && b->Exact() == CPoint(131072, 131072));
+            if (test.length == 0) check("zero-vector-arms-expiry", b->m_nDuration == 0);
+            else {
+                auto scaled = [&](LONG value) { return static_cast<LONG>(static_cast<DWORD>(value * 1024)
+                    * static_cast<LONG>(speed)) / test.length; };
+                check("golden-signed-launch-speed", b->m_nDuration == 60 && b->Delta() == CPoint(scaled(test.dx), scaled(test.dy)));
+            }
+            retire(b);
+        }
+    }
+    objects->Delete(origin->m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE); delete origin;
+    objects->Delete(fallback->m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE); delete fallback;
+
+    BYTE dynamic[64]; memset(dynamic, 0x80, sizeof(dynamic));
+    BYTE* savedDynamic = area->m_search.m_pDynamicCost;
+    CSize savedGrid = area->m_search.m_GridSquareDimensions;
+    CSingleLock searchLock(&area->m_search.m_critSect, TRUE);
+    area->m_search.m_pDynamicCost = dynamic; area->m_search.m_GridSquareDimensions = CSize(8, 8);
+    auto gridOf = [](LONG x, LONG y) { return CPoint(x / 16, y / 12); };
+    auto wall = [&](CPoint cell) { dynamic[cell.x + cell.y * 8] = 1; };
+    for (CPoint delta : {CPoint(16, 8), CPoint(8, 16), CPoint(16, 16)}) {
+        for (LONG signX : {-1L, 1L}) for (LONG signY : {-1L, 1L}) {
+            LONG sx = delta.x * signX, sy = delta.y * signY;
+            for (INT mask = 0; mask < 8; ++mask) for (LONG budget : {-1L, 0L, 1L, 2L}) {
+                memset(dynamic, 0x80, sizeof(dynamic));
+                if (mask & 1) wall(gridOf(56 + sx, 42 + sy * 3 / 4));
+                if (mask & 2) wall(gridOf(56 - sx, 42 + sy * 3 / 4));
+                if (mask & 4) wall(gridOf(56 + sx, 42 - sy * 3 / 4));
+                BOOL dead = FALSE; INT removed = 0; Bolt* b = new Bolt(&dead, &removed);
+                objects->Add(&b->m_id, b, INFINITE); LONG id = b->m_id;
+                b->Seed(area, 56, 42, sx * 1024, sy * 1024); b->m_nBounces = budget;
+                CProjectile* virtualBolt = b; virtualBolt->AIUpdate();
+                BOOL stopAtWall = (mask & 1) && budget == 1;
+                check("wall-contact-retirement", dead == stopAtWall && removed == (stopAtWall ? 1 : 0));
+                if (dead) {
+                    CGameObject* stale = NULL;
+                    check("retired-id-unavailable", objects->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &stale, INFINITE) != CGameObjectArray::SUCCESS);
+                    continue;
+                }
+                // Golden wall choices: X-major tests X then Y; Y-major's
+                // second test ignores index 8 when its cost is passable.
+                INT flips = 0;
+                if (mask & 1) {
+                    static const INT xChoice[8] = {0, 1, 0, 2, 0, 1, 0, 3};
+                    static const INT yChoice[8] = {0, 2, 0, 2, 0, 1, 0, 1};
+                    flips = delta.x >= delta.y ? xChoice[mask] : yChoice[mask];
+                }
+                LONG outX = (flips & 1) ? -sx : sx, outY = (flips & 2) ? -sy : sy;
+                check("golden-signed-wall-corner-velocity", b->Delta() == CPoint(outX * 1024, outY * 1024));
+                check("golden-retracted-position", b->m_pos == CPoint(56 + outX, 42 + outY * 3 / 4));
+                check("duration-budget-frame-and-service", b->m_nDuration == 59 && b->Frame() == 11
+                    && b->m_nBounces == (((mask & 1) && budget > 0) ? budget - 1 : budget)
+                    && b->m_targetMap.m_serviceCountdown == 4);
+                check("sound-follows-head", b->m_sound.m_nXCoordinate == b->m_pos.x
+                    && b->m_sound.m_nYCoordinate == b->m_pos.y && b->m_sound.m_nZCoordinate == -7);
+                if (mask & 1) check("bounce-next-point-and-facing", b->Target() == CPoint(56 + 2 * outX, 42 + 2 * outY * 3 / 4)
+                    && b->Facing() == b->GetDirection(b->Target()));
+                else check("clear-crossing-keeps-aim", b->Target() == CPoint(111, 112) && b->Facing() == 13);
+                retire(b);
+            }
+        }
+    }
+    // Time Stop, same-cell bypass, strict boundaries, wrapping and final tick.
+    for (INT mode = 0; mode < 11; ++mode) {
+        memset(dynamic, 0x80, sizeof(dynamic));
+        BOOL dead = FALSE; INT removed = 0; Bolt* b = new Bolt(&dead, &removed);
+        objects->Add(&b->m_id, b, INFINITE); b->Seed(area, 56, 42, 1024, 0);
+        if (mode == 0 || mode == 1) { game->m_nTimeStop = 1; game->m_nTimeStopCaster = mode == 0 ? -1 : b->m_id; }
+        if (mode == 2) { wall(CPoint(3, 3)); b->m_nBounces = 1; }
+        if (mode == 3) b->m_nDuration = 0;
+        if (mode == 4) b->m_nDuration = 1;
+        if (mode == 5) b->m_nDuration = LONG_MIN;
+        if (mode == 6) b->Seed(area, 0, 42, -1024, 0);
+        if (mode == 7) b->Seed(area, 56, 0, 0, -2048);
+        if (mode == 8) b->Seed(area, area->GetInfinity()->nAreaX - 1, 42, 1024, 0);
+        if (mode == 9) b->Seed(area, 56, area->GetInfinity()->nAreaY - 1, 0, 2048);
+        if (mode == 10) { b->Seed(area, 56, 42, 16384, 8192); memset(b->m_terrainTable, CPathSearch::COST_IMPASSABLE, 16); }
+        b->AIUpdate();
+        if (mode == 3 || (mode >= 6 && mode <= 9)) check("expiry-and-strict-bounds", dead && removed == 1);
+        else {
+            check("live-guard-case", !dead);
+            if (!dead) {
+                if (mode == 0) check("time-stop-no-mutation", b->m_nDuration == 60 && b->Frame() == 10 && b->m_pos == CPoint(56, 42) && b->m_targetMap.m_serviceCountdown == 5);
+                if (mode == 1 || mode == 2) check("owner-time-stop-and-same-cell", b->m_pos == CPoint(57, 42) && b->m_targetMap.m_serviceCountdown == 4 && b->m_nBounces == (mode == 2 ? 1 : -1));
+                if (mode == 4) { check("duration-one-moves-before-expiry", b->m_nDuration == 0 && b->Frame() == 11); b->AIUpdate(); check("following-tick-expires", dead); }
+                if (mode == 5) check("duration-signed-wrap", b->m_nDuration == LONG_MAX);
+                if (mode == 10) check("cost-only-corner-reverses-both", b->Delta() == CPoint(-16384, -8192) && b->m_pos == CPoint(40, 36));
+                if (!dead) retire(b);
+            }
+        }
+        game->m_nTimeStop = 0;
+    }
+    {
+        BOOL dead = FALSE; INT removed = 0; Bolt* b = new Bolt(&dead, &removed);
+        objects->Add(&b->m_id, b, INFINITE); b->Seed(area, 56, 42, 1024, 0); b->m_nDuration = 0;
+        CGameObject* shared = NULL;
+        BYTE rc = objects->GetShare(b->m_id, CGameObjectArray::THREAD_1, &shared, INFINITE);
+        check("delete-failure-share-fixture", rc == CGameObjectArray::SUCCESS);
+        b->AIUpdate();
+        check("delete-failure-removes-but-keeps-object", !dead && removed == 1 && b->CGameObject::m_pArea == NULL && b->Frame() == 10);
+        if (rc == CGameObjectArray::SUCCESS) objects->ReleaseShare(b->m_id, CGameObjectArray::THREAD_1, INFINITE);
+        if (!dead) retire(b);
+    }
+    area->m_search.m_pDynamicCost = savedDynamic; area->m_search.m_GridSquareDimensions = savedGrid;
+    searchLock.Unlock();
+    game->m_nTimeStop = stop; game->m_nTimeStopCaster = stopCaster;
+    check("same-tick-restoration", actor->m_pos == oldActorPos && game->GetWorldTimer()->m_gameTime == clock
+        && messages.GetCount() == messageCount && area->m_lVertSortAdd.GetCount() == front
+        && area->m_lVertSortBackAdd.GetCount() == back && area->m_lVertSortFlightAdd.GetCount() == flight);
+    objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    check("actor-deny-balanced", objects->m_pArray[(actorId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == 0);
+    Emit("{\"step\":%d,\"op\":\"reboundchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, valid ? "true" : "false");
+    if (!valid) Fail(nStep, "reboundchecks", "bolt launch or bounce mismatch");
+}
+
 void VefLoadChecks(INT nStep)
 {
     CInfGame* game = g_pBaldurChitin->GetObjectGame();
@@ -1463,6 +1702,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "vefmessagechecks") == 0) {
         VefMessageChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "reboundchecks") == 0) {
+        ReboundChecks(nStep); ++s_pc; return;
     }
 
     if (strcmp(step.op, "combatrules") == 0) {
@@ -6067,6 +6309,62 @@ void Tick(CWarp* pActiveEngine)
         Emit("{\"step\":%d,\"op\":\"projectilechecks\",\"checks\":%d,\"restored\":true}", nStep, checks);
         ++s_pc;
         return;
+    }
+
+    if (strcmp(step.op, "rebounddamage") == 0) {
+        CInfGame* game = g_pBaldurChitin->GetObjectGame();
+        CGameObjectArray* objects = game->GetObjectArray();
+        LONG sourceId = game->GetFixedOrderCharacterId(0), targetId = game->GetFixedOrderCharacterId(1);
+        CGameObject* source = NULL; CGameObject* raw = NULL;
+        BYTE sourceRC = objects->GetShare(sourceId, CGameObjectArray::THREAD_ASYNCH, &source, INFINITE);
+        BYTE targetRC = objects->GetShare(targetId, CGameObjectArray::THREAD_ASYNCH, &raw, INFINITE);
+        if (sourceRC != CGameObjectArray::SUCCESS || targetRC != CGameObjectArray::SUCCESS
+            || raw->m_pArea == NULL || raw->m_posVertList == NULL
+            || raw->m_listType != CGameObject::LIST_FRONT) {
+            if (sourceRC == CGameObjectArray::SUCCESS) objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            if (targetRC == CGameObjectArray::SUCCESS) objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            Fail(nStep, step.op, "requires two loaded area actors"); return;
+        }
+        auto* target = static_cast<CGameSprite*>(raw);
+        CGameArea* area = target->m_pArea;
+        s_projectileSourceHP = static_cast<CGameSprite*>(source)->m_baseStats.m_hitPoints;
+        s_projectileTargetHP = target->m_baseStats.m_hitPoints; s_projectileFlags = 0xCF;
+        struct StationaryBolt : CProjectileReboundingBolt {
+            void Place(CGameArea* area, CPoint point, LONG source) {
+                m_pArea = area; CGameObject::m_pArea = area; m_pos = point;
+                m_posAccumX = point.x * 1024;
+                // Positive ceiling pins the exact head to the creature's pixel.
+                m_posAccumY = static_cast<LONG>((static_cast<LONGLONG>(point.y) * 4096 + 2) / 3);
+                m_stepX = m_stepY = 0; m_sourceId = source;
+                m_targetMap.m_nRange = 0;
+            }
+        };
+        auto* b = new StationaryBolt;
+        b->Place(area, target->m_pos, sourceId);
+        ITEM_EFFECT item = {}; item.effectID = CGAMEEFFECT_DAMAGE; item.durationType = 1;
+        item.probabilityUpper = 100; item.effectAmount = 3; item.dwFlags = 0x800000;
+        b->AddEffect(CGameEffect::DecodeEffect(&item, source->m_pos, sourceId, target->m_pos));
+        auto& messages = g_pBaldurChitin->GetMessageHandler()->m_messageList;
+        INT before = messages.GetCount(); BOOL valid = FALSE;
+        if (objects->Add(&b->m_id, b, INFINITE) == CGameObjectArray::SUCCESS) {
+            EnterCriticalSection(&g_pBaldurChitin->m_pEngineWorld->field_106);
+            b->m_posVertList = area->m_lVertSort.InsertBefore(target->m_posVertList, reinterpret_cast<int*>(b->m_id));
+            CProjectile* virtualBolt = b; virtualBolt->AIUpdate();
+            valid = b->m_targetMap.m_targets.count(targetId) == 1
+                && b->m_targetMap.m_targets[targetId].m_nStrikes == 1 && messages.GetCount() == before + 1;
+            area->m_lVertSort.RemoveAt(b->m_posVertList); b->m_posVertList = NULL;
+            LeaveCriticalSection(&g_pBaldurChitin->m_pEngineWorld->field_106);
+            b->RemoveFromArea(); objects->Delete(b->m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE);
+        }
+        delete b;
+        objects->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseShare(sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        if (!valid) {
+            while (messages.GetCount() > before) delete messages.RemoveTail();
+            Fail(nStep, step.op, "proximity service did not deliver exactly one strike"); return;
+        }
+        Emit("{\"step\":%d,\"op\":\"rebounddamage\",\"queuedDamage\":3,\"recipient\":%ld,\"projectileRemoved\":true}", nStep, targetId);
+        ++s_pc; return;
     }
 
     if (strcmp(step.op, "projectiledamage") == 0 || strcmp(step.op, "projectilewait") == 0) {

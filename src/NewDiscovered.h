@@ -174,7 +174,6 @@ void FUN_0057c680(); // 0x57C680
 void FUN_0057c7b0(); // 0x57C7B0
 void FUN_0057ce60(); // 0x57CE60
 void FUN_0057ce80(); // 0x57CE80
-void FUN_0057d390(); // 0x57D390
 void FUN_0057d4c0(); // 0x57D4C0
 void FUN_0057d4e0(); // 0x57D4E0
 void FUN_0057d5d0(); // 0x57D5D0

@@ -8,6 +8,7 @@ combatmessagechecks
 effectcontrollerchecks
 vefloadchecks
 vefmessagechecks
+reboundchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks
@@ -29,6 +30,8 @@ protectchecks
 tickcounters
 resume
 expect partyvisible 1
+rebounddamage
+projectilewait
 swingdamage ZRCMELEE
 swingonhit ZRCMELEE
 attackplace 232 1002

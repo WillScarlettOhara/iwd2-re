@@ -1912,6 +1912,15 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
         pProjectile = new CProjectileTurnUndead();
         break;
 
+    case 0xCF: {
+        // Jump-table entry 0x5291B4 -> 0x524F74: the LightnT carrier
+        // stops at its first wall contact (the ctor defaults to unlimited).
+        CProjectileReboundingBolt* pBolt = new CProjectileReboundingBolt();
+        pBolt->m_nBounces = 1;
+        pProjectile = pBolt;
+        break;
+    }
+
     case 0x28: {
         // Lightning Bolt ("LightnT" BAM): SPWI002/308/997 and Eye of the Mage.
         // The line beam that rakes everything it crosses; height on, range 400.
@@ -5682,16 +5691,17 @@ void CProjectileTravelling::Render(CGameArea* pArea, CVidMode* pVidMode, int nSu
 
 // -----------------------------------------------------------------------------
 
-// 0x578110
-//
 // The shared CProjectileTravelling state (heap cell from the resref, range
 // palette, velocity 0x14, lifetime 0x7FFF, render flags 0x20000, zeroed
 // motion fields) is identical in the binary and comes from the base ctor;
 // only the differences are written here. field_17E = "" transcribes the
 // binary's explicit CString assignment of the nil string.
+// 0x578110
 IcewindCProjectileTravellingVFX::IcewindCProjectileTravellingVFX(const CResRef& resRef)
     : CProjectileTravelling(resRef)
 {
+    // 0x578206: this family initializes the trail flag in its inlined base.
+    m_bSparkleTrail = FALSE;
     // Default projectile terrain-cost table (.data 0x8A8154): terrain types
     // 0, 10 and 13 are impassable, everything else costs 5.
     m_terrainTable[0] = CPathSearch::COST_IMPASSABLE;
@@ -8323,6 +8333,204 @@ void CProjectileLightningBolt::AIUpdate()
     } else {
         IcewindCProjectileTravellingVFX::AIUpdate();
     }
+}
+
+// 0x57D390
+CProjectileReboundingBolt::CProjectileReboundingBolt()
+    : IcewindCProjectileTravellingVFX(CResRef("LightnT"))
+{
+    m_nBounces = -1;
+    m_pVidCell->SequenceSet(0);
+    m_renderFlags |= 8;
+    m_tinted = 0;
+    m_useHeightOffset = 0;
+    m_hasShadowCell = 0;
+    m_dirCount = 16;
+    m_fireSoundRef = "TRA_09b";
+    m_velocity = static_cast<SHORT>(static_cast<USHORT>(m_velocity) << 1);
+    m_nDuration = 60;
+    m_callBackProjectile = CGameObjectArray::INVALID_INDEX;
+    field_17E = _T("");
+    m_nTargetId = CGameObjectArray::INVALID_INDEX;
+    m_visualEffect.SetCopyFromBack(TRUE);
+    m_targetMap.m_pOwner = this;
+    m_targetMap.m_strikeInterval = 33;
+    m_targetMap.m_servicePeriod = 2;
+    m_targetMap.m_nRange = 50;
+}
+
+// 0x57D9F0 (vtable 0x85101C, slot 3; stale export: CProjectileBAM::MoveUpdate)
+void CProjectileReboundingBolt::AIUpdate()
+{
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    if (pGame->m_nTimeStop != 0 && pGame->m_nTimeStopCaster != m_id) {
+        return;
+    }
+    auto remove = [&]() {
+        RemoveFromArea();
+        if (pGame->GetObjectArray()->Delete(m_id, CGameObjectArray::THREAD_ASYNCH,
+                NULL, INFINITE) == CGameObjectArray::SUCCESS) {
+            delete this;
+        }
+    };
+    if (m_nDuration == 0) {
+        remove();
+        return;
+    }
+    m_nDuration = static_cast<LONG>(static_cast<DWORD>(m_nDuration) - 1);
+    m_pVidCell->FrameAdvance();
+
+    CPoint oldGrid(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
+        m_pos.y / CPathSearch::GRID_SQUARE_SIZEY);
+    auto screenY = [](LONG exact) {
+        LONG scaled = static_cast<LONG>(static_cast<DWORD>(exact) * 3);
+        return (scaled / 4) >> CGameSprite::EXACT_SCALE;
+    };
+    m_posAccumX = static_cast<LONG>(static_cast<DWORD>(m_posAccumX) + m_stepX);
+    m_posAccumY = static_cast<LONG>(static_cast<DWORD>(m_posAccumY) + m_stepY);
+    m_pos.x = m_posAccumX >> CGameSprite::EXACT_SCALE;
+    m_pos.y = screenY(m_posAccumY);
+    if (m_pos.x < 0 || m_pos.y < 0
+        || m_pos.x >= m_pArea->GetInfinity()->nAreaX
+        || m_pos.y >= m_pArea->GetInfinity()->nAreaY) {
+        remove();
+        return;
+    }
+
+    CPoint grid(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
+        m_pos.y / CPathSearch::GRID_SQUARE_SIZEY);
+    if (grid != oldGrid) {
+        SHORT terrain;
+        auto blocked = [&](const CPoint& point) {
+            BYTE cost = m_pArea->m_search.GetLOSCost(point, m_terrainTable, terrain, FALSE);
+            return cost == CPathSearch::COST_IMPASSABLE || terrain == 8;
+        };
+        auto reverseX = [&]() {
+            m_posAccumX = static_cast<LONG>(static_cast<DWORD>(m_posAccumX)
+                - static_cast<DWORD>(m_stepX) * 2);
+            m_stepX = static_cast<LONG>(0U - static_cast<DWORD>(m_stepX));
+            m_pos.x = m_posAccumX >> CGameSprite::EXACT_SCALE;
+        };
+        auto reverseY = [&]() {
+            m_posAccumY = static_cast<LONG>(static_cast<DWORD>(m_posAccumY)
+                - static_cast<DWORD>(m_stepY) * 2);
+            m_stepY = static_cast<LONG>(0U - static_cast<DWORD>(m_stepY));
+            m_pos.y = screenY(m_posAccumY);
+        };
+        if (blocked(grid)) {
+            if (m_nBounces > 0 && --m_nBounces < 1) {
+                remove();
+                return;
+            }
+            LONG absX = m_stepX < 0 ? static_cast<LONG>(0U - static_cast<DWORD>(m_stepX)) : m_stepX;
+            LONG absY = m_stepY < 0 ? static_cast<LONG>(0U - static_cast<DWORD>(m_stepY)) : m_stepY;
+            if (absX >= absY) {
+                LONG previousX = static_cast<LONG>(static_cast<DWORD>(m_posAccumX)
+                    - static_cast<DWORD>(m_stepX) * 2);
+                CPoint candidate((previousX >> CGameSprite::EXACT_SCALE)
+                        / CPathSearch::GRID_SQUARE_SIZEX,
+                    m_pos.y / CPathSearch::GRID_SQUARE_SIZEY);
+                if (blocked(candidate)) {
+                    reverseY();
+                    if (blocked(CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
+                            m_pos.y / CPathSearch::GRID_SQUARE_SIZEY))) {
+                        reverseX();
+                    }
+                } else {
+                    reverseX();
+                }
+            } else {
+                LONG previousY = static_cast<LONG>(static_cast<DWORD>(m_posAccumY)
+                    - static_cast<DWORD>(m_stepY) * 2);
+                CPoint candidate(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
+                    screenY(previousY) / CPathSearch::GRID_SQUARE_SIZEY);
+                if (blocked(candidate)) {
+                    reverseX();
+                    // Native Y-major fallback checks only cost here, ignoring
+                    // terrain == 8 (0x57DE8A), unlike the X-major fallback.
+                    if (m_pArea->m_search.GetLOSCost(
+                            CPoint(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX,
+                                m_pos.y / CPathSearch::GRID_SQUARE_SIZEY),
+                            m_terrainTable, terrain, FALSE) == CPathSearch::COST_IMPASSABLE) {
+                        reverseY();
+                    }
+                } else {
+                    reverseY();
+                }
+            }
+            CPoint next(static_cast<LONG>(static_cast<DWORD>(m_posAccumX) + m_stepX)
+                    >> CGameSprite::EXACT_SCALE,
+                screenY(static_cast<LONG>(static_cast<DWORD>(m_posAccumY) + m_stepY)));
+            m_facing = GetDirection(next);
+            m_targetX = next.x;
+            m_targetY = next.y;
+        }
+        // PARTIAL: the optional sparkle trail still needs factory 0x51AE40,
+        // as in the travelling base. This leaf's ctor/factory leave it disabled.
+    }
+    m_targetMap.Service();
+    m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
+}
+
+// 0x57D700
+void CProjectileReboundingBolt::Fire(CGameArea* pArea, LONG source, LONG target,
+    CPoint targetPos, LONG nHeight, SHORT nType)
+{
+    (void)nType;
+    // Unlike ordinary missiles, +0x72 is the THIRD argument. The launch
+    // origin comes from the second; the third supplies the zero-distance fallback.
+    m_sourceId = target;
+    m_targetId = CGameObjectArray::INVALID_INDEX;
+    m_pArea = pArea;
+    CGameObjectArray* objects = g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+    CGameObject* object;
+    if (objects->GetShare(source, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE)
+        != CGameObjectArray::SUCCESS) {
+        return;
+    }
+    CPoint launch;
+    GetStart(source, launch, TRUE);
+    objects->ReleaseShare(source, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    if (objects->Add(&m_id, this, INFINITE) != CGameObjectArray::SUCCESS) {
+        delete this;
+        return;
+    }
+    if (objects->GetShare(m_sourceId, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE)
+        != CGameObjectArray::SUCCESS) {
+        return;
+    }
+    CPoint fallback = object->GetPos();
+    fallback.y = static_cast<LONG>(static_cast<DWORD>(fallback.y) << 2) / 3;
+    objects->ReleaseShare(m_sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    field_17C = 1;
+    CGameObject::AddToArea(pArea, launch, nHeight, CGameObject::LIST_FRONT);
+    PlaySound(m_fireSoundRef, m_loopFireSound, FALSE);
+    m_posAccumX = static_cast<LONG>(static_cast<DWORD>(launch.x) << CGameSprite::EXACT_SCALE);
+    m_posAccumY = static_cast<LONG>(static_cast<DWORD>(launch.y)
+        << (CGameSprite::EXACT_SCALE + 2)) / 3;
+    m_facing = GetDirection(targetPos);
+    LONG targetY = static_cast<LONG>(static_cast<DWORD>(targetPos.y) << 2) / 3;
+    LONG launchY = static_cast<LONG>(static_cast<DWORD>(m_pos.y) << 2) / 3;
+    LONG dx = static_cast<LONG>(static_cast<DWORD>(targetPos.x) - m_pos.x);
+    LONG dy = static_cast<LONG>(static_cast<DWORD>(targetY) - launchY);
+    auto distance = [](LONG x, LONG y) {
+        LONG squared = static_cast<LONG>(static_cast<DWORD>(x) * x + static_cast<DWORD>(y) * y);
+        return static_cast<LONG>(sqrt(static_cast<double>(squared)) + 0.5);
+    };
+    LONG length = distance(dx, dy);
+    if (length == 0) {
+        dx = static_cast<LONG>(static_cast<DWORD>(targetPos.x) - fallback.x);
+        dy = static_cast<LONG>(static_cast<DWORD>(targetY) - fallback.y);
+        length = distance(dx, dy);
+        if (length == 0) {
+            m_nDuration = 0;
+            return;
+        }
+    }
+    m_stepX = static_cast<LONG>((static_cast<DWORD>(dx) << CGameSprite::EXACT_SCALE)
+        * static_cast<LONG>(m_velocity)) / length;
+    m_stepY = static_cast<LONG>((static_cast<DWORD>(dy) << CGameSprite::EXACT_SCALE)
+        * static_cast<LONG>(m_velocity)) / length;
 }
 
 // 0x580B30 (vtable slot 27)
