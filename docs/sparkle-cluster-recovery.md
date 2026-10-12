@@ -61,4 +61,5 @@ CLEAN. Three real trails retired; melee -6 HP, bow/crossbow/sling -12,
 trail arrow -3/source 0. Offset oracles unanalysable; parity 1 GREEN/8 YELLOW.
 Renderer invocation/color preservation is not pixel
 equivalence; original/reconstruction differential capture is not claimed.
-Other projectile-family trail sites remain separate recovery work.
+The five explosive/trap/spell-hit trail branches are tracked in
+[sparkle-family-recovery.md](sparkle-family-recovery.md).

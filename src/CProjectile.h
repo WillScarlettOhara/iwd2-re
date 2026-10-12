@@ -292,6 +292,7 @@ public:
 // explosion cells during the linger); the destructor 0x52CE10/0x52CE30 is the
 // compiler-generated member/base chain. This branch's vtables are 35 slots --
 // Explode is the only added virtual.
+#pragma pack(push, 2)
 class CProjectileExploding : public CProjectileTravelling {
     // DecodeProjectile's Skull Trap / Glyph cases (0x60/0x64) stamp the strike
     // and pre-check ranges on the freshly built leaf.
@@ -405,6 +406,7 @@ private:
     /* 04B2 */ SHORT m_nType;
     /* 04B4 */ CString m_explodeSound;   // explosion sound resref; default-empty (ctor seeds the nil sentinel)
 };
+#pragma pack(pop)
 
 // Leaf 0x5300E0 -- the strike bolt (DecodeProjectile type 0x4F; vtable
 // 0x84DF1C): the invisible effect carrier the exploding missiles' strike

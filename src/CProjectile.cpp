@@ -4428,7 +4428,7 @@ CProjectileExploding::CProjectileExploding(const CResRef& resRef)
     m_burstType = 0xFF;
 }
 
-// 0x52DD60 (vtable slot 3)
+// Vtable slot 3.
 //
 // The base flying/linger tick -- the leaves override it with their
 // flame-trail variants. Flying: advance the cell, re-aim at the recorded
@@ -4436,6 +4436,7 @@ CProjectileExploding::CProjectileExploding(const CResRef& resRef)
 // run the strike pass every m_lingerPeriod ticks, and while charges remain
 // fire the pending delayed burst (one-shot) with the colour ranges matching
 // m_burstType and a hold of lingerPeriod * strikesLeft.
+// 0x52DD60
 void CProjectileExploding::AIUpdate()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -4446,20 +4447,23 @@ void CProjectileExploding::AIUpdate()
     if (m_nState == 0) {
         m_pVidCell->FrameAdvance();
 
-        LONG nDeltaX = m_targetX - m_pos.x;
-        LONG nDeltaY = m_targetY - m_pos.y;
+        DWORD nDeltaX = static_cast<DWORD>(m_targetX) - m_pos.x;
+        DWORD nDeltaY = static_cast<DWORD>(m_targetY) - m_pos.y;
         LONG nRadius = m_velocity + 1;
-        if ((nDeltaY * nDeltaY * 16) / 9 + nDeltaX * nDeltaX <= nRadius * nRadius) {
+        LONG nDistance = static_cast<LONG>(static_cast<DWORD>(
+            static_cast<LONG>(nDeltaY * nDeltaY * 16) / 9) + nDeltaX * nDeltaX);
+        if (nDistance <= nRadius * nRadius) {
             OnArrival();
             return;
         }
 
         AimAtPoint(m_targetX, m_targetY);
 
-        // Trailing sub-projectile (m_bSparkleTrail != 0) via the unrecovered
-        // factory 0x51AE40 -- omitted like the same documented stub in
-        // CProjectileTravelling::AIUpdate. (The original builds the 0xCA
-        // object from m_sparkleColor and adds it to the area, LIST_FRONT.)
+        if (m_bSparkleTrail != FALSE) {
+            CSparkleCluster* trail = new CSparkleCluster(m_sparkleColor,
+                CSparkleCluster::TYPE_TRAVEL, CSparkleCluster::DEFAULT_CONJURE_DURATION);
+            trail->AddToArea(m_pArea, m_pos, m_posZ, CGameObject::LIST_FRONT);
+        }
 
         m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
         return;
@@ -4797,10 +4801,12 @@ void CProjectileExplodingFlame::AIUpdate()
             // flame trail.
             m_pVidCell->FrameAdvance();
 
-            LONG nDeltaX = m_targetX - m_pos.x;
-            LONG nDeltaY = m_targetY - m_pos.y;
+            DWORD nDeltaX = static_cast<DWORD>(m_targetX) - m_pos.x;
+            DWORD nDeltaY = static_cast<DWORD>(m_targetY) - m_pos.y;
             LONG nRadius = m_velocity + 1;
-            if (nRadius * nRadius < (nDeltaY * nDeltaY * 16) / 9 + nDeltaX * nDeltaX) {
+            LONG nDistance = static_cast<LONG>(static_cast<DWORD>(
+                static_cast<LONG>(nDeltaY * nDeltaY * 16) / 9) + nDeltaX * nDeltaX);
+            if (nRadius * nRadius < nDistance) {
                 if (m_targetId == CGameObjectArray::INVALID_INDEX) {
                     AimAtPoint(m_targetX, m_targetY);
                 } else {
@@ -4836,8 +4842,8 @@ void CProjectileExplodingFlame::AIUpdate()
                         m_trailColorRanges,
                         sSoundName,
                         m_pArea,
-                        CPoint(((m_pos.x + nJitterX - 2) << CGameSprite::EXACT_SCALE) - m_stepX * 4 / 3,
-                            ((m_pos.y + nJitterY - 2) << CGameSprite::EXACT_SCALE) - m_stepY * 4 / 3),
+                        CPoint(((m_pos.x + nJitterX - 2) << CGameSprite::EXACT_SCALE) - static_cast<LONG>(static_cast<DWORD>(m_stepX) * 4) / 3,
+                            ((m_pos.y + nJitterY - 2) << CGameSprite::EXACT_SCALE) - static_cast<LONG>(static_cast<DWORD>(m_stepY) * 4) / 3),
                         -m_posZ,
                         CPoint(0, 0),
                         0,
@@ -4864,8 +4870,8 @@ void CProjectileExplodingFlame::AIUpdate()
                         m_trailColorRanges,
                         sSoundName,
                         m_pArea,
-                        CPoint(((m_pos.x + nJitterX - 2) << CGameSprite::EXACT_SCALE) - m_stepX * 2 / 3,
-                            ((m_pos.y + nJitterY - 2) << CGameSprite::EXACT_SCALE) - m_stepY * 2 / 3),
+                        CPoint(((m_pos.x + nJitterX - 2) << CGameSprite::EXACT_SCALE) - static_cast<LONG>(static_cast<DWORD>(m_stepX) * 2) / 3,
+                            ((m_pos.y + nJitterY - 2) << CGameSprite::EXACT_SCALE) - static_cast<LONG>(static_cast<DWORD>(m_stepY) * 2) / 3),
                         -m_posZ,
                         CPoint(0, 0),
                         0,
@@ -4873,9 +4879,11 @@ void CProjectileExplodingFlame::AIUpdate()
                         CGameTemporal::COLLISION_DESTROY);
                 }
 
-                // Trailing sub-projectile (+0xE2 != 0) via the unrecovered
-                // factory 0x51AE40 -- omitted like the same documented stub in
-                // CProjectileTravelling::AIUpdate.
+                if (m_bSparkleTrail != FALSE) {
+                    CSparkleCluster* trail = new CSparkleCluster(m_sparkleColor,
+                        CSparkleCluster::TYPE_TRAVEL, CSparkleCluster::DEFAULT_CONJURE_DURATION);
+                    trail->AddToArea(m_pArea, m_pos, m_posZ, CGameObject::LIST_FRONT);
+                }
 
                 m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
             } else {
@@ -4939,10 +4947,9 @@ CProjectileExplodingWeapon::CProjectileExplodingWeapon()
     m_childProjectileType = 0x4E;
 }
 
-// 0x52E4D0
-//
 // Same tick as CProjectileExplodingFlame::AIUpdate minus the live-target
 // homing: the missile only ever re-aims at the recorded target point.
+// 0x52E4D0
 void CProjectileExplodingWeapon::AIUpdate()
 {
     CString sSoundName("");
@@ -4952,10 +4959,12 @@ void CProjectileExplodingWeapon::AIUpdate()
         if (m_nState == 0) {
             m_pVidCell->FrameAdvance();
 
-            LONG nDeltaX = m_targetX - m_pos.x;
-            LONG nDeltaY = m_targetY - m_pos.y;
+            DWORD nDeltaX = static_cast<DWORD>(m_targetX) - m_pos.x;
+            DWORD nDeltaY = static_cast<DWORD>(m_targetY) - m_pos.y;
             LONG nRadius = m_velocity + 1;
-            if (nRadius * nRadius < (nDeltaY * nDeltaY * 16) / 9 + nDeltaX * nDeltaX) {
+            LONG nDistance = static_cast<LONG>(static_cast<DWORD>(
+                static_cast<LONG>(nDeltaY * nDeltaY * 16) / 9) + nDeltaX * nDeltaX);
+            if (nRadius * nRadius < nDistance) {
                 AimAtPoint(m_targetX, m_targetY);
 
                 m_trailTick = m_trailTick + 1;
@@ -4968,8 +4977,8 @@ void CProjectileExplodingWeapon::AIUpdate()
                         m_trailColorRanges,
                         sSoundName,
                         m_pArea,
-                        CPoint(((m_pos.x + nJitterX - 2) << CGameSprite::EXACT_SCALE) - m_stepX * 4 / 3,
-                            ((m_pos.y + nJitterY - 2) << CGameSprite::EXACT_SCALE) - m_stepY * 4 / 3),
+                        CPoint(((m_pos.x + nJitterX - 2) << CGameSprite::EXACT_SCALE) - static_cast<LONG>(static_cast<DWORD>(m_stepX) * 4) / 3,
+                            ((m_pos.y + nJitterY - 2) << CGameSprite::EXACT_SCALE) - static_cast<LONG>(static_cast<DWORD>(m_stepY) * 4) / 3),
                         -m_posZ,
                         CPoint(0, 0),
                         0,
@@ -4996,8 +5005,8 @@ void CProjectileExplodingWeapon::AIUpdate()
                         m_trailColorRanges,
                         sSoundName,
                         m_pArea,
-                        CPoint(((m_pos.x + nJitterX - 2) << CGameSprite::EXACT_SCALE) - m_stepX * 2 / 3,
-                            ((m_pos.y + nJitterY - 2) << CGameSprite::EXACT_SCALE) - m_stepY * 2 / 3),
+                        CPoint(((m_pos.x + nJitterX - 2) << CGameSprite::EXACT_SCALE) - static_cast<LONG>(static_cast<DWORD>(m_stepX) * 2) / 3,
+                            ((m_pos.y + nJitterY - 2) << CGameSprite::EXACT_SCALE) - static_cast<LONG>(static_cast<DWORD>(m_stepY) * 2) / 3),
                         -m_posZ,
                         CPoint(0, 0),
                         0,
@@ -5005,9 +5014,11 @@ void CProjectileExplodingWeapon::AIUpdate()
                         CGameTemporal::COLLISION_DESTROY);
                 }
 
-                // Trailing sub-projectile (+0xE2 != 0) via the unrecovered
-                // factory 0x51AE40 -- omitted like the same documented stub in
-                // CProjectileTravelling::AIUpdate.
+                if (m_bSparkleTrail != FALSE) {
+                    CSparkleCluster* trail = new CSparkleCluster(m_sparkleColor,
+                        CSparkleCluster::TYPE_TRAVEL, CSparkleCluster::DEFAULT_CONJURE_DURATION);
+                    trail->AddToArea(m_pArea, m_pos, m_posZ, CGameObject::LIST_FRONT);
+                }
 
                 m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
             } else {
@@ -5099,7 +5110,7 @@ CProjectileSkullTrap::CProjectileSkullTrap(const CResRef& cMissileRef, const CRe
     m_bExplodeCell2Active = (cExplodeRef != "");
 }
 
-// 0x52F9E0 (vtable slot 3)
+// Vtable slot 3.
 //
 // Skull Trap tick. While flying (m_nState == 0): advance the cell, and once the
 // trap reaches its target point fire OnArrival; otherwise re-aim and keep the
@@ -5107,6 +5118,7 @@ CProjectileSkullTrap::CProjectileSkullTrap(const CResRef& cMissileRef, const CRe
 // m_lingerPeriod, runs an AreaEffect strike pass -- each landed strike spends a
 // charge and re-arms the timer; when the charges run out the trap removes
 // itself and is freed.
+// 0x52F9E0
 void CProjectileSkullTrap::AIUpdate()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -5117,20 +5129,23 @@ void CProjectileSkullTrap::AIUpdate()
     if (m_nState == 0) {
         m_pVidCell->FrameAdvance();
 
-        LONG nDeltaX = m_targetX - m_pos.x;
-        LONG nDeltaY = m_targetY - m_pos.y;
+        DWORD nDeltaX = static_cast<DWORD>(m_targetX) - m_pos.x;
+        DWORD nDeltaY = static_cast<DWORD>(m_targetY) - m_pos.y;
         LONG nRadius = m_velocity + 1;
-        if ((nDeltaY * nDeltaY * 16) / 9 + nDeltaX * nDeltaX <= nRadius * nRadius) {
+        LONG nDistance = static_cast<LONG>(static_cast<DWORD>(
+            static_cast<LONG>(nDeltaY * nDeltaY * 16) / 9) + nDeltaX * nDeltaX);
+        if (nDistance <= nRadius * nRadius) {
             OnArrival();
             return;
         }
 
         AimAtPoint(m_targetX, m_targetY);
 
-        // Trailing sub-projectile (m_bSparkleTrail != 0) via the unrecovered
-        // factory 0x51AE40 -- omitted like the same documented stub in
-        // CProjectileExploding::AIUpdate. (The original builds the 0xCA object
-        // from m_sparkleColor and adds it to the area.)
+        if (m_bSparkleTrail != FALSE) {
+            CSparkleCluster* trail = new CSparkleCluster(m_sparkleColor,
+                CSparkleCluster::TYPE_TRAVEL, CSparkleCluster::DEFAULT_CONJURE_DURATION);
+            trail->AddToArea(m_pArea, m_pos, m_posZ, CGameObject::LIST_FRONT);
+        }
 
         m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
         return;
@@ -6447,7 +6462,7 @@ void IcewindCProjectileSpellHit::Fire(CGameArea* pArea, LONG source, LONG target
 
 // -----------------------------------------------------------------------------
 
-// 0x56FAF0 (vtable slot 3). The spell-hit family's per-tick update. Frozen by
+// The spell-hit family's per-tick update (vtable slot 3). Frozen by
 // Time Stop unless this projectile belongs to the time-stop caster. While
 // travelling (m_bDetonated == 0) it flies toward the target point: snapping there
 // instantly when m_bHasTravelCell is clear, otherwise homing in by m_velocity per tick
@@ -6456,6 +6471,7 @@ void IcewindCProjectileSpellHit::Fire(CGameArea* pArea, LONG source, LONG target
 // its two vid cells, runs a strike pass every m_strikeCountdown ticks (gather the due
 // victims, strike each), loops its area sound, and removes itself when the
 // m_lifetime lifetime expires.
+// 0x56FAF0
 void IcewindCProjectileSpellHit::AIUpdate()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -6473,14 +6489,18 @@ void IcewindCProjectileSpellHit::AIUpdate()
 
         m_pVidCell->FrameAdvance();
 
-        int dy = m_targetY - m_pos.y;
-        int dx = m_targetX - m_pos.x;
+        DWORD dy = static_cast<DWORD>(m_targetY) - m_pos.y;
+        DWORD dx = static_cast<DWORD>(m_targetX) - m_pos.x;
         int radius = m_velocity + 1;
-        if (radius * radius < (dy * dy * 16) / 9 + dx * dx) {
+        LONG distance = static_cast<LONG>(static_cast<DWORD>(
+            static_cast<LONG>(dy * dy * 16) / 9) + dx * dx);
+        if (radius * radius < distance) {
             AimAtPoint(m_targetX, m_targetY);
-            // Trailing sparkle sub-emitter (m_bSparkleTrail) via the unrecovered
-            // factory 0x51AE40 -- omitted like the same documented stub in
-            // CProjectileTravelling::AIUpdate.
+            if (m_bSparkleTrail != FALSE) {
+                CSparkleCluster* trail = new CSparkleCluster(m_sparkleColor,
+                    CSparkleCluster::TYPE_TRAVEL, CSparkleCluster::DEFAULT_CONJURE_DURATION);
+                trail->AddToArea(m_pArea, m_pos, m_posZ, CGameObject::LIST_FRONT);
+            }
             m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
             return;
         }
@@ -6496,7 +6516,8 @@ void IcewindCProjectileSpellHit::AIUpdate()
         m_cell2.FrameAdvance();
     }
 
-    if (--m_strikeCountdown < 1) {
+    m_strikeCountdown = static_cast<LONG>(static_cast<DWORD>(m_strikeCountdown) - 1);
+    if (m_strikeCountdown < 1) {
         std::list<LONG> due = GatherTargets();
         Strike(due);
         m_strikeCountdown = m_strikePeriod;
@@ -6508,7 +6529,8 @@ void IcewindCProjectileSpellHit::AIUpdate()
         m_sound2.Play(m_pos.x, m_pos.y, 0, 0);
     }
 
-    if (--m_lifetime < 1) {
+    m_lifetime = static_cast<LONG>(static_cast<DWORD>(m_lifetime) - 1);
+    if (m_lifetime < 1) {
         RemoveSelf();
     }
 }

@@ -10,6 +10,7 @@ vefloadchecks
 vefmessagechecks
 reboundchecks
 sparklechecks
+sparklefamilychecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

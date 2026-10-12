@@ -111,6 +111,8 @@
 //                                restore search data, actors, objects and queues.
 //   sparklechecks              exercise palettes, particle lifecycle and projectile
 //                                trail creation; restore objects, search and queues.
+//   sparklefamilychecks        exercise explosive/trap/spell-hit trails and timers;
+//                                restore objects, queues, cursor and Time Stop.
 //   sparklewait                require emitted clusters to leave all area lists.
 //   rebounddamage              service a registered bolt beside portrait 1, then
 //                                use projectilewait to require actual payload damage.
@@ -167,6 +169,7 @@
 #include "CPathSearch.h"
 #include "CVariableHash.h"
 #include "CProjectile.h"
+#include "CGameTemporal.h"
 #include "CSpell.h"
 #include "IcewindCGameEffects.h"
 #include "CDimmKeyTable.h"
@@ -1199,6 +1202,191 @@ void SparkleChecks(INT nStep)
     if(!valid) Fail(nStep,"sparklechecks","particle lifecycle mismatch");
 }
 
+// Virtual interception keeps arrivals/strikes local while exercising each
+// production AIUpdate, its real allocations and object/area registration.
+template <class T>
+struct SparkleExplodingFixture : T {
+    using T::T;
+    INT aims = 0, arrivals = 0, removals = 0, explosions = 0;
+    CPoint aimed;
+    void AimAtPoint(int x, int y) override { ++aims; aimed = CPoint(x,y); this->m_pos.x += 16; }
+    void OnArrival() override { ++arrivals; }
+    void RemoveSelf() override { ++removals; }
+    void Explode() override { ++explosions; }
+    void Seed(CGameArea* area) {
+        this->m_pArea = area; this->CGameObject::m_pArea = area;
+        this->m_pos = CPoint(40,36); this->m_posZ = 25;
+        this->m_targetX = 400; this->m_targetY = 36; this->m_velocity = 1;
+        this->m_stepX = 0; this->m_stepY = 0; this->m_targetId = -1;
+        this->m_sparkleColor = 2; this->m_bSparkleTrail = TRUE;
+        this->m_nState = 0; this->m_bExplodeCell1Active = 0; this->m_bExplodeCell2Active = 0;
+        this->m_bBurstPending = 0; this->m_lingerPeriod = 7; this->m_lingerCountdown = 0;
+        this->m_strikesLeft = 2; this->m_bPreScan = 1;
+        this->m_preCheckRange = 0; this->m_strikeRange = 0;
+        this->m_targetType.SetInstance(0x7FFFFFFF);
+        this->m_posVertList = NULL;
+    }
+    void Position(CPoint point, SHORT velocity = 1) { this->m_pos = point; this->m_velocity = velocity; }
+    void Lingering(SHORT countdown) { this->m_nState = 1; this->m_lingerCountdown = countdown; }
+    SHORT Countdown() const { return this->m_lingerCountdown; }
+    SHORT Charges() const { return this->m_strikesLeft; }
+    void ScanFrom(POSITION pos) { this->m_posVertList = pos; }
+};
+
+void SparkleFamilyChecks(INT nStep)
+{
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CGameObjectArray* objects = game->GetObjectArray();
+    LONG actorId = game->GetFixedOrderCharacterId(0);
+    CGameObject* actor = NULL;
+    if (objects->GetShare(actorId,CGameObjectArray::THREAD_ASYNCH,&actor,INFINITE)
+        != CGameObjectArray::SUCCESS) { Fail(nStep,"sparklefamilychecks","requires loaded actor"); return; }
+    CGameArea* area = actor->m_pArea;
+    CPoint actorPoint = actor->GetPos();
+    objects->ReleaseShare(actorId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    if (!area || area->m_lVertSort.IsEmpty()) { Fail(nStep,"sparklefamilychecks","requires area front list"); return; }
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    INT messages = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    INT front = area->m_lVertSortAdd.GetCount(), back = area->m_lVertSortBackAdd.GetCount();
+    INT flight = area->m_lVertSortFlightAdd.GetCount(), sorted = area->m_lVertSort.GetCount();
+    auto stop = game->m_nTimeStop; auto caster = game->m_nTimeStopCaster;
+    INT checks = 0; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"sparkle-family-case\",\"case\":\"%s\",\"passed\":false}",nStep,name);
+    };
+    auto unqueue = [&](LONG id) {
+        POSITION p = area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id)); if(p) area->m_lVertSortAdd.RemoveAt(p);
+        p = area->m_lVertSortBackAdd.Find(reinterpret_cast<int*>(id)); if(p) area->m_lVertSortBackAdd.RemoveAt(p);
+        p = area->m_lVertSortFlightAdd.Find(reinterpret_cast<int*>(id)); if(p) area->m_lVertSortFlightAdd.RemoveAt(p);
+    };
+    auto retire = [&](CGameObject* object) {
+        unqueue(object->m_id); object->RemoveFromArea();
+        objects->Delete(object->m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE); delete object;
+    };
+    auto consume = [&](INT sparkles, INT puffs, CPoint point) {
+        check("queued-spawn-count",area->m_lVertSortAdd.GetCount()==front+sparkles+puffs);
+        INT clusters = 0, temporals = 0;
+        while(area->m_lVertSortAdd.GetCount()>front) {
+            LONG id = reinterpret_cast<LONG>(area->m_lVertSortAdd.GetTail());
+            CGameObject* object = NULL;
+            BYTE rc = objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE);
+            check("spawn-is-registered",rc==CGameObjectArray::SUCCESS);
+            if(rc!=CGameObjectArray::SUCCESS) { unqueue(id); continue; }
+            CSparkleCluster* c = dynamic_cast<CSparkleCluster*>(object);
+            CGameTemporal* t = dynamic_cast<CGameTemporal*>(object);
+            if(c) {
+                ++clusters;
+                check("sparkle-after-motion",c->m_pos==point && c->m_posZ==25 && c->m_pArea==area
+                    && c->m_wType==CSparkleCluster::TYPE_TRAVEL && c->m_nConjureDuration==25
+                    && c->m_particleList.GetCount()==14);
+            } else if(t) {
+                ++temporals;
+                check("flame-puff-jitter-height",t->m_pos.x>=point.x-2 && t->m_pos.x<=point.x+2
+                    && t->m_pos.y>=point.y-2 && t->m_pos.y<=point.y+2 && t->m_posZ==-25 && t->m_pArea==area);
+            } else check("expected-spawn-class",FALSE);
+            objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+            retire(object);
+        }
+        check("sparkles-and-puffs-coexist",clusters==sparkles && temporals==puffs);
+    };
+    game->m_nTimeStop = 0;
+    auto exercise = [&](auto* p, INT puffs, INT lingerReload) {
+        objects->Add(&p->m_id,p,INFINITE); p->Seed(area);
+        CProjectile* dispatch = p;
+        dispatch->AIUpdate(); check("flight-aim",p->aims==1 && p->aimed==CPoint(400,36)); consume(1,puffs,CPoint(56,36));
+        p->m_bSparkleTrail=FALSE; dispatch->AIUpdate(); consume(0,puffs,CPoint(72,36));
+        p->m_bSparkleTrail=2;
+        game->m_nTimeStop=1; game->m_nTimeStopCaster=-1;
+        dispatch->AIUpdate(); check("frozen-no-motion-or-spawn",p->aims==2 && area->m_lVertSortAdd.GetCount()==front);
+        game->m_nTimeStopCaster=p->m_id;
+        dispatch->AIUpdate(); check("time-stop-owner-flies",p->aims==3); consume(1,puffs,CPoint(88,36));
+        game->m_nTimeStop=0;
+        p->Position(CPoint(398,36)); dispatch->AIUpdate();
+        check("exact-radius-arrival",p->arrivals==1 && p->aims==3 && area->m_lVertSortAdd.GetCount()==front);
+        p->Position(CPoint(395,36),-4); dispatch->AIUpdate(); consume(1,puffs,CPoint(411,36));
+        check("signed-velocity-radius",p->arrivals==1 && p->aims==4);
+        // Squaring 50000 wraps negative before the signed comparison.
+        p->Position(CPoint(50400,36)); dispatch->AIUpdate();
+        check("wrapped-x-distance-arrives",p->arrivals==2 && p->aims==4 && area->m_lVertSortAdd.GetCount()==front);
+        p->Position(CPoint(400,15036)); dispatch->AIUpdate();
+        check("wrapped-y-distance-arrives",p->arrivals==3 && p->aims==4 && area->m_lVertSortAdd.GetCount()==front);
+        p->Position(CPoint(40,36)); p->Lingering(-32768); dispatch->AIUpdate();
+        check("linger-short-wrap",p->Countdown()==32767 && p->Charges()==2 && p->aims==4);
+        p->Lingering(1); dispatch->AIUpdate(); check("linger-countdown-zero",p->Countdown()==0);
+        // GetCloseObjects requires a real list cursor, even for an empty scan.
+        p->ScanFrom(area->m_lVertSort.GetHeadPosition()); dispatch->AIUpdate();
+        check("no-target-rearm-difference",p->Countdown()==lingerReload && p->Charges()==2 && p->explosions==0);
+        p->m_posVertList=NULL; retire(p);
+    };
+    exercise(new SparkleExplodingFixture<CProjectileExploding>(CResRef("SPMAGMIS")),0,7);
+    exercise(new SparkleExplodingFixture<CProjectileExplodingWeapon>(),3,6);
+    exercise(new SparkleExplodingFixture<CProjectileSkullTrap>(CResRef("SPMAGMIS"),CResRef(""),0),0,0);
+    {
+        auto* p = new SparkleExplodingFixture<CProjectileExplodingFlame>();
+        exercise(p,3,6);
+        p = new SparkleExplodingFixture<CProjectileExplodingFlame>();
+        objects->Add(&p->m_id,p,INFINITE); p->Seed(area); p->m_targetId=actorId;
+        CProjectile* dispatch=p; dispatch->AIUpdate();
+        check("flame-live-target",p->aimed==actorPoint && p->removals==0); consume(1,3,CPoint(56,36));
+        p->m_targetId=0x7FFFFFFF; dispatch->AIUpdate();
+        check("flame-missing-target-removes",p->removals==1 && p->aims==1 && area->m_lVertSortAdd.GetCount()==front);
+        p->m_targetId=actorId; p->CProjectile::m_pArea=NULL; dispatch->AIUpdate();
+        check("flame-other-area-removes",p->removals==2 && p->aims==1 && area->m_lVertSortAdd.GetCount()==front);
+        p->CProjectile::m_pArea=area; retire(p);
+    }
+    struct Spell : IcewindCProjectileSpellHit {
+        INT aims=0, arrivals=0, removals=0, gathers=0, strikes=0;
+        Spell() : IcewindCProjectileSpellHit(0) {}
+        void AimAtPoint(int,int) override { ++aims; m_pos.x+=16; }
+        void OnArrival() override { ++arrivals; }
+        void RemoveSelf() override { ++removals; }
+        std::list<LONG> GatherTargets() override { ++gathers; return {17,23}; }
+        void Strike(std::list<LONG>& ids) override { if(ids==std::list<LONG>{17,23}) ++strikes; }
+        void Seed(CGameArea* area) {
+            m_pArea=area; CGameObject::m_pArea=area; m_pos=CPoint(40,36); m_posZ=25;
+            m_targetX=400; m_targetY=36; m_velocity=1; m_sparkleColor=2; m_bSparkleTrail=TRUE;
+            m_bHasTravelCell=1; m_bDetonated=0; m_bAnimateCell1=0; m_bAnimateCell2=0;
+            m_lifetime=5; m_strikeCountdown=5; m_strikePeriod=7;
+        }
+        void Position(CPoint pos) { m_pos=pos; }
+        void Snap() { m_bHasTravelCell=0; }
+        void Detonate(LONG lifetime,LONG countdown) { m_bDetonated=1; m_lifetime=lifetime; m_strikeCountdown=countdown; }
+        LONG Lifetime() const { return m_lifetime; }
+        LONG Countdown() const { return m_strikeCountdown; }
+    };
+    {
+        Spell* p=new Spell; objects->Add(&p->m_id,p,INFINITE); p->Seed(area); CProjectile* dispatch=p;
+        dispatch->AIUpdate(); consume(1,0,CPoint(56,36));
+        check("spell-flight-keeps-counters",p->Lifetime()==5 && p->Countdown()==5);
+        p->m_bSparkleTrail=FALSE; dispatch->AIUpdate(); consume(0,0,CPoint(72,36));
+        p->m_bSparkleTrail=TRUE; game->m_nTimeStop=1; game->m_nTimeStopCaster=-1;
+        dispatch->AIUpdate(); check("spell-time-stop",p->aims==2 && p->Lifetime()==5 && area->m_lVertSortAdd.GetCount()==front);
+        game->m_nTimeStopCaster=p->m_id; dispatch->AIUpdate(); consume(1,0,CPoint(88,36));
+        game->m_nTimeStop=0; p->Position(CPoint(398,36)); dispatch->AIUpdate();
+        check("spell-radius-arrival",p->arrivals==1 && p->aims==3 && area->m_lVertSortAdd.GetCount()==front);
+        p->Position(CPoint(50400,36)); dispatch->AIUpdate();
+        check("spell-wrapped-distance",p->arrivals==2 && p->aims==3);
+        p->Snap(); p->Position(CPoint(40,36)); dispatch->AIUpdate();
+        check("spell-no-cell-snap",p->m_pos==CPoint(400,36) && p->arrivals==3 && p->aims==3);
+        p->Detonate(5,1); dispatch->AIUpdate();
+        check("spell-gather-strike-reload",p->gathers==1 && p->strikes==1 && p->Countdown()==7 && p->Lifetime()==4);
+        p->Detonate(static_cast<LONG>(0x80000000UL),static_cast<LONG>(0x80000000UL)); dispatch->AIUpdate();
+        check("spell-long-wrap",p->Lifetime()==0x7FFFFFFF && p->Countdown()==0x7FFFFFFF && p->gathers==1 && p->removals==0);
+        p->Detonate(1,2); dispatch->AIUpdate();
+        check("spell-final-tick",p->Lifetime()==0 && p->Countdown()==1 && p->removals==1);
+        retire(p);
+    }
+    game->m_nTimeStop=stop; game->m_nTimeStopCaster=caster;
+    check("same-tick-restoration",game->GetWorldTimer()->m_gameTime==clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount()==messages
+        && area->m_lVertSortAdd.GetCount()==front && area->m_lVertSortBackAdd.GetCount()==back
+        && area->m_lVertSortFlightAdd.GetCount()==flight && area->m_lVertSort.GetCount()==sorted);
+    srand(1);
+    Emit("{\"step\":%d,\"op\":\"sparklefamilychecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}",nStep,checks,valid?"true":"false");
+    if(!valid) Fail(nStep,"sparklefamilychecks","projectile family mismatch");
+}
+
 void ReboundChecks(INT nStep)
 {
     CInfGame* game = g_pBaldurChitin->GetObjectGame();
@@ -1946,6 +2134,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "sparklechecks") == 0) {
         SparkleChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "sparklefamilychecks") == 0) {
+        SparkleFamilyChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
