@@ -11,6 +11,7 @@ vefmessagechecks
 reboundchecks
 sparklechecks
 sparklefamilychecks
+projectilelaunchchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

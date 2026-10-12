@@ -45,9 +45,9 @@ the world clock and message count must be unchanged.
 Run the complete combat-messages profile, including the real melee, bow,
 crossbow, sling and trail-arrow damage checks. The scenario centers on the
 party and never saves. Static parity and diagnostic fixtures do not establish
-original/reconstruction differential or pixel equivalence. The factory-2F
-carrier's early expiry remains separate: its native constructor initializes
-lifetime to zero; trace the original launch before changing that behavior.
+original/reconstruction differential or pixel equivalence. The original
+factory-2F trace now confirms zero-timer far expiry and near arrival; see
+[projectile-launch-recovery.md](projectile-launch-recovery.md).
 
 Validation: the first batch failed compilation on a misnamed type constant;
 the second built and passed 176 new checks/61 UI steps, all five symbol gates

@@ -51,9 +51,9 @@ including Time Stop, arrival, disabled/same-cell and wall-bounce guards.
 Fixtures restore search, objects, queues and clock in the same tick.
 The full disposable profile also launches an arrow through opcode 430 with
 test-only trail-flag activation, checks real payload damage and retirement
-from area lists, and retains melee/bow/crossbow/sling tests. Our factory 2F
-carrier expires before delivery; its native ctor sets lifetime zero. Trace
-this factory on the original before changing its launch semantics.
+from area lists, and retains melee/bow/crossbow/sling tests. Original factory
+2F now confirms zero-timer far expiry/near arrival; see
+[projectile-launch-recovery.md](projectile-launch-recovery.md).
 
 Validation: .arc/2026-10-11T21-37-18-936882-batch PASS (9 targets);
 Win32 Debug, 663 particle checks/60 UI steps, nine symbols hit and 60 s

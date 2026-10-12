@@ -306,11 +306,11 @@ SHORT CProjectile::GetDirection(CPoint target)
 {
     CPoint ptStart;
     ptStart.x = m_pos.x;
-    ptStart.y = 4 * m_pos.y / 3;
+    ptStart.y = static_cast<LONG>(static_cast<DWORD>(m_pos.y) * 4) / 3;
 
     CPoint ptTarget;
     ptTarget.x = target.x;
-    ptTarget.y = 4 * target.y / 3;
+    ptTarget.y = static_cast<LONG>(static_cast<DWORD>(target.y) * 4) / 3;
 
     return CGameSprite::GetDirection(ptStart, ptTarget);
 }
@@ -3848,20 +3848,18 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
         if (rcSrc != CGameObjectArray::SUCCESS) {
             return;
         }
-        if (rcSrc == CGameObjectArray::SUCCESS) {
-            if (m_bHasHeight) {
-                if (pSourceObj->GetObjectType() == CGameObject::TYPE_SPRITE) {
-                    CGameSprite* pSrcSprite = static_cast<CGameSprite*>(pSourceObj);
-                    nLaunchHeight = pSrcSprite->GetAnimation()->GetCastHeight();
-                } else {
-                    nLaunchHeight = 0x20;
-                }
+        if (m_bHasHeight) {
+            if (pSourceObj->GetObjectType() == CGameObject::TYPE_SPRITE) {
+                CGameSprite* pSrcSprite = static_cast<CGameSprite*>(pSourceObj);
+                nLaunchHeight = pSrcSprite->GetAnimation()->GetCastHeight();
+            } else {
+                nLaunchHeight = 0x20;
             }
-            ptSourceCenter = pSourceObj->GetPos();
-            bSourceCreature = (pSourceObj->GetObjectType() == CGameObject::TYPE_SPRITE);
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceId,
-                CGameObjectArray::THREAD_ASYNCH, INFINITE);
         }
+        ptSourceCenter = pSourceObj->GetPos();
+        bSourceCreature = (pSourceObj->GetObjectType() == CGameObject::TYPE_SPRITE);
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_sourceId,
+            CGameObjectArray::THREAD_ASYNCH, INFINITE);
     }
 
     // Launch origin from the source (facing-adjusted).
@@ -3874,7 +3872,8 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
     if (bSourceCreature) {
         int cellDX = ptTarget.x / 16 - ptSource.x / 16;
         int cellDY = ptTarget.y / 12 - ptSource.y / 12;
-        if (cellDX * cellDX + cellDY * cellDY < 3) {
+        if (static_cast<LONG>(static_cast<DWORD>(cellDX) * static_cast<DWORD>(cellDX)
+            + static_cast<DWORD>(cellDY) * static_cast<DWORD>(cellDY)) < 3) {
             ptSource = ptSourceCenter;
         }
     }
@@ -3908,19 +3907,18 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
 
     // Flight distance^2 (y weighted 16/9) -- the metric AIUpdate tests for
     // arrival; drives the lifetime.
-    int dx = ptTarget.x - ptSource.x;
-    int dy = ptTarget.y - ptSource.y;
-    m_flightDistSq = dx * dx + (dy * dy * 16) / 9;
+    DWORD dx = static_cast<DWORD>(ptTarget.x) - static_cast<DWORD>(ptSource.x);
+    DWORD dy = static_cast<DWORD>(ptTarget.y) - static_cast<DWORD>(ptSource.y);
+    m_flightDistSq = static_cast<LONG>(dx * dx
+        + static_cast<DWORD>(static_cast<LONG>(dy * dy * 16) / 9));
 
-    // Distance-based lifetime (only when m_distLifetime is set; Magic Missile leaves
-    // it 0, keeping the 0x7FFF default).
+    // Round the distance, narrow to signed SHORT, THEN divide by signed speed.
+    // An unarmed launch retains the leaf constructor's lifetime, including zero.
     if (m_distLifetime != 0) {
-        m_lifetime = static_cast<SHORT>(
-            static_cast<int>(sqrt(static_cast<double>(m_flightDistSq))) / m_velocity + 1);
+        SHORT distance = static_cast<SHORT>(static_cast<int>(
+            sqrt(static_cast<double>(m_flightDistSq)) + 0.5));
+        m_lifetime = static_cast<SHORT>(distance / m_velocity + 1);
     }
-
-    m_targetX = ptTarget.x;
-    m_targetY = ptTarget.y;
 
     // Launch height block (0x52C621-0x52C657): use the animation rect's
     // half-height, with arithmetic shift, and seed both interpolation terms.
@@ -3951,18 +3949,19 @@ void CProjectileTravelling::Fire(CGameArea* pArea, LONG source, LONG target,
     // origin. Frida-confirmed exact: X scaled << 10, Y also 4/3 y-scaled (the
     // iso squash) so AimAtPoint's decode reproduces m_pos. Without this the
     // flight would start from (0, 0).
-    m_posAccumX = ptSource.x << 10;
-    m_posAccumY = (ptSource.y << 12) / 3;
+    m_targetX = ptTarget.x;
+    m_targetY = ptTarget.y;
+    m_posAccumX = static_cast<LONG>(static_cast<DWORD>(ptSource.x) << 10);
+    m_posAccumY = static_cast<LONG>(static_cast<DWORD>(ptSource.y) << 12) / 3;
 
     // Initial facing toward the target, both points 4/3 y-scaled. The original
-    // reads m_pos here -- which the preceding AddToArea set to this same launch
-    // origin; AddToArea is not yet wired, so aim from ptSource directly.
+    // reads m_pos here, after AddToArea has installed the launch origin.
     CPoint ptStartScaled;
-    ptStartScaled.x = ptSource.x;
-    ptStartScaled.y = (ptSource.y * 4) / 3;
+    ptStartScaled.x = m_pos.x;
+    ptStartScaled.y = static_cast<LONG>(static_cast<DWORD>(m_pos.y) * 4) / 3;
     CPoint ptTargetScaled;
     ptTargetScaled.x = ptTarget.x;
-    ptTargetScaled.y = (ptTarget.y * 4) / 3;
+    ptTargetScaled.y = static_cast<LONG>(static_cast<DWORD>(ptTarget.y) * 4) / 3;
     m_facing = static_cast<SHORT>(CGameSprite::GetDirection(ptStartScaled, ptTargetScaled));
 }
 
@@ -5775,17 +5774,14 @@ void IcewindCProjectileTravellingVFX::Fire(CGameArea* pArea, LONG source, LONG t
     // when the target is a sprite — see 0x5792BD–0x57931B.
     CPoint ptTarget;
     BOOL bTargetCreature = FALSE;
-    CRect rHeight(0x20, 0x32, 0x40, 0x40);
-    CPoint ptRef(0, 0);
+    CRect rHeight(0, 0, 0x40, 0x40);
+    CPoint ptRef(0x20, 0x32);
     if (m_targetId == CGameObjectArray::INVALID_INDEX) {
         ptTarget = targetPos;
     } else {
         CGameObject* pTarget;
-        BYTE rc;
-        do {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
-                CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
-        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+        BYTE rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
         if (rc != CGameObjectArray::SUCCESS) {
             return;
         }
@@ -5795,13 +5791,13 @@ void IcewindCProjectileTravellingVFX::Fire(CGameArea* pArea, LONG source, LONG t
             // The original upgrades to an exclusive lock (GetDeny) to read the
             // live animation height rect, then releases back to the shared lock
             // for the remainder of the target block (0x57929E–0x57931B).
-            CGameSprite* pTargetSprite = static_cast<CGameSprite*>(pTarget);
             BYTE rcDeny;
             do {
                 rcDeny = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_targetId,
                     CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
-            } while (rcDeny == CGameObjectArray::SHARED || rcDeny == CGameObjectArray::DENIED);
+            } while (rcDeny == CGameObjectArray::SHARED);
             if (rcDeny == CGameObjectArray::SUCCESS) {
+                CGameSprite* pTargetSprite = static_cast<CGameSprite*>(pTarget);
                 pTargetSprite->GetAnimation()->CalculateFxRect(rHeight, ptRef, pTargetSprite->m_posZ);
                 g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
                     CGameObjectArray::THREAD_ASYNCH, INFINITE);
@@ -5819,11 +5815,8 @@ void IcewindCProjectileTravellingVFX::Fire(CGameArea* pArea, LONG source, LONG t
     BOOL bSourceCreature = FALSE;
     {
         CGameObject* pSource;
-        BYTE rc;
-        do {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_sourceId,
-                CGameObjectArray::THREAD_ASYNCH, &pSource, INFINITE);
-        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+        BYTE rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_sourceId,
+            CGameObjectArray::THREAD_ASYNCH, &pSource, INFINITE);
         if (rc != CGameObjectArray::SUCCESS) {
             return;
         }
@@ -5841,7 +5834,8 @@ void IcewindCProjectileTravellingVFX::Fire(CGameArea* pArea, LONG source, LONG t
     if (bSourceCreature) {
         int cellDX = ptTarget.x / 16 - ptLaunch.x / 16;   // 16-wide search cells
         int cellDY = ptTarget.y / 12 - ptLaunch.y / 12;   // 12-tall search cells
-        if (cellDX * cellDX + cellDY * cellDY < 3) {
+        if (static_cast<LONG>(static_cast<DWORD>(cellDX) * static_cast<DWORD>(cellDX)
+            + static_cast<DWORD>(cellDY) * static_cast<DWORD>(cellDY)) < 3) {
             ptLaunch = ptSourceCenter;
         }
     }
@@ -5875,21 +5869,22 @@ void IcewindCProjectileTravellingVFX::Fire(CGameArea* pArea, LONG source, LONG t
 
     // Flight distance^2 (y weighted 16/9) -- AIUpdate's arrival metric; drives
     // the distance-based lifetime when armed.
-    int dx = ptTarget.x - ptLaunch.x;
-    int dy = ptTarget.y - ptLaunch.y;
-    m_flightDistSq = dx * dx + (dy * dy * 16) / 9;
+    DWORD dx = static_cast<DWORD>(ptTarget.x) - static_cast<DWORD>(ptLaunch.x);
+    DWORD dy = static_cast<DWORD>(ptTarget.y) - static_cast<DWORD>(ptLaunch.y);
+    m_flightDistSq = static_cast<LONG>(dx * dx
+        + static_cast<DWORD>(static_cast<LONG>(dy * dy * 16) / 9));
     if (m_distLifetime != 0) {
-        m_lifetime = static_cast<SHORT>(
-            static_cast<int>(sqrt(static_cast<double>(m_flightDistSq))) / m_velocity + 1);
+        SHORT distance = static_cast<SHORT>(static_cast<int>(
+            sqrt(static_cast<double>(m_flightDistSq)) + 0.5));
+        m_lifetime = static_cast<SHORT>(distance / m_velocity + 1);
     }
 
     // A point / non-creature target overwrites the metric with the in-flight
     // marker 1 and launches flat; a creature target keeps the real distance and
-    // refines the launch delta-Z from its animation height rect (the bottom
-    // edge minus the reference point's y, halved — 0x57974E–0x579760).
+    // refines delta-Z from the animation rectangle's arithmetic half-height.
     SHORT nDeltaZ;
     if (bTargetCreature) {
-        nDeltaZ = static_cast<SHORT>(nLaunchHeight - (rHeight.bottom - ptRef.y) / 2);
+        nDeltaZ = static_cast<SHORT>(nLaunchHeight - ((rHeight.bottom - rHeight.top) >> 1));
     } else {
         m_flightDistSq = 1;
         nDeltaZ = 0;
@@ -5897,16 +5892,19 @@ void IcewindCProjectileTravellingVFX::Fire(CGameArea* pArea, LONG source, LONG t
     m_nDeltaZ = nDeltaZ;
     m_nDeltaZLast = nDeltaZ;
 
-    // Register (assigns m_id), then add to the area AT THE CAST HEIGHT -- the
-    // difference from the base launch, which adds at ground level (posZ 0).
-    g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE);
-    AddToArea(pArea, ptLaunch, nLaunchHeight, 0);
+    // Registration must succeed before the qualified base area insertion.
+    if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE)
+        != CGameObjectArray::SUCCESS) {
+        delete this;
+        return;
+    }
+    CGameObject::AddToArea(pArea, ptLaunch, nLaunchHeight, 0);
 
-    PlaySound(m_fireSoundRef, FALSE, FALSE);
+    PlaySound(m_fireSoundRef, m_loopFireSound, FALSE);
 
     // Subpixel launch position (1/1024 fixed point), target point, initial facing.
-    m_posAccumX = ptLaunch.x << 10;
-    m_posAccumY = (ptLaunch.y << 12) / 3;
+    m_posAccumX = static_cast<LONG>(static_cast<DWORD>(ptLaunch.x) << 10);
+    m_posAccumY = static_cast<LONG>(static_cast<DWORD>(ptLaunch.y) << 12) / 3;
     m_targetX = ptTarget.x;
     m_targetY = ptTarget.y;
     m_facing = GetDirection(ptTarget);

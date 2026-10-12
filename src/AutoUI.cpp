@@ -113,6 +113,8 @@
 //                                trail creation; restore objects, search and queues.
 //   sparklefamilychecks        exercise explosive/trap/spell-hit trails and timers;
 //                                restore objects, queues, cursor and Time Stop.
+//   projectilelaunchchecks     verify both travelling launches and sparkle expiry;
+//                                restore actors, objects, queues and Time Stop.
 //   sparklewait                require emitted clusters to leave all area lists.
 //   rebounddamage              service a registered bolt beside portrait 1, then
 //                                use projectilewait to require actual payload damage.
@@ -138,6 +140,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <type_traits>
 
 #include "mfc.h"
 
@@ -1387,6 +1390,199 @@ void SparkleFamilyChecks(INT nStep)
     if(!valid) Fail(nStep,"sparklefamilychecks","projectile family mismatch");
 }
 
+template <class T>
+struct ProjectileLaunchFixture : T {
+    BOOL* dead;
+    INT areaCalls = 0, registrations = 0;
+    BOOL registeredBeforeTarget = FALSE;
+    ProjectileLaunchFixture(BOOL* result) : T(CResRef("ARARROW")), dead(result) {
+        this->m_fireSoundRef = "";
+        this->m_bSparkleTrail = FALSE;
+        this->m_targetX = -1111; this->m_targetY = -2222;
+    }
+    ~ProjectileLaunchFixture() override { *dead = TRUE; }
+    void AddToArea(CGameArea*, const CPoint&, LONG, BYTE) override { ++areaCalls; }
+    void SetAIType(const CAIObjectType& type, int flags) override {
+        ++registrations;
+        registeredBeforeTarget = this->m_targetX == -1111 && this->m_targetY == -2222;
+        CGameObject::SetAIType(type, flags);
+    }
+    void Configure(SHORT speed, BYTE armed, SHORT lifetime) {
+        this->m_velocity = speed; this->m_distLifetime = armed; this->m_lifetime = lifetime;
+    }
+    SHORT Lifetime() const { return this->m_lifetime; }
+    SHORT Facing() const { return this->m_facing; }
+    LONG Metric() const { return this->m_flightDistSq; }
+};
+
+void ProjectileLaunchChecks(INT nStep)
+{
+    auto* game = g_pBaldurChitin->GetObjectGame();
+    auto* objects = game->GetObjectArray();
+    LONG actorId = game->GetFixedOrderCharacterId(0);
+    CGameObject* actor = NULL;
+    if (objects->GetDeny(actorId, CGameObjectArray::THREAD_ASYNCH, &actor, INFINITE) != CGameObjectArray::SUCCESS) {
+        Fail(nStep, "projectilelaunchchecks", "requires loaded actor"); return;
+    }
+    CGameArea* area = actor->m_pArea;
+    if (!area || actor->GetObjectType() != CGameObject::TYPE_SPRITE) {
+        objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        Fail(nStep, "projectilelaunchchecks", "requires party sprite area"); return;
+    }
+    INT checks = 0; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"projectilelaunch-case\",\"case\":\"%s\",\"passed\":false}", nStep, name);
+    };
+    CPoint actorPos = actor->m_pos;
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    auto stop = game->m_nTimeStop; auto caster = game->m_nTimeStopCaster;
+    game->m_nTimeStop = 0;
+    INT front = area->m_lVertSortAdd.GetCount(), back = area->m_lVertSortBackAdd.GetCount(), flight = area->m_lVertSortFlightAdd.GetCount();
+    INT messages = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    auto unqueue = [&](LONG id) {
+        POSITION p = area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortAdd.RemoveAt(p);
+        p = area->m_lVertSortBackAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortBackAdd.RemoveAt(p);
+        p = area->m_lVertSortFlightAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortFlightAdd.RemoveAt(p);
+    };
+    auto retire = [&](CGameObject* object) {
+        if (object->m_id != -1) {
+            unqueue(object->m_id); object->RemoveFromArea();
+            objects->Delete(object->m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE);
+        }
+        delete object;
+    };
+    // A registered non-sprite supplies exact origins without facing offsets.
+    CGameObject* source = new CGameObject;
+    source->m_pos = CPoint(0,0);
+    check("exact-origin-source-registered", objects->Add(&source->m_id, source, INFINITE) == CGameObjectArray::SUCCESS);
+    CRect height; CPoint ref;
+    auto* sprite = static_cast<CGameSprite*>(actor);
+    sprite->GetAnimation()->CalculateFxRect(height, ref, sprite->m_posZ);
+    SHORT expectedZ = static_cast<SHORT>(32 - ((height.bottom - height.top) >> 1));
+    struct LaunchCase { LONG x, y; SHORT speed; BYTE armed; LONG metric; SHORT lifetime; };
+    const LaunchCase cases[] = {
+        {29,5,10,1,885,4}, {9,3,10,1,97,2}, {32767,100,10,1,1073694066,3277},
+        {32768,0,10,1,1073741824,-3275}, {32769,0,-10,1,1073807361,3277},
+        {32768,0,-32768,1,1073741824,2}, {65536,3,3,1,16,2},
+        {1,11586,10,0,-238577883,-123}, {50000,0,10,0,-1794967296,-123},
+        {-3,-2,3,1,16,2}, {0,0,1,1,0,1}
+    };
+    auto exercise = [&](auto* type) {
+        using Missile = typename std::remove_pointer<decltype(type)>::type;
+        for (const auto& c : cases) {
+            BOOL dead = FALSE;
+            auto* missile = new Missile(&dead);
+            missile->Configure(c.speed, c.armed, -123);
+            missile->m_bHasHeight = TRUE;
+            actor->m_pos = CPoint(c.x,c.y);
+            CProjectile* dispatch = missile;
+            dispatch->Fire(area, source->m_id, actorId, CPoint(333,444), -99999, 1234);
+            check("live-target-and-signed-distance", !dead && missile->Metric() == c.metric
+                && CPoint(missile->m_targetX,missile->m_targetY) == CPoint(c.x,c.y));
+            check("rounded-narrowed-signed-lifetime", missile->Lifetime() == c.lifetime);
+            check("animation-half-height", missile->m_posZ == 32 && missile->m_nDeltaZ == expectedZ && missile->m_nDeltaZLast == expectedZ);
+            check("qualified-base-registration-order", missile->areaCalls == 0 && missile->registrations == 1 && missile->registeredBeforeTarget
+                && missile->CGameObject::m_pArea == area && missile->m_pArea == area && missile->m_listType == CGameObject::LIST_FRONT
+                && area->m_lVertSortAdd.Find(reinterpret_cast<int*>(missile->m_id)) != NULL);
+            check("fixed-origin-and-facing", missile->m_pos == CPoint(0,0) && missile->m_posAccumX == 0 && missile->m_posAccumY == 0
+                && missile->Facing() == missile->GetDirection(CPoint(c.x,c.y)));
+            retire(missile); check("owned-retirement", dead);
+        }
+        actor->m_pos = CPoint(128,96);
+        for (BOOL hasHeight : {FALSE, TRUE}) {
+            CPoint start; CProjectile::GetStart(actorId, start, TRUE);
+            for (BOOL nearby : {FALSE, TRUE}) {
+                BOOL dead = FALSE; auto* missile = new Missile(&dead);
+                missile->Configure(10,0,-123); missile->m_bHasHeight = static_cast<BOOLEAN>(hasHeight);
+                CPoint target = nearby ? start : CPoint(500,300);
+                CProjectile* dispatch = missile;
+                dispatch->Fire(area, actorId, -1, target, -99999, 1234);
+                check("sprite-origin-close-snap", missile->m_pos == (nearby ? actor->m_pos : start));
+                check("sprite-cast-height-ignores-argument", missile->m_posZ == (hasHeight ? sprite->GetAnimation()->GetCastHeight() : 0)
+                    && missile->m_nDeltaZ == 0 && missile->m_nDeltaZLast == 0 && missile->Metric() == 1 && missile->Lifetime() == -123);
+                retire(missile);
+            }
+        }
+        for (CPoint origin : {CPoint(-7,-2), CPoint(0x7FFFFFFF,0x7FFFFFFF), CPoint(0,0)}) {
+            BOOL dead = FALSE; auto* missile = new Missile(&dead);
+            source->m_pos = origin; missile->Configure(10,0,7); missile->m_bHasHeight = FALSE;
+            CProjectile* dispatch = missile;
+            dispatch->Fire(area, source->m_id, -1, CPoint(500,300), 8888, -1);
+            CPoint exact = origin == CPoint(-7,-2) ? CPoint(-7168,-2730)
+                : origin == CPoint(0x7FFFFFFF,0x7FFFFFFF) ? CPoint(-1024,-1365) : CPoint(0,0);
+            check("wrapped-fixedpoint-negative-origin", missile->m_pos == origin && missile->m_posAccumX == exact.x
+                && missile->m_posAccumY == exact.y && missile->m_posZ == 0 && missile->Lifetime() == 7);
+            retire(missile);
+        }
+        source->m_pos = CPoint(0,0);
+        for (BOOL missingTarget : {FALSE, TRUE}) {
+            BOOL dead = FALSE; auto* missile = new Missile(&dead);
+            missile->Configure(10,1,55);
+            CProjectile* dispatch = missile;
+            dispatch->Fire(area, missingTarget ? source->m_id : -2, missingTarget ? -2 : -1, CPoint(200,300), 0,0);
+            check("missing-source-or-target-leaves-unregistered", !dead && missile->m_id == -1 && missile->registrations == 0
+                && missile->areaCalls == 0 && missile->Lifetime() == 55 && missile->m_targetX == -1111);
+            retire(missile);
+        }
+        // Force Add's existing NO_MEMORY branch, then restore before any tick.
+        BOOL dead = FALSE; auto* missile = new Missile(&dead);
+        missile->Configure(10,0,55);
+        SHORT nextId = objects->m_nNextObjectId;
+        objects->m_nNextObjectId = 0x7FFF;
+        CProjectile* dispatch = missile;
+        dispatch->Fire(area, source->m_id, -1, CPoint(200,300), 0,0);
+        objects->m_nNextObjectId = nextId;
+        check("registration-failure-deletes-before-area", dead && area->m_lVertSortAdd.GetCount() == front);
+        // A nonempty resource arms the native looping branch even if not found.
+        dead = FALSE; missile = new Missile(&dead); missile->Configure(10,0,55);
+        missile->m_fireSoundRef = "ZRCNONE"; missile->m_loopFireSound = TRUE;
+        dispatch = missile; dispatch->Fire(area, source->m_id, -1, CPoint(200,300), 0,0);
+        check("launch-sound-loop-and-channel", missile->m_sound.GetLooping() && missile->m_sound.m_nChannel == 15
+            && missile->m_sound.m_nArea == reinterpret_cast<DWORD>(area));
+        retire(missile);
+    };
+    exercise(static_cast<ProjectileLaunchFixture<CProjectileTravelling>*>(NULL));
+    exercise(static_cast<ProjectileLaunchFixture<IcewindCProjectileTravellingVFX>*>(NULL));
+    // Original factory-2F evidence: arrival guards precede the zero timer.
+    struct Sparkle : CProjectileSparkle {
+        INT arrivals = 0, removals = 0;
+        Sparkle() : CProjectileSparkle(0) { m_fireSoundRef = ""; }
+        void OnArrival() override { ++arrivals; }
+        void RemoveSelf() override { ++removals; }
+        SHORT Lifetime() const { return m_lifetime; }
+        BYTE Armed() const { return m_distLifetime; }
+    };
+    for (BOOL nearby : {FALSE, TRUE}) {
+        auto* missile = new Sparkle;
+        check("sparkle-native-zero-default", missile->Lifetime() == 0 && missile->Armed() == 0);
+        CProjectile* dispatch = missile;
+        dispatch->Fire(area, source->m_id, -1, nearby ? CPoint(0,0) : CPoint(300,0), 0,0);
+        check("sparkle-fire-retains-zero", missile->Lifetime() == 0 && missile->Armed() == 0);
+        dispatch->AIUpdate();
+        check("sparkle-arrival-before-expiry", nearby ? missile->arrivals == 1 && missile->removals == 0 && missile->Lifetime() == 0
+            : missile->arrivals == 0 && missile->removals == 1 && missile->Lifetime() == -1);
+        retire(missile);
+    }
+    // Exercise full-width direction scaling separately from area insertion.
+    CProjectile direction;
+    direction.m_pos = CPoint(0,0);
+    check("direction-positive-wrap", direction.GetDirection(CPoint(0,0x7FFFFFFF)) == direction.GetDirection(CPoint(0,-1)));
+    direction.m_pos = CPoint(0,0x7FFFFFFF);
+    check("direction-source-wrap", direction.GetDirection(CPoint(0,0)) == 0);
+    retire(source);
+    actor->m_pos = actorPos; game->m_nTimeStop = stop; game->m_nTimeStopCaster = caster;
+    objects->ReleaseDeny(actorId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    check("same-tick-restoration", actor->m_pos == actorPos && game->GetWorldTimer()->m_gameTime == clock
+        && game->m_nTimeStop == stop && game->m_nTimeStopCaster == caster
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount() == messages
+        && area->m_lVertSortAdd.GetCount() == front && area->m_lVertSortBackAdd.GetCount() == back
+        && area->m_lVertSortFlightAdd.GetCount() == flight
+        && objects->m_pArray[(actorId >> 16) & 0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH] == 0);
+    Emit("{\"step\":%d,\"op\":\"projectilelaunchchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}",nStep,checks,valid?"true":"false");
+    if (!valid) Fail(nStep,"projectilelaunchchecks","travelling launch mismatch");
+}
+
 void ReboundChecks(INT nStep)
 {
     CInfGame* game = g_pBaldurChitin->GetObjectGame();
@@ -2137,6 +2333,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "sparklefamilychecks") == 0) {
         SparkleFamilyChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "projectilelaunchchecks") == 0) {
+        ProjectileLaunchChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
