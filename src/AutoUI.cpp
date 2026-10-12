@@ -114,6 +114,8 @@
 //   sparklefamilychecks        exercise explosive/trap/spell-hit trails and timers;
 //                                restore objects, queues, cursor and Time Stop.
 //   projectilelaunchchecks     verify both travelling launches and sparkle expiry;
+//   projectileaimchecks        replay canonical native motion and RNG states;
+//   projectiletickchecks       verify both travelling AI ticks and homing;
 //                                restore actors, objects, queues and Time Stop.
 //   sparklewait                require emitted clusters to leave all area lists.
 //   rebounddamage              service a registered bolt beside portrait 1, then
@@ -1583,6 +1585,266 @@ void ProjectileLaunchChecks(INT nStep)
     if (!valid) Fail(nStep,"projectilelaunchchecks","travelling launch mismatch");
 }
 
+// Expected states captured from both canonical native integrators.
+#include "ProjectileAimGolden.h"
+
+template <class T>
+struct ProjectileAimFixture : T {
+    ProjectileAimFixture() : T(CResRef("ARARROW")) {}
+    void Seed(const ProjectileAimInput& c) {
+        this->m_pos = CPoint(c.state[0],c.state[1]);
+        this->m_posAccumX=c.state[2]; this->m_posAccumY=c.state[3];
+        this->m_driftX=c.state[4]; this->m_driftY=c.state[5];
+        this->m_jitterMinX=c.state[6]; this->m_jitterMinY=c.state[7];
+        this->m_jitterMaxX=c.state[8]; this->m_jitterMaxY=c.state[9];
+        this->m_targetX=c.state[10]; this->m_targetY=c.state[11];
+        this->m_velocity=c.speed; this->m_driftDecay=c.decay;
+        this->m_hasDrift=c.flag; this->m_nTargetId=-1;
+        this->m_posZ=-98765; this->m_lifetime=123;
+    }
+    CPoint Step() const { return CPoint(this->m_stepX,this->m_stepY); }
+    CPoint Drift() const { return CPoint(this->m_driftX,this->m_driftY); }
+    SHORT Facing() const { return this->m_facing; }
+    BOOL Unchanged(const ProjectileAimInput& c) const {
+        return this->m_velocity==c.speed && this->m_driftDecay==c.decay
+            && this->m_hasDrift==c.flag && this->m_lifetime==123 && this->m_posZ==-98765
+            && this->m_jitterMinX==c.state[6] && this->m_jitterMinY==c.state[7]
+            && this->m_jitterMaxX==c.state[8] && this->m_jitterMaxY==c.state[9];
+    }
+};
+
+void ProjectileAimChecks(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* objects=game->GetObjectArray();
+    INT checks=0; BOOL valid=TRUE;
+    INT input=-1, tick=-1, family=0;
+    auto check=[&](const char* name,BOOL ok) {
+        ++checks; valid=valid && ok;
+        if(!ok) Emit("{\"step\":%d,\"op\":\"projectileaim-case\",\"case\":\"%s\",\"input\":%d,\"tick\":%d,\"family\":%d,\"passed\":false}",nStep,name,input,tick,family);
+    };
+    ULONG clock=game->GetWorldTimer()->m_gameTime;
+    INT messages=g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    auto exercise=[&](auto* type) {
+        using Missile=typename std::remove_pointer<decltype(type)>::type;
+        ++family;
+        auto* p=new Missile; CProjectileTravelling* dispatch=p;
+        for(const auto& expected:PROJECTILE_AIM_OUTPUTS) {
+            input=expected.input; tick=expected.tick;
+            const auto& c=PROJECTILE_AIM_INPUTS[expected.input];
+            if(expected.tick==0) { p->Seed(c); srand(c.seed); }
+            dispatch->AimAtPoint(c.x,c.y);
+            const LONG* s=expected.state;
+            check("native-cell-position",p->m_pos==CPoint(s[0],s[1]));
+            check("native-fixed-accumulators",p->m_posAccumX==s[2] && p->m_posAccumY==s[3]);
+            check("native-signed-velocity-step",p->Step()==CPoint(s[4],s[5]));
+            check("native-drift-decay",p->Drift()==CPoint(s[6],s[7]));
+            check("native-target-retention",p->m_targetX==s[8] && p->m_targetY==s[9]);
+            check("native-facing",p->Facing()==expected.facing);
+            check("unmodified-motion-settings",p->Unchanged(c));
+            if(expected.nextRandom!=-1) check("native-random-consumption",rand()==expected.nextRandom);
+        }
+        // Cover the attached-object branch with the loaded engine's real array.
+        auto* attached=new CVisualEffect;
+        attached->m_pos=CPoint(77,88); attached->m_posZ=12345;
+        check("attached-controller-registered",objects->Add(&attached->m_id,attached,INFINITE)==CGameObjectArray::SUCCESS);
+        LONG attachedId=attached->m_id;
+        auto c=PROJECTILE_AIM_INPUTS[0]; c.x=100; c.y=0; c.speed=10;
+        p->Seed(c); p->m_nTargetId=attachedId; dispatch->AimAtPoint(c.x,c.y);
+        check("attached-height-only",attached->m_posZ==-98765 && attached->m_pos==CPoint(77,88));
+        check("attached-deny-balanced",objects->m_pArray[(attachedId>>16)&0x7FFF]
+            .m_denyCounts[CGameObjectArray::THREAD_ASYNCH]==0);
+        check("attached-controller-deleted",objects->Delete(attachedId,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE)==CGameObjectArray::SUCCESS);
+        delete attached;
+        for(LONG id:{LONG(-1),LONG(-2),attachedId}) {
+            p->Seed(c); p->m_nTargetId=id; dispatch->AimAtPoint(c.x,c.y);
+            check("missing-attachment-keeps-flight",p->m_pos==CPoint(10,0) && p->Step()==CPoint(10240,0)
+                && p->m_targetX==100 && p->m_posZ==-98765 && p->m_nTargetId==id);
+        }
+        delete p;
+    };
+    exercise(static_cast<ProjectileAimFixture<CProjectileTravelling>*>(NULL));
+    exercise(static_cast<ProjectileAimFixture<IcewindCProjectileTravellingVFX>*>(NULL));
+    srand(1);
+    check("same-tick-restoration",game->GetWorldTimer()->m_gameTime==clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount()==messages);
+    Emit("{\"step\":%d,\"op\":\"projectileaimchecks\",\"checks\":%d,\"nativeStatesPerFamily\":%d,\"restored\":true,\"valid\":%s}",
+        nStep,checks,static_cast<INT>(sizeof(PROJECTILE_AIM_OUTPUTS)/sizeof(PROJECTILE_AIM_OUTPUTS[0])),valid?"true":"false");
+    if(!valid) Fail(nStep,"projectileaimchecks","travelling numeric/native state mismatch");
+}
+
+template <class T>
+struct ProjectileTickFixture : T {
+    CVidCell* savedCell;
+    VefCellFixture cell;
+    INT aims=0, arrivals=0, removals=0;
+    CPoint aimed;
+    LONG aimHeight=0;
+    ProjectileTickFixture() : T(CResRef("ARARROW")), savedCell(this->m_pVidCell) {
+        this->m_pVidCell=&cell;
+    }
+    ~ProjectileTickFixture() override { this->m_pVidCell=savedCell; }
+    void OnArrival() override { ++arrivals; }
+    void RemoveSelf() override { ++removals; }
+    void AimAtPoint(int x,int y) override {
+        ++aims; aimed=CPoint(x,y); aimHeight=this->m_posZ;
+        T::AimAtPoint(x,y);
+    }
+    void Seed(CGameArea* area) {
+        aims=arrivals=removals=cell.advances=0;
+        this->m_pArea=area; this->CGameObject::m_pArea=area;
+        this->m_pos=CPoint(40,36); this->m_posZ=25;
+        this->m_posAccumX=40960; this->m_posAccumY=49152;
+        this->m_targetX=400; this->m_targetY=36;
+        this->m_velocity=1; this->m_flightDistSq=129600;
+        this->m_targetId=this->m_nTargetId=-1; this->m_lifetime=100;
+        this->m_hasDrift=this->m_driftX=this->m_driftY=0;
+        this->m_jitterMinX=this->m_jitterMinY=this->m_jitterMaxX=this->m_jitterMaxY=0;
+        this->m_nDeltaZ=this->m_nDeltaZLast=-20;
+        this->m_bSparkleTrail=FALSE; this->m_sparkleColor=2;
+        this->m_sound.m_nXCoordinate=111; this->m_sound.m_nYCoordinate=222;
+        this->m_sound.m_nZCoordinate=333;
+    }
+    void Position(CPoint pos,CPoint target,SHORT velocity=1) {
+        this->m_pos=pos; this->m_targetX=target.x; this->m_targetY=target.y; this->m_velocity=velocity;
+    }
+    void Lifetime(SHORT life) { this->m_lifetime=life; }
+    SHORT Lifetime() const { return this->m_lifetime; }
+    void Metric(LONG metric) { this->m_flightDistSq=metric; }
+    void Drift(INT enabled) { this->m_hasDrift=enabled; }
+};
+
+void ProjectileTickChecks(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* objects=game->GetObjectArray();
+    LONG actorId=game->GetFixedOrderCharacterId(0);
+    CGameObject* actor=NULL;
+    if(objects->GetDeny(actorId,CGameObjectArray::THREAD_ASYNCH,&actor,INFINITE)!=CGameObjectArray::SUCCESS) {
+        Fail(nStep,"projectiletickchecks","requires loaded party actor"); return;
+    }
+    CGameArea* area=actor->m_pArea;
+    if(!area || actor->GetObjectType()!=CGameObject::TYPE_SPRITE) {
+        objects->ReleaseDeny(actorId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+        Fail(nStep,"projectiletickchecks","requires party sprite area"); return;
+    }
+    INT checks=0; BOOL valid=TRUE;
+    auto check=[&](const char* name,BOOL ok) {
+        ++checks; valid=valid && ok;
+        if(!ok) Emit("{\"step\":%d,\"op\":\"projectiletick-case\",\"case\":\"%s\",\"passed\":false}",nStep,name);
+    };
+    CPoint actorPos=actor->m_pos;
+    ULONG clock=game->GetWorldTimer()->m_gameTime;
+    auto stop=game->m_nTimeStop; auto caster=game->m_nTimeStopCaster;
+    game->m_nTimeStop=0;
+    INT messages=g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    INT front=area->m_lVertSortAdd.GetCount(), back=area->m_lVertSortBackAdd.GetCount();
+    INT flight=area->m_lVertSortFlightAdd.GetCount(), sorted=area->m_lVertSort.GetCount();
+    auto retire=[&](CGameObject* p) {
+        LONG id=p->m_id;
+        POSITION at=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id)); if(at) area->m_lVertSortAdd.RemoveAt(at);
+        at=area->m_lVertSortBackAdd.Find(reinterpret_cast<int*>(id)); if(at) area->m_lVertSortBackAdd.RemoveAt(at);
+        at=area->m_lVertSortFlightAdd.Find(reinterpret_cast<int*>(id)); if(at) area->m_lVertSortFlightAdd.RemoveAt(at);
+        p->RemoveFromArea(); objects->Delete(id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE); delete p;
+    };
+    struct Target : CGameObject {
+        CPoint live=CPoint(180,60);
+        INT reads=0;
+        CPoint& GetPos() override { ++reads; return live; }
+    };
+    auto* target=new Target;
+    target->m_pos=CPoint(200,80); target->m_pArea=area;
+    check("live-target-registered",objects->Add(&target->m_id,target,INFINITE)==CGameObjectArray::SUCCESS);
+    auto exercise=[&](auto* type) {
+        using Missile=typename std::remove_pointer<decltype(type)>::type;
+        auto* p=new Missile;
+        check("flight-fixture-registered",objects->Add(&p->m_id,p,INFINITE)==CGameObjectArray::SUCCESS);
+        CProjectile* dispatch=p;
+        p->Seed(area); dispatch->AIUpdate();
+        check("point-frame-motion-countdown",p->cell.advances==1 && p->aims==1 && !p->arrivals && !p->removals
+            && p->Lifetime()==99 && p->m_pos==CPoint(41,36) && p->aimed==CPoint(400,36));
+        check("sound-follows-final-position",p->m_sound.m_nXCoordinate==41 && p->m_sound.m_nYCoordinate==36 && p->m_sound.m_nZCoordinate==25);
+        p->Seed(area); game->m_nTimeStop=1; game->m_nTimeStopCaster=-1; dispatch->AIUpdate();
+        check("time-stop-freezes-all",p->cell.advances==0 && p->aims==0 && p->Lifetime()==100 && p->m_sound.m_nXCoordinate==111);
+        game->m_nTimeStopCaster=p->m_id; dispatch->AIUpdate();
+        check("time-stop-own-object-exemption",p->cell.advances==1 && p->aims==1 && p->Lifetime()==99);
+        game->m_nTimeStop=0;
+        struct Arrival { CPoint pos,target; SHORT speed; LONG metric; };
+        const Arrival arrivals[]={
+            {CPoint(40,36),CPoint(47,40),1,129600},
+            {CPoint(-1,-1),CPoint(-15,-11),1,129600},
+            {CPoint(47,36),CPoint(49,36),1,129600},
+            {CPoint(40,36),CPoint(400,36),1,0},
+            {CPoint(40,36),CPoint(65576,36),1,129600},
+            {CPoint(40,36),CPoint(41,11622),1,129600}
+        };
+        for(const auto& c:arrivals) {
+            p->Seed(area); p->Position(c.pos,c.target,c.speed); p->Metric(c.metric); p->Lifetime(0);
+            dispatch->AIUpdate();
+            check("arrival-before-zero-timer",p->cell.advances==1 && p->arrivals==1 && p->removals==0
+                && p->aims==0 && p->Lifetime()==0 && p->m_sound.m_nXCoordinate==111);
+        }
+        p->Seed(area); p->Position(CPoint(47,36),CPoint(50,36)); dispatch->AIUpdate();
+        check("outside-inclusive-radius-flies",p->arrivals==0 && p->aims==1 && p->Lifetime()==99);
+        for(SHORT lifetime:{SHORT(0),SHORT(1),SHORT(-1),SHORT(-32768)}) {
+            p->Seed(area); p->Lifetime(lifetime); dispatch->AIUpdate();
+            SHORT expected=lifetime==0?-1:lifetime==1?0:lifetime==-1?-2:32767;
+            check("native-short-timer-wrap",p->Lifetime()==expected && p->removals==(lifetime==0)
+                && p->aims==(lifetime!=0) && p->cell.advances==1);
+            check("expiry-before-sound",lifetime!=0 || p->m_sound.m_nXCoordinate==111);
+        }
+        p->Seed(area); p->m_targetId=-2; dispatch->AIUpdate();
+        check("missing-live-target-retires",p->removals==1 && p->aims==0 && p->Lifetime()==99 && p->m_sound.m_nXCoordinate==111);
+        p->Seed(area); p->m_targetId=target->m_id; target->m_pArea=NULL; dispatch->AIUpdate();
+        check("other-area-live-target-retires",p->removals==1 && p->aims==0 && p->Lifetime()==99);
+        target->m_pArea=area; target->reads=0;
+        p->Seed(area); p->m_targetId=target->m_id; p->Metric(10000); dispatch->AIUpdate();
+        check("live-virtual-pos-and-stored-distance-height",p->aimed==CPoint(180,60) && target->reads==1
+            && p->aimHeight==-214 && p->m_nDeltaZLast==-259 && p->aims==1 && p->removals==0);
+        p->Seed(area); p->m_targetId=target->m_id; p->m_nDeltaZ=32767; dispatch->AIUpdate();
+        check("height-product-wrap-before-division",p->aimHeight==-328 && p->m_nDeltaZLast==-373);
+        p->Seed(area); p->m_targetId=target->m_id; p->m_nDeltaZ=0; p->m_nDeltaZLast=-32768;
+        p->m_posZ=0x7FFFFFFF; dispatch->AIUpdate();
+        check("height-addition-wrap",p->aimHeight==-2147450881 && p->m_nDeltaZLast==0);
+        p->Seed(area); p->m_targetId=target->m_id; p->Drift(1); dispatch->AIUpdate();
+        check("non-sprite-drift-preserves-height",p->aimHeight==25 && p->m_nDeltaZLast==-20 && p->aims==1);
+        actor->m_pos=CPoint(400,36);
+        for(SHORT delta:{SHORT(-1),SHORT(1)}) {
+            p->Seed(area); p->m_targetId=actorId; p->Drift(1); p->m_nDeltaZ=delta;
+            dispatch->AIUpdate();
+            check("sprite-drift-native-restores-old-height",p->aimHeight==25 && p->m_posZ==25
+                && p->aimed==CPoint(400,36) && p->m_nDeltaZLast==-20);
+        }
+        p->Seed(area); p->m_bSparkleTrail=TRUE; dispatch->AIUpdate();
+        check("trail-spawn-after-real-motion",area->m_lVertSortAdd.GetCount()==front+1 && p->m_pos==CPoint(41,36));
+        POSITION at=area->m_lVertSortAdd.FindIndex(front);
+        if(at) {
+            LONG id=reinterpret_cast<LONG>(area->m_lVertSortAdd.GetAt(at));
+            CGameObject* object=NULL;
+            BYTE rc=objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE);
+            auto* trail=rc==CGameObjectArray::SUCCESS?dynamic_cast<CSparkleCluster*>(object):NULL;
+            check("trail-real-cluster-at-final-height",trail && trail->m_pos==p->m_pos && trail->m_posZ==p->m_posZ
+                && trail->m_particleList.GetCount()==14);
+            if(rc==CGameObjectArray::SUCCESS) {
+                objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE); retire(object);
+            }
+        } else check("trail-real-cluster-at-final-height",FALSE);
+        check("live-target-locks-balanced",objects->m_pArray[(target->m_id>>16)&0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH]==0);
+        retire(p);
+    };
+    exercise(static_cast<ProjectileTickFixture<CProjectileTravelling>*>(NULL));
+    exercise(static_cast<ProjectileTickFixture<IcewindCProjectileTravellingVFX>*>(NULL));
+    target->m_pArea=NULL; retire(target);
+    actor->m_pos=actorPos; game->m_nTimeStop=stop; game->m_nTimeStopCaster=caster;
+    objects->ReleaseDeny(actorId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    check("same-tick-restoration",actor->m_pos==actorPos && game->GetWorldTimer()->m_gameTime==clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount()==messages
+        && area->m_lVertSortAdd.GetCount()==front && area->m_lVertSortBackAdd.GetCount()==back
+        && area->m_lVertSortFlightAdd.GetCount()==flight && area->m_lVertSort.GetCount()==sorted
+        && objects->m_pArray[(actorId>>16)&0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH]==0);
+    srand(1);
+    Emit("{\"step\":%d,\"op\":\"projectiletickchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}",nStep,checks,valid?"true":"false");
+    if(!valid) Fail(nStep,"projectiletickchecks","travelling flight tick mismatch");
+}
+
 void ReboundChecks(INT nStep)
 {
     CInfGame* game = g_pBaldurChitin->GetObjectGame();
@@ -2336,6 +2598,12 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "projectilelaunchchecks") == 0) {
         ProjectileLaunchChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "projectiletickchecks") == 0) {
+        ProjectileTickChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "projectileaimchecks") == 0) {
+        ProjectileAimChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

@@ -3691,15 +3691,16 @@ void CProjectileTravelling::AIUpdate()
 
     // Arrival: target and position share the same 16-unit x and 12-unit y cell.
     int posX = m_pos.x;
-    if (((m_targetX + ((m_targetX >> 31) & 0xF)) >> 4) == ((posX + ((posX >> 31) & 0xF)) >> 4)
+    if (m_targetX / 16 == posX / 16
         && m_targetY / 12 == m_pos.y / 12) {
         OnArrival();
         return;
     }
 
     // Arrival within the per-tick travel radius (velocity + 1); y weighted 16/9.
-    int dy = m_targetY - m_pos.y;
-    int dist = (dy * dy * 16) / 9 + (m_targetX - posX) * (m_targetX - posX);
+    DWORD dy = static_cast<DWORD>(m_targetY) - static_cast<DWORD>(m_pos.y);
+    DWORD dx = static_cast<DWORD>(m_targetX) - static_cast<DWORD>(posX);
+    LONG dist = static_cast<LONG>(static_cast<DWORD>(static_cast<LONG>(dy * dy * 16) / 9) + dx * dx);
     int radius = m_velocity + 1;
     if (dist <= radius * radius) {
         OnArrival();
@@ -3712,7 +3713,7 @@ void CProjectileTravelling::AIUpdate()
 
     // Lifetime countdown.
     SHORT life = m_lifetime;
-    m_lifetime = life - 1;
+    m_lifetime = static_cast<SHORT>(life - 1);
     if (life == 0) {
         RemoveSelf();
         return;
@@ -3733,7 +3734,7 @@ void CProjectileTravelling::AIUpdate()
         }
 
         // Save the target id before RemoveSelf can delete this (0x52BAC8).
-        if (m_pArea != pTarget->GetArea()) {
+        if (m_pArea != pTarget->m_pArea) {
             LONG targetId = m_targetId;
             RemoveSelf();
             g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(targetId,
@@ -3749,26 +3750,27 @@ void CProjectileTravelling::AIUpdate()
         // With drift, the binary queries height but restores the old m_posZ.
         if (m_hasDrift == 0) {
             SHORT stepDeltaZ = static_cast<SHORT>(
-                (static_cast<int>(m_nDeltaZ) * dist) / m_flightDistSq);
-            m_posZ += static_cast<int>(stepDeltaZ - m_nDeltaZLast);
+                static_cast<LONG>(static_cast<DWORD>(m_nDeltaZ) * static_cast<DWORD>(dist)) / m_flightDistSq);
+            m_posZ = static_cast<LONG>(static_cast<DWORD>(m_posZ)
+                + static_cast<DWORD>(static_cast<int>(stepDeltaZ) - m_nDeltaZLast));
             m_nDeltaZLast = stepDeltaZ;
         } else if (pTarget->GetObjectType() == CGameObject::TYPE_SPRITE) {
-            CGameSprite* pTargetSprite = static_cast<CGameSprite*>(pTarget);
             BYTE rcDeny;
             do {
                 rcDeny = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_targetId,
                     CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
             } while (rcDeny == CGameObjectArray::SHARED);
             if (rcDeny == CGameObjectArray::SUCCESS) {
+                CGameSprite* pTargetSprite = static_cast<CGameSprite*>(pTarget);
                 CRect rHeight;
                 CPoint ptRef;
                 pTargetSprite->GetAnimation()->CalculateFxRect(rHeight, ptRef, pTargetSprite->m_posZ);
                 g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
                     CGameObjectArray::THREAD_ASYNCH, INFINITE);
-                LONG targetHeight = (rHeight.bottom - ptRef.y) >> 1;
+                LONG targetHeight = static_cast<LONG>(static_cast<DWORD>(rHeight.bottom) - static_cast<DWORD>(rHeight.top)) >> 1;
                 if (m_posZ != targetHeight) {
                     LONG oldHeight = m_posZ;
-                    m_posZ += (m_nDeltaZ < 0) ? 1 : -1;
+                    m_posZ = static_cast<LONG>(static_cast<DWORD>(m_posZ) + ((m_nDeltaZ < 0) ? 1u : 0xFFFFFFFFu));
                     // The original restores EAX at 0x52BC2A after either step.
                     m_posZ = oldHeight;
                 }
@@ -3988,42 +3990,47 @@ void CProjectileTravelling::AimAtPoint(int x, int y)
     // Facing toward the target; both points y-scaled 4/3 (undo the iso squash).
     CPoint ptStart;
     ptStart.x = m_pos.x;
-    ptStart.y = (m_pos.y * 4) / 3;
+    ptStart.y = static_cast<LONG>(static_cast<DWORD>(m_pos.y) * 4) / 3;
     CPoint ptTarget;
     ptTarget.x = x;
-    ptTarget.y = (y * 4) / 3;
+    ptTarget.y = static_cast<LONG>(static_cast<DWORD>(y) * 4) / 3;
     m_facing = static_cast<SHORT>(CGameSprite::GetDirection(ptStart, ptTarget));
 
     // Velocity-scaled unit step (1/1024 fixed point).
-    int dx = x - m_pos.x;
-    int dyScaled = ptTarget.y - ptStart.y;
-    int dist = static_cast<int>(
-        sqrt(static_cast<double>(dx * dx + dyScaled * dyScaled)) + 0.5);
+    int dx = static_cast<LONG>(static_cast<DWORD>(x) - static_cast<DWORD>(m_pos.x));
+    int dyScaled = static_cast<LONG>(static_cast<DWORD>(ptTarget.y) - static_cast<DWORD>(ptStart.y));
+    // __ftol converts to a QWORD; the caller uses its low DWORD, including
+    // the zero low half of x87's integer-indefinite result after a NaN.
+    int dist = static_cast<int>(static_cast<LONGLONG>(
+        sqrt(static_cast<double>(static_cast<LONG>(static_cast<DWORD>(dx) * static_cast<DWORD>(dx)
+            + static_cast<DWORD>(dyScaled) * static_cast<DWORD>(dyScaled)))) + 0.5));
     if (dist == 0) {
         m_stepX = 1;
         m_stepY = 1;
     } else {
-        m_stepX = ((dx << 10) * m_velocity) / dist;
-        m_stepY = ((dyScaled << 10) * m_velocity) / dist;
+        m_stepX = static_cast<LONG>((static_cast<DWORD>(dx) << 10) * static_cast<DWORD>(m_velocity)) / dist;
+        m_stepY = static_cast<LONG>((static_cast<DWORD>(dyScaled) << 10) * static_cast<DWORD>(m_velocity)) / dist;
         m_targetX = x;
         m_targetY = y;
 
         // Fold in the per-tick carry, then a random spread within the band.
-        m_stepX += m_driftX;
-        m_stepY += m_driftY;
-        int spreadX = m_jitterMaxX - m_jitterMinX;
+        m_stepX = static_cast<LONG>(static_cast<DWORD>(m_stepX) + static_cast<DWORD>(m_driftX));
+        m_stepY = static_cast<LONG>(static_cast<DWORD>(m_stepY) + static_cast<DWORD>(m_driftY));
+        int spreadX = static_cast<LONG>(static_cast<DWORD>(m_jitterMaxX) - static_cast<DWORD>(m_jitterMinX));
+        int spreadY = static_cast<LONG>(static_cast<DWORD>(m_jitterMaxY) - static_cast<DWORD>(m_jitterMinY));
         if (spreadX > 0) {
-            m_stepX += m_jitterMinX + rand() % spreadX;
+            m_stepX = static_cast<LONG>(static_cast<DWORD>(m_stepX)
+                + static_cast<DWORD>(m_jitterMinX) + static_cast<DWORD>(rand() % spreadX));
         }
-        int spreadY = m_jitterMaxY - m_jitterMinY;
         if (spreadY > 0) {
-            m_stepY += m_jitterMinY + rand() % spreadY;
+            m_stepY = static_cast<LONG>(static_cast<DWORD>(m_stepY)
+                + static_cast<DWORD>(m_jitterMinY) + static_cast<DWORD>(rand() % spreadY));
         }
     }
 
     // Advance the subpixel position by the step.
-    m_posAccumX += m_stepX;
-    m_posAccumY += m_stepY;
+    m_posAccumX = static_cast<LONG>(static_cast<DWORD>(m_posAccumX) + static_cast<DWORD>(m_stepX));
+    m_posAccumY = static_cast<LONG>(static_cast<DWORD>(m_posAccumY) + static_cast<DWORD>(m_stepY));
 
     // Bleed each carry down by one modulus per tick (zero once exhausted).
     if (m_driftX < 0) {
@@ -4040,7 +4047,7 @@ void CProjectileTravelling::AimAtPoint(int x, int y)
     // Decode the subpixel position back to the cell position (undo the 1/1024
     // fixed point and, for y, the 4/3 iso scale).
     m_pos.x = m_posAccumX >> 10;
-    m_pos.y = ((m_posAccumY * 3) / 4) >> 10;
+    m_pos.y = (static_cast<LONG>(static_cast<DWORD>(m_posAccumY) * 3) / 4) >> 10;
 
     // Keep the attached object (m_nTargetId) at the projectile's height.
     if (m_nTargetId != CGameObjectArray::INVALID_INDEX) {
@@ -5742,21 +5749,124 @@ IcewindCProjectileTravellingVFX::IcewindCProjectileTravellingVFX(const CResRef& 
 }
 
 // 0x578AB0 (vtable slot 3)
-// The family's flight tick is a verbatim copy of CProjectileTravelling::
-// AIUpdate (0x52B900): cell frame advance, 16x12-cell then radius
-// (velocity+1, y weighted 16/9) arrival tests into the OnArrival virtual,
-// lifetime countdown into RemoveSelf, AimAtPoint homing (point target when
-// m_targetId is INVALID_INDEX), trailing sub-projectile, sound follow.
-// Delegating shares that recovered body and its documented partial stubs
-// (pause-gate, live-target height interpolation, trailing factory).
 void IcewindCProjectileTravellingVFX::AIUpdate()
 {
-    CProjectileTravelling::AIUpdate();
+    // Time Stop gate (0x578ABE–0x578AEB): during Time Stop, only the
+    // caster's own projectiles continue to tick.  The check reads
+    // CInfGame::m_nTimeStop and m_nTimeStopCaster at +0x4B40/+0x4B44.
+    CInfGame* pGame = g_pBaldurChitin->m_pObjectGame;
+    if (pGame->m_nTimeStop != 0 && pGame->m_nTimeStopCaster != m_id) {
+        return;
+    }
+
+    m_pVidCell->FrameAdvance();
+
+    // Arrival: target and position share the same 16-unit x and 12-unit y cell.
+    int posX = m_pos.x;
+    if (m_targetX / 16 == posX / 16
+        && m_targetY / 12 == m_pos.y / 12) {
+        OnArrival();
+        return;
+    }
+
+    // Arrival within the per-tick travel radius (velocity + 1); y weighted 16/9.
+    DWORD dy = static_cast<DWORD>(m_targetY) - static_cast<DWORD>(m_pos.y);
+    DWORD dx = static_cast<DWORD>(m_targetX) - static_cast<DWORD>(posX);
+    LONG dist = static_cast<LONG>(static_cast<DWORD>(static_cast<LONG>(dy * dy * 16) / 9) + dx * dx);
+    int radius = m_velocity + 1;
+    if (dist <= radius * radius) {
+        OnArrival();
+        return;
+    }
+    if (m_flightDistSq == 0) {
+        OnArrival();
+        return;
+    }
+
+    // Lifetime countdown.
+    SHORT life = m_lifetime;
+    m_lifetime = static_cast<SHORT>(life - 1);
+    if (life == 0) {
+        RemoveSelf();
+        return;
+    }
+
+    if (m_targetId == CGameObjectArray::INVALID_INDEX) {
+        AimAtPoint(m_targetX, m_targetY);
+    } else {
+        // Homing branch (0x578C1E–0x578E0D): share the live target, verify
+        // it is still in the same area, read its current position, then
+        // interpolate the projectile height toward the target and aim.
+        CGameObject* pTarget;
+        BYTE rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
+        if (rc != CGameObjectArray::SUCCESS) {
+            RemoveSelf();
+            return;
+        }
+
+        // Save the target id before RemoveSelf can delete this (0x578C7D).
+        if (m_pArea != pTarget->m_pArea) {
+            LONG targetId = m_targetId;
+            RemoveSelf();
+            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(targetId,
+                CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            return;
+        }
+
+        CPoint ptLive = pTarget->GetPos();
+
+        // Height interpolation. When m_hasDrift is
+        // false (plain Magic Missile), linearly step the projectile height
+        // toward the target using the stored delta-Z and distance metric.
+        // With drift, the binary queries height but restores the old m_posZ.
+        if (m_hasDrift == 0) {
+            SHORT stepDeltaZ = static_cast<SHORT>(
+                static_cast<LONG>(static_cast<DWORD>(m_nDeltaZ) * static_cast<DWORD>(dist)) / m_flightDistSq);
+            m_posZ = static_cast<LONG>(static_cast<DWORD>(m_posZ)
+                + static_cast<DWORD>(static_cast<int>(stepDeltaZ) - m_nDeltaZLast));
+            m_nDeltaZLast = stepDeltaZ;
+        } else if (pTarget->GetObjectType() == CGameObject::TYPE_SPRITE) {
+            BYTE rcDeny;
+            do {
+                rcDeny = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_targetId,
+                    CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
+            } while (rcDeny == CGameObjectArray::SHARED);
+            if (rcDeny == CGameObjectArray::SUCCESS) {
+                CGameSprite* pTargetSprite = static_cast<CGameSprite*>(pTarget);
+                CRect rHeight;
+                CPoint ptRef;
+                pTargetSprite->GetAnimation()->CalculateFxRect(rHeight, ptRef, pTargetSprite->m_posZ);
+                g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_targetId,
+                    CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                LONG targetHeight = static_cast<LONG>(static_cast<DWORD>(rHeight.bottom) - static_cast<DWORD>(rHeight.top)) >> 1;
+                if (m_posZ != targetHeight) {
+                    LONG oldHeight = m_posZ;
+                    m_posZ = static_cast<LONG>(static_cast<DWORD>(m_posZ) + ((m_nDeltaZ < 0) ? 1u : 0xFFFFFFFFu));
+                    // The original restores EAX at 0x578DDA after either step.
+                    m_posZ = oldHeight;
+                }
+            }
+        }
+
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, INFINITE);
+
+        AimAtPoint(ptLive.x, ptLive.y);
+    }
+
+    if (m_bSparkleTrail != FALSE) {
+        CSparkleCluster* trail = new CSparkleCluster(m_sparkleColor,
+            CSparkleCluster::TYPE_TRAVEL, CSparkleCluster::DEFAULT_CONJURE_DURATION);
+        trail->AddToArea(m_pArea, m_pos, m_posZ, CGameObject::LIST_FRONT);
+    }
+
+    m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
 }
 
 // VFX-family launch uses DetermineHeight for the source, then creates the
 // optional VEF controller through the same trailing branch as the base Fire.
-// Its per-tick integrator is shared with CProjectileTravelling.
+// Its own flight and aiming virtuals preserve the native family's call sites.
 // 0x5791D0 (vtable slot 27)
 void IcewindCProjectileTravellingVFX::Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType)
 {
@@ -5911,11 +6021,80 @@ void IcewindCProjectileTravellingVFX::Fire(CGameArea* pArea, LONG source, LONG t
 }
 
 // 0x578ED0 (vtable slot 33)
-// UNIMPLEMENTED: the family's own flight aiming; delegate to the recovered
-// CProjectileTravelling integrator until it is recovered.
 void IcewindCProjectileTravellingVFX::AimAtPoint(int x, int y)
 {
-    CProjectileTravelling::AimAtPoint(x, y);
+    m_facing = GetDirection(CPoint(x, y));
+
+    // Velocity-scaled unit step (1/1024 fixed point).
+    int dx = static_cast<LONG>(static_cast<DWORD>(x) - static_cast<DWORD>(m_pos.x));
+    LONG targetY = static_cast<LONG>(static_cast<DWORD>(y) * 4) / 3;
+    LONG sourceY = static_cast<LONG>(static_cast<DWORD>(m_pos.y) * 4) / 3;
+    int dyScaled = static_cast<LONG>(static_cast<DWORD>(targetY) - static_cast<DWORD>(sourceY));
+    // __ftol converts to a QWORD; the caller uses its low DWORD, including
+    // the zero low half of x87's integer-indefinite result after a NaN.
+    int dist = static_cast<int>(static_cast<LONGLONG>(
+        sqrt(static_cast<double>(static_cast<LONG>(static_cast<DWORD>(dx) * static_cast<DWORD>(dx)
+            + static_cast<DWORD>(dyScaled) * static_cast<DWORD>(dyScaled)))) + 0.5));
+    if (dist == 0) {
+        m_stepX = 1;
+        m_stepY = 1;
+    } else {
+        m_stepX = static_cast<LONG>((static_cast<DWORD>(dx) << 10) * static_cast<DWORD>(m_velocity)) / dist;
+        m_stepY = static_cast<LONG>((static_cast<DWORD>(dyScaled) << 10) * static_cast<DWORD>(m_velocity)) / dist;
+        m_targetX = x;
+        m_targetY = y;
+
+        // Fold in the per-tick carry, then a random spread within the band.
+        m_stepX = static_cast<LONG>(static_cast<DWORD>(m_stepX) + static_cast<DWORD>(m_driftX));
+        m_stepY = static_cast<LONG>(static_cast<DWORD>(m_stepY) + static_cast<DWORD>(m_driftY));
+        int spreadX = static_cast<LONG>(static_cast<DWORD>(m_jitterMaxX) - static_cast<DWORD>(m_jitterMinX));
+        int spreadY = static_cast<LONG>(static_cast<DWORD>(m_jitterMaxY) - static_cast<DWORD>(m_jitterMinY));
+        if (spreadX > 0) {
+            m_stepX = static_cast<LONG>(static_cast<DWORD>(m_stepX)
+                + static_cast<DWORD>(m_jitterMinX) + static_cast<DWORD>(rand() % spreadX));
+        }
+        if (spreadY > 0) {
+            m_stepY = static_cast<LONG>(static_cast<DWORD>(m_stepY)
+                + static_cast<DWORD>(m_jitterMinY) + static_cast<DWORD>(rand() % spreadY));
+        }
+    }
+
+    // Advance the subpixel position by the step.
+    m_posAccumX = static_cast<LONG>(static_cast<DWORD>(m_posAccumX) + static_cast<DWORD>(m_stepX));
+    m_posAccumY = static_cast<LONG>(static_cast<DWORD>(m_posAccumY) + static_cast<DWORD>(m_stepY));
+
+    // Bleed each carry down by one modulus per tick (zero once exhausted).
+    if (m_driftX < 0) {
+        m_driftX = (m_driftX <= -m_driftDecay) ? m_driftX + m_driftDecay : 0;
+    } else if (m_driftX > 0) {
+        m_driftX = (m_driftX >= m_driftDecay) ? m_driftX - m_driftDecay : 0;
+    }
+    if (m_driftY < 0) {
+        m_driftY = (m_driftY <= -m_driftDecay) ? m_driftY + m_driftDecay : 0;
+    } else if (m_driftY > 0) {
+        m_driftY = (m_driftY >= m_driftDecay) ? m_driftY - m_driftDecay : 0;
+    }
+
+    // Decode the subpixel position back to the cell position (undo the 1/1024
+    // fixed point and, for y, the 4/3 iso scale).
+    m_pos.x = m_posAccumX >> 10;
+    m_pos.y = (static_cast<LONG>(static_cast<DWORD>(m_posAccumY) * 3) / 4) >> 10;
+
+    // Keep the attached object (m_nTargetId) at the projectile's height.
+    if (m_nTargetId != CGameObjectArray::INVALID_INDEX) {
+        CGameObject* pObj;
+        BYTE rc;
+        do {
+            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_nTargetId,
+                CGameObjectArray::THREAD_ASYNCH, &pObj, INFINITE);
+        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+        if (rc != CGameObjectArray::SUCCESS) {
+            return;
+        }
+        pObj->m_posZ = m_posZ;
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_nTargetId,
+            CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
 }
 
 // 0x578480 (vtable slot 19)

@@ -12,6 +12,8 @@ reboundchecks
 sparklechecks
 sparklefamilychecks
 projectilelaunchchecks
+projectileaimchecks
+projectiletickchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

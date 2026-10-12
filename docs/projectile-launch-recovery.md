@@ -61,4 +61,4 @@ Offset oracles unavailable and layout review gaps remain: absolute layout and
 pixel equivalence are unproven. First batch failed on Windows' near macro;
 renamed the fixture variable and reran the full profile without reduced gates.
 
-Next: recover VFX AimAtPoint 578ED0, which still delegates to the base integrator.
+Flight/Aim recovery continues in [projectile-flight-recovery.md](projectile-flight-recovery.md).
