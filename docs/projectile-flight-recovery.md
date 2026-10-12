@@ -57,5 +57,5 @@ is bounded behavioral evidence; full AI/gameplay differential and pixels remain
 unproven. Earlier journal replacement and NaN mismatch runs remain ERROR,
 with successful restoration; no reduced gates were used to obtain this pass.
 
-Next: recover the missing CProjectileExploding::Render override at 52CF80,
-which still inherits the travelling renderer during its detonation phase.
+Next: the CProjectileExploding::Render override at 52CF80 is now recovered;
+see projectile-explosion-render-recovery.md for its validation and next target.

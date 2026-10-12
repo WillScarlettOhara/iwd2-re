@@ -4434,6 +4434,111 @@ CProjectileExploding::CProjectileExploding(const CResRef& resRef)
     m_burstType = 0xFF;
 }
 
+// 0x52CF80
+void CProjectileExploding::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
+{
+    CProjectileTravelling::Render(pArea, pVidMode, nSurface);
+    if (m_nState == 0 || m_bExplodeCell1Active == 0) {
+        return;
+    }
+
+    COLORREF tintColor = RGB(0xFF, 0xFF, 0xFF);
+    DWORD flags = GetRenderFlags();
+    // The native tile index is sign-extended from its low WORD, including
+    // the intermediate 16-bit product of the row and visibility-map width.
+    SHORT tileIndex = static_cast<SHORT>(static_cast<SHORT>(m_pos.y / CVisibilityMap::SQUARE_SIZEY)
+        * m_pArea->m_visibility.m_nWidth + m_pos.x / CVisibilityMap::SQUARE_SIZEX);
+    if (!m_pArea->m_visibility.IsTileVisible(tileIndex)) {
+        return;
+    }
+    CPoint searchPos(m_pos.x / CPathSearch::GRID_SQUARE_SIZEX, m_pos.y / CPathSearch::GRID_SQUARE_SIZEY);
+    if (m_pArea->m_search.GetMobileCost(searchPos, m_terrainTable, 3, TRUE) == CPathSearch::COST_IMPASSABLE) {
+        return;
+    }
+    if (m_mirror != 0) {
+        flags |= 0x200;
+    }
+    if (m_tinted != 0) {
+        flags |= 0x10000;
+    }
+    if (m_bExplodeCell2Active != 0) {
+        flags |= 0x4;
+    }
+
+    CInfinity* pInfinity = m_pArea->GetInfinity();
+    CRect rViewport(pInfinity->nCurrentX,
+        pInfinity->nCurrentY,
+        pInfinity->nCurrentX + pInfinity->rViewPort.Width(),
+        pInfinity->nCurrentY + pInfinity->rViewPort.Height());
+    CRect rFX;
+    CPoint ptRef;
+    // Deliberately measure the travel cell, not either explosion cell. This
+    // qualified non-virtual call is what 52D111 invokes with a NULL cell.
+    GetCellBounds(rFX, ptRef, NULL);
+
+    CPoint newPos = m_pos;
+    LONG zOffset;
+    if ((m_mirror == 0 || g_pBaldurChitin->cVideo.m_bIs3dAccelerated != 0)
+        && m_bExplodeCell2Active == 0) {
+        newPos.y -= m_posZ;
+        zOffset = 0;
+    } else {
+        zOffset = m_posZ;
+    }
+    if (m_useHeightOffset != 0) {
+        newPos.y += m_pArea->GetHeightOffset(m_pos, m_listType);
+    }
+
+    CRect rGCBounds(0, 0, 0, 0);
+    if (CGameSprite::DIR_N < m_direction) {
+        rGCBounds.left = (ptRef.x - rFX.right) + newPos.x + rFX.left;
+    } else {
+        rGCBounds.left = newPos.x - ptRef.x;
+    }
+    if (CGameSprite::DIR_W < m_direction && m_direction < CGameSprite::DIR_E) {
+        if ((m_mirror == 0 || g_pBaldurChitin->cVideo.m_bIs3dAccelerated != 0)
+            && m_bExplodeCell2Active == 0) {
+            rGCBounds.top = (rFX.top - rFX.bottom) + ptRef.y + newPos.y;
+        } else {
+            ptRef.y = (rFX.bottom - rFX.top) - ptRef.y;
+            rGCBounds.top = (newPos.y - m_posZ) - ptRef.y;
+        }
+        zOffset = -zOffset;
+    } else {
+        rGCBounds.top = newPos.y - ptRef.y;
+    }
+    rGCBounds.right = rGCBounds.left + rFX.Width();
+    rGCBounds.bottom = rGCBounds.top + rFX.Height();
+    if (!IntersectRect(&rViewport, &rGCBounds, &rViewport)) {
+        return;
+    }
+    if (m_tinted != 0 || m_mirror != 0) {
+        tintColor = m_pArea->GetTintColor(newPos, m_listType);
+    }
+    if (CGameSprite::DIR_N < m_direction) {
+        flags |= CInfinity::MIRROR_FX;
+    }
+    if (CGameSprite::DIR_W < m_direction && m_direction < CGameSprite::DIR_E) {
+        flags |= CInfinity::MIRROR_FX_UPDOWN;
+    }
+
+    // COPYFROMBACK is added only for FXPrep on this path. The following
+    // lock/render/clip/unlock/blit calls keep the original render flags.
+    pInfinity->FXPrep(rFX, CInfinity::FXPREP_COPYFROMBACK | flags, nSurface, newPos, ptRef);
+    if (pInfinity->FXLock(rFX, flags)) {
+        if (m_tinted != 0) {
+            m_explodeCell1.SetTintColor(tintColor);
+        }
+        if (m_bExplodeCell2Active != 0) {
+            pInfinity->FXRender(&m_explodeCell2, ptRef.x, ptRef.y, flags, 0);
+        }
+        pInfinity->FXRender(&m_explodeCell1, ptRef.x, ptRef.y - zOffset, flags, 0x80);
+        pInfinity->FXRenderClippingPolys(newPos.x, newPos.y, 0, ptRef, rGCBounds, FALSE, flags);
+        pInfinity->FXUnlock(flags, NULL, CPoint(0, 0));
+        pInfinity->FXBltFrom(nSurface, rFX, newPos.x, newPos.y, ptRef.x, ptRef.y, flags);
+    }
+}
+
 // Vtable slot 3.
 //
 // The base flying/linger tick -- the leaves override it with their
@@ -5567,14 +5672,13 @@ void CProjectileSPMAGMIS::PrimeAndFireSubMissile(CProjectileTravelling* pMissile
     pMissile->Fire(pArea, source, target, targetPos, 0, nType);
 }
 
-// 0x52B190 (vtable slot 19 -- Render)
-//
 // Tile-based draw of a travelling projectile: visibility/passability gates,
 // field-driven blit flags (mirror/tint/shadow), the directional-sequence
 // pick, then the CInfinity FX pipeline. Facings past CGameSprite::DIR_N
 // mirror the blit horizontally; the DIR_W..DIR_E window mirrors vertically
 // and flips the draw rect. m_paletteSwap swaps the cell palette from the
 // travel-palette bitmap around the main cell draw (sparkle streams).
+// 0x52B190 (vtable slot 19 -- Render)
 void CProjectileTravelling::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
 {
     (void)pArea;
@@ -5591,7 +5695,8 @@ void CProjectileTravelling::Render(CGameArea* pArea, CVidMode* pVidMode, int nSu
     }
 
     // Tile-visibility gate (32x32 visibility tiles).
-    LONG tileIndex = (m_pos.y / 32) * m_pArea->m_visibility.m_nWidth + (m_pos.x / 32);
+    SHORT tileIndex = static_cast<SHORT>(static_cast<SHORT>(m_pos.y / CVisibilityMap::SQUARE_SIZEY)
+        * m_pArea->m_visibility.m_nWidth + m_pos.x / CVisibilityMap::SQUARE_SIZEX);
     if (!m_pArea->m_visibility.IsTileVisible(tileIndex)) {
         return;
     }

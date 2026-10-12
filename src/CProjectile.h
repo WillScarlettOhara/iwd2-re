@@ -288,8 +288,8 @@ public:
 // m_childProjectileType + 1) at every creature in strike range, cloning this
 // missile's effect list onto each child.
 //
-// Its only own deferred virtual is Render 0x52CF80 (slot 19, draws the two
-// explosion cells during the linger); the destructor 0x52CE10/0x52CE30 is the
+// Render 0x52CF80 (slot 19) draws the two explosion cells during the linger;
+// the destructor 0x52CE10/0x52CE30 is the
 // compiler-generated member/base chain. This branch's vtables are 35 slots --
 // Explode is the only added virtual.
 #pragma pack(push, 2)
@@ -301,6 +301,7 @@ class CProjectileExploding : public CProjectileTravelling {
 public:
     CProjectileExploding(const CResRef& resRef);   // 0x52CCE0
 
+    void Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface) override; // 0x52CF80 (slot 19)
     void AIUpdate() override;    // 0x52DD60 (slot 3)
     void Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType) override;   // 0x52D9F0 (slot 27)
     void OnArrival() override;   // 0x52D7F0 (slot 28, arms the linger state)
@@ -333,10 +334,10 @@ protected:
     /* 02F0 */ BYTE m_bBurstPending/*#guess*/;
     /* 02F1 */ BYTE m_burstType/*#guess*/;
     /* 02F2 */ int m_bCheckNonSprites;
-    /* 02F6 */ int m_bExplodeCell1Active/*#guess*/;
-    /* 02FA */ CVidCell m_explodeCell1/*#guess*/;
-    /* 03D4 */ int m_bExplodeCell2Active/*#guess*/;
-    /* 03D8 */ CVidCell m_explodeCell2/*#guess*/;
+    /* 02F6 */ int m_bExplodeCell1Active; // #guess name; first explosion cell enable
+    /* 02FA */ CVidCell m_explodeCell1; // #guess name; Render/AI cell at native +0x2FA
+    /* 03D4 */ int m_bExplodeCell2Active; // #guess name; second explosion cell enable
+    /* 03D8 */ CVidCell m_explodeCell2; // #guess name; Render/AI cell at native +0x3D8
 };
 
 // Leaf 0x52E9F0 -- the exploding flame missile (DecodeProjectile type 0x3;

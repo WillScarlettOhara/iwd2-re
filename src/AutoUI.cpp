@@ -117,6 +117,8 @@
 //   projectileaimchecks        replay canonical native motion and RNG states;
 //   projectiletickchecks       verify both travelling AI ticks and homing;
 //                                restore actors, objects, queues and Time Stop.
+//   explodingrenderchecks     compare flight/detonation BAM pixels and render gates;
+//                                restore camera, search, visibility and back pixels.
 //   sparklewait                require emitted clusters to leave all area lists.
 //   rebounddamage              service a registered bolt beside portrait 1, then
 //                                use projectilewait to require actual payload damage.
@@ -1585,6 +1587,323 @@ void ProjectileLaunchChecks(INT nStep)
     if (!valid) Fail(nStep,"projectilelaunchchecks","travelling launch mismatch");
 }
 
+void ExplodingRenderChecks(INT nStep)
+{
+    auto* game = g_pBaldurChitin->GetObjectGame();
+    auto* area = game->GetVisibleArea();
+    auto* video = static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+    if (!area || g_pChitin->cVideo.m_bIs3dAccelerated || !area->m_visibility.m_pMap
+        || !area->m_search.m_pDynamicCost) {
+        Fail(nStep, "explodingrenderchecks", "requires loaded software area"); return;
+    }
+    INT checks = 0, test = -1; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"exploding-render-case\",\"case\":%d,\"name\":\"%s\",\"passed\":false}",
+            nStep, test, name);
+    };
+    auto& infinity = area->m_cInfinity;
+    CRect savedView = infinity.rViewPort;
+    INT savedX = infinity.nCurrentX, savedY = infinity.nCurrentY;
+    auto* savedWED = infinity.pResWED;
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    INT messages = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    INT front = area->m_lVertSortAdd.GetCount(), back = area->m_lVertSortBackAdd.GetCount();
+    INT flight = area->m_lVertSortFlightAdd.GetCount();
+    CRect patch(64, 64, 416, 336);
+    std::vector<BYTE> savedPixels;
+    auto pixels = [&](std::vector<BYTE>* read, const std::vector<BYTE>* write, BOOL clear) -> BOOL {
+        if (!video->BKLock(patch)) return FALSE;
+        DWORD bytes = video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount / 8;
+        INT row = patch.Width() * bytes;
+        BOOL ok = bytes >= 2 && bytes <= 4 && video->m_SurfaceDesc.lpSurface != NULL;
+        if (ok && read) read->resize(row * patch.Height());
+        if (ok && write) ok = write->size() == static_cast<size_t>(row * patch.Height());
+        if (ok) for (INT y = 0; y < patch.Height(); ++y) {
+            BYTE* p = static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface) + y * video->m_SurfaceDesc.lPitch;
+            if (read) memcpy(read->data() + y * row, p, row);
+            if (write) memcpy(p, write->data() + y * row, row);
+            if (clear) memset(p, 0, row);
+        }
+        video->BKUnlock(); return ok;
+    };
+    BOOL backedUp = pixels(&savedPixels, NULL, FALSE);
+    check("back-pixels-backed-up", backedUp);
+    struct Missile : CProjectileExploding {
+        using CProjectileTravelling::GetCellBounds;
+        using CProjectileTravelling::m_pVidCell;
+        using CProjectileTravelling::m_pShadowCell;
+        using CProjectileTravelling::m_visible;
+        using CProjectileTravelling::m_tinted;
+        using CProjectileTravelling::m_mirror;
+        using CProjectileTravelling::m_hasShadowCell;
+        using CProjectileTravelling::m_direction;
+        using CProjectileTravelling::m_useHeightOffset;
+        using CProjectileTravelling::m_paletteSwap;
+        using CProjectileExploding::m_nState;
+        using CProjectileExploding::m_bExplodeCell1Active;
+        using CProjectileExploding::m_bExplodeCell2Active;
+        using CProjectileExploding::m_explodeCell1;
+        using CProjectileExploding::m_explodeCell2;
+        INT flagsCalls = 0;
+        RGBQUAD palettes[3][256] = {};
+        Missile() : CProjectileExploding(CResRef("ARARROW")) {
+            m_explodeCell1.SetResRef(CResRef("ARARROW"), FALSE, TRUE, FALSE);
+            m_explodeCell2.SetResRef(CResRef("ARARROW"), FALSE, TRUE, FALSE);
+            // The un-clipped FX blitter requires matching cell extents. Native
+            // Skull Trap also supplies a travel shadow when it carries Z.
+            m_pShadowCell = new CVidCell(CResRef("ARARROW"), FALSE);
+            m_pShadowCell->SequenceSet(0); m_pShadowCell->FrameSet(0);
+            m_pVidCell->SequenceSet(0); m_pVidCell->FrameSet(0);
+            m_explodeCell1.SequenceSet(0); m_explodeCell1.FrameSet(0);
+            m_explodeCell2.SequenceSet(0); m_explodeCell2.FrameSet(0);
+            for (INT i = 0; i < 256; ++i) {
+                BYTE intensity = static_cast<BYTE>(64 + i % 192);
+                palettes[0][i].rgbRed = intensity;
+                palettes[1][i].rgbBlue = intensity;
+                palettes[2][i].rgbGreen = intensity;
+            }
+            // Distinct owned palettes make overdraw order observable even
+            // when the native pass has no tint flag.
+            m_pVidCell->SetPalette(palettes[0], 256, CVidPalette::TYPE_RESOURCE);
+            m_explodeCell1.SetPalette(palettes[1], 256, CVidPalette::TYPE_RESOURCE);
+            m_explodeCell2.SetPalette(palettes[2], 256, CVidPalette::TYPE_RESOURCE);
+            m_dirCount = 1; m_renderFlags = 0;
+            m_hasShadowCell = 0; m_useHeightOffset = 0; m_paletteSwap = 0;
+            CSize size;
+            m_pVidCell->GetCurrentFrameSize(size, FALSE);
+            // Symmetric mirror bounds enclose both the lifted cell and its
+            // unlifted secondary for either sign of the test height.
+            m_mirrorMinX = size.cx;
+            m_mirrorMinY = size.cy + 17;
+        }
+        DWORD GetRenderFlags() override { ++flagsCalls; return CProjectileTravelling::GetRenderFlags(); }
+    } missile;
+    // Use a symmetric anchor for synthetic signed-height/mirror combinations.
+    // Keep the real BAM pinned, restore its complete frame record and demand
+    // count before releasing either resource-service lock or ticking the game.
+    struct FrameAnchor {
+        CResCell* resource;
+        CResCellHeader* header;
+        FRAMEENTRY* frame = NULL;
+        FRAMEENTRY* headerFrame = NULL;
+        FRAMEENTRY saved = {};
+        FRAMEENTRY savedHeader = {};
+        INT demands;
+        INT headerDemands = 0;
+        BOOL active = TRUE;
+        BOOL pinned;
+        explicit FrameAnchor(CVidCell* cell) : resource(cell->pRes), header(cell->m_header.pRes) {
+            EnterCriticalSection(&g_pChitin->m_critSectDimm);
+            EnterCriticalSection(&g_pChitin->m_critSectService);
+            demands = resource->GetDemands();
+            pinned = resource->Demand() != NULL;
+            if (pinned) frame = resource->GetFrame(0, 0, FALSE);
+            if (header != NULL) {
+                headerDemands = header->GetDemands();
+                if (header->Demand() != NULL) headerFrame = header->GetFrame(0, 0, FALSE);
+            }
+            if (frame != NULL) {
+                saved = *frame;
+                frame->nCenterY = static_cast<SHORT>(frame->nHeight / 2);
+            }
+            if (headerFrame != NULL) {
+                savedHeader = *headerFrame;
+                headerFrame->nCenterY = static_cast<SHORT>(headerFrame->nHeight / 2);
+            }
+        }
+        BOOL Restore() {
+            if (!active) return TRUE;
+            if (frame != NULL) *frame = saved;
+            BOOL ok = frame != NULL && memcmp(frame, &saved, sizeof(saved)) == 0;
+            if (header != NULL) {
+                if (headerFrame != NULL) *headerFrame = savedHeader;
+                ok = ok && headerFrame != NULL && memcmp(headerFrame, &savedHeader, sizeof(savedHeader)) == 0;
+                header->Release();
+                ok = ok && header->GetDemands() == headerDemands;
+            }
+            resource->Release();
+            ok = ok && resource->GetDemands() == demands;
+            LeaveCriticalSection(&g_pChitin->m_critSectService);
+            LeaveCriticalSection(&g_pChitin->m_critSectDimm);
+            active = FALSE;
+            return ok;
+        }
+        ~FrameAnchor() { Restore(); }
+    } anchor(missile.m_pVidCell);
+    if (anchor.frame == NULL || (anchor.header != NULL && anchor.headerFrame == NULL)) {
+        Fail(nStep, "explodingrenderchecks", "BAM fixture frame unavailable"); return;
+    }
+    missile.m_pArea = area; missile.CGameObject::m_pArea = area;
+    missile.m_listType = CGameObject::LIST_FLIGHT;
+    CPoint origin(232, 1002);
+    SHORT tile = static_cast<SHORT>(origin.y / 32 * area->m_visibility.m_nWidth + origin.x / 32);
+    INT cost = (origin.y / 12) * area->m_search.m_GridSquareDimensions.cx + origin.x / 16;
+    if (tile < 0 || tile >= area->m_visibility.m_nMapSize || cost < 0
+        || cost >= area->m_search.m_GridSquareDimensions.cx * area->m_search.m_GridSquareDimensions.cy) {
+        check("fixture-coordinates-in-map", FALSE);
+    } else if (backedUp) {
+        BYTE visible = area->m_visibility.m_pMap[tile], dynamic = area->m_search.m_pDynamicCost[cost];
+        // Isolate BAM geometry from unrelated loaded-area wall polygons. The
+        // production clipping call still executes and returns on NULL WED.
+        infinity.pResWED = NULL;
+        auto reset = [&]() {
+            missile.m_pos = origin; missile.m_posZ = 17;
+            missile.m_nState = 1; missile.m_bExplodeCell1Active = 1; missile.m_bExplodeCell2Active = 0;
+            missile.m_visible = 0; missile.m_tinted = 0; missile.m_mirror = 0;
+            missile.m_hasShadowCell = 0;
+            missile.m_direction = 0; missile.flagsCalls = 0; missile.m_paletteSwap = 0;
+            missile.m_pVidCell->SetTintColor(RGB(240, 180, 120));
+            missile.m_explodeCell1.SetTintColor(RGB(80, 180, 240));
+            missile.m_explodeCell2.SetTintColor(RGB(230, 60, 100));
+            infinity.rViewPort = CRect(80, 80, 400, 320);
+            infinity.nCurrentX = origin.x - 160; infinity.nCurrentY = origin.y - 120;
+            area->m_visibility.m_pMap[tile] = CVisibilityMap::VISIBILITY_MASK;
+            area->m_search.m_pDynamicCost[cost] = 0;
+        };
+        // This reference paints the specified cells at explicit anchors using
+        // the existing video pipeline. It contains no visibility/state/direction
+        // decision tree from the recovered renderer.
+        auto paint = [&](BOOL travel, BOOL explosion, BOOL second, DWORD flags, LONG y, LONG z, BOOL flipRef) {
+            if (!travel && !explosion) return TRUE;
+            CRect bounds; CPoint reference;
+            missile.GetCellBounds(bounds, reference, NULL);
+            if (flipRef) reference.y = bounds.Height() - reference.y;
+            CPoint cellCenter;
+            CSize cellSize;
+            missile.m_explodeCell2.GetCurrentCenterPoint(cellCenter, FALSE);
+            missile.m_explodeCell2.GetCurrentFrameSize(cellSize, FALSE);
+            Emit("{\"step\":%d,\"op\":\"exploding-render-reference\",\"case\":%d,\"flags\":%lu,\"bounds\":[%ld,%ld],\"ref\":[%ld,%ld],\"center\":[%ld,%ld],\"size\":[%ld,%ld],\"z\":%ld}",
+                nStep, test, flags, bounds.Width(), bounds.Height(), reference.x, reference.y,
+                cellCenter.x, cellCenter.y, cellSize.cx, cellSize.cy, z);
+            // FXRender writes a complete BAM frame without clipping. Reject
+            // invalid synthetic anchors before touching a video surface.
+            if (second && (reference.x < cellCenter.x || reference.y < cellCenter.y
+                || reference.x - cellCenter.x + cellSize.cx > bounds.Width()
+                || reference.y - cellCenter.y + cellSize.cy > bounds.Height())) return FALSE;
+            CVidCell* primary = travel ? missile.m_pVidCell : &missile.m_explodeCell1;
+            primary->GetCurrentCenterPoint(cellCenter, FALSE);
+            primary->GetCurrentFrameSize(cellSize, FALSE);
+            if (reference.x < cellCenter.x || reference.y - z < cellCenter.y
+                || reference.x - cellCenter.x + cellSize.cx > bounds.Width()
+                || reference.y - z - cellCenter.y + cellSize.cy > bounds.Height()) return FALSE;
+            CPoint point(missile.m_pos.x, y);
+            infinity.FXPrep(bounds, CInfinity::FXPREP_COPYFROMBACK | flags, CVIDINF_SURFACE_BACK, point, reference);
+            if (!infinity.FXLock(bounds, flags)) return FALSE;
+            if (second) infinity.FXRender(&missile.m_explodeCell2, reference.x, reference.y, flags, 0);
+            infinity.FXRender(travel ? missile.m_pVidCell : &missile.m_explodeCell1,
+                reference.x, reference.y - z, flags, 0x80);
+            infinity.FXUnlock(flags, NULL, CPoint(0, 0));
+            return infinity.FXBltFrom(CVIDINF_SURFACE_BACK, bounds, point.x, point.y, reference.x, reference.y, flags);
+        };
+        auto compare = [&](BOOL travel, BOOL explosion, BOOL second, DWORD flags, LONG y, LONG z,
+                           BOOL flipRef, BOOL requireDraw, INT expectedCalls) {
+            std::vector<BYTE> expected, actual;
+            BOOL ok = pixels(NULL, NULL, TRUE);
+            if (travel) ok = paint(TRUE, FALSE, FALSE, CInfinity::FXPREP_COPYFROMBACK | flags, y, z, flipRef) && ok;
+            if (explosion) ok = paint(FALSE, TRUE, second, flags, y, z, flipRef) && ok;
+            if (!ok) { check("reference-geometry-valid", FALSE); return; }
+            ok = pixels(&expected, NULL, TRUE) && ok;
+            if (missile.m_tinted != 0) missile.m_explodeCell1.SetTintColor(RGB(1, 2, 3));
+            CProjectile* object = &missile;
+            object->Render(NULL, video, CVIDINF_SURFACE_BACK);
+            ok = pixels(&actual, NULL, FALSE) && ok;
+            check("complete-clipped-pixels", ok && actual == expected);
+            check("expected-visible-draw", std::any_of(expected.begin(), expected.end(), [](BYTE x) { return x != 0; }) == (requireDraw != FALSE));
+            check("virtual-flags-call-count", missile.flagsCalls == expectedCalls);
+            check("frames-and-surfaces-balanced", missile.m_pVidCell->m_nCurrentFrame == 0
+                && missile.m_explodeCell1.m_nCurrentFrame == 0 && missile.m_explodeCell2.m_nCurrentFrame == 0
+                && video->m_SurfaceDesc.lpSurface == NULL);
+        };
+        for (test = 0; test < 6; ++test) {
+            reset();
+            if (test == 0 || test == 1) missile.m_nState = 0;
+            if (test == 1 || test == 3 || test == 5) missile.m_visible = 1;
+            if (test == 2 || test == 3) missile.m_bExplodeCell1Active = 0;
+            if (test == 2) missile.m_bExplodeCell2Active = 1; // Cell 2 alone never draws.
+            compare(missile.m_visible != 0, test >= 4, FALSE, 0, origin.y - 17, 0, FALSE,
+                missile.m_visible != 0 || test >= 4, test >= 4 ? 2 : 1);
+        }
+        for (test = 6; test < 22; ++test) {
+            reset(); missile.m_direction = static_cast<SHORT>(test - 6);
+            // Native directional thresholds: N=8, W=4, E=12. The plain-cell
+            // path retains its reference even when its vertical blit is flipped.
+            DWORD flags = test > 14 ? CInfinity::MIRROR_FX : 0;
+            if (test > 10 && test < 18) flags |= CInfinity::MIRROR_FX_UPDOWN;
+            compare(FALSE, TRUE, FALSE, flags, origin.y - 17, 0, FALSE, TRUE, 2);
+        }
+        for (test = 22; test < 30; ++test) {
+            reset(); missile.m_bExplodeCell2Active = 1; missile.m_hasShadowCell = 1;
+            missile.m_mirror = (test & 1) ? 1 : 0;
+            missile.m_direction = test & 2 ? 8 : 0;
+            missile.m_posZ = test & 4 ? -17 : 17;
+            BOOL flipped = (test & 2) != 0;
+            DWORD flags = 4 | (missile.m_mirror ? 0x200 : 0) | (flipped ? CInfinity::MIRROR_FX_UPDOWN : 0);
+            compare(FALSE, TRUE, TRUE, flags, origin.y, flipped ? -missile.m_posZ : missile.m_posZ, flipped, TRUE, 2);
+            check("secondary-tint-untouched", missile.m_explodeCell2.GetTintColor() == RGB(230, 60, 100));
+        }
+        for (test = 30; test < 34; ++test) {
+            reset();
+            if (test == 30) area->m_visibility.m_pMap[tile] = 0;
+            if (test == 31) area->m_search.m_pDynamicCost[cost] = 0x80;
+            if (test == 32) infinity.nCurrentX += 10000;
+            if (test == 33) infinity.nCurrentY += 10000;
+            compare(FALSE, FALSE, FALSE, 0, origin.y - 17, 0, FALSE, FALSE, 2);
+        }
+        for (test = 34; test < 38; ++test) {
+            reset(); missile.m_tinted = 1; missile.m_bExplodeCell2Active = test & 1;
+            missile.m_hasShadowCell = test & 1;
+            missile.m_nState = (test & 2) ? -1 : 1; // Any nonzero linger state.
+            CPoint tintPos(origin.x, origin.y - (test & 1 ? 0 : 17));
+            COLORREF tint = area->GetTintColor(tintPos, CGameObject::LIST_FLIGHT);
+            missile.m_explodeCell1.SetTintColor(tint);
+            compare(FALSE, TRUE, (test & 1) != 0, 0x10000 | (test & 1 ? 4 : 0), tintPos.y,
+                test & 1 ? 17 : 0, FALSE, TRUE, 2);
+            check("first-cell-receives-area-tint", missile.m_explodeCell1.GetTintColor() == tint);
+            check("travel-and-secondary-tints-untouched", missile.m_pVidCell->GetTintColor() == RGB(240, 180, 120)
+                && missile.m_explodeCell2.GetTintColor() == RGB(230, 60, 100));
+        }
+        for (test = 38; test < 40; ++test) {
+            reset(); missile.m_pos.y += test == 38 ? 32 * 65536 : -32 * 65536;
+            infinity.nCurrentY += test == 38 ? 32 * 65536 : -32 * 65536;
+            compare(FALSE, TRUE, FALSE, 0, missile.m_pos.y - 17, 0, FALSE, TRUE, 2);
+        }
+        for (test = 40; test < 44; ++test) {
+            reset(); missile.m_mirror = 1; missile.m_direction = test & 1 ? 8 : 0;
+            missile.m_posZ = test & 2 ? -17 : 17;
+            BOOL flipped = (test & 1) != 0;
+            compare(FALSE, TRUE, FALSE, 0x200 | (flipped ? CInfinity::MIRROR_FX_UPDOWN : 0),
+                origin.y, flipped ? -missile.m_posZ : missile.m_posZ, flipped, TRUE, 2);
+        }
+        test = 44; reset(); missile.m_posZ = 0; missile.m_bExplodeCell2Active = 1;
+        // With zero height, the identical frame extents also safely exercise
+        // the independent explosion-shadow flag without a travel shadow.
+        compare(FALSE, TRUE, TRUE, 4, origin.y, 0, FALSE, TRUE, 2);
+        for (test = 45; test < 47; ++test) {
+            reset(); missile.m_nState = 0; missile.m_visible = 1;
+            missile.m_pos.y += test == 45 ? 32 * 65536 : -32 * 65536;
+            infinity.nCurrentY += test == 45 ? 32 * 65536 : -32 * 65536;
+            // The travelling base must draw at wrapped tile indices too;
+            // an invisible flight cell would not expose a widened-index bug.
+            compare(TRUE, FALSE, FALSE, 0, missile.m_pos.y - 17, 0, FALSE, TRUE, 1);
+        }
+        area->m_visibility.m_pMap[tile] = visible; area->m_search.m_pDynamicCost[cost] = dynamic;
+    }
+    infinity.pResWED = savedWED; infinity.rViewPort = savedView;
+    infinity.nCurrentX = savedX; infinity.nCurrentY = savedY;
+    check("bam-frame-and-demand-restored", anchor.Restore());
+    check("sampled-pixels-restored", backedUp && pixels(NULL, &savedPixels, FALSE));
+    check("same-tick-state-restored", infinity.pResWED == savedWED && infinity.rViewPort == savedView
+        && infinity.nCurrentX == savedX && infinity.nCurrentY == savedY
+        && game->GetWorldTimer()->m_gameTime == clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount() == messages
+        && area->m_lVertSortAdd.GetCount() == front && area->m_lVertSortBackAdd.GetCount() == back
+        && area->m_lVertSortFlightAdd.GetCount() == flight);
+    Emit("{\"step\":%d,\"op\":\"explodingrenderchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}",
+        nStep, checks, valid ? "true" : "false");
+    if (!valid) Fail(nStep, "explodingrenderchecks", "explosive render mismatch (state restored)");
+}
+
 // Expected states captured from both canonical native integrators.
 #include "ProjectileAimGolden.h"
 
@@ -2604,6 +2923,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "projectileaimchecks") == 0) {
         ProjectileAimChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "explodingrenderchecks") == 0) {
+        ExplodingRenderChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
