@@ -200,6 +200,7 @@ public:
 
     void SetVidCell(CResRef resRef);            // 0x5295D0 -- replace the animation cell
     void SetTravelPalette(CString bitmapName);  // 0x529660 -- request the sparkle colour-table bitmap (#guess name)
+    void SetRange(USHORT range, USHORT value);   // 0x52B150 -- bind palette before changing its range
 
 protected:
     void GetCellBounds(CRect& rBounds, CPoint& ptRef, CVidCell* pCell);   // 0x52B6B0 -- cell draw rect + ref point (pCell NULL = the main cell)
@@ -240,6 +241,13 @@ protected:
     BYTE m_paletteSwap;         // +0x29C (param[0xa7]) -- Frida-confirmed; set by SetTravelPalette, Render swaps the cell palette from the bitmap
     BYTE m_distLifetime;        // +0x29D -- gate: when set, compute lifetime from sqrt(dist)/velocity
     SHORT m_lifetime;           // +0x29E -- Frida-confirmed (decrements 1/tick from 0x7FFF)
+};
+
+// Native 0x532260, vtable 0x84E504, size 0x2A0. ACIDBLOB animation;
+// all flight/render virtuals inherit the travelling base, with no extra fields.
+class CProjectileAcidBlob /*#guess*/ : public CProjectileTravelling {
+public:
+    CProjectileAcidBlob();
 };
 
 // Leaf 0x5324A0 -- the canonical travelling arrow (DecodeProjectile types

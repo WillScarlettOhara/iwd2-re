@@ -21,6 +21,7 @@ beamchecks
 chainchecks
 nearestchecks
 sparkleexplosionchecks
+acidblobchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

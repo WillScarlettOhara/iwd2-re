@@ -1671,6 +1671,134 @@ struct ProjectileRenderFrameAnchor {
 #include "BeamTickGolden.h"
 #include "AreaNearestGolden.h"
 #include "SparkleExplosionGolden.h"
+#include "AcidBlobGolden.h"
+
+void AcidBlobChecks(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* area=game->GetVisibleArea();
+    auto* video=static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+    if (!area || !area->m_visibility.m_pMap || g_pChitin->cVideo.m_bIs3dAccelerated) {
+        Fail(nStep,"acidblobchecks","requires loaded software area"); return;
+    }
+    INT checks=0,draws=0; BOOL valid=TRUE;
+    auto check=[&](const char* name,BOOL ok) {
+        ++checks; valid=valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"acid-blob-case\",\"case\":\"%s\",\"passed\":false}",nStep,name);
+    };
+    auto* master=game->GetMasterBitmap(); INT masterDemands=master->pRes->GetDemands();
+    struct Blob : CProjectileAcidBlob {
+        using CProjectileTravelling::m_palette;
+        using CProjectileTravelling::m_pVidCell;
+        BOOL Defaults() { return m_pVidCell->GetResRef()==CResRef("ACIDBLOB") && m_pVidCell->GetCurrentSequenceId()==0
+            && m_palette.m_rangeColors[0]==CVIDPALETTE_ACID && m_pVidCell->m_cPalette.m_rangeColors[0]==CVIDPALETTE_ACID
+            && m_palette.m_pPalette==m_pVidCell->m_cPalette.m_pPalette && m_tinted==TRUE && m_useHeightOffset==FALSE
+            && m_mirror==FALSE && m_hasShadowCell==FALSE && m_dirCount==16 && m_velocity==20
+            && m_fireSoundRef==CResRef("") && m_callBackProjectile==-1 && m_nTargetId==-1 && field_17E.IsEmpty(); }
+    };
+    Blob original; check("native-constructor-defaults",original.Defaults());
+    for (const auto& row : ACID_BLOB_RANGE) {
+        Blob sample; USHORT range=static_cast<USHORT>(row.range);
+        sample.SetRange(range,static_cast<USHORT>(row.value));
+        check("native-palette-bind-before-range",sample.m_palette.m_rangeColors[range]==row.color
+            && sample.m_pVidCell->m_cPalette.m_rangeColors[range]==row.cached
+            && sample.m_palette.m_pPalette==sample.m_pVidCell->m_cPalette.m_pPalette
+            && sample.m_pVidCell->m_bPaletteChanged==TRUE);
+        master->pRes->Demand();
+        for (INT x=0;x<12;++x) {
+            RGBQUAD expected={}; BOOL loaded=master->GetPixelColor(expected,x,row.row,TRUE);
+            check("range-rgb-from-full-word-row",loaded && memcmp(&expected,&sample.m_palette.m_pPalette[4+12*range+x],sizeof(expected))==0);
+        }
+        master->pRes->Release();
+    }
+    auto& infinity=area->m_cInfinity; CRect savedView=infinity.rViewPort;
+    INT savedX=infinity.nCurrentX,savedY=infinity.nCurrentY; auto* wed=infinity.pResWED;
+    ULONG clock=game->GetWorldTimer()->m_gameTime;
+    INT messages=g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    INT pending=area->m_lVertSortAdd.GetCount();
+    std::vector<BYTE> visibility(area->m_visibility.m_pMap,area->m_visibility.m_pMap+area->m_visibility.m_nMapSize);
+    CPoint origin(232,1002); INT cost=origin.y/12*area->m_search.m_GridSquareDimensions.cx+origin.x/16;
+    BYTE dynamic=area->m_search.m_pDynamicCost[cost];
+    CRect patch(64,64,416,336); std::vector<BYTE> savedPixels;
+    auto pixels=[&](std::vector<BYTE>* read,const std::vector<BYTE>* write,BOOL clear)->BOOL {
+        if (!video->BKLock(patch)) return FALSE;
+        DWORD bytes=video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount/8;
+        INT stride=patch.Width()*bytes; BOOL ok=bytes>=2 && bytes<=4 && video->m_SurfaceDesc.lpSurface!=NULL;
+        if (ok && read) read->resize(stride*patch.Height());
+        if (ok && write) ok=write->size()==static_cast<size_t>(stride*patch.Height());
+        if (ok) for (INT y=0;y<patch.Height();++y) {
+            BYTE* p=static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface)+y*video->m_SurfaceDesc.lPitch;
+            if (read) memcpy(read->data()+y*stride,p,stride);
+            if (write) memcpy(p,write->data()+y*stride,stride);
+            if (clear) memset(p,0,stride);
+        }
+        video->BKUnlock(); return ok;
+    };
+    BOOL backedUp=pixels(&savedPixels,NULL,FALSE); check("pixels-backed-up",backedUp);
+    if (backedUp) {
+        infinity.rViewPort=CRect(80,80,400,320); infinity.nCurrentX=72; infinity.nCurrentY=882; infinity.pResWED=NULL;
+        memset(area->m_visibility.m_pMap,CVisibilityMap::VISIBILITY_MASK,visibility.size()); area->m_search.m_pDynamicCost[cost]=0;
+        for (const auto& row : ACID_BLOB_FACTORY) {
+            CProjectile* object=CProjectile::DecodeProjectile(row.type,NULL,row.delay);
+            check("native-factory-type-and-sounds",dynamic_cast<CProjectileAcidBlob*>(object)!=NULL
+                && object->m_projectileType==row.type-1 && object->m_bHasHeight==TRUE
+                && object->m_fireSoundRef==CResRef("") && object->m_arrivalSoundRef==CResRef(""));
+            object->m_pArea=area; object->CGameObject::m_pArea=area;
+            object->m_pos=origin; object->m_posZ=17; object->m_listType=CGameObject::LIST_FLIGHT;
+            // The native base ctor leaves facing unwritten; Fire normally
+            // initializes it. Aim south for sequence zero, then restore the
+            // fixture position advanced by AimAtPoint.
+            static_cast<CProjectileTravelling*>(object)->AimAtPoint(origin.x,origin.y+12);
+            object->m_pos=origin;
+            CVidPalette palette(CVidPalette::TYPE_RANGE); palette.SetRange(0,row.color,*master);
+            CVidCell cell(CResRef("ACIDBLOB"),FALSE); cell.SequenceSet(0); cell.FrameSet(0); cell.SetPalette(palette);
+            // Captured native metadata is the old row, while the RGB pointer
+            // already references the new row. No source SetRange call here.
+            cell.m_cPalette.m_rangeColors[0]=row.cached;
+            // Construct and demand palette resources before holding the
+            // resource-service locks used by the frame anchor.
+            ProjectileRenderFrameAnchor anchor(&cell);
+            check("acid-bam-frame-available",anchor.frame && (!anchor.header || anchor.headerFrame));
+            CPoint center; CSize size; cell.GetCurrentCenterPoint(center,FALSE); cell.GetCurrentFrameSize(size,FALSE);
+            CRect bounds(0,0,size.cx,size.cy); CPoint point(232,985); DWORD flags=0x30000|CInfinity::FXPREP_COPYFROMBACK;
+            cell.SetTintColor(area->GetTintColor(point,CGameObject::LIST_FLIGHT));
+            for (INT mode=0;mode<3;++mode) {
+                SHORT tile=area->m_visibility.PointToTile(origin);
+                if (mode==1) area->m_visibility.m_pMap[tile]=0;
+                if (mode==2) infinity.nCurrentX+=10000;
+                std::vector<BYTE> expected,actual;
+                BOOL ok=pixels(NULL,NULL,TRUE);
+                if (mode==0) {
+                    infinity.FXPrep(bounds,flags,CVIDINF_SURFACE_BACK,point,center);
+                    if (infinity.FXLock(bounds,flags)) {
+                        infinity.FXRender(&cell,center.x,center.y,flags,0x80);
+                        infinity.FXUnlock(flags,NULL,CPoint(0,0));
+                        ok=infinity.FXBltFrom(CVIDINF_SURFACE_BACK,bounds,point.x,point.y,center.x,center.y,flags) && ok;
+                    } else ok=FALSE;
+                }
+                ok=pixels(&expected,NULL,TRUE) && ok;
+                if (mode==0) {
+                    BOOL visiblePixels=FALSE; for (BYTE pixel : expected) visiblePixels=visiblePixels || pixel!=0;
+                    check("normal-reference-draws-visible-pixels",visiblePixels);
+                }
+                object->Render(NULL,video,CVIDINF_SURFACE_BACK); ++draws;
+                ok=pixels(&actual,NULL,FALSE) && ok;
+                check("native-color-variant-full-pixels",ok && expected==actual);
+                check("renderer-surface-unlocked",video->m_SurfaceDesc.lpSurface==NULL);
+                area->m_visibility.m_pMap[tile]=CVisibilityMap::VISIBILITY_MASK;
+                if (mode==2) infinity.nCurrentX-=10000;
+            }
+            check("frame-and-demand-restoration",anchor.Restore());
+            object->CGameObject::m_pArea=NULL; delete object;
+        }
+    }
+    memcpy(area->m_visibility.m_pMap,visibility.data(),visibility.size()); area->m_search.m_pDynamicCost[cost]=dynamic;
+    infinity.rViewPort=savedView; infinity.nCurrentX=savedX; infinity.nCurrentY=savedY; infinity.pResWED=wed;
+    check("pixels-restored",backedUp && pixels(NULL,&savedPixels,FALSE));
+    check("same-tick-state-restored",master->pRes->GetDemands()==masterDemands && game->GetWorldTimer()->m_gameTime==clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount()==messages && area->m_lVertSortAdd.GetCount()==pending);
+    Emit("{\"step\":%d,\"op\":\"acidblobchecks\",\"checks\":%d,\"renderCalls\":%d,\"nativeCases\":13,\"restored\":true,\"valid\":%s}",nStep,checks,draws,valid?"true":"false");
+    if (!valid) Fail(nStep,"acidblobchecks","acid leaf/palette/render mismatch");
+}
 
 void SparkleExplosionChecks(INT nStep)
 {
@@ -2107,6 +2235,59 @@ void AreaNearestChecks(INT nStep)
                 && saved[1].p->m_timedEffectList.GetCount()==saved[1].timed && saved[1].p->m_equipedEffectList.GetCount()==saved[1].equipped);
             Emit("{\"step\":%d,\"op\":\"impact-bam-damage\",\"loss\":%ld,\"ticks\":%d,\"retired\":%s}",nStep,
                 hpBefore-saved[1].p->m_baseStats.m_hitPoints,ticks,retired?"true":"false");
+            for (USHORT type : {USHORT(0x6C),USHORT(0xC0),USHORT(0xC1),USHORT(0xC2)}) {
+                CProjectile* blob=CProjectile::DecodeProjectile(type,saved[0].p,255);
+                check("acid-live-factory-class",dynamic_cast<CProjectileAcidBlob*>(blob)!=NULL && blob->m_projectileType==type-1);
+                blob->AddEffect(CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],saved[1].p->m_pos));
+                LONG before=saved[1].p->m_baseStats.m_hitPoints;
+                blob->Fire(area,origin->m_id,ids[1],CPoint(-123,456),99,0);
+                LONG id=blob->m_id; CPoint launch=blob->m_pos;
+                check("acid-launch-retains-damage-payload",blob->m_effectList.GetCount()==1 && handler->m_messageList.GetCount()==messages
+                    && blob->m_pos==origin->m_pos && blob->m_targetX==137 && blob->m_targetY==96 && blob->m_posZ==32);
+                game->m_nTimeStop=1; game->m_nTimeStopCaster=origin->m_id; blob->AIUpdate();
+                check("acid-time-stop-freezes-flight",blob->m_pos==launch && blob->m_effectList.GetCount()==1);
+                game->m_nTimeStop=0;
+                POSITION pending=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id));
+                if (pending) area->m_lVertSortAdd.RemoveAt(pending);
+                BOOL arrived=FALSE,moved=FALSE; INT ticks=0;
+                for (;ticks<64 && !arrived;++ticks) {
+                    CPoint previous=blob->m_pos;
+                    blob->AIUpdate(); CGameObject* live=NULL;
+                    BYTE rc=objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&live,INFINITE);
+                    arrived=rc!=CGameObjectArray::SUCCESS;
+                    if (arrived) check("acid-arrival-deletes-carrier",rc==CGameObjectArray::DELETED);
+                    else {
+                        blob=static_cast<CProjectile*>(live); moved=moved || blob->m_pos!=previous;
+                        objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                        check("acid-does-not-hit-during-flight",handler->m_messageList.GetCount()==messages
+                            && saved[1].p->m_baseStats.m_hitPoints==before && blob->m_effectList.GetCount()==1);
+                    }
+                }
+                if (!arrived) retire(blob);
+                check("acid-actual-flight-before-arrival",arrived && moved && ticks>1);
+                check("acid-arrival-queues-one-owned-group",handler->m_messageList.GetCount()==messages+1);
+                INT groups=0,sounds=0;
+                while (handler->m_messageList.GetCount()>messages) {
+                    CMessage* message=handler->m_messageList.RemoveTail();
+                    auto* group=dynamic_cast<CMessage105*>(message);
+                    auto* sound=dynamic_cast<CMessagePlaySound*>(message);
+                    check("acid-arrival-message-ownership",(group && group->m_sourceId==origin->m_id
+                        && group->m_targetId==ids[1] && group->m_nCount==1)
+                        || (sound && sound->m_sourceId==ids[1] && sound->m_targetId==ids[1]
+                            && sound->m_soundId==CGameSprite::SOUND_DAMAGE && sound->m_showText && sound->m_showCircle));
+                    if (group) { ++groups; group->Run(); }
+                    // Applying the real damage queues the defender's bark.
+                    // Dispose our sound fixture without changing speech state.
+                    if (sound) ++sounds;
+                    delete message;
+                }
+                check("acid-one-damage-group-and-owned-bark",groups==1 && sounds==1);
+                LONG loss=before-saved[1].p->m_baseStats.m_hitPoints;
+                check("acid-arrival-real-six-hp-loss",loss==6 && saved[0].p->m_baseStats.m_hitPoints==512
+                    && saved[1].p->m_timedEffectList.GetCount()==saved[1].timed && saved[1].p->m_equipedEffectList.GetCount()==saved[1].equipped);
+                Emit("{\"step\":%d,\"op\":\"acid-live-damage\",\"type\":%u,\"loss\":%ld,\"ticks\":%d,\"retired\":%s}",nStep,
+                    type,loss,ticks,arrived?"true":"false");
+            }
         }
         if (chain) {
             if (chain->CGameObject::m_pArea) retire(chain); else delete chain;
@@ -4324,6 +4505,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "sparkleexplosionchecks") == 0) {
         SparkleExplosionChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "acidblobchecks") == 0) {
+        AcidBlobChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

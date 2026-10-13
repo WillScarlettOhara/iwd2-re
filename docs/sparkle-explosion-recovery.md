@@ -56,4 +56,4 @@ Six-HP BAM hit, expiry after six updates, no repeat; chain/beam/weapon tests
 pass. Hash cleanup restored. Impact member spacing PASS; fieldless leaf skip.
 Explode/AI/Fire parity GREEN; ctor/render/factory YELLOW. Missing offset
 oracles leave static equivalence unproven; no native rasterization claim.
-Next: identify travelling leaf 532260 and factory C0..C2.
+Continuation: [acid travelling leaf 532260/C0..C2](acid-blob-recovery.md).

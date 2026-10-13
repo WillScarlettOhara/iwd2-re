@@ -713,6 +713,20 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
         break;
     }
 
+    case 0x6C:
+    case 0xC0: case 0xC1: case 0xC2: {
+        auto* pBlob=new CProjectileAcidBlob();
+        pBlob->m_bHasHeight=TRUE;
+        // Native 0x524760/0x5247D9/0x524852 reuse the same leaf and
+        // bind the current palette BEFORE recoloring range zero.
+        if (projectileType==0xC0) pBlob->SetRange(0,0x56);
+        else if (projectileType==0xC1) pBlob->SetRange(0,0x6E);
+        else if (projectileType==0xC2) pBlob->SetRange(0,0x1A);
+        pBlob->m_fireSoundRef=""; pBlob->m_arrivalSoundRef="";
+        pProjectile=pBlob;
+        break;
+    }
+
     case 0x95: case 0x96: case 0x97: case 0x98: case 0x99:
     case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0xB6: case 0xB7: {
         // Exploding sparkle streams use their own Explode virtual, rather
@@ -5595,6 +5609,28 @@ CProjectileSparkle::CProjectileSparkle(SHORT nPaletteType)
 
     m_callBackProjectile = CGameObjectArray::INVALID_INDEX;
     m_nTargetId = CGameObjectArray::INVALID_INDEX;
+}
+
+// 0x532260
+CProjectileAcidBlob::CProjectileAcidBlob()
+    : CProjectileTravelling(CResRef("ACIDBLOB"))
+{
+    m_pVidCell->SequenceSet(0);
+    m_palette.SetRange(0,CVIDPALETTE_ACID,*g_pBaldurChitin->GetObjectGame()->GetMasterBitmap());
+    m_pVidCell->SetPalette(m_palette);
+    m_tinted=TRUE; m_useHeightOffset=FALSE; m_mirror=FALSE; m_hasShadowCell=FALSE;
+    m_dirCount=16; m_fireSoundRef="";
+    m_callBackProjectile=CGameObjectArray::INVALID_INDEX;
+    field_17E=""; m_nTargetId=CGameObjectArray::INVALID_INDEX;
+}
+
+// 0x52B150
+void CProjectileTravelling::SetRange(USHORT range, USHORT value)
+{
+    // Native binds the shared color buffer and snapshots range metadata
+    // first. Reversing these calls changes the cell's cached range values.
+    m_pVidCell->SetPalette(m_palette);
+    m_palette.SetRange(range,value,*g_pBaldurChitin->GetObjectGame()->GetMasterBitmap());
 }
 
 // 0x5295D0
