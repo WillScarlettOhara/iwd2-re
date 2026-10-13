@@ -1670,6 +1670,207 @@ struct ProjectileRenderFrameAnchor {
 
 #include "BeamTickGolden.h"
 #include "AreaNearestGolden.h"
+#include "SparkleExplosionGolden.h"
+
+void SparkleExplosionChecks(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* area=game->GetVisibleArea();
+    auto* objects=game->GetObjectArray(); auto* handler=g_pBaldurChitin->GetMessageHandler();
+    auto* video=static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+    if (!area || !area->m_visibility.m_pMap || g_pChitin->cVideo.m_bIs3dAccelerated) {
+        Fail(nStep,"sparkleexplosionchecks","requires loaded software area"); return;
+    }
+    INT checks=0, draws=0; BOOL valid=TRUE;
+    auto check=[&](const char* name,BOOL ok) {
+        ++checks; valid=valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"sparkle-explosion-case\",\"case\":\"%s\",\"passed\":false}",nStep,name);
+    };
+    INT messages=handler->m_messageList.GetCount(), front=area->m_lVertSortAdd.GetCount();
+    INT sorted=area->m_lVertSort.GetCount(), back=area->m_lVertSortBackAdd.GetCount(), flight=area->m_lVertSortFlightAdd.GetCount();
+    ULONG clock=game->GetWorldTimer()->m_gameTime;
+    auto stop=game->m_nTimeStop, caster=game->m_nTimeStopCaster;
+    auto& infinity=area->m_cInfinity;
+    CRect view=infinity.rViewPort; INT viewX=infinity.nCurrentX, viewY=infinity.nCurrentY;
+    auto* wed=infinity.pResWED;
+    std::vector<BYTE> visibility(area->m_visibility.m_pMap,area->m_visibility.m_pMap+area->m_visibility.m_nMapSize);
+    CRect patch(64,64,416,336); std::vector<BYTE> savedPixels;
+    auto pixels=[&](std::vector<BYTE>* read,const std::vector<BYTE>* write,BOOL clear)->BOOL {
+        if (!video->BKLock(patch)) return FALSE;
+        DWORD bytes=video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount/8;
+        INT row=patch.Width()*bytes; BOOL ok=bytes>=2 && bytes<=4 && video->m_SurfaceDesc.lpSurface!=NULL;
+        if (ok && read) read->resize(row*patch.Height());
+        if (ok && write) ok=write->size()==static_cast<size_t>(row*patch.Height());
+        if (ok) for (INT y=0;y<patch.Height();++y) {
+            BYTE* p=static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface)+y*video->m_SurfaceDesc.lPitch;
+            if (read) memcpy(read->data()+y*row,p,row);
+            if (write) memcpy(p,write->data()+y*row,row);
+            if (clear) memset(p,0,row);
+        }
+        video->BKUnlock(); return ok;
+    };
+    BOOL backedUp=pixels(&savedPixels,NULL,FALSE); check("back-surface-backed-up",backedUp);
+    struct Origin : CGameObject { BYTE GetObjectType() override { return TYPE_NONE; } };
+    auto* origin=new Origin; origin->m_pArea=area; origin->m_pos=CPoint(128,96);
+    check("source-registered",objects->Add(&origin->m_id,origin,INFINITE)==CGameObjectArray::SUCCESS);
+    LONG targetId=game->GetFixedOrderCharacterId(1); CGameObject* target=NULL; CPoint targetPos;
+    BYTE targetRC=objects->GetShare(targetId,CGameObjectArray::THREAD_ASYNCH,&target,INFINITE);
+    check("party-target-available",targetRC==CGameObjectArray::SUCCESS);
+    if (targetRC==CGameObjectArray::SUCCESS) { targetPos=target->GetPos(); objects->ReleaseShare(targetId,CGameObjectArray::THREAD_ASYNCH,INFINITE); }
+    auto retire=[&](CGameObject* object) {
+        POSITION node=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(object->m_id));
+        if (node) area->m_lVertSortAdd.RemoveAt(node);
+        object->RemoveFromArea();
+        check("fixture-object-retired",objects->Delete(object->m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE)==CGameObjectArray::SUCCESS);
+        delete object;
+    };
+    struct Impact : CProjectileImpactBAM {
+        using CProjectileImpactBAM::m_vidCell;
+        using CProjectileImpactBAM::m_bitmap;
+        using CProjectileImpactBAM::m_renderFlags;
+        using CProjectileImpactBAM::m_hasPalette;
+        using CProjectileImpactBAM::m_translucency;
+        INT arrivals=0;
+        Impact(const char* cell,const char* palette,LONG flags=8,BYTE translucency=0)
+            : CProjectileImpactBAM(CString(cell),CString(_T("")),CString(palette),flags,translucency) {}
+        void OnArrival() override { ++arrivals; }
+    };
+    struct Sparkle : CProjectileSparkleExplosion {
+        Sparkle() : CProjectileSparkleExplosion(CResRef("TRAVEL")) {}
+        BOOL Defaults() { return m_childProjectileType==0x4E && m_pVidCell->GetResRef()==CResRef("TRAVEL")
+            && m_renderFlags==0x20000 && m_sparkleColor==0; }
+    };
+    Sparkle defaults; check("leaf-only-overrides-explode",defaults.Defaults());
+    game->m_nTimeStop=0;
+    infinity.pResWED=NULL; infinity.rViewPort=CRect(80,80,400,320);
+    infinity.nCurrentX=72; infinity.nCurrentY=882;
+    memset(area->m_visibility.m_pMap,CVisibilityMap::VISIBILITY_MASK,visibility.size());
+    for (const auto& golden : SPARKLE_EXPLOSION_FACTORY) {
+        CProjectile* object=CProjectile::DecodeProjectile(golden.type,NULL,255);
+        BOOL kind=golden.sparkle?dynamic_cast<CProjectileSparkleExplosion*>(object)!=NULL:
+            dynamic_cast<CProjectileImpactBAM*>(object)!=NULL;
+        check("native-factory-class-and-metadata",kind && object->m_projectileType==golden.type-1
+            && object->m_fireSoundRef==CResRef(golden.fire) && object->m_arrivalSoundRef==CResRef(golden.arrival));
+        if (golden.sparkle && kind && targetRC==CGameObjectArray::SUCCESS) {
+            auto* parent=static_cast<CProjectileSparkleExplosion*>(object);
+            check("native-sparkle-factory-flags",parent->m_sparkleColor==golden.color && parent->m_bSparkleTrail==TRUE
+                && parent->m_bHasHeight==TRUE && parent->GetRenderFlags()==0x20008);
+            parent->m_pArea=area; parent->m_sourceId=origin->m_id; parent->m_targetId=targetId;
+            parent->m_targetX=-123; parent->m_targetY=456;
+            parent->Explode();
+            check("native-colored-impact-launched",area->m_lVertSortAdd.GetCount()==front+1);
+            if (area->m_lVertSortAdd.GetCount()>front) {
+                LONG id=reinterpret_cast<LONG>(area->m_lVertSortAdd.GetTail()); CGameObject* child=NULL;
+                BYTE rc=objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&child,INFINITE);
+                check("impact-registered",rc==CGameObjectArray::SUCCESS && dynamic_cast<CProjectileImpactBAM*>(child)!=NULL);
+                if (rc==CGameObjectArray::SUCCESS) {
+                    auto* effect=static_cast<CProjectile*>(child); USHORT expected=0;
+                    for (const auto& row : SPARKLE_EXPLOSION_DISPATCH) if (row.color==golden.color) expected=row.type;
+                    check("native-impact-provenance-and-placement",effect->m_projectileType==expected-1
+                        && effect->m_sourceId==origin->m_id && effect->m_targetId==targetId
+                        && effect->m_pos==CPoint(targetPos.x,targetPos.y+1) && effect->m_posZ==30
+                        && effect->CGameObject::m_pArea==area && effect->m_effectList.IsEmpty());
+                    objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE); retire(child);
+                }
+            }
+            while (handler->m_messageList.GetCount()>messages) {
+                CMessage* message=handler->m_messageList.RemoveTail();
+                auto* group=dynamic_cast<CMessage105*>(message);
+                check("empty-impact-group-ownership",group && group->m_nCount==0
+                    && group->m_sourceId==origin->m_id && group->m_targetId==targetId);
+                if (group) group->Run();
+                delete message;
+            }
+        } else if (!golden.sparkle && kind && backedUp) {
+            Impact reference(golden.cell,golden.palette);
+            check("native-impact-constructor-state",reference.m_vidCell.GetResRef()==CResRef(golden.cell)
+                && reference.m_hasPalette==!CString(golden.palette).IsEmpty() && reference.m_renderFlags==8
+                && reference.m_translucency==0 && reference.m_bHasHeight==TRUE
+                && reference.m_vidCell.GetCurrentSequenceId()==0 && reference.m_vidCell.m_nCurrentFrame==0);
+            if (reference.m_vidCell.pRes) {
+                ProjectileRenderFrameAnchor anchor(&reference.m_vidCell);
+                if (anchor.frame && (!anchor.header || anchor.headerFrame)) {
+                    object->m_pArea=area; object->CGameObject::m_pArea=area;
+                    object->m_pos=CPoint(232,1002); object->m_posZ=17; object->m_listType=CGameObject::LIST_FLIGHT;
+                    INT bitmapDemands=reference.m_bitmap.pRes?reference.m_bitmap.pRes->GetDemands():0;
+                    auto paint=[&](BOOL visible)->BOOL {
+                        if (!visible) return TRUE;
+                        CPoint center; CSize size;
+                        reference.m_vidCell.GetCurrentCenterPoint(center,FALSE); reference.m_vidCell.GetCurrentFrameSize(size,FALSE);
+                        CRect bounds(0,0,size.cx,size.cy); CPoint point(232,985);
+                        DWORD flags=8|CInfinity::FXPREP_COPYFROMBACK;
+                        if (reference.m_hasPalette) {
+                            reference.m_bitmap.pRes->Demand();
+                            reference.m_vidCell.SetPalette(reference.m_bitmap.pRes->GetColorTable(),reference.m_bitmap.pRes->GetColorCount(),CVidPalette::TYPE_RESOURCE);
+                            reference.m_bitmap.pRes->Release();
+                        }
+                        infinity.FXPrep(bounds,flags,CVIDINF_SURFACE_BACK,point,center);
+                        if (!infinity.FXLock(bounds,flags)) return FALSE;
+                        infinity.FXRender(&reference.m_vidCell,center.x,center.y,flags,0);
+                        infinity.FXUnlock(flags,NULL,CPoint(0,0));
+                        return infinity.FXBltFrom(CVIDINF_SURFACE_BACK,bounds,point.x,point.y,center.x,center.y,flags);
+                    };
+                    for (INT mode=0;mode<3;++mode) {
+                        SHORT tile=area->m_visibility.PointToTile(object->m_pos);
+                        if (mode==1) area->m_visibility.m_pMap[tile]=0;
+                        if (mode==2) infinity.nCurrentX+=10000;
+                        std::vector<BYTE> expected,actual;
+                        BOOL ok=pixels(NULL,NULL,TRUE) && paint(mode==0) && pixels(&expected,NULL,TRUE);
+                        object->Render(NULL,video,CVIDINF_SURFACE_BACK); ++draws;
+                        ok=pixels(&actual,NULL,FALSE) && ok;
+                        check("impact-full-software-pixels",ok && actual==expected);
+                        check("impact-render-resource-and-surface-balance",video->m_SurfaceDesc.lpSurface==NULL
+                            && (!reference.m_bitmap.pRes || reference.m_bitmap.pRes->GetDemands()==bitmapDemands));
+                        area->m_visibility.m_pMap[tile]=CVisibilityMap::VISIBILITY_MASK;
+                        if (mode==2) infinity.nCurrentX-=10000;
+                    }
+                } else check("impact-bam-frame-available",FALSE);
+                check("impact-frame-and-demands-restored",anchor.Restore());
+            } else check("impact-bam-resource-available",FALSE);
+            object->CGameObject::m_pArea=NULL;
+        }
+        delete object;
+    }
+    for (const auto& row : SPARKLE_EXPLOSION_DISPATCH) if (row.type==0) {
+        defaults.m_sparkleColor=row.color; defaults.m_pArea=area;
+        defaults.Explode(); check("unsupported-signed-color-does-not-launch",area->m_lVertSortAdd.GetCount()==front);
+    }
+    for (LONG flags : {LONG(0),LONG(8),LONG(0x80000000u)}) for (BYTE translucency : {BYTE(0),BYTE(2),BYTE(255)}) {
+        Impact state("ARARROW","",flags,translucency);
+        state.m_pArea=area; state.CGameObject::m_pArea=area; state.m_pos=CPoint(232,1002);
+        state.m_posZ=17; state.m_listType=CGameObject::LIST_FLIGHT;
+        ProjectileRenderFrameAnchor anchor(&state.m_vidCell);
+        SHORT frame=state.m_vidCell.m_nCurrentFrame;
+        state.Render(NULL,video,CVIDINF_SURFACE_BACK); ++draws;
+        LONG expected=flags==0?0:flags|CInfinity::FXPREP_COPYFROMBACK;
+        check("render-zero-flags-guard-and-dword-preservation",state.m_renderFlags==expected
+            && state.m_translucency==translucency && state.m_vidCell.m_nCurrentFrame==frame);
+        check("render-state-surface-and-demands-balanced",video->m_SurfaceDesc.lpSurface==NULL && anchor.Restore());
+        state.CGameObject::m_pArea=NULL;
+    }
+    {
+        Impact animation("SHAREA",""); animation.m_pArea=area; animation.m_id=-123;
+        animation.m_pos=CPoint(232,1002); animation.m_posZ=17;
+        SHORT before=animation.m_vidCell.m_nCurrentFrame;
+        game->m_nTimeStop=1; game->m_nTimeStopCaster=-1; animation.AIUpdate();
+        check("impact-time-stop-keeps-frame",animation.m_vidCell.m_nCurrentFrame==before && animation.arrivals==0);
+        game->m_nTimeStopCaster=-123; animation.AIUpdate();
+        check("impact-time-stop-owner-advances",animation.m_vidCell.m_nCurrentFrame==before+1 && animation.arrivals==0);
+        game->m_nTimeStop=0;
+        animation.m_vidCell.FrameSet(animation.m_vidCell.GetSequenceLength(0,FALSE)-1);
+        before=animation.m_vidCell.m_nCurrentFrame; animation.AIUpdate();
+        check("impact-end-arrives-before-advance",animation.arrivals==1 && animation.m_vidCell.m_nCurrentFrame==before);
+    }
+    retire(origin);
+    memcpy(area->m_visibility.m_pMap,visibility.data(),visibility.size());
+    infinity.pResWED=wed; infinity.rViewPort=view; infinity.nCurrentX=viewX; infinity.nCurrentY=viewY;
+    game->m_nTimeStop=stop; game->m_nTimeStopCaster=caster;
+    check("back-surface-restored",backedUp && pixels(NULL,&savedPixels,FALSE));
+    check("same-tick-state-restored",game->GetWorldTimer()->m_gameTime==clock && handler->m_messageList.GetCount()==messages
+        && area->m_lVertSortAdd.GetCount()==front && area->m_lVertSortBackAdd.GetCount()==back
+        && area->m_lVertSortFlightAdd.GetCount()==flight && area->m_lVertSort.GetCount()==sorted);
+    Emit("{\"step\":%d,\"op\":\"sparkleexplosionchecks\",\"checks\":%d,\"renderCalls\":%d,\"nativeCases\":37,\"restored\":true,\"valid\":%s}",nStep,checks,draws,valid?"true":"false");
+    if (!valid) Fail(nStep,"sparkleexplosionchecks","colored impact factory/lifecycle/render mismatch");
+}
 
 void AreaNearestChecks(INT nStep)
 {
@@ -1865,6 +2066,47 @@ void AreaNearestChecks(INT nStep)
                     && saved[i].p->m_equipedEffectList.GetCount()==saved[i].equipped);
                 Emit("{\"step\":%d,\"op\":\"chain-live-damage\",\"target\":%d,\"loss\":%ld}",nStep,i,loss);
             }
+            // The new BAM carrier delivers ordinary effects during Fire,
+            // before registration/animation, and must not repeat them on expiry.
+            CProjectile* impact=CProjectile::DecodeProjectile(0xC5,saved[0].p,0);
+            impact->AddEffect(CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],saved[1].p->m_pos));
+            LONG hpBefore=saved[1].p->m_baseStats.m_hitPoints;
+            impact->Fire(area,origin->m_id,ids[1],CPoint(-123,456),30,2);
+            LONG impactId=impact->m_id;
+            check("bam-fire-delivers-before-animation",impact->m_effectList.IsEmpty()
+                && handler->m_messageList.GetCount()==messages+1
+                && impact->m_pos==CPoint(137,97) && impact->m_posZ==30);
+            while (handler->m_messageList.GetCount()>messages) {
+                CMessage* message=handler->m_messageList.RemoveTail();
+                if (dynamic_cast<CMessage105*>(message) || dynamic_cast<CMessageAddEffect*>(message)) message->Run();
+                delete message;
+            }
+            check("bam-fire-actual-hp-loss",hpBefore-saved[1].p->m_baseStats.m_hitPoints==6
+                && saved[0].p->m_baseStats.m_hitPoints==512);
+            POSITION pending=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(impactId));
+            if (pending) area->m_lVertSortAdd.RemoveAt(pending);
+            BOOL retired=FALSE; INT ticks=0;
+            for (;ticks<512 && !retired;++ticks) {
+                impact->AIUpdate(); CGameObject* live=NULL;
+                BYTE rc=objects->GetShare(impactId,CGameObjectArray::THREAD_ASYNCH,&live,INFINITE);
+                retired=rc!=CGameObjectArray::SUCCESS;
+                if (retired) check("bam-expiry-deletes-carrier",rc==CGameObjectArray::DELETED);
+                else { impact=static_cast<CProjectile*>(live); objects->ReleaseShare(impactId,CGameObjectArray::THREAD_ASYNCH,INFINITE); }
+            }
+            if (!retired) retire(impact);
+            while (handler->m_messageList.GetCount()>messages) {
+                CMessage* message=handler->m_messageList.RemoveTail();
+                auto* group=dynamic_cast<CMessage105*>(message);
+                check("bam-expiry-queues-empty-owned-group",group && group->m_nCount==0
+                    && group->m_sourceId==origin->m_id && group->m_targetId==ids[1]);
+                if (group) group->Run();
+                delete message;
+            }
+            check("bam-animation-expires-without-repeat-damage",retired
+                && hpBefore-saved[1].p->m_baseStats.m_hitPoints==6 && handler->m_messageList.GetCount()==messages
+                && saved[1].p->m_timedEffectList.GetCount()==saved[1].timed && saved[1].p->m_equipedEffectList.GetCount()==saved[1].equipped);
+            Emit("{\"step\":%d,\"op\":\"impact-bam-damage\",\"loss\":%ld,\"ticks\":%d,\"retired\":%s}",nStep,
+                hpBefore-saved[1].p->m_baseStats.m_hitPoints,ticks,retired?"true":"false");
         }
         if (chain) {
             if (chain->CGameObject::m_pArea) retire(chain); else delete chain;
@@ -4079,6 +4321,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "nearestchecks") == 0) {
         AreaNearestChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "sparkleexplosionchecks") == 0) {
+        SparkleExplosionChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

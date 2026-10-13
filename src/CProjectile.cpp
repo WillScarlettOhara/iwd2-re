@@ -713,6 +713,52 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
         break;
     }
 
+    case 0x95: case 0x96: case 0x97: case 0x98: case 0x99:
+    case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0xB6: case 0xB7: {
+        // Exploding sparkle streams use their own Explode virtual, rather
+        // than the plain travelling sparkle or generic projectile fallback.
+        auto* pSparkle = new CProjectileSparkleExplosion(CResRef("TRAVEL"));
+        CString paletteRef; CResRef fireRef(""), arrivalRef("");
+        SHORT color = 0, child = 0;
+        switch (projectileType) {
+        case 0x95: color=2; child=0x2E; paletteRef="STTRAVL1"; fireRef="TRA_04A"; arrivalRef="CAS_M08"; break;
+        case 0x96: color=4; child=0x2F; paletteRef="STTRAVL2"; fireRef="TRA_04C"; arrivalRef="EFF_M05"; break;
+        case 0x97: color=6; child=0x30; paletteRef="STTRAVL5"; fireRef="TRA_04B"; arrivalRef="CAS_P03"; break;
+        case 0x98: color=9; child=0x31; paletteRef="STTRAVL7"; break;
+        case 0x99: color=10; child=0x32; break;
+        case 0x9A: color=1; child=0x33; break;
+        case 0x9B: color=3; child=0x34; break;
+        case 0x9C: color=7; child=0x35; paletteRef="STTRAVL6"; break;
+        case 0x9D: color=5; child=0x36; paletteRef="STTRAVL3"; fireRef="TRA_04A"; arrivalRef="CAS_P02"; break;
+        case 0xB6: color=11; child=0x36; paletteRef="STTRAVL4"; break;
+        case 0xB7: color=12; child=0xB8; paletteRef="STTRAVL8"; fireRef="TRA_03"; arrivalRef="EFF_M04"; break;
+        }
+        if (!paletteRef.IsEmpty()) pSparkle->SetTravelPalette(paletteRef);
+        pSparkle->m_bSparkleTrail=TRUE; pSparkle->m_sparkleColor=color;
+        pSparkle->m_childProjectileType=child; pSparkle->m_bHasHeight=TRUE;
+        pSparkle->m_renderFlags |= 8;
+        pSparkle->m_fireSoundRef=fireRef; pSparkle->m_arrivalSoundRef=arrivalRef;
+        pProjectile=pSparkle;
+        break;
+    }
+
+    case 0xC4: case 0xC5: case 0xC6: case 0xC7:
+    case 0xC8: case 0xC9: case 0xCA: case 0xCB: {
+        // Colored impact BAMs selected by the exploding sparkle leaf.
+        CString paletteRef;
+        switch (projectileType) {
+        case 0xC5: paletteRef="SHAREA1"; break;
+        case 0xC7: paletteRef="SHAREA3"; break;
+        case 0xC8: paletteRef="SHAREA4"; break;
+        case 0xC9: paletteRef="SHAREA5"; break;
+        case 0xCA: paletteRef="SHAREA6"; break;
+        case 0xCB: paletteRef="SHAREA2"; break;
+        }
+        pProjectile=new CProjectileImpactBAM(CString(_T("SHAREA")),CString(_T("")),paletteRef,8,0);
+        pProjectile->m_fireSoundRef=""; pProjectile->m_arrivalSoundRef="";
+        break;
+    }
+
     case 0x2F:   // SPARKLBL blue
     case 0x30:   // SPARKLGO gold
     case 0x31:   // SPARKLPU purple
@@ -2318,6 +2364,123 @@ CProjectile::CProjectile()
     m_arrivalSoundRef = "";
     m_loopArrivalSound = FALSE;
     m_nTargetId = CGameObjectArray::INVALID_INDEX;
+}
+
+// 0x535F20
+CProjectileImpactBAM::CProjectileImpactBAM(const CString& visualRef, const CString& soundRef,
+    const CString& paletteRef, LONG renderFlags, BYTE translucency)
+{
+    m_vidCell.SetResRef(CResRef(visualRef),FALSE,TRUE,TRUE);
+    m_hasPalette=!paletteRef.IsEmpty();
+    if (m_hasPalette) {
+        m_bitmap.SetResRef(CResRef(paletteRef),TRUE,TRUE);
+        m_bitmap.m_bDoubleSize=FALSE;
+    }
+    m_vidCell.SequenceSet(0); m_vidCell.FrameSet(0);
+    m_sound.Stop(); m_sound.SetResRef(CResRef(soundRef),TRUE,TRUE);
+    if (!m_sound.GetLooping()) m_sound.SetFireForget(TRUE);
+    m_sound.SetChannel(14,reinterpret_cast<DWORD>(m_pArea));
+    m_fireSoundRef=CResRef(soundRef);
+    m_translucency=translucency; m_renderFlags=renderFlags; m_bHasHeight=TRUE;
+}
+
+// 0x536380
+void CProjectileImpactBAM::AIUpdate()
+{
+    auto* game=g_pBaldurChitin->GetObjectGame();
+    if (game->m_nTimeStop!=0 && game->m_nTimeStopCaster!=m_id) return;
+    if (m_vidCell.IsEndOfSequence(FALSE)) {
+        OnArrival();
+        return;
+    }
+    m_vidCell.FrameAdvance();
+    m_sound.SetCoordinates(m_pos.x,m_pos.y,m_posZ);
+}
+
+// 0x5363F0
+void CProjectileImpactBAM::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
+{
+    (void)pArea;
+    UTIL_ASSERT(pVidMode!=NULL);
+    SHORT tileX=static_cast<SHORT>(m_pos.x/CVisibilityMap::SQUARE_SIZEX), tileY=static_cast<SHORT>(m_pos.y/CVisibilityMap::SQUARE_SIZEY);
+    SHORT tile=static_cast<SHORT>(static_cast<DWORD>(tileY)*static_cast<DWORD>(m_pArea->m_visibility.m_nWidth)
+        + static_cast<DWORD>(tileX));
+    if (!m_pArea->m_visibility.IsTileVisible(tile)) return;
+    auto* infinity=m_pArea->GetInfinity();
+    CRect viewport(infinity->nCurrentX,infinity->nCurrentY,
+        static_cast<LONG>(static_cast<DWORD>(infinity->nCurrentX)+static_cast<DWORD>(infinity->rViewPort.Width())),
+        static_cast<LONG>(static_cast<DWORD>(infinity->nCurrentY)+static_cast<DWORD>(infinity->rViewPort.Height())));
+    CPoint pos(m_pos.x,static_cast<LONG>(static_cast<DWORD>(m_pArea->GetHeightOffset(m_pos,m_listType))
+        +static_cast<DWORD>(m_pos.y)-static_cast<DWORD>(m_posZ)));
+    CPoint reference; CSize size;
+    m_vidCell.GetCurrentCenterPoint(reference,FALSE); m_vidCell.GetCurrentFrameSize(size,FALSE);
+    CRect fx(0,0,size.cx,size.cy);
+    CRect bounds(static_cast<LONG>(static_cast<DWORD>(pos.x)-static_cast<DWORD>(reference.x)),
+        static_cast<LONG>(static_cast<DWORD>(pos.y)-static_cast<DWORD>(reference.y)),0,0);
+    bounds.right=static_cast<LONG>(static_cast<DWORD>(bounds.left)+static_cast<DWORD>(size.cx));
+    bounds.bottom=static_cast<LONG>(static_cast<DWORD>(bounds.top)+static_cast<DWORD>(size.cy));
+    CRect intersection; intersection.IntersectRect(bounds,viewport);
+    if (intersection.IsRectEmpty()) return;
+    if (m_renderFlags!=0) m_renderFlags|=CInfinity::FXPREP_COPYFROMBACK;
+    infinity->FXPrep(fx,m_renderFlags,nSurface,pos,reference);
+    if (infinity->FXLock(fx,m_renderFlags)) {
+        if (m_hasPalette) {
+            m_bitmap.pRes->Demand();
+            int count=m_bitmap.pRes->GetColorCount();
+            m_vidCell.SetPalette(m_bitmap.pRes->GetColorTable(),count,CVidPalette::TYPE_RESOURCE);
+            infinity->FXRender(&m_vidCell,reference.x,reference.y,m_renderFlags,m_translucency);
+            m_bitmap.pRes->Release();
+        } else {
+            infinity->FXRender(&m_vidCell,reference.x,reference.y,m_renderFlags,m_translucency);
+        }
+        infinity->FXRenderClippingPolys(pos.x,pos.y,0,reference,bounds,FALSE,m_renderFlags);
+        infinity->FXUnlock(m_renderFlags,NULL,CPoint(0,0));
+        infinity->FXBltFrom(nSurface,fx,pos.x,pos.y,reference.x,reference.y,m_renderFlags);
+    }
+}
+
+// 0x5366F0
+void CProjectileImpactBAM::Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType)
+{
+    (void)nType;
+    m_sourceId=source; m_targetId=target; m_pArea=pArea;
+    DeliverEffects();
+    auto* objects=g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+    if (objects->Add(&m_id,this,INFINITE)!=CGameObjectArray::SUCCESS) {
+        delete this;
+        return;
+    }
+    CPoint pos;
+    if (target==CGameObjectArray::INVALID_INDEX) pos=targetPos;
+    else GetStart(target,pos,FALSE);
+    m_sound.Play(pos.x,pos.y,0,FALSE);
+    pos.y=static_cast<LONG>(static_cast<DWORD>(pos.y)+1);
+    CGameObject::AddToArea(pArea,pos,nHeight,CGameObject::LIST_FRONT);
+}
+
+// 0x5297B0
+CProjectileSparkleExplosion::CProjectileSparkleExplosion(const CResRef& resRef)
+    : CProjectileExploding(resRef)
+{
+}
+
+// 0x52E160
+void CProjectileSparkleExplosion::Explode()
+{
+    USHORT type;
+    switch (m_sparkleColor) {
+    case 1: case 9: case 10: type=0xC4; break;
+    case 2: type=0xC5; break;
+    case 3: case 11: type=0xC8; break;
+    case 4: type=0xC6; break;
+    case 5: type=0xC7; break;
+    case 6: type=0xC9; break;
+    case 7: case 8: type=0xCA; break;
+    case 12: type=0xCB; break;
+    default: return;
+    }
+    CProjectile* child=DecodeProjectile(type,NULL,0);
+    if (child) child->Fire(m_pArea,m_sourceId,m_targetId,CPoint(m_targetX,m_targetY),30,m_sparkleColor);
 }
 
 // 0x57CAC0

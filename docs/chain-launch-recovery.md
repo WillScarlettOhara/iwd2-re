@@ -55,5 +55,5 @@ Profile cleanup restored hashes. No gates reduced. Delivery parity GREEN;
 other four YELLOW call-count mismatches (split factory/STL/inlined calls).
 Missing offset oracles leave full static equivalence unproven; visual/player
 spell presentation not claimed. Native reference verifies factory semantics,
-not the complete gameplay path. Next: identify/recover impact visual dispatch
-52E160 (native vtable reference 84D9C0), then verify its production callers.
+not the complete gameplay path. Impact dispatch 52E160 and its BAM lifecycle
+are now recovered in [continuation](sparkle-explosion-recovery.md).

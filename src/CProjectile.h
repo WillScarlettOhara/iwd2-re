@@ -113,6 +113,25 @@ public:
               LONG nHeight, SHORT nType) override;   // 0x529950 (slot 27)
 };
 
+// Native impact BAM carrier (0x535F20, vtable 0x84E9C0, size 0x32C).
+// Separate from CProjectileBAM: its lifetime and rendering virtuals differ.
+#pragma pack(push, 2)
+class CProjectileImpactBAM /*#guess*/ : public CProjectile {
+public:
+    CProjectileImpactBAM(const CString& visualRef, const CString& soundRef,
+        const CString& paletteRef, LONG renderFlags, BYTE translucency);
+    void AIUpdate() override;
+    void Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface) override;
+    void Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType) override;
+protected:
+    /* 0192 */ CVidCell m_vidCell;
+    /* 026C */ CVidBitmap m_bitmap;
+    /* 0326 */ LONG m_renderFlags;
+    /* 032A */ BYTE m_hasPalette;
+    /* 032B */ BYTE m_translucency;
+};
+#pragma pack(pop)
+
 class CProjectileBAM : public CProjectile {
 public:
     CProjectileBAM(const CResRef& visualResRef, const CResRef& arrivalSoundRef, BYTE sequenceDelay, BYTE initialDelay, const IcewindCVisualEffect& visualEffect);
@@ -338,6 +357,14 @@ protected:
     /* 02FA */ CVidCell m_explodeCell1; // #guess name; Render/AI cell at native +0x2FA
     /* 03D4 */ int m_bExplodeCell2Active; // #guess name; second explosion cell enable
     /* 03D8 */ CVidCell m_explodeCell2; // #guess name; Render/AI cell at native +0x3D8
+};
+
+// Native 0x5297B0, vtable 0x84D938, size 0x4B2: exploding sparkle
+// carrier with no extra fields, whose Explode dispatches a colored BAM.
+class CProjectileSparkleExplosion /*#guess*/ : public CProjectileExploding {
+public:
+    explicit CProjectileSparkleExplosion(const CResRef& resRef);
+    void Explode() override;
 };
 
 // Leaf 0x52E9F0 -- the exploding flame missile (DecodeProjectile type 0x3;
