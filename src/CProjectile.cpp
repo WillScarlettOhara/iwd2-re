@@ -6380,6 +6380,81 @@ void IcewindCProjectileScorcher::InitializeOffsets()
     }
 }
 
+// 0x57C510
+IcewindCProjectileChainLightning::IcewindCProjectileChainLightning(const std::set<LONG>& struckTargets)
+    : IcewindCProjectileTravellingVFX(CResRef("CLightT")), m_struckTargets(struckTargets)
+{
+    // This copies target history, not a projectile. Cell, sound and launch
+    // state are rebuilt from the VFX base rather than copied from the parent.
+    m_pVidCell->SequenceSet(0);
+    m_dirCount = 16;
+    m_fireSoundRef = "TRA_09";
+    // Native WORD shift doubles the base speed (20), retaining 16-bit wrap.
+    m_velocity = static_cast<SHORT>(static_cast<USHORT>(m_velocity) << 1);
+    m_visualEffect.SetCopyFromBack(TRUE);
+    // The base enables both height gates; the chain carrier clears both.
+    m_bHasHeight = FALSE;
+    m_useHeightOffset = 0;
+}
+
+// 0x57C7B0
+void IcewindCProjectileChainLightning::DeliverEffects()
+{
+    m_struckTargets.insert(m_targetId);
+    CGameObjectArray* objects = g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+    CGameObject* current;
+    if (objects->GetShare(m_targetId, CGameObjectArray::THREAD_ASYNCH, &current, INFINITE)
+        == CGameObjectArray::SUCCESS) {
+        CGameArea* area = current->m_pArea;
+        UTIL_ASSERT(area != NULL);
+        objects->ReleaseShare(m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        LONG target = 0;
+        BYTE nearest = 0;
+        for (;;) {
+            LONG previous = target;
+            CAIObjectType type(CAIObjectType::ANYONE);
+            target = area->GetNearest(m_targetId, type, 0x7FFF, m_pArea->m_visibleTerrainTable,
+                TRUE, TRUE, TRUE, nearest, FALSE);
+            if (target == previous || target == CGameObjectArray::INVALID_INDEX || nearest > 20) {
+                CProjectile::DeliverEffects();
+                return;
+            }
+            ++nearest;
+            if (m_struckTargets.find(target) == m_struckTargets.end()) {
+                break;
+            }
+        }
+        auto* child = new IcewindCProjectileChainLightning(m_struckTargets);
+        CGameObject* next;
+        if (objects->GetShare(target, CGameObjectArray::THREAD_ASYNCH, &next, INFINITE)
+            == CGameObjectArray::SUCCESS) {
+            CPoint position = next->GetPos();
+            LONG id = next->m_id;
+            objects->ReleaseShare(target, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            POSITION effectPosition = m_effectList.GetHeadPosition();
+            while (effectPosition != NULL) {
+                CGameEffect* effect = m_effectList.GetNext(effectPosition)->Copy();
+                if (effect->m_effectID == CGAMEEFFECT_DAMAGE) {
+                    if (m_struckTargets.size() == 1) {
+                        effect->m_numDice >>= 1;
+                    }
+                    if (static_cast<BYTE>(effect->m_casterLevel) <= m_struckTargets.size()) {
+                        // Native abort leaves this unowned copy allocated.
+                        delete child;
+                        CProjectile::DeliverEffects();
+                        return;
+                    }
+                }
+                child->AddEffect(effect);
+            }
+            child->Fire(m_pArea, m_id, id, position, m_posZ, 0);
+        } else {
+            delete child;
+        }
+    }
+    CProjectile::DeliverEffects();
+}
+
 // 0x57AEB0
 IcewindCProjectileScorcher::IcewindCProjectileScorcher()
     : IcewindCProjectileTravellingVFX(CResRef("AScorcT"))

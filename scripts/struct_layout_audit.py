@@ -215,7 +215,7 @@ def run_layout_dump(cls: str, source_rel: str, build_dir: Path | None = None) ->
     return out.stdout + out.stderr
 
 
-def parse_dump(dump: str, cls: str):
+def parse_dump(dump: str, cls: str, include_inherited: bool = False):
     """member -> compiled_offset, from the base `class <cls>` block (single pipe)."""
     lines = dump.splitlines()
     start = next((i for i, ln in enumerate(lines)
@@ -227,10 +227,36 @@ def parse_dump(dump: str, cls: str):
     for ln in lines[start + 1:]:
         if re.match(r"^\s*class\s", ln):        # next class block -> end
             break
-        m = _DUMP_MEMBER.match(ln)
+        member_line = re.sub(r"(\|\s*)+", "| ", ln) if include_inherited else ln
+        m = _DUMP_MEMBER.match(member_line)
         if m:
             offsets.setdefault(m.group(3), int(m.group(1)))
     return offsets
+
+
+def single_member_anchor(header: Path, cls: str, dump: str, common):
+    """Audit a one-member leaf against its immediate base's annotated tail.
+
+    This checks the base/leaf boundary instead of silently accepting a class
+    with no adjacent direct-member spacing evidence. Unknown bases still fail.
+    """
+    if len(common) != 1:
+        return common
+    text = re.sub(r"/\*.*?\*/", "", header.read_text(encoding="utf-8"), flags=re.S)
+    base = re.search(rf"\bclass\s+{re.escape(cls)}\s*:\s*public\s+(\w+)\s*\{{", text)
+    if not base:
+        return common
+    try:
+        members = parse_header(header, base[1])
+    except AuditError:
+        return common
+    inherited = parse_dump(dump, cls, include_inherited=True)
+    if not members:
+        return common
+    anchor = members[-1]
+    if anchor[0] == common[0][0] or anchor[0] not in inherited or anchor[1] >= common[0][1]:
+        return common
+    return [anchor, common[0]]
 
 
 def main():
@@ -264,6 +290,12 @@ def main():
     compiled = parse_dump(dump, args.cls)
 
     common = [(m, off, typ) for m, off, typ in hdr if m in compiled]
+    if len(common) == 1:
+        common = single_member_anchor(header, args.cls, dump, common)
+        if len(common) == 2:
+            inherited = parse_dump(dump, args.cls, include_inherited=True)
+            compiled[common[0][0]] = inherited[common[0][0]]
+            print(f"[audit] one-member leaf anchored to inherited {common[0][0]}")
     if len(common) < 2:
         raise AuditError(f"only {len(common)} member(s) matched between header and dump "
                          "-- cannot diff spacing")

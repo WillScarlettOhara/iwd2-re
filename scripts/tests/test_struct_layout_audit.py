@@ -40,6 +40,26 @@ class StructLayoutAuditTest(unittest.TestCase):
         with self.assertRaisesRegex(audit.AuditError, "no '/d1reportSingleClassLayoutCMissing'"):
             audit.parse_dump(DUMP, "CMissing")
 
+    def test_one_member_leaf_checks_annotated_base_boundary(self):
+        header = self.root / "leaf.h"
+        header.write_text("class CBase {\n/* 0000 */ WORD tail;\n};\n"
+                          "class CLeaf /*#guess*/ : public CBase {\n/* 0002 */ LONG only;\n};\n")
+        dump = "class CLeaf size(6):\n 0 | | WORD tail\n 2 | LONG only\n"
+        common = [("only", 2, "LONG")]
+        self.assertEqual(audit.single_member_anchor(header, "CLeaf", dump, common),
+                         [("tail", 0, "WORD"), ("only", 2, "LONG")])
+        drifted = dump.replace("2 | LONG", "4 | LONG")
+        offsets = audit.parse_dump(drifted, "CLeaf", include_inherited=True)
+        self.assertEqual(offsets["only"] - offsets["tail"], 4)
+        gap_drift = (offsets["only"] - offsets["tail"]) - (common[0][1] - 0)
+        self.assertEqual(audit.classify("WORD", common[0][1], gap_drift), "actionable")
+
+    def test_one_member_leaf_missing_base_evidence_stays_unproven(self):
+        header = self.root / "leaf.h"
+        header.write_text("class CLeaf : public CMissing {\n/* 0004 */ LONG only;\n};\n")
+        common = [("only", 4, "LONG")]
+        self.assertEqual(audit.single_member_anchor(header, "CLeaf", DUMP, common), common)
+
     def test_x64_build_cannot_supply_x86_layout_evidence(self):
         (self.root / "iwd2-re.vcxproj").touch()
         (self.root / "CMakeCache.txt").write_text(

@@ -556,6 +556,20 @@ protected:
 };
 #pragma pack(pop)
 
+// Chain carrier: vtable 0x850F14, native size 0x2BE. The constructor copies
+// the signed target-ID set, not a whole projectile. Original initial launch
+// construction is inlined in CGameSprite::UpdateSpriteEffect and is deferred.
+#pragma pack(push, 2)
+class IcewindCProjectileChainLightning /*#guess*/ : public IcewindCProjectileTravellingVFX {
+public:
+    explicit IcewindCProjectileChainLightning(const std::set<LONG>& struckTargets);
+    void DeliverEffects() override;
+
+protected:
+    /* 02AE */ std::set<LONG> m_struckTargets;
+};
+#pragma pack(pop)
+
 // Intermediate base 0x56EDD0 -- the large spell-hit / area-of-effect projectile
 // (vtable 0x84F1C4; : IcewindCProjectileTravellingVFX). Unnamed in the binary
 // (no BG2/RTTI carry-over); the AOE spell-effect family builds through it --

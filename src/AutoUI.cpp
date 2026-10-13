@@ -121,6 +121,7 @@
 //   vfxrenderchecks           compare VFX masks, translucency, shadow bounds and sequences;
 //   beamrenderchecks          verify segmented beam pixels, rejection and height stepping;
 //   beamchecks                verify beam launch, ticks, polygon strikes and delivery;
+//   chainchecks               verify chain history, child launch and ordered payloads;
 //                                restore camera, search, visibility and back pixels.
 //   sparklewait                require emitted clusters to leave all area lists.
 //   rebounddamage              service a registered bolt beside portrait 1, then
@@ -1667,6 +1668,147 @@ struct ProjectileRenderFrameAnchor {
 };
 
 #include "BeamTickGolden.h"
+
+void ChainLightningChecks(INT nStep)
+{
+    auto* game = g_pBaldurChitin->GetObjectGame(); auto* objects = game->GetObjectArray();
+    auto* area = game->GetVisibleArea(); auto* handler = g_pBaldurChitin->GetMessageHandler();
+    if (!area || !area->m_visibility.m_pMap) { Fail(nStep,"chainchecks","requires loaded area"); return; }
+    INT checks = 0; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"chain-case\",\"case\":\"%s\",\"passed\":false}",nStep,name);
+    };
+    struct Chain : IcewindCProjectileChainLightning {
+        Chain(const std::set<LONG>& ids) : IcewindCProjectileChainLightning(ids) {}
+        const std::set<LONG>& Seen() const { return m_struckTargets; }
+        BOOL Configured() const { return m_dirCount==16 && m_pVidCell->GetCurrentSequenceId()==0
+            && m_velocity==40 && m_visualEffect.m_bCopyFromBack==TRUE && !m_bHasHeight && !m_useHeightOffset; }
+    };
+    std::set<LONG> ids = {LONG(0x80000000u),-1,0,0x7FFFFFFF};
+    Chain copied(ids); ids.clear();
+    check("constructor-copies-signed-ids",copied.Seen().size()==4 && *copied.Seen().begin()==LONG(0x80000000u));
+    check("constructor-configures-independent-carrier",copied.Configured() && copied.m_fireSoundRef==CResRef("TRA_09")
+        && copied.m_effectList.IsEmpty() && copied.m_sourceId==0);
+    copied.m_targetId = -2; copied.AddEffect(new CGameEffect()); copied.DeliverEffects();
+    check("missing-target-insert-before-failed-delivery",copied.Seen().count(-2)==1 && copied.m_effectList.GetCount()==1);
+    CGameObject* startObject = NULL; CGameObject* nextObject = NULL;
+    LONG startId = game->GetFixedOrderCharacterId(0), nextId = game->GetFixedOrderCharacterId(1);
+    BYTE startRC = objects->GetDeny(startId,CGameObjectArray::THREAD_ASYNCH,&startObject,INFINITE);
+    BYTE nextRC = objects->GetDeny(nextId,CGameObjectArray::THREAD_ASYNCH,&nextObject,INFINITE);
+    check("party-targets-available",startRC==CGameObjectArray::SUCCESS && nextRC==CGameObjectArray::SUCCESS);
+    ULONG clock = game->GetWorldTimer()->m_gameTime; INT messageCount = handler->m_messageList.GetCount();
+    INT front = area->m_lVertSort.GetCount(), pending = area->m_lVertSortAdd.GetCount();
+    if (startRC==CGameObjectArray::SUCCESS && nextRC==CGameObjectArray::SUCCESS) {
+        auto* start = static_cast<CGameSprite*>(startObject); auto* next = static_cast<CGameSprite*>(nextObject);
+        CPoint startPos = start->m_pos, nextPos = next->m_pos;
+        POSITION startNode = start->m_posVertList, nextNode = next->m_posVertList;
+        auto startList = start->m_listType, nextList = next->m_listType;
+        auto active = next->m_active, activeAI = next->m_activeAI, imprisoned = next->m_activeImprisonment;
+        auto stealth = next->m_baseStats.m_bStealthMode;
+        auto state = next->m_derivedStats.m_generalState;
+        std::vector<BYTE> visibility(area->m_visibility.m_pMap,area->m_visibility.m_pMap+area->m_visibility.m_nMapSize);
+        memset(area->m_visibility.m_pMap,CVisibilityMap::VISIBILITY_MASK,visibility.size());
+        start->m_pos = next->m_pos = CPoint(128,96);
+        start->m_listType = next->m_listType = CGameObject::LIST_FRONT;
+        POSITION a = area->m_lVertSort.AddTail(reinterpret_cast<int*>(startId));
+        POSITION b = area->m_lVertSort.AddTail(reinterpret_cast<int*>(nextId));
+        start->m_posVertList = a; next->m_posVertList = b;
+        next->m_active = next->m_activeAI = next->m_activeImprisonment = TRUE;
+        next->m_baseStats.m_bStealthMode = 0; next->m_derivedStats.m_generalState &= ~(STATE_DEAD|STATE_SLEEPING);
+        check("real-nearest-selects-unseen-party-member",area->GetNearest(startId,CAIObjectType::ANYONE,0x7FFF,
+            area->m_visibleTerrainTable,TRUE,TRUE,TRUE,0,FALSE)==nextId);
+        struct Payload : CGameEffect {
+            std::vector<CGameEffect*>* copies;
+            CGameEffect* Copy() override {
+                auto* effect = new CGameEffect; effect->CopyFromBase(this); copies->push_back(effect); return effect;
+            }
+        };
+        auto retire = [&](CProjectile* p) {
+            POSITION node = area->m_lVertSortAdd.Find(reinterpret_cast<int*>(p->m_id));
+            if (node) area->m_lVertSortAdd.RemoveAt(node);
+            p->RemoveFromArea(); objects->Delete(p->m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE); delete p;
+        };
+        // First-hop halving applies to DWORD dice count, not flat damage.
+        // Caster level is compared using its low BYTE against set cardinality.
+        for (INT test = 0; test < 10; ++test) {
+            std::set<LONG> history;
+            if (test==2 || test==8) history.insert(-123);
+            if (test==9) history.insert(nextId);
+            auto* chain = new Chain(history);
+            chain->m_sourceId = startId; chain->m_targetId = startId;
+            chain->m_casterResRef = CResRef("ZRCHIT"); chain->m_projectileType = 0x6C;
+            chain->m_pArea = area; chain->CGameObject::m_pArea = area;
+            chain->m_pos = CPoint(128,96); chain->m_posZ = 17;
+            objects->Add(&chain->m_id,chain,INFINITE); LONG chainId = chain->m_id;
+            std::vector<CGameEffect*> copies;
+            auto* effect = new Payload; effect->copies = &copies;
+            effect->m_effectID = test==7?CGAMEEFFECT_AC:CGAMEEFFECT_DAMAGE;
+            effect->m_effectAmount = -17; effect->m_numDice = test==6?0x80000001u:9;
+            effect->m_casterLevel = test==3?1:test==4?256:test==5?258:test==8?2:3;
+            if (test==1 || test==3) {
+                auto* prefix = new Payload; prefix->copies = &copies;
+                prefix->m_effectID = CGAMEEFFECT_AC; prefix->m_effectAmount = 999;
+                chain->AddEffect(prefix);
+            }
+            chain->AddEffect(effect);
+            chain->DeliverEffects();
+            BOOL shouldLaunch = test!=3 && test!=4 && test!=8 && test!=9;
+            CProjectile* child = NULL;
+            POSITION p = area->m_lVertSortAdd.GetHeadPosition();
+            while (p) {
+                LONG id = reinterpret_cast<LONG>(area->m_lVertSortAdd.GetNext(p)); CGameObject* object = NULL;
+                if (objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS) {
+                    if (dynamic_cast<IcewindCProjectileChainLightning*>(object)) child = static_cast<CProjectile*>(object);
+                    objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                }
+            }
+            check("child-registration-and-cardinality-limit",(child!=NULL)==shouldLaunch);
+            check("parent-payload-delivered-on-every-path",chain->m_effectList.IsEmpty()
+                && chain->Seen().count(startId)==1 && handler->m_messageList.GetCount()==messageCount+1);
+            if (child) {
+                check("child-launch-source-is-parent-projectile",child->m_sourceId==chainId && child->m_targetId==nextId
+                    && child->m_targetX==128 && child->m_targetY==96 && child->m_effectList.GetCount()==(test==1?2:1));
+                if (test==1) check("ordered-mixed-payload-copy",child->m_effectList.GetHead()->m_effectID==CGAMEEFFECT_AC
+                    && child->m_effectList.GetHead()->m_effectAmount==999);
+                CGameEffect* copy = child->m_effectList.GetTail();
+                DWORD expectedDice = test==7 || test==2?9:test==6?0x40000000u:4;
+                check("clone-dice-and-flat-damage",copy!=effect && copy->m_numDice==expectedDice
+                    && copy->m_effectAmount==-17 && effect->m_numDice==(test==6?0x80000001u:9));
+                check("child-constructor-does-not-copy-caster-metadata",child->m_casterResRef==CResRef("")
+                    && child->m_projectileType==0);
+                retire(child);
+            } else if (!copies.empty()) {
+                // Native threshold abort leaks its unattached copy; the test
+                // owns that pointer explicitly so no fixture allocation leaks.
+                check("aborted-copy-was-not-attached",copies.size()==(test==3?2:1));
+                delete copies.back();
+            }
+            while (handler->m_messageList.GetCount()>messageCount) {
+                auto* message = handler->m_messageList.RemoveTail();
+                auto* group = dynamic_cast<CMessage105*>(message);
+                check("original-effect-message-provenance",group && group->m_sourceId==startId
+                    && group->m_targetId==startId && group->m_nCount==((test==1 || test==3)?2:1));
+                delete message;
+            }
+            retire(chain);
+            Emit("{\"step\":%d,\"op\":\"chain-hop\",\"case\":%d,\"launched\":%s}",nStep,test,child?"true":"false");
+        }
+        area->m_lVertSort.RemoveAt(a); area->m_lVertSort.RemoveAt(b);
+        start->m_pos = startPos; next->m_pos = nextPos;
+        start->m_posVertList = startNode; next->m_posVertList = nextNode;
+        start->m_listType = startList; next->m_listType = nextList;
+        next->m_active = active; next->m_activeAI = activeAI; next->m_activeImprisonment = imprisoned;
+        next->m_baseStats.m_bStealthMode = stealth; next->m_derivedStats.m_generalState = state;
+        memcpy(area->m_visibility.m_pMap,visibility.data(),visibility.size());
+    }
+    if (nextRC==CGameObjectArray::SUCCESS) objects->ReleaseDeny(nextId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    if (startRC==CGameObjectArray::SUCCESS) objects->ReleaseDeny(startId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    check("same-tick-state-restored",game->GetWorldTimer()->m_gameTime==clock && handler->m_messageList.GetCount()==messageCount
+        && area->m_lVertSort.GetCount()==front && area->m_lVertSortAdd.GetCount()==pending);
+    Emit("{\"step\":%d,\"op\":\"chainchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}",nStep,checks,valid?"true":"false");
+    if (!valid) Fail(nStep,"chainchecks","chain propagation mismatch");
+}
 
 void BeamChecks(INT nStep)
 {
@@ -3719,6 +3861,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "beamchecks") == 0) {
         BeamChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "chainchecks") == 0) {
+        ChainLightningChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
