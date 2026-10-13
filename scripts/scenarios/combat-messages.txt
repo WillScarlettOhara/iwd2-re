@@ -15,6 +15,7 @@ projectilelaunchchecks
 projectileaimchecks
 projectiletickchecks
 explodingrenderchecks
+vfxrenderchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

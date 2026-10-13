@@ -59,5 +59,5 @@ Pixel comparisons are bounded software regression evidence, not a captured
 original/reconstruction pixel differential. Accelerated rendering, actual wall
 occlusion and forced FXLock failure remain unproven by these fixtures.
 
-Next: inspect IcewindCProjectileTravellingVFX::Render 578480 against its native
-direction/visual-effect branches; preserve its independent renderer semantics.
+Next: travelling VFX rendering is refined and tested; see vfx-render-recovery.md
+for its independent masks, bounds, sequences and the next recovery target.

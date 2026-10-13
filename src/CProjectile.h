@@ -575,7 +575,7 @@ public:
 
     // Pure forwarder to the family Render (0x578480); the leaf still owns vtable
     // slot 19 so the slot pointer matches the binary (0x56F3F0, not the inherited
-    // 0x578480). No added behaviour.
+    // family address 0x578480). No added behaviour.
     void Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface) override;   // 0x56F3F0 (slot 19)
 
     // First of the five spell-hit virtuals. A no-op in every family vtable (the

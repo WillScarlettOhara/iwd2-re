@@ -6202,12 +6202,11 @@ void IcewindCProjectileTravellingVFX::AimAtPoint(int x, int y)
     }
 }
 
-// 0x578480 (vtable slot 19)
-//
-// The family draw: unlike CProjectileTravelling::Render the blit flags come
-// from the attached visual effect (copy-from-back arms the translucent 0x200
-// path), the area tint is applied when tinting or copy-from-back is on, and
-// the east/north facings mirror through the m_bMirror* gates.
+// Flags and transparency come from the attached visual effect. Area tint is
+// fetched for tint/copy-from-back, but assigned only for tint == 1. The north
+// facing gate toggles the horizontal mirror bit independently of sequence
+// folding; the travelling base's tint/mirror/GetRenderFlags are not used.
+// 0x578480
 void IcewindCProjectileTravellingVFX::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
 {
     (void)pArea;
@@ -6220,7 +6219,8 @@ void IcewindCProjectileTravellingVFX::Render(CGameArea* pArea, CVidMode* pVidMod
     COLORREF tintColor = RGB(0xFF, 0xFF, 0xFF);
 
     // Tile-visibility gate (32x32 visibility tiles).
-    LONG tileIndex = (m_pos.y / 32) * m_pArea->m_visibility.m_nWidth + (m_pos.x / 32);
+    SHORT tileIndex = static_cast<SHORT>(static_cast<SHORT>(m_pos.y / CVisibilityMap::SQUARE_SIZEY)
+        * m_pArea->m_visibility.m_nWidth + m_pos.x / CVisibilityMap::SQUARE_SIZEX);
     if (!m_pArea->m_visibility.IsTileVisible(tileIndex)) {
         return;
     }
@@ -6339,11 +6339,10 @@ void IcewindCProjectileTravellingVFX::Render(CGameArea* pArea, CVidMode* pVidMod
     }
 }
 
-// 0x578970
-//
 // Bounding box and reference point for the draw: the cell alone, or, with a
 // shadow cell, the union of the flying cell (lifted by m_posZ) and the
 // ground shadow.
+// 0x578970
 void IcewindCProjectileTravellingVFX::GetCellBounds(CRect& rBounds, CPoint& ptRef, CVidCell* pCell)
 {
     CSize size;
@@ -6391,12 +6390,11 @@ void IcewindCProjectileTravellingVFX::GetCellBounds(CRect& rBounds, CPoint& ptRe
     }
 }
 
-// 0x579860
-//
 // Facing -> animation sequence. Like CProjectileTravelling::
 // UpdateDirectionSequence but mirror-aware: with m_bMirrorNorth the BAM has
 // no north-half sequences (5..8), so those facings fold onto the south ones
-// (3..0) and Render flips the blit vertically through the MIRROR_FX toggle.
+// (3..0); Render independently toggles the horizontal MIRROR_FX bit.
+// 0x579860
 void IcewindCProjectileTravellingVFX::UpdateDirectionSequence(CVidCell* pCell)
 {
     if (pCell == NULL) {

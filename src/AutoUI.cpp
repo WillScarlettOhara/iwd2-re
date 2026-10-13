@@ -118,6 +118,7 @@
 //   projectiletickchecks       verify both travelling AI ticks and homing;
 //                                restore actors, objects, queues and Time Stop.
 //   explodingrenderchecks     compare flight/detonation BAM pixels and render gates;
+//   vfxrenderchecks           compare VFX masks, translucency, shadow bounds and sequences;
 //                                restore camera, search, visibility and back pixels.
 //   sparklewait                require emitted clusters to leave all area lists.
 //   rebounddamage              service a registered bolt beside portrait 1, then
@@ -190,6 +191,7 @@
 #include "CUIControlBase.h"
 #include "CUIManager.h"
 #include "CUIPanel.h"
+#include "CUtil.h"
 #include "CWarp.h"
 
 #include <stdarg.h>
@@ -204,6 +206,28 @@ namespace {
 const int MAX_STEPS = 128;
 const int MAX_TOKEN = 48;
 const int MAX_STRS = 2;
+
+// Fake provider/connection fields must never reach the real transport loop.
+// Local player zero guards its initial wait only: an already-running inner
+// loop keeps servicing until ThreadLoop returns negative. Take both transport
+// locks before pausing our message thread, and resume only after restoration.
+struct SimulatedTransportPause {
+    CNetwork& network;
+    HANDLE thread;
+    DWORD previous;
+    explicit SimulatedTransportPause(CNetwork& value) : network(value), thread(g_pChitin->m_hMessageThread) {
+        EnterCriticalSection(&network.m_critSectQueue);
+        EnterCriticalSection(&network.m_critSect);
+        previous = SuspendThread(thread);
+        UTIL_ASSERT_MSG(previous != static_cast<DWORD>(-1), "AutoUI transport fixture could not pause its message thread");
+    }
+    ~SimulatedTransportPause() {
+        DWORD count = ResumeThread(thread);
+        LeaveCriticalSection(&network.m_critSect);
+        LeaveCriticalSection(&network.m_critSectQueue);
+        UTIL_ASSERT_MSG(count == previous + 1, "AutoUI transport fixture did not restore its thread suspend count");
+    }
+};
 const int MAX_NUMS = 3;
 // Ticks to let the engine settle after a click before the next step runs.
 const int CLICK_SETTLE_TICKS = 2;
@@ -1587,6 +1611,59 @@ void ProjectileLaunchChecks(INT nStep)
     if (!valid) Fail(nStep,"projectilelaunchchecks","travelling launch mismatch");
 }
 
+// Use a symmetric anchor for synthetic signed-height/mirror combinations.
+// Keep the real BAM pinned, restore its complete frame record and demand
+// count before releasing either resource-service lock or ticking the game.
+struct ProjectileRenderFrameAnchor {
+    CResCell* resource;
+    CResCellHeader* header;
+    FRAMEENTRY* frame = NULL;
+    FRAMEENTRY* headerFrame = NULL;
+    FRAMEENTRY saved = {};
+    FRAMEENTRY savedHeader = {};
+    INT demands;
+    INT headerDemands = 0;
+    BOOL active = TRUE;
+    BOOL pinned;
+    explicit ProjectileRenderFrameAnchor(CVidCell* cell) : resource(cell->pRes), header(cell->m_header.pRes) {
+        EnterCriticalSection(&g_pChitin->m_critSectDimm);
+        EnterCriticalSection(&g_pChitin->m_critSectService);
+        demands = resource->GetDemands();
+        pinned = resource->Demand() != NULL;
+        if (pinned) frame = resource->GetFrame(0, 0, FALSE);
+        if (header != NULL) {
+            headerDemands = header->GetDemands();
+            if (header->Demand() != NULL) headerFrame = header->GetFrame(0, 0, FALSE);
+        }
+        if (frame != NULL) {
+            saved = *frame;
+            frame->nCenterY = static_cast<SHORT>(frame->nHeight / 2);
+        }
+        if (headerFrame != NULL) {
+            savedHeader = *headerFrame;
+            headerFrame->nCenterY = static_cast<SHORT>(headerFrame->nHeight / 2);
+        }
+    }
+    BOOL Restore() {
+        if (!active) return TRUE;
+        if (frame != NULL) *frame = saved;
+        BOOL ok = frame != NULL && memcmp(frame, &saved, sizeof(saved)) == 0;
+        if (header != NULL) {
+            if (headerFrame != NULL) *headerFrame = savedHeader;
+            ok = ok && headerFrame != NULL && memcmp(headerFrame, &savedHeader, sizeof(savedHeader)) == 0;
+            header->Release();
+            ok = ok && header->GetDemands() == headerDemands;
+        }
+        resource->Release();
+        ok = ok && resource->GetDemands() == demands;
+        LeaveCriticalSection(&g_pChitin->m_critSectService);
+        LeaveCriticalSection(&g_pChitin->m_critSectDimm);
+        active = FALSE;
+        return ok;
+    }
+    ~ProjectileRenderFrameAnchor() { Restore(); }
+};
+
 void ExplodingRenderChecks(INT nStep)
 {
     auto* game = g_pBaldurChitin->GetObjectGame();
@@ -1679,58 +1756,7 @@ void ExplodingRenderChecks(INT nStep)
         }
         DWORD GetRenderFlags() override { ++flagsCalls; return CProjectileTravelling::GetRenderFlags(); }
     } missile;
-    // Use a symmetric anchor for synthetic signed-height/mirror combinations.
-    // Keep the real BAM pinned, restore its complete frame record and demand
-    // count before releasing either resource-service lock or ticking the game.
-    struct FrameAnchor {
-        CResCell* resource;
-        CResCellHeader* header;
-        FRAMEENTRY* frame = NULL;
-        FRAMEENTRY* headerFrame = NULL;
-        FRAMEENTRY saved = {};
-        FRAMEENTRY savedHeader = {};
-        INT demands;
-        INT headerDemands = 0;
-        BOOL active = TRUE;
-        BOOL pinned;
-        explicit FrameAnchor(CVidCell* cell) : resource(cell->pRes), header(cell->m_header.pRes) {
-            EnterCriticalSection(&g_pChitin->m_critSectDimm);
-            EnterCriticalSection(&g_pChitin->m_critSectService);
-            demands = resource->GetDemands();
-            pinned = resource->Demand() != NULL;
-            if (pinned) frame = resource->GetFrame(0, 0, FALSE);
-            if (header != NULL) {
-                headerDemands = header->GetDemands();
-                if (header->Demand() != NULL) headerFrame = header->GetFrame(0, 0, FALSE);
-            }
-            if (frame != NULL) {
-                saved = *frame;
-                frame->nCenterY = static_cast<SHORT>(frame->nHeight / 2);
-            }
-            if (headerFrame != NULL) {
-                savedHeader = *headerFrame;
-                headerFrame->nCenterY = static_cast<SHORT>(headerFrame->nHeight / 2);
-            }
-        }
-        BOOL Restore() {
-            if (!active) return TRUE;
-            if (frame != NULL) *frame = saved;
-            BOOL ok = frame != NULL && memcmp(frame, &saved, sizeof(saved)) == 0;
-            if (header != NULL) {
-                if (headerFrame != NULL) *headerFrame = savedHeader;
-                ok = ok && headerFrame != NULL && memcmp(headerFrame, &savedHeader, sizeof(savedHeader)) == 0;
-                header->Release();
-                ok = ok && header->GetDemands() == headerDemands;
-            }
-            resource->Release();
-            ok = ok && resource->GetDemands() == demands;
-            LeaveCriticalSection(&g_pChitin->m_critSectService);
-            LeaveCriticalSection(&g_pChitin->m_critSectDimm);
-            active = FALSE;
-            return ok;
-        }
-        ~FrameAnchor() { Restore(); }
-    } anchor(missile.m_pVidCell);
+    ProjectileRenderFrameAnchor anchor(missile.m_pVidCell);
     if (anchor.frame == NULL || (anchor.header != NULL && anchor.headerFrame == NULL)) {
         Fail(nStep, "explodingrenderchecks", "BAM fixture frame unavailable"); return;
     }
@@ -1902,6 +1928,266 @@ void ExplodingRenderChecks(INT nStep)
     Emit("{\"step\":%d,\"op\":\"explodingrenderchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}",
         nStep, checks, valid ? "true" : "false");
     if (!valid) Fail(nStep, "explodingrenderchecks", "explosive render mismatch (state restored)");
+}
+
+void VfxRenderChecks(INT nStep)
+{
+    auto* game = g_pBaldurChitin->GetObjectGame();
+    auto* area = game->GetVisibleArea();
+    auto* video = static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+    if (!area || g_pChitin->cVideo.m_bIs3dAccelerated || !area->m_visibility.m_pMap
+        || !area->m_search.m_pDynamicCost) {
+        Fail(nStep, "vfxrenderchecks", "requires loaded software area"); return;
+    }
+    INT checks = 0, test = 0, draws = 0; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"vfx-render-case\",\"case\":%d,\"name\":\"%s\",\"passed\":false}", nStep, test, name);
+    };
+    auto& infinity = area->m_cInfinity;
+    CRect savedView = infinity.rViewPort;
+    INT savedX = infinity.nCurrentX, savedY = infinity.nCurrentY;
+    auto* savedWED = infinity.pResWED;
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    INT messages = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    INT front = area->m_lVertSortAdd.GetCount(), back = area->m_lVertSortBackAdd.GetCount(), flight = area->m_lVertSortFlightAdd.GetCount();
+    CRect patch(64, 64, 416, 336);
+    std::vector<BYTE> savedPixels;
+    auto pixels = [&](std::vector<BYTE>* read, const std::vector<BYTE>* write, BOOL clear) -> BOOL {
+        if (!video->BKLock(patch)) return FALSE;
+        DWORD bytes = video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount / 8;
+        INT row = patch.Width() * bytes;
+        BOOL ok = bytes >= 2 && bytes <= 4 && video->m_SurfaceDesc.lpSurface != NULL;
+        if (ok && read) read->resize(row * patch.Height());
+        if (ok && write) ok = write->size() == static_cast<size_t>(row * patch.Height());
+        if (ok) for (INT y = 0; y < patch.Height(); ++y) {
+            BYTE* p = static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface) + y * video->m_SurfaceDesc.lPitch;
+            if (read) memcpy(read->data() + y * row, p, row);
+            if (write) memcpy(p, write->data() + y * row, row);
+            if (clear) memset(p, 0, row);
+        }
+        video->BKUnlock(); return ok;
+    };
+    BOOL backedUp = pixels(&savedPixels, NULL, FALSE);
+    check("back-pixels-backed-up", backedUp);
+    struct Missile : IcewindCProjectileTravellingVFX {
+        using IcewindCProjectileTravellingVFX::GetCellBounds;
+        using IcewindCProjectileTravellingVFX::UpdateDirectionSequence;
+        using IcewindCProjectileTravellingVFX::m_visualEffect;
+        using IcewindCProjectileTravellingVFX::m_bMirrorNorth;
+        using IcewindCProjectileTravellingVFX::m_bMirrorEast;
+        using CProjectileTravelling::m_pVidCell;
+        using CProjectileTravelling::m_pShadowCell;
+        using CProjectileTravelling::m_hasShadowCell;
+        using CProjectileTravelling::m_direction;
+        using CProjectileTravelling::m_facing;
+        using CProjectileTravelling::m_dirCount;
+        using CProjectileTravelling::m_visible;
+        using CProjectileTravelling::m_useHeightOffset;
+        using CProjectileTravelling::m_paletteSwap;
+        using CProjectileTravelling::m_pTravelPaletteRes;
+        INT flagsCalls = 0;
+        RGBQUAD palettes[2][256] = {};
+        Missile() : IcewindCProjectileTravellingVFX(CResRef("ARARROW")) {
+            m_pShadowCell = new CVidCell(CResRef("ARARROW"), FALSE);
+            for (INT i = 0; i < 256; ++i) {
+                BYTE intensity = static_cast<BYTE>(64 + i % 192);
+                palettes[0][i].rgbRed = intensity; palettes[1][i].rgbGreen = intensity;
+            }
+            m_pVidCell->SetPalette(palettes[0], 256, CVidPalette::TYPE_RESOURCE);
+            m_pShadowCell->SetPalette(palettes[1], 256, CVidPalette::TYPE_RESOURCE);
+            // These old-family fields must not supply VFX flags or bounds.
+            m_renderFlags = 8; m_tinted = 1; m_mirror = 1;
+            m_mirrorMinX = 80; m_mirrorMinY = 80;
+            m_pTravelPaletteRes = NULL; m_travelPaletteRef = CResRef(""); m_travelPaletteRequested = FALSE;
+            SetTravelPalette("STTRAVL1");
+        }
+        DWORD GetRenderFlags() override { ++flagsCalls; return 0xFFFFFFFFu; }
+    } missile;
+    missile.m_pArea = area; missile.CGameObject::m_pArea = area; missile.m_listType = CGameObject::LIST_FLIGHT;
+    CResBitmap* palette = missile.m_pTravelPaletteRes;
+    if (palette == NULL) { Fail(nStep, "vfxrenderchecks", "travel palette unavailable"); return; }
+    INT paletteDemands = palette->GetDemands();
+    if (palette->Demand() == NULL) {
+        palette->Release(); Fail(nStep, "vfxrenderchecks", "travel palette demand failed"); return;
+    }
+    ProjectileRenderFrameAnchor anchor(missile.m_pVidCell);
+    CPoint origin(232, 1002);
+    SHORT tile = static_cast<SHORT>(origin.y / 32 * area->m_visibility.m_nWidth + origin.x / 32);
+    INT cost = origin.y / 12 * area->m_search.m_GridSquareDimensions.cx + origin.x / 16;
+    BOOL available = backedUp && anchor.frame != NULL && (anchor.header == NULL || anchor.headerFrame != NULL)
+        && tile >= 0 && tile < area->m_visibility.m_nMapSize && cost >= 0
+        && cost < area->m_search.m_GridSquareDimensions.cx * area->m_search.m_GridSquareDimensions.cy;
+    check("fixture-inputs-valid", available);
+    if (available) {
+        BYTE visible = area->m_visibility.m_pMap[tile], dynamic = area->m_search.m_pDynamicCost[cost];
+        infinity.pResWED = NULL;
+        auto reset = [&]() {
+            ++test;
+            missile.m_pos = origin; missile.m_posZ = 17; missile.m_visible = 1;
+            missile.m_dirCount = 1; missile.m_direction = 0; missile.m_facing = 0;
+            missile.m_hasShadowCell = 0; missile.m_useHeightOffset = 0; missile.m_bHasHeight = FALSE;
+            missile.m_bMirrorNorth = 0; missile.m_bMirrorEast = 0; missile.flagsCalls = 0;
+            missile.m_visualEffect = IcewindCVisualEffect(); missile.m_visualEffect.SetCopyFromBack(FALSE);
+            missile.m_paletteSwap = 0;
+            missile.m_pVidCell->SequenceSet(0); missile.m_pVidCell->FrameSet(0);
+            missile.m_pShadowCell->SequenceSet(0); missile.m_pShadowCell->FrameSet(0);
+            missile.m_pVidCell->SetPalette(missile.palettes[0], 256, CVidPalette::TYPE_RESOURCE);
+            missile.m_pShadowCell->SetPalette(missile.palettes[1], 256, CVidPalette::TYPE_RESOURCE);
+            missile.m_pVidCell->SetTintColor(RGB(180, 80, 240)); missile.m_pShadowCell->SetTintColor(RGB(230, 60, 100));
+            infinity.rViewPort = CRect(80, 80, 400, 320);
+            infinity.nCurrentX = origin.x - 160; infinity.nCurrentY = origin.y - 120;
+            area->m_visibility.m_pMap[tile] = CVisibilityMap::VISIBILITY_MASK; area->m_search.m_pDynamicCost[cost] = 0;
+        };
+        auto compare = [&](BOOL draw, DWORD flags, LONG y, LONG z, BOOL flipRef, SHORT sequence, SHORT facing) {
+            std::vector<BYTE> expected, actual;
+            BOOL ok = pixels(NULL, NULL, TRUE);
+            SHORT oldSequence = missile.m_pVidCell->m_nCurrentSequence;
+            COLORREF oldTint = missile.m_pVidCell->GetTintColor();
+            if (draw) {
+                missile.m_pVidCell->SequenceSet(sequence);
+                CRect bounds; CPoint reference;
+                missile.GetCellBounds(bounds, reference, NULL);
+                if (flipRef) reference.y = bounds.Height() - reference.y;
+                auto fits = [&](CVidCell* cell, LONG height) {
+                    CPoint center; CSize size;
+                    cell->GetCurrentCenterPoint(center, FALSE); cell->GetCurrentFrameSize(size, FALSE);
+                    return reference.x >= center.x && reference.y - height >= center.y
+                        && reference.x - center.x + size.cx <= bounds.Width()
+                        && reference.y - height - center.y + size.cy <= bounds.Height();
+                };
+                BOOL geometry = fits(missile.m_pVidCell, z)
+                    && (!missile.m_hasShadowCell || fits(missile.m_pShadowCell, 0));
+                check("reference-anchors-in-bounds", geometry);
+                if (!geometry) { missile.m_pVidCell->SequenceSet(oldSequence); return; }
+                CPoint point(missile.m_pos.x, y);
+                if (missile.m_visualEffect.m_bTintEnabled == TRUE)
+                    missile.m_pVidCell->SetTintColor(area->GetTintColor(point, missile.m_listType));
+                if (missile.m_paletteSwap) missile.m_pVidCell->SetPalette(palette->GetColorTable(), palette->GetColorCount(), CVidPalette::TYPE_RESOURCE);
+                infinity.FXPrep(bounds, CInfinity::FXPREP_COPYFROMBACK | flags, CVIDINF_SURFACE_BACK, point, reference);
+                if (infinity.FXLock(bounds, flags)) {
+                    if (missile.m_hasShadowCell) infinity.FXRender(missile.m_pShadowCell, reference.x, reference.y, flags, 0);
+                    infinity.FXRender(missile.m_pVidCell, reference.x, reference.y - z, flags, missile.m_visualEffect.m_nTransValue);
+                    infinity.FXUnlock(flags, NULL, CPoint(0, 0));
+                    ok = infinity.FXBltFrom(CVIDINF_SURFACE_BACK, bounds, point.x, point.y, reference.x, reference.y, flags) && ok;
+                } else ok = FALSE;
+            }
+            COLORREF expectedTint = missile.m_pVidCell->GetTintColor();
+            // Real BAM drawing normalizes unavailable sequences to zero.
+            // The separate helper checks below assert the raw selection and
+            // frame preservation before this resource-dependent draw step.
+            SHORT expectedSequence = missile.m_pVidCell->m_nCurrentSequence;
+            ok = pixels(&expected, NULL, TRUE) && ok;
+            missile.m_pVidCell->SequenceSet(oldSequence); missile.m_pVidCell->SetTintColor(oldTint);
+            if (missile.m_paletteSwap) missile.m_pVidCell->SetPalette(missile.palettes[0], 256, CVidPalette::TYPE_RESOURCE);
+            CProjectile* object = &missile; object->Render(NULL, video, CVIDINF_SURFACE_BACK); ++draws;
+            ok = pixels(&actual, NULL, FALSE) && ok;
+            check("complete-pixels", ok && expected == actual);
+            check("expected-visible-draw", std::any_of(expected.begin(), expected.end(), [](BYTE x) { return x != 0; }) == (draw != FALSE));
+            check("independent-flags-and-tints", missile.flagsCalls == 0 && missile.m_pVidCell->GetTintColor() == expectedTint
+                && missile.m_pShadowCell->GetTintColor() == RGB(230, 60, 100));
+            check("sequence-facing-frame-and-lock", missile.m_pVidCell->m_nCurrentSequence == expectedSequence && missile.m_direction == facing
+                && missile.m_pVidCell->m_nCurrentFrame == 0 && missile.m_pShadowCell->m_nCurrentFrame == 0
+                && video->m_SurfaceDesc.lpSurface == NULL);
+        };
+        // Explicit outcomes: [initial horizontal bit][east/north == 1][facing].
+        static const BYTE masks[2][4][16] = {
+            {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+             {0,0,0,0,0,0,0,0,0,16,16,16,16,16,16,16},
+             {0,0,0,0,0,16,16,16,16,16,16,16,0,0,0,0},
+             {0,0,0,0,0,16,16,16,16,0,0,0,16,16,16,16}},
+            {{16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16},
+             {16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16},
+             {16,16,16,16,16,0,0,0,0,0,0,0,16,16,16,16},
+             {16,16,16,16,16,0,0,0,0,0,0,0,16,16,16,16}}
+        };
+        for (INT seed = 0; seed < 2; ++seed) for (BYTE north : {BYTE(0), BYTE(1), BYTE(2), BYTE(255)})
+            for (BYTE east : {BYTE(0), BYTE(1), BYTE(2), BYTE(255)}) for (SHORT direction = 0; direction < 16; ++direction) {
+                reset(); missile.m_bMirrorNorth = north; missile.m_bMirrorEast = east; missile.m_direction = direction;
+                missile.m_visualEffect.m_dwFlags |= seed ? CInfinity::MIRROR_FX : 0;
+                INT row = (east == 1 ? 1 : 0) + (north == 1 ? 2 : 0);
+                compare(TRUE, 0x20000 | masks[seed][row][direction], origin.y - 17, 0, FALSE, 0, direction);
+            }
+        for (SHORT direction : {SHORT(0), SHORT(8), SHORT(12), SHORT(15)}) for (LONG height : {LONG(-17), LONG(0), LONG(17)}) {
+            reset(); missile.m_direction = direction; missile.m_bMirrorNorth = 1; missile.m_bMirrorEast = 1;
+            missile.m_posZ = height; missile.m_hasShadowCell = 1;
+            BOOL flipped = direction == 8;
+            compare(TRUE, 0x20004 | masks[0][3][direction], origin.y, flipped ? -height : height, flipped, 0, direction);
+        }
+        for (BYTE tint : {BYTE(0), BYTE(1), BYTE(2), BYTE(255)}) for (BYTE copy : {BYTE(0), BYTE(1), BYTE(2), BYTE(255)}) {
+            reset(); missile.m_visualEffect.m_bTintEnabled = tint; missile.m_visualEffect.m_bCopyFromBack = copy;
+            // The mask and the Boolean are independent native inputs.
+            missile.m_visualEffect.m_dwFlags |= 0x10000;
+            compare(TRUE, 0x30000, origin.y - 17, 0, FALSE, 0, 0);
+        }
+        for (INT transparency : {0, 64, 128, 254}) {
+            reset(); missile.m_visualEffect.SetTransparency(TRUE, transparency);
+            compare(TRUE, 0x20002, origin.y - 17, 0, FALSE, 0, 0);
+            reset(); missile.m_visualEffect.SetCopyFromBack(TRUE);
+            compare(TRUE, 0x20200, origin.y - 17, 0, FALSE, 0, 0);
+        }
+        for (INT mode = 0; mode < 7; ++mode) {
+            reset();
+            if (mode == 0) missile.m_visible = 0;
+            if (mode == 1) area->m_visibility.m_pMap[tile] = 0;
+            if (mode == 2) area->m_search.m_pDynamicCost[cost] = 0x80;
+            if (mode == 3 || mode == 4) { infinity.nCurrentX += mode == 3 ? 10000 : 0; infinity.nCurrentY += mode == 4 ? 10000 : 0; }
+            if (mode >= 5) { missile.m_pos.y += mode == 5 ? 32 * 65536 : -32 * 65536; infinity.nCurrentY += mode == 5 ? 32 * 65536 : -32 * 65536; }
+            compare(mode >= 5, 0x20000, missile.m_pos.y - 17, 0, FALSE, 0, 0);
+        }
+        reset(); missile.m_paletteSwap = 1;
+        compare(TRUE, 0x20000, origin.y - 17, 0, FALSE, 0, 0);
+        static const SHORT sequences[4][16] = {
+            {0,1,2,3,4,5,6,7,8,7,6,5,4,3,2,1}, {0,1,2,3,4,3,2,1,0,1,2,3,4,3,2,1},
+            {0,0,2,2,4,4,2,2,0,0,2,2,4,4,2,2}, {0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1}
+        };
+        for (BYTE north : {BYTE(0), BYTE(2)}) for (SHORT facing = 0; facing < 16; ++facing) {
+            reset(); missile.m_bMirrorNorth = north; missile.m_dirCount = 16; missile.m_direction = -1; missile.m_facing = facing;
+            compare(TRUE, 0x20000, origin.y - 17, 0, FALSE, sequences[north != 0][facing], facing);
+        }
+        for (SHORT count : {SHORT(2), SHORT(8), SHORT(16), SHORT(3), SHORT(1)}) for (BOOL other : {FALSE, TRUE})
+            for (BYTE north : {BYTE(0), BYTE(2)}) for (SHORT facing = 0; facing < 16; ++facing) {
+                reset(); missile.m_bMirrorNorth = north; missile.m_dirCount = count; missile.m_direction = -1; missile.m_facing = facing;
+                CVidCell* selected = other ? missile.m_pShadowCell : missile.m_pVidCell;
+                selected->SequenceSet(6); selected->FrameSet(3);
+                missile.UpdateDirectionSequence(other ? selected : NULL);
+                INT row = count == 2 ? 3 : count == 8 ? 2 : north != 0 ? 1 : 0;
+                SHORT expected = count == 1 || count == 3 ? 6 : sequences[row][facing];
+                check("direction-sequence-table", selected->m_nCurrentSequence == expected && selected->m_nCurrentFrame == 3
+                    && missile.m_direction == (other || count == 1 ? -1 : facing));
+                missile.m_direction = facing; selected->SequenceSet(6);
+                missile.UpdateDirectionSequence(selected);
+                check("unchanged-facing-skips-alternate", selected->m_nCurrentSequence == 6 && selected->m_nCurrentFrame == 3);
+            }
+        for (LONG height : {LONG(-17), LONG(0), LONG(17)}) for (BOOL shadow : {FALSE, TRUE}) for (BOOL other : {FALSE, TRUE}) {
+            reset(); missile.m_posZ = height; missile.m_hasShadowCell = shadow;
+            missile.m_pShadowCell->SequenceSet(4);
+            CVidCell* selected = other ? missile.m_pShadowCell : missile.m_pVidCell;
+            CPoint center; CSize size;
+            selected->GetCurrentCenterPoint(center, FALSE); selected->GetCurrentFrameSize(size, FALSE);
+            CRect expected(0, 0, size.cx, size.cy); CPoint ref = center;
+            if (shadow) {
+                CRect mainRect(-center.x, -center.y - height, size.cx - center.x, size.cy - center.y - height);
+                missile.m_pShadowCell->GetCurrentCenterPoint(center, FALSE); missile.m_pShadowCell->GetCurrentFrameSize(size, FALSE);
+                CRect shadowRect(-center.x, -center.y, size.cx - center.x, size.cy - center.y);
+                UnionRect(&expected, &mainRect, &shadowRect);
+                ref = CPoint(-expected.left, -expected.top); expected.OffsetRect(ref);
+            }
+            CRect actual; CPoint actualRef;
+            missile.GetCellBounds(actual, actualRef, other ? selected : NULL);
+            check("bounds-equal-independent-rectangle-union", actual == expected && actualRef == ref);
+        }
+        area->m_visibility.m_pMap[tile] = visible; area->m_search.m_pDynamicCost[cost] = dynamic;
+    }
+    infinity.pResWED = savedWED; infinity.rViewPort = savedView; infinity.nCurrentX = savedX; infinity.nCurrentY = savedY;
+    check("bam-frame-and-demand-restored", anchor.Restore());
+    palette->Release(); check("palette-demand-balanced", palette->GetDemands() == paletteDemands);
+    check("sampled-pixels-restored", backedUp && pixels(NULL, &savedPixels, FALSE));
+    check("same-tick-state-restored", game->GetWorldTimer()->m_gameTime == clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount() == messages
+        && area->m_lVertSortAdd.GetCount() == front && area->m_lVertSortBackAdd.GetCount() == back && area->m_lVertSortFlightAdd.GetCount() == flight);
+    Emit("{\"step\":%d,\"op\":\"vfxrenderchecks\",\"checks\":%d,\"renderCalls\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, draws, valid ? "true" : "false");
+    if (!valid) Fail(nStep, "vfxrenderchecks", "VFX render, bounds or sequence mismatch (state restored)");
 }
 
 // Expected states captured from both canonical native integrators.
@@ -2768,6 +3054,7 @@ void VefMessageChecks(INT nStep)
     BOOLEAN reply = baldur->m_bDialogReplyReturned; BYTE blocked = game->field_4BD4;
     PLAYER_ID ready[CNETWORK_MAX_PLAYERS]; memcpy(ready, settings->m_pnPlayerReady, sizeof(ready));
     BOOLEAN windows[CNETWORK_MAX_PLAYERS];
+    SimulatedTransportPause transportPause(network);
     EnterCriticalSection(&network.m_critSectQueue);
     network.m_idLocalPlayer = 0; network.m_bIsHost = FALSE; network.m_bConnectionEstablished = TRUE;
     network.m_SystemWindow.m_bInitialized = TRUE; baldur->m_bDialogReplyReturned = FALSE;
@@ -2926,6 +3213,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "explodingrenderchecks") == 0) {
         ExplodingRenderChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "vfxrenderchecks") == 0) {
+        VfxRenderChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
@@ -4334,9 +4624,9 @@ void Tick(CWarp* pActiveEngine)
         BOOLEAN returned = g_pBaldurChitin->GetBaldurMessage()->m_bDialogReplyReturned;
         PLAYER_ID ready[CNETWORK_MAX_PLAYERS]; memcpy(ready, settings->m_pnPlayerReady, sizeof(ready));
         BOOLEAN windows[CNETWORK_MAX_PLAYERS];
+        SimulatedTransportPause transportPause(network);
         EnterCriticalSection(&network.m_critSectQueue);
-        // MessageThreadMain waits for a nonzero local player before entering
-        // ThreadLoop. Keep the transport thread asleep during fake sessions.
+        // Also preserve the native initial-wait guard during fake sessions.
         network.m_idLocalPlayer = 0;
         for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) {
             windows[i] = network.m_pSlidingWindow[i].m_bInitialized; network.m_pSlidingWindow[i].m_bInitialized = FALSE;
@@ -4897,6 +5187,7 @@ void Tick(CWarp* pActiveEngine)
         PLAYER_ID ready[CNETWORK_MAX_PLAYERS];
         memcpy(ready, settings->m_pnPlayerReady, sizeof(ready));
         BOOLEAN windows[CNETWORK_MAX_PLAYERS];
+        SimulatedTransportPause transportPause(network);
         EnterCriticalSection(&network.m_critSectQueue);
         network.m_idLocalPlayer = 0;
         for (INT i = 0; i < CNETWORK_MAX_PLAYERS; ++i) {
