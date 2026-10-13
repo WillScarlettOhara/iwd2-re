@@ -120,6 +120,7 @@
 //   explodingrenderchecks     compare flight/detonation BAM pixels and render gates;
 //   vfxrenderchecks           compare VFX masks, translucency, shadow bounds and sequences;
 //   beamrenderchecks          verify segmented beam pixels, rejection and height stepping;
+//   beamchecks                verify beam launch, ticks, polygon strikes and delivery;
 //                                restore camera, search, visibility and back pixels.
 //   sparklewait                require emitted clusters to leave all area lists.
 //   rebounddamage              service a registered bolt beside portrait 1, then
@@ -1664,6 +1665,298 @@ struct ProjectileRenderFrameAnchor {
     }
     ~ProjectileRenderFrameAnchor() { Restore(); }
 };
+
+#include "BeamTickGolden.h"
+
+void BeamChecks(INT nStep)
+{
+    auto* game = g_pBaldurChitin->GetObjectGame(); auto* objects = game->GetObjectArray();
+    auto* area = game->GetVisibleArea();
+    if (!area) { Fail(nStep,"beamchecks","requires loaded area"); return; }
+    INT checks = 0; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"beam-case\",\"case\":\"%s\",\"passed\":false}",nStep,name);
+    };
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    auto stop = game->m_nTimeStop; auto caster = game->m_nTimeStopCaster;
+    auto* handler = g_pBaldurChitin->GetMessageHandler(); INT messages = handler->m_messageList.GetCount();
+    INT front = area->m_lVertSortAdd.GetCount(), back = area->m_lVertSortBackAdd.GetCount(), flight = area->m_lVertSortFlightAdd.GetCount();
+    INT sorted = area->m_lVertSort.GetCount();
+    auto unqueue = [&](LONG id) {
+        POSITION p = area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortAdd.RemoveAt(p);
+        p = area->m_lVertSortBackAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortBackAdd.RemoveAt(p);
+        p = area->m_lVertSortFlightAdd.Find(reinterpret_cast<int*>(id)); if (p) area->m_lVertSortFlightAdd.RemoveAt(p);
+    };
+    auto retire = [&](CGameObject* p) {
+        unqueue(p->m_id); p->RemoveFromArea(); objects->Delete(p->m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE); delete p;
+    };
+    struct Origin : CGameObject {
+        BYTE GetObjectType() override { return TYPE_NONE; }
+    };
+    auto* source = new Origin; source->m_pos = CPoint(128,96); source->m_pArea = area;
+    check("source-registered",objects->Add(&source->m_id,source,INFINITE)==CGameObjectArray::SUCCESS);
+    struct Target : CGameObject {
+        CPoint live = CPoint(256,96); INT reads = 0;
+        CPoint& GetPos() override { ++reads; return live; }
+    };
+    auto* target = new Target; target->m_pos = target->live; target->m_pArea = area; target->m_posZ = 31;
+    check("target-registered",objects->Add(&target->m_id,target,INFINITE)==CGameObjectArray::SUCCESS);
+    struct Beam : IcewindCProjectileScorcher {
+        struct Cell : CVidCell {
+            INT advances = 0;
+            Cell() : CVidCell(CResRef("ARARROW"),FALSE) {}
+            BOOL FrameAdvance() override { ++advances; return TRUE; }
+        };
+        Cell* cell; BOOL* dead = NULL; BOOL isolatedRemoval = FALSE;
+        INT removals = 0, areaRemovals = 0, gathers = 0, deliveries = 0;
+        std::vector<std::pair<LONG,BYTE>> strikes;
+        Beam() { delete m_pVidCell; cell = new Cell; m_pVidCell = cell; }
+        ~Beam() { if (dead) *dead = TRUE; }
+        void RemoveSelf() override { ++removals; }
+        void RemoveFromArea() override { ++areaRemovals; if (!isolatedRemoval) CGameObject::RemoveFromArea(); }
+        void GatherTargets() override { ++gathers; }
+        void Strike(LONG target,BYTE initial) override { strikes.emplace_back(target,initial); }
+        void DeliverEffects() override { ++deliveries; IcewindCProjectileScorcher::DeliverEffects(); }
+        void Seed(CGameArea* area,LONG source) {
+            m_pArea = area; CGameObject::m_pArea = area; m_listType = CGameObject::LIST_FLIGHT;
+            m_pos = CPoint(10,20); m_posZ = 17; m_sourceId = source; m_targetId = -1;
+            m_targetX = 256; m_targetY = 96; m_velocity = 10; m_tickCount = 0; m_lifeSpan = 110;
+            m_strikePeriod = 3; m_clearPeriod = 60; m_strikeTarget = 0x80000001u;
+            m_deltaZ = 99; m_nSegments = 123; m_posAccumX = -111; m_posAccumY = -222; m_stepX = -333; m_stepY = -444;
+            m_facing = 0; m_direction = 0; m_pVidCell->SequenceSet(0); m_pVidCell->FrameSet(0);
+            m_struckTargets.clear(); strikes.clear(); gathers = removals = areaRemovals = deliveries = cell->advances = 0;
+            m_sound.SetCoordinates(111,222,333);
+        }
+        LONG Tick() const { return m_tickCount; }
+        void Tick(LONG value) { m_tickCount = value; }
+        BYTE Life() const { return m_lifeSpan; }
+        void Life(BYTE value) { m_lifeSpan = value; }
+        BYTE Segments() const { return m_nSegments; }
+        LONG HeightSlope() const { return m_deltaZ; }
+        CPoint Delta() const { return CPoint(m_stepX,m_stepY); }
+        CPoint Exact() const { return CPoint(m_posAccumX,m_posAccumY); }
+        void Speed(SHORT value) { m_velocity = value; }
+        void TargetPoint(CPoint point) { m_targetX = point.x; m_targetY = point.y; }
+        void Periods(LONG strike,LONG clear) { m_strikePeriod = strike; m_clearPeriod = clear; }
+        BOOL Seen(LONG id) const { return m_struckTargets.count(static_cast<DWORD>(id)) != 0; }
+        void Remember(LONG id) { m_struckTargets.insert(static_cast<DWORD>(id)); }
+        void Scan() { m_pos = CPoint(128,96); m_facing = 4; IcewindCProjectileScorcher::GatherTargets(); }
+        LONG InitialTarget() const { return m_strikeTarget; }
+    };
+    game->m_nTimeStop = 0;
+    auto* beam = new Beam; beam->Seed(area,source->m_id); CProjectile* dispatch = beam;
+    dispatch->AIUpdate();
+    check("tick-before-frame-and-source-anchor",beam->Tick()==1 && beam->Life()==109 && beam->cell->advances==1
+        && beam->m_pos==CPoint(128,96) && beam->Exact()==CPoint(131072,131072));
+    check("rounded-distance-ceil-and-steps",beam->Segments()==13 && beam->Delta()==CPoint(10082,0) && beam->HeightSlope()==0);
+    check("initial-strike-before-gather",beam->strikes.size()==1 && beam->strikes[0]==std::make_pair(LONG(0x80000001u),BYTE(1))
+        && beam->gathers==1 && beam->Seen(0x80000001u));
+    check("sound-at-caster",beam->m_sound.m_nXCoordinate==128 && beam->m_sound.m_nYCoordinate==96 && beam->m_sound.m_nZCoordinate==17);
+    dispatch->AIUpdate(); dispatch->AIUpdate(); dispatch->AIUpdate();
+    check("strike-period-and-dedup",beam->Tick()==4 && beam->strikes.size()==1 && beam->gathers==2);
+    beam->Tick(60); dispatch->AIUpdate();
+    check("clear-before-restrike",beam->strikes.size()==2 && beam->gathers==3 && beam->Seen(0x80000001u));
+    beam->Seed(area,source->m_id); game->m_nTimeStop = 1; game->m_nTimeStopCaster = source->m_id; dispatch->AIUpdate();
+    check("time-stop-advances-only-clock",beam->Tick()==1 && beam->Life()==110 && beam->cell->advances==0 && beam->Exact()==CPoint(-111,-222));
+    game->m_nTimeStopCaster = beam->m_id; dispatch->AIUpdate();
+    check("time-stop-object-exemption",beam->Tick()==2 && beam->Life()==109 && beam->cell->advances==1 && beam->gathers==0);
+    game->m_nTimeStop = 0;
+    beam->Seed(area,source->m_id); beam->Tick(0x7FFFFFFF); dispatch->AIUpdate();
+    check("signed-tick-wrap",beam->Tick()==LONG(0x80000000u) && beam->gathers==0);
+    for (BYTE life : {BYTE(1),BYTE(255)}) {
+        beam->Seed(area,source->m_id); beam->Life(life); dispatch->AIUpdate();
+        check("byte-life-and-final-live-tick",beam->Life()==BYTE(life-1) && beam->cell->advances==1 && !beam->areaRemovals);
+    }
+    beam->Seed(area,source->m_id); beam->Life(0); dispatch->AIUpdate();
+    check("expiry-bad-id-does-not-delete",beam->Tick()==1 && beam->areaRemovals==1 && beam->cell->advances==0);
+    beam->Seed(area,source->m_id); beam->m_targetId = -2; dispatch->AIUpdate();
+    check("missing-target-retires-after-frame",beam->removals==1 && beam->cell->advances==1 && beam->gathers==0);
+    beam->Seed(area,source->m_id); beam->m_targetId = target->m_id; target->m_pArea = NULL; dispatch->AIUpdate();
+    check("other-area-target-retires",beam->removals==1 && beam->cell->advances==1);
+    target->m_pArea = area;
+    beam->Seed(area,source->m_id); beam->m_targetId = target->m_id; target->reads = 0; dispatch->AIUpdate();
+    check("virtual-live-target-and-height",target->reads==1 && beam->HeightSlope()==14 && beam->Segments()==13);
+    beam->Seed(area,-1); dispatch->AIUpdate();
+    check("missing-source-retains-tick-and-frame",beam->Life()==109 && beam->cell->advances==1 && beam->gathers==0 && beam->Exact()==CPoint(-111,-222));
+    beam->Seed(area,source->m_id); beam->TargetPoint(source->m_pos); dispatch->AIUpdate();
+    check("zero-distance-after-strike-arms-expiry",beam->Life()==0 && beam->Segments()==0 && beam->strikes.size()==1
+        && beam->Delta()==CPoint(-333,-444));
+    for (SHORT speed : {SHORT(1),SHORT(-1),SHORT(-10),SHORT(32767)}) {
+        beam->Seed(area,source->m_id); beam->Speed(speed); dispatch->AIUpdate();
+        BYTE expected = speed==1?128:speed==-1?130:speed==-10?245:1;
+        check("signed-velocity-byte-segments",beam->Segments()==expected && beam->Delta()==CPoint(131072/expected,0));
+    }
+    beam->Seed(area,source->m_id); beam->TargetPoint(CPoint(128,99)); dispatch->AIUpdate();
+    check("isometric-distance-rounded",beam->Segments()==1 && beam->Delta()==CPoint(0,4096));
+    // The canonical numeric capture replaces RemoveFromArea with a counter;
+    // match that collaborator here. Actual removal/deletion is tested below.
+    beam->isolatedRemoval = TRUE;
+    for (INT i = 0; i < _countof(BEAM_TICK_INPUTS); ++i) {
+        const auto& c = BEAM_TICK_INPUTS[i]; const auto& expected = BEAM_TICK_OUTPUTS[i];
+        source->m_pos = CPoint(c.origin[0],c.origin[1]);
+        beam->Seed(area,c.missing?-1:source->m_id); beam->TargetPoint(CPoint(c.target[0],c.target[1]));
+        beam->Speed(c.speed); beam->Tick(c.tick); beam->Life(c.life);
+        game->m_nTimeStop = c.stop; game->m_nTimeStopCaster = c.exempt?beam->m_id:source->m_id;
+        dispatch->AIUpdate();
+        BOOL matches = beam->m_pos==CPoint(expected.state[0],expected.state[1])
+            && beam->Exact()==CPoint(expected.state[2],expected.state[3]) && beam->Delta()==CPoint(expected.state[4],expected.state[5])
+            && beam->HeightSlope()==expected.state[6] && beam->Tick()==expected.state[7]
+            && beam->Life()==expected.life && beam->Segments()==expected.segments
+            && beam->cell->advances==expected.frames && beam->areaRemovals==expected.removed;
+        if (!matches) Emit("{\"step\":%d,\"op\":\"beam-native-mismatch\",\"index\":%d,\"state\":[%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld],\"life\":%u,\"segments\":%u,\"frames\":%d,\"removed\":%d}",
+            nStep,i,beam->m_pos.x,beam->m_pos.y,beam->Exact().x,beam->Exact().y,beam->Delta().x,beam->Delta().y,
+            beam->HeightSlope(),beam->Tick(),beam->Life(),beam->Segments(),beam->cell->advances,beam->areaRemovals);
+        check("captured-native-tick-state",matches);
+    }
+    beam->isolatedRemoval = FALSE;
+    source->m_pos = CPoint(128,96); game->m_nTimeStop = 0;
+    // Real scan: temporarily add private objects to the front list, then
+    // remove them before deleting; no ordinary world tick sees these nodes.
+    auto* inside = new Origin; inside->m_pos = CPoint(160,96); inside->m_pArea = area;
+    objects->Add(&inside->m_id,inside,INFINITE);
+    auto* outside = new Origin; outside->m_pos = CPoint(300,96); outside->m_pArea = area;
+    objects->Add(&outside->m_id,outside,INFINITE);
+    POSITION nodes[3] = {area->m_lVertSort.AddTail(reinterpret_cast<int*>(inside->m_id)),
+        area->m_lVertSort.AddTail(reinterpret_cast<int*>(outside->m_id)), area->m_lVertSort.AddTail(reinterpret_cast<int*>(source->m_id))};
+    beam->Seed(area,source->m_id); beam->Scan();
+    check("polygon-strikes-inside-excludes-source",beam->strikes.size()==1
+        && beam->strikes[0]==std::make_pair(inside->m_id,BYTE(0)) && beam->Seen(inside->m_id) && !beam->Seen(source->m_id));
+    beam->Scan(); check("polygon-dedup",beam->strikes.size()==1);
+    for (POSITION p : nodes) area->m_lVertSort.RemoveAt(p);
+    inside->m_pArea = outside->m_pArea = NULL; retire(inside); retire(outside);
+    beam->Seed(area,source->m_id); beam->AddEffect(new CGameEffect());
+    dispatch->Fire(area,source->m_id,-1,CPoint(256,96),-999,123);
+    check("beam-fire-registers-and-delivery-is-empty",beam->m_id!=-1 && beam->InitialTarget()==-1 && beam->deliveries==1
+        && beam->CGameObject::m_pArea==area && handler->m_messageList.GetCount()==messages && beam->m_effectList.GetCount()==1);
+    retire(beam);
+    {
+        BOOL dead = FALSE; auto* expiring = new Beam; expiring->dead = &dead;
+        expiring->Seed(area,source->m_id); expiring->Life(0); objects->Add(&expiring->m_id,expiring,INFINITE);
+        LONG id = expiring->m_id; expiring->AIUpdate(); CGameObject* stale = NULL;
+        check("successful-expiry-deletes-object",dead && objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&stale,INFINITE)!=CGameObjectArray::SUCCESS);
+    }
+    CProjectile* decoded = CProjectile::DecodeProjectile(0x6D,NULL,0);
+    check("native-factory-6D",dynamic_cast<IcewindCProjectileScorcher*>(decoded)!=NULL
+        && decoded->m_projectileType==0x6C && decoded->m_fireSoundRef==CResRef("TRA_17")); delete decoded;
+    // Exercise actual delivery to the loaded defender. Its point equals the
+    // launch origin, making native CheckLOS's equal-point branch deterministic.
+    CGameObject* actorObject = NULL; CGameObject* victimObject = NULL;
+    LONG actorId = game->GetFixedOrderCharacterId(0), victimId = game->GetFixedOrderCharacterId(1);
+    BYTE actorRC = objects->GetDeny(actorId,CGameObjectArray::THREAD_ASYNCH,&actorObject,INFINITE);
+    BYTE victimRC = objects->GetDeny(victimId,CGameObjectArray::THREAD_ASYNCH,&victimObject,INFINITE);
+    check("strike-actors-available",actorRC==CGameObjectArray::SUCCESS && victimRC==CGameObjectArray::SUCCESS);
+    if (actorRC==CGameObjectArray::SUCCESS && victimRC==CGameObjectArray::SUCCESS) {
+        auto* actor = static_cast<CGameSprite*>(actorObject); auto* victim = static_cast<CGameSprite*>(victimObject);
+        CPoint victimPos = victim->m_pos; CPoint origin;
+        CProjectile::GetStart(actorId,origin,TRUE); victim->m_pos = origin;
+        auto newDirection = actor->m_nNewDirection; auto deltaDirection = actor->m_deltaDirection;
+        auto skipDirection = actor->m_skipDeltaDirection; auto backwards = actor->m_walkBackwards;
+        actor->m_walkBackwards = FALSE;
+        SHORT expectedFacing = actor->GetDirection(victim->m_pos);
+        auto* spriteBeam = new Beam; spriteBeam->Seed(area,actorId); spriteBeam->m_targetId = victimId;
+        spriteBeam->AIUpdate();
+        check("sprite-source-turn-and-anchor",actor->m_nNewDirection==expectedFacing && spriteBeam->m_pos==origin
+            && spriteBeam->HeightSlope()==victim->m_posZ-17);
+        delete spriteBeam;
+        actor->m_nNewDirection = newDirection; actor->m_deltaDirection = deltaDirection;
+        actor->m_skipDeltaDirection = skipDirection; actor->m_walkBackwards = backwards;
+        IcewindCProjectileScorcher delivery; delivery.m_sourceId = actorId; delivery.m_pArea = area;
+        for (BYTE initial : {BYTE(0),BYTE(1),BYTE(2),BYTE(255)}) {
+            INT before = handler->m_messageList.GetCount();
+            delivery.Strike(victimId,initial);
+            INT added = handler->m_messageList.GetCount()-before;
+            check("strike-subspell-queued",added>0);
+            while (handler->m_messageList.GetCount()>before) {
+                CMessage* message = handler->m_messageList.RemoveTail();
+                auto* payload = dynamic_cast<CMessageAddEffect*>(message);
+                check("strike-owned-payload-provenance",payload && payload->m_effect && message->m_sourceId==actorId && message->m_targetId==victimId
+                    && payload->m_effect->m_sourceRes==CResRef("SpWi217") && payload->m_effect->m_sourceID==actorId);
+                delete message;
+            }
+        }
+        // Pin the real sub-spell resource and substitute only its typed tables.
+        // The Strike -> BuildSubSpellEffects -> AddEffect message path remains
+        // production code; an instant ZRCHIT record makes HP deterministic.
+        CSpell damage(CResRef("ZRCHIT"));
+        BOOL damageAvailable = damage.Demand() != NULL && damage.pRes->m_bParsed;
+        check("damage-fixture-available",damageAvailable);
+        if (damageAvailable) {
+            for (BYTE initial : {BYTE(0),BYTE(1),BYTE(2),BYTE(255)}) {
+                CSpell subSpell(CResRef(initial==1?"EffAS1":"EffAS2"));
+                BOOL available = subSpell.Demand() != NULL && subSpell.pRes->m_bParsed;
+                check("subspell-damage-fixture-available",available);
+                if (available) {
+                    EnterCriticalSection(&g_pChitin->m_critSectDimm);
+                    EnterCriticalSection(&g_pChitin->m_critSectService);
+                    auto* res = subSpell.pRes;
+                    auto* oldHeader = res->m_pHeader; auto* oldAbilities = res->m_pAbilities; auto* oldEffects = res->m_pEffects;
+                    SPELL_HEADER header = *damage.pRes->m_pHeader;
+                    SPELL_ABILITY ability = damage.pRes->m_pAbilities[0];
+                    ITEM_EFFECT effect = damage.pRes->m_pEffects[0];
+                    header.abilityCount = 1; ability.minCasterLevel = 1; ability.effectCount = 1; ability.startingEffect = 0;
+                    effect.effectAmount = initial==1?3:2;
+                    effect.dwFlags = 0x40000000; effect.special = DWORD(-1);
+                    res->m_pHeader = &header; res->m_pAbilities = &ability; res->m_pEffects = &effect;
+                    auto base = victim->m_baseStats;
+                    CDerivedStats derived; derived = victim->m_derivedStats;
+                    CDerivedStats temp; temp = victim->m_tempStats;
+                    auto colorEffects = victim->m_hasColorEffects; auto dirty = victim->field_562C;
+                    auto bloodFlash = victim->m_bBloodFlashOn; auto bloodAmount = victim->m_nBloodFlashAmount;
+                    auto locatorTime = victim->m_nDamageLocatorTime; auto damageTaken = victim->m_nDamageTaken;
+                    auto sequence = victim->m_nSequence;
+                    BYTE saves[5] = {victim->field_70F6,victim->field_70F7,victim->field_70F8,victim->field_70F9,victim->field_70FA};
+                    INT timed = victim->m_timedEffectList.GetCount(), equipped = victim->m_equipedEffectList.GetCount();
+                    // Isolate HP from blood/animation/wake/low-health effects.
+                    victim->m_baseStats.m_hitPoints = victim->m_baseStats.m_maxHitPointsBase = 512;
+                    victim->m_baseStats.m_generalState = victim->m_derivedStats.m_generalState = 0;
+                    victim->m_derivedStats.m_nMaxHitPoints = 512;
+                    victim->m_derivedStats.m_spellStates.reset(SPLSTATE_TORTOISE_SHELL);
+                    victim->m_nSequence = CGameSprite::SEQ_SLEEP;
+                    LONG hp = victim->m_baseStats.m_hitPoints; INT before = handler->m_messageList.GetCount();
+                    delivery.Strike(victimId,initial);
+                    INT count = handler->m_messageList.GetCount()-before;
+                    check("one-deterministic-strike-effect",count==1);
+                    while (handler->m_messageList.GetCount()>before) {
+                        CMessage* message = handler->m_messageList.RemoveTail();
+                        if (dynamic_cast<CMessageAddEffect*>(message)) message->Run();
+                        delete message;
+                    }
+                    LONG loss = hp-victim->m_baseStats.m_hitPoints;
+                    check("actual-beam-strike-hp-loss",loss==(initial==1?3:2));
+                    check("instant-strike-does-not-retain-effect",victim->m_timedEffectList.GetCount()==timed
+                        && victim->m_equipedEffectList.GetCount()==equipped);
+                    Emit("{\"step\":%d,\"op\":\"beam-strike-damage\",\"initial\":%u,\"loss\":%ld}",nStep,initial,loss);
+                    victim->m_baseStats = base; victim->m_derivedStats = derived; victim->m_tempStats = temp;
+                    victim->m_hasColorEffects = colorEffects; victim->field_562C = dirty;
+                    victim->m_bBloodFlashOn = bloodFlash; victim->m_nBloodFlashAmount = bloodAmount;
+                    victim->m_nDamageLocatorTime = locatorTime; victim->m_nDamageTaken = damageTaken; victim->m_nSequence = sequence;
+                    victim->field_70F6 = saves[0]; victim->field_70F7 = saves[1]; victim->field_70F8 = saves[2];
+                    victim->field_70F9 = saves[3]; victim->field_70FA = saves[4];
+                    res->m_pHeader = oldHeader; res->m_pAbilities = oldAbilities; res->m_pEffects = oldEffects;
+                    LeaveCriticalSection(&g_pChitin->m_critSectService);
+                    LeaveCriticalSection(&g_pChitin->m_critSectDimm);
+                }
+                subSpell.Release();
+            }
+        }
+        damage.Release();
+        delivery.Strike(-1,TRUE); delivery.Strike(source->m_id,TRUE);
+        check("strike-invalid-and-non-ai-targets",handler->m_messageList.GetCount()==messages);
+        delivery.m_sourceId = -1; delivery.Strike(victimId,TRUE);
+        check("strike-missing-source",handler->m_messageList.GetCount()==messages);
+        victim->m_pos = victimPos;
+    }
+    if (victimRC==CGameObjectArray::SUCCESS) objects->ReleaseDeny(victimId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    if (actorRC==CGameObjectArray::SUCCESS) objects->ReleaseDeny(actorId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    target->m_pArea = source->m_pArea = NULL; retire(target); retire(source);
+    game->m_nTimeStop = stop; game->m_nTimeStopCaster = caster;
+    check("same-tick-state-restored",game->GetWorldTimer()->m_gameTime==clock && handler->m_messageList.GetCount()==messages
+        && area->m_lVertSortAdd.GetCount()==front && area->m_lVertSortBackAdd.GetCount()==back && area->m_lVertSortFlightAdd.GetCount()==flight
+        && area->m_lVertSort.GetCount()==sorted);
+    Emit("{\"step\":%d,\"op\":\"beamchecks\",\"checks\":%d,\"restored\":true,\"valid\":%s}",nStep,checks,valid?"true":"false");
+    if (!valid) Fail(nStep,"beamchecks","beam lifecycle or strike mismatch");
+}
 
 #include "BeamRenderGolden.h"
 
@@ -3423,6 +3716,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "beamrenderchecks") == 0) {
         BeamRenderChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "beamchecks") == 0) {
+        BeamChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

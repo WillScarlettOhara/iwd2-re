@@ -525,7 +525,7 @@ protected:
 
 // Beam leaf: vtable 0x850E84, ctor 0x57AEB0, native size 0x2D6.
 // BG2's CProjectileScorcher supplies the role names; the IWD2 class name is
-// provisional. The launch/tick/strike paths remain deferred until recovered.
+// provisional. Strike state is separate from the travelling payload delivery.
 #pragma pack(push, 2)
 class IcewindCProjectileScorcher /*#guess*/ : public IcewindCProjectileTravellingVFX {
 public:
@@ -534,6 +534,9 @@ public:
     void Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos,
               LONG nHeight, SHORT nType) override;
     void Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface) override;
+    void DeliverEffects() override;
+    virtual void GatherTargets();
+    virtual void Strike(LONG target, BYTE initial);
 
 protected:
     static void InitializeOffsets(); // native static direction table
@@ -545,7 +548,7 @@ protected:
     /* 02B0 */ LONG m_deltaZ;
     /* 02B4 */ BYTE m_bGlow;
     /* 02B5 */ BYTE _pad2B5;
-    /* 02B6 */ std::set<LONG> m_struckTargets;
+    /* 02B6 */ std::set<DWORD> m_struckTargets;
     /* 02C6 */ LONG m_tickCount;
     /* 02CA */ LONG m_strikePeriod;
     /* 02CE */ LONG m_clearPeriod;

@@ -58,7 +58,6 @@ offset oracles leave full static equivalence unproven. Initial run
 on the explicit deferred AI stub. Build/game passed (40 renders, 131 checks,
 67 UI steps, CLEAN); marker fixed before final rerun. No gates reduced.
 
-Next: recover AIUpdate 57B210, Fire 57B1D0 and strike services 57BE80/57C1D0
-before factory integration. AI/Fire are explicit stubs; this lot does not yet
-enable beam damage in ordinary gameplay. Software walls/nonzero terrain,
-accelerated pixels and forced lock failure in our build remain unproven.
+Lifecycle and factory 6D recovered: [continuation](beam-lifecycle-recovery.md).
+Software walls/nonzero terrain, accelerated pixels and forced lock failure
+in our build remain unproven.

@@ -30,6 +30,7 @@
 #include "CTimerWorld.h"
 #include "CVisualEffect.h"
 #include "IcewindMisc.h"
+#include "IcewindCGameEffects.h"
 
 // 0x84F06C. Data-segment gather radius the image initialises to 100 and never
 // writes; DecodeProjectile case 0x118 is its only reader in the whole binary.
@@ -582,6 +583,12 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
         // m_arrivalSoundRef -- inert while the launch-height path is stubbed.)
         pProjectile = new CProjectileMMissiT(0);
         pProjectile->m_fireSoundRef = CResRef("TRA_02");
+        break;
+
+    case 0x6D:
+        // Native handler 0x51FF03: segmented beam with its launch-sound override.
+        pProjectile = new IcewindCProjectileScorcher();
+        pProjectile->m_fireSoundRef = CResRef("TRA_17");
         break;
 
     case 0x18: {
@@ -6404,14 +6411,175 @@ IcewindCProjectileScorcher::IcewindCProjectileScorcher()
 // 0x57B210
 void IcewindCProjectileScorcher::AIUpdate()
 {
-    // Unimplemented: native beam tick/strike path, distinct from travelling AI.
+    m_tickCount = static_cast<LONG>(static_cast<DWORD>(m_tickCount) + 1);
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    if (game->m_nTimeStop != 0 && game->m_nTimeStopCaster != m_id) {
+        return;
+    }
+    if (m_lifeSpan == 0) {
+        RemoveFromArea();
+        if (game->GetObjectArray()->Delete(m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE)
+            == CGameObjectArray::SUCCESS) {
+            delete this;
+        }
+        return;
+    }
+    --m_lifeSpan;
+    m_pVidCell->FrameAdvance();
+    if (m_targetId == CGameObjectArray::INVALID_INDEX) {
+        m_deltaZ = 0;
+    } else {
+        CGameObject* target;
+        BYTE rc = game->GetObjectArray()->GetShare(m_targetId, CGameObjectArray::THREAD_ASYNCH, &target, INFINITE);
+        if (rc != CGameObjectArray::SUCCESS) {
+            RemoveSelf();
+            return;
+        }
+        if (m_pArea != target->m_pArea) {
+            LONG targetId = m_targetId;
+            RemoveSelf();
+            game->GetObjectArray()->ReleaseShare(targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            return;
+        }
+        CPoint position = target->GetPos();
+        m_targetX = position.x;
+        m_targetY = position.y;
+        m_deltaZ = static_cast<LONG>(static_cast<DWORD>(target->m_posZ) - static_cast<DWORD>(m_posZ));
+        game->GetObjectArray()->ReleaseShare(m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+    CGameObject* source;
+    BYTE rc;
+    do {
+        rc = game->GetObjectArray()->GetDeny(m_sourceId, CGameObjectArray::THREAD_ASYNCH, &source, INFINITE);
+    } while (rc == CGameObjectArray::SHARED);
+    if (rc != CGameObjectArray::SUCCESS) {
+        return;
+    }
+    CPoint targetPoint(m_targetX, m_targetY);
+    if (source->GetObjectType() == CGameObject::TYPE_SPRITE) {
+        CGameSprite* sprite = static_cast<CGameSprite*>(source);
+        m_facing = sprite->GetDirection(targetPoint);
+        sprite->SetDirection(m_facing);
+    } else {
+        m_facing = GetDirection(targetPoint);
+    }
+    UpdateDirectionSequence(NULL);
+    game->GetObjectArray()->ReleaseDeny(m_sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    GetStart(m_sourceId, m_pos, TRUE);
+    if (m_tickCount % m_clearPeriod == 1) {
+        m_struckTargets.clear();
+    }
+    if (m_tickCount % m_strikePeriod == 1) {
+        if (m_struckTargets.find(static_cast<DWORD>(m_strikeTarget)) == m_struckTargets.end()) {
+            Strike(m_strikeTarget, TRUE);
+            m_struckTargets.insert(static_cast<DWORD>(m_strikeTarget));
+        }
+        GatherTargets();
+    }
+    m_posAccumX = static_cast<LONG>(static_cast<DWORD>(m_pos.x) << CGameSprite::EXACT_SCALE);
+    m_posAccumY = static_cast<LONG>((static_cast<DWORD>(m_pos.y) << CGameSprite::EXACT_SCALE) << 2) / 3;
+    LONG targetY = static_cast<LONG>(static_cast<DWORD>(m_targetY) << 2) / 3;
+    LONG sourceY = static_cast<LONG>(static_cast<DWORD>(m_pos.y) << 2) / 3;
+    LONG dy = static_cast<LONG>(static_cast<DWORD>(targetY) - static_cast<DWORD>(sourceY));
+    LONG dx = static_cast<LONG>(static_cast<DWORD>(m_targetX) - static_cast<DWORD>(m_pos.x));
+    LONG distanceSquared = static_cast<LONG>(static_cast<DWORD>(dx) * static_cast<DWORD>(dx)
+        + static_cast<DWORD>(dy) * static_cast<DWORD>(dy));
+    LONG distance = static_cast<LONG>(static_cast<LONGLONG>(sqrt(static_cast<double>(distanceSquared)) + 0.5));
+    if (distance == 0) {
+        m_lifeSpan = 0;
+        m_nSegments = 0;
+    } else {
+        LONG rounded = static_cast<LONG>(static_cast<DWORD>(m_velocity) + static_cast<DWORD>(distance) - 1);
+        m_nSegments = static_cast<BYTE>(rounded / m_velocity);
+        m_stepX = static_cast<LONG>(static_cast<DWORD>(dx) << CGameSprite::EXACT_SCALE) / m_nSegments;
+        m_stepY = static_cast<LONG>(static_cast<DWORD>(dy) << CGameSprite::EXACT_SCALE) / m_nSegments;
+    }
+    m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
 }
 
 // 0x57B1D0
 void IcewindCProjectileScorcher::Fire(CGameArea* pArea, LONG source, LONG target,
     CPoint targetPos, LONG nHeight, SHORT nType)
 {
-    // Unimplemented: native beam launch, distinct from travelling Fire.
+    IcewindCProjectileTravellingVFX::Fire(pArea, source, target, targetPos, nHeight, nType);
+    m_strikeTarget = target;
+    DeliverEffects();
+}
+
+// 0x799CA0
+void IcewindCProjectileScorcher::DeliverEffects()
+{
+}
+
+// 0x57BE80
+void IcewindCProjectileScorcher::GatherTargets()
+{
+    const CPoint& offset = m_offsets[m_facing];
+    CPoint polygon[4] = {
+        CPoint(m_pos.x + offset.x, m_pos.y + offset.y),
+        CPoint(m_pos.x - offset.x, m_pos.y - offset.y),
+        CPoint(m_targetX - offset.x, m_targetY - offset.y),
+        CPoint(m_targetX + offset.x, m_targetY + offset.y)
+    };
+    CRect bounds(polygon[0], polygon[0]);
+    for (INT i = 1; i < 4; ++i) {
+        bounds.left = min(bounds.left, polygon[i].x);
+        bounds.top = min(bounds.top, polygon[i].y);
+        bounds.right = max(bounds.right, polygon[i].x);
+        bounds.bottom = max(bounds.bottom, polygon[i].y);
+    }
+    CTypedPtrList<CPtrList, LONG*> targets(10);
+    m_pArea->GetAllInPoly(bounds, polygon, 4, CAIObjectType::ANYONE,
+        m_pArea->m_visibleTerrainTable, targets, TRUE);
+    POSITION position = targets.GetHeadPosition();
+    while (position != NULL) {
+        LONG target = reinterpret_cast<LONG>(targets.GetNext(position));
+        if (m_struckTargets.find(static_cast<DWORD>(target)) == m_struckTargets.end()
+            && target != m_sourceId) {
+            Strike(target, FALSE);
+            m_struckTargets.insert(static_cast<DWORD>(target));
+        }
+    }
+}
+
+// 0x57C1D0
+void IcewindCProjectileScorcher::Strike(LONG target, BYTE initial)
+{
+    CGameObjectArray* objects = g_pBaldurChitin->GetObjectGame()->GetObjectArray();
+    CGameObject* victim;
+    if (objects->GetShare(target, CGameObjectArray::THREAD_ASYNCH, &victim, INFINITE)
+        != CGameObjectArray::SUCCESS) {
+        return;
+    }
+    if ((victim->GetObjectType() & CGameObject::TYPE_AIBASE) == 0) {
+        objects->ReleaseShare(target, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        return;
+    }
+    if (victim->GetObjectType() == CGameObject::TYPE_SPRITE
+        && static_cast<BYTE>(IsTargetImmune(static_cast<CGameSprite*>(victim))) == TRUE) {
+        CGameEffect::FeedBackImmuneToResource(static_cast<CGameSprite*>(victim), m_casterResRef);
+        objects->ReleaseShare(target, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        return;
+    }
+    CGameObject* source;
+    if (objects->GetShare(m_sourceId, CGameObjectArray::THREAD_ASYNCH, &source, INFINITE)
+        != CGameObjectArray::SUCCESS) {
+        objects->ReleaseShare(target, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        return;
+    }
+    CPoint origin;
+    GetStart(m_sourceId, origin, TRUE);
+    if (m_pArea->CheckLOS(origin, victim->GetPos(), m_terrainTable, FALSE)) {
+        std::list<CGameEffect*> effects = BuildSubSpellEffects(static_cast<CGameSprite*>(source),
+            CResRef(initial == TRUE ? "EffAS1" : "EffAS2"), 1);
+        for (CGameEffect* effect : effects) {
+            effect->m_sourceRes = CResRef("SpWi217");
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                new CMessageAddEffect(effect, m_sourceId, target), FALSE);
+        }
+    }
+    objects->ReleaseShare(target, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    objects->ReleaseShare(m_sourceId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
 }
 
 // 0x57B780
