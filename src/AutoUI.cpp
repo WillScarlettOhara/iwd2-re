@@ -119,6 +119,7 @@
 //                                restore actors, objects, queues and Time Stop.
 //   explodingrenderchecks     compare flight/detonation BAM pixels and render gates;
 //   vfxrenderchecks           compare VFX masks, translucency, shadow bounds and sequences;
+//   beamrenderchecks          verify segmented beam pixels, rejection and height stepping;
 //                                restore camera, search, visibility and back pixels.
 //   sparklewait                require emitted clusters to leave all area lists.
 //   rebounddamage              service a registered bolt beside portrait 1, then
@@ -1663,6 +1664,209 @@ struct ProjectileRenderFrameAnchor {
     }
     ~ProjectileRenderFrameAnchor() { Restore(); }
 };
+
+#include "BeamRenderGolden.h"
+
+void BeamRenderChecks(INT nStep)
+{
+    auto* game = g_pBaldurChitin->GetObjectGame();
+    auto* area = game->GetVisibleArea();
+    auto* video = static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+    if (!area || g_pChitin->cVideo.m_bIs3dAccelerated || !area->m_visibility.m_pMap) {
+        Fail(nStep, "beamrenderchecks", "requires loaded software area"); return;
+    }
+    INT checks = 0, test = 0, draws = 0; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"beam-render-case\",\"case\":%d,\"name\":\"%s\",\"passed\":false}", nStep, test, name);
+    };
+    auto& infinity = area->m_cInfinity;
+    CRect savedView = infinity.rViewPort;
+    INT savedX = infinity.nCurrentX, savedY = infinity.nCurrentY;
+    auto* savedWED = infinity.pResWED;
+    ULONG clock = game->GetWorldTimer()->m_gameTime;
+    INT messages = g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount();
+    INT front = area->m_lVertSortAdd.GetCount(), back = area->m_lVertSortBackAdd.GetCount(), flight = area->m_lVertSortFlightAdd.GetCount();
+    std::vector<BYTE> visibility(area->m_visibility.m_pMap, area->m_visibility.m_pMap + area->m_visibility.m_nMapSize);
+    CRect patch(64, 64, 416, 336);
+    std::vector<BYTE> savedPixels;
+    auto pixels = [&](std::vector<BYTE>* read, const std::vector<BYTE>* write, BOOL clear) -> BOOL {
+        if (!video->BKLock(patch)) return FALSE;
+        DWORD bytes = video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount / 8;
+        INT row = patch.Width() * bytes;
+        BOOL ok = bytes >= 2 && bytes <= 4 && video->m_SurfaceDesc.lpSurface != NULL;
+        if (ok && read) read->resize(row * patch.Height());
+        if (ok && write) ok = write->size() == static_cast<size_t>(row * patch.Height());
+        if (ok) for (INT y = 0; y < patch.Height(); ++y) {
+            BYTE* p = static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface) + y * video->m_SurfaceDesc.lPitch;
+            if (read) memcpy(read->data() + y * row, p, row);
+            if (write) memcpy(p, write->data() + y * row, row);
+            if (clear) memset(p, 0, row);
+        }
+        video->BKUnlock(); return ok;
+    };
+    BOOL backedUp = pixels(&savedPixels, NULL, FALSE);
+    check("pixels-backed-up", backedUp);
+    struct Beam : IcewindCProjectileScorcher {
+        using IcewindCProjectileScorcher::m_nSegments;
+        using IcewindCProjectileScorcher::m_deltaZ;
+        using IcewindCProjectileScorcher::m_offsets;
+        using IcewindCProjectileScorcher::m_offsetsInitialized;
+        using IcewindCProjectileScorcher::InitializeOffsets;
+        using CProjectileTravelling::m_pVidCell;
+        using CProjectileTravelling::m_pShadowCell;
+        using CProjectileTravelling::m_direction;
+        using CProjectileTravelling::m_stepX;
+        using CProjectileTravelling::m_stepY;
+        INT flagsCalls = 0;
+        RGBQUAD palette[256] = {};
+        BOOL Defaults() {
+            CSize size; m_pVidCell->GetFrameSize(0, 0, size, FALSE);
+            return m_lifeSpan == 110 && m_nSegments == 0 && m_deltaZ == 0 && m_bGlow == 0
+                && m_struckTargets.empty() && m_tickCount == 0 && m_strikePeriod == 3 && m_clearPeriod == 60
+                && m_strikeTarget == 0 && m_useHeightOffset == 1 && m_hasShadowCell == 0 && m_dirCount == 16
+                && m_velocity == size.cy * 3 / 4 && m_fireSoundRef == CResRef("TRA_M04")
+                && m_callBackProjectile == -1 && m_nTargetId == -1 && field_17E.IsEmpty() && m_bHasHeight == TRUE;
+        }
+        void Reset() {
+            m_visible = 0; m_hasShadowCell = 1; m_useHeightOffset = 0; m_dirCount = 16;
+            m_bMirrorNorth = 255; m_bMirrorEast = 255; m_tinted = 1; m_mirror = 0; m_paletteSwap = 1;
+            m_visualEffect.m_dwFlags = 0xFFFFFFFFu; m_visualEffect.m_bTintEnabled = TRUE;
+            m_visualEffect.m_bCopyFromBack = TRUE; m_visualEffect.m_nTransValue = 254;
+            flagsCalls = 0;
+        }
+        DWORD GetRenderFlags() override { ++flagsCalls; return 0xFFFFFFFFu; }
+    };
+    std::vector<CPoint> savedOffsets = Beam::m_offsets;
+    BYTE savedOffsetsInitialized = Beam::m_offsetsInitialized;
+    Beam beam;
+    check("native-constructor-defaults", beam.Defaults());
+    const CPoint offsets[16] = {CPoint(-20,0), CPoint(25,8), CPoint(19,14), CPoint(10,18),
+        CPoint(0,20), CPoint(-10,18), CPoint(-19,14), CPoint(-25,8), CPoint(-27,0),
+        CPoint(-25,-8), CPoint(-19,-14), CPoint(-10,-18), CPoint(0,-20), CPoint(-10,18), CPoint(-19,14), CPoint(-24,8)};
+    auto offsetTable = [&]() { return beam.m_offsets.size() == 16 && std::equal(beam.m_offsets.begin(), beam.m_offsets.end(), offsets); };
+    check("native-sixteen-offsets", offsetTable());
+    beam.m_offsets.push_back(CPoint(123,456)); beam.m_offsetsInitialized = 2;
+    beam.InitializeOffsets(); check("table-truncation-and-exact-true-guard", offsetTable());
+    beam.m_offsets.clear(); beam.m_offsetsInitialized = 0;
+    beam.InitializeOffsets(); check("table-growth", offsetTable());
+    beam.m_offsets[0] = CPoint(123,456); beam.InitializeOffsets();
+    check("initialized-table-preserved", beam.m_offsets[0] == CPoint(123,456));
+    beam.m_offsetsInitialized = 0; beam.InitializeOffsets(); check("table-restored", offsetTable());
+    beam.SetVidCell(CResRef("ARARROW"));
+    beam.m_pShadowCell = new CVidCell(CResRef("ARARROW"), FALSE);
+    for (INT i = 0; i < 256; ++i) { beam.palette[i].rgbRed = static_cast<BYTE>(64 + i % 192); beam.palette[i].rgbGreen = 80; }
+    beam.m_pVidCell->SetPalette(beam.palette, 256, CVidPalette::TYPE_RESOURCE);
+    beam.m_pArea = area; beam.CGameObject::m_pArea = area; beam.m_listType = CGameObject::LIST_FLIGHT;
+    ProjectileRenderFrameAnchor anchor(beam.m_pVidCell);
+    check("bam-fixture-valid", backedUp && anchor.frame != NULL && (anchor.header == NULL || anchor.headerFrame != NULL));
+    if (backedUp && anchor.frame != NULL && (anchor.header == NULL || anchor.headerFrame != NULL)) {
+        infinity.pResWED = NULL;
+        CPoint origin(232,1002);
+        auto reset = [&]() {
+            ++test; beam.Reset(); beam.m_pos = origin; beam.m_posZ = 17; beam.m_deltaZ = 0;
+            beam.m_nSegments = 5; beam.m_direction = 0;
+            beam.m_posAccumX = 232 * 1024; beam.m_posAccumY = 1336 * 1024;
+            beam.m_stepX = 8 * 1024; beam.m_stepY = 0;
+            beam.m_pVidCell->SequenceSet(0); beam.m_pVidCell->FrameSet(0);
+            beam.m_pVidCell->SetTintColor(RGB(180,80,240));
+            infinity.rViewPort = CRect(80,80,400,320); infinity.nCurrentX = origin.x - 160; infinity.nCurrentY = origin.y - 120;
+            memset(area->m_visibility.m_pMap, CVisibilityMap::VISIBILITY_MASK, visibility.size());
+        };
+        auto compare = [&](const std::vector<CPoint>& points, DWORD mask) {
+            std::vector<BYTE> expected, actual;
+            BOOL ok = pixels(NULL, NULL, TRUE);
+            CPoint reference; CSize size;
+            beam.m_pVidCell->GetCurrentCenterPoint(reference, FALSE); beam.m_pVidCell->GetCurrentFrameSize(size, FALSE);
+            CRect bounds(0,0,size.cx,size.cy);
+            for (const CPoint& point : points) {
+                infinity.FXPrep(bounds, mask, CVIDINF_SURFACE_BACK, point, reference);
+                if (infinity.FXLock(bounds, mask)) {
+                    infinity.FXRender(beam.m_pVidCell, reference.x, reference.y, mask, 0);
+                    infinity.FXUnlock(mask, NULL, CPoint(0,0));
+                    ok = infinity.FXBltFrom(CVIDINF_SURFACE_BACK, bounds, point.x, point.y, reference.x, reference.y, mask) && ok;
+                } else ok = FALSE;
+            }
+            ok = pixels(&expected, NULL, TRUE) && ok;
+            CPoint savedPos = beam.m_pos; INT ax = beam.m_posAccumX, ay = beam.m_posAccumY;
+            CProjectile* object = &beam; object->Render(NULL, video, CVIDINF_SURFACE_BACK); ++draws;
+            ok = pixels(&actual, NULL, FALSE) && ok;
+            check("complete-segment-pixels", ok && expected == actual);
+            check("nonempty-reference", std::any_of(expected.begin(), expected.end(), [](BYTE p) { return p != 0; }) == !points.empty());
+            check("ignored-family-flags-and-unchanged-state", beam.flagsCalls == 0 && beam.m_pos == savedPos
+                && beam.m_posAccumX == ax && beam.m_posAccumY == ay && beam.m_pVidCell->GetTintColor() == RGB(180,80,240)
+                && beam.m_pVidCell->m_nCurrentFrame == 0 && beam.m_pVidCell->m_nCurrentSequence == 0 && video->m_SurfaceDesc.lpSurface == NULL);
+        };
+        const DWORD masks[16] = {0x280,0x280,0x280,0x280,0x280,0x2A0,0x2A0,0x2A0,0x2A0,0x2B0,0x2B0,0x2B0,0x290,0x290,0x290,0x290};
+        for (SHORT direction = 0; direction < 16; ++direction) {
+            reset(); beam.m_direction = direction;
+            compare({CPoint(232,985),CPoint(240,985),CPoint(248,985),CPoint(256,985),CPoint(264,985)}, masks[direction]);
+        }
+        for (LONG delta : {LONG(-100),LONG(-2),LONG(0),LONG(2),LONG(100)}) {
+            reset(); beam.m_deltaZ = delta;
+            // Independent sampled heights from native min(abs(delta), index).
+            std::vector<CPoint> points = {CPoint(232,985),CPoint(240,985),CPoint(248,985),CPoint(256,985),CPoint(264,985)};
+            const INT low[5] = {0,-1,-2,-3,-4}, high[5] = {0,1,2,3,4}, low2[5] = {0,-1,-2,-2,-2}, high2[5] = {0,1,2,2,2};
+            for (INT i = 0; i < 5; ++i) points[i].y += delta == -100 ? high[i] : delta == -2 ? high2[i] : delta == 2 ? low2[i] : delta == 100 ? low[i] : 0;
+            compare(points, 0x280);
+        }
+        for (BYTE count : {BYTE(0),BYTE(1),BYTE(2),BYTE(127),BYTE(128),BYTE(255)}) {
+            reset(); beam.m_nSegments = count; beam.m_stepX = 0;
+            compare(std::vector<CPoint>(count, CPoint(232,985)), 0x280);
+        }
+        reset(); beam.m_stepY = 4 * 1024;
+        compare({CPoint(232,985),CPoint(240,988),CPoint(248,991),CPoint(256,994),CPoint(264,997)}, 0x280);
+        reset(); beam.m_stepY = -4 * 1024;
+        compare({CPoint(232,985),CPoint(240,982),CPoint(248,979),CPoint(256,976),CPoint(264,973)}, 0x280);
+        reset(); beam.m_posZ = -17;
+        compare({CPoint(232,1019),CPoint(240,1019),CPoint(248,1019),CPoint(256,1019),CPoint(264,1019)}, 0x280);
+        reset(); beam.m_nSegments = 2; beam.m_posAccumY += 1; beam.m_stepY = -2;
+        compare({CPoint(232,985),CPoint(240,984)}, 0x280);
+        auto hide = [&](CPoint point) {
+            SHORT tile = static_cast<SHORT>(point.y / 32 * area->m_visibility.m_nWidth + point.x / 32);
+            if (tile >= 0 && tile < area->m_visibility.m_nMapSize) area->m_visibility.m_pMap[tile] = 0;
+            else check("hidden-tile-valid", FALSE);
+        };
+        reset(); hide(CPoint(232,985)); compare({}, 0x280);
+        reset(); hide(CPoint(256,985)); compare({CPoint(232,985),CPoint(240,985),CPoint(248,985)}, 0x280);
+        reset(); hide(origin); compare({CPoint(232,985),CPoint(240,985),CPoint(248,985),CPoint(256,985),CPoint(264,985)}, 0x280);
+        reset(); infinity.nCurrentX += 10000; compare({}, 0x280);
+        reset(); infinity.nCurrentX = 235; compare({}, 0x280);
+        reset(); infinity.nCurrentY = 995; compare({}, 0x280);
+        reset(); beam.m_stepX = 200 * 1024; compare({CPoint(232,985)}, 0x280);
+        for (LONG wrap : {LONG(32 * 65536),LONG(-32 * 65536)}) {
+            reset(); beam.m_nSegments = 1; beam.m_pos.y += wrap; infinity.nCurrentY += wrap;
+            compare({CPoint(232,985 + wrap)}, 0x280);
+        }
+        // Native captures provide the anchors/masks; they contain no C++
+        // reconstruction of the renderer's arithmetic. Draw those samples
+        // with the real BAM, then compare the complete virtual-render pixels.
+        for (INT i = 0; i < _countof(BEAM_RENDER_INPUTS); ++i) {
+            reset(); const auto& c = BEAM_RENDER_INPUTS[i];
+            beam.m_pos = CPoint(c.state[0],c.state[1]); beam.m_posZ = c.state[2];
+            beam.m_posAccumX = c.state[3]; beam.m_posAccumY = c.state[4];
+            beam.m_stepX = c.state[5]; beam.m_stepY = c.state[6]; beam.m_deltaZ = c.state[7];
+            beam.m_direction = c.direction; beam.m_nSegments = c.count;
+            infinity.nCurrentX = c.view[0]; infinity.nCurrentY = c.view[1];
+            std::vector<CPoint> points; DWORD mask = masks[c.direction];
+            for (const auto& sample : BEAM_RENDER_SAMPLES) if (sample.input == i) {
+                points.push_back(CPoint(sample.x,sample.y)); mask = sample.flags;
+            }
+            compare(points, mask);
+        }
+    }
+    memcpy(area->m_visibility.m_pMap, visibility.data(), visibility.size());
+    infinity.pResWED = savedWED; infinity.rViewPort = savedView; infinity.nCurrentX = savedX; infinity.nCurrentY = savedY;
+    check("frame-and-demands-restored", anchor.Restore());
+    check("pixels-restored", backedUp && pixels(NULL, &savedPixels, FALSE));
+    Beam::m_offsets = savedOffsets; Beam::m_offsetsInitialized = savedOffsetsInitialized;
+    check("static-offset-state-restored", Beam::m_offsets == savedOffsets && Beam::m_offsetsInitialized == savedOffsetsInitialized);
+    check("same-tick-state-restored", game->GetWorldTimer()->m_gameTime == clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount() == messages
+        && area->m_lVertSortAdd.GetCount() == front && area->m_lVertSortBackAdd.GetCount() == back && area->m_lVertSortFlightAdd.GetCount() == flight);
+    Emit("{\"step\":%d,\"op\":\"beamrenderchecks\",\"checks\":%d,\"renderCalls\":%d,\"restored\":true,\"valid\":%s}", nStep, checks, draws, valid ? "true" : "false");
+    if (!valid) Fail(nStep, "beamrenderchecks", "beam renderer or construction mismatch (state restored)");
+}
 
 void ExplodingRenderChecks(INT nStep)
 {
@@ -3216,6 +3420,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "vfxrenderchecks") == 0) {
         VfxRenderChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "beamrenderchecks") == 0) {
+        BeamRenderChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

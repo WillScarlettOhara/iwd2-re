@@ -6339,6 +6339,148 @@ void IcewindCProjectileTravellingVFX::Render(CGameArea* pArea, CVidMode* pVidMod
     }
 }
 
+std::vector<CPoint> IcewindCProjectileScorcher::m_offsets;
+BYTE IcewindCProjectileScorcher::m_offsetsInitialized = 0;
+
+// 0x57BBC0
+void IcewindCProjectileScorcher::InitializeOffsets()
+{
+    if (m_offsetsInitialized != TRUE) {
+        const size_t count = 16;
+        if (m_offsets.size() < count) {
+            CPoint point;
+            m_offsets.insert(m_offsets.end(), count - m_offsets.size(), point);
+        } else if (count < m_offsets.size()) {
+            m_offsets.erase(m_offsets.begin() + count, m_offsets.end());
+        }
+        m_offsets[12] = CPoint(0, -20);
+        m_offsets[11] = CPoint(-10, -18);
+        m_offsets[10] = CPoint(-19, -14);
+        m_offsets[9] = CPoint(-25, -8);
+        m_offsets[8] = CPoint(-27, 0);
+        m_offsets[7] = CPoint(-25, 8);
+        m_offsets[6] = CPoint(-19, 14);
+        m_offsets[5] = CPoint(-10, 18);
+        m_offsets[4] = CPoint(0, 20);
+        m_offsets[3] = CPoint(10, 18);
+        m_offsets[2] = CPoint(19, 14);
+        m_offsets[1] = CPoint(25, 8);
+        m_offsets[0] = CPoint(-20, 0);
+        m_offsets[15] = CPoint(-24, 8);
+        m_offsets[14] = CPoint(-19, 14);
+        m_offsets[13] = CPoint(-10, 18);
+        m_offsetsInitialized = TRUE;
+    }
+}
+
+// 0x57AEB0
+IcewindCProjectileScorcher::IcewindCProjectileScorcher()
+    : IcewindCProjectileTravellingVFX(CResRef("AScorcT"))
+{
+    m_tickCount = 0;
+    m_strikePeriod = 3;
+    m_clearPeriod = 60;
+    m_deltaZ = 0;
+    m_bGlow = FALSE;
+    m_strikeTarget = 0;
+    InitializeOffsets();
+    m_pVidCell->FrameSet(0);
+    m_useHeightOffset = 0;
+    m_hasShadowCell = 0;
+    m_dirCount = 16;
+    m_fireSoundRef = "TRA_M04";
+    CSize size;
+    m_pVidCell->GetFrameSize(0, 0, size, FALSE);
+    m_velocity = static_cast<SHORT>(static_cast<LONG>(static_cast<DWORD>(size.cy) * 3) / 4);
+    m_callBackProjectile = -1;
+    field_17E = "";
+    m_nTargetId = -1;
+    m_nSegments = 0;
+    m_lifeSpan = 110;
+    m_bHasHeight = TRUE;
+    m_useHeightOffset = 1;
+}
+
+// 0x57B210
+void IcewindCProjectileScorcher::AIUpdate()
+{
+    // Unimplemented: native beam tick/strike path, distinct from travelling AI.
+}
+
+// 0x57B1D0
+void IcewindCProjectileScorcher::Fire(CGameArea* pArea, LONG source, LONG target,
+    CPoint targetPos, LONG nHeight, SHORT nType)
+{
+    // Unimplemented: native beam launch, distinct from travelling Fire.
+}
+
+// 0x57B780
+void IcewindCProjectileScorcher::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
+{
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\IcewindCProjectiles.cpp
+    // __LINE__: 207
+    UTIL_ASSERT(pVidMode != NULL);
+
+    CInfinity* pInfinity = m_pArea->GetInfinity();
+    DWORD flags = 0x200;
+    if (CGameSprite::DIR_N < m_direction) {
+        flags |= CInfinity::MIRROR_FX;
+    }
+    if (CGameSprite::DIR_W < m_direction && m_direction < CGameSprite::DIR_E) {
+        flags |= CInfinity::MIRROR_FX_UPDOWN;
+    }
+    CRect viewport(pInfinity->nCurrentX, pInfinity->nCurrentY,
+        pInfinity->nCurrentX + pInfinity->rViewPort.Width(),
+        pInfinity->nCurrentY + pInfinity->rViewPort.Height());
+    CPoint point(m_pos.x, m_pos.y - m_posZ + m_pArea->GetHeightOffset(m_pos, m_listType));
+    CPoint reference;
+    CSize size;
+    m_pVidCell->GetCurrentCenterPoint(reference, FALSE);
+    m_pVidCell->GetCurrentFrameSize(size, FALSE);
+    CRect bounds;
+    bounds.SetRect(0, 0, size.cx, size.cy);
+    for (BYTE index = 0; index < m_nSegments; ++index) {
+        SHORT tile = static_cast<SHORT>(static_cast<SHORT>(point.y / CVisibilityMap::SQUARE_SIZEY)
+            * m_pArea->m_visibility.m_nWidth + point.x / CVisibilityMap::SQUARE_SIZEX);
+        if (!m_pArea->m_visibility.IsTileVisible(tile)) {
+            continue;
+        }
+        CRect gcBounds;
+        gcBounds.left = CGameSprite::DIR_N < m_direction
+            ? reference.x - bounds.right + point.x + bounds.left : point.x - reference.x;
+        gcBounds.top = CGameSprite::DIR_W < m_direction && m_direction < CGameSprite::DIR_E
+            ? bounds.top - bounds.bottom + reference.y + point.y : point.y - reference.y;
+        gcBounds.right = gcBounds.left + bounds.Width();
+        gcBounds.bottom = gcBounds.top + bounds.Height();
+        CRect intersection;
+        IntersectRect(&intersection, &gcBounds, &viewport);
+        if (IsRectEmpty(&intersection)) {
+            continue;
+        }
+        flags |= CInfinity::FXPREP_COPYFROMBACK;
+        pInfinity->FXPrep(bounds, flags, nSurface, point, reference);
+        if (pInfinity->FXLock(bounds, flags)) {
+            pInfinity->FXRender(m_pVidCell, reference.x, reference.y, flags, 0);
+            pInfinity->FXRenderClippingPolys(point.x, point.y, 0, reference, gcBounds, FALSE, flags);
+            pInfinity->FXUnlock(flags, NULL, CPoint(0, 0));
+            pInfinity->FXBltFrom(nSurface, bounds, point.x, point.y, reference.x, reference.y, flags);
+        }
+        INT step = index + 1;
+        point.x = static_cast<LONG>(static_cast<DWORD>(m_stepX) * step + static_cast<DWORD>(m_posAccumX))
+            >> CGameSprite::EXACT_SCALE;
+        LONG scaledY = static_cast<LONG>((static_cast<DWORD>(m_stepY) * step + static_cast<DWORD>(m_posAccumY)) * 3);
+        point.y = ((scaledY / 4) >> CGameSprite::EXACT_SCALE) - m_posZ
+            + m_pArea->GetHeightOffset(m_pos, m_listType);
+        if (m_deltaZ > 0) {
+            point.y -= step < m_deltaZ ? step : m_deltaZ;
+        } else if (m_deltaZ < 0) {
+            LONG delta = static_cast<LONG>(0u - static_cast<DWORD>(m_deltaZ));
+            point.y = static_cast<LONG>(static_cast<DWORD>(point.y)
+                + static_cast<DWORD>(step < delta ? step : delta));
+        }
+    }
+}
+
 // Bounding box and reference point for the draw: the cell alone, or, with a
 // shadow cell, the union of the flying cell (lifted by m_posZ) and the
 // ground shadow.

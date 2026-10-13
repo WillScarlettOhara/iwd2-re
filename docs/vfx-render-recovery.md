@@ -59,5 +59,5 @@ Pixels are bounded regression evidence, not an original/reconstruction pixel
 capture. Accelerated rendering, actual wall occlusion, forced lock failure and
 nonzero terrain-height pixels remain outside this fixture's proof.
 
-Next: recover missing Render 57B780 of the beam leaf (ctor 57AEB0, vtable
-850E84 slot 19); its identity/layout need recovery before source declaration.
+Next: beam Render/ctor recovered; continue its launch/tick/strike paths.
+See [beam continuation](beam-render-recovery.md).

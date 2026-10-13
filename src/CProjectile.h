@@ -523,6 +523,36 @@ protected:
 };
 #pragma pack(pop)
 
+// Beam leaf: vtable 0x850E84, ctor 0x57AEB0, native size 0x2D6.
+// BG2's CProjectileScorcher supplies the role names; the IWD2 class name is
+// provisional. The launch/tick/strike paths remain deferred until recovered.
+#pragma pack(push, 2)
+class IcewindCProjectileScorcher /*#guess*/ : public IcewindCProjectileTravellingVFX {
+public:
+    IcewindCProjectileScorcher();
+    void AIUpdate() override;
+    void Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos,
+              LONG nHeight, SHORT nType) override;
+    void Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface) override;
+
+protected:
+    static void InitializeOffsets(); // native static direction table
+    static std::vector<CPoint> m_offsets;
+    static BYTE m_offsetsInitialized;
+
+    /* 02AE */ BYTE m_lifeSpan;
+    /* 02AF */ BYTE m_nSegments;
+    /* 02B0 */ LONG m_deltaZ;
+    /* 02B4 */ BYTE m_bGlow;
+    /* 02B5 */ BYTE _pad2B5;
+    /* 02B6 */ std::set<LONG> m_struckTargets;
+    /* 02C6 */ LONG m_tickCount;
+    /* 02CA */ LONG m_strikePeriod;
+    /* 02CE */ LONG m_clearPeriod;
+    /* 02D2 */ LONG m_strikeTarget;
+};
+#pragma pack(pop)
+
 // Intermediate base 0x56EDD0 -- the large spell-hit / area-of-effect projectile
 // (vtable 0x84F1C4; : IcewindCProjectileTravellingVFX). Unnamed in the binary
 // (no BG2/RTTI carry-over); the AOE spell-effect family builds through it --
