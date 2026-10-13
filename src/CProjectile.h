@@ -557,8 +557,8 @@ protected:
 #pragma pack(pop)
 
 // Chain carrier: vtable 0x850F14, native size 0x2BE. The constructor copies
-// the signed target-ID set, not a whole projectile. Original initial launch
-// construction is inlined in CGameSprite::UpdateSpriteEffect and is deferred.
+// the signed target-ID set, not a whole projectile. DecodeProjectile case
+// 0xD2 constructs the initial carrier with an empty history at 0x5250B0.
 #pragma pack(push, 2)
 class IcewindCProjectileChainLightning /*#guess*/ : public IcewindCProjectileTravellingVFX {
 public:

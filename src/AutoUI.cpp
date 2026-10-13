@@ -1715,6 +1715,7 @@ void AreaNearestChecks(INT nStep)
     }
     check("four-party-fixtures-available",available);
     ULONG clock=game->GetWorldTimer()->m_gameTime; INT messages=handler->m_messageList.GetCount();
+    auto timeStop=game->m_nTimeStop, timeStopCaster=game->m_nTimeStopCaster;
     if (available) {
         auto areaCounter=CGameArea::dword_8D212C; auto areaFlag=CGameArea::byte_8D2138;
         auto* area=new CGameArea(255); area->m_pGame=game;
@@ -1757,8 +1758,8 @@ void AreaNearestChecks(INT nStep)
         check("point-los-equal-position",area->FindObjectNear(128,96,type,50,area->m_visibleTerrainTable,TRUE,TRUE,FALSE,FALSE)==ids[1]);
         saved[0].p->m_pos=CPoint(128,96); saved[0].p->m_listType=CGameObject::LIST_BACK;
         check("nonfront-search-delegates-to-point",area->GetNearest(ids[0],type,50,area->m_visibleTerrainTable,TRUE,TRUE,TRUE,0,FALSE)==ids[1]);
-        // Three decreasing spacings let each native nearest pass select an
-        // unseen forward target without inventing ordinal selection.
+        // Launch the factory carrier far enough away to exercise actual
+        // movement, then let decreasing spacings select two unseen targets.
         area->m_lVertSort.RemoveAll();
         for (INT i=0;i<4;++i) {
             auto* p=saved[i].p; p->m_typeAI.m_nRace=0; p->m_typeAI.m_nEnemyAlly=saved[i].ea;
@@ -1774,16 +1775,22 @@ void AreaNearestChecks(INT nStep)
             if (i) p->m_posVertList=area->m_lVertSort.AddTail(reinterpret_cast<int*>(ids[i]));
         }
         struct Origin : CGameObject { BYTE GetObjectType() override { return TYPE_NONE; } };
-        auto* origin=new Origin; origin->m_pos=CPoint(129,96); origin->m_pArea=area; origin->m_listType=CGameObject::LIST_BACK;
+        auto* origin=new Origin; origin->m_pos=CPoint(48,96); origin->m_pArea=area; origin->m_listType=CGameObject::LIST_BACK;
         objects->Add(&origin->m_id,origin,INFINITE);
         auto retire=[&](CGameObject* object) {
             POSITION node=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(object->m_id));
             if (node) area->m_lVertSortAdd.RemoveAt(node);
             object->RemoveFromArea(); objects->Delete(object->m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE); delete object;
         };
-        auto* chain=new IcewindCProjectileChainLightning(std::set<LONG>());
-        chain->m_sourceId=ids[0]; chain->m_targetId=origin->m_id; chain->m_pos=origin->m_pos; chain->m_posZ=17;
-        chain->m_pArea=area; chain->CGameObject::m_pArea=area; objects->Add(&chain->m_id,chain,INFINITE);
+        for (BYTE delay : {BYTE(0),BYTE(255)}) {
+            CProjectile* decoded=CProjectile::DecodeProjectile(0xD2,NULL,delay);
+            check("chain-factory-class-and-type",dynamic_cast<IcewindCProjectileChainLightning*>(decoded)
+                && decoded->m_projectileType==0xD1 && decoded->m_fireSoundRef==CResRef("TRA_09")
+                && decoded->m_effectList.IsEmpty() && decoded->m_sourceId==0);
+            delete decoded;
+        }
+        CProjectile* chain=CProjectile::DecodeProjectile(0xD2,saved[0].p,17);
+        check("real-chain-factory-carrier",dynamic_cast<IcewindCProjectileChainLightning*>(chain)!=NULL);
         CSpell damage(CResRef("ZRCHIT")); BOOL loaded=damage.Demand()!=NULL && damage.pRes->m_bParsed;
         check("real-chain-damage-resource",loaded);
         if (loaded) {
@@ -1791,26 +1798,66 @@ void AreaNearestChecks(INT nStep)
             effect.special=DWORD(-1); effect.numDice=0; effect.diceSize=0;
             CGameEffect* payload=CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],CPoint(137,96)); payload->m_casterLevel=4;
             chain->AddEffect(payload);
-            for (INT hop=0;hop<4 && chain;++hop) {
-                chain->DeliverEffects();
+            chain->Fire(area,origin->m_id,ids[1],saved[1].p->m_pos,17,0);
+            CGameObject* registered=NULL;
+            BYTE registration=objects->GetShare(chain->m_id,CGameObjectArray::THREAD_ASYNCH,&registered,INFINITE);
+            check("initial-chain-fire-registers-target",chain->m_id!=CGameObjectArray::INVALID_INDEX
+                && registration==CGameObjectArray::SUCCESS && registered==chain
+                && chain->m_sourceId==origin->m_id && chain->m_targetId==ids[1]
+                && chain->m_pos==origin->m_pos && chain->m_targetX==137 && chain->m_targetY==96);
+            if (registration==CGameObjectArray::SUCCESS) objects->ReleaseShare(chain->m_id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+            LONG initialId=chain->m_id; CPoint initialPos=chain->m_pos;
+            game->m_nTimeStop=1; game->m_nTimeStopCaster=origin->m_id;
+            chain->AIUpdate();
+            check("factory-chain-obeys-time-stop",chain->m_pos==initialPos && !chain->m_effectList.IsEmpty()
+                && handler->m_messageList.GetCount()==messages);
+            game->m_nTimeStop=0;
+            INT totalTicks=0;
+            for (INT hop=0;hop<3 && chain;++hop) {
+                LONG parentId=chain->m_id, targetId=chain->m_targetId;
+                BOOL arrived=FALSE, moved=FALSE; INT ticks=0;
+                // Pending nodes are consumed by area sorting in a normal
+                // tick. Remove ours before self-deleting OnArrival here.
+                POSITION pending=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(parentId));
+                if (pending) area->m_lVertSortAdd.RemoveAt(pending);
+                for (;ticks<64 && !arrived;++ticks) {
+                    CPoint previous=chain->m_pos;
+                    chain->AIUpdate(); ++totalTicks;
+                    CGameObject* live=NULL;
+                    BYTE rc=objects->GetShare(parentId,CGameObjectArray::THREAD_ASYNCH,&live,INFINITE);
+                    arrived=rc!=CGameObjectArray::SUCCESS;
+                    if (arrived) check("arrival-deletes-object-array-entry",rc==CGameObjectArray::DELETED);
+                    if (!arrived) {
+                        chain=static_cast<CProjectile*>(live); moved=moved || chain->m_pos!=previous;
+                        objects->ReleaseShare(parentId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                        check("travelling-chain-retains-payload",!chain->m_effectList.IsEmpty()
+                            && handler->m_messageList.GetCount()==messages);
+                    }
+                }
+                check("chain-arrival-retires-parent",arrived);
+                if (hop==0) check("initial-chain-really-travels",moved && ticks>1 && parentId==initialId);
                 IcewindCProjectileChainLightning* child=NULL;
                 POSITION node=area->m_lVertSortAdd.GetHeadPosition();
                 while (node) {
                     LONG id=reinterpret_cast<LONG>(area->m_lVertSortAdd.GetNext(node)); CGameObject* object=NULL;
                     if (objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS) {
-                        if (id!=chain->m_id) child=dynamic_cast<IcewindCProjectileChainLightning*>(object);
+                        if (id!=parentId) child=dynamic_cast<IcewindCProjectileChainLightning*>(object);
                         objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
                     }
                 }
-                check("three-live-chain-hops",hop<3?child && child->m_sourceId==chain->m_id && child->m_targetId==ids[hop+1]:child==NULL);
-                Emit("{\"step\":%d,\"op\":\"chain-live-hop\",\"hop\":%d,\"target\":%ld,\"child\":%ld}",nStep,hop,chain->m_targetId,child?child->m_targetId:-1);
+                check("three-live-chain-hops",hop<2?child && child->m_sourceId==parentId
+                    && child->m_targetId==ids[hop+2] && child->m_projectileType==0:child==NULL);
+                Emit("{\"step\":%d,\"op\":\"chain-live-hop\",\"hop\":%d,\"target\":%ld,\"child\":%ld,\"ticks\":%d,\"arrived\":%s}",nStep,hop,targetId,child?child->m_targetId:-1,ticks,arrived?"true":"false");
                 while (handler->m_messageList.GetCount()>messages) {
                     CMessage* message=handler->m_messageList.RemoveTail();
                     if (dynamic_cast<CMessage105*>(message) || dynamic_cast<CMessageAddEffect*>(message)) message->Run();
                     delete message;
                 }
-                retire(chain); chain=child;
+                if (!arrived) retire(chain);
+                chain=child;
             }
+            check("factory-flight-chain-all-carriers-retired",chain==NULL && area->m_lVertSortAdd.IsEmpty() && totalTicks>3);
+            check("factory-chain-does-not-damage-caster",saved[0].p->m_baseStats.m_hitPoints==512);
             for (INT i=1;i<4;++i) {
                 LONG loss=512-saved[i].p->m_baseStats.m_hitPoints;
                 check("chain-actual-hp-loss",loss==6);
@@ -1819,13 +1866,16 @@ void AreaNearestChecks(INT nStep)
                 Emit("{\"step\":%d,\"op\":\"chain-live-damage\",\"target\":%d,\"loss\":%ld}",nStep,i,loss);
             }
         }
-        if (chain) retire(chain);
+        if (chain) {
+            if (chain->CGameObject::m_pArea) retire(chain); else delete chain;
+        }
         damage.Release(); retire(origin);
         for (INT i=0;i<4;++i) saved[i].Restore();
         area->m_lVertSort.RemoveAll(); area->m_visibility.m_pMap=NULL; delete area;
         CGameArea::dword_8D212C=areaCounter; CGameArea::byte_8D2138=areaFlag;
     }
     for (INT i=0;i<4;++i) if (locked[i]==CGameObjectArray::SUCCESS) objects->ReleaseDeny(ids[i],CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    game->m_nTimeStop=timeStop; game->m_nTimeStopCaster=timeStopCaster;
     check("same-tick-clock-messages-restored",game->GetWorldTimer()->m_gameTime==clock && handler->m_messageList.GetCount()==messages);
     Emit("{\"step\":%d,\"op\":\"nearestchecks\",\"checks\":%d,\"nativeCases\":%d,\"restored\":true,\"valid\":%s}",nStep,checks,INT(_countof(AREA_NEAREST_CASES)),valid?"true":"false");
     if (!valid) Fail(nStep,"nearestchecks","area selection or chained damage mismatch");

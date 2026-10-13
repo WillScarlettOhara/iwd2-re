@@ -35,9 +35,9 @@ isolated: list/scalar proof only. Golden header from captured IDs.
 
 AutoUI nearestchecks uses a private typed area/front list and four real party
 sprites; 49 captured selections replay with remapped IDs, scaled point filters,
-equal-point LOS and nonfront delegation. Then three decreasing spacings drive
-three registered chain children with real ZRCHIT damage copies, explicit
-impact calls and owned grouped messages. Six HP per defender, instant effects
+equal-point LOS and nonfront delegation. The original fixture used explicit impacts;
+the launch continuation now runs factory/Fire/AI arrival and two children
+with real ZRCHIT copies and owned grouped messages. Six HP per defender, instant effects
 not retained. Restore full actor base/derived/temp stats, positions, list nodes,
 flags/damage metadata and area globals; retire all fixtures before next tick.
 Chain fixtures share the private area and temporarily clear AI-type immunity;
@@ -58,4 +58,4 @@ Final .arc/2026-10-13T17-47-45-091065-batch PASS: Win32 Debug, 70 UI steps,
 point/chain hits 23912/34/15. GetNearest/chain parity GREEN; point YELLOW calls
 14/19. Missing offset/area-layout oracles leave full static equivalence
 unproven. Cleanup restored hashes; no gates reduced. Weapon/beam checks pass.
-Next: initial carrier construction in UpdateSpriteEffect 709B60, still deferred.
+Initial factory launch recovered; see [continuation](chain-launch-recovery.md).

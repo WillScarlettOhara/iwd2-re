@@ -3,9 +3,9 @@
 Recovered IcewindCProjectileChainLightning (#guess), native vtable 850F14,
 size 2BE. Constructor 57C510 takes const std::set<LONG>& target history,
 not a beam/projectile copy. DeliverEffects 57C7B0 owns the chain pass.
-Native initial construction is inlined near 70AAA5 in UpdateSpriteEffect;
-that source branch remains deferred. No new factory case or gameplay-launch
-claim. All flight/render/fire slots inherit the already recovered VFX base.
+Initial construction is DecodeProjectile case D2 at 5250B0, recovered in
+[launch continuation](chain-launch-recovery.md). The prior 70AAA5 pointer
+scan was an instruction-byte coincidence, not a vtable assignment. All flight/render/fire slots inherit the already recovered VFX base.
 
 Full bundles/manifests tmp_beam_variant_context.md,
 tmp_chain_delivery_context.md, tmp_chain_recovery_context.md; shared header
@@ -20,9 +20,9 @@ copy-from-back, disables height flags. It does not copy source/caster metadata.
 Delivery inserts current target before GetShare. Successful target share gets
 its CGameObject area (assert nonnull), releases it, queries nearest with ANYONE,
 SHORT 7FFF, PROJECTILE-owner area's visible terrain, flags TRUE/TRUE/TRUE,
-BYTE ordinal starting 0, ignoreDead FALSE. Repeated result, invalid ID or
-ordinal >20 terminates via qualified CProjectile::DeliverEffects. Increment
-ordinal before signed-set membership check; first unseen candidate creates
+BYTE selection mode starting 0, ignoreDead FALSE. Repeated result, invalid ID or
+mode >20 terminates via qualified CProjectile::DeliverEffects. Increment
+mode before signed-set membership check; first unseen candidate creates
 fresh child from current history, then shares it, reads virtual position/id,
 releases, and copies ordered payloads. Damage opcode 12 with history size 1
 logically shifts native +34 (m_numDice, not flat amount) by one. Low BYTE of
@@ -56,4 +56,4 @@ full static equivalence unproven. Cleanup restores hashes. No gates reduced.
 The native argument is a selection mode, not an ordinal. The front-list
 nonzero-mode rejection is native behavior, not a missing nth-target feature.
 FindObjectNear and traversal corrected in [continuation](area-nearest-recovery.md).
-Next: native initial carrier creation in UpdateSpriteEffect.
+Initial factory/flight recovery: [continuation](chain-launch-recovery.md).

@@ -1746,6 +1746,14 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
         pProjectile = new CProjectileFireStorm();
         break;
 
+    case 0xD2:
+        // 0x5250B0: construct the initial chain carrier from a temporary
+        // empty signed-ID set (0x537010), then destroy that set (0x5370C0).
+        // The common tail stamps 0xD1; subsequent hops use the constructor
+        // directly and retain its default projectile type.
+        pProjectile = new IcewindCProjectileChainLightning(std::set<LONG>());
+        break;
+
     case 0xD3:
         // Acid Storm (SPWI708): the persistent acid area spell-hit projectile. Bare
         // IcewindCProjectileSpellHit leaf (ctor 0x571170). Previously fell through to
