@@ -19,6 +19,7 @@ vfxrenderchecks
 beamrenderchecks
 beamchecks
 chainchecks
+nearestchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

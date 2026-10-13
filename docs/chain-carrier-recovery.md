@@ -53,8 +53,7 @@ Final .arc/2026-10-13T15-43-03-139897-batch PASS: Win32 Debug, 69 steps,
 delivery parity GREEN, ctor YELLOW calls 11/2. Missing offset oracles leave
 full static equivalence unproven. Cleanup restores hashes. No gates reduced.
 
-Higher GetNearest
-ordinals and initial visual launch remain unproven. FindObjectNear is still a
-stub; current GetNearest also only handles nearest/farthest, so no general
-multi-hop selection claim. Next: recover that ordinal selection, then native
-initial carrier creation in UpdateSpriteEffect.
+The native argument is a selection mode, not an ordinal. The front-list
+nonzero-mode rejection is native behavior, not a missing nth-target feature.
+FindObjectNear and traversal corrected in [continuation](area-nearest-recovery.md).
+Next: native initial carrier creation in UpdateSpriteEffect.

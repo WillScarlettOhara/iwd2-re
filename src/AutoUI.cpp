@@ -122,6 +122,7 @@
 //   beamrenderchecks          verify segmented beam pixels, rejection and height stepping;
 //   beamchecks                verify beam launch, ticks, polygon strikes and delivery;
 //   chainchecks               verify chain history, child launch and ordered payloads;
+//   nearestchecks             replay area selection and verify three chain impacts;
 //                                restore camera, search, visibility and back pixels.
 //   sparklewait                require emitted clusters to leave all area lists.
 //   rebounddamage              service a registered bolt beside portrait 1, then
@@ -1668,6 +1669,167 @@ struct ProjectileRenderFrameAnchor {
 };
 
 #include "BeamTickGolden.h"
+#include "AreaNearestGolden.h"
+
+void AreaNearestChecks(INT nStep)
+{
+    auto* game = g_pBaldurChitin->GetObjectGame(); auto* objects = game->GetObjectArray();
+    auto* handler = g_pBaldurChitin->GetMessageHandler();
+    INT checks = 0; BOOL valid = TRUE;
+    auto check = [&](const char* name, BOOL ok) {
+        ++checks; valid = valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"nearest-case\",\"case\":\"%s\",\"passed\":false}",nStep,name);
+    };
+    struct Saved {
+        CGameSprite* p = NULL; CCreatureFileHeader base; CDerivedStats derived,temp;
+        CPoint pos; CGameArea* area; POSITION node; BYTE list,ea,race,saves[5];
+        BOOL active,ai,imprisoned,color,dirty,blood; INT sequence,bloodAmount,damageTaken,timed,equipped; ULONG locator;
+        void Capture(CGameSprite* sprite) {
+            p = sprite; base = p->m_baseStats; derived = p->m_derivedStats; temp = p->m_tempStats;
+            pos = p->m_pos; area = p->m_pArea; node = p->m_posVertList; list = p->m_listType;
+            ea = p->m_typeAI.m_nEnemyAlly; race = p->m_typeAI.m_nRace;
+            active = p->m_active; ai = p->m_activeAI; imprisoned = p->m_activeImprisonment;
+            color = p->m_hasColorEffects; dirty = p->field_562C; blood = p->m_bBloodFlashOn;
+            sequence = p->m_nSequence; bloodAmount = p->m_nBloodFlashAmount;
+            damageTaken = p->m_nDamageTaken; locator = p->m_nDamageLocatorTime;
+            timed = p->m_timedEffectList.GetCount(); equipped = p->m_equipedEffectList.GetCount();
+            saves[0]=p->field_70F6; saves[1]=p->field_70F7; saves[2]=p->field_70F8; saves[3]=p->field_70F9; saves[4]=p->field_70FA;
+        }
+        void Restore() {
+            p->m_baseStats=base; p->m_derivedStats=derived; p->m_tempStats=temp;
+            p->m_pos=pos; p->m_pArea=area; p->m_posVertList=node; p->m_listType=list;
+            p->m_typeAI.m_nEnemyAlly=ea; p->m_typeAI.m_nRace=race;
+            p->m_active=active; p->m_activeAI=ai; p->m_activeImprisonment=imprisoned;
+            p->m_hasColorEffects=color; p->field_562C=dirty; p->m_bBloodFlashOn=blood;
+            p->m_nSequence=sequence; p->m_nBloodFlashAmount=bloodAmount;
+            p->m_nDamageTaken=damageTaken; p->m_nDamageLocatorTime=locator;
+            p->field_70F6=saves[0]; p->field_70F7=saves[1]; p->field_70F8=saves[2]; p->field_70F9=saves[3]; p->field_70FA=saves[4];
+        }
+    } saved[4];
+    LONG ids[4]; BYTE locked[4]; CGameObject* raw[4] = {};
+    BOOL available = TRUE;
+    for (INT i=0;i<4;++i) {
+        ids[i]=game->GetFixedOrderCharacterId(i);
+        locked[i]=objects->GetDeny(ids[i],CGameObjectArray::THREAD_ASYNCH,&raw[i],INFINITE);
+        if (locked[i]==CGameObjectArray::SUCCESS) saved[i].Capture(static_cast<CGameSprite*>(raw[i])); else available=FALSE;
+    }
+    check("four-party-fixtures-available",available);
+    ULONG clock=game->GetWorldTimer()->m_gameTime; INT messages=handler->m_messageList.GetCount();
+    if (available) {
+        auto areaCounter=CGameArea::dword_8D212C; auto areaFlag=CGameArea::byte_8D2138;
+        auto* area=new CGameArea(255); area->m_pGame=game;
+        std::vector<BYTE> visibility(128*128,CVisibilityMap::VISIBILITY_MASK);
+        area->m_visibility.m_pMap=visibility.data(); area->m_visibility.m_nWidth=128;
+        area->m_visibility.m_nHeight=128; area->m_visibility.m_nMapSize=visibility.size();
+        area->m_visibility.m_nSearchRangeH=16; area->m_search.m_GridSquareDimensions=CSize(16,16);
+        CAIObjectType type(CAIObjectType::ANYONE); type.m_nEnemyAlly=222;
+        for (INT test=0;test<_countof(AREA_NEAREST_CASES);++test) {
+            const auto& c=AREA_NEAREST_CASES[test]; area->m_lVertSort.RemoveAll();
+            for (INT j=0;j<4;++j) {
+                auto* p=saved[j].p; p->m_pos=CPoint(c.actors[j][0],c.actors[j][1]);
+                p->m_derivedStats.m_generalState=c.actors[j][2]; p->m_baseStats.m_bStealthMode=BYTE(c.actors[j][3]);
+                p->m_typeAI.m_nRace=BYTE(c.actors[j][4]); p->m_typeAI.m_nEnemyAlly=222;
+                p->m_active=c.actors[j][5]; p->m_activeAI=p->m_activeImprisonment=TRUE;
+                p->m_posVertList=NULL; p->m_listType=CGameObject::LIST_FRONT;
+            }
+            for (INT j=0;j<c.count;++j) {
+                INT slot=c.order[j]; LONG id=slot==99?-123:ids[slot];
+                POSITION node=area->m_lVertSort.AddTail(reinterpret_cast<int*>(id));
+                if (slot!=99 && c.actors[slot][6]) saved[slot].p->m_posVertList=node;
+            }
+            LONG result=c.point?area->FindObjectNear(c.center[0],c.center[1],type,c.range,area->m_visibleTerrainTable,
+                FALSE,TRUE,c.mode,c.include):area->GetNearest(ids[0],type,c.range,area->m_visibleTerrainTable,
+                FALSE,TRUE,c.sleep,BYTE(c.mode),c.include);
+            LONG expected=c.result==-1?-1:ids[c.result];
+            if (result!=expected) Emit("{\"step\":%d,\"op\":\"nearest-native-mismatch\",\"index\":%d,\"actual\":%ld,\"expected\":%ld}",nStep,test,result,expected);
+            check("captured-native-selection",result==expected);
+        }
+        // Point filters receive the perspective-scaled candidate point.
+        area->m_lVertSort.RemoveAll();
+        auto* target=saved[1].p; target->m_pos=CPoint(140,96); target->m_typeAI.m_nRace=0;
+        target->m_derivedStats.m_generalState=0; target->m_active=TRUE; target->m_baseStats.m_bStealthMode=0;
+        target->m_posVertList=area->m_lVertSort.AddTail(reinterpret_cast<int*>(ids[1]));
+        CAIObjectType shape(type); shape.SetCenter(CPoint(140,128)); shape.SetRadius(0);
+        check("location-filter-sees-scaled-y",area->FindObjectNear(128,96,shape,50,area->m_visibleTerrainTable,FALSE,TRUE,FALSE,FALSE)==ids[1]);
+        shape.SetCenter(CPoint(140,96));
+        check("location-filter-does-not-use-world-y",area->FindObjectNear(128,96,shape,50,area->m_visibleTerrainTable,FALSE,TRUE,FALSE,FALSE)==-1);
+        target->m_pos=CPoint(128,96);
+        check("point-los-equal-position",area->FindObjectNear(128,96,type,50,area->m_visibleTerrainTable,TRUE,TRUE,FALSE,FALSE)==ids[1]);
+        saved[0].p->m_pos=CPoint(128,96); saved[0].p->m_listType=CGameObject::LIST_BACK;
+        check("nonfront-search-delegates-to-point",area->GetNearest(ids[0],type,50,area->m_visibleTerrainTable,TRUE,TRUE,TRUE,0,FALSE)==ids[1]);
+        // Three decreasing spacings let each native nearest pass select an
+        // unseen forward target without inventing ordinal selection.
+        area->m_lVertSort.RemoveAll();
+        for (INT i=0;i<4;++i) {
+            auto* p=saved[i].p; p->m_typeAI.m_nRace=0; p->m_typeAI.m_nEnemyAlly=saved[i].ea;
+            p->m_baseStats.m_generalState=p->m_derivedStats.m_generalState=0;
+            p->m_active=p->m_activeAI=p->m_activeImprisonment=TRUE; p->m_baseStats.m_bStealthMode=0;
+            p->m_baseStats.m_hitPoints=p->m_baseStats.m_maxHitPointsBase=512;
+            p->m_derivedStats.m_nMaxHitPoints=512; p->m_derivedStats.m_spellStates.reset(SPLSTATE_TORTOISE_SHELL);
+            p->m_derivedStats.m_cImmunitiesAIType.ClearAll();
+            p->m_nSequence=CGameSprite::SEQ_SLEEP;
+            p->m_pos=CPoint(i==1?137:i==2?141:i==3?143:128,96);
+            p->m_pArea=area;
+            p->m_listType=CGameObject::LIST_FRONT; p->m_posVertList=NULL;
+            if (i) p->m_posVertList=area->m_lVertSort.AddTail(reinterpret_cast<int*>(ids[i]));
+        }
+        struct Origin : CGameObject { BYTE GetObjectType() override { return TYPE_NONE; } };
+        auto* origin=new Origin; origin->m_pos=CPoint(129,96); origin->m_pArea=area; origin->m_listType=CGameObject::LIST_BACK;
+        objects->Add(&origin->m_id,origin,INFINITE);
+        auto retire=[&](CGameObject* object) {
+            POSITION node=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(object->m_id));
+            if (node) area->m_lVertSortAdd.RemoveAt(node);
+            object->RemoveFromArea(); objects->Delete(object->m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE); delete object;
+        };
+        auto* chain=new IcewindCProjectileChainLightning(std::set<LONG>());
+        chain->m_sourceId=ids[0]; chain->m_targetId=origin->m_id; chain->m_pos=origin->m_pos; chain->m_posZ=17;
+        chain->m_pArea=area; chain->CGameObject::m_pArea=area; objects->Add(&chain->m_id,chain,INFINITE);
+        CSpell damage(CResRef("ZRCHIT")); BOOL loaded=damage.Demand()!=NULL && damage.pRes->m_bParsed;
+        check("real-chain-damage-resource",loaded);
+        if (loaded) {
+            ITEM_EFFECT effect=damage.pRes->m_pEffects[0]; effect.effectAmount=6; effect.dwFlags=0x40000000;
+            effect.special=DWORD(-1); effect.numDice=0; effect.diceSize=0;
+            CGameEffect* payload=CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],CPoint(137,96)); payload->m_casterLevel=4;
+            chain->AddEffect(payload);
+            for (INT hop=0;hop<4 && chain;++hop) {
+                chain->DeliverEffects();
+                IcewindCProjectileChainLightning* child=NULL;
+                POSITION node=area->m_lVertSortAdd.GetHeadPosition();
+                while (node) {
+                    LONG id=reinterpret_cast<LONG>(area->m_lVertSortAdd.GetNext(node)); CGameObject* object=NULL;
+                    if (objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS) {
+                        if (id!=chain->m_id) child=dynamic_cast<IcewindCProjectileChainLightning*>(object);
+                        objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                    }
+                }
+                check("three-live-chain-hops",hop<3?child && child->m_sourceId==chain->m_id && child->m_targetId==ids[hop+1]:child==NULL);
+                Emit("{\"step\":%d,\"op\":\"chain-live-hop\",\"hop\":%d,\"target\":%ld,\"child\":%ld}",nStep,hop,chain->m_targetId,child?child->m_targetId:-1);
+                while (handler->m_messageList.GetCount()>messages) {
+                    CMessage* message=handler->m_messageList.RemoveTail();
+                    if (dynamic_cast<CMessage105*>(message) || dynamic_cast<CMessageAddEffect*>(message)) message->Run();
+                    delete message;
+                }
+                retire(chain); chain=child;
+            }
+            for (INT i=1;i<4;++i) {
+                LONG loss=512-saved[i].p->m_baseStats.m_hitPoints;
+                check("chain-actual-hp-loss",loss==6);
+                check("instant-chain-effect-does-not-persist",saved[i].p->m_timedEffectList.GetCount()==saved[i].timed
+                    && saved[i].p->m_equipedEffectList.GetCount()==saved[i].equipped);
+                Emit("{\"step\":%d,\"op\":\"chain-live-damage\",\"target\":%d,\"loss\":%ld}",nStep,i,loss);
+            }
+        }
+        if (chain) retire(chain);
+        damage.Release(); retire(origin);
+        for (INT i=0;i<4;++i) saved[i].Restore();
+        area->m_lVertSort.RemoveAll(); area->m_visibility.m_pMap=NULL; delete area;
+        CGameArea::dword_8D212C=areaCounter; CGameArea::byte_8D2138=areaFlag;
+    }
+    for (INT i=0;i<4;++i) if (locked[i]==CGameObjectArray::SUCCESS) objects->ReleaseDeny(ids[i],CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    check("same-tick-clock-messages-restored",game->GetWorldTimer()->m_gameTime==clock && handler->m_messageList.GetCount()==messages);
+    Emit("{\"step\":%d,\"op\":\"nearestchecks\",\"checks\":%d,\"nativeCases\":%d,\"restored\":true,\"valid\":%s}",nStep,checks,INT(_countof(AREA_NEAREST_CASES)),valid?"true":"false");
+    if (!valid) Fail(nStep,"nearestchecks","area selection or chained damage mismatch");
+}
 
 void ChainLightningChecks(INT nStep)
 {
@@ -3864,6 +4026,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "chainchecks") == 0) {
         ChainLightningChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "nearestchecks") == 0) {
+        AreaNearestChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

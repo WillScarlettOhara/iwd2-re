@@ -30,6 +30,8 @@
 #include "CVidPoly.h"
 
 #include <vector>
+#include <new>
+#include <cstdio>
 
 // 0x8D212C
 INT CGameArea::dword_8D212C;
@@ -782,8 +784,6 @@ LONG CGameArea::GetNearest(LONG startObject, const CAIObjectType& type, SHORT ra
 
     CPoint posStart = pStart->GetPos();
     if (posStart.x < 0 || posStart.y < 0) {
-        // NOTE: the binary formats an "Illegal position!: %d %d" string into a
-        // heap buffer and immediately frees it (dead debug print).
         m_pGame->GetObjectArray()->ReleaseShare(startObject, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         return CGameObjectArray::INVALID_INDEX;
     }
@@ -804,11 +804,16 @@ LONG CGameArea::GetNearest(LONG startObject, const CAIObjectType& type, SHORT ra
         return FindObjectNear(pos.x, pos.y, type, range, terrainTable, checkLOS, seeInvisible, nNearest, ignoreDead);
     }
 
+    posStart = pStart->GetPos();
     LONG nStartX = posStart.x;
-    LONG nStartYPersp = (posStart.y * 4) / 3;
+    LONG nStartYPersp = static_cast<LONG>(static_cast<DWORD>(posStart.y) << 2) / 3;
 
     if (m_visibility.PointToTile(posStart) >= m_visibility.m_nWidth * m_visibility.m_nHeight) {
-        // NOTE: dead "Illegal position!" debug print in the binary, as above.
+        char* message = new (std::nothrow) char[128];
+        if (message != NULL) {
+            std::sprintf(message, "Illegal position: (%d,%d)\n", posStart.x, posStart.y);
+            delete[] message;
+        }
         m_pGame->GetObjectArray()->ReleaseShare(startObject, CGameObjectArray::THREAD_ASYNCH, INFINITE);
         return CGameObjectArray::INVALID_INDEX;
     }
@@ -839,44 +844,28 @@ LONG CGameArea::GetNearest(LONG startObject, const CAIObjectType& type, SHORT ra
         nBestDist = 0;
     }
 
-    // The front vert list is y-sorted: scan outwards from the start object's
-    // own node, alternating backward/forward, and stop a direction as soon as
-    // its perspective-y distance alone exceeds the best squared distance.
+    // This is a mode, not an ordinal. Nonzero modes seed the Y-distance
+    // bound to zero, preserving the native front-list rejection quirk.
     POSITION posBack = posVert;
     m_lVertSort.GetPrev(posBack);
     POSITION posFwd = posVert;
     m_lVertSort.GetNext(posFwd);
 
-    BOOL bPreferBackward = TRUE;
-    while (posBack != NULL || posFwd != NULL) {
-        BOOL bBackward = bPreferBackward ? posBack != NULL : posFwd == NULL;
-        bPreferBackward = !bBackward;
-        LONG nCandidateId;
-        if (bBackward) {
-            nCandidateId = reinterpret_cast<LONG>(m_lVertSort.GetPrev(posBack));
-        } else {
-            nCandidateId = reinterpret_cast<LONG>(m_lVertSort.GetNext(posFwd));
-        }
-
+    auto consider = [&](LONG nCandidateId, POSITION& direction) -> BOOL {
         CGameObject* pObject;
         if (m_pGame->GetObjectArray()->GetShare(nCandidateId,
                 CGameObjectArray::THREAD_ASYNCH,
                 &pObject,
                 INFINITE)
             != CGameObjectArray::SUCCESS) {
-            continue;
+            return FALSE;
         }
 
-        if (pObject->GetVertListPos() == NULL) {
-            if (bBackward) {
-                posBack = NULL;
-            } else {
-                posFwd = NULL;
-            }
-        } else {
+        if (pObject->GetVertListPos() != NULL) {
             CPoint posCand = pObject->GetPos();
-            LONG dy = nStartYPersp - (posCand.y * 4) / 3;
-            LONG nDistSq = dy * dy;
+            LONG scaledY = static_cast<LONG>(static_cast<DWORD>(posCand.y) << 2) / 3;
+            LONG dy = static_cast<LONG>(static_cast<DWORD>(nStartYPersp) - static_cast<DWORD>(scaledY));
+            LONG nDistSq = static_cast<LONG>(static_cast<DWORD>(dy) * static_cast<DWORD>(dy));
             if (nDistSq < nBestDist) {
                 if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
                     CGameSprite* pSprite = static_cast<CGameSprite*>(pObject);
@@ -899,7 +888,8 @@ LONG CGameArea::GetNearest(LONG startObject, const CAIObjectType& type, SHORT ra
                                 bInSight = CheckLOS(posStart, pObject->GetPos(), terrainTable, TRUE);
                             }
                             if (bInSight) {
-                                nDistSq += (nStartX - posCand.x) * (nStartX - posCand.x);
+                                DWORD dx = static_cast<DWORD>(nStartX) - static_cast<DWORD>(posCand.x);
+                                nDistSq = static_cast<LONG>(static_cast<DWORD>(nDistSq) + dx * dx);
                                 if (nNearest == 0) {
                                     if (nDistSq < nBestDist) {
                                         nBestId = nCandidateId;
@@ -914,15 +904,22 @@ LONG CGameArea::GetNearest(LONG startObject, const CAIObjectType& type, SHORT ra
                     }
                 }
             } else {
-                if (bBackward) {
-                    posBack = NULL;
-                } else {
-                    posFwd = NULL;
-                }
+                direction = NULL;
             }
         }
 
         m_pGame->GetObjectArray()->ReleaseShare(nCandidateId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        return TRUE;
+    };
+    while (posBack != NULL || posFwd != NULL) {
+        // Failed backward shares retry the backward side before visiting
+        // forward; a missing node merely skips that candidate.
+        if (posBack != NULL && !consider(reinterpret_cast<LONG>(m_lVertSort.GetPrev(posBack)), posBack)) {
+            continue;
+        }
+        if (posFwd != NULL) {
+            consider(reinterpret_cast<LONG>(m_lVertSort.GetNext(posFwd)), posFwd);
+        }
     }
 
     return nBestId;
@@ -1269,9 +1266,55 @@ void CGameArea::GetAllInPoly(const CRect& rBounding, CPoint* pPoly, SHORT nPoly,
 // 0x46DAE0
 LONG CGameArea::FindObjectNear(INT x, INT y, const CAIObjectType& type, SHORT range, const BYTE* terrainTable, BOOL checkLOS, BOOL seeInvisible, BOOL findFarthest, BOOL includeAll)
 {
-    // TODO: Incomplete.
-
-    return -1;
+    BOOL wantsRaceBE = type.m_nRace == 0xBE;
+    if (x < 0 || y < 0) {
+        return CGameObjectArray::INVALID_INDEX;
+    }
+    LONG bestDistance = findFarthest == 0 ? static_cast<LONG>(range) * range + 1 : 0;
+    LONG bestId = CGameObjectArray::INVALID_INDEX;
+    LONG scaledY = static_cast<LONG>(static_cast<DWORD>(y) << 2) / 3;
+    POSITION position = m_lVertSort.GetHeadPosition();
+    while (position != NULL) {
+        LONG id = reinterpret_cast<LONG>(m_lVertSort.GetNext(position));
+        CGameObject* object;
+        if (m_pGame->GetObjectArray()->GetShare(id, CGameObjectArray::THREAD_ASYNCH, &object, INFINITE)
+            != CGameObjectArray::SUCCESS) {
+            continue;
+        }
+        BOOL sprite = object->GetObjectType() == CGameObject::TYPE_SPRITE;
+        if (object->GetAIType().m_nRace != 0xBE || wantsRaceBE) {
+            CPoint point = object->GetPos();
+            point.y = static_cast<LONG>(static_cast<DWORD>(point.y) << 2) / 3;
+            LONG above = static_cast<LONG>(static_cast<DWORD>(scaledY) - static_cast<DWORD>(point.y));
+            if (above <= range) {
+                LONG below = static_cast<LONG>(static_cast<DWORD>(point.y) - static_cast<DWORD>(scaledY));
+                if (below > range) {
+                    m_pGame->GetObjectArray()->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+                    return bestId;
+                }
+                if (type.IsOver(point)
+                    && (!sprite || (static_cast<CGameSprite*>(object)->m_active
+                        && static_cast<CGameSprite*>(object)->m_activeAI
+                        && static_cast<CGameSprite*>(object)->m_activeImprisonment
+                        && static_cast<CGameSprite*>(object)->m_animation.GetAboveGround()
+                        && static_cast<CGameSprite*>(object)->CheckInvisibility(seeInvisible)))
+                    && object->GetAIType().OfType(type, FALSE, FALSE)
+                    && (!includeAll || (static_cast<CGameSprite*>(object)->m_derivedStats.m_generalState & 0x10000000) != 0)
+                    && (!checkLOS || CheckLOS(CPoint(x,y), object->GetPos(), terrainTable, FALSE))) {
+                    DWORD dx = static_cast<DWORD>(point.x) - static_cast<DWORD>(x);
+                    DWORD dy = static_cast<DWORD>(point.y) - static_cast<DWORD>(scaledY);
+                    LONG distance = static_cast<LONG>(dx * dx + dy * dy);
+                    if ((findFarthest == 0 && distance < bestDistance)
+                        || (findFarthest == 1 && distance > bestDistance)) {
+                        bestDistance = distance;
+                        bestId = id;
+                    }
+                }
+            }
+        }
+        m_pGame->GetObjectArray()->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+    return bestId;
 }
 
 // 0x46E130
