@@ -25,6 +25,7 @@ acidblobchecks
 thrownweaponchecks
 spraychecks
 followupchecks
+phasebamchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

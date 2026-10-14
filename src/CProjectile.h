@@ -132,6 +132,23 @@ protected:
     /* 032A */ BYTE m_hasPalette;
     /* 032B */ BYTE m_translucency;
 };
+
+// Native vtable 0x84E940, size 0x332. Opening/loop/reverse-closing BAM carrier.
+class CProjectilePhaseBAM /*#guess*/ : public CProjectile {
+public:
+    CProjectilePhaseBAM(const CString& visual, const CString& sound, const CString& palette, DWORD flags, BYTE transparency);
+    void AIUpdate() override;
+    void Render(CGameArea* area, CVidMode* mode, int surface) override;
+    void Fire(CGameArea* area, LONG source, LONG target, CPoint point, LONG height, SHORT kind) override;
+protected:
+    /* 0192 */ CVidCell m_vidCell;
+    /* 026C */ CVidBitmap m_bitmap;
+    /* 0326 */ DWORD m_renderFlags;
+    /* 032A */ BYTE m_hasPalette;
+    /* 032B */ BYTE m_translucency;
+    /* 032C */ CString m_visualBase;
+    /* 0330 */ BYTE m_phase;
+};
 #pragma pack(pop)
 
 class CProjectileBAM : public CProjectile {

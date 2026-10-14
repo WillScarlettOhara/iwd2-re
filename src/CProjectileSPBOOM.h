@@ -9,6 +9,7 @@ class CProjectileSPBOOM /*#guess*/ : public CProjectileTravelling {
 public:
     CProjectileSPBOOM();
     void AIUpdate() override;
+    virtual void AddVisualToArea(CGameArea* area, CPoint point);
 };
 #pragma pack(pop)
 

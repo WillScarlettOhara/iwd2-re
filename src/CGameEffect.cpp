@@ -11,6 +11,8 @@
 #include "CGameSprite.h"
 #include "CInfCursor.h"
 #include "CInfGame.h"
+#include "CProjectileSPBOOM.h"
+#include "CTimerWorld.h"
 #include "CScreenWorld.h"
 #include "CSevenEyes.h"
 #include "CSpell.h"
@@ -9959,6 +9961,66 @@ CGameEffect* CGameEffectVisualSpellHit::Copy()
     delete effect;
     copy->CopyFromBase(this);
     return copy;
+}
+
+// 0x4BBCB0
+BOOL CGameEffectVisualSpellHit::ApplyEffect(CGameSprite* pSprite)
+{
+    CGameArea* area=pSprite->m_pArea;
+    if (!area) { m_done=TRUE; return TRUE; }
+    CProjectile* projectile=NULL;
+    CString visual,sound,palette;
+    // Unmapped selectors retain the incoming sprite pointer in the native
+    // argument slot subsequently consumed as the message's WORD type.
+    USHORT type=static_cast<USHORT>(reinterpret_cast<DWORD>(pSprite));
+    switch (m_dwFlags) {
+    case 32: case 33: case 34: {
+        auto* boom=new CProjectileSPBOOM;
+        boom->SetRange(0,m_dwFlags==32?0x43:m_dwFlags==33?0x41:0x45);
+        CPoint point=pSprite->GetPos();
+        point.y=static_cast<LONG>(static_cast<DWORD>(point.y)-2);
+        boom->AddVisualToArea(area,point);
+        m_done=TRUE;
+        return TRUE;
+    }
+    case 35: case 36:
+        projectile=new CProjectileCallLightning(CResRef(m_dwFlags==35?"FlmStrk":"HLYMITE"),CResRef(""),
+            0xFF,m_dwFlags==35?0:1,0,static_cast<SHORT>(2*CTimerWorld::TIMESCALE_MSEC_PER_SEC));
+        projectile->Fire(area,pSprite->m_id,pSprite->m_id,pSprite->GetPos(),projectile->DetermineHeight(pSprite),0);
+        m_done=TRUE;
+        return TRUE;
+    case 37:
+        visual="SHAir"; palette="SHAir7"; type=0x93;
+        break;
+    case 38:
+        projectile=new CProjectilePhaseBAM(CString(_T("DDoorH")),CString(_T("")),CString(_T("")),0,0);
+        projectile->Fire(area,pSprite->m_id,pSprite->m_id,pSprite->GetPos(),0,0);
+        m_done=TRUE;
+        return TRUE;
+    case 39:
+        visual="SPFDEATH"; type=0xCF;
+        break;
+    default:
+        if (m_dwFlags<=30 && (m_dwFlags&3)!=3)
+            type=static_cast<USHORT>(0x76+(m_dwFlags>>2)*3+(m_dwFlags&3));
+        switch (m_dwFlags&3) {
+        case 0: visual="SHAir"; palette="SHAir0"; break;
+        case 1: visual="SHEarth"; palette="SHEarth0"; break;
+        case 2: visual="SHWater"; palette="SHWater0"; break;
+        default: UTIL_ASSERT(FALSE); break;
+        }
+        if ((m_dwFlags&3)!=3) {
+            if ((m_dwFlags&0xFFFFFFFCu)==0) palette="";
+            else palette.SetAt(palette.GetLength()-1,static_cast<char>((m_dwFlags>>2)+'0'));
+        }
+        break;
+    }
+    projectile=new CProjectileImpactBAM(visual,sound,palette,8,0);
+    g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageFireProjectile(type,pSprite->m_id,pSprite->GetPos(),
+        projectile->DetermineHeight(pSprite),pSprite->m_id,pSprite->m_id,0),FALSE);
+    projectile->Fire(area,pSprite->m_id,pSprite->m_id,pSprite->GetPos(),projectile->DetermineHeight(pSprite),0);
+    m_done=TRUE;
+    return TRUE;
 }
 
 // -----------------------------------------------------------------------------

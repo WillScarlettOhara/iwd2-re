@@ -5852,6 +5852,131 @@ void CProjectileSprayCell::AddVisualToArea(CGameArea* area, const CPoint& point,
     }
 }
 
+// 0x535320
+CProjectilePhaseBAM::CProjectilePhaseBAM(const CString& visual, const CString& sound, const CString& palette, DWORD flags, BYTE transparency)
+{
+    m_visualBase=visual;
+    m_vidCell.SetResRef(CResRef(visual+"2"),FALSE,TRUE,TRUE);
+    m_hasPalette=!palette.IsEmpty();
+    if (m_hasPalette) {
+        m_bitmap.SetResRef(CResRef(palette),TRUE,TRUE);
+        m_bitmap.m_bDoubleSize=FALSE;
+    }
+    m_vidCell.SequenceSet(0);
+    m_vidCell.FrameSet(0);
+    m_fireSoundRef=CResRef(sound);
+    m_translucency=transparency;
+    m_phase=0;
+    m_renderFlags=flags;
+}
+
+// 0x5357B0
+void CProjectilePhaseBAM::AIUpdate()
+{
+    auto* game=g_pBaldurChitin->GetObjectGame();
+    if (game->m_nTimeStop!=0 && game->m_nTimeStopCaster!=m_id) return;
+    switch (m_phase) {
+    case 0:
+        if (m_vidCell.IsEndOfSequence(FALSE)) {
+            m_vidCell.SetResRef(CResRef(m_visualBase+"1"),FALSE,TRUE,TRUE);
+            m_vidCell.SequenceSet(0);
+            m_vidCell.FrameSet(0);
+            ++m_phase;
+        } else m_vidCell.FrameAdvance();
+        break;
+    case 1: case 2: case 3:
+        if (m_vidCell.IsEndOfSequence(FALSE)) {
+            m_vidCell.FrameSet(0);
+            ++m_phase;
+        }
+        m_vidCell.FrameAdvance();
+        break;
+    case 4:
+        if (m_vidCell.IsEndOfSequence(FALSE)) {
+            m_vidCell.SetResRef(CResRef(m_visualBase+"2"),FALSE,TRUE,TRUE);
+            m_vidCell.SequenceSet(0);
+            m_vidCell.FrameSet(m_vidCell.GetSequenceLength(m_vidCell.GetCurrentSequenceId(),FALSE)-1);
+            ++m_phase;
+        } else m_vidCell.FrameAdvance();
+        break;
+    case 5:
+        if (m_vidCell.m_nCurrentFrame==0) {
+            OnArrival();
+            return;
+        }
+        m_vidCell.m_nCurrentFrame=static_cast<SHORT>(static_cast<USHORT>(m_vidCell.m_nCurrentFrame)-1);
+        break;
+    }
+    m_sound.SetCoordinates(m_pos.x,m_pos.y,m_posZ);
+}
+
+// 0x535A40
+void CProjectilePhaseBAM::Render(CGameArea* area, CVidMode* mode, int surface)
+{
+    (void)area;
+    UTIL_ASSERT(mode!=NULL);
+    SHORT tileX=static_cast<SHORT>(m_pos.x/CVisibilityMap::SQUARE_SIZEX);
+    SHORT tileY=static_cast<SHORT>(m_pos.y/CVisibilityMap::SQUARE_SIZEY);
+    SHORT tile=static_cast<SHORT>(static_cast<DWORD>(tileY)*static_cast<DWORD>(m_pArea->m_visibility.m_nWidth)
+        +static_cast<DWORD>(tileX));
+    if (!m_pArea->m_visibility.IsTileVisible(tile)) return;
+    auto* infinity=m_pArea->GetInfinity();
+    CRect viewport(infinity->nCurrentX,infinity->nCurrentY,
+        static_cast<LONG>(static_cast<DWORD>(infinity->nCurrentX)+static_cast<DWORD>(infinity->rViewPort.Width())),
+        static_cast<LONG>(static_cast<DWORD>(infinity->nCurrentY)+static_cast<DWORD>(infinity->rViewPort.Height())));
+    CPoint pos(m_pos.x,static_cast<LONG>(static_cast<DWORD>(m_pArea->GetHeightOffset(m_pos,m_listType))
+        +static_cast<DWORD>(m_pos.y)-static_cast<DWORD>(m_posZ)));
+    CPoint reference; CSize size;
+    m_vidCell.GetCurrentCenterPoint(reference,FALSE);
+    m_vidCell.GetCurrentFrameSize(size,FALSE);
+    CRect fx(0,0,size.cx,size.cy);
+    CRect bounds(static_cast<LONG>(static_cast<DWORD>(pos.x)-static_cast<DWORD>(reference.x)),
+        static_cast<LONG>(static_cast<DWORD>(pos.y)-static_cast<DWORD>(reference.y)),0,0);
+    bounds.right=static_cast<LONG>(static_cast<DWORD>(bounds.left)+static_cast<DWORD>(size.cx));
+    bounds.bottom=static_cast<LONG>(static_cast<DWORD>(bounds.top)+static_cast<DWORD>(size.cy));
+    CRect intersection; intersection.IntersectRect(bounds,viewport);
+    if (intersection.IsRectEmpty()) return;
+    DWORD flags=m_renderFlags!=0?m_renderFlags|CInfinity::FXPREP_COPYFROMBACK:CInfinity::FXPREP_CLEARFILL|1;
+    infinity->FXPrep(fx,flags,surface,pos,reference);
+    if (infinity->FXLock(fx,flags)) {
+        if (m_hasPalette) {
+            m_bitmap.pRes->Demand();
+            int count=m_bitmap.pRes->GetColorCount();
+            m_vidCell.SetPalette(m_bitmap.pRes->GetColorTable(),count,CVidPalette::TYPE_RESOURCE);
+            infinity->FXRender(&m_vidCell,reference.x,reference.y,flags,m_translucency);
+            m_bitmap.pRes->Release();
+        } else infinity->FXRender(&m_vidCell,reference.x,reference.y,flags,m_translucency);
+        infinity->FXRenderClippingPolys(pos.x,pos.y,0,reference,bounds,FALSE,flags);
+        infinity->FXUnlock(flags,NULL,CPoint(0,0));
+        infinity->FXBltFrom(surface,fx,pos.x,pos.y,reference.x,reference.y,flags);
+    }
+}
+
+// 0x535D20
+void CProjectilePhaseBAM::Fire(CGameArea* area, LONG source, LONG target, CPoint point, LONG height, SHORT kind)
+{
+    (void)point; (void)height; (void)kind;
+    m_sourceId=source;
+    m_targetId=target;
+    m_pArea=area;
+    DeliverEffects();
+    if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id,this,INFINITE)!=CGameObjectArray::SUCCESS) {
+        delete this;
+        return;
+    }
+    CPoint pos;
+    GetStart(target,pos,FALSE);
+    pos.y=static_cast<LONG>(static_cast<DWORD>(pos.y)-1);
+    CGameObject::AddToArea(area,pos,0,LIST_FRONT);
+    m_sound.Stop();
+    if (m_fireSoundRef!=CResRef("")) {
+        m_sound.SetResRef(m_fireSoundRef,TRUE,TRUE);
+        if (m_loopFireSound) m_sound.SetLoopingFlag(TRUE);
+        m_sound.SetChannel(15,reinterpret_cast<DWORD>(m_pArea));
+        m_sound.Play(m_pos.x,m_pos.y,0,FALSE);
+    }
+}
+
 // 0x533CB0
 CProjectileFollowUp::CProjectileFollowUp(USHORT childType, CResRef resRef, SHORT remaining, SHORT interval, BOOL keepSource, CAIObjectType type)
     : CProjectileTravelling(resRef)

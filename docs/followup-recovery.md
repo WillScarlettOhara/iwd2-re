@@ -62,4 +62,4 @@ Final15-30-29 PASS: Win32 Debug,75 steps,693 follow-up/46134 nearest checks,
 Fire/GetNearest GREEN; seven YELLOW (counts/tiny callback). Missing offset
 oracles/fieldless layouts leave full static equivalence unproven.
 
-Next: visual ctor535320/vtable84E940, Fire535D20, AI5357B0 (missing exports).
+Continuation: [phase BAM and opcode215](phase-bam-recovery.md).

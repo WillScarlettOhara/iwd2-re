@@ -1675,6 +1675,169 @@ struct ProjectileRenderFrameAnchor {
 #include "ThrownWeaponGolden.h"
 #include "SprayGolden.h"
 #include "FollowupGolden.h"
+#include "PhaseBAMGolden.h"
+
+struct PhaseBAMAccess : CProjectilePhaseBAM {
+    using CProjectilePhaseBAM::m_vidCell;
+    using CProjectilePhaseBAM::m_bitmap;
+    using CProjectilePhaseBAM::m_renderFlags;
+    using CProjectilePhaseBAM::m_hasPalette;
+    using CProjectilePhaseBAM::m_translucency;
+    using CProjectilePhaseBAM::m_visualBase;
+    using CProjectilePhaseBAM::m_phase;
+    PhaseBAMAccess(const char* palette="",DWORD flags=0,BYTE trans=0)
+        : CProjectilePhaseBAM(CString(_T("DDoorH")),CString(_T("")),CString(palette),flags,trans) {}
+};
+
+void PhaseBAMChecks(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* area=game->GetVisibleArea();
+    auto* objects=game->GetObjectArray(); auto* handler=g_pBaldurChitin->GetMessageHandler();
+    auto* video=static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+    if (!area || !area->m_visibility.m_pMap || g_pChitin->cVideo.m_bIs3dAccelerated) {
+        Fail(nStep,"phasebamchecks","requires loaded software area"); return;
+    }
+    INT checks=0,draws=0,replays=0; BOOL valid=TRUE;
+    auto check=[&](const char* name,BOOL ok) { ++checks; valid=valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"phase-bam-case\",\"case\":\"%s\",\"passed\":false}",nStep,name); };
+    ULONG clock=game->GetWorldTimer()->m_gameTime; auto stop=game->m_nTimeStop,caster=game->m_nTimeStopCaster;
+    INT messages=handler->m_messageList.GetCount(),front=area->m_lVertSortAdd.GetCount(),sorted=area->m_lVertSort.GetCount();
+    auto retire=[&](CGameObject* object) {
+        POSITION node=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(object->m_id)); if (node) area->m_lVertSortAdd.RemoveAt(node);
+        object->RemoveFromArea(); check("registered-fixture-retired",objects->Delete(object->m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE)==CGameObjectArray::SUCCESS); delete object;
+    };
+    {
+        PhaseBAMAccess opening; CVidCell loop; loop.SetResRef(CResRef("DDoorH1"),FALSE,TRUE,TRUE);
+        check("both-native-bams-available",opening.m_vidCell.pRes && loop.pRes);
+        if (opening.m_vidCell.pRes && loop.pRes) {
+            ProjectileRenderFrameAnchor a(&opening.m_vidCell),b(&loop);
+            auto* r2=opening.m_vidCell.pRes; auto* h2=opening.m_vidCell.m_header.pRes; auto* r1=loop.pRes; auto* h1=loop.m_header.pRes;
+            SEQUENCEENTRY s2=r2->m_pSequences[0],s1=r1->m_pSequences[0],sh2={},sh1={};
+            r2->m_pSequences[0].nFrames=7; r1->m_pSequences[0].nFrames=7;
+            if (h2) { sh2=h2->m_pSequences[0]; h2->m_pSequences[0].nFrames=7; }
+            if (h1) { sh1=h1->m_pSequences[0]; h1->m_pSequences[0].nFrames=7; }
+            for (const auto& row : PHASE_BAM_GATE) {
+                // Replay coherent predicate/frame pairs against real BAM metadata.
+                if (row.phase<5 && row.end!=(row.frame>=6)) continue;
+                struct Sample : PhaseBAMAccess { INT arrivals=0; void OnArrival() override { ++arrivals; } } p;
+                if (row.phase>=1 && row.phase<=4) p.m_vidCell.SetResRef(CResRef("DDoorH1"),FALSE,TRUE,TRUE);
+                p.m_phase=row.phase; p.m_vidCell.m_nCurrentFrame=row.frame; p.m_id=-123; p.m_pos=CPoint(160,96); p.m_posZ=17;
+                game->m_nTimeStop=row.stop; game->m_nTimeStopCaster=row.stop==1?-1:-123;
+                p.AIUpdate(); ++replays;
+                check("captured-native-phase-frame-arrival",p.m_phase==row.after && p.m_vidCell.m_nCurrentFrame==row.nextFrame && p.arrivals==row.arrival);
+                check("phase-resource-switch-and-no-payload",p.m_vidCell.GetResRef()==CResRef(p.m_phase>=1 && p.m_phase<=4?"DDoorH1":"DDoorH2")
+                    && p.m_effectList.IsEmpty() && !p.m_bHasHeight && p.m_renderFlags==0);
+            }
+            r2->m_pSequences[0]=s2; r1->m_pSequences[0]=s1;
+            if (h2) h2->m_pSequences[0]=sh2; if (h1) h1->m_pSequences[0]=sh1;
+            check("sequence-and-frame-metadata-restored",a.Restore() && b.Restore());
+        }
+    }
+    game->m_nTimeStop=0;
+    struct ImpactAccess : CProjectileImpactBAM { using CProjectileImpactBAM::m_vidCell; using CProjectileImpactBAM::m_bitmap; using CProjectileImpactBAM::m_hasPalette; };
+    LONG id=game->GetFixedOrderCharacterId(1); CGameObject* raw=NULL;
+    BYTE rc=objects->GetDeny(id,CGameObjectArray::THREAD_ASYNCH,&raw,INFINITE);
+    check("party-visual-target-available",rc==CGameObjectArray::SUCCESS);
+    if (rc==CGameObjectArray::SUCCESS) {
+        auto* sprite=static_cast<CGameSprite*>(raw); LONG hp=sprite->m_baseStats.m_hitPoints; CPoint pos=sprite->GetPos();
+        ITEM_EFFECT item={}; item.effectID=CGAMEEFFECT_VISUALSPELLHIT;
+        for (const auto& row : VISUAL_SPELL_HIT) {
+            item.dwFlags=row.flag; auto* effect=CGameEffect::DecodeEffect(&item,pos,id,pos);
+            check("opcode-215-real-decoder",dynamic_cast<CGameEffectVisualSpellHit*>(effect)!=NULL);
+            auto* copy=effect->Copy(); check("opcode-copy-retains-selector",dynamic_cast<CGameEffectVisualSpellHit*>(copy) && copy->m_dwFlags==row.flag); delete copy;
+            check("opcode-virtual-apply-completes",effect->ApplyEffect(sprite) && effect->m_done);
+            check("opcode-registers-one-direct-carrier",area->m_lVertSortAdd.GetCount()==front+1);
+            if (area->m_lVertSortAdd.GetCount()>front) {
+                LONG childId=reinterpret_cast<LONG>(area->m_lVertSortAdd.GetTail()); CGameObject* child=NULL;
+                BYTE shared=objects->GetShare(childId,CGameObjectArray::THREAD_ASYNCH,&child,INFINITE);
+                check("opcode-carrier-array-ownership",shared==CGameObjectArray::SUCCESS);
+                if (shared==CGameObjectArray::SUCCESS) {
+                    auto* projectile=static_cast<CProjectile*>(child); BOOL impact=strcmp(row.kind,"impact")==0,phase=strcmp(row.kind,"phase")==0;
+                    BOOL boom=strcmp(row.kind,"boom")==0,lightning=strcmp(row.kind,"lightning")==0;
+                    check("native-opcode-carrier-class",(impact && dynamic_cast<CProjectileImpactBAM*>(child)) || (phase && dynamic_cast<CProjectilePhaseBAM*>(child))
+                        || (boom && dynamic_cast<CProjectileSPBOOM*>(child)) || (lightning && dynamic_cast<CProjectileCallLightning*>(child)));
+                    check("native-opcode-placement-and-height",child->m_pos==CPoint(pos.x,pos.y+(impact?1:phase?-1:boom?-2:13))
+                        && child->m_posZ==(impact?projectile->DetermineHeight(sprite):0) && child->m_pArea==area && projectile->m_effectList.IsEmpty());
+                    if (impact) {
+                        auto* p=static_cast<CProjectileImpactBAM*>(child); auto& cell=p->*(&ImpactAccess::m_vidCell); auto& bitmap=p->*(&ImpactAccess::m_bitmap);
+                        auto requested=[&](const char* name,WORD type)->CResRef { CRes* res=g_pChitin->cDimm.GetResObject(CResRef(name),type,FALSE);
+                            BOOL available=res!=NULL; if (res) g_pChitin->cDimm.ReleaseResObject(res); return CResRef(available?name:""); };
+                        check("native-opcode-visual-and-palette",cell.GetResRef()==requested(row.visual,1000)
+                            && p->*(&ImpactAccess::m_hasPalette)==!CString(row.palette).IsEmpty() && bitmap.GetResRef()==requested(row.palette,1));
+                    }
+                    if (phase) { auto* p=static_cast<CProjectilePhaseBAM*>(projectile);
+                        check("native-opcode-phase-opening",p->*(&PhaseBAMAccess::m_phase)==0 && p->*(&PhaseBAMAccess::m_visualBase)==CString(row.visual)); }
+                    objects->ReleaseShare(childId,CGameObjectArray::THREAD_ASYNCH,INFINITE); retire(child);
+                }
+            }
+            INT launches=0,groups=0;
+            while (handler->m_messageList.GetCount()>messages) {
+                CMessage* message=handler->m_messageList.RemoveTail(); auto* launch=dynamic_cast<CMessageFireProjectile*>(message); auto* group=dynamic_cast<CMessage105*>(message);
+                if (launch) { ++launches; USHORT argument=row.pointerType?static_cast<USHORT>(reinterpret_cast<DWORD>(sprite)):row.type;
+                    check("native-parallel-message-type-and-provenance",launch->m_projectileType==static_cast<USHORT>(argument+1)
+                    && launch->m_sourceId==id && launch->m_targetId==id && launch->m_projectileTargetId==id && launch->m_projectileTarget==pos && launch->field_1E==0); }
+                if (group) { ++groups; check("empty-visual-payload-owned",group->m_nCount==0 && group->m_sourceId==id && group->m_targetId==id); }
+                check("only-native-owned-visual-messages",launch || group); delete message;
+            }
+            BOOL impact=strcmp(row.kind,"impact")==0,boom=strcmp(row.kind,"boom")==0;
+            check("native-double-launch-versus-direct-only",launches==(impact?1:0) && groups==(boom?0:1) && sprite->m_baseStats.m_hitPoints==hp);
+            delete effect;
+        }
+        CGameArea* savedArea=sprite->m_pArea; sprite->m_pArea=NULL; item.dwFlags=0xFFFFFFFFu;
+        auto* effect=CGameEffect::DecodeEffect(&item,pos,id,pos);
+        check("absent-area-completes-before-selector",effect->ApplyEffect(sprite) && effect->m_done && area->m_lVertSortAdd.GetCount()==front && handler->m_messageList.GetCount()==messages);
+        delete effect; sprite->m_pArea=savedArea; objects->ReleaseDeny(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    }
+    auto& infinity=area->m_cInfinity; CRect view=infinity.rViewPort; INT viewX=infinity.nCurrentX,viewY=infinity.nCurrentY; auto* wed=infinity.pResWED;
+    std::vector<BYTE> visibility(area->m_visibility.m_pMap,area->m_visibility.m_pMap+area->m_visibility.m_nMapSize);
+    CRect patch(64,64,416,336); std::vector<BYTE> savedPixels;
+    auto pixels=[&](std::vector<BYTE>* read,const std::vector<BYTE>* write,BOOL clear)->BOOL {
+        if (!video->BKLock(patch)) return FALSE; DWORD bytes=video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount/8;
+        INT row=patch.Width()*bytes; BOOL ok=bytes>=2 && bytes<=4 && video->m_SurfaceDesc.lpSurface!=NULL;
+        if (ok && read) read->resize(row*patch.Height()); if (ok && write) ok=write->size()==static_cast<size_t>(row*patch.Height());
+        if (ok) for (INT y=0;y<patch.Height();++y) { BYTE* p=static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface)+y*video->m_SurfaceDesc.lPitch;
+            if (read) memcpy(read->data()+y*row,p,row); if (write) memcpy(p,write->data()+y*row,row); if (clear) memset(p,0,row); }
+        video->BKUnlock(); return ok;
+    };
+    BOOL backed=pixels(&savedPixels,NULL,FALSE); check("phase-render-pixels-backed-up",backed);
+    infinity.pResWED=NULL; infinity.rViewPort=CRect(80,80,400,320); infinity.nCurrentX=72; infinity.nCurrentY=882;
+    memset(area->m_visibility.m_pMap,CVisibilityMap::VISIBILITY_MASK,visibility.size());
+    for (const char* palette : {"","SHAir7"}) for (DWORD flags : {0u,8u,0x80000000u}) for (BYTE trans : {BYTE(0),BYTE(2),BYTE(255)}) {
+        PhaseBAMAccess p(palette,flags,trans),reference(palette,flags,trans);
+        p.m_pArea=area; p.CGameObject::m_pArea=area; p.m_pos=CPoint(232,1002); p.m_posZ=17; p.m_listType=CGameObject::LIST_FLIGHT;
+        check("phase-constructor-resource-state",p.m_vidCell.pRes && p.m_hasPalette==!CString(palette).IsEmpty() && p.m_visualBase==CString(_T("DDoorH")) && !p.m_bHasHeight);
+        if (p.m_vidCell.pRes && backed) {
+            ProjectileRenderFrameAnchor anchor(&p.m_vidCell); INT demands=p.m_bitmap.pRes?p.m_bitmap.pRes->GetDemands():0;
+            for (INT gate=0;gate<3;++gate) {
+                SHORT tile=area->m_visibility.PointToTile(p.m_pos); if (gate==1) area->m_visibility.m_pMap[tile]=0; if (gate==2) infinity.nCurrentX+=10000;
+                std::vector<BYTE> expected,actual; BOOL ok=pixels(NULL,NULL,TRUE);
+                if (gate==0) {
+                    CPoint center; CSize size; reference.m_vidCell.GetCurrentCenterPoint(center,FALSE); reference.m_vidCell.GetCurrentFrameSize(size,FALSE);
+                    CRect fx(0,0,size.cx,size.cy); CPoint point(232,985); DWORD nativeFlags=0;
+                    for (const auto& row : PHASE_BAM_RENDER_FLAGS) if (row.input==flags) nativeFlags=row.output;
+                    if (reference.m_hasPalette) { reference.m_bitmap.pRes->Demand(); reference.m_vidCell.SetPalette(reference.m_bitmap.pRes->GetColorTable(),reference.m_bitmap.pRes->GetColorCount(),CVidPalette::TYPE_RESOURCE); reference.m_bitmap.pRes->Release(); }
+                    infinity.FXPrep(fx,nativeFlags,CVIDINF_SURFACE_BACK,point,center); ok=infinity.FXLock(fx,nativeFlags) && ok;
+                    if (ok) { infinity.FXRender(&reference.m_vidCell,center.x,center.y,nativeFlags,trans); infinity.FXUnlock(nativeFlags,NULL,CPoint(0,0)); ok=infinity.FXBltFrom(CVIDINF_SURFACE_BACK,fx,point.x,point.y,center.x,center.y,nativeFlags) && ok; }
+                }
+                ok=pixels(&expected,NULL,TRUE) && ok; p.Render(NULL,video,CVIDINF_SURFACE_BACK); ++draws; ok=pixels(&actual,NULL,FALSE) && ok;
+                check("phase-native-full-software-pixels",ok && expected==actual);
+                if (gate==0 && flags==0 && trans==0) check("phase-render-really-changes-pixels",std::any_of(actual.begin(),actual.end(),[](BYTE value) { return value!=0; }));
+                check("render-flags-remain-unchanged",p.m_renderFlags==flags && p.m_translucency==trans && p.m_vidCell.m_nCurrentFrame==0);
+                check("phase-render-surface-and-palette-balanced",video->m_SurfaceDesc.lpSurface==NULL && (!p.m_bitmap.pRes || p.m_bitmap.pRes->GetDemands()==demands));
+                area->m_visibility.m_pMap[tile]=CVisibilityMap::VISIBILITY_MASK; if (gate==2) infinity.nCurrentX-=10000;
+            }
+            check("phase-render-frame-restored",anchor.Restore());
+        }
+        p.CGameObject::m_pArea=NULL;
+    }
+    memcpy(area->m_visibility.m_pMap,visibility.data(),visibility.size()); infinity.pResWED=wed; infinity.rViewPort=view; infinity.nCurrentX=viewX; infinity.nCurrentY=viewY;
+    game->m_nTimeStop=stop; game->m_nTimeStopCaster=caster;
+    check("phase-back-surface-restored",backed && pixels(NULL,&savedPixels,FALSE));
+    check("phase-same-tick-fixtures-restored",game->GetWorldTimer()->m_gameTime==clock && handler->m_messageList.GetCount()==messages
+        && area->m_lVertSortAdd.GetCount()==front && area->m_lVertSort.GetCount()==sorted);
+    Emit("{\"step\":%d,\"op\":\"phasebamchecks\",\"checks\":%d,\"renderCalls\":%d,\"nativeReplays\":%d,\"nativeCases\":324,\"restored\":true,\"valid\":%s}",nStep,checks,draws,replays,valid?"true":"false");
+    if (!valid) Fail(nStep,"phasebamchecks","phase animation/opcode/render mismatch");
+}
 
 BOOL SprayPixels(INT nStep)
 {
@@ -2665,6 +2828,52 @@ void AreaNearestChecks(INT nStep)
                 && saved[1].p->m_timedEffectList.GetCount()==saved[1].timed && saved[1].p->m_equipedEffectList.GetCount()==saved[1].equipped);
             Emit("{\"step\":%d,\"op\":\"impact-bam-damage\",\"loss\":%ld,\"ticks\":%d,\"retired\":%s}",nStep,
                 hpBefore-saved[1].p->m_baseStats.m_hitPoints,ticks,retired?"true":"false");
+            {
+                struct Parent : CProjectile { INT callbacks=0; void CallBack() override { ++callbacks; } };
+                auto* parent=new Parent; objects->Add(&parent->m_id,parent,INFINITE);
+                auto* phase=new PhaseBAMAccess; CVidCell loop;
+                loop.SetResRef(CResRef("DDoorH1"),FALSE,TRUE,TRUE);
+                INT length2=phase->m_vidCell.GetSequenceLength(0,FALSE),length1=loop.GetSequenceLength(0,FALSE);
+                check("phase-live-animation-lengths",length2>1 && length1>1);
+                phase->m_callBackProjectile=parent->m_id;
+                phase->AddEffect(CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],saved[1].p->m_pos));
+                LONG before=saved[1].p->m_baseStats.m_hitPoints;
+                phase->Fire(area,origin->m_id,ids[1],CPoint(-123,456),99,13); LONG phaseId=phase->m_id;
+                check("phase-fire-native-target-y-minus-one",phase->m_pos==CPoint(137,95) && phase->m_posZ==0
+                    && phase->m_sourceId==origin->m_id && phase->m_targetId==ids[1] && phase->m_effectList.IsEmpty());
+                auto drain=[&](BOOL arrival) {
+                    INT groups=0;
+                    while (handler->m_messageList.GetCount()>messages) {
+                        CMessage* message=handler->m_messageList.RemoveTail(); auto* group=dynamic_cast<CMessage105*>(message); auto* sound=dynamic_cast<CMessagePlaySound*>(message);
+                        check("phase-owned-payload-routing",(group && group->m_nCount==(arrival?0:1) && group->m_sourceId==origin->m_id && group->m_targetId==ids[1])
+                            || (sound && sound->m_sourceId==ids[1] && sound->m_targetId==ids[1] && sound->m_soundId==CGameSprite::SOUND_DAMAGE));
+                        if (group) { ++groups; group->Run(); } delete message;
+                    }
+                    check("phase-exactly-one-owned-group",groups==1);
+                };
+                drain(FALSE); check("phase-real-immediate-six-hp",before-saved[1].p->m_baseStats.m_hitPoints==6 && parent->callbacks==0);
+                POSITION pending=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(phaseId)); if (pending) area->m_lVertSortAdd.RemoveAt(pending);
+                game->m_nTimeStop=1; game->m_nTimeStopCaster=origin->m_id; phase->AIUpdate();
+                check("phase-live-time-stop-freezes-opening",phase->m_phase==0 && phase->m_vidCell.m_nCurrentFrame==0 && parent->callbacks==0);
+                game->m_nTimeStop=0; BOOL retired=FALSE; INT ticks=0,expected=2*length2+4*length1-3;
+                BYTE seen=1;
+                for (;ticks<1024 && !retired;++ticks) {
+                    phase->AIUpdate(); CGameObject* live=NULL; BYTE rc=objects->GetShare(phaseId,CGameObjectArray::THREAD_ASYNCH,&live,INFINITE);
+                    retired=rc==CGameObjectArray::DELETED;
+                    check("phase-exact-native-cycle-retirement",retired==(ticks+1==expected));
+                    if (rc==CGameObjectArray::SUCCESS) {
+                        phase=static_cast<PhaseBAMAccess*>(live); seen|=BYTE(1u<<phase->m_phase);
+                        check("phase-no-hit-during-animation",handler->m_messageList.GetCount()==messages && before-saved[1].p->m_baseStats.m_hitPoints==6);
+                        objects->ReleaseShare(phaseId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                    } else if (!retired) break;
+                }
+                if (!retired) retire(phase);
+                drain(TRUE); check("phase-all-six-phases-and-final-callback",retired && ticks==expected && seen==0x3F && parent->callbacks==1
+                    && before-saved[1].p->m_baseStats.m_hitPoints==6 && saved[0].p->m_baseStats.m_hitPoints==512);
+                Emit("{\"step\":%d,\"op\":\"phase-bam-live-damage\",\"loss\":%ld,\"ticks\":%d,\"length1\":%d,\"length2\":%d,\"retired\":%s}",nStep,
+                    before-saved[1].p->m_baseStats.m_hitPoints,ticks,length1,length2,retired?"true":"false");
+                retire(parent);
+            }
             for (USHORT type : {USHORT(0x6C),USHORT(0xC0),USHORT(0xC1),USHORT(0xC2),
                 USHORT(7),USHORT(10),USHORT(11),USHORT(27),USHORT(30),USHORT(31),USHORT(56),USHORT(59),USHORT(60),USHORT(375)}) {
                 CProjectile* blob=CProjectile::DecodeProjectile(type,saved[0].p,255);
@@ -5139,6 +5348,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "followupchecks") == 0) {
         FollowupChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "phasebamchecks") == 0) {
+        PhaseBAMChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
