@@ -1673,6 +1673,206 @@ struct ProjectileRenderFrameAnchor {
 #include "SparkleExplosionGolden.h"
 #include "AcidBlobGolden.h"
 #include "ThrownWeaponGolden.h"
+#include "SprayGolden.h"
+
+BOOL SprayPixels(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* area=game->GetVisibleArea();
+    auto* handler=g_pBaldurChitin->GetMessageHandler();
+    auto* video=static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+    if (!area || !area->m_visibility.m_pMap || g_pChitin->cVideo.m_bIs3dAccelerated) return FALSE;
+    INT checks=0,draws=0; BOOL valid=TRUE;
+    auto check=[&](const char* name,BOOL ok) { ++checks; valid=valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"spray-pixel-case\",\"case\":\"%s\",\"passed\":false}",nStep,name); };
+    struct Access : CProjectileSPBRNHND { using CProjectileTravelling::m_palette; };
+    auto* master=game->GetMasterBitmap(); INT demands=master->pRes->GetDemands();
+    auto& infinity=area->m_cInfinity; CRect view=infinity.rViewPort;
+    INT viewX=infinity.nCurrentX,viewY=infinity.nCurrentY; auto* wed=infinity.pResWED;
+    ULONG clock=game->GetWorldTimer()->m_gameTime;
+    INT messages=g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount(),pending=area->m_lVertSortAdd.GetCount();
+    std::vector<BYTE> visibility(area->m_visibility.m_pMap,area->m_visibility.m_pMap+area->m_visibility.m_nMapSize);
+    CPoint origin(232,1002); INT cost=origin.y/12*area->m_search.m_GridSquareDimensions.cx+origin.x/16;
+    BYTE dynamic=area->m_search.m_pDynamicCost[cost]; CRect patch(64,64,416,336); std::vector<BYTE> saved;
+    auto pixels=[&](std::vector<BYTE>* read,const std::vector<BYTE>* write,BOOL clear)->BOOL {
+        if (!video->BKLock(patch)) return FALSE;
+        DWORD bytes=video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount/8;
+        INT stride=patch.Width()*bytes; BOOL ok=bytes>=2 && bytes<=4 && video->m_SurfaceDesc.lpSurface!=NULL;
+        if (ok && read) read->resize(stride*patch.Height());
+        if (ok && write) ok=write->size()==static_cast<size_t>(stride*patch.Height());
+        if (ok) for (INT y=0;y<patch.Height();++y) {
+            BYTE* p=static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface)+y*video->m_SurfaceDesc.lPitch;
+            if (read) memcpy(read->data()+y*stride,p,stride); if (write) memcpy(p,write->data()+y*stride,stride);
+            if (clear) memset(p,0,stride);
+        }
+        video->BKUnlock(); return ok;
+    };
+    BOOL backedUp=pixels(&saved,NULL,FALSE); check("pixels-backed-up",backedUp);
+    if (backedUp) {
+        infinity.rViewPort=CRect(80,80,400,320); infinity.nCurrentX=72; infinity.nCurrentY=882; infinity.pResWED=NULL;
+        memset(area->m_visibility.m_pMap,CVisibilityMap::VISIBILITY_MASK,visibility.size()); area->m_search.m_pDynamicCost[cost]=0;
+        for (const auto& row : SPRAY_FACTORY) {
+            auto* parent=dynamic_cast<CProjectileSPBRNHND*>(CProjectile::DecodeProjectile(0x1A,NULL,row.delay));
+            check("pixel-factory-parent",parent!=NULL); if (!parent) continue;
+            auto& parentPalette=parent->*(&Access::m_palette);
+            auto* child=new CProjectileSprayCell(CResRef("SPBRNHND"),row.life,0,parentPalette);
+            for (INT kind=0;kind<2;++kind) {
+                CProjectileTravelling* object=kind?static_cast<CProjectileTravelling*>(child):parent;
+                object->m_pArea=area; object->CGameObject::m_pArea=area;
+                object->m_pos=origin; object->m_posZ=17; object->m_listType=CGameObject::LIST_FRONT;
+                object->AimAtPoint(origin.x,origin.y+12); object->m_pos=origin;
+                CVidPalette palette(CVidPalette::TYPE_RANGE); palette.SetRange(0,row.color,*master);
+                CVidCell cell(CResRef("SPBRNHND"),FALSE); cell.SequenceSet(0); cell.FrameSet(0); cell.SetPalette(palette);
+                cell.m_cPalette.m_rangeColors[0]=kind?row.color:row.cached;
+                ProjectileRenderFrameAnchor anchor(&cell); check("spray-bam-frame",anchor.frame && (!anchor.header || anchor.headerFrame));
+                CPoint center; CSize size; cell.GetCurrentCenterPoint(center,FALSE); cell.GetCurrentFrameSize(size,FALSE);
+                CRect bounds(0,0,size.cx,size.cy); CPoint point(232,985);
+                DWORD flags=(kind?0x20000:row.flags)|CInfinity::FXPREP_COPYFROMBACK;
+                for (INT mode=0;mode<3;++mode) {
+                    SHORT tile=area->m_visibility.PointToTile(origin);
+                    if (mode==1) area->m_visibility.m_pMap[tile]=0; if (mode==2) infinity.nCurrentX+=10000;
+                    std::vector<BYTE> expected,actual; BOOL ok=pixels(NULL,NULL,TRUE);
+                    if (mode==0) {
+                        infinity.FXPrep(bounds,flags,CVIDINF_SURFACE_BACK,point,center);
+                        if (infinity.FXLock(bounds,flags)) {
+                            infinity.FXRender(&cell,center.x,center.y,flags,0x80); infinity.FXUnlock(flags,NULL,CPoint(0,0));
+                            ok=infinity.FXBltFrom(CVIDINF_SURFACE_BACK,bounds,point.x,point.y,center.x,center.y,flags) && ok;
+                        } else ok=FALSE;
+                    }
+                    ok=pixels(&expected,NULL,TRUE) && ok;
+                    if (mode==0) { BOOL nonempty=FALSE; for (BYTE pixel : expected) nonempty=nonempty || pixel!=0;
+                        check("normal-spray-has-visible-pixels",nonempty); }
+                    object->Render(NULL,video,CVIDINF_SURFACE_BACK); ++draws;
+                    ok=pixels(&actual,NULL,FALSE) && ok;
+                    check("spray-parent-child-complete-pixels",ok && expected==actual);
+                    check("render-surface-unlocked",video->m_SurfaceDesc.lpSurface==NULL);
+                    area->m_visibility.m_pMap[tile]=CVisibilityMap::VISIBILITY_MASK;
+                    if (mode==2) infinity.nCurrentX-=10000;
+                }
+                check("spray-frame-restored",anchor.Restore()); object->CGameObject::m_pArea=NULL;
+            }
+            delete child; delete parent;
+        }
+    }
+    memcpy(area->m_visibility.m_pMap,visibility.data(),visibility.size()); area->m_search.m_pDynamicCost[cost]=dynamic;
+    infinity.rViewPort=view; infinity.nCurrentX=viewX; infinity.nCurrentY=viewY; infinity.pResWED=wed;
+    check("pixels-restored",backedUp && pixels(NULL,&saved,FALSE));
+    check("pixel-fixture-state-restored",game->GetWorldTimer()->m_gameTime==clock && master->pRes->GetDemands()==demands
+        && handler->m_messageList.GetCount()==messages && area->m_lVertSortAdd.GetCount()==pending);
+    Emit("{\"step\":%d,\"op\":\"spraypixels\",\"checks\":%d,\"renderCalls\":%d,\"restored\":true,\"valid\":%s}",nStep,checks,draws,valid?"true":"false");
+    return valid;
+}
+
+void SprayChecks(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* objects=game->GetObjectArray();
+    auto* handler=g_pBaldurChitin->GetMessageHandler();
+    INT checks=0; BOOL valid=TRUE;
+    auto check=[&](const char* name,BOOL ok) { ++checks; valid=valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"spray-case\",\"case\":\"%s\",\"passed\":false}",nStep,name); };
+    struct Access : CProjectileSPBRNHND {
+        using CProjectileSprayLifetime::m_animationLifetime;
+        using CProjectileTravelling::m_pVidCell; using CProjectileTravelling::m_palette;
+        using CProjectileTravelling::m_facing;
+    };
+    ULONG clock=game->GetWorldTimer()->m_gameTime; auto stop=game->m_nTimeStop,caster=game->m_nTimeStopCaster;
+    INT messages=handler->m_messageList.GetCount(); auto areaCounter=CGameArea::dword_8D212C; auto areaFlag=CGameArea::byte_8D2138;
+    auto* area=new CGameArea(255); area->m_pGame=game;
+    auto* master=game->GetMasterBitmap(); INT masterDemands=master->pRes->GetDemands();
+    struct Origin : CGameObject { BYTE GetObjectType() override { return TYPE_NONE; } };
+    auto* origin=new Origin; origin->m_pArea=area; origin->m_pos=CPoint(128,96);
+    check("source-registered",objects->Add(&origin->m_id,origin,INFINITE)==CGameObjectArray::SUCCESS);
+    auto retire=[&](CGameObject* p) {
+        POSITION node=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(p->m_id)); if (node) area->m_lVertSortAdd.RemoveAt(node);
+        p->RemoveFromArea(); objects->Delete(p->m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE); delete p;
+    };
+    auto pending=[&]()->std::vector<CProjectile*> {
+        std::vector<CProjectile*> result; POSITION pos=area->m_lVertSortAdd.GetHeadPosition();
+        while (pos) { LONG id=reinterpret_cast<LONG>(area->m_lVertSortAdd.GetNext(pos)); CGameObject* p=NULL;
+            if (objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&p,INFINITE)==CGameObjectArray::SUCCESS) {
+                auto* projectile=dynamic_cast<CProjectile*>(p); check("pending-object-is-projectile",projectile!=NULL);
+                if (projectile) result.push_back(projectile); objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+            } else check("pending-object-registered",FALSE);
+        }
+        return result;
+    };
+    for (const auto& row : SPRAY_FACTORY) {
+        CProjectile* object=CProjectile::DecodeProjectile(0x1A,NULL,row.delay);
+        auto* spray=dynamic_cast<CProjectileSPBRNHND*>(object);
+        check("native-factory-and-ctor",spray && object->m_projectileType==0x19 && object->m_bHasHeight
+            && object->m_fireSoundRef==CResRef("EFF_M20") && object->m_arrivalSoundRef==CResRef("")
+            && object->field_174==23 && object->field_178==50);
+        if (spray) {
+            auto* cell=spray->*(&Access::m_pVidCell); auto& palette=spray->*(&Access::m_palette);
+            check("native-palette-order-and-lifetime",cell->GetResRef()==CResRef("SPBRNHND") && cell->GetCurrentSequenceId()==0
+                && palette.m_rangeColors[0]==row.color && cell->m_cPalette.m_rangeColors[0]==row.cached
+                && palette.m_pPalette==cell->m_cPalette.m_pPalette && spray->GetRenderFlags()==row.flags
+                && spray->*(&Access::m_animationLifetime)==row.life);
+        }
+        delete object;
+    }
+    game->m_nTimeStop=0;
+    for (const auto& row : SPRAY_SPAWN) {
+        Access parent; parent.m_pArea=area; parent.m_posZ=31; parent.m_bHasHeight=TRUE;
+        parent.SpawnSpray(CPoint(128,96),row.count,row.facing,row.oneSide);
+        auto cells=pending(); check("native-recursive-child-count",cells.size()==static_cast<size_t>(row.size));
+        for (INT i=0;i<static_cast<INT>(cells.size());++i) {
+            auto* cell=dynamic_cast<CProjectileSprayCell*>(cells[i]);
+            check("distinct-child-class-and-placement",cell && i<row.size && cell->m_pos==CPoint(row.points[i][0],row.points[i][1])
+                && cell->m_posZ==31 && cell->m_listType==CGameObject::LIST_FRONT && cell->m_bHasHeight
+                && cell->m_pArea==area && cell->CGameObject::m_pArea==area && cell->GetRenderFlags()==0x20000);
+        }
+        for (auto* cell : cells) retire(cell);
+        check("spawn-fixtures-retired",area->m_lVertSortAdd.IsEmpty() && handler->m_messageList.GetCount()==messages);
+    }
+    for (const auto& row : SPRAY_FIRE) {
+        origin->m_pos=CPoint(row.origin[0],row.origin[1]);
+        auto* parent=new Access; parent->Fire(area,origin->m_id,-1,CPoint(row.target[0],row.target[1]),row.height,13);
+        check("native-fire-state",parent->m_pos==CPoint(row.launch[0],row.launch[1]) && parent->m_posZ==row.height
+            && parent->m_posAccumX==row.accum[0] && parent->m_posAccumY==row.accum[1] && parent->m_facing==row.facing
+            && parent->m_targetX==row.target[0] && parent->m_targetY==row.target[1] && parent->m_sourceId==origin->m_id);
+        auto cells=pending(); check("native-fire-registers-parent-and-cells",cells.size()==static_cast<size_t>(row.size+1)
+            && !cells.empty() && cells[0]==parent);
+        for (INT i=1;i<static_cast<INT>(cells.size());++i) check("native-fire-recursive-placement",i<=row.size
+            && dynamic_cast<CProjectileSprayCell*>(cells[i])!=NULL && cells[i]->m_pos==CPoint(row.points[i-1][0],row.points[i-1][1])
+            && cells[i]->m_posZ==row.height && cells[i]->m_listType==CGameObject::LIST_FRONT);
+        for (INT i=static_cast<INT>(cells.size())-1;i>=0;--i) retire(cells[i]);
+        check("empty-fire-no-damage-messages",handler->m_messageList.GetCount()==messages && area->m_lVertSortAdd.IsEmpty());
+    }
+    for (const auto& row : SPRAY_TICK) {
+        BOOL removed=FALSE,destroyed=FALSE,order=TRUE; INT frames=0;
+        struct Sample : Access {
+            CVidCell* original=NULL; BOOL* removed; BOOL* destroyed; BOOL fail;
+            ~Sample() override { *destroyed=TRUE; }
+            void RemoveFromArea() override { *removed=TRUE; m_pVidCell=original; if (fail) m_id=-1; }
+        };
+        struct Frame : CVidCell {
+            SHORT* remaining; SHORT expected; INT* calls; BOOL* order;
+            BOOL FrameAdvance() override { ++*calls; *order=*order && *remaining==expected; return TRUE; }
+        } frame;
+        auto* sample=new Sample; sample->removed=&removed; sample->destroyed=&destroyed; sample->fail=row.deleteFail;
+        sample->original=sample->m_pVidCell; sample->m_animationLifetime=row.before;
+        frame.remaining=&sample->m_animationLifetime; frame.expected=row.after; frame.calls=&frames; frame.order=&order;
+        sample->m_pVidCell=&frame; LONG id=-1; objects->Add(&sample->m_id,sample,INFINITE); id=sample->m_id;
+        game->m_nTimeStop=row.stop; game->m_nTimeStopCaster=row.stop==1?id+1:id;
+        sample->AIUpdate();
+        check("native-countdown-before-frame-and-retirement",order && frames==row.frames && removed==row.expired && destroyed==row.destroyed);
+        if (!destroyed) {
+            check("native-signed-word-countdown",sample->m_animationLifetime==row.after);
+            sample->m_pVidCell=sample->original; objects->Delete(id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE); delete sample;
+        }
+    }
+    {
+        Access absent; absent.Fire(area,-1,-1,CPoint(256,96),31,0);
+        check("missing-source-keeps-unregistered-object",absent.m_id==-1 && area->m_lVertSortAdd.IsEmpty());
+    }
+    retire(origin); delete area; CGameArea::dword_8D212C=areaCounter; CGameArea::byte_8D2138=areaFlag;
+    game->m_nTimeStop=stop; game->m_nTimeStopCaster=caster;
+    check("same-tick-state-restored",game->GetWorldTimer()->m_gameTime==clock && master->pRes->GetDemands()==masterDemands
+        && handler->m_messageList.GetCount()==messages);
+    check("spray-pixel-comparisons",SprayPixels(nStep));
+    Emit("{\"step\":%d,\"op\":\"spraychecks\",\"checks\":%d,\"nativeCases\":261,\"restored\":true,\"valid\":%s}",nStep,checks,valid?"true":"false");
+    if (!valid) Fail(nStep,"spraychecks","spray constructor/placement/lifetime mismatch");
+}
 
 void ThrownWeaponChecks(INT nStep)
 {
@@ -2429,6 +2629,76 @@ void AreaNearestChecks(INT nStep)
                     && saved[1].p->m_timedEffectList.GetCount()==saved[1].timed && saved[1].p->m_equipedEffectList.GetCount()==saved[1].equipped);
                 Emit("{\"step\":%d,\"op\":\"%s\",\"type\":%u,\"loss\":%ld,\"ticks\":%d,\"retired\":%s}",nStep,
                     acid?"acid-live-damage":"thrown-live-damage",type,loss,ticks,arrived?"true":"false");
+            }
+            // SPBRNHND copies the payload to selected polygon targets, then
+            // delivers the original to its explicit target during Fire.
+            origin->m_pos=CPoint(128,96);
+            saved[1].p->m_pos=CPoint(160,96); saved[2].p->m_pos=CPoint(180,96); saved[3].p->m_pos=CPoint(40,300);
+            LONG beforeSpray[3]={saved[1].p->m_baseStats.m_hitPoints,saved[2].p->m_baseStats.m_hitPoints,saved[3].p->m_baseStats.m_hitPoints};
+            auto* spray=dynamic_cast<CProjectileSPBRNHND*>(CProjectile::DecodeProjectile(0x1A,saved[0].p,0));
+            check("spray-factory-carrier",spray!=NULL);
+            if (spray) {
+                spray->AddEffect(CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],CPoint(256,96)));
+                spray->Fire(area,origin->m_id,ids[3],CPoint(256,96),31,0);
+                LONG parentId=spray->m_id;
+                check("spray-fire-delivers-immediately",spray->m_effectList.IsEmpty() && handler->m_messageList.GetCount()==messages+3
+                    && spray->m_pos==CPoint(138,96) && spray->m_targetX==256 && spray->m_targetY==96 && spray->m_posZ==31);
+                INT copies=0,groups=0,barks=0;
+                while (handler->m_messageList.GetCount()>messages) {
+                    CMessage* message=handler->m_messageList.RemoveTail();
+                    auto* copy=dynamic_cast<CMessageAddEffect*>(message); auto* group=dynamic_cast<CMessage105*>(message);
+                    auto* sound=dynamic_cast<CMessagePlaySound*>(message);
+                    check("spray-owned-message-routing",(copy && copy->m_sourceId==origin->m_id && (copy->m_targetId==ids[1] || copy->m_targetId==ids[2]))
+                        || (group && group->m_sourceId==origin->m_id && group->m_targetId==ids[3] && group->m_nCount==1)
+                        || (sound && sound->m_sourceId==sound->m_targetId && (sound->m_targetId==ids[1] || sound->m_targetId==ids[2] || sound->m_targetId==ids[3])
+                            && sound->m_soundId==CGameSprite::SOUND_DAMAGE));
+                    if (copy) { ++copies; copy->Run(); } if (group) { ++groups; group->Run(); } if (sound) ++barks;
+                    delete message;
+                }
+                check("spray-two-copies-and-original-target",copies==2 && groups==1 && barks==3 && saved[0].p->m_baseStats.m_hitPoints==512);
+                for (INT i=0;i<3;++i) {
+                    LONG loss=beforeSpray[i]-saved[i+1].p->m_baseStats.m_hitPoints;
+                    check("spray-real-six-hp-loss",loss==6);
+                    Emit("{\"step\":%d,\"op\":\"spray-live-damage\",\"target\":%d,\"loss\":%ld}",nStep,i+1,loss);
+                }
+                std::vector<LONG> carriers; POSITION node=area->m_lVertSortAdd.GetHeadPosition(); INT child=0;
+                while (node) {
+                    LONG id=reinterpret_cast<LONG>(area->m_lVertSortAdd.GetNext(node)); CGameObject* object=NULL;
+                    if (objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS) {
+                        if (id!=parentId) {
+                            auto* cell=dynamic_cast<CProjectileSprayCell*>(object);
+                            check("spray-native-registered-cell-order",cell && child<_countof(SPRAY_DAMAGE_POINTS)
+                                && object->m_pos==CPoint(SPRAY_DAMAGE_POINTS[child][0],SPRAY_DAMAGE_POINTS[child][1]) && object->m_posZ==31);
+                            ++child; carriers.push_back(id);
+                        }
+                        objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                    }
+                }
+                check("spray-native-nine-cell-fan",child==_countof(SPRAY_DAMAGE_POINTS)); carriers.push_back(parentId);
+                for (LONG id : carriers) { POSITION queued=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id)); if (queued) area->m_lVertSortAdd.RemoveAt(queued); }
+                game->m_nTimeStop=1; game->m_nTimeStopCaster=origin->m_id;
+                for (LONG id : carriers) { CGameObject* object=NULL;
+                    if (objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS) {
+                        objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE); object->AIUpdate();
+                    }
+                }
+                game->m_nTimeStop=0;
+                for (INT tick=0;tick<55;++tick) for (LONG id : carriers) {
+                    CGameObject* object=NULL; BYTE rc=objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE);
+                    check("spray-carrier-alive-before-expiry",rc==CGameObjectArray::SUCCESS);
+                    if (rc==CGameObjectArray::SUCCESS) { objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE); object->AIUpdate(); }
+                    rc=objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE);
+                    check("spray-exact-fifty-five-tick-expiry",tick==54?rc==CGameObjectArray::DELETED:rc==CGameObjectArray::SUCCESS);
+                    if (rc==CGameObjectArray::SUCCESS) objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                }
+                for (LONG id : carriers) { CGameObject* object=NULL;
+                    if (objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS) {
+                        objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE); retire(object);
+                    }
+                }
+                check("spray-expiry-no-repeat-damage",handler->m_messageList.GetCount()==messages && area->m_lVertSortAdd.IsEmpty());
+                for (INT i=0;i<3;++i) check("spray-hit-stays-instant",beforeSpray[i]-saved[i+1].p->m_baseStats.m_hitPoints==6
+                    && saved[i+1].p->m_timedEffectList.GetCount()==saved[i+1].timed && saved[i+1].p->m_equipedEffectList.GetCount()==saved[i+1].equipped);
             }
         }
         if (chain) {
@@ -4653,6 +4923,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "thrownweaponchecks") == 0) {
         ThrownWeaponChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "spraychecks") == 0) {
+        SprayChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

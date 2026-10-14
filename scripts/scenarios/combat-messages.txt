@@ -23,6 +23,7 @@ nearestchecks
 sparkleexplosionchecks
 acidblobchecks
 thrownweaponchecks
+spraychecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

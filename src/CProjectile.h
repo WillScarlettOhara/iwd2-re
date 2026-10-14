@@ -83,6 +83,8 @@ public:
     /* 016C */ SHORT m_nDeltaZ;
     /* 016E */ SHORT m_nDeltaZLast;
     /* 0170 */ LONG m_nOrigDistance;
+    /* 0174 */ LONG field_174;
+    /* 0178 */ LONG field_178;
     /* 017C */ BYTE field_17C;
     /* 017E */ CString field_17E;
     /* 0182 */ LONG m_nTargetId;
@@ -240,7 +242,7 @@ protected:
     int field_298;              // +0x298 -- zeroed by SetTravelPalette
     BYTE m_paletteSwap;         // +0x29C (param[0xa7]) -- Frida-confirmed; set by SetTravelPalette, Render swaps the cell palette from the bitmap
     BYTE m_distLifetime;        // +0x29D -- gate: when set, compute lifetime from sqrt(dist)/velocity
-    SHORT m_lifetime;           // +0x29E -- Frida-confirmed (decrements 1/tick from 0x7FFF)
+    /* 029E */ SHORT m_lifetime; // Frida-confirmed (decrements 1/tick from 0x7FFF)
 };
 
 // Native 0x532260, vtable 0x84E504, size 0x2A0. ACIDBLOB animation;
@@ -266,6 +268,40 @@ public:
 class CProjectileDagger /*#guess*/ : public CProjectileTravelling {
 public:
     CProjectileDagger(); // 0x532000, vtable 0x84E47C
+};
+
+// Shared native animation lifetime code (0x533A50) and tail for the two
+// distinct 0x2A2 spray classes. No separate binary vtable is assumed here.
+class CProjectileSprayLifetime /*#guess*/ : public CProjectileTravelling {
+public:
+    void AIUpdate() override;
+protected:
+    explicit CProjectileSprayLifetime(const CResRef& resRef) : CProjectileTravelling(resRef) {}
+    /* 02A0 */ SHORT m_animationLifetime;
+};
+
+// Native SPBRNHND carrier, vtable 0x84E69C, size 0x2A2.
+class CProjectileSPBRNHND /*#guess*/ : public CProjectileSprayLifetime {
+public:
+    CProjectileSPBRNHND();
+    void Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType) override;
+    void SpawnSpray(const CPoint& origin, LONG count, SHORT facing, BOOL oneSide); // native 0x533600
+};
+
+// Separate visual leaf: vtable 0x84E724 adds slot 34, and retains the base
+// travelling Fire in slot 27. Its constructor is inlined in SpawnSpray.
+class CProjectileSprayCell /*#guess*/ : public CProjectileSprayLifetime {
+public:
+    // Inlined at native 0x533729/0x533806; not a separate binary function.
+    CProjectileSprayCell(const CResRef& resRef, SHORT lifetime, SHORT facing, const CVidPalette& palette)
+        : CProjectileSprayLifetime(resRef)
+    {
+        m_animationLifetime=lifetime;
+        m_tinted=FALSE; m_useHeightOffset=FALSE; m_mirror=FALSE; m_hasShadowCell=FALSE; m_dirCount=16;
+        m_facing=facing; UpdateDirectionSequence(NULL);
+        m_pVidCell->SetPalette(palette);
+    }
+    virtual void AddVisualToArea(CGameArea* area, const CPoint& point, LONG height);
 };
 
 // Leaf 0x5324A0 -- the canonical travelling arrow (DecodeProjectile types

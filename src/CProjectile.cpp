@@ -450,6 +450,15 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
         pProjectile->m_arrivalSoundRef = CResRef("");
         break;
 
+    case 0x1A: {
+        auto* spray=new CProjectileSPBRNHND();
+        spray->m_bHasHeight=TRUE;
+        spray->SetRange(0,0x43);
+        spray->m_fireSoundRef="EFF_M20"; spray->m_arrivalSoundRef="";
+        pProjectile=spray;
+        break;
+    }
+
     case 0xC:
     case 0xF:
     case 0x10:
@@ -5689,6 +5698,148 @@ CProjectileDagger::CProjectileDagger()
     m_velocity=static_cast<SHORT>(m_velocity*2);
     m_callBackProjectile=CGameObjectArray::INVALID_INDEX;
     field_17E=""; m_nTargetId=CGameObjectArray::INVALID_INDEX;
+}
+
+// 0x532CA0
+CProjectileSPBRNHND::CProjectileSPBRNHND()
+    : CProjectileSprayLifetime(CResRef("SPBRNHND"))
+{
+    m_pVidCell->SequenceSet(0);
+    m_palette.SetRange(0,0x47,*g_pBaldurChitin->GetObjectGame()->GetMasterBitmap());
+    m_pVidCell->SetPalette(m_palette);
+    m_renderFlags|=CVIDCELL_BRIGHTEST;
+    m_tinted=FALSE; m_useHeightOffset=FALSE; m_mirror=FALSE; m_hasShadowCell=FALSE; m_dirCount=16;
+    m_fireSoundRef=""; m_animationLifetime=55;
+    m_callBackProjectile=CGameObjectArray::INVALID_INDEX;
+    field_17E=""; m_nTargetId=CGameObjectArray::INVALID_INDEX;
+    field_174=23; field_178=50;
+}
+
+namespace {
+// Native signed-WORD direction tables, 0x84D6B8..0x84D798.
+const SHORT SPRAY_VECTORS[8][16] = {
+    {-1000,-924,-707,-383,0,383,707,924,1000,924,707,383,0,-383,-707,-924},
+    {0,-383,-707,-924,-1000,-924,-707,-383,0,383,707,924,1000,924,707,383},
+    {0,-383,-707,-924,-1000,-924,-707,-383,0,383,707,924,1000,924,707,383},
+    {1000,924,707,383,0,-383,-707,-924,-1000,-924,-707,-383,0,383,707,924},
+    {1000,924,707,383,0,-383,-707,-924,-1000,-924,-707,-383,0,383,707,924},
+    {0,-383,-707,-924,-1000,-924,-707,-383,0,383,707,924,1000,924,707,383},
+    {0,383,707,924,1000,924,707,383,0,-383,-707,-924,-1000,-924,-707,-383},
+    {1000,924,707,383,0,-383,-707,-924,-1000,-924,-707,-383,0,383,707,924},
+};
+LONG SprayAdd(LONG a,LONG b) { return static_cast<LONG>(static_cast<DWORD>(a)+static_cast<DWORD>(b)); }
+LONG SprayProjection(LONG a,SHORT av,LONG b,SHORT bv,SHORT count) {
+    DWORD sum=static_cast<DWORD>(a)*static_cast<DWORD>(av)+static_cast<DWORD>(b)*static_cast<DWORD>(bv);
+    return static_cast<LONG>(sum*static_cast<DWORD>(count))/1000;
+}
+}
+
+// 0x533600
+void CProjectileSPBRNHND::SpawnSpray(const CPoint& origin, LONG count, SHORT facing, BOOL oneSide)
+{
+    CPoint left(SprayAdd(origin.x,static_cast<SHORT>(SprayProjection(14,SPRAY_VECTORS[0][facing],32,SPRAY_VECTORS[1][facing],1))),
+        SprayAdd(origin.y,static_cast<SHORT>(SprayProjection(14,SPRAY_VECTORS[2][facing],32,SPRAY_VECTORS[3][facing],1))));
+    CPoint right(SprayAdd(origin.x,static_cast<SHORT>(SprayProjection(14,SPRAY_VECTORS[4][facing],32,SPRAY_VECTORS[5][facing],1))),
+        SprayAdd(origin.y,static_cast<SHORT>(SprayProjection(14,SPRAY_VECTORS[6][facing],32,SPRAY_VECTORS[7][facing],1))));
+    auto* first=new CProjectileSprayCell(m_pVidCell->GetResRef(),m_animationLifetime,facing,m_palette);
+    first->m_bHasHeight=m_bHasHeight; first->AddVisualToArea(m_pArea,left,m_posZ);
+    if (!oneSide) {
+        auto* second=new CProjectileSprayCell(m_pVidCell->GetResRef(),m_animationLifetime,facing,m_palette);
+        second->m_bHasHeight=m_bHasHeight; second->AddVisualToArea(m_pArea,right,m_posZ);
+    }
+    if (static_cast<SHORT>(count)-1>0) {
+        LONG next=SprayAdd(count,-1);
+        SpawnSpray(left,next,facing,TRUE);
+        if (!oneSide) SpawnSpray(right,next,facing,FALSE);
+    }
+}
+
+// 0x532F00
+void CProjectileSPBRNHND::Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType)
+{
+    (void)nType;
+    m_sourceId=source; m_targetId=target; m_pArea=pArea;
+    auto* objects=g_pBaldurChitin->GetObjectGame()->GetObjectArray(); CGameObject* caster; BYTE rc;
+    do { rc=objects->GetShare(source,CGameObjectArray::THREAD_ASYNCH,&caster,INFINITE); }
+    while (rc==CGameObjectArray::SHARED || rc==CGameObjectArray::DENIED);
+    if (rc!=CGameObjectArray::SUCCESS) return;
+    CPoint start; GetStart(source,start,TRUE);
+    LONG dx=static_cast<LONG>(static_cast<DWORD>(targetPos.x)-static_cast<DWORD>(start.x));
+    LONG dy=static_cast<LONG>(static_cast<DWORD>(targetPos.y)-static_cast<DWORD>(start.y));
+    if (dx<-10) start.x=SprayAdd(start.x,-10); else if (dx>10) start.x=SprayAdd(start.x,10);
+    if (dy<-10) start.y=SprayAdd(start.y,-10); else if (dy>10) start.y=SprayAdd(start.y,10);
+    if (objects->Add(&m_id,this,INFINITE)!=CGameObjectArray::SUCCESS) {
+        delete this; objects->ReleaseShare(source,CGameObjectArray::THREAD_ASYNCH,INFINITE); return;
+    }
+    CGameObject::AddToArea(pArea,start,nHeight,CGameObject::LIST_FRONT);
+    PlaySound(m_fireSoundRef,m_loopFireSound,FALSE);
+    m_pos=start; m_targetX=targetPos.x; m_targetY=targetPos.y;
+    m_posAccumX=static_cast<LONG>(static_cast<DWORD>(start.x)<<10);
+    m_posAccumY=static_cast<LONG>(static_cast<DWORD>(start.y)<<12)/3;
+    CPoint scaledStart(start.x,static_cast<LONG>(static_cast<DWORD>(start.y)*4)/3);
+    CPoint scaledTarget(targetPos.x,static_cast<LONG>(static_cast<DWORD>(targetPos.y)*4)/3);
+    m_facing=CGameSprite::GetDirection(scaledStart,scaledTarget);
+    DWORD x=static_cast<DWORD>(start.x)-static_cast<DWORD>(targetPos.x),y=static_cast<DWORD>(start.y)-static_cast<DWORD>(targetPos.y);
+    LONG metric=static_cast<LONG>(x*x+y*y);
+    LONG count=static_cast<LONG>(static_cast<LONGLONG>(sqrt(static_cast<double>(metric))))/32;
+    SpawnSpray(m_pos,count,m_facing,FALSE);
+    SHORT n=static_cast<SHORT>(count),f=m_facing;
+    CPoint polygon[3]={m_pos,m_pos,m_pos};
+    polygon[1].x=SprayAdd(SprayAdd(m_pos.x,SprayProjection(14,SPRAY_VECTORS[0][f],32,SPRAY_VECTORS[1][f],n)),
+        SprayProjection(field_174,SPRAY_VECTORS[0][f],field_178,SPRAY_VECTORS[1][f],n));
+    polygon[1].y=SprayAdd(SprayAdd(m_pos.y,SprayProjection(14,SPRAY_VECTORS[2][f],32,SPRAY_VECTORS[3][f],n)),
+        SprayProjection(field_174,SPRAY_VECTORS[2][f],field_178,SPRAY_VECTORS[3][f],n));
+    polygon[2].x=SprayAdd(SprayAdd(m_pos.x,SprayProjection(14,SPRAY_VECTORS[4][f],32,SPRAY_VECTORS[5][f],n)),
+        SprayProjection(SprayAdd(field_174,field_178),SPRAY_VECTORS[4][f],0,0,n));
+    polygon[2].y=SprayAdd(SprayAdd(m_pos.y,SprayProjection(14,SPRAY_VECTORS[6][f],32,SPRAY_VECTORS[7][f],n)),
+        SprayProjection(SprayAdd(field_174,field_178),SPRAY_VECTORS[6][f],0,0,n));
+    CRect bounds(min(polygon[0].x,min(polygon[1].x,polygon[2].x)),min(polygon[0].y,min(polygon[1].y,polygon[2].y)),
+        max(polygon[0].x,max(polygon[1].x,polygon[2].x)),max(polygon[0].y,max(polygon[1].y,polygon[2].y)));
+    CTypedPtrList<CPtrList,LONG*> targets;
+    pArea->GetAllInPoly(bounds,polygon,3,CAIObjectType::ANYONE,pArea->m_visibleTerrainTable,targets,TRUE);
+    POSITION pos=targets.GetHeadPosition();
+    while (pos) {
+        LONG id=reinterpret_cast<LONG>(targets.GetNext(pos)); CGameObject* object;
+        if (objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)!=CGameObjectArray::SUCCESS) continue;
+        if (object->GetObjectType() & CGameObject::TYPE_AIBASE) {
+            POSITION effect=m_effectList.GetHeadPosition();
+            while (effect) g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                new CMessageAddEffect(m_effectList.GetNext(effect)->Copy(),source,id),FALSE);
+        }
+        objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    }
+    objects->ReleaseShare(source,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    DeliverEffects();
+}
+
+// 0x533A50
+void CProjectileSprayLifetime::AIUpdate()
+{
+    auto* game=g_pBaldurChitin->GetObjectGame();
+    if (game->m_nTimeStop!=0 && game->m_nTimeStopCaster!=m_id) return;
+    m_animationLifetime=static_cast<SHORT>(m_animationLifetime-1);
+    m_pVidCell->FrameAdvance();
+    if (m_animationLifetime<=0) {
+        RemoveFromArea();
+        if (game->GetObjectArray()->Delete(m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE)==CGameObjectArray::SUCCESS) delete this;
+    }
+}
+
+// 0x533AE0
+void CProjectileSprayCell::AddVisualToArea(CGameArea* area, const CPoint& point, LONG height)
+{
+    m_pArea=area;
+    if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id,this,INFINITE)!=CGameObjectArray::SUCCESS) {
+        delete this; return;
+    }
+    CGameObject::AddToArea(area,point,height,CGameObject::LIST_FRONT);
+    m_sound.Stop();
+    if (m_fireSoundRef!="") {
+        m_sound.SetResRef(m_fireSoundRef,TRUE,TRUE);
+        if (m_loopFireSound) m_sound.SetLoopingFlag(TRUE);
+        m_sound.SetChannel(15,reinterpret_cast<DWORD>(m_pArea));
+        m_sound.Play(m_pos.x,m_pos.y,0,FALSE);
+    }
 }
 
 // 0x532260

@@ -56,5 +56,5 @@ Melee/bow/crossbow/sling 6/12/12/12 plus ammo/acid/chain/beam tests pass.
 Dagger/OnList/Fire/Deliver parity GREEN; three other ctors/factory/AI
 YELLOW call counts. Missing offset oracles and fieldless layout skips leave
 full static equivalence unproven; source pixel tests are not native raster.
-Next: SPBRNHND ctor 532CA0, Fire 532F00 and AI 533A50, vtable84E69C;
-recover own field/lifetime behavior before enabling its factory cases.
+Continuation: [SPBRNHND spray recovery](spray-recovery.md), including
+its separate visual cells, recursive placement and shared lifetime.
