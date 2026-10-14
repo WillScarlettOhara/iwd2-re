@@ -24,6 +24,7 @@ sparkleexplosionchecks
 acidblobchecks
 thrownweaponchecks
 spraychecks
+followupchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

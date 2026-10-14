@@ -59,7 +59,5 @@ six YELLOW warnings (counts/render), missing offset oracles and fieldless
 layout skips leave full static equivalence unproven. Pixel tests are source
 renderer comparisons, not native raster proof.
 
-Next: common ctor533CB0/vtable84E7B0, MAGMISS leaf534600/vtable84E838,
-Fire533F40 and AI534140 (missing exports need addressed stubs/export).
-tmp_spray_next_context.md read; common ctor owns child Decode(type+1),
-CAIObjectType2B2 and tail2A0..2F8. Do not borrow BG2 Multi's layout.
+Continuation: [MAGMISS follow-up recovery](followup-recovery.md), including
+the immediate CallLiH callback and native count/interval scheduler.

@@ -1674,6 +1674,7 @@ struct ProjectileRenderFrameAnchor {
 #include "AcidBlobGolden.h"
 #include "ThrownWeaponGolden.h"
 #include "SprayGolden.h"
+#include "FollowupGolden.h"
 
 BOOL SprayPixels(INT nStep)
 {
@@ -1760,6 +1761,114 @@ BOOL SprayPixels(INT nStep)
         && handler->m_messageList.GetCount()==messages && area->m_lVertSortAdd.GetCount()==pending);
     Emit("{\"step\":%d,\"op\":\"spraypixels\",\"checks\":%d,\"renderCalls\":%d,\"restored\":true,\"valid\":%s}",nStep,checks,draws,valid?"true":"false");
     return valid;
+}
+
+struct FollowupAccess : CProjectileMAGMISS {
+    explicit FollowupAccess(SHORT count=3) : CProjectileMAGMISS(count,1) {}
+    using CProjectileFollowUp::m_remainingShots; using CProjectileFollowUp::m_interval;
+    using CProjectileFollowUp::m_keepSource; using CProjectileFollowUp::m_childType;
+    using CProjectileFollowUp::m_nextProjectile; using CProjectileFollowUp::m_ready;
+    using CProjectileFollowUp::m_targetType; using CProjectileFollowUp::m_launchHeight;
+    using CProjectileFollowUp::m_launchKind; using CProjectileFollowUp::m_checkLOS; using CProjectileFollowUp::m_delay;
+    using CProjectileTravelling::m_pVidCell; using CProjectileTravelling::m_mirror;
+    using CProjectileTravelling::m_tinted; using CProjectileTravelling::m_dirCount;
+};
+
+void FollowupChecks(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* objects=game->GetObjectArray();
+    auto* handler=g_pBaldurChitin->GetMessageHandler(); INT checks=0; BOOL valid=TRUE;
+    auto check=[&](const char* name,BOOL ok) { ++checks; valid=valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"followup-case\",\"case\":\"%s\",\"passed\":false}",nStep,name); };
+    ULONG clock=game->GetWorldTimer()->m_gameTime; auto stop=game->m_nTimeStop,caster=game->m_nTimeStopCaster;
+    INT messages=handler->m_messageList.GetCount(); auto areaCounter=CGameArea::dword_8D212C; auto areaFlag=CGameArea::byte_8D2138;
+    auto* area=new CGameArea(255); area->m_pGame=game;
+    auto* master=game->GetMasterBitmap(); INT demands=master->pRes->GetDemands();
+    struct Caster : CGameAIBase { CAIObjectType type; const CAIObjectType& GetAIType() override { return type; } } fixtureCaster;
+    CRes* carrierResource=g_pChitin->cDimm.GetResObject(CResRef("MAGMISS"),1000,FALSE);
+    BOOL carrierAvailable=carrierResource!=NULL;
+    if (carrierResource) g_pChitin->cDimm.ReleaseResObject(carrierResource);
+    Emit("{\"step\":%d,\"op\":\"followup-carrier-resource\",\"available\":%s}",nStep,carrierAvailable?"true":"false");
+    auto retire=[&](CGameObject* p) {
+        POSITION node=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(p->m_id)); if (node) area->m_lVertSortAdd.RemoveAt(node);
+        p->RemoveFromArea(); objects->Delete(p->m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE); delete p;
+    };
+    for (const auto& row : FOLLOWUP_FACTORY) {
+        fixtureCaster.type.m_nEnemyAlly=row.ea;
+        auto* p=dynamic_cast<CProjectileMAGMISS*>(CProjectile::DecodeProjectile(row.type,&fixtureCaster,row.delay));
+        check("native-factory-class-and-stamp",p && p->m_projectileType==row.type-1 && !p->m_bHasHeight);
+        if (p) {
+            check("native-count-interval-and-filter",p->*(&FollowupAccess::m_remainingShots)==row.count
+                && p->*(&FollowupAccess::m_interval)==row.interval && (p->*(&FollowupAccess::m_targetType)).m_nEnemyAlly==row.filter
+                && p->*(&FollowupAccess::m_keepSource) && p->*(&FollowupAccess::m_checkLOS));
+            auto* cell=p->*(&FollowupAccess::m_pVidCell);
+            check("native-magmiss-visual-defaults",cell->GetResRef()==CResRef(carrierAvailable?"MAGMISS":"")
+                && (cell->pRes!=NULL)==carrierAvailable
+                && p->*(&FollowupAccess::m_mirror) && !(p->*(&FollowupAccess::m_tinted)) && p->*(&FollowupAccess::m_dirCount)==1
+                && p->m_fireSoundRef==CResRef("") && p->m_arrivalSoundRef==CResRef(""));
+            CProjectile* child=p->*(&FollowupAccess::m_nextProjectile);
+            check("native-prebuilt-child-type",dynamic_cast<CProjectileCallLightning*>(child) && child->m_projectileType==0x16
+                && child->m_fireSoundRef==CResRef("EFF_P19") && child->m_arrivalSoundRef==CResRef(""));
+            delete child; delete p;
+        }
+    }
+    for (const auto& row : FOLLOWUP_FIRE) {
+        struct Payload : CGameEffect {
+            CGameEffect* Copy() override { auto* p=new Payload; p->m_projectileType=m_projectileType; p->m_slotNum=m_slotNum; return p; }
+        };
+        struct Child : CProjectile {
+            FollowupAccess* parent; BOOL sync,called=FALSE,copies=FALSE,route=FALSE;
+            void Fire(CGameArea*,LONG source,LONG target,CPoint point,LONG height,SHORT kind) override {
+                called=TRUE; route=source==11 && target==22 && point==CPoint(256,96) && height==31 && kind==13
+                    && m_callBackProjectile==parent->m_id && m_nSpellLevel==0;
+                copies=m_effectList.GetCount()==2; INT i=0; POSITION pos=m_effectList.GetHeadPosition();
+                while (pos) { auto* e=m_effectList.GetNext(pos); copies=copies && e->m_projectileType==DWORD(123+i) && e->m_slotNum==22; ++i; }
+                if (sync) parent->CallBack();
+            }
+        };
+        auto* p=new FollowupAccess; delete p->m_nextProjectile; auto* child=new Child;
+        child->m_projectileType=22; child->parent=p; child->sync=row.sync; p->m_nextProjectile=child;
+        for (INT i=0;i<2;++i) { auto* e=new Payload; e->m_projectileType=123+i; e->m_slotNum=900+i; p->m_effectList.AddTail(e); }
+        p->m_remainingShots=row.remaining; p->m_interval=row.interval; p->m_nSpellLevel=7; p->m_casterResRef="TEST";
+        p->Fire(area,11,22,CPoint(256,96),31,13);
+        check("native-copy-slots-and-first-fire",child->called && child->copies && child->route && p->m_effectList.GetCount()==2);
+        check("native-post-fire-state",p->m_remainingShots==row.after && p->m_delay==row.delay && p->m_ready==row.sync
+            && p->m_launchHeight==31 && p->m_launchKind==0 && p->m_pos==CPoint(256,96) && p->m_posZ==31);
+        check("fresh-child-spell-metadata",p->m_nextProjectile!=child && p->m_nextProjectile->m_nSpellLevel==7
+            && p->m_nextProjectile->m_casterResRef==CResRef("TEST") && p->m_nextProjectile->m_callBackProjectile==-1);
+        delete child; delete p->m_nextProjectile; retire(p);
+    }
+    for (const auto& row : FOLLOWUP_GATE) {
+        BOOL destroyed=FALSE;
+        struct Sample : FollowupAccess { BOOL* destroyed; ~Sample() override { *destroyed=TRUE; } };
+        auto* p=new Sample; p->destroyed=&destroyed; CProjectile* unused=p->m_nextProjectile;
+        p->m_remainingShots=row.remaining; p->m_delay=row.delay; p->m_ready=row.ready;
+        objects->Add(&p->m_id,p,INFINITE); LONG id=p->m_id;
+        game->m_nTimeStop=row.stop; game->m_nTimeStopCaster=row.stop==1?id+1:id;
+        p->AIUpdate(); check("native-gate-and-terminal-lifetime",destroyed==row.retired);
+        if (!destroyed) { check("native-decrement-only-positive-delay",p->m_delay==row.after && p->m_remainingShots==row.remaining); retire(p); }
+        delete unused;
+    }
+    game->m_nTimeStop=0;
+    struct Origin : CGameObject { BYTE GetObjectType() override { return TYPE_NONE; } };
+    auto* target=new Origin; target->m_pArea=area; target->m_pos=CPoint(160,96);
+    objects->Add(&target->m_id,target,INFINITE);
+    for (BOOL missing : {FALSE,TRUE}) {
+        struct Parent : FollowupAccess { INT calls=0; void CallBack() override { ++calls; FollowupAccess::CallBack(); } };
+        auto* p=new Parent; objects->Add(&p->m_id,p,INFINITE); delete p->m_nextProjectile; p->m_nextProjectile=NULL;
+        auto* child=CProjectile::DecodeProjectile(0x17,NULL,0); child->m_callBackProjectile=p->m_id;
+        child->m_arrivalSoundRef="ARE_M06";
+        child->Fire(area,11,missing?-123:target->m_id,CPoint(256,96),31,13);
+        check("native-child-single-share-and-immediate-callback",missing?(p->calls==0 && !child->CGameObject::m_pArea)
+            :(p->calls==1 && p->m_ready && child->m_pos==CPoint(160,109) && child->m_posZ==0));
+        check("empty-nonaibase-child-no-owned-message",handler->m_messageList.GetCount()==messages);
+        retire(child); retire(p);
+    }
+    retire(target); delete area; CGameArea::dword_8D212C=areaCounter; CGameArea::byte_8D2138=areaFlag;
+    game->m_nTimeStop=stop; game->m_nTimeStopCaster=caster;
+    check("same-tick-fixtures-restored",game->GetWorldTimer()->m_gameTime==clock && handler->m_messageList.GetCount()==messages && master->pRes->GetDemands()==demands);
+    Emit("{\"step\":%d,\"op\":\"followupchecks\",\"checks\":%d,\"nativeCases\":342,\"restored\":true,\"valid\":%s}",nStep,checks,valid?"true":"false");
+    if (!valid) Fail(nStep,"followupchecks","follow-up factory/copies/scheduler/callback mismatch");
 }
 
 void SprayChecks(INT nStep)
@@ -2699,6 +2808,107 @@ void AreaNearestChecks(INT nStep)
                 check("spray-expiry-no-repeat-damage",handler->m_messageList.GetCount()==messages && area->m_lVertSortAdd.IsEmpty());
                 for (INT i=0;i<3;++i) check("spray-hit-stays-instant",beforeSpray[i]-saved[i+1].p->m_baseStats.m_hitPoints==6
                     && saved[i+1].p->m_timedEffectList.GetCount()==saved[i+1].timed && saved[i+1].p->m_equipedEffectList.GetCount()==saved[i+1].equipped);
+            }
+        }
+        if (loaded) {
+            // Native MAGMISS variants: independent CallLiH markers, immediate
+            // callback, then exactly 300 delay updates before each next action.
+            ITEM_EFFECT effect=damage.pRes->m_pEffects[0]; effect.effectAmount=6; effect.dwFlags=0x40000000;
+            effect.special=DWORD(-1); effect.numDice=0; effect.diceSize=0;
+            saved[0].p->m_typeAI.m_nEnemyAlly=0; saved[3].p->m_typeAI.m_nEnemyAlly=0;
+            saved[1].p->m_pos=CPoint(140,96); saved[2].p->m_pos=CPoint(180,96); saved[3].p->m_pos=CPoint(300,200);
+            for (INT variant=0;variant<12;++variant) {
+                BOOL pointSearch=variant==11; USHORT type=pointSearch?0x53:USHORT(0x51+variant);
+                INT count=type-0x50; LONG losses[3]={}; INT shots=0,ticks=0,expired=0;
+                for (INT i=1;i<4;++i) saved[i].p->m_baseStats.m_hitPoints=512;
+                saved[1].p->m_typeAI.m_nEnemyAlly=saved[2].p->m_typeAI.m_nEnemyAlly=255;
+                saved[1].p->m_listType=pointSearch?CGameObject::LIST_BACK:CGameObject::LIST_FRONT;
+                auto* carrier=dynamic_cast<CProjectileMAGMISS*>(CProjectile::DecodeProjectile(type,saved[0].p,0));
+                check("followup-live-factory",carrier!=NULL); if (!carrier) continue;
+                // The private area has no search bitmap; selector behavior is
+                // tested with LOS disabled, while factory/ABI tests retain it.
+                carrier->*(&FollowupAccess::m_checkLOS)=FALSE;
+                carrier->*(&FollowupAccess::m_keepSource)=!pointSearch;
+                carrier->AddEffect(CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],saved[1].p->m_pos));
+                carrier->m_effectList.GetHead()->m_slotNum=900;
+                carrier->Fire(area,origin->m_id,ids[1],CPoint(256,96),31,13);
+                LONG parentId=carrier->m_id; CProjectile* unused=NULL;
+                struct Marker { LONG id; INT updates=0; }; std::vector<Marker> markers;
+                auto gather=[&]() {
+                    POSITION node=area->m_lVertSortAdd.GetHeadPosition();
+                    while (node) {
+                        POSITION here=node; LONG id=reinterpret_cast<LONG>(area->m_lVertSortAdd.GetNext(node));
+                        if (id!=parentId) {
+                            CGameObject* object=NULL;
+                            if (objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS) {
+                                check("followup-real-child-placement",dynamic_cast<CProjectileCallLightning*>(object)
+                                    && object->m_posZ==0 && object->m_pos==CPoint(saved[pointSearch || shots%2==0?1:2].p->m_pos.x,109));
+                                objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE); markers.push_back({id});
+                            } else check("followup-real-child-registered",FALSE);
+                        }
+                        area->m_lVertSortAdd.RemoveAt(here);
+                    }
+                    while (handler->m_messageList.GetCount()>messages) {
+                        auto* message=handler->m_messageList.RemoveTail(); auto* group=dynamic_cast<CMessage105*>(message);
+                        auto* sound=dynamic_cast<CMessagePlaySound*>(message);
+                        LONG expectedTarget=ids[pointSearch || shots%2==0?1:2];
+                        LONG expectedSource=pointSearch && shots>0?ids[1]:origin->m_id;
+                        check("followup-owned-hit-routing",(group && group->m_nCount==1 && group->m_sourceId==expectedSource && group->m_targetId==expectedTarget)
+                            || (sound && sound->m_sourceId==sound->m_targetId && (sound->m_targetId==ids[1] || sound->m_targetId==ids[2])
+                                && sound->m_soundId==CGameSprite::SOUND_DAMAGE));
+                        if (group) {
+                            LONG before=saved[pointSearch || shots%2==0?1:2].p->m_baseStats.m_hitPoints;
+                            group->Run(); check("followup-child-real-six-hp",before-saved[pointSearch || shots%2==0?1:2].p->m_baseStats.m_hitPoints==6);
+                            ++shots;
+                        }
+                        delete message;
+                    }
+                };
+                gather();
+                check("followup-first-hit-keeps-template",shots==1 && carrier->m_effectList.GetCount()==1
+                    && carrier->m_effectList.GetHead()->m_slotNum==900 && carrier->*(&FollowupAccess::m_ready));
+                game->m_nTimeStop=1; game->m_nTimeStopCaster=origin->m_id;
+                carrier->AIUpdate(); for (const auto& marker : markers) { CGameObject* object=NULL;
+                    if (objects->GetShare(marker.id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS) {
+                        objects->ReleaseShare(marker.id,CGameObjectArray::THREAD_ASYNCH,INFINITE); object->AIUpdate();
+                    }
+                }
+                check("followup-time-stop-freezes-delay",carrier->*(&FollowupAccess::m_delay)==300);
+                game->m_nTimeStop=0; BOOL retired=FALSE;
+                for (ticks=1;ticks<=count*301 && !retired;++ticks) {
+                    if (carrier->*(&FollowupAccess::m_remainingShots)==0) unused=carrier->*(&FollowupAccess::m_nextProjectile);
+                    INT beforeShots=shots; carrier->AIUpdate();
+                    CGameObject* live=NULL; BYTE rc=objects->GetShare(parentId,CGameObjectArray::THREAD_ASYNCH,&live,INFINITE);
+                    retired=rc==CGameObjectArray::DELETED;
+                    if (rc==CGameObjectArray::SUCCESS) objects->ReleaseShare(parentId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                    gather();
+                    check("followup-native-strike-period",shots==min(count,1+ticks/301) && (shots==beforeShots || ticks%301==0));
+                    check("followup-native-parent-retirement",retired==(ticks==count*301));
+                    for (auto& marker : markers) if (marker.updates<20) {
+                        CGameObject* object=NULL; BYTE shared=objects->GetShare(marker.id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE);
+                        check("followup-marker-alive-before-update",shared==CGameObjectArray::SUCCESS);
+                        if (shared==CGameObjectArray::SUCCESS) { objects->ReleaseShare(marker.id,CGameObjectArray::THREAD_ASYNCH,INFINITE); object->AIUpdate(); }
+                        ++marker.updates; shared=objects->GetShare(marker.id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE);
+                        check("followup-marker-twenty-update-expiry",marker.updates==20?shared==CGameObjectArray::DELETED:shared==CGameObjectArray::SUCCESS);
+                        if (shared==CGameObjectArray::SUCCESS) objects->ReleaseShare(marker.id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                        if (marker.updates==20) ++expired;
+                    }
+                }
+                if (!retired) { unused=carrier->*(&FollowupAccess::m_nextProjectile); retire(carrier); }
+                // Native teardown leaves the unlaunched prototype untouched.
+                // The disposable test explicitly frees its own unused child.
+                delete unused;
+                for (const auto& marker : markers) { CGameObject* object=NULL;
+                    if (objects->GetShare(marker.id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS) {
+                        objects->ReleaseShare(marker.id,CGameObjectArray::THREAD_ASYNCH,INFINITE); retire(object);
+                    }
+                }
+                for (INT i=0;i<3;++i) losses[i]=512-saved[i+1].p->m_baseStats.m_hitPoints;
+                check("followup-native-count-and-final-damage",shots==count && expired==count && losses[0]==6*(pointSearch?count:(count+1)/2)
+                    && losses[1]==(pointSearch?0:6*(count/2)) && losses[2]==0 && saved[0].p->m_baseStats.m_hitPoints==512);
+                check("followup-retired-without-repeat",handler->m_messageList.GetCount()==messages && area->m_lVertSortAdd.IsEmpty());
+                Emit("{\"step\":%d,\"op\":\"followup-live-damage\",\"type\":%u,\"point\":%s,\"shots\":%d,\"ticks\":%d,\"losses\":[%ld,%ld,%ld],\"markersRetired\":%d}",
+                    nStep,type,pointSearch?"true":"false",shots,ticks-1,losses[0],losses[1],losses[2],expired);
             }
         }
         if (chain) {
@@ -4926,6 +5136,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "spraychecks") == 0) {
         SprayChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "followupchecks") == 0) {
+        FollowupChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

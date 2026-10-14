@@ -252,6 +252,36 @@ public:
     CProjectileAcidBlob();
 };
 
+// Native vtable 0x84E7B0, size 0x2FA. The current child becomes independent
+// on Fire; the native destructor does not dispose the next unregistered child.
+#pragma pack(push, 2)
+class CProjectileFollowUp /*#guess*/ : public CProjectileTravelling {
+    friend class CProjectile;
+public:
+    CProjectileFollowUp(USHORT childType, CResRef resRef, SHORT remaining, SHORT interval, BOOL keepSource, CAIObjectType type);
+    void Fire(CGameArea* area, LONG source, LONG target, CPoint point, LONG height, SHORT kind) override;
+    void AIUpdate() override;
+    void CallBack() override;
+protected:
+    /* 02A0 */ SHORT m_remainingShots;
+    /* 02A2 */ SHORT m_interval;
+    /* 02A4 */ BOOL m_keepSource;
+    /* 02A8 */ USHORT m_childType;
+    /* 02AA */ CProjectile* m_nextProjectile;
+    /* 02AE */ BOOL m_ready;
+    /* 02B2 */ CAIObjectType m_targetType;
+    /* 02EE */ LONG m_launchHeight;
+    /* 02F2 */ SHORT m_launchKind;
+    /* 02F4 */ BOOL m_checkLOS;
+    /* 02F8 */ SHORT m_delay;
+};
+// Native vtable 0x84E838, size 0x2FA. Factory types 0x51..0x5B.
+class CProjectileMAGMISS /*#guess*/ : public CProjectileFollowUp {
+public:
+    CProjectileMAGMISS(SHORT count, USHORT unused);
+};
+#pragma pack(pop)
+
 // Fieldless native travelling leaves; all gameplay virtuals are inherited.
 class CProjectileBoulder /*#guess*/ : public CProjectileTravelling {
 public:

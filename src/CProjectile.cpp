@@ -459,6 +459,21 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
         break;
     }
 
+    case 0x17:
+        pProjectile=new CProjectileCallLightning(CResRef("CallLiH"),CResRef(""),0xFF,1,0,20);
+        pProjectile->m_fireSoundRef="EFF_P19"; pProjectile->m_arrivalSoundRef="";
+        break;
+
+    case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56:
+    case 0x57: case 0x58: case 0x59: case 0x5A: case 0x5B: {
+        auto* carrier=new CProjectileMAGMISS(static_cast<SHORT>(projectileType-0x50),CVidPalette::TYPE_RANGE);
+        CAIObjectType type;
+        type.m_nEnemyAlly=pCaster->GetAIType().m_nEnemyAlly>CAIObjectType::EA_NOTEVIL
+            ?CAIObjectType::EA_NOTEVIL:CAIObjectType::EA_EVILCUTOFF;
+        carrier->m_targetType.Set(type); pProjectile=carrier;
+        break;
+    }
+
     case 0xC:
     case 0xF:
     case 0x10:
@@ -3597,40 +3612,35 @@ void CProjectileCallLightning::Fire(CGameArea* pArea, LONG source, LONG target,
         return;
     }
 
-    // Resolve the launch point: if homing, read the live target position;
-    // otherwise use the passed point.  The binary adds +13 to Y (0x535181).
+    // A failed single target share leaves the object registered but unplaced.
     CPoint ptLaunch;
     if (m_targetId == CGameObjectArray::INVALID_INDEX) {
         ptLaunch = targetPos;
-        ptLaunch.y += 13;
+        ptLaunch.y = static_cast<LONG>(static_cast<DWORD>(ptLaunch.y)+13);
     } else {
         CGameObject* pTarget;
         BYTE rc;
-        do {
-            rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
-                CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
-        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
-        if (rc == CGameObjectArray::SUCCESS) {
-            ptLaunch = pTarget->GetPos();
-            ptLaunch.y += 13;
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
-                CGameObjectArray::THREAD_ASYNCH, INFINITE);
-        } else {
-            ptLaunch = targetPos;
-            ptLaunch.y += 13;
-        }
+        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
+        if (rc != CGameObjectArray::SUCCESS) return;
+        ptLaunch = pTarget->GetPos();
+        ptLaunch.y = static_cast<LONG>(static_cast<DWORD>(ptLaunch.y)+13);
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, INFINITE);
     }
 
     AddToArea(pArea, ptLaunch, 0, CGameObject::LIST_FRONT);
 
-    // Launch sound (0x535213–0x535290).
-    if (m_fireSoundRef != "") {
-        PlaySound(m_fireSoundRef, m_loopFireSound, FALSE);
-    }
-
-    // Arrival / impact sound (0x535295–0x5352E2).
-    if (m_arrivalSoundRef != "") {
-        PlaySound(m_arrivalSoundRef, m_loopArrivalSound, FALSE);
+    PlaySound(m_fireSoundRef,m_loopFireSound,FALSE);
+    if (m_callBackProjectile!=CGameObjectArray::INVALID_INDEX) {
+        CGameObject* parent; BYTE rc;
+        do { rc=g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_callBackProjectile,
+            CGameObjectArray::THREAD_ASYNCH,&parent,INFINITE); }
+        while (rc==CGameObjectArray::SHARED || rc==CGameObjectArray::DENIED);
+        if (rc!=CGameObjectArray::SUCCESS) return;
+        static_cast<CProjectile*>(parent)->CallBack();
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_callBackProjectile,
+            CGameObjectArray::THREAD_ASYNCH,INFINITE);
     }
 }
 
@@ -5840,6 +5850,132 @@ void CProjectileSprayCell::AddVisualToArea(CGameArea* area, const CPoint& point,
         m_sound.SetChannel(15,reinterpret_cast<DWORD>(m_pArea));
         m_sound.Play(m_pos.x,m_pos.y,0,FALSE);
     }
+}
+
+// 0x533CB0
+CProjectileFollowUp::CProjectileFollowUp(USHORT childType, CResRef resRef, SHORT remaining, SHORT interval, BOOL keepSource, CAIObjectType type)
+    : CProjectileTravelling(resRef)
+{
+    m_launchHeight=0;
+    m_launchKind=0;
+    m_checkLOS=FALSE;
+    m_delay=0;
+    m_pVidCell->SequenceSet(0);
+    m_childType=childType;
+    m_remainingShots=remaining;
+    m_interval=interval;
+    m_keepSource=keepSource;
+    m_ready=FALSE;
+    m_targetType.Set(type);
+    m_nextProjectile=CProjectile::DecodeProjectile(static_cast<USHORT>(m_childType+1),NULL,0);
+    m_callBackProjectile=CGameObjectArray::INVALID_INDEX;
+    field_17E="";
+    m_nTargetId=CGameObjectArray::INVALID_INDEX;
+}
+
+// 0x534600
+CProjectileMAGMISS::CProjectileMAGMISS(SHORT count, USHORT unused)
+    : CProjectileFollowUp(0x16,CResRef("MAGMISS"),count,300,TRUE,CAIObjectType::ANYONE)
+{
+    (void)unused;
+    m_mirrorMinX=10;
+    m_mirrorMinY=7;
+    m_tinted=FALSE;
+    m_useHeightOffset=FALSE;
+    m_mirror=TRUE;
+    m_leafRenderParam=0x80;
+    m_hasShadowCell=FALSE;
+    m_dirCount=1;
+    m_fireSoundRef="";
+    m_callBackProjectile=CGameObjectArray::INVALID_INDEX;
+    field_17E="";
+    m_nTargetId=CGameObjectArray::INVALID_INDEX;
+    CAIObjectType type;
+    type.m_nEnemyAlly=CAIObjectType::EA_GOODCUTOFF;
+    m_targetType.Set(type);
+    m_checkLOS=TRUE;
+}
+
+// 0x533F40
+void CProjectileFollowUp::Fire(CGameArea* area, LONG source, LONG target, CPoint point, LONG height, SHORT kind)
+{
+    m_sourceId=source; m_targetId=target; m_targetX=point.x; m_targetY=point.y; m_facing=0;
+    POSITION pos=m_effectList.GetHeadPosition();
+    while (pos) {
+        auto* copy=m_effectList.GetNext(pos)->Copy(); copy->m_slotNum=m_nextProjectile->m_projectileType;
+        m_nextProjectile->m_effectList.AddTail(copy);
+    }
+    if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id,this,INFINITE)!=CGameObjectArray::SUCCESS) {
+        delete this; return;
+    }
+    CGameObject::AddToArea(area,point,height,CGameObject::LIST_FRONT);
+    PlaySound(m_fireSoundRef,m_loopFireSound,FALSE);
+    m_pArea=area; m_nextProjectile->m_callBackProjectile=m_id; m_launchHeight=height; m_ready=FALSE;
+    m_nextProjectile->Fire(area,source,target,point,height,kind);
+    m_nextProjectile=CProjectile::DecodeProjectile(static_cast<USHORT>(m_childType+1),NULL,0);
+    m_nextProjectile->m_nSpellLevel=m_nSpellLevel; m_nextProjectile->m_casterResRef=m_casterResRef;
+    m_remainingShots=static_cast<SHORT>(m_remainingShots-1); m_delay=m_interval;
+}
+
+// 0x534140
+void CProjectileFollowUp::AIUpdate()
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* objects=game->GetObjectArray();
+    if ((game->m_nTimeStop!=0 && game->m_nTimeStopCaster!=m_id) || !m_ready) return;
+    if (m_delay>0) { --m_delay; return; }
+    BYTE rc;
+    if (m_remainingShots>0) {
+        m_nextProjectile->m_callBackProjectile=m_id; CGameObject* previous;
+        do { rc=objects->GetShare(m_targetId,CGameObjectArray::THREAD_ASYNCH,&previous,INFINITE); }
+        while (rc==CGameObjectArray::SHARED || rc==CGameObjectArray::DENIED);
+        if (rc!=CGameObjectArray::SUCCESS) { RemoveSelf(); return; }
+        if (previous->m_pArea!=m_pArea) {
+            LONG oldTarget=m_targetId; RemoveSelf(); objects->ReleaseShare(oldTarget,CGameObjectArray::THREAD_ASYNCH,INFINITE); return;
+        }
+        SHORT range=static_cast<SHORT>(static_cast<DWORD>(m_pArea->m_visibility.m_nSearchRangeH)<<5);
+        LONG next;
+        if (previous->GetVertListType()==CGameObject::LIST_FRONT)
+            next=m_pArea->GetNearest(m_targetId,m_targetType,range,CGameObject::DEFAULT_VISIBLE_TERRAIN_TABLE,m_checkLOS,TRUE,FALSE,0,FALSE);
+        else {
+            CPoint point=previous->GetPos();
+            next=m_pArea->FindObjectNear(point.x,point.y,m_targetType,range,CGameObject::DEFAULT_VISIBLE_TERRAIN_TABLE,m_checkLOS,TRUE,FALSE,FALSE);
+        }
+        objects->ReleaseShare(m_targetId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+        if (next!=CGameObjectArray::INVALID_INDEX) {
+            if (!m_keepSource) m_sourceId=m_targetId;
+            m_targetId=next; CGameObject* target;
+            do { rc=objects->GetShare(m_targetId,CGameObjectArray::THREAD_ASYNCH,&target,INFINITE); }
+            while (rc==CGameObjectArray::SHARED || rc==CGameObjectArray::DENIED);
+            if (rc!=CGameObjectArray::SUCCESS) return;
+            CPoint point=target->GetPos(); m_targetX=point.x; m_targetY=point.y;
+            objects->ReleaseShare(m_targetId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+            POSITION pos=m_effectList.GetHeadPosition();
+            while (pos) {
+                auto* copy=m_effectList.GetNext(pos)->Copy(); copy->m_slotNum=m_nextProjectile->m_projectileType;
+                m_nextProjectile->m_effectList.AddTail(copy);
+            }
+            m_ready=FALSE; m_nextProjectile->Fire(m_pArea,m_sourceId,m_targetId,point,m_launchHeight,m_launchKind);
+            m_nextProjectile=CProjectile::DecodeProjectile(static_cast<USHORT>(m_childType+1),NULL,0);
+            m_nextProjectile->m_nSpellLevel=m_nSpellLevel; m_nextProjectile->m_casterResRef=m_casterResRef;
+            m_remainingShots=static_cast<SHORT>(m_remainingShots-1); m_delay=m_interval; return;
+        }
+    }
+    if (m_callBackProjectile!=CGameObjectArray::INVALID_INDEX) {
+        CGameObject* parent;
+        do { rc=objects->GetDeny(m_callBackProjectile,CGameObjectArray::THREAD_ASYNCH,&parent,INFINITE); }
+        while (rc==CGameObjectArray::SHARED || rc==CGameObjectArray::DENIED);
+        if (rc!=CGameObjectArray::SUCCESS) return;
+        static_cast<CProjectile*>(parent)->CallBack();
+        objects->ReleaseDeny(m_callBackProjectile,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    }
+    RemoveFromArea();
+    if (objects->Delete(m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE)==CGameObjectArray::SUCCESS) delete this;
+}
+
+// 0x533DE0
+void CProjectileFollowUp::CallBack()
+{
+    m_ready=TRUE;
 }
 
 // 0x532260
