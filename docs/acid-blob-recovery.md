@@ -57,5 +57,4 @@ melee/bow/crossbow/sling 6/12/12/12 plus ammo/chain/beam regressions pass.
 Cleanup hashes restored. Ctor/helper/Fire parity GREEN; factory/AI/Render
 YELLOW. Fieldless layout skipped; missing offset oracles leave full static
 equivalence unproven. Pixel tests compare recovered paths, not native raster.
-Next: identify 4E7120, shared immunity/delivery helper, then continue the
-remaining travelling leaves from factory/vtable evidence.
+Continuation: [thrown leaves and immunity helper 4E7120](thrown-weapon-recovery.md).

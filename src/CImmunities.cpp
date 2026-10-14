@@ -494,6 +494,7 @@ CImmunitiesItemTypeEquipList& CImmunitiesItemTypeEquipList::operator=(const CImm
 // -----------------------------------------------------------------------------
 
 // NOTE: Inlined.
+// 0x4E7120
 BOOL CImmunitiesProjectile::OnList(DWORD projectileType)
 {
     POSITION pos = GetHeadPosition();

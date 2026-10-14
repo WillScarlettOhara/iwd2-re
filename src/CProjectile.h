@@ -250,6 +250,24 @@ public:
     CProjectileAcidBlob();
 };
 
+// Fieldless native travelling leaves; all gameplay virtuals are inherited.
+class CProjectileBoulder /*#guess*/ : public CProjectileTravelling {
+public:
+    CProjectileBoulder(); // 0x531570, vtable 0x84E1D4
+};
+class CProjectileAxe /*#guess*/ : public CProjectileTravelling {
+public:
+    CProjectileAxe(); // 0x531BE0, vtable 0x84E36C
+};
+class CProjectileSpear /*#guess*/ : public CProjectileTravelling {
+public:
+    CProjectileSpear(); // 0x531DF0, vtable 0x84E3F4
+};
+class CProjectileDagger /*#guess*/ : public CProjectileTravelling {
+public:
+    CProjectileDagger(); // 0x532000, vtable 0x84E47C
+};
+
 // Leaf 0x5324A0 -- the canonical travelling arrow (DecodeProjectile types
 // 0x2/0x5/0x6; vtable 0x84E58C). Its only own virtual is the destructor
 // (0x5325E0, base dtor inlined, deferred); everything else is inherited from

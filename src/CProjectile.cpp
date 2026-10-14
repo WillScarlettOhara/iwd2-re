@@ -422,6 +422,34 @@ CProjectile* CProjectile::DecodeProjectile(USHORT projectileType, CGameAIBase* p
         pProjectile = new CProjectileArrow();
         break;
 
+    case 0x7: case 0xA: case 0xB:
+        pProjectile = new CProjectileAxe();
+        pProjectile->m_bHasHeight = TRUE;
+        pProjectile->m_fireSoundRef = CResRef("");
+        pProjectile->m_arrivalSoundRef = CResRef("");
+        break;
+
+    case 0x1B: case 0x1E: case 0x1F:
+        pProjectile = new CProjectileDagger();
+        pProjectile->m_bHasHeight = TRUE;
+        pProjectile->m_fireSoundRef = CResRef("");
+        pProjectile->m_arrivalSoundRef = CResRef("");
+        break;
+
+    case 0x38: case 0x3B: case 0x3C:
+        pProjectile = new CProjectileSpear();
+        pProjectile->m_bHasHeight = TRUE;
+        pProjectile->m_fireSoundRef = CResRef("");
+        pProjectile->m_arrivalSoundRef = CResRef("");
+        break;
+
+    case 0x177:
+        pProjectile = new CProjectileBoulder();
+        pProjectile->m_bHasHeight = TRUE;
+        pProjectile->m_fireSoundRef = CResRef("");
+        pProjectile->m_arrivalSoundRef = CResRef("");
+        break;
+
     case 0xC:
     case 0xF:
     case 0x10:
@@ -5609,6 +5637,58 @@ CProjectileSparkle::CProjectileSparkle(SHORT nPaletteType)
 
     m_callBackProjectile = CGameObjectArray::INVALID_INDEX;
     m_nTargetId = CGameObjectArray::INVALID_INDEX;
+}
+
+// 0x531570
+CProjectileBoulder::CProjectileBoulder()
+    : CProjectileTravelling(CResRef("BOULDER"))
+{
+    m_pVidCell->SequenceSet(0);
+    m_tinted=TRUE; m_useHeightOffset=FALSE; m_mirror=FALSE; m_hasShadowCell=FALSE;
+    m_dirCount=16; m_fireSoundRef="";
+    m_velocity=static_cast<SHORT>(m_velocity*3/2);
+    m_callBackProjectile=CGameObjectArray::INVALID_INDEX;
+    field_17E=""; m_nTargetId=CGameObjectArray::INVALID_INDEX;
+}
+
+// 0x531BE0
+CProjectileAxe::CProjectileAxe()
+    : CProjectileTravelling(CResRef("AXE"))
+{
+    m_pVidCell->SequenceSet(0);
+    m_tinted=TRUE; m_useHeightOffset=FALSE; m_mirror=FALSE; m_hasShadowCell=FALSE;
+    m_dirCount=16; m_fireSoundRef="";
+    m_velocity=static_cast<SHORT>(m_velocity*2);
+    m_callBackProjectile=CGameObjectArray::INVALID_INDEX;
+    field_17E=""; m_nTargetId=CGameObjectArray::INVALID_INDEX;
+}
+
+// 0x531DF0
+CProjectileSpear::CProjectileSpear()
+    : CProjectileTravelling(CResRef("SPEAR"))
+{
+    m_pVidCell->SequenceSet(0);
+    m_tinted=TRUE; m_useHeightOffset=FALSE; m_mirror=FALSE; m_hasShadowCell=FALSE;
+    m_dirCount=16; m_fireSoundRef="";
+    m_velocity=static_cast<SHORT>(m_velocity*2);
+    m_callBackProjectile=CGameObjectArray::INVALID_INDEX;
+    field_17E=""; m_nTargetId=CGameObjectArray::INVALID_INDEX;
+}
+
+// 0x532000
+CProjectileDagger::CProjectileDagger()
+    : CProjectileTravelling(CResRef("DAGGER"))
+{
+    m_pVidCell->SequenceSet(0);
+    auto* master=g_pBaldurChitin->GetObjectGame()->GetMasterBitmap();
+    m_palette.SetRange(5,0x1B,*master);
+    m_palette.SetRange(4,0x1E,*master);
+    m_pVidCell->SetPalette(m_palette);
+    m_tinted=TRUE; m_useHeightOffset=FALSE; m_mirror=FALSE; m_hasShadowCell=FALSE;
+    m_dirCount=16; m_fireSoundRef="";
+    m_velocity=static_cast<SHORT>(m_velocity*2);
+    m_callBackProjectile=CGameObjectArray::INVALID_INDEX;
+    field_17E=""; m_nTargetId=CGameObjectArray::INVALID_INDEX;
 }
 
 // 0x532260

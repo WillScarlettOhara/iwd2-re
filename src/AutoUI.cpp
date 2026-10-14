@@ -1672,6 +1672,127 @@ struct ProjectileRenderFrameAnchor {
 #include "AreaNearestGolden.h"
 #include "SparkleExplosionGolden.h"
 #include "AcidBlobGolden.h"
+#include "ThrownWeaponGolden.h"
+
+void ThrownWeaponChecks(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* area=game->GetVisibleArea();
+    auto* video=static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+    if (!area || !area->m_visibility.m_pMap || g_pChitin->cVideo.m_bIs3dAccelerated) {
+        Fail(nStep,"thrownweaponchecks","requires loaded software area"); return;
+    }
+    INT checks=0,draws=0; BOOL valid=TRUE;
+    auto check=[&](const char* name,BOOL ok) {
+        ++checks; valid=valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"thrown-weapon-case\",\"case\":\"%s\",\"passed\":false}",nStep,name);
+    };
+    for (const auto& row : PROJECTILE_IMMUNITY) {
+        CImmunitiesProjectile list;
+        for (INT i=0;i<row.count;++i) list.AddTail(reinterpret_cast<DWORD*>(row.values[i]));
+        check("native-full-dword-immunity-lookup",list.OnList(row.query)==row.found && list.GetCount()==row.count);
+        POSITION pos=list.GetHeadPosition();
+        for (INT i=0;i<row.count;++i) check("immunity-lookup-keeps-list-order",reinterpret_cast<DWORD>(list.GetNext(pos))==row.values[i]);
+    }
+    struct Access : CProjectileTravelling {
+        using CProjectileTravelling::m_pVidCell; using CProjectileTravelling::m_palette;
+        using CProjectileTravelling::m_velocity; using CProjectileTravelling::m_dirCount;
+        using CProjectileTravelling::m_tinted; using CProjectileTravelling::m_useHeightOffset;
+        using CProjectileTravelling::m_mirror; using CProjectileTravelling::m_hasShadowCell;
+    };
+    auto* master=game->GetMasterBitmap(); INT demands=master->pRes->GetDemands();
+    auto& infinity=area->m_cInfinity; CRect view=infinity.rViewPort;
+    INT viewX=infinity.nCurrentX,viewY=infinity.nCurrentY; auto* wed=infinity.pResWED;
+    ULONG clock=game->GetWorldTimer()->m_gameTime;
+    INT messages=g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount(),pending=area->m_lVertSortAdd.GetCount();
+    std::vector<BYTE> visibility(area->m_visibility.m_pMap,area->m_visibility.m_pMap+area->m_visibility.m_nMapSize);
+    CPoint origin(232,1002); INT cost=origin.y/12*area->m_search.m_GridSquareDimensions.cx+origin.x/16;
+    BYTE dynamic=area->m_search.m_pDynamicCost[cost];
+    CRect patch(64,64,416,336); std::vector<BYTE> savedPixels;
+    auto pixels=[&](std::vector<BYTE>* read,const std::vector<BYTE>* write,BOOL clear)->BOOL {
+        if (!video->BKLock(patch)) return FALSE;
+        DWORD bytes=video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount/8;
+        INT stride=patch.Width()*bytes; BOOL ok=bytes>=2 && bytes<=4 && video->m_SurfaceDesc.lpSurface!=NULL;
+        if (ok && read) read->resize(stride*patch.Height());
+        if (ok && write) ok=write->size()==static_cast<size_t>(stride*patch.Height());
+        if (ok) for (INT y=0;y<patch.Height();++y) {
+            BYTE* p=static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface)+y*video->m_SurfaceDesc.lPitch;
+            if (read) memcpy(read->data()+y*stride,p,stride);
+            if (write) memcpy(p,write->data()+y*stride,stride);
+            if (clear) memset(p,0,stride);
+        }
+        video->BKUnlock(); return ok;
+    };
+    BOOL backedUp=pixels(&savedPixels,NULL,FALSE); check("pixels-backed-up",backedUp);
+    if (backedUp) {
+        infinity.rViewPort=CRect(80,80,400,320); infinity.nCurrentX=72; infinity.nCurrentY=882; infinity.pResWED=NULL;
+        memset(area->m_visibility.m_pMap,CVisibilityMap::VISIBILITY_MASK,visibility.size()); area->m_search.m_pDynamicCost[cost]=0;
+        for (const auto& row : THROWN_WEAPON_FACTORY) {
+            CProjectile* object=CProjectile::DecodeProjectile(row.type,NULL,row.delay);
+            auto* travel=dynamic_cast<CProjectileTravelling*>(object);
+            BOOL kind=row.type==0x177?dynamic_cast<CProjectileBoulder*>(object)!=NULL:
+                row.type<=0xB?dynamic_cast<CProjectileAxe*>(object)!=NULL:
+                row.type<=0x1F?dynamic_cast<CProjectileDagger*>(object)!=NULL:dynamic_cast<CProjectileSpear*>(object)!=NULL;
+            check("native-factory-class-and-stamp",kind && object->m_projectileType==row.type-1 && object->m_bHasHeight
+                && object->m_fireSoundRef==CResRef("") && object->m_arrivalSoundRef==CResRef(""));
+            if (!travel) { delete object; continue; }
+            // Public using-declarations permit typed pointers to inherited
+            // members; no cast to a test subclass or binary offsets.
+            auto* animation=travel->*(&Access::m_pVidCell); auto& palette=travel->*(&Access::m_palette);
+            check("native-leaf-defaults",animation->GetResRef()==CResRef(row.cell) && animation->GetCurrentSequenceId()==0
+                && travel->*(&Access::m_velocity)==row.speed && travel->*(&Access::m_dirCount)==16
+                && travel->*(&Access::m_tinted)==TRUE && travel->*(&Access::m_useHeightOffset)==FALSE
+                && travel->*(&Access::m_mirror)==FALSE && travel->*(&Access::m_hasShadowCell)==FALSE
+                && object->m_callBackProjectile==-1 && object->m_nTargetId==-1 && object->field_17E.IsEmpty());
+            check("native-dagger-palette-binding",animation->m_bPaletteChanged==row.colored
+                && (!row.colored || (palette.m_rangeColors[5]==27 && palette.m_rangeColors[4]==30
+                    && animation->m_cPalette.m_rangeColors[5]==27 && animation->m_cPalette.m_rangeColors[4]==30
+                    && palette.m_pPalette==animation->m_cPalette.m_pPalette)));
+            object->m_pArea=area; object->CGameObject::m_pArea=area;
+            object->m_pos=origin; object->m_posZ=17; object->m_listType=CGameObject::LIST_FLIGHT;
+            travel->AimAtPoint(origin.x,origin.y+12); object->m_pos=origin;
+            CVidPalette reference(CVidPalette::TYPE_RANGE);
+            CVidCell cell(CResRef(row.cell),FALSE); cell.SequenceSet(0); cell.FrameSet(0);
+            if (row.colored) { reference.SetRange(5,27,*master); reference.SetRange(4,30,*master); cell.SetPalette(reference); }
+            ProjectileRenderFrameAnchor anchor(&cell);
+            check("weapon-bam-frame-available",anchor.frame && (!anchor.header || anchor.headerFrame));
+            CPoint center; CSize size; cell.GetCurrentCenterPoint(center,FALSE); cell.GetCurrentFrameSize(size,FALSE);
+            CRect bounds(0,0,size.cx,size.cy); CPoint point(232,985); DWORD flags=0x30000|CInfinity::FXPREP_COPYFROMBACK;
+            cell.SetTintColor(area->GetTintColor(point,CGameObject::LIST_FLIGHT));
+            for (INT mode=0;mode<3;++mode) {
+                SHORT tile=area->m_visibility.PointToTile(origin);
+                if (mode==1) area->m_visibility.m_pMap[tile]=0;
+                if (mode==2) infinity.nCurrentX+=10000;
+                std::vector<BYTE> expected,actual; BOOL ok=pixels(NULL,NULL,TRUE);
+                if (mode==0) {
+                    infinity.FXPrep(bounds,flags,CVIDINF_SURFACE_BACK,point,center);
+                    if (infinity.FXLock(bounds,flags)) {
+                        infinity.FXRender(&cell,center.x,center.y,flags,0x80);
+                        infinity.FXUnlock(flags,NULL,CPoint(0,0));
+                        ok=infinity.FXBltFrom(CVIDINF_SURFACE_BACK,bounds,point.x,point.y,center.x,center.y,flags) && ok;
+                    } else ok=FALSE;
+                }
+                ok=pixels(&expected,NULL,TRUE) && ok;
+                if (mode==0) { BOOL visiblePixels=FALSE; for (BYTE pixel : expected) visiblePixels=visiblePixels || pixel!=0;
+                    check("normal-reference-draws-visible-pixels",visiblePixels); }
+                object->Render(NULL,video,CVIDINF_SURFACE_BACK); ++draws;
+                ok=pixels(&actual,NULL,FALSE) && ok;
+                check("native-weapon-full-software-pixels",ok && expected==actual);
+                check("renderer-surface-unlocked",video->m_SurfaceDesc.lpSurface==NULL);
+                area->m_visibility.m_pMap[tile]=CVisibilityMap::VISIBILITY_MASK;
+                if (mode==2) infinity.nCurrentX-=10000;
+            }
+            check("frame-and-demand-restoration",anchor.Restore());
+            object->CGameObject::m_pArea=NULL; delete object;
+        }
+    }
+    memcpy(area->m_visibility.m_pMap,visibility.data(),visibility.size()); area->m_search.m_pDynamicCost[cost]=dynamic;
+    infinity.rViewPort=view; infinity.nCurrentX=viewX; infinity.nCurrentY=viewY; infinity.pResWED=wed;
+    check("pixels-restored",backedUp && pixels(NULL,&savedPixels,FALSE));
+    check("same-tick-state-restored",master->pRes->GetDemands()==demands && game->GetWorldTimer()->m_gameTime==clock
+        && g_pBaldurChitin->GetMessageHandler()->m_messageList.GetCount()==messages && area->m_lVertSortAdd.GetCount()==pending);
+    Emit("{\"step\":%d,\"op\":\"thrownweaponchecks\",\"checks\":%d,\"renderCalls\":%d,\"nativeCases\":36,\"restored\":true,\"valid\":%s}",nStep,checks,draws,valid?"true":"false");
+    if (!valid) Fail(nStep,"thrownweaponchecks","weapon leaf/immunity/render mismatch");
+}
 
 void AcidBlobChecks(INT nStep)
 {
@@ -2235,9 +2356,30 @@ void AreaNearestChecks(INT nStep)
                 && saved[1].p->m_timedEffectList.GetCount()==saved[1].timed && saved[1].p->m_equipedEffectList.GetCount()==saved[1].equipped);
             Emit("{\"step\":%d,\"op\":\"impact-bam-damage\",\"loss\":%ld,\"ticks\":%d,\"retired\":%s}",nStep,
                 hpBefore-saved[1].p->m_baseStats.m_hitPoints,ticks,retired?"true":"false");
-            for (USHORT type : {USHORT(0x6C),USHORT(0xC0),USHORT(0xC1),USHORT(0xC2)}) {
+            for (USHORT type : {USHORT(0x6C),USHORT(0xC0),USHORT(0xC1),USHORT(0xC2),
+                USHORT(7),USHORT(10),USHORT(11),USHORT(27),USHORT(30),USHORT(31),USHORT(56),USHORT(59),USHORT(60),USHORT(375)}) {
                 CProjectile* blob=CProjectile::DecodeProjectile(type,saved[0].p,255);
-                check("acid-live-factory-class",dynamic_cast<CProjectileAcidBlob*>(blob)!=NULL && blob->m_projectileType==type-1);
+                BOOL acid=type==0x6C || (type>=0xC0 && type<=0xC2);
+                check("travelling-live-factory-class",dynamic_cast<CProjectileTravelling*>(blob)!=NULL && blob->m_projectileType==type-1);
+                auto& immunity=saved[1].p->m_derivedStats.m_cImmunitiesProjectile;
+                auto& levels=saved[1].p->m_derivedStats.m_cImmunitiesSpellLevel;
+                immunity.RemoveAll(); memset(levels.m_levels,0,sizeof(levels.m_levels));
+                immunity.AddTail(reinterpret_cast<DWORD*>(DWORD(type-1)|0x10000));
+                blob->m_nSpellLevel=0;
+                check("projectile-immunity-is-full-dword",!blob->IsTargetImmune(saved[1].p));
+                immunity.RemoveAll(); immunity.AddTail(reinterpret_cast<DWORD*>(DWORD(type-1)));
+                blob->m_sourceId=origin->m_id; blob->m_targetId=ids[1]; blob->m_pArea=area; blob->m_casterResRef=CResRef("");
+                LONG immuneHP=saved[1].p->m_baseStats.m_hitPoints;
+                blob->AddEffect(CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],saved[1].p->m_pos));
+                blob->DeliverEffects();
+                check("projectile-immunity-discards-owned-payload",blob->m_effectList.IsEmpty()
+                    && handler->m_messageList.GetCount()==messages && saved[1].p->m_baseStats.m_hitPoints==immuneHP);
+                immunity.RemoveAll(); levels.m_levels[0]=levels.m_levels[8]=levels.m_levels[9]=TRUE;
+                for (DWORD level : {0u,8u,9u,0x10008u,0x10009u,0xFFFFFFFFu}) {
+                    blob->m_nSpellLevel=level;
+                    check("spell-immunity-byte-gate-zero-through-eight",blob->IsTargetImmune(saved[1].p)==((level&0xFF)==0 || (level&0xFF)==8));
+                }
+                memset(levels.m_levels,0,sizeof(levels.m_levels)); blob->m_nSpellLevel=0;
                 blob->AddEffect(CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],saved[1].p->m_pos));
                 LONG before=saved[1].p->m_baseStats.m_hitPoints;
                 blob->Fire(area,origin->m_id,ids[1],CPoint(-123,456),99,0);
@@ -2285,8 +2427,8 @@ void AreaNearestChecks(INT nStep)
                 LONG loss=before-saved[1].p->m_baseStats.m_hitPoints;
                 check("acid-arrival-real-six-hp-loss",loss==6 && saved[0].p->m_baseStats.m_hitPoints==512
                     && saved[1].p->m_timedEffectList.GetCount()==saved[1].timed && saved[1].p->m_equipedEffectList.GetCount()==saved[1].equipped);
-                Emit("{\"step\":%d,\"op\":\"acid-live-damage\",\"type\":%u,\"loss\":%ld,\"ticks\":%d,\"retired\":%s}",nStep,
-                    type,loss,ticks,arrived?"true":"false");
+                Emit("{\"step\":%d,\"op\":\"%s\",\"type\":%u,\"loss\":%ld,\"ticks\":%d,\"retired\":%s}",nStep,
+                    acid?"acid-live-damage":"thrown-live-damage",type,loss,ticks,arrived?"true":"false");
             }
         }
         if (chain) {
@@ -4508,6 +4650,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "acidblobchecks") == 0) {
         AcidBlobChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "thrownweaponchecks") == 0) {
+        ThrownWeaponChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
