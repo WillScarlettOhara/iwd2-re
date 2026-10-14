@@ -3577,12 +3577,9 @@ CProjectileCallLightning::CProjectileCallLightning(const CResRef& resRef,
     // (the binary inlines that initialisation here).
     m_vidCell.SetResRef(resRef, FALSE, TRUE, TRUE);
 
-    // Optional palette recolour.  Every shipped Call Lightning variant passes
-    // colorIndex 0xFF (no recolour), so this branch never runs; the master
-    // palette bitmap source (global 0x8CF6DC chain) is left unrecovered.
-    if (colorIndex != (BYTE)0xFF) {
-        // m_palette.SetRange(0, colorIndex, <master palette bitmap>);
-        // m_vidCell.SetPalette(m_palette);
+    if (colorIndex != BYTE(0xFF)) {
+        m_palette.SetRange(0,colorIndex,*g_pBaldurChitin->GetObjectGame()->GetMasterBitmap());
+        m_vidCell.SetPalette(m_palette);
     }
     m_vidCell.FrameSet(0);
 
@@ -3647,65 +3644,41 @@ void CProjectileCallLightning::Fire(CGameArea* pArea, LONG source, LONG target,
 // 0x534C10 (slot 3).  Lifetime countdown + the bolt's own BAM frame animation.
 void CProjectileCallLightning::AIUpdate()
 {
-    // Time Stop gate (0x534C11–0x534C33): frozen unless this bolt belongs to the
-    // caster who stopped time.
-    CInfGame* pGame = g_pBaldurChitin->m_pObjectGame;
-    if (pGame->m_nTimeStop != 0 && pGame->m_nTimeStopCaster != m_id) {
-        return;
-    }
-
-    // Lifetime countdown (0x534C39–0x534C97).
-    if (--m_lifetime == 0) {
+    auto* game=g_pBaldurChitin->GetObjectGame();
+    auto* objects=game->GetObjectArray();
+    if (game->m_nTimeStop!=0 && game->m_nTimeStopCaster!=m_id) return;
+    m_lifetime=static_cast<SHORT>(static_cast<USHORT>(m_lifetime)-1);
+    if (m_lifetime==0) {
         RemoveFromArea();
-        if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Delete(m_id,
-                CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE)
-            == CGameObjectArray::SUCCESS) {
-            delete this;
-        }
+        if (objects->Delete(m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE)==CGameObjectArray::SUCCESS) delete this;
         return;
     }
-
-    // Frame animation (0x534C9D–).  m_animFlag == 0 => sequential advance,
-    // reseeding to frame 0 at the end of the sequence; otherwise => random-frame
-    // lightning flicker.
-    if (m_animFlag == 0) {
-        if (!m_vidCell.IsEndOfSequence(FALSE)) {
-            m_vidCell.FrameAdvance();
-        } else {
-            m_vidCell.FrameSet(0);
-        }
+    if (m_animFlag==0) {
+        if (m_vidCell.IsEndOfSequence(FALSE)) m_vidCell.FrameSet(0);
+        else m_vidCell.FrameAdvance();
     } else {
-        BYTE sequenceLength = (BYTE)m_vidCell.GetSequenceLength(0, FALSE);
-        if (sequenceLength == 0) {
-            m_vidCell.FrameSet(0);
-        } else {
-            m_vidCell.FrameSet(rand() % sequenceLength);
-        }
+        BYTE length=m_vidCell.GetSequenceLength(0,FALSE);
+        m_vidCell.FrameSet(length==0?0:rand()%length);
     }
-
-    // Drop the bolt if its target has left the area (0x534CEB–).
-    if (m_targetId != CGameObjectArray::INVALID_INDEX) {
-        CGameObject* pTarget;
-        BYTE rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(
-            m_targetId, CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
-        if (rc != CGameObjectArray::SUCCESS) {
+    if (m_targetId!=CGameObjectArray::INVALID_INDEX) {
+        CGameObject* target;
+        BYTE rc=objects->GetShare(m_targetId,CGameObjectArray::THREAD_ASYNCH,&target,INFINITE);
+        if (rc!=CGameObjectArray::SUCCESS) {
             RemoveSelf();
             return;
         }
-        if (m_pArea != pTarget->m_pArea) {
+        if (m_pArea!=target->m_pArea) {
+            LONG targetId=m_targetId;
             RemoveSelf();
-            g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(
-                m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            objects->ReleaseShare(targetId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
             return;
         }
-        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(
-            m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        objects->ReleaseShare(m_targetId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
     }
-
-    m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
+    m_sound.SetCoordinates(m_pos.x,m_pos.y,m_posZ);
 }
 
-// 0x534DD0 (vtable slot 19 override). The CALLLIH bolt is a multi-sequence BAM:
+// The CALLLIH bolt is a multi-sequence BAM:
 // each sequence (cycle) is one vertical slice of the lightning, and they must be
 // drawn stacked. The single-cell CProjectileBAM::Render would draw only the current
 // slice (the "zoomed" look); this walks every sequence, drawing each one its own
@@ -3714,6 +3687,7 @@ void CProjectileCallLightning::AIUpdate()
 // tile-visibility culled and viewport-clipped; the walk stops the moment a slice
 // leaves the map top (nBaseY < 0), is off-screen, or is fully clipped.
 // Frida-confirmed on the original: SequenceSet 0/1/2 + an FXRender per cycle per frame.
+// 0x534DD0
 void CProjectileCallLightning::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
 {
     (void)pArea;   // the override reads m_pArea, not the passed area
@@ -3737,22 +3711,22 @@ void CProjectileCallLightning::Render(CGameArea* pArea, CVidMode* pVidMode, int 
     // bottom of the map. nBaseY climbs one slice at a time; nSavedX/nSavedBaseY keep
     // the foot for the clipping-poly pass.
     LONG nBaseX = m_pos.x;
-    LONG nBaseY = m_pArea->GetHeightOffset(m_pos, m_listType) + m_pos.y;
+    LONG nBaseY = static_cast<LONG>(static_cast<DWORD>(m_pArea->GetHeightOffset(m_pos,m_listType))+static_cast<DWORD>(m_pos.y));
     if (pInfinity->nAreaY <= nBaseY) {
-        nBaseY = pInfinity->nAreaY - 1;
+        nBaseY = static_cast<LONG>(static_cast<DWORD>(pInfinity->nAreaY)-1);
     }
     LONG nSavedX = nBaseX;
     LONG nSavedBaseY = nBaseY;
 
-    if (m_vidCell.GetNumberSequences(FALSE) != 0) {
+    if (static_cast<BYTE>(m_vidCell.GetNumberSequences(FALSE)) != 0) {
         DWORD flags = 0;
         BYTE seq = 0;
         do {
             if (nBaseY < 0) {
                 return;
             }
-            SHORT nTile = (SHORT)((SHORT)(nBaseY / 32) * m_pArea->m_visibility.m_nWidth
-                                  + (SHORT)(nBaseX / 32));
+            SHORT nTile=static_cast<SHORT>(static_cast<DWORD>(static_cast<SHORT>(nBaseY/CVisibilityMap::SQUARE_SIZEY))
+                *static_cast<DWORD>(m_pArea->m_visibility.m_nWidth)+static_cast<DWORD>(static_cast<SHORT>(nBaseX/CVisibilityMap::SQUARE_SIZEX)));
             if (!m_pArea->m_visibility.IsTileVisible(nTile)) {
                 return;
             }
@@ -3766,10 +3740,10 @@ void CProjectileCallLightning::Render(CGameArea* pArea, CVidMode* pVidMode, int 
             rFrame.SetRect(0, 0, frameSize.cx, frameSize.cy);
 
             CRect rDraw;
-            rDraw.left = nBaseX - ptRef.x;
-            rDraw.top = (m_posZ - ptRef.y) + nBaseY;
-            rDraw.right = (rFrame.right - rFrame.left) + rDraw.left;
-            rDraw.bottom = (rFrame.bottom - rFrame.top) + rDraw.top;
+            rDraw.left=static_cast<LONG>(static_cast<DWORD>(nBaseX)-static_cast<DWORD>(ptRef.x));
+            rDraw.top=static_cast<LONG>(static_cast<DWORD>(m_posZ)-static_cast<DWORD>(ptRef.y)+static_cast<DWORD>(nBaseY));
+            rDraw.right=static_cast<LONG>(static_cast<DWORD>(frameSize.cx)+static_cast<DWORD>(rDraw.left));
+            rDraw.bottom=static_cast<LONG>(static_cast<DWORD>(frameSize.cy)+static_cast<DWORD>(rDraw.top));
 
             CRect rClipped;
             rClipped.IntersectRect(&rDraw, &rViewport);
@@ -3791,17 +3765,18 @@ void CProjectileCallLightning::Render(CGameArea* pArea, CVidMode* pVidMode, int 
                 pInfinity->FXRender(&m_vidCell, ptRef.x, ptRef.y, flags, 0);
                 CRect rGCBounds;
                 rGCBounds.left = rDraw.left;
-                rGCBounds.top = m_posZ + rDraw.top;
+                rGCBounds.top=static_cast<LONG>(static_cast<DWORD>(m_posZ)+static_cast<DWORD>(rDraw.top));
                 rGCBounds.right = rDraw.right;
-                rGCBounds.bottom = m_posZ + rDraw.bottom;
-                pInfinity->FXRenderClippingPolys(nSavedX, m_posZ + nSavedBaseY, -m_posZ,
+                rGCBounds.bottom=static_cast<LONG>(static_cast<DWORD>(m_posZ)+static_cast<DWORD>(rDraw.bottom));
+                pInfinity->FXRenderClippingPolys(nSavedX,static_cast<LONG>(static_cast<DWORD>(m_posZ)+static_cast<DWORD>(nSavedBaseY)),
+                    static_cast<LONG>(0u-static_cast<DWORD>(m_posZ)),
                     ptRef, rGCBounds, FALSE, flags);
                 pInfinity->FXUnlock(flags, NULL, CPoint(0, 0));
                 pInfinity->FXBltFrom(nSurface, rFrame, nBaseX, nBaseY,
                     ptRef.x, ptRef.y, flags);
             }
 
-            nBaseY -= ptRef.y;
+            nBaseY=static_cast<LONG>(static_cast<DWORD>(nBaseY)-static_cast<DWORD>(ptRef.y));
             seq++;
         } while (seq < (BYTE)m_vidCell.GetNumberSequences(FALSE));
     }

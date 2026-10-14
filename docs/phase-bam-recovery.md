@@ -60,5 +60,4 @@ draws/99 native replays. Real6HP,33 ticks (both BAM lengths6), no repeat.
 Six symbols hit,60s CLEAN; save/config/fixture hashes restored. Prior weapon
 checks: melee6, bow/crossbow/sling12 each. First run fixed fixture type+1.
 
-Next: school-hit dispatcher/factory560310 and its missing variant families;
-ground spell-hit visual56BF30/56D0A0/56D730 remains scaffolded.
+Continuation: [colored strike completion](call-lightning-recovery.md).

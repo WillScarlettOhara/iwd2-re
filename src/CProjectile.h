@@ -1678,6 +1678,7 @@ public:
 // ---------------------------------------------------------------------------
 #pragma pack(push, 2)
 class CProjectileCallLightning : public CProjectileInstant {
+    friend struct CallLightningAccess;
 public:
     CProjectileCallLightning(const CResRef& resRef, const CResRef& soundRef,
                              BYTE colorIndex, LONG renderFlag, LONG animFlag,

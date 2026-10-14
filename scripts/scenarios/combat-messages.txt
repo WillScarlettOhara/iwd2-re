@@ -26,6 +26,7 @@ thrownweaponchecks
 spraychecks
 followupchecks
 phasebamchecks
+calllightningchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

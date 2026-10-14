@@ -201,6 +201,16 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+struct CallLightningAccess : CProjectileCallLightning {
+    using CProjectileCallLightning::m_vidCell;
+    using CProjectileCallLightning::m_palette;
+    using CProjectileCallLightning::m_renderFlag;
+    using CProjectileCallLightning::m_animFlag;
+    using CProjectileCallLightning::m_lifetime;
+    CallLightningAccess(BYTE color=255,LONG flags=0,LONG anim=0,SHORT life=20)
+        : CProjectileCallLightning(CResRef("CallLiH"),CResRef("EFF_P19"),color,flags,anim,life) {}
+};
 #include <string.h>
 
 namespace Iwd2AutoUI {
@@ -1676,6 +1686,152 @@ struct ProjectileRenderFrameAnchor {
 #include "SprayGolden.h"
 #include "FollowupGolden.h"
 #include "PhaseBAMGolden.h"
+#include "CallLightningGolden.h"
+
+// Test-only master bitmap supporting every BYTE row without assuming shipped
+// palette dimensions. Demand and service locks pin both the original and fixture.
+struct MasterPaletteFixture {
+    CResBitmap* resource;
+    LPBITMAPINFOHEADER header=NULL;
+    BYTE* data=NULL;
+    INT words=0,demands;
+    BITMAPINFOHEADER image={};
+    std::vector<BYTE> pixels;
+    BOOL active=FALSE,pinned=FALSE;
+    explicit MasterPaletteFixture(CVidBitmap* bitmap) : resource(bitmap->pRes),demands(resource->GetDemands()) {
+        EnterCriticalSection(&g_pChitin->m_critSectDimm); EnterCriticalSection(&g_pChitin->m_critSectService);
+        pinned=resource->Demand()!=NULL;
+        if (pinned && resource->pBitmapInfoHeader) {
+            header=resource->pBitmapInfoHeader; data=resource->pBitmapData; words=resource->nXWords;
+            image=*header; image.biWidth=12; image.biHeight=256; image.biBitCount=24; image.biCompression=BI_RGB;
+            pixels.resize(36*256+4);
+            for (INT y=0;y<256;++y) for (INT x=0;x<12;++x) {
+                INT offset=36*(255-y)+3*x; pixels[offset]=BYTE(19*x); pixels[offset+1]=BYTE(y); pixels[offset+2]=BYTE(y^x);
+            }
+            resource->pBitmapInfoHeader=&image; resource->pBitmapData=pixels.data(); resource->nXWords=9; active=TRUE;
+        }
+    }
+    BOOL Restore() {
+        BOOL ok=active;
+        if (active) { resource->pBitmapInfoHeader=header; resource->pBitmapData=data; resource->nXWords=words; active=FALSE; }
+        if (pinned) { resource->Release(); pinned=FALSE; }
+        ok=ok && resource->GetDemands()==demands;
+        LeaveCriticalSection(&g_pChitin->m_critSectService); LeaveCriticalSection(&g_pChitin->m_critSectDimm);
+        resource=NULL; return ok;
+    }
+    ~MasterPaletteFixture() { if (resource) Restore(); }
+};
+
+void CallLightningChecks(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* objects=game->GetObjectArray(); auto* area=game->GetVisibleArea();
+    auto* handler=g_pBaldurChitin->GetMessageHandler(); auto* video=static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
+    if (!area || !area->m_visibility.m_pMap || g_pChitin->cVideo.m_bIs3dAccelerated) { Fail(nStep,"calllightningchecks","requires loaded software area"); return; }
+    INT checks=0,draws=0; BOOL valid=TRUE;
+    auto check=[&](const char* name,BOOL ok) { ++checks; valid=valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"call-lightning-case\",\"case\":\"%s\",\"passed\":false}",nStep,name); };
+    ULONG clock=game->GetWorldTimer()->m_gameTime; auto stop=game->m_nTimeStop,caster=game->m_nTimeStopCaster;
+    INT messages=handler->m_messageList.GetCount(),front=area->m_lVertSortAdd.GetCount();
+    auto* master=game->GetMasterBitmap(); INT masterDemands=master->pRes->GetDemands();
+    MasterPaletteFixture masterFixture(master); check("byte-palette-fixture-pinned",masterFixture.active);
+    for (BYTE color : {BYTE(0),BYTE(1),BYTE(73),BYTE(127),BYTE(254),BYTE(255)}) for (LONG flags : {0L,1L,-1L}) for (LONG anim : {0L,-1L}) {
+        CallLightningAccess p(color,flags,anim,-32768);
+        check("native-colored-constructor-state",p.m_vidCell.GetResRef()==CResRef("CallLiH") && p.m_fireSoundRef==CResRef("EFF_P19")
+            && p.m_renderFlag==flags && p.m_animFlag==anim && p.m_lifetime==-32768 && !p.m_bHasHeight && p.m_vidCell.m_nCurrentFrame==0);
+        check("native-optional-range-and-bind",color==255?p.m_vidCell.m_cPalette.m_nType==CVidPalette::TYPE_RESOURCE:
+            (p.m_palette.m_rangeColors[0]==color && p.m_vidCell.m_cPalette.m_rangeColors[0]==color
+            && p.m_vidCell.m_cPalette.m_pPalette==p.m_palette.m_pPalette && p.m_vidCell.m_cPalette.m_nType==CVidPalette::TYPE_RANGE));
+        if (color!=255) check("byte-palette-row-is-real-helper-output",p.m_palette.m_pPalette[4].rgbGreen==color);
+    }
+    CallLightningAccess fixture; check("calllih-bam-available",fixture.m_vidCell.pRes!=NULL);
+    if (fixture.m_vidCell.pRes) {
+        ProjectileRenderFrameAnchor anchor(&fixture.m_vidCell); auto* resource=fixture.m_vidCell.pRes; auto* header=fixture.m_vidCell.m_header.pRes;
+        SEQUENCEENTRY original=resource->m_pSequences[0],originalHeader={}; if (header) originalHeader=header->m_pSequences[0];
+        auto retire=[&](CGameObject* p) { p->RemoveFromArea(); objects->Delete(p->m_id,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE); delete p; };
+        for (const auto& row : CALL_LIGHTNING_AI) {
+            BOOL destroyed=FALSE;
+            struct Sample : CallLightningAccess { BOOL* destroyed=NULL; ~Sample() override { if (destroyed) *destroyed=TRUE; } };
+            auto* p=new Sample; p->destroyed=&destroyed; p->m_lifetime=row.lifetime; p->m_animFlag=row.random; p->m_targetId=-1;
+            p->m_vidCell.m_nCurrentFrame=3; objects->Add(&p->m_id,p,INFINITE); LONG id=p->m_id;
+            SHORT length=row.random || !row.end?7:4; resource->m_pSequences[0].nFrames=length; if (header) header->m_pSequences[0].nFrames=length;
+            BYTE& foreignShare=objects->m_pArray[(id>>16)&0x7FFF].m_shareCounts[CGameObjectArray::THREAD_1]; BYTE oldShare=foreignShare;
+            if (row.failed) foreignShare=1;
+            game->m_nTimeStop=row.stop; game->m_nTimeStopCaster=row.stop==1?id+1:id;
+            srand(1); p->AIUpdate(); INT next=rand(); BOOL randomUsed=row.random && row.stop!=1 && row.lifetime!=1;
+            check("native-random-consumption",next==(randomUsed?18467:41));
+            check("native-lifetime-retirement",destroyed==row.retired);
+            foreignShare=oldShare;
+            if (!destroyed) { check("native-signed-delay-and-frame",p->m_lifetime==row.after && p->m_vidCell.m_nCurrentFrame==row.frame); retire(p); }
+        }
+        resource->m_pSequences[0]=original; if (header) header->m_pSequences[0]=originalHeader;
+        game->m_nTimeStop=0; srand(1);
+        // Single target share; removal can invalidate this before the saved-ID release.
+        struct Origin : CGameObject { BYTE GetObjectType() override { return TYPE_NONE; } };
+        auto* target=new Origin; target->m_pArea=area; objects->Add(&target->m_id,target,INFINITE);
+        for (BOOL missing : {FALSE,TRUE}) for (BOOL foreign : {FALSE,TRUE}) {
+            struct Sample : CallLightningAccess { INT removed=0; void RemoveSelf() override { ++removed; m_targetId=-777; } } p;
+            p.m_pArea=area; p.m_targetId=missing?-123:target->m_id; target->m_pArea=foreign?NULL:area; p.m_vidCell.FrameSet(0);
+            p.AIUpdate(); check("native-target-missing-and-foreign-removal",p.removed==(missing || foreign) && p.m_lifetime==19);
+        }
+        target->m_pArea=NULL; retire(target);
+        auto& infinity=area->m_cInfinity; CRect view=infinity.rViewPort; INT viewX=infinity.nCurrentX,viewY=infinity.nCurrentY;
+        auto* wed=infinity.pResWED; auto areaY=infinity.nAreaY;
+        std::vector<BYTE> visibility(area->m_visibility.m_pMap,area->m_visibility.m_pMap+area->m_visibility.m_nMapSize);
+        CRect patch(64,64,416,336); std::vector<BYTE> savedPixels;
+        auto pixels=[&](std::vector<BYTE>* read,const std::vector<BYTE>* write,BOOL clear)->BOOL {
+            if (!video->BKLock(patch)) return FALSE; DWORD bytes=video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount/8;
+            INT row=patch.Width()*bytes; BOOL ok=bytes>=2 && bytes<=4 && video->m_SurfaceDesc.lpSurface!=NULL;
+            if (ok && read) read->resize(row*patch.Height()); if (ok && write) ok=write->size()==static_cast<size_t>(row*patch.Height());
+            if (ok) for (INT y=0;y<patch.Height();++y) { BYTE* p=static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface)+y*video->m_SurfaceDesc.lPitch;
+                if (read) memcpy(read->data()+y*row,p,row); if (write) memcpy(p,write->data()+y*row,row); if (clear) memset(p,0,row); }
+            video->BKUnlock(); return ok;
+        };
+        BOOL backed=pixels(&savedPixels,NULL,FALSE); check("layered-render-pixels-backed-up",backed);
+        infinity.pResWED=NULL; infinity.rViewPort=CRect(80,80,400,320); infinity.nCurrentX=72; infinity.nCurrentY=882; infinity.nAreaY=10000;
+        memset(area->m_visibility.m_pMap,CVisibilityMap::VISIBILITY_MASK,visibility.size());
+        std::vector<SEQUENCEENTRY> layers(255,original); for (auto& layer : layers) layer.nFrames=1;
+        auto* originalSequences=resource->m_pSequences; auto* originalHeaderSequences=header?header->m_pSequences:NULL;
+        struct HeaderSnapshot { BAMHEADER* p; BYTE count; }; std::vector<HeaderSnapshot> snapshots;
+        for (auto* h : {resource->m_pBamHeader,resource->m_pBamHeaderCopy,header?header->m_pBamHeader:NULL,header?header->m_pBamHeaderCopy:NULL}) if (h) {
+            BOOL found=FALSE; for (const auto& saved : snapshots) if (saved.p==h) found=TRUE;
+            if (!found) snapshots.push_back({h,h->nSequences});
+        }
+        resource->m_pSequences=layers.data(); if (header) header->m_pSequences=layers.data();
+        if (anchor.frame) anchor.frame->nCenterY=0; if (anchor.headerFrame) anchor.headerFrame->nCenterY=0;
+        for (BYTE color : {BYTE(73),BYTE(255)}) for (const auto& row : CALL_LIGHTNING_RENDER) {
+            for (auto& saved : snapshots) saved.p->nSequences=row.count;
+            CallLightningAccess p(color,row.flags),reference(color,row.flags);
+            p.m_pArea=area; p.CGameObject::m_pArea=area; p.m_pos=CPoint(232,1002); p.m_posZ=17; p.m_listType=CGameObject::LIST_FLIGHT;
+            SHORT tile=area->m_visibility.PointToTile(p.m_pos); if (row.hidden) area->m_visibility.m_pMap[tile]=0;
+            std::vector<BYTE> expected,actual; BOOL ok=backed && pixels(NULL,NULL,TRUE);
+            if (!row.hidden) for (INT layer=0;layer<row.draws && ok;++layer) {
+                reference.m_vidCell.SequenceSet(static_cast<SHORT>(layer)); CPoint center; CSize size;
+                reference.m_vidCell.GetCurrentCenterPoint(center,FALSE); reference.m_vidCell.GetCurrentFrameSize(size,FALSE);
+                CRect fx(0,0,size.cx,size.cy); CPoint point(232,1002); DWORD flags=row.flags?0x20280:0x20101;
+                infinity.FXPrep(fx,flags,CVIDINF_SURFACE_BACK,point,center); ok=infinity.FXLock(fx,flags);
+                if (ok) { infinity.FXRender(&reference.m_vidCell,center.x,center.y,flags,0); infinity.FXUnlock(flags,NULL,CPoint(0,0));
+                    ok=infinity.FXBltFrom(CVIDINF_SURFACE_BACK,fx,point.x,point.y,center.x,center.y,flags); }
+            }
+            ok=pixels(&expected,NULL,TRUE) && ok; p.Render(NULL,video,CVIDINF_SURFACE_BACK); ++draws; ok=pixels(&actual,NULL,FALSE) && ok;
+            check("native-layer-count-full-software-pixels",ok && actual==expected);
+            check("native-render-sequence-and-frame",p.m_vidCell.m_nCurrentSequence==(!row.hidden && row.count?row.count-1:0) && p.m_vidCell.m_nCurrentFrame==0 && p.m_renderFlag==row.flags);
+            check("layered-render-surface-balanced",video->m_SurfaceDesc.lpSurface==NULL);
+            if (!row.hidden && row.count==1 && row.flags==0 && color==255) check("strike-really-renders",std::any_of(actual.begin(),actual.end(),[](BYTE value){return value!=0;}));
+            area->m_visibility.m_pMap[tile]=CVisibilityMap::VISIBILITY_MASK; p.CGameObject::m_pArea=NULL;
+        }
+        resource->m_pSequences=originalSequences; if (header) header->m_pSequences=originalHeaderSequences;
+        for (const auto& saved : snapshots) saved.p->nSequences=saved.count;
+        memcpy(area->m_visibility.m_pMap,visibility.data(),visibility.size()); infinity.pResWED=wed; infinity.rViewPort=view;
+        infinity.nCurrentX=viewX; infinity.nCurrentY=viewY; infinity.nAreaY=areaY;
+        check("layered-pixels-restored",backed && pixels(NULL,&savedPixels,FALSE)); check("layered-metadata-and-demands-restored",anchor.Restore());
+    }
+    game->m_nTimeStop=stop; game->m_nTimeStopCaster=caster; srand(1);
+    check("master-palette-metadata-restored",masterFixture.Restore());
+    check("colored-strike-fixtures-restored",clock==game->GetWorldTimer()->m_gameTime && master->pRes->GetDemands()==masterDemands
+        && handler->m_messageList.GetCount()==messages && area->m_lVertSortAdd.GetCount()==front);
+    Emit("{\"step\":%d,\"op\":\"calllightningchecks\",\"checks\":%d,\"renderCalls\":%d,\"nativeCases\":266,\"restored\":true,\"valid\":%s}",nStep,checks,draws,valid?"true":"false");
+    if (!valid) Fail(nStep,"calllightningchecks","colored-strike constructor/AI/layered-render mismatch");
+}
 
 struct PhaseBAMAccess : CProjectilePhaseBAM {
     using CProjectilePhaseBAM::m_vidCell;
@@ -2873,6 +3029,34 @@ void AreaNearestChecks(INT nStep)
                 Emit("{\"step\":%d,\"op\":\"phase-bam-live-damage\",\"loss\":%ld,\"ticks\":%d,\"length1\":%d,\"length2\":%d,\"retired\":%s}",nStep,
                     before-saved[1].p->m_baseStats.m_hitPoints,ticks,length1,length2,retired?"true":"false");
                 retire(parent);
+            }
+            {
+            MasterPaletteFixture masterFixture(game->GetMasterBitmap()); check("colored-live-byte-palette-pinned",masterFixture.active);
+            for (BYTE color : {BYTE(0),BYTE(1),BYTE(73),BYTE(127),BYTE(254),BYTE(255)}) {
+                auto* marker=new CallLightningAccess(color,1,0,3); LONG before=saved[1].p->m_baseStats.m_hitPoints;
+                marker->AddEffect(CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],saved[1].p->m_pos));
+                marker->Fire(area,origin->m_id,ids[1],CPoint(-123,456),99,13); LONG id=marker->m_id;
+                check("colored-strike-native-launch",marker->m_effectList.IsEmpty() && marker->m_pos==CPoint(137,109) && marker->m_posZ==0);
+                INT groups=0;
+                while (handler->m_messageList.GetCount()>messages) {
+                    CMessage* message=handler->m_messageList.RemoveTail(); auto* group=dynamic_cast<CMessage105*>(message); auto* sound=dynamic_cast<CMessagePlaySound*>(message);
+                    check("colored-strike-owned-hit",(group && group->m_nCount==1 && group->m_sourceId==origin->m_id && group->m_targetId==ids[1])
+                        || (sound && sound->m_sourceId==ids[1] && sound->m_targetId==ids[1] && sound->m_soundId==CGameSprite::SOUND_DAMAGE));
+                    if (group) { ++groups; group->Run(); } delete message;
+                }
+                check("colored-strike-real-six-hp",groups==1 && before-saved[1].p->m_baseStats.m_hitPoints==6 && saved[0].p->m_baseStats.m_hitPoints==512);
+                POSITION queued=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id)); if (queued) area->m_lVertSortAdd.RemoveAt(queued);
+                game->m_nTimeStop=1; game->m_nTimeStopCaster=origin->m_id; marker->AIUpdate();
+                check("colored-strike-time-stop",marker->m_lifetime==3); game->m_nTimeStop=0;
+                for (INT tick=1;tick<=3;++tick) {
+                    marker->AIUpdate(); CGameObject* live=NULL; BYTE rc=objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&live,INFINITE);
+                    check("colored-strike-exact-three-update-expiry",tick==3?rc==CGameObjectArray::DELETED:rc==CGameObjectArray::SUCCESS);
+                    if (rc==CGameObjectArray::SUCCESS) { objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE); marker=static_cast<CallLightningAccess*>(live); if (tick==3) retire(marker); }
+                }
+                check("colored-strike-never-repeats-payload",before-saved[1].p->m_baseStats.m_hitPoints==6 && handler->m_messageList.GetCount()==messages);
+                Emit("{\"step\":%d,\"op\":\"colored-strike-live-damage\",\"color\":%u,\"loss\":%ld}",nStep,unsigned(color),before-saved[1].p->m_baseStats.m_hitPoints);
+            }
+            check("colored-live-master-palette-restored",masterFixture.Restore());
             }
             for (USHORT type : {USHORT(0x6C),USHORT(0xC0),USHORT(0xC1),USHORT(0xC2),
                 USHORT(7),USHORT(10),USHORT(11),USHORT(27),USHORT(30),USHORT(31),USHORT(56),USHORT(59),USHORT(60),USHORT(375)}) {
@@ -5351,6 +5535,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "phasebamchecks") == 0) {
         PhaseBAMChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "calllightningchecks") == 0) {
+        CallLightningChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
