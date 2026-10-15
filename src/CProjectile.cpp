@@ -11042,9 +11042,10 @@ void IcewindCSpellHitVisual::Render(CGameArea* pArea, CVidMode* pVidMode, int nS
     }
 }
 
-// 0x56DF00. The m_emission1 sibling of the 0x56E280 ctor: same particle setup
+// The m_emission1 sibling of the ranged ctor: same particle setup
 // from the plainer IcewindCSpellHitEmission, which carries no shared cell object
 // (m_cellPool..m_hasCloud are cleared rather than copied from the descriptor).
+// 0x56DF00
 IcewindCSpellHitParticle::IcewindCSpellHitParticle(const IcewindCSpellHitEmission& descriptor,
     CGameArea* pArea, const CPoint& pos, int a5, const CPoint& velocity, SHORT a7, BYTE mode8,
     BYTE mode9)
@@ -11056,7 +11057,7 @@ IcewindCSpellHitParticle::IcewindCSpellHitParticle(const IcewindCSpellHitEmissio
     m_animTick = 0;
 
     SHORT nFacing = CGameSprite::GetDirection(CPoint(0, 0), velocity);
-    m_animation.m_animation = new IcewindCGameAnimationTypeEffect(descriptor, static_cast<WORD>(nFacing & 0xF));
+    m_animation.m_animation = new IcewindCGameAnimationTypeEffect(descriptor, static_cast<WORD>(nFacing % 16));
 
     // 0x56DFD7 / 0x56E34F: the binary routes m_resref1 through CString(LPCSTR), which
     // substitutes "" (DAT_008485bc) for a NULL/empty slot. CResRef(const char*) is not
@@ -11077,28 +11078,32 @@ IcewindCSpellHitParticle::IcewindCSpellHitParticle(const IcewindCSpellHitEmissio
         == CGameObjectArray::SUCCESS) {
         CPoint scaledPos(pos.x >> (CGameSprite::EXACT_SCALE & 0x1F),
             pos.y >> (CGameSprite::EXACT_SCALE & 0x1F));
-        AddToArea(pArea, scaledPos, a5, CGameObject::LIST_FRONT);
+        CGameObject::AddToArea(pArea, scaledPos, a5, CGameObject::LIST_FRONT);
+    } else {
+        delete this;
     }
-    // else: registration failed -> the binary self-deletes via vtable slot 0;
-    // omitted here (matches the IcewindCSpellHitVisual ctor).
 }
 
-// 0x56E280. Builds one travelling particle of the detonation fan from the
+// Builds one travelling particle of the detonation fan from the
 // parent's m_emission2 descriptor (the 0x56DF00 sibling builds it from the
 // plainer m_emission1). Loads the impact sound, seeds the particle's motion
 // state from the launch parameters, registers the object and adds it to the
 // area, taking a reference on the descriptor's shared cell object.
+// 0x56E280
 IcewindCSpellHitParticle::IcewindCSpellHitParticle(const IcewindCSpellHitEmissionRanged& descriptor,
     CGameArea* pArea, const CPoint& pos, int a5, const CPoint& velocity, SHORT a7, BYTE mode8,
     BYTE mode9)
 {
+    // A failed registration destroys the partially built particle before it
+    // acquires a pool reference.
+    m_cellPool = NULL;
     m_animTick = 0;
 
     // Build the per-particle detonation animation for this launch direction
     // (CGameSprite::GetDirection from the origin to the launch velocity gives the
     // 16-way facing). The embedded CGameAnimation installs its own vtable.
     SHORT nFacing = CGameSprite::GetDirection(CPoint(0, 0), velocity);
-    m_animation.m_animation = new IcewindCGameAnimationTypeEffect(descriptor, static_cast<WORD>(nFacing & 0xF));
+    m_animation.m_animation = new IcewindCGameAnimationTypeEffect(descriptor, static_cast<WORD>(nFacing % 16));
 
     // 0x56DFD7 / 0x56E34F: the binary routes m_resref1 through CString(LPCSTR), which
     // substitutes "" (DAT_008485bc) for a NULL/empty slot. CResRef(const char*) is not
@@ -11119,18 +11124,18 @@ IcewindCSpellHitParticle::IcewindCSpellHitParticle(const IcewindCSpellHitEmissio
         == CGameObjectArray::SUCCESS) {
         CPoint scaledPos(pos.x >> (CGameSprite::EXACT_SCALE & 0x1F),
             pos.y >> (CGameSprite::EXACT_SCALE & 0x1F));
-        AddToArea(pArea, scaledPos, a5, CGameObject::LIST_FRONT);
+        CGameObject::AddToArea(pArea, scaledPos, a5, CGameObject::LIST_FRONT);
 
         // Take a counted reference on the descriptor's shared cell pool and copy
         // its trailing parameters.
         m_cellPool = descriptor.m_cellPool;
-        m_cellPool->m_refCount++;
+        m_cellPool->m_refCount = GroundHitAdd(m_cellPool->m_refCount, 1);
         m_cellIndex = descriptor.m_lastCellIndex;
         m_respawnFromPool = static_cast<BYTE>(descriptor.m_respawnFlag);
         m_hasCloud = static_cast<BYTE>(descriptor.m_cloudFlag);
+    } else {
+        delete this;
     }
-    // else: registration failed -> the binary self-deletes via vtable slot 0;
-    // omitted here (matches the IcewindCSpellHitVisual ctor).
 }
 
 // 0x56E260 (vtable slot 0 -- MSVC emits the scalar-deleting wrapper there; the
@@ -11152,10 +11157,11 @@ IcewindCSpellHitParticle::~IcewindCSpellHitParticle()
     // in ~CGameAnimation when the member dtor then runs on the freed pointer.
 }
 
-// 0x56E650 (vtable slot 3). Drives the particle: drift along m_posDelta, then on
+// Drives the particle: drift along m_posDelta, then on
 // crossing a search-grid cell bounce off / die on / pass through walls
 // (CSearchBitmap::GetLOSCost), expiring after m_duration ticks or when the
 // animation sequence ends, and advance the frame. Mirrors CGameTemporal::AIUpdate.
+// 0x56E650
 void IcewindCSpellHitParticle::AIUpdate()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -11163,7 +11169,7 @@ void IcewindCSpellHitParticle::AIUpdate()
         return;
     }
 
-    m_animTick++;
+    m_animTick = GroundHitAdd(m_animTick, 1);
 
     if (m_duration == 0) {
         // Lives until the animation sequence runs out.
@@ -11172,7 +11178,7 @@ void IcewindCSpellHitParticle::AIUpdate()
             return;
         }
     } else {
-        m_duration--;
+        m_duration = static_cast<SHORT>(static_cast<USHORT>(m_duration) - 1);
         if (m_duration == 0) {
             RemoveFromArea();
             return;
@@ -11182,10 +11188,10 @@ void IcewindCSpellHitParticle::AIUpdate()
     int nOldCellX = m_pos.x / CPathSearch::GRID_SQUARE_SIZEX;
     int nOldCellY = m_pos.y / CPathSearch::GRID_SQUARE_SIZEY;
 
-    m_posExact.x += m_posDelta.x;
-    m_posExact.y += m_posDelta.y;
-    m_pos.x = m_posExact.x >> CGameSprite::EXACT_SCALE;
-    m_pos.y = m_posExact.y >> CGameSprite::EXACT_SCALE;
+    m_posExact.x = GroundHitAdd(m_posExact.x, m_posDelta.x);
+    m_posExact.y = GroundHitAdd(m_posExact.y, m_posDelta.y);
+    m_pos.x = m_posExact.x >> (CGameSprite::EXACT_SCALE & 31);
+    m_pos.y = m_posExact.y >> (CGameSprite::EXACT_SCALE & 31);
 
     int nNewCellX = m_pos.x / CPathSearch::GRID_SQUARE_SIZEX;
     int nNewCellY = m_pos.y / CPathSearch::GRID_SQUARE_SIZEY;
@@ -11203,15 +11209,15 @@ void IcewindCSpellHitParticle::AIUpdate()
             if (m_collision == CGameTemporal::COLLISION_REBOUND) {
                 CPoint ptOld(m_posExact);
                 if (nOldCellX != nNewCellX) {
-                    m_posExact.x += -m_posDelta.x * 2;
-                    m_pos.x = m_posExact.x >> CGameSprite::EXACT_SCALE;
-                    m_posDelta.x = -m_posDelta.x;
+                    m_posExact.x = GroundHitSub(m_posExact.x, GroundHitMul(m_posDelta.x, 2));
+                    m_pos.x = m_posExact.x >> (CGameSprite::EXACT_SCALE & 31);
+                    m_posDelta.x = GroundHitSub(0, m_posDelta.x);
                 }
 
                 if (nOldCellY != nNewCellY) {
-                    m_posExact.y += -m_posDelta.y * 2;
-                    m_pos.y = m_posExact.y >> CGameSprite::EXACT_SCALE;
-                    m_posDelta.y = -m_posDelta.y;
+                    m_posExact.y = GroundHitSub(m_posExact.y, GroundHitMul(m_posDelta.y, 2));
+                    m_pos.y = m_posExact.y >> (CGameSprite::EXACT_SCALE & 31);
+                    m_posDelta.y = GroundHitSub(0, m_posDelta.y);
                 }
 
                 SHORT nDirection = CGameSprite::GetDirection(ptOld, m_posExact);
@@ -11270,17 +11276,18 @@ void IcewindCSpellHitParticle::AIUpdate()
             m_cellIndex = nIndex;
             m_posExact.x = m_cellPool->m_cells[nIndex].x;
             m_posExact.y = m_cellPool->m_cells[nIndex].y;
-            m_pos.x = m_posExact.x >> CGameSprite::EXACT_SCALE;
-            m_pos.y = m_posExact.y >> CGameSprite::EXACT_SCALE;
+            m_pos.x = m_posExact.x >> (CGameSprite::EXACT_SCALE & 31);
+            m_pos.y = m_posExact.y >> (CGameSprite::EXACT_SCALE & 31);
         }
     }
 
     m_animation.IncrementFrame();
 }
 
-// 0x56ECF0 (vtable slot 18). Removes the particle from the area and the global
+// Removes the particle from the area and the global
 // object array, then deletes itself. Mirrors CGameTemporal::RemoveFromArea with a
 // trailing self-delete.
+// 0x56ECF0
 void IcewindCSpellHitParticle::RemoveFromArea()
 {
     CGameObject::RemoveFromArea();
@@ -11296,13 +11303,15 @@ void IcewindCSpellHitParticle::RemoveFromArea()
     delete this;
 }
 
-// 0x56EA90 (vtable slot 19). Draws the particle's detonation animation through
+// Draws the particle's detonation animation through
 // CInfinity, gated on m_animationRunning, the impact point being in-bounds and
 // its tile being visible. Mirrors CGameTemporal::Render with an extra position
 // bounds guard.
+// 0x56EA90
 void IcewindCSpellHitParticle::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
 {
-    (void)pArea;   // binary asserts pVidMode != NULL here (ObjAnimation.cpp:0x162); UtilAssert omitted
+    (void)pArea;
+    UTIL_ASSERT(pVidMode != NULL);
 
     if (!m_animationRunning) {
         return;
@@ -11313,8 +11322,8 @@ void IcewindCSpellHitParticle::Render(CGameArea* pArea, CVidMode* pVidMode, int 
 
     CInfinity* pInfinity = &m_pArea->m_cInfinity;
 
-    LONG nTileIndex = (m_pos.y / CVisibilityMap::SQUARE_SIZEY) * m_pArea->m_visibility.m_nWidth
-        + m_pos.x / CVisibilityMap::SQUARE_SIZEX;
+    SHORT nTileIndex = static_cast<SHORT>((m_pos.y / CVisibilityMap::SQUARE_SIZEY) * m_pArea->m_visibility.m_nWidth
+        + m_pos.x / CVisibilityMap::SQUARE_SIZEX);
     if (!m_pArea->m_visibility.IsTileVisible(nTileIndex)) {
         return;
     }
@@ -11326,15 +11335,15 @@ void IcewindCSpellHitParticle::Render(CGameArea* pArea, CVidMode* pVidMode, int 
 
     CRect rView(pInfinity->nCurrentX,
         pInfinity->nCurrentY,
-        pInfinity->nCurrentX + (pInfinity->rViewPort.right - pInfinity->rViewPort.left),
-        pInfinity->nCurrentY + (pInfinity->rViewPort.bottom - pInfinity->rViewPort.top));
+        GroundHitAdd(pInfinity->nCurrentX, GroundHitSub(pInfinity->rViewPort.right, pInfinity->rViewPort.left)),
+        GroundHitAdd(pInfinity->nCurrentY, GroundHitSub(pInfinity->rViewPort.bottom, pInfinity->rViewPort.top)));
 
     CRect rFx;
     CPoint ptReference;
     m_animation.CalculateFxRect(rFx, ptReference, m_posZ);
 
     CPoint ptNewPos(m_pos.x, m_pos.y);
-    ptNewPos.y += m_pArea->GetHeightOffset(m_pos, CGameObject::LIST_BACK);
+    ptNewPos.y = GroundHitAdd(ptNewPos.y, m_pArea->GetHeightOffset(m_pos, CGameObject::LIST_BACK));
 
     CRect rGCBounds;
     m_animation.CalculateGCBoundsRect(rGCBounds, ptNewPos, ptReference, m_posZ,
@@ -11345,9 +11354,9 @@ void IcewindCSpellHitParticle::Render(CGameArea* pArea, CVidMode* pVidMode, int 
         return;
     }
 
-    CPoint ptTint(m_pos.x, m_pos.y + m_posZ);
+    CPoint ptTint(ptNewPos.x, GroundHitAdd(ptNewPos.y, m_posZ));
     COLORREF rgbTintColor = m_pArea->GetTintColor(ptTint, m_listType);
 
     m_animation.Render(pInfinity, pVidMode, nSurface, rFx, ptNewPos, ptReference,
-        0x20000, rgbTintColor, rDest, FALSE, bFadeOut, m_posZ, 0);
+        0x20000, rgbTintColor, rGCBounds, FALSE, bFadeOut, m_posZ, 0);
 }

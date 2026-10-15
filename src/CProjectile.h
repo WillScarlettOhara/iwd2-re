@@ -1620,21 +1620,17 @@ static_assert(sizeof(IcewindCSpellHitVisual) - sizeof(CGameObject) == 0x2A2 - 0x
 //
 // It embeds a small CGameAnimation-derived BAM animator at +0x7E (its own
 // vtable 0x84F1B8, slot 0 = CalculateGCBoundsRect at 0x56E210 forwarding to the
-// sub-object's m_animation at +0x82). That sub-object's full layout is a
-// separate recovery; it is left as an opaque span here.
+// sub-object's m_animation at +0x82). CGameAnimation supplies that typed wrapper.
 //
 // Two sibling ctors build it from the two cell-spawn paths of the parent's
 // AIUpdate: 0x56E280 (decodes the animation via FUN_0055D3A0) and 0x56DF00
-// (via FUN_0055CD70). Only 0x56E280 is scaffolded below; the 0x56DF00 overload
-// is recovered later (its descriptor argument type fixes the overload split).
+// (via 0x55CD70); the descriptor type distinguishes the two constructors.
 //
 // Name is a guess (no RTTI; no BG2 PDB match -- IWD2-specific Icewind class).
 // vtable 0x84F14C, ctor 0x56E280, sizeof 0x112.
 //
-// SCAFFOLD: layout below is recovered from the 0x56E280 ctor (offsets
-// asm/decompile-confirmed); method bodies are faithful stubs pending recovery
-// of 0x56E280/0x56DF00 (ctors), 0x56E650 (AIUpdate), 0x56EA90 (Render),
-// 0x56ECF0 (RemoveFromArea) and 0x56E260 (dtor). Not yet spawned by the parent.
+// Constructors, AI and renderer are recovered with the shared-cell respawn and
+// cloud animation paths. The ground impact visual owns their spawn scheduling.
 #pragma pack(push, 2)
 class IcewindCSpellHitParticle /*#guess*/ : public CGameObject {
 public:

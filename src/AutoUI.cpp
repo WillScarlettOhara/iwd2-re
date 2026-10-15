@@ -182,6 +182,7 @@
 #include "CPathSearch.h"
 #include "CVariableHash.h"
 #include "CProjectile.h"
+#include "IcewindCGameAnimationTypeEffect.h"
 #include "CGameTemporal.h"
 #include "CSpell.h"
 #include "IcewindCGameEffects.h"
@@ -1725,6 +1726,7 @@ struct MasterPaletteFixture {
 
 #include "SchoolHitChecks.h"
 #include "GroundHitChecks.h"
+#include "HitParticleChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5582,6 +5584,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "groundhitchecks") == 0) {
         GroundHitChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "hitparticlechecks") == 0) {
+        HitParticleChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

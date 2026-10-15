@@ -10,6 +10,7 @@
 // is recovered as a subclass in IcewindCGameAnimationTypeEffect.h; its descriptor
 // ctors (0x55CD70 / 0x55D3A0) used to live here when the two binary classes were
 // conflated.
+#pragma pack(push, 2)
 class CGameAnimationTypeEffect : public CGameAnimationType {
 public:
     CGameAnimationTypeEffect(USHORT animationID, BYTE* colorRangeValues, WORD facing);
@@ -63,5 +64,6 @@ public:
     // never touch +0, so the two coexist exactly as in the binary.
     /* 05F6 */ TString m_animResName;
 };
+#pragma pack(pop)
 
 #endif /* CGAMEANIMATIONTYPEEFFECT_H_ */

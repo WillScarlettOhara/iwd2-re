@@ -22,9 +22,12 @@ struct IcewindCSpellHitEmissionRanged;
 // ChangeDirection, IsEndOfSequence, IncrementFrame, Render and GetCurrentFrame slots
 // overridden); the binary instead derives both straight from CGameAnimationType
 // (siblings). The two destructor slots (0x55d2c0 / 0x55d240) are the
-// compiler-generated deleting-destructor thunks and stay implicit.
+// compiler-generated deleting-destructor thunks; C++ member destruction supplies
+// their shared cleanup.
+#pragma pack(push, 2)
 class IcewindCGameAnimationTypeEffect : public CGameAnimationTypeEffect {
 public:
+    /* 0000 */ ~IcewindCGameAnimationTypeEffect() override; // 0x55D2C0
     IcewindCGameAnimationTypeEffect(const IcewindCSpellHitEmission& descriptor, WORD facing);        // 0x55CD70
     IcewindCGameAnimationTypeEffect(const IcewindCSpellHitEmissionRanged& descriptor, WORD facing);  // 0x55D3A0
     /* 0004 */ void CalculateFxRect(CRect& rFx, CPoint& ptReference, LONG posZ) override;             // 0x55D690
@@ -34,5 +37,6 @@ public:
     /* 0090 */ void Render(CInfinity* pInfinity, CVidMode* pVidMode, INT nSurface, const CRect& rectFX, const CPoint& ptNewPos, const CPoint& ptReference, DWORD dwRenderFlags, COLORREF rgbTintColor, const CRect& rGCBounds, BOOL bDithered, BOOL bFadeOut, LONG posZ, BYTE transparency) override;  // 0x55d950
     /* 00C8 */ SHORT GetCurrentFrame() override;                                                      // 0x55D210
 };
+#pragma pack(pop)
 
 #endif /* ICEWINDCGAMEANIMATIONTYPEEFFECT_H_ */

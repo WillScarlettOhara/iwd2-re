@@ -58,4 +58,4 @@ comparisons,88 particle launch checks; parent-independent detonation27 objects
 retired in54 ticks, zero left. Earlier melee6HP/bow/bolt/sling12HP checks pass.
 Final ARC11-06 PASS4 warnings:5/5 symbols,60s CLEAN,rollback restored/errors[].
 Missing offset oracles/call-count advisories leave static equivalence unproven.
-Next: particle ctors56DF00/56E280, AI56E650, Render56EA90.
+Particle continuation: [hit-particle-recovery.md](hit-particle-recovery.md).

@@ -7,13 +7,19 @@
 #include "CProjectile.h"
 #include "CUtil.h"
 
-// 0x55CD70. Spell-hit detonation overload for the plainer IcewindCSpellHitEmission
+// Native cleanup at 55D2E0 releases the TString, palette, two cells and base;
+// the deleting wrapper remains compiler generated.
+// 0x55D2C0
+IcewindCGameAnimationTypeEffect::~IcewindCGameAnimationTypeEffect() = default;
+
+// Spell-hit detonation overload for the plainer IcewindCSpellHitEmission
 // (the 0x55D3A0 twin handles the IcewindCSpellHitEmissionRanged descriptor). It is
 // identical except this emission carries no m_animFlag36 (it stays 0) and its
 // random-sequence opt-in (m_animMode) comes from the plain descriptor's 0x2C slot
 // rather than the ranged descriptor's 0x35 slot. The shared base/member construction
 // (CGameAnimationType + the CVidCell/CVidPalette/IcewindCVisualEffect subobjects)
 // runs through CGameAnimationTypeEffect's protected default ctor.
+// 0x55CD70
 IcewindCGameAnimationTypeEffect::IcewindCGameAnimationTypeEffect(const IcewindCSpellHitEmission& descriptor,
     WORD facing)
     : CGameAnimationTypeEffect()
@@ -38,7 +44,7 @@ IcewindCGameAnimationTypeEffect::IcewindCGameAnimationTypeEffect(const IcewindCS
     if (descriptor.m_resref0Len == 0) {
         m_g1VidCell.SetResRef(CResRef("GreaseA"), FALSE, TRUE, TRUE);
     } else {
-        m_g1VidCell.SetResRef(CResRef(descriptor.m_resref0), FALSE, TRUE, TRUE);
+        m_g1VidCell.SetResRef(CResRef(CString(descriptor.m_resref0)), FALSE, TRUE, TRUE);
 
         if (m_animMode == 1) {
             BYTE cnt = static_cast<BYTE>(m_g1VidCell.GetNumberSequences(FALSE));
@@ -53,9 +59,7 @@ IcewindCGameAnimationTypeEffect::IcewindCGameAnimationTypeEffect(const IcewindCS
         m_g1VidCell.SequenceSet(m_currentBamSequence);
         m_g1VidCell.FrameSet(0);
 
-        // The descriptor's resref name is copied into a scratch buffer here via
-        // the 0x44BC20 / 0x44BC00 allocator pair; pending recovery of those
-        // helpers m_animResName is left NULL.
+        m_animResName = descriptor.m_resref0 ? descriptor.m_resref0 : "";
     }
 
     m_currentVidCell = &m_g1VidCell;
@@ -64,12 +68,13 @@ IcewindCGameAnimationTypeEffect::IcewindCGameAnimationTypeEffect(const IcewindCS
     m_extendDirectionTest = CGameSprite::DIR_N;
 }
 
-// 0x55D3A0. Spell-hit detonation overload: builds one detonation-fan particle's
+// Spell-hit detonation overload: builds one detonation-fan particle's
 // animation from an IcewindCSpellHitVisual emission descriptor and the launch
 // direction. Loads the detonation BAM into m_g1VidCell (the descriptor's
 // m_resref0, or "GreaseA" when the descriptor carries no geometry), copies the
 // descriptor's visual-effect parameters and, when the descriptor opts in
 // (m_animMode), seeds a random start sequence.
+// 0x55D3A0
 IcewindCGameAnimationTypeEffect::IcewindCGameAnimationTypeEffect(const IcewindCSpellHitEmissionRanged& descriptor,
     WORD facing)
     : CGameAnimationTypeEffect()
@@ -94,7 +99,7 @@ IcewindCGameAnimationTypeEffect::IcewindCGameAnimationTypeEffect(const IcewindCS
     if (descriptor.m_resref0Len == 0) {
         m_g1VidCell.SetResRef(CResRef("GreaseA"), FALSE, TRUE, TRUE);
     } else {
-        m_g1VidCell.SetResRef(CResRef(descriptor.m_resref0), FALSE, TRUE, TRUE);
+        m_g1VidCell.SetResRef(CResRef(CString(descriptor.m_resref0)), FALSE, TRUE, TRUE);
 
         if (m_animMode == 1) {
             BYTE cnt = static_cast<BYTE>(m_g1VidCell.GetNumberSequences(FALSE));
@@ -109,9 +114,7 @@ IcewindCGameAnimationTypeEffect::IcewindCGameAnimationTypeEffect(const IcewindCS
         m_g1VidCell.SequenceSet(m_currentBamSequence);
         m_g1VidCell.FrameSet(0);
 
-        // The descriptor's resref name is copied into a scratch buffer here via
-        // the 0x44BC20 / 0x44BC00 allocator pair; pending recovery of those
-        // helpers m_animResName is left NULL.
+        m_animResName = descriptor.m_resref0 ? descriptor.m_resref0 : "";
     }
 
     m_currentVidCell = &m_g1VidCell;
@@ -184,12 +187,13 @@ BOOL IcewindCGameAnimationTypeEffect::IsEndOfSequence()
     return m_currentVidCell->IsEndOfSequence(FALSE);
 }
 
-// 0x55D810. Advances the ember animation. Unlike the CGameAnimationTypeEffect twin
+// Advances the ember animation. Unlike the CGameAnimationTypeEffect twin
 // (0x6A3550, which keys on m_animationID), at end-of-sequence this either stops
 // rendering (m_animFlag36 == 1, a one-shot burst), reseeds a random sequence
 // (m_animMode == 1) or steps to the next sequence clamped to the last; mid-sequence it
 // just advances the frame. The embers never carry a shadow cell (the ctors force
 // m_currentVidCellShadow to NULL), so the shadow arms are inert here.
+// 0x55D810
 void IcewindCGameAnimationTypeEffect::IncrementFrame()
 {
     if (m_currentVidCell->IsEndOfSequence(FALSE)) {
@@ -206,9 +210,9 @@ void IcewindCGameAnimationTypeEffect::IncrementFrame()
                 m_currentBamSequence = 0;
             }
         } else {
-            m_currentBamSequence++;
-            if (m_currentBamSequence >= m_g1VidCell.GetNumberSequences(FALSE)) {
-                m_currentBamSequence = static_cast<SHORT>(m_g1VidCell.GetNumberSequences(FALSE) - 1);
+            m_currentBamSequence = static_cast<SHORT>(static_cast<USHORT>(m_currentBamSequence) + 1);
+            if (m_currentBamSequence >= static_cast<BYTE>(m_g1VidCell.GetNumberSequences(FALSE))) {
+                m_currentBamSequence = static_cast<SHORT>(static_cast<BYTE>(m_g1VidCell.GetNumberSequences(FALSE)) - 1);
             }
         }
 
@@ -228,7 +232,7 @@ void IcewindCGameAnimationTypeEffect::IncrementFrame()
     }
 }
 
-// 0x55d950. The detonation-ember render. Unlike the CGameAnimationTypeEffect twin
+// The detonation-ember render. Unlike the CGameAnimationTypeEffect twin
 // (0x6A36A0, which keys clear-fill on m_translucent/transparency and blits with the
 // caller's render flags), every blend decision here comes from the descriptor's
 // IcewindCVisualEffect: clear-fill only for an opaque, non-copy-from-back, shadowless
@@ -236,6 +240,7 @@ void IcewindCGameAnimationTypeEffect::IncrementFrame()
 // the cells themselves are drawn with m_visualEffect.m_dwFlags. A Fireball detonation
 // sets CopyFromBack=1, so its embers copy-from-back (blend over the backdrop, orange)
 // instead of clear-filling to the BAM's green key colour.
+// 0x55D950
 void IcewindCGameAnimationTypeEffect::Render(CInfinity* pInfinity, CVidMode* pVidMode, INT nSurface, const CRect& rectFX, const CPoint& ptNewPos, const CPoint& ptReference, DWORD dwRenderFlags, COLORREF rgbTintColor, const CRect& rGCBounds, BOOL bDithered, BOOL bFadeOut, LONG posZ, BYTE transparency)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\IcewindCGameAnimationTypeEffect.cpp
@@ -250,7 +255,7 @@ void IcewindCGameAnimationTypeEffect::Render(CInfinity* pInfinity, CVidMode* pVi
         return;
     }
 
-    CPoint ptPos(ptNewPos.x, ptNewPos.y + posZ);
+    CPoint ptPos(ptNewPos.x, static_cast<LONG>(static_cast<DWORD>(ptNewPos.y) + static_cast<DWORD>(posZ)));
     CRect rFXRect(rectFX);
 
     // The blend mode comes entirely from the visual-effect descriptor: an opaque,
@@ -276,7 +281,7 @@ void IcewindCGameAnimationTypeEffect::Render(CInfinity* pInfinity, CVidMode* pVi
         if (m_currentVidCellShadow != NULL) {
             pInfinity->FXRender(m_currentVidCellShadow,
                 ptReference.x,
-                ptReference.y - posZ,
+                static_cast<LONG>(static_cast<DWORD>(ptReference.y) - static_cast<DWORD>(posZ)),
                 m_visualEffect.m_dwFlags | 0x4,
                 0);
         }
@@ -307,7 +312,9 @@ void IcewindCGameAnimationTypeEffect::Render(CInfinity* pInfinity, CVidMode* pVi
             m_visualEffect.m_dwFlags);
 
         if (bFadeOut) {
-            pInfinity->FXUnlock(dwRenderFlags, &rFXRect, ptPos + ptReference);
+            CPoint point(static_cast<LONG>(static_cast<DWORD>(ptPos.x) + static_cast<DWORD>(ptReference.x)),
+                static_cast<LONG>(static_cast<DWORD>(ptPos.y) + static_cast<DWORD>(ptReference.y)));
+            pInfinity->FXUnlock(dwRenderFlags, &rFXRect, point);
         } else {
             pInfinity->FXUnlock(dwRenderFlags, NULL, CPoint(0, 0));
         }
