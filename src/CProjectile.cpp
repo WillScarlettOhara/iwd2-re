@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <new>
 
 #include "CBaldurChitin.h"
 #include "CBaldurEngine.h"
@@ -10535,20 +10536,46 @@ IcewindCSpellHitEmissionRanged::IcewindCSpellHitEmissionRanged()
 }
 
 // =============================================================================
-// IcewindCSpellHitVisual -- the on-ground detonation visual (SCAFFOLD).
-// Layout is recovered (see CProjectile.h); the bodies below are faithful stubs.
-// The base CGameObject and the typed sub-objects (m_cell, m_palette, m_sound,
-// m_visualEffect) are still constructed/destroyed; the real work -- BAM load,
-// radial velocity table, CGameObjectArray::Add + AddToArea, frame advance and
-// render -- is recovered in a later pass.
+// IcewindCSpellHitVisual -- the on-ground detonation visual.
 // =============================================================================
 
-// 0x56BF30. Builds the on-ground detonation animation: loads the explosion BAM
+namespace {
+// VC6 TString copy/Tidy inlined four times in 56BF30/56CF00. These descriptors
+// retain their POD layout because the projectile's visual slots alias them.
+void CopyGroundHitName(char*& target, INT& length, INT& capacity,
+    const char* source, INT sourceLength, INT sourceCapacity)
+{
+    if (sourceLength == 0) return;
+    if (static_cast<BYTE>(source[-1]) < 0xFE) {
+        target = const_cast<char*>(source);
+        length = sourceLength;
+        capacity = sourceCapacity;
+        target[-1] = static_cast<char>(static_cast<BYTE>(target[-1]) + 1);
+    } else {
+        capacity = sourceLength | 0x1F;
+        char* block = new char[capacity + 2];
+        block[0] = 0;
+        target = block + 1;
+        memcpy(target, source, sourceLength);
+        target[sourceLength] = 0;
+        length = sourceLength;
+    }
+}
+
+LONG GroundHitAdd(LONG a, LONG b) { return static_cast<LONG>(static_cast<DWORD>(a) + static_cast<DWORD>(b)); }
+LONG GroundHitSub(LONG a, LONG b) { return static_cast<LONG>(static_cast<DWORD>(a) - static_cast<DWORD>(b)); }
+LONG GroundHitMul(LONG a, LONG b) { return static_cast<LONG>(static_cast<DWORD>(a) * static_cast<DWORD>(b)); }
+LONG GroundHitShift(LONG a) { return static_cast<LONG>(static_cast<DWORD>(a) << (CGameSprite::EXACT_SCALE & 31)); }
+LONG GroundHitIso(LONG a) { return GroundHitMul(a, 3) / 4; }
+}
+
+// Builds the on-ground detonation animation: loads the explosion BAM
 // into m_cell from the first emission slot, copies the other two emission slots
 // in, then rasterises two quarter-circle arcs (CVidMode::GetEllipseArcPixelList)
 // and stores, for every cell of the radial fan, the velocity vector normalised
 // to the launch speed -- replicated across the four quadrants -- before
 // registering the object and adding it to the area.
+// 0x56BF30
 IcewindCSpellHitVisual::IcewindCSpellHitVisual(const IcewindCSpellHitEmission& emission0,
     const IcewindCSpellHitEmission& emission1, const IcewindCSpellHitEmissionRanged& emission2,
     CGameArea* pArea, const CPoint& pos, SHORT nRange, BYTE nVelocity, BYTE a8, SHORT nDuration)
@@ -10567,32 +10594,53 @@ IcewindCSpellHitVisual::IcewindCSpellHitVisual(const IcewindCSpellHitEmission& e
     if (emission0.m_resref0Len == 0) {
         m_bamLoaded = 0;
     } else {
-        m_cell.SetResRef(CResRef(emission0.m_resref0), FALSE, TRUE, TRUE);
+        m_cell.SetResRef(CResRef(CString(emission0.m_resref0)), FALSE, TRUE, TRUE);
         m_bamLoaded = 1;
     }
 
     m_visualEffect = emission0.m_visualEffect;
-    m_emission1 = emission1;
-    m_emission2 = emission2;
+    CopyGroundHitName(m_emission1.m_resref0, m_emission1.m_resref0Len, m_emission1.m_resref0Cap,
+        emission1.m_resref0, emission1.m_resref0Len, emission1.m_resref0Cap);
+    CopyGroundHitName(m_emission1.m_resref1, m_emission1.m_resref1Len, m_emission1.m_resref1Cap,
+        emission1.m_resref1, emission1.m_resref1Len, emission1.m_resref1Cap);
+    m_emission1.m_visualEffect = emission1.m_visualEffect;
+    m_emission1.m_animMode = emission1.m_animMode;
+    m_emission1.m_maxMovingSpawn = emission1.m_maxMovingSpawn;
+    CopyGroundHitName(m_emission2.m_resref0, m_emission2.m_resref0Len, m_emission2.m_resref0Cap,
+        emission2.m_resref0, emission2.m_resref0Len, emission2.m_resref0Cap);
+    CopyGroundHitName(m_emission2.m_resref1, m_emission2.m_resref1Len, m_emission2.m_resref1Cap,
+        emission2.m_resref1, emission2.m_resref1Len, emission2.m_resref1Cap);
+    m_emission2.m_visualEffect = emission2.m_visualEffect;
+    m_emission2.m_cellPool = emission2.m_cellPool;
+    m_emission2.m_lastCellIndex = emission2.m_lastCellIndex;
+    m_emission2.m_respawnFlag = emission2.m_respawnFlag;
+    m_emission2.m_animMode = emission2.m_animMode;
+    m_emission2.m_animFlag36 = emission2.m_animFlag36;
+    m_emission2.m_densityBase = emission2.m_densityBase;
+    m_emission2.m_emitPeriod = emission2.m_emitPeriod;
+    m_emission2.m_densityRampDiv = emission2.m_densityRampDiv;
+    m_emission2.m_cloudFlag = emission2.m_cloudFlag;
 
     m_cell.SequenceSet(0);
     m_cell.FrameSet(0);
     field_7E = 0;
     field_80 = 0;
     m_fanCells = NULL;
+    m_fanVel = NULL;
 
     // Allocate the per-cell pixel-run buffer sized for the full radius.
-    int nRadius = (nRange - 1) / 16;
+    int nRadius = (nRange - 1) / CPathSearch::GRID_SQUARE_SIZEX;
     m_coverHalfW = nRadius + 1;
     m_coverHalfH = nRadius + 1;
-    m_coverageMap = malloc((nRadius + 2 + nRadius + 1) * (nRadius + 2 + nRadius + 1));
+    m_coverageMap = ::operator new((nRadius * 2 + 3) * (nRadius * 2 + 3), std::nothrow);
     if (m_coverageMap == NULL) {
+        delete this;
         return;
     }
 
     // Rasterise the two arcs (half-radius major/minor axes); each call appends a
     // run-length terminator and returns the run count.
-    int nHalf = (nRange - 1) / 32 + 1;
+    int nHalf = (nRange - 1) / (2 * CPathSearch::GRID_SQUARE_SIZEX) + 1;
     m_coverHalfW = nHalf;
     m_coverHalfH = nHalf;
     CBaldurEngine* pEngine = g_pBaldurChitin->GetActiveEngine();
@@ -10607,16 +10655,18 @@ IcewindCSpellHitVisual::IcewindCSpellHitVisual(const IcewindCSpellHitEmission& e
     m_arcLen2 = nRun2 + 1;
     static_cast<BYTE*>(m_coverageMap)[m_arcLen1 + nRun2] = 1;
 
-    m_coverHalfW = (nRange - 1) / 16 + 1;
+    m_coverHalfW = (nRange - 1) / CPathSearch::GRID_SQUARE_SIZEX + 1;
     m_coverHalfH = m_coverHalfW;
 
     // Velocity table: 16 bytes per cell, four quadrants.
-    m_fanCells = malloc((m_arcLen2 + m_arcLen1) * 0x40);
+    m_fanCells = ::operator new((m_arcLen2 + m_arcLen1) * 0x40, std::nothrow);
     if (m_fanCells == NULL) {
+        delete this;
         return;
     }
-    m_fanVel = malloc((m_arcLen2 + m_arcLen1) * 4);
+    m_fanVel = ::operator new((m_arcLen2 + m_arcLen1) * 4, std::nothrow);
     if (m_fanVel == NULL) {
+        delete this;
         return;
     }
     memset(m_fanVel, 0, (m_arcLen2 + m_arcLen1) * 4);
@@ -10627,14 +10677,14 @@ IcewindCSpellHitVisual::IcewindCSpellHitVisual(const IcewindCSpellHitEmission& e
     LONG nStride = m_arcLen1 + m_arcLen2;
 
     LONG nCenterX = pos.x;
-    LONG nIsoY = (pos.y << 2) / 3;
+    LONG nIsoY = static_cast<LONG>(static_cast<DWORD>(pos.y) << 2) / 3;
     LONG nCursorX = nCenterX;
-    LONG nCursorY = nRange + nIsoY;
+    LONG nCursorY = GroundHitAdd(nRange, nIsoY);
 
     for (SHORT i = 0; i < m_arcLen1; ++i) {
-        LONG dx = nCursorX - nCenterX;
-        LONG dy = nCursorY - nIsoY;
-        LONG dist = static_cast<LONG>(sqrt(static_cast<double>(dx * dx + dy * dy)));
+        LONG dx = GroundHitSub(nCursorX, nCenterX);
+        LONG dy = GroundHitSub(nCursorY, nIsoY);
+        LONG dist = static_cast<LONG>(sqrt(static_cast<double>(GroundHitAdd(GroundHitMul(dx, dx), GroundHitMul(dy, dy)))) + 0.5);
         LONG i0 = i;
         LONG i1 = nStride + i;
         LONG i2 = i + nStride * 2;
@@ -10647,7 +10697,7 @@ IcewindCSpellHitVisual::IcewindCSpellHitVisual(const IcewindCSpellHitEmission& e
         pVel[i1 * 4] = 0;
         pVel[i2 * 4] = 0;
         pVel[i3 * 4] = 0;
-        LONG vx = (dx << 10) * nVelocity / dist;
+        LONG vx = GroundHitMul(GroundHitShift(dx), nVelocity) / dist;
         pVel[i0 * 4 + 3] = vx;
         pVel[i1 * 4 + 3] = vx;
         if (vx == 0) {
@@ -10656,21 +10706,21 @@ IcewindCSpellHitVisual::IcewindCSpellHitVisual(const IcewindCSpellHitEmission& e
         }
         pVel[i2 * 4 + 3] = -vx;
         pVel[i3 * 4 + 3] = -vx;
-        LONG vy = (dy << 10) * nVelocity / dist;
+        LONG vy = GroundHitMul(GroundHitShift(dy), nVelocity) / dist;
         pVel[i0 * 4 + 2] = vy;
         pVel[i1 * 4 + 2] = -vy;
         pVel[i2 * 4 + 2] = vy;
         pVel[i3 * 4 + 2] = -vy;
-        nCursorX += 16 * 2;
-        nCursorY -= pArc[i] * 12 * 2;
+        nCursorX = GroundHitAdd(nCursorX, CPathSearch::GRID_SQUARE_SIZEX * 2);
+        nCursorY = GroundHitSub(nCursorY, pArc[i] * CPathSearch::GRID_SQUARE_SIZEY * 2);
     }
 
-    nCursorX = nRange + nCenterX;
+    nCursorX = GroundHitAdd(nRange, nCenterX);
     nCursorY = nIsoY;
     for (SHORT i = 0; i < m_arcLen2; ++i) {
-        LONG dy = nCursorY - nIsoY;
-        LONG dx = nCursorX - nCenterX;
-        LONG dist = static_cast<LONG>(sqrt(static_cast<double>(dx * dx + dy * dy)));
+        LONG dy = GroundHitSub(nCursorY, nIsoY);
+        LONG dx = GroundHitSub(nCursorX, nCenterX);
+        LONG dist = static_cast<LONG>(sqrt(static_cast<double>(GroundHitAdd(GroundHitMul(dx, dx), GroundHitMul(dy, dy)))) + 0.5);
         LONG j0 = m_arcLen1 + i;
         LONG j1 = m_arcLen2 + m_arcLen1 * 2 + i;
         LONG j2 = i + nStride * 2 + m_arcLen1;
@@ -10683,12 +10733,12 @@ IcewindCSpellHitVisual::IcewindCSpellHitVisual(const IcewindCSpellHitEmission& e
         pVel[j1 * 4] = 0;
         pVel[j2 * 4] = 0;
         pVel[j3 * 4] = 0;
-        LONG vx = (dx << 10) * nVelocity / dist;
+        LONG vx = GroundHitMul(GroundHitShift(dx), nVelocity) / dist;
         pVel[j0 * 4 + 3] = vx;
         pVel[j1 * 4 + 3] = vx;
         pVel[j2 * 4 + 3] = -vx;
         pVel[j3 * 4 + 3] = -vx;
-        LONG vy = (dy << 10) * nVelocity / dist;
+        LONG vy = GroundHitMul(GroundHitShift(dy), nVelocity) / dist;
         pVel[j0 * 4 + 2] = vy;
         pVel[j1 * 4 + 2] = -vy;
         pVel[j2 * 4 + 2] = vy;
@@ -10697,35 +10747,68 @@ IcewindCSpellHitVisual::IcewindCSpellHitVisual(const IcewindCSpellHitEmission& e
             pFlag[j1] = 2;
             pFlag[j3] = 2;
         }
-        nCursorX -= pArc[m_arcLen1 + i] * 16 * 2;
-        nCursorY += 12 * 2;
+        nCursorX = GroundHitSub(nCursorX, pArc[m_arcLen1 + i] * CPathSearch::GRID_SQUARE_SIZEX * 2);
+        nCursorY = GroundHitAdd(nCursorY, CPathSearch::GRID_SQUARE_SIZEY * 2);
     }
 
     memcpy(m_terrainTable, CGameObject::DEFAULT_VISIBLE_TERRAIN_TABLE, sizeof(m_terrainTable));
 
     if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE)
         == CGameObjectArray::SUCCESS) {
-        AddToArea(pArea, pos, 0, 0 /* DAT_0084C50C */);
+        CGameObject::AddToArea(pArea, pos, 0, CGameObject::LIST_FRONT);
+    } else {
+        delete this;
     }
 }
 
 // 0x56CEE0 (vtable slot 0 -- MSVC scalar-deleting wrapper; body at 0x56CF00).
-// Frees the three malloc'd fan buffers; the CVidCell, CVidPalette, CSound, the
+// Frees the three fan buffers and four retained TString buffers. CVidCell,
+// CVidPalette, CSound, the
 // IcewindCVisualEffect, the two emission descriptors and the CGameObject base all
 // destruct automatically.
+// 0x56CF00
 IcewindCSpellHitVisual::~IcewindCSpellHitVisual()
 {
-    free(m_coverageMap);
-    free(m_fanCells);
-    free(m_fanVel);
+    ::operator delete(m_coverageMap);
+    ::operator delete(m_fanCells);
+    ::operator delete(m_fanVel);
+    if (m_emission2.m_resref1) {
+        BYTE count = static_cast<BYTE>(m_emission2.m_resref1[-1]);
+        if (count == 0 || count == 0xFF) delete[] (m_emission2.m_resref1 - 1);
+        else m_emission2.m_resref1[-1] = static_cast<char>(count - 1);
+    }
+    m_emission2.m_resref1 = NULL;
+    m_emission2.m_resref1Len = m_emission2.m_resref1Cap = 0;
+    if (m_emission2.m_resref0) {
+        BYTE count = static_cast<BYTE>(m_emission2.m_resref0[-1]);
+        if (count == 0 || count == 0xFF) delete[] (m_emission2.m_resref0 - 1);
+        else m_emission2.m_resref0[-1] = static_cast<char>(count - 1);
+    }
+    m_emission2.m_resref0 = NULL;
+    m_emission2.m_resref0Len = m_emission2.m_resref0Cap = 0;
+    if (m_emission1.m_resref1) {
+        BYTE count = static_cast<BYTE>(m_emission1.m_resref1[-1]);
+        if (count == 0 || count == 0xFF) delete[] (m_emission1.m_resref1 - 1);
+        else m_emission1.m_resref1[-1] = static_cast<char>(count - 1);
+    }
+    m_emission1.m_resref1 = NULL;
+    m_emission1.m_resref1Len = m_emission1.m_resref1Cap = 0;
+    if (m_emission1.m_resref0) {
+        BYTE count = static_cast<BYTE>(m_emission1.m_resref0[-1]);
+        if (count == 0 || count == 0xFF) delete[] (m_emission1.m_resref0 - 1);
+        else m_emission1.m_resref0[-1] = static_cast<char>(count - 1);
+    }
+    m_emission1.m_resref0 = NULL;
+    m_emission1.m_resref0Len = m_emission1.m_resref0Cap = 0;
 }
 
-// 0x56D0A0 (vtable slot 3). Each tick advances the detonation and expands the
+// Each tick advances the detonation and expands the
 // radial fan: every live cell drifts by its velocity, bounces off / dies on walls
 // (CSearchBitmap::GetLOSCost) per the mode byte, and spawns IcewindCSpellHit
 // particles -- stationary m_emission2 cells at an age-ramped probability (recorded
 // into the shared cell pool), and moving m_emission1 cells once per fresh coverage
 // pixel. The visual expires once the fan has settled and the BAM sequence ends.
+// 0x56D0A0
 void IcewindCSpellHitVisual::AIUpdate()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
@@ -10734,7 +10817,7 @@ void IcewindCSpellHitVisual::AIUpdate()
     }
 
     BOOL bSettled = TRUE;
-    m_age++;
+    m_age = GroundHitAdd(m_age, 1);
     m_frameCount--;
 
     if (m_bamLoaded == 1) {
@@ -10763,12 +10846,12 @@ void IcewindCSpellHitVisual::AIUpdate()
             BYTE* pFlags = static_cast<BYTE*>(m_fanVel);
             if (pFlags[i] != 2) {
                 LONG* pCell = reinterpret_cast<LONG*>(static_cast<BYTE*>(m_fanCells) + i * 0x10);
-                pCell[1] += pCell[3];   // pos.y += vel.y
-                pCell[0] += pCell[2];   // pos.x += vel.x
+                pCell[1] = GroundHitAdd(pCell[1], pCell[3]); // fixed X
+                pCell[0] = GroundHitAdd(pCell[0], pCell[2]); // unsquashed fixed Y
 
-                int nTileY = (((pCell[0] * 3 / 4) >> CGameSprite::EXACT_SCALE) + m_pos.y)
+                int nTileY = GroundHitAdd(GroundHitIso(pCell[0]) >> (CGameSprite::EXACT_SCALE & 31), m_pos.y)
                     / CPathSearch::GRID_SQUARE_SIZEY;
-                int nTileX = ((pCell[1] >> CGameSprite::EXACT_SCALE) + m_pos.x)
+                int nTileX = GroundHitAdd(pCell[1] >> (CGameSprite::EXACT_SCALE & 31), m_pos.x)
                     / CPathSearch::GRID_SQUARE_SIZEX;
 
                 SHORT nTableIndex;
@@ -10782,15 +10865,15 @@ void IcewindCSpellHitVisual::AIUpdate()
                     }
                     if (m_collision == CGameTemporal::COLLISION_REBOUND) {
                         // Reverse the velocity on whichever axis crossed the wall.
-                        if ((((pCell[1] - pCell[3]) >> CGameSprite::EXACT_SCALE) + m_pos.x)
+                        if (GroundHitAdd(GroundHitSub(pCell[1], pCell[3]) >> (CGameSprite::EXACT_SCALE & 31), m_pos.x)
                                 / CPathSearch::GRID_SQUARE_SIZEX != nTileX) {
-                            pCell[1] += pCell[3] * -2;
-                            pCell[3] = -pCell[3];
+                            pCell[1] = GroundHitSub(pCell[1], GroundHitMul(pCell[3], 2));
+                            pCell[3] = GroundHitSub(0, pCell[3]);
                         }
-                        if ((((pCell[0] - pCell[2]) * 3 / 4 >> CGameSprite::EXACT_SCALE) + m_pos.y)
+                        if (GroundHitAdd(GroundHitIso(GroundHitSub(pCell[0], pCell[2])) >> (CGameSprite::EXACT_SCALE & 31), m_pos.y)
                                 / CPathSearch::GRID_SQUARE_SIZEY != nTileY) {
-                            pCell[0] += pCell[2] * -2;
-                            pCell[2] = -pCell[2];
+                            pCell[0] = GroundHitSub(pCell[0], GroundHitMul(pCell[2], 2));
+                            pCell[2] = GroundHitSub(0, pCell[2]);
                         }
                     } else {
                         bRender = FALSE;
@@ -10809,12 +10892,12 @@ void IcewindCSpellHitVisual::AIUpdate()
                     // density probability that ramps with age.
                     if (m_emission2.m_resref0Len != 0) {
                         if (m_emitCooldown < 1) {
-                            int nThreshold = m_age * m_age / m_emission2.m_densityRampDiv + m_emission2.m_densityBase;
+                            int nThreshold = GroundHitAdd(GroundHitMul(m_age, m_age) / m_emission2.m_densityRampDiv, m_emission2.m_densityBase);
                             if (m_frameCount < 2) {
-                                nThreshold *= 2;
+                                nThreshold = GroundHitMul(nThreshold, 2);
                             }
-                            CPoint ptSpawn((m_pos.x << CGameSprite::EXACT_SCALE) + pCell[1],
-                                (m_pos.y << CGameSprite::EXACT_SCALE) + pCell[0] * 3 / 4);
+                            CPoint ptSpawn(GroundHitAdd(GroundHitShift(m_pos.x), pCell[1]),
+                                GroundHitAdd(GroundHitShift(m_pos.y), GroundHitIso(pCell[0])));
                             int nRand = rand() % 10000;
                             IcewindCSpellHitCell cell = { ptSpawn.x, ptSpawn.y, 0 };
                             if (nThreshold < nRand) {
@@ -10839,10 +10922,11 @@ void IcewindCSpellHitVisual::AIUpdate()
                     BYTE nCount = pCoverage[nPixIdx];
                     pCoverage[nPixIdx] = nCount + 1;
                     if (nCount == 0 && pFlags[i] == 0) {
-                        if (m_emission1.m_resref0Len != 0 && ++m_movingSpawnCount <= m_emission1.m_maxMovingSpawn) {
-                            CPoint ptSpawn((m_pos.x << CGameSprite::EXACT_SCALE) + pCell[1],
-                                (m_pos.y << CGameSprite::EXACT_SCALE) + pCell[0] * 3 / 4);
-                            CPoint ptVel(pCell[3], pCell[2] * 3 / 4);
+                        if (m_emission1.m_resref0Len != 0
+                            && (m_movingSpawnCount = GroundHitAdd(m_movingSpawnCount, 1)) <= m_emission1.m_maxMovingSpawn) {
+                            CPoint ptSpawn(GroundHitAdd(GroundHitShift(m_pos.x), pCell[1]),
+                                GroundHitAdd(GroundHitShift(m_pos.y), GroundHitIso(pCell[0])));
+                            CPoint ptVel(pCell[3], GroundHitIso(pCell[2]));
                             new IcewindCSpellHitParticle(m_emission1, m_pArea, ptSpawn, 0, ptVel,
                                 static_cast<SHORT>(m_frameCount), 0, m_collision);
                         }
@@ -10861,9 +10945,13 @@ void IcewindCSpellHitVisual::AIUpdate()
         if (m_bamLoaded == 1) {
             if (m_cell.IsEndOfSequence(FALSE)) {
                 RemoveFromArea();
+                // The native epilogue rereads the freed object's BAM flag.
+                // Successful RemoveFromArea deletes this; nothing can advance.
+                return;
             }
         } else {
             RemoveFromArea();
+            return;
         }
     }
 
@@ -10874,6 +10962,7 @@ void IcewindCSpellHitVisual::AIUpdate()
 
 // 0x56D9B0 (vtable slot 18). Removes the visual from the area and the global
 // object array, then deletes itself (same shape as the particle's RemoveFromArea).
+// 0x56D9B0
 void IcewindCSpellHitVisual::RemoveFromArea()
 {
     CGameObject::RemoveFromArea();
@@ -10892,6 +10981,7 @@ void IcewindCSpellHitVisual::RemoveFromArea()
 // 0x56D730 (vtable slot 19). Draws the detonation BAM's current frame at the
 // impact point through the CInfinity FX pipeline, gated on tile visibility, a
 // loaded BAM (m_bamLoaded) and the sequence not having finished.
+// 0x56D730
 void IcewindCSpellHitVisual::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
 {
     CRect rFX;
@@ -10902,19 +10992,19 @@ void IcewindCSpellHitVisual::Render(CGameArea* pArea, CVidMode* pVidMode, int nS
     CInfinity* pInfinity;
 
     (void)pArea;
-    (void)pVidMode;   // binary asserts pVidMode != NULL here; UtilAssert omitted (it kills the game)
+    UTIL_ASSERT(pVidMode != NULL);
 
     // Skip if the impact tile is off-screen or no detonation BAM was loaded. The
     // point is clamped to the area bounds before the visibility lookup.
     LONG nVisX = m_pos.x < 0 ? 0 : m_pos.x;
     LONG nAreaW = m_pArea->GetInfinity()->nAreaX;
-    if (nVisX > nAreaW - 1) {
-        nVisX = nAreaW - 1;
+    if (nVisX > GroundHitSub(nAreaW, 1)) {
+        nVisX = GroundHitSub(nAreaW, 1);
     }
     LONG nVisY = m_pos.y < 0 ? 0 : m_pos.y;
     LONG nAreaH = m_pArea->GetInfinity()->nAreaY;
-    if (nVisY > nAreaH - 1) {
-        nVisY = nAreaH - 1;
+    if (nVisY > GroundHitSub(nAreaH, 1)) {
+        nVisY = GroundHitSub(nAreaH, 1);
     }
     if (!m_pArea->m_visibility.IsTileVisible(m_pArea->m_visibility.PointToTile(CPoint(nVisX, nVisY)))
         || m_bamLoaded == 0) {
@@ -10929,12 +11019,12 @@ void IcewindCSpellHitVisual::Render(CGameArea* pArea, CVidMode* pVidMode, int nS
     rFX.SetRect(0, 0, frameSize.cx, frameSize.cy);
 
     newPos.x = m_pos.x;
-    newPos.y = m_pArea->GetHeightOffset(m_pos, m_listType) + m_pos.y;
+    newPos.y = GroundHitAdd(m_pArea->GetHeightOffset(m_pos, m_listType), m_pos.y);
 
-    rGCBounds.left = newPos.x - ptReference.x;
-    rGCBounds.top = newPos.y - ptReference.y;
-    rGCBounds.right = rGCBounds.left + rFX.Width();
-    rGCBounds.bottom = rGCBounds.top + rFX.Height();
+    rGCBounds.left = GroundHitSub(newPos.x, ptReference.x);
+    rGCBounds.top = GroundHitAdd(GroundHitSub(newPos.y, ptReference.y), m_posZ);
+    rGCBounds.right = GroundHitAdd(rGCBounds.left, frameSize.cx);
+    rGCBounds.bottom = GroundHitAdd(rGCBounds.top, frameSize.cy);
 
     DWORD dwPrepFlags = m_visualEffect.m_dwFlags | CInfinity::FXPREP_COPYFROMBACK;
 
@@ -10942,7 +11032,9 @@ void IcewindCSpellHitVisual::Render(CGameArea* pArea, CVidMode* pVidMode, int nS
     pInfinity->FXPrep(rFX, dwPrepFlags, nSurface, newPos, ptReference);
     if (pInfinity->FXLock(rFX, dwPrepFlags)) {
         pInfinity->FXRender(&m_cell, ptReference.x, ptReference.y, m_visualEffect.m_dwFlags, 0);
-        pInfinity->FXRenderClippingPolys(newPos.x, newPos.y - m_posZ, m_posZ, ptReference, rGCBounds,
+        rGCBounds.top = GroundHitSub(rGCBounds.top, m_posZ);
+        rGCBounds.bottom = GroundHitSub(rGCBounds.bottom, m_posZ);
+        pInfinity->FXRenderClippingPolys(newPos.x, GroundHitSub(newPos.y, m_posZ), m_posZ, ptReference, rGCBounds,
             FALSE, m_visualEffect.m_dwFlags);
         pInfinity->FXUnlock(dwPrepFlags, NULL, CPoint(0, 0));
         pInfinity->FXBltFrom(nSurface, rFX, newPos.x, newPos.y, ptReference.x, ptReference.y,

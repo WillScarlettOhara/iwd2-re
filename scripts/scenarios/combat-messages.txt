@@ -29,6 +29,7 @@ phasebamchecks
 calllightningchecks
 schoolhitchecks
 sunraychecks
+groundhitchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

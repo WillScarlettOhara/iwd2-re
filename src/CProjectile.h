@@ -1439,7 +1439,8 @@ public:
 struct IcewindCSpellHitCell /*#guess*/ {
     /* 0x00 */ LONG  x;
     /* 0x04 */ LONG  y;
-    /* 0x08 */ SHORT flag;
+    /* 0x08 */ BYTE flag;
+    /* 0x09 */ BYTE padding;
 };
 #pragma pack(pop)
 static_assert(sizeof(IcewindCSpellHitCell) == 0xA,
@@ -1544,10 +1545,8 @@ static_assert(sizeof(IcewindCSpellHitEmissionRanged) == 0x46,
 // Name is a guess: IWD2.exe carries no RTTI and the BG2 PDB has no match (this
 // is an IWD2-specific Icewind class). vtable 0x84F0DC, ctor 0x56BF30.
 //
-// SCAFFOLD: the layout below is recovered from the 0x56BF30 ctor (sub-object
-// offsets asm-confirmed); the method bodies are faithful stubs pending recovery
-// of 0x56BF30 (ctor), 0x56D0A0 (AIUpdate), 0x56D730 (Render), 0x56D9B0
-// (RemoveFromArea) and 0x56CEE0 (dtor). Not yet wired into OnArrival.
+// Constructor, fan scheduler, renderer and cleanup recovered against 56BF30,
+// 56D0A0, 56D730, 56D9B0 and the destructor body 56CF00.
 #pragma pack(push, 2)
 class IcewindCSpellHitVisual /*#guess*/ : public CGameObject {
 public:

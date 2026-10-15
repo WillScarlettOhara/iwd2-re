@@ -58,4 +58,4 @@ Final ARC08-18 PASS5 warnings: Win32 Debug,79 steps,5658 school/1726 Sunray/
 46325 nearest checks,60 new pixels,9/9 symbols,60s CLEAN; hashes restored/errors[].
 AI/overlay Fire/opcode/render parity GREEN. Four call-count YELLOWs, render arg
 count advisory and missing offset oracles leave static equivalence unproven.
-Next: ground impact visual56BF30/56D0A0/56D730.
+Follow-up: [ground-hit-recovery.md](ground-hit-recovery.md).

@@ -154,6 +154,7 @@
 #include "mfc.h"
 
 #include "BalDataTypes.h"
+#include "CResWED.h"
 #include "CAIAction.h"
 #include "CAICondition.h"
 #include "CAIResponse.h"
@@ -1723,6 +1724,7 @@ struct MasterPaletteFixture {
 };
 
 #include "SchoolHitChecks.h"
+#include "GroundHitChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5577,6 +5579,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "sunraychecks") == 0) {
         SunrayChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "groundhitchecks") == 0) {
+        GroundHitChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
