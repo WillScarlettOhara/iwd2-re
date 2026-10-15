@@ -1,0 +1,79 @@
+#include "TString.h"
+
+// Storage preparation /*#guess*/: native takes a size and trim BYTE,
+// not the character pointer suggested by the old Assign export name.
+// 0x44BC20
+BOOLEAN TString::PrepareAssign(UINT nLen, BOOLEAN bTrim)
+{
+    if (nLen > 0xFFFFFFFD) {
+        Xlen();
+    }
+    if (m_pData != NULL && static_cast<BYTE>(m_pData[-1]) != 0 && static_cast<BYTE>(m_pData[-1]) != 0xFF) {
+        if (nLen == 0) {
+            m_pData[-1] = static_cast<char>(static_cast<BYTE>(m_pData[-1]) - 1);
+            Tidy(FALSE);
+            return FALSE;
+        }
+        Grow(nLen);
+    } else if (nLen == 0) {
+        if (bTrim) {
+            Tidy(TRUE);
+        } else if (m_pData != NULL) {
+            m_nLen = 0;
+            m_pData[0] = 0;
+        }
+        return FALSE;
+    } else if (bTrim && !(static_cast<UINT>(m_nRes) < 0x20 && nLen <= static_cast<UINT>(m_nRes))) {
+        Tidy(TRUE);
+        Grow(nLen);
+    } else if (static_cast<UINT>(m_nRes) < nLen) {
+        Grow(nLen);
+    }
+    return TRUE;
+}
+
+// Rounded allocation, one-byte reference count and preserved old prefix.
+// 0x44BE10
+void TString::Grow(UINT nLen)
+{
+    UINT nCap = nLen | 0x1f;
+    if (nCap > 0xFFFFFFFD) {
+        nCap = nLen;
+    }
+    char* pBuf;
+    try {
+        LONG size = static_cast<LONG>(nCap + 2);
+        pBuf = new char[size < 0 ? 0 : size];
+    } catch (...) {
+        nCap = nLen;
+        LONG size = static_cast<LONG>(nCap + 2);
+        pBuf = new char[size < 0 ? 0 : size];
+    }
+    UINT nKeep = static_cast<UINT>(m_nLen) < nCap ? static_cast<UINT>(m_nLen) : nCap;
+    if (nKeep != 0) {
+        memcpy(pBuf + 1, m_pData, nKeep);
+    }
+    Tidy(TRUE);
+    pBuf[0] = 0;
+    m_pData = pBuf + 1;
+    m_nRes = static_cast<INT>(nCap);
+    m_nLen = static_cast<INT>(nKeep);
+    m_pData[nKeep] = 0;
+}
+
+// Release owned/frozen storage, otherwise release one shared reference.
+// 0x448D50
+void TString::Tidy(BOOLEAN bDealloc)
+{
+    if (bDealloc && m_pData != NULL) {
+        BYTE rc = static_cast<BYTE>(m_pData[-1]);
+        if (rc == 0 || rc == 0xFF) {
+            delete[] (m_pData - 1);
+        } else {
+            m_pData[-1] = static_cast<char>(rc - 1);
+        }
+    }
+    m_pData = NULL;
+    m_nLen = 0;
+    m_nRes = 0;
+}

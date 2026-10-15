@@ -49,4 +49,4 @@ forms replayed),60s CLEAN. Ground lifecycle1419 checks/72 pixels still passes;
 real melee6HP and bow/bolt/sling12HP plus ammunition and arrival checks pass.
 Rollback restored/errors[]. Static equivalence remains unproven: missing
 offset oracles and seven call-count advisories; no original raster equivalence.
-Next: animator geometry55D690 and cloud rebind55DBD0, then their shared helpers.
+Geometry/cloud continuation: [ember-geometry-recovery.md](ember-geometry-recovery.md).

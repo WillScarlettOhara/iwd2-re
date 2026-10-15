@@ -335,14 +335,14 @@ void CGameAnimationTypeEffect::CalculateFxRect(CRect& rFx, CPoint& ptReference, 
 void CGameAnimationTypeEffect::CalculateGCBoundsRect(CRect& rGCBounds, const CPoint& pos, const CPoint& ptReference, LONG posZ, LONG nWidth, LONG nHeight)
 {
     if (m_currentBamDirection > m_extendDirectionTest) {
-        rGCBounds.left = ptReference.x + pos.x - nWidth;
+        rGCBounds.left = static_cast<LONG>(static_cast<DWORD>(pos.x) - static_cast<DWORD>(nWidth) + static_cast<DWORD>(ptReference.x));
     } else {
-        rGCBounds.left = pos.x - ptReference.x;
+        rGCBounds.left = static_cast<LONG>(static_cast<DWORD>(pos.x) - static_cast<DWORD>(ptReference.x));
     }
 
-    rGCBounds.top = posZ + pos.y - ptReference.y;
-    rGCBounds.right = rGCBounds.left + nWidth;
-    rGCBounds.bottom = rGCBounds.top + nHeight;
+    rGCBounds.top = static_cast<LONG>(static_cast<DWORD>(pos.y) - static_cast<DWORD>(ptReference.y) + static_cast<DWORD>(posZ));
+    rGCBounds.right = static_cast<LONG>(static_cast<DWORD>(rGCBounds.left) + static_cast<DWORD>(nWidth));
+    rGCBounds.bottom = static_cast<LONG>(static_cast<DWORD>(rGCBounds.top) + static_cast<DWORD>(nHeight));
 }
 
 // 0x6A3C60

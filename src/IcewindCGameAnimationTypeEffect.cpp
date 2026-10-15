@@ -7,6 +7,11 @@
 #include "CProjectile.h"
 #include "CUtil.h"
 
+namespace {
+LONG EmberAdd(LONG a, LONG b) { return static_cast<LONG>(static_cast<DWORD>(a) + static_cast<DWORD>(b)); }
+LONG EmberSub(LONG a, LONG b) { return static_cast<LONG>(static_cast<DWORD>(a) - static_cast<DWORD>(b)); }
+}
+
 // Native cleanup at 55D2E0 releases the TString, palette, two cells and base;
 // the deleting wrapper remains compiler generated.
 // 0x55D2C0
@@ -123,11 +128,12 @@ IcewindCGameAnimationTypeEffect::IcewindCGameAnimationTypeEffect(const IcewindCS
     m_extendDirectionTest = CGameSprite::DIR_N;
 }
 
-// 0x55D690. Same FX-rect computation as the CGameAnimationTypeEffect twin (0x6A3280):
+// Same FX-rect computation as the CGameAnimationTypeEffect twin (0x6A3280):
 // the cell's centre point plus its frame size, widened to enclose a shadow cell. The
 // detonation embers never carry a shadow (the ctors force m_currentVidCellShadow to
 // NULL), so only the else branch runs at runtime; the shadow arm is reproduced from
 // the twin for fidelity.
+// 0x55D690
 void IcewindCGameAnimationTypeEffect::CalculateFxRect(CRect& rFx, CPoint& ptReference, LONG posZ)
 {
     // __FILE__: C:\Projects\Icewind2\src\Baldur\IcewindCGameAnimationTypeEffect.cpp
@@ -138,7 +144,7 @@ void IcewindCGameAnimationTypeEffect::CalculateFxRect(CRect& rFx, CPoint& ptRefe
     m_currentVidCell->GetCurrentCenterPoint(ptChar, FALSE);
 
     if (m_currentVidCellShadow != NULL) {
-        ptChar.y += posZ;
+        ptChar.y = EmberAdd(ptChar.y, posZ);
     }
 
     ptReference = ptChar;
@@ -153,31 +159,33 @@ void IcewindCGameAnimationTypeEffect::CalculateFxRect(CRect& rFx, CPoint& ptRefe
         ptReference.x = max(ptShadow.x, ptReference.x);
         ptReference.y = max(ptShadow.y, ptReference.y);
 
-        frameSize.cx += ptReference.x - ptChar.x;
-        frameSize.cy += ptReference.y - ptChar.y;
+        frameSize.cx = EmberAdd(frameSize.cx, EmberSub(ptReference.x, ptChar.x));
+        frameSize.cy = EmberAdd(frameSize.cy, EmberSub(ptReference.y, ptChar.y));
         rFx.SetRect(0, 0, frameSize.cx, frameSize.cy);
 
         m_currentVidCellShadow->GetCurrentFrameSize(frameSize, FALSE);
 
-        rFx.right = max(frameSize.cx + ptReference.x - ptShadow.x, rFx.right);
-        rFx.bottom = max(frameSize.cy + ptReference.y - ptShadow.y, rFx.bottom);
+        rFx.right = max(EmberAdd(frameSize.cx, EmberSub(ptReference.x, ptShadow.x)), rFx.right);
+        rFx.bottom = max(EmberAdd(frameSize.cy, EmberSub(ptReference.y, ptShadow.y)), rFx.bottom);
 
-        ptReference.y = max(ptChar.y - posZ, ptShadow.y + posZ);
+        ptReference.y = max(EmberSub(ptChar.y, posZ), EmberAdd(ptShadow.y, posZ));
     } else {
         rFx.SetRect(0, 0, frameSize.cx, frameSize.cy);
     }
 }
 
-// 0x55D800. The detonation embers have no directional sequences, so unlike the
+// The detonation embers have no directional sequences, so unlike the
 // CGameAnimationTypeEffect twin (0x6A3450) this only records the facing -- no assert,
 // no sequence reselection.
+// 0x55D800
 void IcewindCGameAnimationTypeEffect::ChangeDirection(SHORT nDirection)
 {
     m_currentBamDirection = nDirection;
 }
 
-// 0x55D260. Same as the CGameAnimationTypeEffect twin (0x6A3140): delegates to the
+// Same as the CGameAnimationTypeEffect twin (0x6A3140): delegates to the
 // current cell.
+// 0x55D260
 BOOL IcewindCGameAnimationTypeEffect::IsEndOfSequence()
 {
     // __FILE__: .\Include\IcewindCGameAnimationTypeEffect.h
@@ -329,8 +337,9 @@ void IcewindCGameAnimationTypeEffect::Render(CInfinity* pInfinity, CVidMode* pVi
     }
 }
 
-// 0x55D210. The detonation embers report no meaningful frame index -- unlike the
+// The detonation embers report no meaningful frame index -- unlike the
 // CGameAnimationTypeEffect twin (0x6A3180) this returns -1 unconditionally.
+// 0x55D210
 SHORT IcewindCGameAnimationTypeEffect::GetCurrentFrame()
 {
     return -1;

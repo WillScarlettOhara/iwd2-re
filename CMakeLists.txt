@@ -442,6 +442,7 @@ target_sources(${EXECUTABLE_NAME} PUBLIC
     "src/IcewindMisc.cpp"
     "src/IcewindMisc.h"
     "src/MfcCString.cpp"
+    "src/TString.cpp"
     "src/main.cpp"
     "src/mfc.h"
     "src/resource.h"

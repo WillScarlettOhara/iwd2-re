@@ -10,20 +10,13 @@
 // laid out { <union head>[4], char* m_pData @4, int m_nLen @8, int m_nRes @0xc }
 // whose heap buffer carries a one-byte reference count immediately ahead of m_pData
 // (m_pData[-1]) and whose capacity is rounded up with | 0x1f. Reconstructed from the
-// assign/grow/tidy helpers 0x44BC20 / 0x44BE10 / 0x448D50, the _Xlen throw 0x7F9AC2
+// storage/grow/tidy helpers 0x44BC20 / 0x44BE10 / 0x448D50, the _Xlen throw 0x7F9AC2
 // and the substring compare 0x4C5ED0.
 //
-// NOTE: our recovered call sites only default-construct, assign-from-char*, compare
-// and destroy a TString -- they never copy or share one -- so the reference count
-// stays at the "owned" sentinel (0) and the copy-on-write detach path is never
-// reached. Assign therefore reproduces 0x44BC20's observable result (an owned heap
-// buffer with the new contents, capacity rounded | 0x1f, a leading refcount byte)
-// without the share/unshare branches that no live path exercises. Copy construction
-// and copy assignment (0x44BA90) share the source buffer and bump the reference
-// count in the binary; we model them as a deep copy into an owned buffer -- the same
-// owned-only simplification as Assign, and observably identical for the resref keys
-// std::set<TString> holds (CDerivedStats::m_cImmunitiesSpell).
-#pragma pack(push, 4)
+// Assignment preserves the native trim, shared-buffer detach and empty-release
+// rules. Copy construction/assignment still deep-copy rather than recovering the
+// separate 0x44BA90 sharing path; std::set<TString> uses those value operations.
+#pragma pack(push, 2)
 class TString {
 public:
     /* 0000 */ char m_buf[4];   // union head; unused once heap-allocated. A caller may
@@ -116,59 +109,20 @@ public:
     }
 
 private:
-    // 0x44BC20 (assign) + 0x44BE10 (grow) collapsed to the owned-buffer path.
     TString& Assign(const char* s, int nLen)
     {
-        if (static_cast<unsigned>(nLen) > 0xFFFFFFFD) {
-            Xlen();
-        }
-        if (m_pData == NULL || nLen > m_nRes) {
-            Tidy(TRUE);
-            if (nLen != 0) {
-                Grow(nLen);
-            }
-        }
-        if (nLen != 0) {
+        if (PrepareAssign(static_cast<UINT>(nLen), TRUE)) {
             memcpy(m_pData, s, nLen);
             m_pData[nLen] = 0;
             m_nLen = nLen;
-        } else if (m_pData != NULL) {
-            m_nLen = 0;
-            m_pData[0] = 0;
         }
         return *this;
     }
 
-    // 0x44BE10: allocate an owned buffer of capacity (nLen | 0x1f), preceded by the
-    // reference-count byte (0 == owned) and followed by room for the terminator.
-    void Grow(int nLen)
-    {
-        int nCap = nLen | 0x1f;
-        if (static_cast<unsigned>(nCap) > 0xFFFFFFFD) {
-            nCap = nLen;
-        }
-        char* pBuf = new char[nCap + 2];
-        pBuf[0] = 0;
-        m_pData = pBuf + 1;
-        m_nRes = nCap;
-    }
-
-    // 0x448D50: release the buffer (free when owned -- refcount 0 or the 0xFF frozen
-    // marker -- else decrement the shared count) and reset to empty.
-    void Tidy(BOOL bDealloc)
-    {
-        if (bDealloc && m_pData != NULL) {
-            char rc = m_pData[-1];
-            if (rc == 0 || rc == static_cast<char>(0xFF)) {
-                delete[] (m_pData - 1);
-            } else {
-                m_pData[-1] = rc - 1;
-            }
-        }
-        m_pData = NULL;
-        m_nLen = 0;
-        m_nRes = 0;
-    }
+protected:
+    BOOLEAN PrepareAssign(UINT nLen, BOOLEAN bTrim); // 0x44BC20
+    void Grow(UINT nLen); // 0x44BE10
+    void Tidy(BOOLEAN bDealloc); // 0x448D50
 
     // 0x7F9AC2: std::_String_base::_Xlen.
     static void Xlen()

@@ -1727,6 +1727,7 @@ struct MasterPaletteFixture {
 #include "SchoolHitChecks.h"
 #include "GroundHitChecks.h"
 #include "HitParticleChecks.h"
+#include "EmberGeometryChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5587,6 +5588,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "hitparticlechecks") == 0) {
         HitParticleChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "embergeometrychecks") == 0) {
+        EmberGeometryChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
@@ -10142,9 +10146,14 @@ void Tick(CWarp* pActiveEngine)
             const DWORD flags[] = {1, 11, 16, 0x10001};
             for (INT index = 0; index < 4; ++index) {
                 std::set<CGameObject*> before;
+                std::set<LONG> beforeIds;
                 for (INT slot = 0; slot < objects->m_nArraySize; ++slot) {
-                    if (objects->m_pArray[slot].m_objectId != -1) before.insert(objects->m_pArray[slot].m_objectPtr);
+                    if (objects->m_pArray[slot].m_objectId != -1) {
+                        before.insert(objects->m_pArray[slot].m_objectPtr);
+                        beforeIds.insert((slot<<16)|USHORT(objects->m_pArray[slot].m_objectId));
+                    }
                 }
+                SHORT nextId=objects->m_nNextObjectId;
                 effect->m_dwFlags = flags[index];
                 effect->m_done = FALSE;
                 check("travelling-virtual-apply-done", effect->ApplyEffect(target) && effect->m_done);
@@ -10152,9 +10161,20 @@ void Tick(CWarp* pActiveEngine)
                 INT created = 0;
                 for (INT slot = 0; slot < objects->m_nArraySize; ++slot) {
                     auto& entry = objects->m_pArray[slot];
+                    LONG id=(slot<<16)|USHORT(entry.m_objectId);
+                    if (entry.m_objectId!=-1 && !beforeIds.count(id) && before.count(entry.m_objectPtr))
+                        Emit("{\"step\":%d,\"op\":\"projectile-reused-address\",\"flags\":%lu,\"id\":%ld,\"pointer\":%lu}",nStep,flags[index],id,DWORD(entry.m_objectPtr));
                     if (entry.m_objectId == -1 || before.count(entry.m_objectPtr)) continue;
                     CProjectile* candidate = dynamic_cast<CProjectile*>(entry.m_objectPtr);
                     if (candidate) { projectile = candidate; ++created; }
+                }
+                if (created!=1 || !queue.IsEmpty()) {
+                    CGameObject* shared=NULL; BYTE src=objects->GetShare(sourceId,CGameObjectArray::THREAD_ASYNCH,&shared,INFINITE);
+                    if (src==CGameObjectArray::SUCCESS) objects->ReleaseShare(sourceId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                    BYTE dst=objects->GetShare(targetId,CGameObjectArray::THREAD_ASYNCH,&shared,INFINITE);
+                    if (dst==CGameObjectArray::SUCCESS) objects->ReleaseShare(targetId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                    Emit("{\"step\":%d,\"op\":\"projectile-launch-diagnostic\",\"flags\":%lu,\"created\":%d,\"messages\":%d,\"nextBefore\":%d,\"nextAfter\":%d,\"sourceRC\":%u,\"targetRC\":%u,\"sourceId\":%ld,\"targetId\":%ld}",
+                        nStep,flags[index],created,queue.GetCount(),nextId,objects->m_nNextObjectId,src,dst,sourceId,targetId);
                 }
                 check("one-travelling-object-no-early-message", created == 1 && queue.IsEmpty());
                 check("word-factory-selects-concrete-type", projectile && (index == 1
