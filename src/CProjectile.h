@@ -170,25 +170,6 @@ protected:
     /* 032E */ IcewindCVisualEffect m_visualEffect;
 };
 
-class CProjectileSummonVFX : public CProjectile {
-public:
-    CProjectileSummonVFX(const CResRef& visualResRef, const IcewindCVisualEffect& visualEffect);
-
-    void AIUpdate() override;
-    void Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface) override;
-    void Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType) override;
-
-    void SetArrivalSound(const CResRef& arrivalSoundRef);
-    void SetOffsetAboveTarget(BOOL offsetAboveTarget);
-
-    static CProjectile* DecodeSpellHitProjectile(int typeIndex, CGameAIBase* pCaster, BOOL bPositive);
-
-private:
-    /* 0192 */ CVidCell m_vidCell;
-    /* 026C */ IcewindCVisualEffect m_visualEffect;
-    /* 032C */ BOOL m_offsetAboveTarget;
-};
-
 // Intermediate base for the travelling weapon/spell projectiles (arrows, bolts,
 // darts, axes, spears, magic missiles, fireballs). Adds a heap CVidCell
 // animation cell plus a range palette and bitmap on top of CProjectile. 17 leaf
@@ -627,8 +608,8 @@ private:
 // CProjectileMagicMissileMulti). Differences from the travelling ctor, per
 // the 0x578110 asm: height handling on by default (m_bHasHeight,
 // m_useHeightOffset), the four +0xD0 colors seeded, the +0x2A0/+0x2A1 flags,
-// and the visual-effect member. The already-recovered chainers
-// (CProjectileSummonVFX) keep their independent minimal models for now.
+// and the visual-effect member. Stationary school-hit overlays also inherit
+// this family's cell ownership and renderer.
 #pragma pack(push, 2)
 class IcewindCProjectileTravellingVFX : public CProjectileTravelling {
     // The strike tracker's gather pass reads m_terrainTable off its owner.
@@ -656,6 +637,45 @@ protected:
     /* 02A0 */ BYTE m_bMirrorNorth; // #guess
     /* 02A1 */ BYTE m_bMirrorEast; // #guess
     /* 02A2 */ IcewindCVisualEffect m_visualEffect;
+};
+#pragma pack(pop)
+
+// Native vtable 0x851234, size 0x2BA. Stationary school/spell impact overlay.
+#pragma pack(push, 2)
+class CProjectileSummonVFX : public IcewindCProjectileTravellingVFX {
+public:
+    CProjectileSummonVFX(const CResRef& visualResRef, const IcewindCVisualEffect& visualEffect);
+    void AIUpdate() override;
+    void Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType) override;
+    void SetArrivalSound(const CResRef& arrivalSoundRef);
+    void SetOffsetAboveTarget(BOOL offsetAboveTarget);
+    static CProjectile* DecodeSpellHitProjectile(int typeIndex, CGameAIBase* pCaster, BOOL bPositive);
+protected:
+    /* 02AE */ BYTE m_offsetAboveTarget;
+    /* 02AF */ BYTE m_loopSequence;
+    /* 02B0 */ LONG m_loopSequenceIndex;
+    /* 02B4 */ LONG m_loopCount;
+    /* 02B8 */ BYTE m_randomSequence;
+    /* 02B9 */ BYTE m_singleSequence;
+};
+#pragma pack(pop)
+
+// Native vtable 0x8512BC, size 0x29E. SunrayX impact carrier.
+#pragma pack(push, 2)
+class CProjectileSunray /*#guess*/ : public CProjectile {
+public:
+    CProjectileSunray(const CResRef& visual, const CResRef& sound, BYTE color,
+        LONG flags, LONG animation, SHORT lifetime);
+    void AIUpdate() override;
+    void Render(CGameArea* area, CVidMode* mode, int surface) override;
+    void Fire(CGameArea* area, LONG source, LONG target, CPoint point, LONG height, SHORT kind) override;
+protected:
+    /* 0192 */ CVidCell m_vidCell;
+    /* 026C */ CVidPalette m_palette;
+    /* 0290 */ LONG m_renderFlag;
+    /* 0294 */ LONG m_animFlag;
+    /* 0298 */ SHORT m_lifetime;
+    /* 029A */ LONG m_phase;
 };
 #pragma pack(pop)
 

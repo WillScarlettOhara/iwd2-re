@@ -27,6 +27,8 @@ spraychecks
 followupchecks
 phasebamchecks
 calllightningchecks
+schoolhitchecks
+sunraychecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

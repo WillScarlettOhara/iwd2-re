@@ -1722,6 +1722,8 @@ struct MasterPaletteFixture {
     ~MasterPaletteFixture() { if (resource) Restore(); }
 };
 
+#include "SchoolHitChecks.h"
+
 void CallLightningChecks(INT nStep)
 {
     auto* game=g_pBaldurChitin->GetObjectGame(); auto* objects=game->GetObjectArray(); auto* area=game->GetVisibleArea();
@@ -3029,6 +3031,37 @@ void AreaNearestChecks(INT nStep)
                 Emit("{\"step\":%d,\"op\":\"phase-bam-live-damage\",\"loss\":%ld,\"ticks\":%d,\"length1\":%d,\"length2\":%d,\"retired\":%s}",nStep,
                     before-saved[1].p->m_baseStats.m_hitPoints,ticks,length1,length2,retired?"true":"false");
                 retire(parent);
+            }
+            for (INT type : {3,18,21,57,69,73,74,75,76,98,104,111}) {
+                CProjectile* marker=CProjectileSummonVFX::DecodeSpellHitProjectile(type,NULL,FALSE);
+                // This leaf preserves existing payload IDs; Fire's own IDs are
+                // ignored for SummonVFX, as proved by the native Fire capture.
+                marker->m_sourceId=origin->m_id; marker->m_targetId=ids[1]; marker->m_fireSoundRef="";
+                marker->AddEffect(CGameEffect::DecodeEffect(&effect,origin->m_pos,ids[0],saved[1].p->m_pos));
+                LONG before=saved[1].p->m_baseStats.m_hitPoints;
+                marker->Fire(area,origin->m_id,ids[1],CPoint(137,196),99,13); LONG id=marker->m_id;
+                check("school-hit-immediate-owned-payload",marker->m_effectList.IsEmpty());
+                INT groups=0;
+                while (handler->m_messageList.GetCount()>messages) {
+                    CMessage* message=handler->m_messageList.RemoveTail(); auto* group=dynamic_cast<CMessage105*>(message); auto* sound=dynamic_cast<CMessagePlaySound*>(message);
+                    check("school-hit-owned-damage-routing",(group && group->m_nCount==1 && group->m_sourceId==origin->m_id && group->m_targetId==ids[1])
+                        || (sound && sound->m_sourceId==ids[1] && sound->m_targetId==ids[1]));
+                    if (group) { ++groups; group->Run(); } delete message;
+                }
+                check("school-hit-real-six-hp",groups==1 && before-saved[1].p->m_baseStats.m_hitPoints==6 && saved[0].p->m_baseStats.m_hitPoints==512);
+                POSITION queued=area->m_lVertSortAdd.Find(reinterpret_cast<int*>(id)); if (queued) area->m_lVertSortAdd.RemoveAt(queued);
+                game->m_nTimeStop=1; game->m_nTimeStopCaster=origin->m_id; marker->AIUpdate();
+                game->m_nTimeStop=0; BOOL retired=FALSE; INT ticks=0;
+                for (;ticks<4096 && !retired;++ticks) {
+                    marker->AIUpdate(); CGameObject* live=NULL; BYTE rc=objects->GetShare(id,CGameObjectArray::THREAD_ASYNCH,&live,INFINITE);
+                    retired=rc==CGameObjectArray::DELETED;
+                    if (rc==CGameObjectArray::SUCCESS) { objects->ReleaseShare(id,CGameObjectArray::THREAD_ASYNCH,INFINITE); marker=static_cast<CProjectile*>(live); }
+                    else if (!retired) break;
+                }
+                if (!retired) retire(marker);
+                check("school-hit-full-expiry-without-repeat",retired && before-saved[1].p->m_baseStats.m_hitPoints==6 && handler->m_messageList.GetCount()==messages);
+                Emit("{\"step\":%d,\"op\":\"school-hit-live-damage\",\"type\":%d,\"loss\":%ld,\"ticks\":%d,\"retired\":%s}",nStep,type,
+                    before-saved[1].p->m_baseStats.m_hitPoints,ticks,retired?"true":"false");
             }
             {
             MasterPaletteFixture masterFixture(game->GetMasterBitmap()); check("colored-live-byte-palette-pinned",masterFixture.active);
@@ -5538,6 +5571,12 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "calllightningchecks") == 0) {
         CallLightningChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "schoolhitchecks") == 0) {
+        SchoolHitChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "sunraychecks") == 0) {
+        SunrayChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

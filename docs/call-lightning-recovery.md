@@ -57,5 +57,4 @@ AI/Render parity GREEN; ctor YELLOW and arg-count advisory leave static proof
 incomplete where oracles skip. Marker moved beside Render to gate all3 symbols.
 Setup journal rename failed once; rollback clean, retry retained all gates.
 
-Next: school-hit factory560310 and opcode233 dispatcher5601E0 replication;
-ground impact visual56BF30/56D0A0/56D730 remains scaffolded.
+School-hit factory/opcode233/Sunray completed: [school-hit-recovery.md](school-hit-recovery.md).

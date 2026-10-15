@@ -2739,144 +2739,305 @@ void CProjectileBAM::Fire(CGameArea* pArea, LONG source, LONG target, CPoint tar
 
 // -----------------------------------------------------------------------------
 
+// 0x57E860
+CProjectileSunray::CProjectileSunray(const CResRef& resRef,
+    const CResRef& soundRef, BYTE colorIndex, LONG renderFlag, LONG animFlag,
+    SHORT lifetime)
+    : m_palette(CVidPalette::TYPE_RANGE)
+{
+    m_bSparkleTrail = FALSE;
+    m_phase = 0;
+    m_vidCell.SetResRef(resRef, FALSE, TRUE, TRUE);
+
+    if (colorIndex != BYTE(0xFF)) {
+        m_palette.SetRange(0,colorIndex,*g_pBaldurChitin->GetObjectGame()->GetMasterBitmap());
+        m_vidCell.SetPalette(m_palette);
+    }
+    m_vidCell.FrameSet(0);
+
+    m_fireSoundRef = soundRef;
+
+    m_renderFlag = renderFlag;
+    m_animFlag = animFlag;
+    m_lifetime = lifetime;
+}
+
+// 0x57EB30
+void CProjectileSunray::AIUpdate()
+{
+    auto* game = g_pBaldurChitin->GetObjectGame();
+    auto* objects = game->GetObjectArray();
+    if (game->m_nTimeStop != 0 && game->m_nTimeStopCaster != m_id) return;
+    m_lifetime = static_cast<SHORT>(static_cast<USHORT>(m_lifetime) - 1);
+    if (m_lifetime == 0) {
+        m_phase = 2;
+        m_vidCell.FrameSet(0);
+    }
+    if (m_animFlag == 0) {
+        if (!m_vidCell.IsEndOfSequence(FALSE)) m_vidCell.FrameAdvance();
+        else if (m_phase == 0 || m_phase == 1) {
+            m_phase = 1;
+            m_vidCell.FrameSet(0);
+        } else if (m_phase == 2) {
+            RemoveFromArea();
+            if (objects->Delete(m_id, CGameObjectArray::THREAD_ASYNCH, NULL, INFINITE)
+                == CGameObjectArray::SUCCESS) delete this;
+            return;
+        }
+    } else {
+        BYTE length = m_vidCell.GetSequenceLength(0, FALSE);
+        m_vidCell.FrameSet(length == 0 ? 0 : rand() % length);
+    }
+    if (m_targetId != CGameObjectArray::INVALID_INDEX) {
+        CGameObject* target;
+        BYTE rc = objects->GetShare(m_targetId, CGameObjectArray::THREAD_ASYNCH, &target, INFINITE);
+        if (rc != CGameObjectArray::SUCCESS) { RemoveSelf(); return; }
+        if (target->m_pArea != m_pArea) {
+            LONG id = m_targetId;
+            RemoveSelf();
+            objects->ReleaseShare(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            return;
+        }
+        objects->ReleaseShare(m_targetId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+    m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
+}
+
+// 0x57ED30
+void CProjectileSunray::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
+{
+    (void)pArea;   // the override reads m_pArea, not the passed area
+
+    UTIL_ASSERT(pVidMode != NULL);
+
+    // Viewport clip rect in world coords: scroll origin (nCurrentX/Y) plus the
+    // screen rect (rViewPort), read from the area's embedded CInfinity.
+    CInfinity* pInfinity = m_pArea->GetInfinity();
+    CRect rViewport;
+    rViewport.left = pInfinity->nCurrentX;
+    rViewport.top = pInfinity->nCurrentY;
+    rViewport.right = (pInfinity->rViewPort.right - pInfinity->rViewPort.left)
+                      + pInfinity->nCurrentX;
+    rViewport.bottom = (pInfinity->rViewPort.bottom - pInfinity->rViewPort.top)
+                       + pInfinity->nCurrentY;
+
+    // The strike foot: the cell origin lifted by the terrain height, clamped to the
+    // bottom of the map. nBaseY climbs one slice at a time; nSavedX/nSavedBaseY keep
+    // the foot for the clipping-poly pass.
+    LONG nBaseX = m_pos.x;
+    LONG nBaseY = static_cast<LONG>(static_cast<DWORD>(m_pArea->GetHeightOffset(m_pos,m_listType))+static_cast<DWORD>(m_pos.y));
+    if (pInfinity->nAreaY <= nBaseY) {
+        nBaseY = static_cast<LONG>(static_cast<DWORD>(pInfinity->nAreaY)-1);
+    }
+    LONG nSavedX = nBaseX;
+    LONG nSavedBaseY = nBaseY;
+
+    {
+        DWORD flags = 0;
+        BYTE seq = 0;
+        do {
+            if (nBaseY < 0) {
+                return;
+            }
+            SHORT nTile=static_cast<SHORT>(static_cast<DWORD>(static_cast<SHORT>(nBaseY/CVisibilityMap::SQUARE_SIZEY))
+                *static_cast<DWORD>(m_pArea->m_visibility.m_nWidth)+static_cast<DWORD>(static_cast<SHORT>(nBaseX/CVisibilityMap::SQUARE_SIZEX)));
+            if (!m_pArea->m_visibility.IsTileVisible(nTile)) {
+                return;
+            }
+
+            m_vidCell.SequenceSet(static_cast<SHORT>(static_cast<USHORT>(static_cast<USHORT>(m_phase) << 2) + seq));
+            CPoint ptRef;
+            m_vidCell.GetCurrentCenterPoint(ptRef, FALSE);
+            CSize frameSize;
+            m_vidCell.GetCurrentFrameSize(frameSize, FALSE);
+            CRect rFrame;
+            rFrame.SetRect(0, 0, frameSize.cx, frameSize.cy);
+
+            CRect rDraw;
+            rDraw.left=static_cast<LONG>(static_cast<DWORD>(nBaseX)-static_cast<DWORD>(ptRef.x));
+            rDraw.top=static_cast<LONG>(static_cast<DWORD>(m_posZ)-static_cast<DWORD>(ptRef.y)+static_cast<DWORD>(nBaseY));
+            rDraw.right=static_cast<LONG>(static_cast<DWORD>(frameSize.cx)+static_cast<DWORD>(rDraw.left));
+            rDraw.bottom=static_cast<LONG>(static_cast<DWORD>(frameSize.cy)+static_cast<DWORD>(rDraw.top));
+
+            CRect rClipped;
+            rClipped.IntersectRect(&rDraw, &rViewport);
+            if (rClipped.IsRectEmpty()) {
+                return;
+            }
+
+            DWORD cycleFlags;
+            if (m_renderFlag == 0) {
+                cycleFlags = CInfinity::FXPREP_CLEARFILL | 0x20001;
+            } else {
+                cycleFlags = CInfinity::FXPREP_COPYFROMBACK | 0x20200;
+            }
+            flags |= cycleFlags;
+
+            CPoint newPos(nBaseX, nBaseY);
+            pInfinity->FXPrep(rFrame, flags, nSurface, newPos, ptRef);
+            if (pInfinity->FXLock(rFrame, flags)) {
+                pInfinity->FXRender(&m_vidCell, ptRef.x, ptRef.y, flags, 0);
+                CRect rGCBounds;
+                rGCBounds.left = rDraw.left;
+                rGCBounds.top=static_cast<LONG>(static_cast<DWORD>(m_posZ)+static_cast<DWORD>(rDraw.top));
+                rGCBounds.right = rDraw.right;
+                rGCBounds.bottom=static_cast<LONG>(static_cast<DWORD>(m_posZ)+static_cast<DWORD>(rDraw.bottom));
+                pInfinity->FXRenderClippingPolys(nSavedX,static_cast<LONG>(static_cast<DWORD>(m_posZ)+static_cast<DWORD>(nSavedBaseY)),
+                    static_cast<LONG>(0u-static_cast<DWORD>(m_posZ)),
+                    ptRef, rGCBounds, FALSE, flags);
+                pInfinity->FXUnlock(flags, NULL, CPoint(0, 0));
+                pInfinity->FXBltFrom(nSurface, rFrame, nBaseX, nBaseY,
+                    ptRef.x, ptRef.y, flags | 1);
+            }
+
+            nBaseY=static_cast<LONG>(static_cast<DWORD>(nBaseY)-static_cast<DWORD>(ptRef.y));
+            seq++;
+        } while (seq < 4);
+    }
+}
+
+//
+// CProjectileTravelling -- shared base ctor for the travelling weapon/spell
+// projectiles. Builds the heap CVidCell animation cell from the visual resref,
+// a range palette and a bitmap, then seeds the travelling state. The leaf
+// classes (CProjectileArrow etc.) prepare the resref and call this, then set
+// their own vtable and per-projectile configuration.
+//
+// STEP 1: the CProjectile base sub-object is constructed by its (implicit)
+// member ctor; this body initializes the travelling additions. The original
+// also zeroes the motion-integrator work fields in the +0x9C..0xC0 "drift gap"
+// (see the projectile-factory layout note) -- the subpixel position, per-tick
+// step, carry and random-spread band that AimAtPoint reads each tick -- plus
+// the +0xE6 render flags; these are modelled by-name on CProjectileTravelling
+// and seeded here. The remaining unread gap defaults (+0xC4, +0xD0..0xDC) are
+// omitted. m_driftDecay (the carry modulus) is left unwritten by the original; it
+// is only consulted when a carry is non-zero, which the zeroed carries prevent,
+// so it is zero-seeded here for definedness.
+// 0x57F050
+void CProjectileSunray::Fire(CGameArea* pArea, LONG source, LONG target,
+    CPoint targetPos, LONG nHeight, SHORT nType)
+{
+    m_sourceId = source;
+    m_targetId = target;
+    m_pArea = pArea;
+
+    // Deliver before registering the animation.
+    DeliverEffects();
+
+    // Register in the global object array.
+    if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE)
+        != CGameObjectArray::SUCCESS) {
+        delete this;
+        return;
+    }
+
+    // A failed single target share leaves the object registered but unplaced.
+    CPoint ptLaunch;
+    if (m_targetId == CGameObjectArray::INVALID_INDEX) {
+        ptLaunch = targetPos;
+        ptLaunch.y = static_cast<LONG>(static_cast<DWORD>(ptLaunch.y)+13);
+    } else {
+        CGameObject* pTarget;
+        BYTE rc;
+        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &pTarget, INFINITE);
+        if (rc != CGameObjectArray::SUCCESS) return;
+        ptLaunch = pTarget->GetPos();
+        ptLaunch.y = static_cast<LONG>(static_cast<DWORD>(ptLaunch.y)+13);
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+
+    AddToArea(pArea, ptLaunch, 0, CGameObject::LIST_FRONT);
+
+    PlaySound(m_fireSoundRef,m_loopFireSound,FALSE);
+    if (m_callBackProjectile!=CGameObjectArray::INVALID_INDEX) {
+        CGameObject* parent; BYTE rc;
+        do { rc=g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_callBackProjectile,
+            CGameObjectArray::THREAD_ASYNCH,&parent,INFINITE); }
+        while (rc==CGameObjectArray::SHARED || rc==CGameObjectArray::DENIED);
+        if (rc!=CGameObjectArray::SUCCESS) return;
+        static_cast<CProjectile*>(parent)->CallBack();
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_callBackProjectile,
+            CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    }
+}
+
 // 0x57E490
 CProjectileSummonVFX::CProjectileSummonVFX(const CResRef& visualResRef, const IcewindCVisualEffect& visualEffect)
-    : m_visualEffect(visualEffect)
+    : IcewindCProjectileTravellingVFX(visualResRef)
 {
-    m_projectileType = 0;
-    m_sourceId = CGameObjectArray::INVALID_INDEX;
-    m_targetId = CGameObjectArray::INVALID_INDEX;
-    m_callBackProjectile = CGameObjectArray::INVALID_INDEX;
-    m_pArea = NULL;
-    m_arrivalSoundRef = "";
-    m_loopArrivalSound = FALSE;
-    m_bHasHeight = FALSE;
-    m_nTargetId = CGameObjectArray::INVALID_INDEX;
     m_offsetAboveTarget = FALSE;
-
-    m_vidCell.SetResRef(visualResRef, FALSE, TRUE, TRUE);
-    m_vidCell.SequenceSet(0);
-    m_vidCell.FrameSet(0);
+    m_loopSequence = FALSE;
+    m_loopSequenceIndex = 0;
+    m_loopCount = 0;
+    m_randomSequence = TRUE;
+    m_singleSequence = TRUE;
+    m_hasShadowCell = FALSE;
+    m_dirCount = 1;
+    m_bHasHeight = FALSE;
+    m_useHeightOffset = FALSE;
+    m_visualEffect = visualEffect;
 }
 
 // 0x57E580 (virtual)
 void CProjectileSummonVFX::AIUpdate()
 {
-    if (m_vidCell.IsEndOfSequence(FALSE)) {
-        OnArrival();
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    if (game->m_nTimeStop != 0 && game->m_nTimeStopCaster != m_id) {
         return;
     }
-
-    m_vidCell.FrameAdvance();
+    if (!m_pVidCell->IsEndOfSequence(FALSE)) {
+        m_pVidCell->FrameAdvance();
+    }
+    if (m_loopSequence == 1
+        && static_cast<USHORT>(m_pVidCell->m_nCurrentSequence) == m_loopSequenceIndex
+        && m_loopCount > 0) {
+        --m_loopCount;
+        if (m_pVidCell->IsEndOfSequence(FALSE)) m_pVidCell->FrameSet(0);
+    }
+    if (m_pVidCell->IsEndOfSequence(FALSE)) {
+        if (m_singleSequence != 1
+            && static_cast<USHORT>(m_pVidCell->m_nCurrentSequence)
+                < static_cast<BYTE>(m_pVidCell->GetNumberSequences(FALSE)) - 1) {
+            m_pVidCell->SequenceSet(static_cast<SHORT>(m_pVidCell->m_nCurrentSequence + 1));
+            m_pVidCell->FrameSet(0);
+        } else {
+            if (m_sound.IsSoundPlaying()) {
+                m_visible = FALSE;
+                return;
+            }
+            RemoveFromArea();
+            if (game->GetObjectArray()->Delete(m_id, CGameObjectArray::THREAD_ASYNCH,
+                    NULL, INFINITE) == CGameObjectArray::SUCCESS) {
+                delete this;
+                return;
+            }
+        }
+    }
     m_sound.SetCoordinates(m_pos.x, m_pos.y, m_posZ);
-}
-
-// Models the inherited family Render (0x578480, recovered as
-// IcewindCProjectileTravellingVFX::Render) under this class's divergent
-// local layout; in the binary CProjectileSummonVFX is a family child
-// (vtable 0x851234 slot 19 = 0x578480) -- re-parenting is pending.
-void CProjectileSummonVFX::Render(CGameArea* pArea, CVidMode* pVidMode, int nSurface)
-{
-    CRect rFX;
-    CSize frameSize;
-    CRect rGCBounds;
-    CPoint newPos;
-    CPoint ptReference;
-    CInfinity* pInfinity;
-
-    (void)pVidMode;
-
-    if (pArea == NULL) {
-        return;
-    }
-
-    pInfinity = pArea->GetInfinity();
-
-    m_vidCell.GetCurrentCenterPoint(ptReference, FALSE);
-    m_vidCell.GetCurrentFrameSize(frameSize, FALSE);
-
-    rFX.SetRect(0, 0, frameSize.cx, frameSize.cy);
-
-    newPos.x = m_pos.x;
-    newPos.y = pArea->GetHeightOffset(m_pos, m_listType) + m_pos.y - m_posZ;
-
-    DWORD dwPrepFlags;
-    if (m_visualEffect.m_dwFlags != 0) {
-        dwPrepFlags = CInfinity::FXPREP_COPYFROMBACK;
-    } else {
-        dwPrepFlags = CInfinity::FXPREP_CLEARFILL;
-    }
-
-    rGCBounds.left = newPos.x - ptReference.x;
-    rGCBounds.top = newPos.y - ptReference.y;
-    rGCBounds.right = rGCBounds.left + rFX.Width();
-    rGCBounds.bottom = rGCBounds.top + rFX.Height();
-
-    pInfinity->FXPrep(rFX,
-        dwPrepFlags,
-        nSurface,
-        newPos,
-        ptReference);
-
-    if (pInfinity->FXLock(rFX, dwPrepFlags)) {
-        pInfinity->FXRender(&m_vidCell,
-            ptReference.x,
-            ptReference.y,
-            m_visualEffect.m_dwFlags,
-            m_visualEffect.m_nTransValue);
-
-        pInfinity->FXRenderClippingPolys(newPos.x,
-            newPos.y,
-            0,
-            ptReference,
-            rGCBounds,
-            FALSE,
-            dwPrepFlags);
-
-        pInfinity->FXUnlock(dwPrepFlags, NULL, CPoint(0, 0));
-        pInfinity->FXBltFrom(nSurface,
-            rFX,
-            newPos.x,
-            newPos.y,
-            ptReference.x,
-            ptReference.y,
-            m_visualEffect.m_dwFlags | 0x1);
-    }
 }
 
 // 0x57E710 (virtual)
 void CProjectileSummonVFX::Fire(CGameArea* pArea, LONG source, LONG target, CPoint targetPos, LONG nHeight, SHORT nType)
 {
-    BYTE rc;
-
     (void)nHeight;
     (void)nType;
-
-    m_sourceId = source;
-    m_targetId = target;
+    (void)source;
+    (void)target;
+    UTIL_ASSERT(!m_loopSequence || !m_randomSequence);
+    UTIL_ASSERT(!m_loopSequence || !m_singleSequence);
+    DeliverEffects();
+    BYTE count = static_cast<BYTE>(m_pVidCell->GetNumberSequences(FALSE));
+    m_pVidCell->SequenceSet(m_randomSequence == 1 && count > 1 ? rand() % count : 0);
     m_pArea = pArea;
     m_pos.x = targetPos.x;
-    m_pos.y = m_offsetAboveTarget ? targetPos.y - 100 : targetPos.y + 1;
-    m_posZ = 0;
-
-    // Per-cast visual variety (binary 0x57E776): randomize the overlay vidcell's
-    // starting sequence.  The constructor hardcodes the randomize flag (+0x2b8)
-    // to 1 (0x57E50A), so the pick is unconditional -- when the BAM holds more
-    // than one sequence choose one at random, else sequence 0.  Overrides the
-    // constructor's fixed SequenceSet(0) so repeated hits don't always show the
-    // same variant.
-    SHORT nSeqCount = m_vidCell.GetNumberSequences(FALSE) & 0xFF;
-    m_vidCell.SequenceSet(nSeqCount > 1 ? static_cast<SHORT>(rand() % nSeqCount) : 0);
-
-    rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE);
-    if (rc == CGameObjectArray::SUCCESS) {
+    m_pos.y = static_cast<LONG>(static_cast<DWORD>(targetPos.y)
+        + (m_offsetAboveTarget == 1 ? -100 : 1));
+    if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->Add(&m_id, this, INFINITE)
+        == CGameObjectArray::SUCCESS) {
         CGameObject::AddToArea(pArea, m_pos, 0, CGAMEOBJECT_LIST_FRONT);
-        // Impact cue (binary 0x57E838): the overlay plays its fire-sound on launch
-        // -- the spell-hit sound (e.g. EFF_M06 for an Invocation hit such as Magic
-        // Missile).  The original passes the loop flag at +0x15a (one-shot for these
-        // cues, not modelled here) and fireAndForget FALSE.
-        PlaySound(m_fireSoundRef, FALSE, FALSE);
-        DeliverEffects();
+        PlaySound(m_fireSoundRef, m_loopFireSound, FALSE);
     } else {
         delete this;
     }
@@ -2892,20 +3053,17 @@ void CProjectileSummonVFX::SetOffsetAboveTarget(BOOL offsetAboveTarget)
     m_offsetAboveTarget = offsetAboveTarget;
 }
 
-// 0x560310
 //
 // Sub-factory for the casting/"spell hit" overlay projectiles -- the
 // DecodeProjectile path for projectileType > 0x1000 (typeIndex =
-// projectileType - 0x1001, bPositive selects the good/evil sound variant).
+// projectileType - 0x1001, bPositive selects the positive/negative sound variant).
 // 107 of the 112 cases build a CProjectileSummonVFX overlay (resref "<spell>H"
 // or "<x>X") with per-case copy-from-back / tint-from-flags / caster color-glow
 // flash / fire sound / offset-above-target.
 //
-// Not yet recovered (faithfully omitted, documented per case): the aura-attach
-// config on a few overlays, and 4 exotic projectile classes (CallLightning x3
-// at 0x5348C0, Sunray at 0x57E860). The color-glow is applied via the caster's
-// AddEffect (vtbl+0x78) exactly as the original; AddEffect's own full immunity
-// filter (0x733050) is a separate arc.
+// The color-glow is applied via the caster's AddEffect (vtbl+0x78), except
+// FireH which queues CMessageAddEffect.
+// 0x560310
 CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGameAIBase* pCaster, BOOL bPositive)
 {
     CProjectileSummonVFX* p = NULL;
@@ -2919,7 +3077,7 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
             pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(0xD7, 0x8C, 0x46, 0x1E),
                 CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
         }
-        p->m_fireSoundRef = bPositive ? CResRef("EFF_P01") : CResRef("EFF_M02");
+        p->m_fireSoundRef = static_cast<BYTE>(bPositive) == 1 ? CResRef("EFF_P01") : CResRef("EFF_M02");
         break;
     }
     case 2: {
@@ -2929,7 +3087,7 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
             pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(0x4B, 0xD2, 0xA0, 0x1E),
                 CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
         }
-        p->m_fireSoundRef = bPositive ? CResRef("EFF_P07") : CResRef("EFF_M08");
+        p->m_fireSoundRef = static_cast<BYTE>(bPositive) == 1 ? CResRef("EFF_P07") : CResRef("EFF_M08");
         break;
     }
     case 3: {
@@ -2939,7 +3097,7 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
             pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(0x6B, 0x06, 0xC9, 0x1E),
                 CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
         }
-        p->m_fireSoundRef = bPositive ? CResRef("EFF_P05") : CResRef("EFF_M06");
+        p->m_fireSoundRef = static_cast<BYTE>(bPositive) == 1 ? CResRef("EFF_P05") : CResRef("EFF_M06");
         break;
     }
     case 4: {
@@ -2949,7 +3107,7 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
             pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(0xB4, 0xD2, 0x50, 0x1E),
                 CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
         }
-        p->m_fireSoundRef = bPositive ? CResRef("EFF_P06") : CResRef("EFF_M07");
+        p->m_fireSoundRef = static_cast<BYTE>(bPositive) == 1 ? CResRef("EFF_P06") : CResRef("EFF_M07");
         break;
     }
     case 5: {
@@ -2959,7 +3117,7 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
             pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(0x69, 0xD7, 0x46, 0x1E),
                 CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
         }
-        p->m_fireSoundRef = bPositive ? CResRef("EFF_P02") : CResRef("EFF_M03");
+        p->m_fireSoundRef = static_cast<BYTE>(bPositive) == 1 ? CResRef("EFF_P02") : CResRef("EFF_M03");
         break;
     }
     case 6: {
@@ -2969,7 +3127,7 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
             pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(0x50, 0xD2, 0x50, 0x1E),
                 CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
         }
-        p->m_fireSoundRef = bPositive ? CResRef("EFF_P04") : CResRef("EFF_M05");
+        p->m_fireSoundRef = static_cast<BYTE>(bPositive) == 1 ? CResRef("EFF_P04") : CResRef("EFF_M05");
         break;
     }
     case 7: {
@@ -2989,7 +3147,7 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
             pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(0x64, 0x46, 0xD2, 0x1E),
                 CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
         }
-        p->m_fireSoundRef = bPositive ? CResRef("EFF_P03") : CResRef("EFF_M04");
+        p->m_fireSoundRef = static_cast<BYTE>(bPositive) == 1 ? CResRef("EFF_P03") : CResRef("EFF_M04");
         break;
     }
     case 9: {
@@ -3024,10 +3182,12 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
     }
     case 14: {
         p = new CProjectileSummonVFX(CResRef("SOFlamH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 15: {
         p = new CProjectileSummonVFX(CResRef("DSpellH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 16: {
@@ -3043,8 +3203,9 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
         break;
     }
     case 18: {
-        p = new CProjectileSummonVFX(CResRef("None"), IcewindCVisualEffect());
+        p = new CProjectileSummonVFX(CResRef("PWStunH"), IcewindCVisualEffect());
         p->m_visualEffect.SetCopyFromBack(TRUE);
+        p->m_fireSoundRef = CResRef("EFF_M38");
         break;
     }
     case 19: {
@@ -3055,48 +3216,58 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
     }
     case 20: {
         p = new CProjectileSummonVFX(CResRef("MSwordH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 21: {
         p = new CProjectileSummonVFX(CResRef("MSumm1H"), IcewindCVisualEffect());
         p->m_visualEffect.SetCopyFromBack(TRUE);
-        // NOTE: extra aura-attach config (proj +0x2AF/+0x2B0/+0x2B4) omitted.
+        // Native sequence scheduling is configured below.
         break;
     }
     case 22: {
         p = new CProjectileSummonVFX(CResRef("MSumm2H"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 23: {
         p = new CProjectileSummonVFX(CResRef("MSumm3H"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 24: {
         p = new CProjectileSummonVFX(CResRef("MSumm4H"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 25: {
         p = new CProjectileSummonVFX(CResRef("MSumm5H"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 26: {
         p = new CProjectileSummonVFX(CResRef("MSumm6H"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 27: {
         p = new CProjectileSummonVFX(CResRef("MSumm7H"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 28: {
         p = new CProjectileSummonVFX(CResRef("CFElemH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 29: {
         p = new CProjectileSummonVFX(CResRef("CEElemH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 30: {
         p = new CProjectileSummonVFX(CResRef("CWElemH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 31: {
@@ -3155,14 +3326,17 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
     }
     case 40: {
         p = new CProjectileSummonVFX(CResRef("ASumm1H"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 41: {
         p = new CProjectileSummonVFX(CResRef("ASumm2H"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 42: {
         p = new CProjectileSummonVFX(CResRef("ASumm3H"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 43: {
@@ -3249,8 +3423,8 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
         p->m_fireSoundRef = CResRef("EFF_P36");
         break;
     }
-    case 57:  // Sunray projectile (class not recovered)
-        return NULL;
+    case 57:
+        return new CProjectileSunray(CResRef("SunrayX"), CResRef(""), 0xFF, 1, 0, 0x145);
     case 58: {
         p = new CProjectileSummonVFX(CResRef("SStoneA"), IcewindCVisualEffect());
         p->m_fireSoundRef = CResRef("CRE_P03");
@@ -3270,6 +3444,7 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
     }
     case 61: {
         p = new CProjectileSummonVFX(CResRef("CoColdH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 62: {
@@ -3330,18 +3505,22 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
     }
     case 68: {
         p = new CProjectileSummonVFX(CResRef("MRageH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 69: {
         p = new CProjectileSummonVFX(CResRef("RWOTFaG"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 70: {
         p = new CProjectileSummonVFX(CResRef("BDeath"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 71: {
         p = new CProjectileSummonVFX(CResRef("PortalH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 72: {  // Call Lightning variant: SunscoH beam, sound EFF_P39
@@ -3352,28 +3531,28 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
         p = new CProjectileSummonVFX(CResRef("BBarrH1"), IcewindCVisualEffect());
         p->m_visualEffect.SetTintFromFlags(TRUE);
         p->m_fireSoundRef = CResRef("ARE_P20");
-        // NOTE: extra aura-attach config (proj +0x2AF/+0x2B0/+0x2B4) omitted.
+        // Native sequence scheduling is configured below.
         break;
     }
     case 74: {
         p = new CProjectileSummonVFX(CResRef("BBarrH2"), IcewindCVisualEffect());
         p->m_visualEffect.SetTintFromFlags(TRUE);
         p->SetOffsetAboveTarget(TRUE);
-        // NOTE: extra aura-attach config (proj +0x2AF/+0x2B0/+0x2B4) omitted.
+        // Native sequence scheduling is configured below.
         break;
     }
     case 75: {
         p = new CProjectileSummonVFX(CResRef("CoBonH1"), IcewindCVisualEffect());
         p->m_visualEffect.SetTintFromFlags(TRUE);
         p->m_fireSoundRef = CResRef("ARE_P21");
-        // NOTE: extra aura-attach config (proj +0x2AF/+0x2B0/+0x2B4) omitted.
+        // Native sequence scheduling is configured below.
         break;
     }
     case 76: {
         p = new CProjectileSummonVFX(CResRef("CoBonH2"), IcewindCVisualEffect());
         p->m_visualEffect.SetTintFromFlags(TRUE);
         p->SetOffsetAboveTarget(TRUE);
-        // NOTE: extra aura-attach config (proj +0x2AF/+0x2B0/+0x2B4) omitted.
+        // Native sequence scheduling is configured below.
         break;
     }
     case 77: {
@@ -3438,6 +3617,7 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
     }
     case 87: {
         p = new CProjectileSummonVFX(CResRef("CloudbH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 88: {
@@ -3454,13 +3634,14 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
     }
     case 90: {
         p = new CProjectileSummonVFX(CResRef("CGraceH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 91: {
         p = new CProjectileSummonVFX(CResRef("SEaterH"), IcewindCVisualEffect());
         p->m_visualEffect.SetCopyFromBack(TRUE);
         p->m_fireSoundRef = CResRef("EFF_M104");
-        // NOTE: extra aura-attach config (proj +0x2AF/+0x2B0/+0x2B4) omitted.
+        // Native sequence scheduling is configured below.
         break;
     }
     case 92: {
@@ -3471,6 +3652,7 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
     }
     case 93: {
         p = new CProjectileSummonVFX(CResRef("SuffocA"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 94: {
@@ -3487,53 +3669,64 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
     }
     case 96: {
         p = new CProjectileSummonVFX(CResRef("VSpherX"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 97: {
         p = new CProjectileSummonVFX(CResRef("WVDeatH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 98: {
         p = new CProjectileSummonVFX(CResRef("UWardX"), IcewindCVisualEffect());
         p->m_visualEffect.SetCopyFromBack(TRUE);
         p->SetOffsetAboveTarget(TRUE);
-        // NOTE: extra aura-attach config (proj +0x2AF/+0x2B0/+0x2B4) omitted.
+        // Native sequence scheduling is configured below.
         break;
     }
     case 99: {
         p = new CProjectileSummonVFX(CResRef("WVHitH"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 100: {
         p = new CProjectileSummonVFX(CResRef("WDeath1"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 101: {
         p = new CProjectileSummonVFX(CResRef("WDeath2"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 102: {
         p = new CProjectileSummonVFX(CResRef("DDeath"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 103: {
         p = new CProjectileSummonVFX(CResRef("DDeath2"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 104: {
         p = new CProjectileSummonVFX(CResRef("MSumm1X"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 105: {
         p = new CProjectileSummonVFX(CResRef("ASumm1X"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 106: {
         p = new CProjectileSummonVFX(CResRef("CEElemX"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 107: {
         p = new CProjectileSummonVFX(CResRef("CFElemX"), IcewindCVisualEffect());
+        p->m_visualEffect.SetCopyFromBack(TRUE);
         break;
     }
     case 108: {
@@ -3558,7 +3751,47 @@ CProjectile* CProjectileSummonVFX::DecodeSpellHitProjectile(int typeIndex, CGame
         break;
     }
     default:
+        UTIL_ASSERT(FALSE);
         return NULL;
+    }
+    switch (typeIndex) {
+    case 21:
+        p->m_randomSequence = FALSE;
+        break;
+    case 69: case 104: case 105: case 106: case 107: case 108:
+        p->m_offsetAboveTarget = TRUE;
+        break;
+    case 73: case 74: case 75: case 76: case 98:
+        p->m_loopSequence = TRUE;
+        p->m_loopSequenceIndex = 1;
+        p->m_loopCount = typeIndex == 98 ? 965 : (typeIndex <= 74 ? 165 : 265);
+        p->m_randomSequence = FALSE;
+        p->m_singleSequence = FALSE;
+        break;
+    }
+    if (pCaster != NULL) {
+        switch (typeIndex) {
+        case 35: case 36: case 37: case 38: case 39:
+            pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(0, 128, 255, 30),
+                CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
+            break;
+        case 43:
+            pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(255, 128, 0, 30),
+                CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
+            break;
+        case 44:
+            pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(192, 128, 0, 30),
+                CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
+            break;
+        case 47:
+            pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(0, 0, 255, 30),
+                CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
+            break;
+        case 50:
+            pCaster->AddEffect(IcewindMisc::CreateEffectColorGlowDissipate(16, 64, 128, 30),
+                CGameAIBase::EFFECT_LIST_TIMED, TRUE, TRUE);
+            break;
+        }
     }
     return p;
 }
