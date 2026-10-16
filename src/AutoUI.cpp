@@ -1728,6 +1728,7 @@ struct MasterPaletteFixture {
 #include "GroundHitChecks.h"
 #include "HitParticleChecks.h"
 #include "EmberGeometryChecks.h"
+#include "TStringSharingChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5591,6 +5592,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "embergeometrychecks") == 0) {
         EmberGeometryChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "tstringsharingchecks") == 0) {
+        TStringSharingChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

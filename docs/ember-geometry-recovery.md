@@ -58,4 +58,4 @@ pixels and1419 ground checks/72 pixels pass; melee6HP, bow/bolt/sling12HP,
 ammunition and ordinary projectile arrival damage pass. Rollback restored,
 cleanup_errors[]. Four class audits clean. Static equivalence unproven: missing
 layout/offset oracles, two call-count and two tiny-body advisories (ASM reviewed).
-Next: native TString sharing44BA90 and detach44BD40 (digests read only).
+Continued in [TString sharing](tstring-sharing-recovery.md).

@@ -1,5 +1,140 @@
 #include "TString.h"
 
+// Allocator construction wrapper /*#guess*/; the original entry is cdecl,
+// takes destination/source pointers and constructs only for a nonnull destination.
+// 0x44BA90
+void TString::ConstructCopy(TString* target, const TString* source)
+{
+    if (target == NULL) {
+        return;
+    }
+    target->m_buf[0] = source->m_buf[0];
+    target->m_pData = NULL;
+    target->m_nLen = 0;
+    target->m_nRes = 0;
+    UINT length = static_cast<UINT>(source->m_nLen);
+    if (target == source) {
+        // Placement aliasing sees the fields already reset above. The two
+        // native detach operations therefore both see an empty string.
+        target->Detach();
+        target->Detach();
+        return;
+    }
+    const char* data = source->m_pData != NULL ? source->m_pData : "";
+    if (length != 0 && static_cast<BYTE>(data[-1]) < 0xFE) {
+        target->Tidy(TRUE);
+        target->m_pData = source->m_pData;
+        target->m_nLen = source->m_nLen;
+        target->m_nRes = source->m_nRes;
+        target->m_pData[-1] = static_cast<char>(static_cast<BYTE>(target->m_pData[-1]) + 1);
+        return;
+    }
+    if (target->PrepareAssign(length, TRUE)) {
+        data = source->m_pData != NULL ? source->m_pData : "";
+        memcpy(target->m_pData, data, length);
+        target->SetLength(length);
+    }
+}
+
+// Assign a whole string or substring, including the native two-erase self path.
+// 0x45E870
+TString& TString::AssignString(const TString& source, UINT start, UINT count)
+{
+    if (static_cast<UINT>(source.m_nLen) < start) {
+        Xran();
+    }
+    UINT length = static_cast<UINT>(source.m_nLen) - start;
+    if (count < length) length = count;
+    if (this == &source) {
+        UINT end = start + length;
+        if (static_cast<UINT>(m_nLen) < end) Xran();
+        Detach();
+        UINT tail = static_cast<UINT>(m_nLen) - end;
+        if (tail != 0) {
+            memmove(m_pData + end, m_pData + end + tail, static_cast<UINT>(m_nLen) - end - tail);
+            UINT remaining = static_cast<UINT>(m_nLen) - tail;
+            if (PrepareAssign(remaining, FALSE)) SetLength(remaining);
+        }
+        Detach();
+        UINT prefix = start < static_cast<UINT>(m_nLen) ? start : static_cast<UINT>(m_nLen);
+        if (prefix != 0) {
+            memmove(m_pData, m_pData + prefix, static_cast<UINT>(m_nLen) - prefix);
+            UINT remaining = static_cast<UINT>(m_nLen) - prefix;
+            if (PrepareAssign(remaining, FALSE)) SetLength(remaining);
+        }
+        return *this;
+    }
+    const char* data = source.m_pData != NULL ? source.m_pData : "";
+    if (length != 0 && length == static_cast<UINT>(source.m_nLen) && static_cast<BYTE>(data[-1]) < 0xFE) {
+        Tidy(TRUE);
+        m_pData = source.m_pData != NULL ? source.m_pData : const_cast<char*>("");
+        m_nLen = source.m_nLen;
+        m_nRes = source.m_nRes;
+        m_pData[-1] = static_cast<char>(static_cast<BYTE>(m_pData[-1]) + 1);
+    } else {
+        if (MaxSize() < length) Xlen();
+        if (PrepareAssign(length, TRUE)) {
+            data = source.m_pData != NULL ? source.m_pData : "";
+            memcpy(m_pData, data + start, length);
+            SetLength(length);
+        }
+    }
+    return *this;
+}
+
+// Detach shared storage using strlen, independently of the stored logical length.
+// 0x44BD40
+void TString::Detach()
+{
+    char* data = m_pData;
+    if (data == NULL) {
+        return;
+    }
+    BYTE references = static_cast<BYTE>(data[-1]);
+    if (references == 0 || references == 0xFF) {
+        return;
+    }
+    data[-1] = static_cast<char>(references - 1);
+    Tidy(FALSE);
+    UINT length = static_cast<UINT>(strlen(data));
+    if (PrepareAssign(length, TRUE)) {
+        memcpy(m_pData, data, length);
+        SetLength(length);
+    }
+}
+
+// 0x44BC00
+void TString::SetLength(UINT length)
+{
+    m_nLen = static_cast<INT>(length);
+    m_pData[length] = 0;
+}
+
+// 0x45EA70
+UINT TString::MaxSize() const
+{
+    return 0xFFFFFFFD;
+}
+
+// Parameters retain the old int API; native comparisons interpret their bits
+// as unsigned sizes, including npos and high-bit counts.
+// 0x4C5ED0
+int TString::Compare(int nPos, int nCount, const char* pStr2, int nLen2) const
+{
+    UINT pos = static_cast<UINT>(nPos), count = static_cast<UINT>(nCount), otherLength = static_cast<UINT>(nLen2);
+    if (static_cast<UINT>(m_nLen) < pos) Xran();
+    UINT remaining = static_cast<UINT>(m_nLen) - pos;
+    if (remaining < count) count = remaining;
+    UINT scan = count < otherLength ? count : otherLength;
+    const char* data = m_pData != NULL ? m_pData + pos : NULL;
+    for (UINT i = 0; i < scan; ++i) {
+        BYTE left = static_cast<BYTE>(data[i]), right = static_cast<BYTE>(pStr2[i]);
+        if (left != right) return left < right ? -1 : 1;
+    }
+    if (count < otherLength) return -1;
+    return count != otherLength ? 1 : 0;
+}
+
 // Storage preparation /*#guess*/: native takes a size and trim BYTE,
 // not the character pointer suggested by the old Assign export name.
 // 0x44BC20
