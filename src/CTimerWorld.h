@@ -5,6 +5,7 @@
 
 #include "BalDataTypes.h"
 
+#pragma pack(push, 2)
 class CTimerWorld {
 public:
     static const CString TOKEN_MINUTE;
@@ -62,9 +63,10 @@ public:
     static BOOLEAN IsDawn(ULONG nTimeOfDay);
     static BOOLEAN IsDusk(ULONG nTimeOfDay);
 
-    ULONG m_gameTime;
-    BOOLEAN m_active;
-    BYTE m_nLastPercentage;
+    /* 0000 */ ULONG m_gameTime;
+    /* 0004 */ BOOLEAN m_active;
+    /* 0005 */ BYTE m_nLastPercentage;
 };
+#pragma pack(pop)
 
 #endif /* CTIMERWORLD_H_ */

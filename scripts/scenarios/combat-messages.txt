@@ -33,6 +33,7 @@ groundhitchecks
 hitparticlechecks
 embergeometrychecks
 tstringsharingchecks
+specialabilitychecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

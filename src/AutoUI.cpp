@@ -185,6 +185,7 @@
 #include "IcewindCGameAnimationTypeEffect.h"
 #include "CGameTemporal.h"
 #include "CSpell.h"
+#include "CScreenCharacter.h"
 #include "IcewindCGameEffects.h"
 #include "CDimmKeyTable.h"
 #include "CInfGame.h"
@@ -1729,6 +1730,7 @@ struct MasterPaletteFixture {
 #include "HitParticleChecks.h"
 #include "EmberGeometryChecks.h"
 #include "TStringSharingChecks.h"
+#include "SpecialAbilityChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5595,6 +5597,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "tstringsharingchecks") == 0) {
         TStringSharingChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "specialabilitychecks") == 0) {
+        SpecialAbilityChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

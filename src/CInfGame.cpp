@@ -10349,7 +10349,7 @@ CSpellResRefList* CInfGame::GetInnateSpells()
 // 0x5F6800
 CSpellResRefList* CInfGame::GetShapeshifts()
 {
-    return &m_innateSpells;
+    return &m_shapeshifts;
 }
 
 // 0x64D660

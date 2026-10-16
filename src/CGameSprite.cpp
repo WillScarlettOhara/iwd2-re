@@ -11451,13 +11451,72 @@ SHORT CGameSprite::GetLayOnHandsAmount()
 // 0x71B9C0
 void CGameSprite::AddSpecialAbility(const CResRef& cResInnateSpell, BOOL feedBack)
 {
-    // TODO: Incomplete.
+    if (g_pBaldurChitin->cDimm.m_cKeyTable.FindKey(cResInnateSpell, 1006, TRUE) == NULL) {
+        return;
+    }
+
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    WORD feedbackId = FEEDBACK_GAINEDSPECIALABILITY;
+    UINT id = 0;
+    UINT maximum = 1, current = 1, shared = 0;
+    if (game->GetMasterSongLookup().Find(cResInnateSpell, id) == TRUE) {
+        feedbackId = FEEDBACK_GAINEDBARDSONG;
+        id = 0;
+        if (game->GetMasterSongLookup().Find(cResInnateSpell, id) == TRUE) {
+            m_songs.Add(id, maximum, current, shared);
+        }
+    } else if (game->GetShapeshifts()->Find(cResInnateSpell, id) == TRUE) {
+        maximum = current = shared = 0;
+        id = 0;
+        if (game->GetShapeshifts()->Find(cResInnateSpell, id) == TRUE) {
+            m_shapeshifts.Add(id, maximum, current, shared);
+        }
+    } else if (game->GetInnateSpells()->Find(cResInnateSpell, id) == TRUE) {
+        id = 0;
+        if (game->GetInnateSpells()->Find(cResInnateSpell, id) == TRUE) {
+            m_innateSpells.Add(id, maximum, current, shared);
+        }
+    }
+
+    if (feedBack == TRUE) {
+        CSpell spell;
+        spell.SetResRef(cResInnateSpell, TRUE, TRUE);
+        spell.Demand();
+        if (spell.pRes != NULL) {
+            FeedBack(feedbackId, 0, 0, 0, spell.GetGenericName(), 0, 0);
+        }
+        spell.Release();
+    }
 }
 
 // 0x71BC60
 void CGameSprite::RemoveSpecialAbility(const CResRef& cResInnateSpell)
 {
-    // TODO: Incomplete.
+    CString name;
+    cResInnateSpell.CopyToString(name);
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    UINT id = 0, maximum = 0, current = 0;
+    if (game->GetMasterSongLookup().Find(cResInnateSpell, id) == TRUE) {
+        id = 0;
+        if (game->GetMasterSongLookup().Find(cResInnateSpell, id) == TRUE) {
+            m_songs.Remove(id, TRUE, maximum, current);
+        }
+    } else if (game->GetShapeshifts()->Find(cResInnateSpell, id) == TRUE) {
+        id = 0;
+        if (game->GetShapeshifts()->Find(cResInnateSpell, id) == TRUE) {
+            m_shapeshifts.Remove(id, TRUE, maximum, current);
+        }
+    } else if (game->GetInnateSpells()->Find(cResInnateSpell, id) == TRUE) {
+        id = 0;
+        if (game->GetInnateSpells()->Find(cResInnateSpell, id) == TRUE) {
+            m_innateSpells.Remove(id, TRUE, maximum, current);
+        }
+    }
+
+    CAbilityId ability;
+    ability.m_itemType = 1;
+    ability.m_res = name;
+    UpdateQuickButtons(ability, -1, FALSE, FALSE);
 }
 
 // 0x71BE80

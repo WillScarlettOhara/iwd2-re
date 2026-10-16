@@ -7,6 +7,7 @@
 
 class CItem;
 
+#pragma pack(push, 2)
 class CGameSave {
 public:
     CGameSave();
@@ -24,5 +25,6 @@ public:
     /* 01B6 */ DWORD m_mode;
     /* 01BA */ BOOL m_cutScene;
 };
+#pragma pack(pop)
 
 #endif /* CGAMESAVE_H_ */

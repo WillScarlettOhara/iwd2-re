@@ -55,6 +55,4 @@ with charges3->2. Ordinary projectile arrivals each deliver3HP, source loss0.
 Profile cleanup passed: temporary fixtures removed, preserved paths restored
 and hashed; no game process left and no saves written.
 
-Next: sprite stubs AddSpecialAbility71B9C0/RemoveSpecialAbility71BC60, used by
-effects/Seven Eyes (digests only). Assemble full bundles first; keep the complete
-combat profile. 55BAF0/55CC10 appear to be STL tree iterators.
+Continued in [special abilities](special-ability-recovery.md).
