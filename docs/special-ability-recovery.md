@@ -56,5 +56,4 @@ ARC2026-10-16T19-40-32-030929-batch PASS3 warnings: full Win32 Debug build,
 Rollback verified, cleanup_errors[]. Two helper call-count advisories and the
 tiny getter remain; missing offset oracles leave general static parity unproven.
 Melee6HP, bow/bolt/sling12HP, ammo3->2 and ordinary arrivals3HP all pass.
-Next: identify class-ability helpers71E240/722D50 and complete sprite71E760;
-digests only read, full bundles/ASM required before editing.
+Continuation: [class/feat ability recovery](class-ability-recovery.md).

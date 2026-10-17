@@ -4326,7 +4326,7 @@ void CScreenCreateChar::CompleteCharacterAbilities(CGameSprite* pSprite)
 
     pSprite->m_innateSpells.Clear();
 
-    pSprite->sub_71E760(DStats, 1);
+    pSprite->AddNewSpecialAbilities(DStats, TRUE);
 
     pSprite->GetBaseStats()->m_xp = ruleTables.GetStartingExperiencePoints(pSprite);
 

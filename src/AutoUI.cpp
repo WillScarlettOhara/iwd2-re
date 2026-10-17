@@ -216,6 +216,8 @@ struct CallLightningAccess : CProjectileCallLightning {
 };
 #include <string.h>
 
+#include "ClassAbilityTableFixture.h"
+
 namespace Iwd2AutoUI {
 
 namespace {
@@ -1731,6 +1733,7 @@ struct MasterPaletteFixture {
 #include "EmberGeometryChecks.h"
 #include "TStringSharingChecks.h"
 #include "SpecialAbilityChecks.h"
+#include "ClassAbilityChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5600,6 +5603,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "specialabilitychecks") == 0) {
         SpecialAbilityChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "classabilitychecks") == 0) {
+        ClassAbilityChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

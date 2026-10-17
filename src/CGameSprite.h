@@ -631,7 +631,9 @@ public:
     void SetTeamEnemies();
     BOOL CheckItemDepleted(SHORT nSlot, SHORT nAbility);
     void sub_72DE60();
-    void sub_71E760(CDerivedStats& DStats, int a2);
+    void AddNewSpecialAbilities(CDerivedStats& previousStats, BOOL feedBack);
+    void AddClassAbilities(BYTE nClass, SHORT nLevels, BOOL feedBack);
+    void ApplyNewFeatBonuses(const CCreatureFileHeader& previousBase, CDerivedStats& previousStats); /*#guess: descriptive name*/
     SHORT Berserk();
     void UpdateBerserkActive();
     void CheckModal();

@@ -8248,7 +8248,7 @@ void CGameSprite::Unmarshal(CSavedGamePartyCreature* pCreature, BOOLEAN bPartyMe
             m_baseStats.m_resistMagicBase = 50;
         }
 
-        sub_71E760(m_derivedStats, TRUE);
+        AddNewSpecialAbilities(m_derivedStats, TRUE);
 
         for (UINT nClassIndex = 0; nClassIndex < CSPELLLIST_NUM_CLASSES; nClassIndex++) {
             for (UINT nLevel = 0; nLevel < CSPELLLIST_MAX_LEVELS; nLevel++) {
@@ -14044,9 +14044,176 @@ void CGameSprite::CheckFatigue()
 }
 
 // 0x71E760
-void CGameSprite::sub_71E760(CDerivedStats& DStats, int a2)
+void CGameSprite::AddNewSpecialAbilities(CDerivedStats& previousStats, BOOL feedBack)
 {
-    // TODO: Incomplete.
+    for (BYTE nClass = CAIOBJECTTYPE_C_BARBARIAN; nClass <= CAIOBJECTTYPE_C_WIZARD; ++nClass) {
+        if (m_derivedStats.GetClassLevel(nClass) != 0) {
+            INT oldLevel = previousStats.GetClassLevel(nClass);
+            AddClassAbilities(nClass, static_cast<SHORT>(m_derivedStats.GetClassLevel(nClass) - oldLevel), feedBack);
+        }
+    }
+
+    for (INT level = 0; level < m_derivedStats.m_nLevel - previousStats.m_nLevel; ++level) {
+        if ((m_typeAI.m_nRace == CAIOBJECTTYPE_R_ELF || m_typeAI.m_nRace == CAIOBJECTTYPE_R_GNOME)
+            && m_typeAI.m_nSubRace == 1) {
+            ++m_baseStats.m_resistMagicBase;
+        }
+    }
+}
+
+// 0x71E240
+void CGameSprite::ApplyNewFeatBonuses(const CCreatureFileHeader& previousBase, CDerivedStats& previousStats)
+{
+    auto acquired = [&](UINT feat) {
+        DWORD mask = 1u << (feat & 31);
+        return (previousBase.m_feats[feat >> 5] & mask) == 0
+            && (m_baseStats.m_feats[feat >> 5] & mask) != 0;
+    };
+    auto resistance = [](signed char& value) {
+        value = static_cast<signed char>(value + 5);
+        value = static_cast<signed char>(min(max(static_cast<INT>(value), 0), 100));
+    };
+
+    if (acquired(CGAMESPRITE_FEAT_AEGIS_OF_RIME)) resistance(m_baseStats.m_resistColdBase);
+    if (acquired(CGAMESPRITE_FEAT_AQUA_MORTIS)) resistance(m_baseStats.m_resistAcidBase);
+    if (acquired(CGAMESPRITE_FEAT_BULLHEADED)) ++m_baseStats.m_saveVSWillBase;
+    if (acquired(CGAMESPRITE_FEAT_DISCIPLINE)) ++m_baseStats.m_saveVSWillBase;
+    if (acquired(CGAMESPRITE_FEAT_GREAT_FORTITUDE)) m_baseStats.m_saveVSFortitudeBase += 2;
+    if (acquired(CGAMESPRITE_FEAT_IRON_WILL)) m_baseStats.m_saveVSWillBase += 2;
+    if (acquired(CGAMESPRITE_FEAT_LIGHTNING_REFLEXES)) m_baseStats.m_saveVSReflexBase += 2;
+    if (acquired(CGAMESPRITE_FEAT_LUCK_OF_HEROES)) {
+        ++m_baseStats.m_saveVSReflexBase;
+        ++m_baseStats.m_saveVSFortitudeBase;
+        ++m_baseStats.m_saveVSWillBase;
+    }
+    if (acquired(CGAMESPRITE_FEAT_SCION_OF_STORMS)) resistance(m_baseStats.m_resistElectricityBase);
+    if (acquired(CGAMESPRITE_FEAT_SNAKE_BLOOD)) ++m_baseStats.m_saveVSReflexBase;
+    if (acquired(CGAMESPRITE_FEAT_SPIRIT_OF_FLAME)) resistance(m_baseStats.m_resistFireBase);
+    if (acquired(CGAMESPRITE_FEAT_ENVENOM_WEAPON)) AddSpecialAbility(SPIN231, FALSE);
+    if (acquired(CGAMESPRITE_FEAT_MAXIMIZED_ATTACKS)) AddSpecialAbility(SPIN197, FALSE);
+    if (acquired(CGAMESPRITE_FEAT_WILDSHAPE_BOAR)) AddSpecialAbility(SPIN111, FALSE);
+    if (acquired(CGAMESPRITE_FEAT_WILDSHAPE_PANTHER)) AddSpecialAbility(SPIN245, FALSE);
+    if (acquired(CGAMESPRITE_FEAT_WILDSHAPE_SHAMBLER)) AddSpecialAbility(SPIN246, FALSE);
+
+    if (HasFeat(CGAMESPRITE_FEAT_STUNNING_FIST) == TRUE) {
+        INT level = static_cast<INT>(m_derivedStats.GetClassMaskLevel(0xFFF));
+        INT first = acquired(CGAMESPRITE_FEAT_STUNNING_FIST)
+            ? 1 : static_cast<INT>(previousStats.GetClassMaskLevel(0xFFF));
+        for (; first <= level; ++first) {
+            if (first % 4 == 0) AddSpecialAbility(SPIN232, FALSE);
+        }
+    }
+    if (acquired(CGAMESPRITE_FEAT_POWER_ATTACK)) AddSpecialAbility(SPIN275, FALSE);
+    if (acquired(CGAMESPRITE_FEAT_EXPERTISE)) AddSpecialAbility(SPIN276, FALSE);
+    if (acquired(CGAMESPRITE_FEAT_ARTERIAL_STRIKE)) AddSpecialAbility(SPIN277, FALSE);
+    if (acquired(CGAMESPRITE_FEAT_HAMSTRING)) AddSpecialAbility(SPIN278, FALSE);
+    if (acquired(CGAMESPRITE_FEAT_RAPID_SHOT)) AddSpecialAbility(SPIN279, FALSE);
+
+    if ((m_baseStats.m_feats[2] & (1u << (CGAMESPRITE_FEAT_TOUGHNESS & 31))) != 0) {
+        SHORT amount = static_cast<SHORT>(3 * (m_baseStats.m_featToughness - previousBase.m_featToughness));
+        m_baseStats.m_hitPoints += amount;
+        m_baseStats.m_maxHitPointsBase += amount;
+    }
+    if ((m_baseStats.m_feats[0] & (1u << CGAMESPRITE_FEAT_EXTRA_RAGE)) != 0
+        && m_baseStats.m_featExtraRage != previousBase.m_featExtraRage) {
+        CResRef ability;
+        if (m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_BARBARIAN) >= 15
+            && previousStats.GetClassLevel(CAIOBJECTTYPE_C_BARBARIAN) < 15) {
+            ability = SPIN260;
+        } else {
+            ability = SPIN236;
+        }
+        for (INT i = previousBase.m_featExtraRage; i < m_baseStats.m_featExtraRage; ++i) {
+            AddSpecialAbility(ability, FALSE);
+        }
+    }
+    if ((m_baseStats.m_feats[0] & (1u << CGAMESPRITE_FEAT_EXTRA_SMITING)) != 0) {
+        for (INT i = previousBase.m_featExtraSmiting; i < m_baseStats.m_featExtraSmiting; ++i) {
+            AddSpecialAbility(SPIN152, FALSE);
+        }
+    }
+    if ((m_baseStats.m_feats[0] & (1u << CGAMESPRITE_FEAT_EXTRA_TURNING)) != 0) {
+        for (INT i = previousBase.m_featExtraTurning; i < m_baseStats.m_featExtraTurning; ++i) {
+            AddSpecialAbility(SPIN970, FALSE);
+        }
+    }
+}
+
+// 0x722D50
+void CGameSprite::AddClassAbilities(BYTE nClass, SHORT nLevels, BOOL feedBack)
+{
+    CString ability;
+    CString type;
+    const C2DArray* table = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassAbilityTable(nClass, GetSpecialization());
+    if (table == NULL) return;
+
+    SHORT current = static_cast<SHORT>(GetActiveStats()->GetClassLevel(nClass));
+    SHORT first = nLevels == -1 ? 0 : static_cast<SHORT>(current - nLevels);
+    for (INT column = first; column < current && column < table->GetWidth(); ++column) {
+        for (INT row = 0; row < table->GetHeight(); ++row) {
+            ability = table->GetAt(CPoint(column, row));
+            if (ability == table->GetDefault()) continue;
+            type = ability.Left(3);
+            ability = ability.Right(ability.GetLength() - 3);
+            if (type == FA) {
+                FeedBack(FEEDBACK_GAINEDSPECIALABILITY, 0, 0, 0, atol(ability), 0, 0);
+            } else if (type == GA) {
+                AddSpecialAbility(CResRef(ability), feedBack);
+            } else if (type == RA) {
+                RemoveSpecialAbility(CResRef(ability));
+            } else if (type == AP) {
+                auto effects = BuildSubSpellEffects(this, CResRef(ability), 1);
+                for (auto* effect : effects) {
+                    if (effect != NULL) {
+                        effect->m_sourceRes = ability;
+                        if (GetObjectType() == CGameObject::TYPE_SPRITE) {
+                            AddEffect(effect, 1, FALSE, TRUE);
+                        }
+                    }
+                }
+            } else {
+                // __FILE__: C:\Projects\Icewind2\src\Baldur\ObjCreatureAI.cpp
+                // __LINE__: 24151
+                UTIL_ASSERT_MSG(FALSE, "Invalid ability type");
+            }
+        }
+
+        INT level = column + 1;
+        if (nClass == CAIOBJECTTYPE_C_BARBARIAN) {
+            if (level >= 11 && (level - 11) % 3 == 0) {
+                ++m_baseStats.m_resistAcidBase;
+                ++m_baseStats.m_resistColdBase;
+                ++m_baseStats.m_resistElectricityBase;
+                ++m_baseStats.m_resistFireBase;
+                ++m_baseStats.m_resistMissileBase;
+                ++m_baseStats.m_resistCrushingBase;
+                ++m_baseStats.m_resistPiercingBase;
+                ++m_baseStats.m_resistSlashingBase;
+            }
+        } else if (nClass == CAIOBJECTTYPE_C_CLERIC) {
+            if ((m_baseStats.m_specialization & SPECMASK_CLERIC) == SPECMASK_CLERIC_MASK && level == 1) {
+                CCreatureFileHeader previous = m_baseStats;
+                SetFeatValue(CGAMESPRITE_FEAT_BLIND_FIGHT, 1);
+                ApplyNewFeatBonuses(previous, m_derivedStats);
+            }
+        } else if (nClass == CAIOBJECTTYPE_C_MONK) {
+            if (level == 2 || level == 9) {
+                CCreatureFileHeader previous = m_baseStats;
+                SetFeatValue(level == 2 ? CGAMESPRITE_FEAT_DEFLECT_ARROWS : CGAMESPRITE_FEAT_IMPROVED_EVASION, 1);
+                ApplyNewFeatBonuses(previous, m_derivedStats);
+            } else if (level == 13) {
+                m_baseStats.m_resistMagicBase += 23;
+            } else if (level > 13) {
+                ++m_baseStats.m_resistMagicBase;
+            }
+            if (level % 5 == 0) ++m_baseStats.field_3E;
+        }
+    }
+    if (nClass == CAIOBJECTTYPE_C_MONK) SetMonkAbilities();
+    GetAIType();
+    INT attack = 0, attacks = 0, interval = 0;
+    g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetBaseCombatValues(this, attack, attacks, interval, FALSE);
+    m_baseStats.m_numberOfAttacksBase = static_cast<BYTE>(min(static_cast<BYTE>(attacks), 5));
 }
 
 // 0x71F480
