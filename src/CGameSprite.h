@@ -634,6 +634,8 @@ public:
     void AddNewSpecialAbilities(CDerivedStats& previousStats, BOOL feedBack);
     void AddClassAbilities(BYTE nClass, SHORT nLevels, BOOL feedBack);
     void ApplyNewFeatBonuses(const CCreatureFileHeader& previousBase, CDerivedStats& previousStats); /*#guess: descriptive name*/
+    void ApplyNewSkillBonuses(const CCreatureFileHeader& previousBase, CDerivedStats& previousStats); /*#guess: native no-op hook*/
+    void AddRacialAbilities(); /*#guess: descriptive name*/
     SHORT Berserk();
     void UpdateBerserkActive();
     void CheckModal();

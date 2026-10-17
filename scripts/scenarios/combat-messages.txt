@@ -35,6 +35,7 @@ embergeometrychecks
 tstringsharingchecks
 specialabilitychecks
 classabilitychecks
+chargencompletionchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

@@ -728,14 +728,14 @@ ITEM_ABILITY* CItem::GetAbility(INT nAbility)
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\CItem.cpp
     // __LINE__: 1478
-    UTIL_ASSERT(pRes->Demand());
+    UTIL_ASSERT(pRes->GetDemands() > 0);
 
     ITEM_ABILITY* ability = pRes->GetAbility(nAbility);
     if (ability == NULL) {
         return NULL;
     }
 
-    if (ability->type == 0) {
+    if (static_cast<BYTE>(ability->type) == 0) {
         return NULL;
     }
 

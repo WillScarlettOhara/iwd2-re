@@ -5,9 +5,11 @@
 #include "CResText.h"
 
 namespace Iwd2AutoUI { struct ClassAbilityTableFixture; }
+namespace Iwd2AutoUI { struct ChargenTableFixture; }
 
 class C2DArray : public CResHelper<CResText, 1012> {
     friend struct Iwd2AutoUI::ClassAbilityTableFixture;
+    friend struct Iwd2AutoUI::ChargenTableFixture;
 public:
     C2DArray();
     ~C2DArray();

@@ -58,4 +58,4 @@ three PDB gates31/181/375 hits,60s CLEAN; restored=true/cleanup_errors[].
 Static parity remains unproven for71E760 (missing offset oracle); all three
 call-count advisories remain44->4/40->35/21->47. No reduced gates.
 Melee6HP, bow/bolt/sling12HP, ammo3->2 and ordinary arrivals3HP pass.
-Next: recover CompleteCharacterSkills 612DE0, then scope LevelUp 5E56F0.
+Continued in [chargen completion](chargen-completion-recovery.md).

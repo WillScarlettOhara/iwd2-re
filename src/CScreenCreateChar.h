@@ -26,6 +26,7 @@ class CDerivedStats;
 class CGameSprite;
 class CVidCell;
 
+#pragma pack(push, 2)
 class CScreenCreateChar : public CBaldurEngine {
 public:
     static const char* MALE_PORTRAITS[];
@@ -190,6 +191,7 @@ public:
     /* 04EE */ INT m_nExtraSpells;
     /* 04F2 */ INT m_nExtraSkillPoints;
     /* 04F6 */ int field_4F6;
+    /* 04FA */ int field_4FA;
     /* 04FE */ int field_4FE;
     /* 0502 */ int field_502;
     /* 0506 */ int field_506;
@@ -253,6 +255,7 @@ public:
     /* 1624 */ CUIControlScrollBar* m_pActiveScrollBar;
     /* 1628 */ int field_1628;
 };
+#pragma pack(pop)
 
 class CUIControlButtonCharGenMenu : public CUIControlButton {
 public:

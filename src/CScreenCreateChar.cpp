@@ -1,15 +1,18 @@
 #include "CScreenCreateChar.h"
 
 #include "CBaldurChitin.h"
+#include "CAIScript.h"
 #include "CCreatureFile.h"
 #include "CGameAnimationType.h"
 #include "CGameArea.h"
+#include "CGameButtonList.h"
 #include "CGameEffect.h"
 #include "CGameObjectArray.h"
 #include "CGameSprite.h"
 #include "CIcon.h"
 #include "CInfCursor.h"
 #include "CInfGame.h"
+#include "CItem.h"
 #include "CScreenCharacter.h"
 #include "CScreenConnection.h"
 #include "CScreenMultiPlayer.h"
@@ -145,6 +148,7 @@ CScreenCreateChar::CScreenCreateChar()
     m_nExtraSpells = 0;
     m_nExtraSkillPoints = 0;
     field_4F6 = 0;
+    field_4FA = 0;
     field_4FE = 0;
     field_502 = 0;
     field_506 = 0;
@@ -4337,13 +4341,86 @@ void CScreenCreateChar::CompleteCharacterAbilities(CGameSprite* pSprite)
 // 0x612DE0
 void CScreenCreateChar::CompleteCharacterSkills(CGameSprite* pSprite)
 {
-    // TODO: Incomplete.
+    const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
+    RemoveItems(pSprite);
+    pSprite->GetBaseStats()->m_gold = ruleTables.GetStartingGold(pSprite);
+
+    if (pSprite->GetAIType().m_nClass != CAIOBJECTTYPE_C_MONK) {
+        BYTE slot = CGameSpriteEquipment::SLOT_WEAPON;
+        pSprite->GetEquipment()->m_items[slot] = new CItem(CResRef("00STAF01"), 0, 0, 0, 0, 0);
+        pSprite->SelectWeaponAbility(slot, 0, 1, 1);
+
+        CGameButtonList* usages = pSprite->GetItemUsages(slot, 1, 0);
+        POSITION pos = usages->GetHeadPosition();
+        if (pos != NULL) {
+            CButtonData* button = usages->GetNext(pos);
+            pSprite->m_quickWeapons[0] = *button;
+            SHORT itemSlot = button->m_abilityId.m_itemNum;
+            pSprite->field_3D3A[0] = itemSlot >= 11 && itemSlot <= 14
+                ? static_cast<BYTE>(itemSlot) : 0;
+            delete button;
+            while (pos != NULL) {
+                delete usages->GetNext(pos);
+            }
+        }
+        usages->RemoveAll();
+        delete usages;
+    }
+
+    CCreatureFileHeader previousBase;
+    CDerivedStats previousStats;
+    pSprite->ApplyNewFeatBonuses(previousBase, previousStats);
+    pSprite->ApplyNewSkillBonuses(previousBase, previousStats);
+    pSprite->field_562C = 1;
+    pSprite->ProcessEffectList();
 }
 
 // 0x613310
 void CScreenCreateChar::CompleteCharacterWrapup(CGameSprite* pSprite)
 {
-    // TODO: Incomplete.
+    const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
+    CAIObjectType typeAI(pSprite->m_startTypeAI);
+    pSprite->SetScript(6, new CAIScript(CResRef("DPLAYER3")));
+    pSprite->GetBaseStats()->m_reputation = ruleTables.GetStartingReputation(pSprite->m_startTypeAI.m_nAlignment)
+        * CInfGame::REPUTATION_MULTIPLIER;
+    pSprite->AddRacialAbilities();
+
+    for (UINT classIndex = 0; classIndex < CSPELLLIST_NUM_CLASSES; ++classIndex) {
+        for (UINT level = 0; level < CSPELLLIST_MAX_LEVELS; ++level) {
+            CGameSpriteGroupedSpellList* spells = pSprite->m_spells.Get(classIndex);
+            CGameSpriteSpellList* atLevel = spells->GetSpellsAtLevel(level);
+            if (classIndex == 0 || classIndex == 5) {
+                INT bonus = 0;
+                BYTE nClass = g_pBaldurChitin->GetObjectGame()->GetSpellcasterClass(classIndex);
+                INT count = ruleTables.GetMaxKnownSpells(nClass, typeAI,
+                    *pSprite->GetDerivedStats(), pSprite->GetSpecialization(), level + 1, bonus);
+                atLevel->m_nSharedMax = count + bonus;
+                spells->AddToSharedCurrentCountAtLevel(level, 0, TRUE);
+            } else {
+                for (UINT index = 0; index < atLevel->m_List.size(); ++index) {
+                    spells->AddToCurrentCountAtLevel(atLevel->Get(index)->m_nID, level, 0, TRUE);
+                }
+            }
+        }
+    }
+
+    for (UINT level = 0; level < CSPELLLIST_MAX_LEVELS; ++level) {
+        CGameSpriteSpellList* spells = pSprite->m_domainSpells.GetSpellsAtLevel(level);
+        for (UINT index = 0; index < spells->m_List.size(); ++index) {
+            pSprite->m_domainSpells.AddToCurrentCountAtLevel(spells->Get(index)->m_nID, level, 0, TRUE);
+        }
+    }
+    for (UINT index = 0; index < pSprite->m_innateSpells.m_List.size(); ++index) {
+        pSprite->m_innateSpells.AddToCurrentCount(pSprite->m_innateSpells.Get(index)->m_nID, 0, TRUE);
+    }
+    for (UINT index = 0; index < pSprite->m_songs.m_List.size(); ++index) {
+        pSprite->m_songs.AddToCurrentCount(pSprite->m_songs.Get(index)->m_nID, 0, TRUE);
+    }
+    pSprite->m_shapeshifts.AddToSharedCurrentCount(0, TRUE);
+
+    if (pSprite->GetBaseStats()->m_gold == 0) {
+        pSprite->GetBaseStats()->m_gold = ruleTables.GetStartingGold(pSprite);
+    }
 }
 
 // 0x6139C0

@@ -14043,6 +14043,87 @@ void CGameSprite::CheckFatigue()
     }
 }
 
+// 0x71E750
+void CGameSprite::ApplyNewSkillBonuses(const CCreatureFileHeader& previousBase, CDerivedStats& previousStats)
+{
+    // The original is RET 8, folded with unrelated empty methods by the linker.
+}
+
+// 0x722820
+void CGameSprite::AddRacialAbilities()
+{
+    CAIObjectType typeAI(m_startTypeAI);
+    switch (typeAI.m_nRace) {
+    case CAIOBJECTTYPE_R_HUMAN:
+        if (typeAI.m_nSubRace == 1 || typeAI.m_nSubRace == 2) {
+            m_baseStats.m_generalState |= STATE_INFRAVISION;
+        }
+        break;
+    case CAIOBJECTTYPE_R_ELF:
+        UTIL_ASSERT(typeAI.m_nSubRace <= 2);
+        if (typeAI.m_nSubRace == 1) {
+            m_baseStats.m_generalState |= STATE_INFRAVISION;
+        }
+        break;
+    case CAIOBJECTTYPE_R_HALF_ELF:
+        UTIL_ASSERT(typeAI.m_nSubRace == 0);
+        break;
+    case CAIOBJECTTYPE_R_DWARF:
+        m_baseStats.m_generalState |= STATE_INFRAVISION;
+        UTIL_ASSERT(typeAI.m_nSubRace <= 2);
+        break;
+    case CAIOBJECTTYPE_R_HALFLING:
+        UTIL_ASSERT(typeAI.m_nSubRace <= 2);
+        break;
+    case CAIOBJECTTYPE_R_GNOME:
+        UTIL_ASSERT(typeAI.m_nSubRace <= 1);
+        if (typeAI.m_nSubRace == 1) {
+            m_baseStats.m_generalState |= STATE_INFRAVISION | STATE_NONDETECTION;
+            m_baseStats.field_3E = 14;
+        }
+        break;
+    case CAIOBJECTTYPE_R_HALF_ORC:
+        m_baseStats.m_generalState |= STATE_INFRAVISION;
+        UTIL_ASSERT(typeAI.m_nSubRace == 0);
+        break;
+    default:
+        UTIL_ASSERT(FALSE);
+    }
+
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    CString race = game->GetRuleTables().GetRaceString(typeAI.m_nRace, typeAI.m_nSubRace);
+    CString file = game->GetRuleTables().m_tRaceSpAb.GetAt(CRuleTables::SPECIAL_ABILITIES_FILE, race);
+    if (file != "*") {
+        C2DArray abilities;
+        abilities.Load(CResRef(file));
+        for (UINT row = 0; row < static_cast<UINT>(abilities.GetHeight()); ++row) {
+            CResRef spell(abilities.GetAt(CPoint(0, row)));
+            if (spell.GetResRefStr() != "*") {
+                UINT count = atol(abilities.GetAt(CPoint(1, row)));
+                if (count == 1) {
+                    UINT id = 0;
+                    if (game->m_innateSpells.Find(spell, id) == TRUE) {
+                        BOOL found = FALSE;
+                        for (const auto& entry : m_innateSpells.m_List) {
+                            if (entry.m_nID == id) {
+                                found = TRUE;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            AddSpecialAbility(spell, FALSE);
+                        }
+                    }
+                } else {
+                    for (UINT index = 0; index < count; ++index) {
+                        AddSpecialAbility(spell, FALSE);
+                    }
+                }
+            }
+        }
+    }
+}
+
 // 0x71E760
 void CGameSprite::AddNewSpecialAbilities(CDerivedStats& previousStats, BOOL feedBack)
 {

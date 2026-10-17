@@ -138,6 +138,8 @@
 //   targetresolvechecks         check target fixation, markers and formation
 //                                requests through the real action dispatcher.
 //   targettriggerchecks         check stored targets, selector predicates and HP
+//   chargencompletionchecks     replay initial equipment, racial abilities and
+//                                spell refill; restore party and resources in one tick.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
 // verdict. A failed assertion stops the script.
@@ -217,6 +219,8 @@ struct CallLightningAccess : CProjectileCallLightning {
 #include <string.h>
 
 #include "ClassAbilityTableFixture.h"
+#include "ChargenTableFixture.h"
+#include "CScreenCreateChar.h"
 
 namespace Iwd2AutoUI {
 
@@ -1734,6 +1738,7 @@ struct MasterPaletteFixture {
 #include "TStringSharingChecks.h"
 #include "SpecialAbilityChecks.h"
 #include "ClassAbilityChecks.h"
+#include "ChargenCompletionChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5606,6 +5611,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "classabilitychecks") == 0) {
         ClassAbilityChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "chargencompletionchecks") == 0) {
+        ChargenCompletionChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
