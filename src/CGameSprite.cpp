@@ -28381,10 +28381,10 @@ BOOLEAN CGameSprite::HasSpell(const CResRef& resRef, const DWORD& dwClassMask, U
 
     if (nLevel < CSPELLLIST_MAX_LEVELS) {
         nStartLevel = nLevel;
-        nStartLevel = nLevel + 1;
+        nEndLevel = nLevel + 1;
     }
 
-    UINT nID;
+    UINT nID = 0;
     if (!g_pBaldurChitin->GetObjectGame()->m_spells.Find(resRef, nID)) {
         return FALSE;
     }
@@ -28409,14 +28409,14 @@ BOOLEAN CGameSprite::HasSpell(const CResRef& resRef, const DWORD& dwClassMask, U
                 UTIL_ASSERT(nCurrLevel < CSPELLLIST_MAX_LEVELS);
 
                 UINT nIndex = 0;
-                v1 = m_spells.m_spellsByClass[nClassIndex].m_lists[nCurrLevel].Find(nID, nIndex);
+                v1 = m_spells.m_spellsByClass[nClassIndex].GetSpellsAtLevel(nCurrLevel)->Find(nID, nIndex);
                 if (v1 == TRUE && a4 == TRUE) {
                     // __FILE__: .\Include\FileFormat.h
                     // __LINE__: 2565
                     UTIL_ASSERT(nClassIndex < CSPELLLIST_NUM_CLASSES);
 
                     // NOTE: Uninline.
-                    v1 = m_spells.m_spellsByClass[nClassIndex].m_lists[nCurrLevel].CheckF8(nIndex);
+                    v1 = m_spells.m_spellsByClass[nClassIndex].GetSpellsAtLevel(nCurrLevel)->CheckF8(nIndex);
                 }
             }
         }
@@ -28432,10 +28432,10 @@ BOOLEAN CGameSprite::HasSpell(const CResRef& resRef, const DWORD& dwClassMask, U
                 UINT nIndex = 0;
 
                 // NOTE: Uninline.
-                v1 = m_domainSpells.Find(nID, nStartLevel, nIndex);
+                v1 = m_domainSpells.GetSpellsAtLevel(nCurrLevel)->Find(nID, nIndex);
                 if (v1 == TRUE && a4 == TRUE) {
                     // NOTE: Uninline.
-                    v1 = m_innateSpells.CheckF8(nIndex);
+                    v1 = m_domainSpells.GetSpellsAtLevel(nCurrLevel)->CheckF8(nIndex);
                 }
             }
         }

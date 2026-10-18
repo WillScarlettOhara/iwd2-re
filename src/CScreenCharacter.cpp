@@ -2490,8 +2490,8 @@ void CScreenCharacter::UpdateMainPanel(BOOL bCharacterChanged)
         // __LINE__: 4866
         UTIL_ASSERT(pButton != NULL);
 
-        // pButton->SetEnabled(IsLevelUpButtonClickable(pSprite)
-        //     && (DStats.m_generalState & STATE_DEAD) == 0);
+        pButton->SetEnabled(IsLevelUpButtonClickable(pSprite)
+            && (DStats.m_generalState & STATE_DEAD) == 0);
 
         pGame->GetObjectArray()->ReleaseShare(nCharacterId,
             CGameObjectArray::THREAD_ASYNCH,
@@ -3815,6 +3815,170 @@ void CScreenCharacter::SummonPopup(DWORD dwPopupId, CGameSprite* pSprite, int a3
     UpdatePopupPanel(pPanel->m_nID, pSprite);
 }
 
+// 0x5E0FD0
+BOOL CScreenCharacter::IsLevelUpPanelNeeded(DWORD dwPanelId, CGameSprite* pSprite)
+{
+    switch (dwPanelId) {
+    case 54:
+        return TRUE;
+    case 6:
+        return (m_nClass == CAIOBJECTTYPE_C_WIZARD
+                   || m_nClass == CAIOBJECTTYPE_C_MONK
+                   || m_nClass == CAIOBJECTTYPE_C_PALADIN
+                   || m_nClass == CAIOBJECTTYPE_C_CLERIC)
+            && m_pBeforeLevelUpDerivedStats->GetClassLevel(m_nClass) == 0;
+    case 7:
+        return (pSprite->m_derivedStats.m_nLevel >> 2)
+                - (m_pTempDerivedStats->m_nLevel >> 2)
+            > 0;
+    case 55:
+        return field_2BC > 0;
+    case 56: {
+        const C2DArray& feats = g_pBaldurChitin->GetObjectGame()->GetRuleTables().m_tFeats;
+        if (m_nClass == CAIOBJECTTYPE_C_CLERIC
+            && m_pBeforeLevelUpDerivedStats->GetClassLevel(CAIOBJECTTYPE_C_CLERIC) == 0) {
+            INT nDomain = reinterpret_cast<INT>(pSprite);
+            switch (pSprite->GetSpecialization() & SPECMASK_CLERIC) {
+            case SPECMASK_CLERIC_ILMATER: nDomain = 0; break;
+            case SPECMASK_CLERIC_LATHANDER: nDomain = 1; break;
+            case SPECMASK_CLERIC_SELUNE: nDomain = 2; break;
+            case SPECMASK_CLERIC_HELM: nDomain = 3; break;
+            case SPECMASK_CLERIC_OGHMA: nDomain = 4; break;
+            case SPECMASK_CLERIC_TEMPUS: nDomain = 5; break;
+            case SPECMASK_CLERIC_BANE: nDomain = 6; break;
+            case SPECMASK_CLERIC_MASK: nDomain = 7; break;
+            case SPECMASK_CLERIC_TALOS: nDomain = 8; break;
+            }
+            for (INT nFeat = 0; nFeat < feats.GetHeight(); nFeat++) {
+                INT nMinimum = atoi(feats.GetAt(CPoint(nDomain + 14, nFeat)));
+                INT nValue = pSprite->GetFeatValue(nFeat);
+                if (nMinimum > 0) {
+                    pSprite->SetFeatValue(nFeat, max(nValue, nMinimum));
+                }
+            }
+        }
+        for (INT nFeat = 0; nFeat < FEAT_COUNT; nFeat++) {
+            INT nMinimum = atoi(feats.GetAt(CPoint(m_nClass + 2, nFeat)));
+            if (pSprite->GetFeatValue(nFeat) < nMinimum) {
+                pSprite->SetFeatValue(nFeat, nMinimum);
+            }
+        }
+        return field_64C > 0;
+    }
+    case 8:
+        if (m_nClass == CAIOBJECTTYPE_C_BARD || m_nClass == CAIOBJECTTYPE_C_SORCERER) {
+            ++field_1776;
+            while (field_1776 < 10) {
+                const C2DArray& known = m_nClass == CAIOBJECTTYPE_C_BARD
+                    ? g_pBaldurChitin->GetObjectGame()->GetRuleTables().m_tKnownSpellsBard
+                    : g_pBaldurChitin->GetObjectGame()->GetRuleTables().m_tKnownSpellsSorcerer;
+                INT nBefore = atol(known.GetAt(CPoint(field_1776 - 1,
+                    m_pTempDerivedStats->GetClassLevel(m_nClass) - 1)));
+                m_nExtraMageSpells = atol(known.GetAt(CPoint(field_1776 - 1,
+                    pSprite->m_derivedStats.GetClassLevel(m_nClass) - 1))) - nBefore;
+                if (m_nExtraMageSpells > 0) {
+                    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+                    UINT nCaster = pGame->GetSpellcasterIndex(m_nClass);
+                    UTIL_ASSERT(static_cast<UINT>(field_1776 - 1) < CSPELLLIST_MAX_LEVELS);
+                    INT nCount = pGame->m_spellsByClass[nCaster].m_lists[field_1776 - 1].m_nCount;
+                    INT nAvailable = 0;
+                    INT nIndex = 0;
+                    UINT nExamined = 0;
+                    CResRef resRef;
+                    while (nIndex < nCount) {
+                        for (; nIndex < nCount; nIndex++) {
+                            pGame = g_pBaldurChitin->GetObjectGame();
+                            nCaster = pGame->GetSpellcasterIndex(m_nClass);
+                            UTIL_ASSERT(static_cast<UINT>(field_1776 - 1) < CSPELLLIST_MAX_LEVELS);
+                            UINT nID = pGame->m_spellsByClass[nCaster].m_lists[field_1776 - 1].Get(nIndex);
+                            resRef = pGame->m_spells.Get636(nID);
+                            CSpell spell(resRef);
+                            if (spell.GetRes() != NULL) {
+                                break;
+                            }
+                        }
+                        if (nIndex >= nCount) {
+                            break;
+                        }
+                        {
+                            CSpell spell(resRef);
+                            spell.Demand();
+                            DWORD nClassMask = g_pBaldurChitin->GetObjectGame()->GetClassMask(m_nClass);
+                            if (spell.GetRes() != NULL
+                                && spell.CheckUsableBy(pSprite) == TRUE
+                                && !pSprite->HasSpell(resRef, nClassMask, field_1776 - 1, FALSE)) {
+                                nAvailable++;
+                            }
+                            spell.Release();
+                            nIndex++;
+                        }
+                        if (++nExamined > 29) {
+                            break;
+                        }
+                    }
+                    m_nExtraMageSpells = min(m_nExtraMageSpells, nAvailable);
+                }
+                if (m_nExtraMageSpells > 0) {
+                    return TRUE;
+                }
+                ++field_1776;
+            }
+        }
+        return FALSE;
+    case 16:
+        return m_nClass == CAIOBJECTTYPE_C_RANGER
+            && static_cast<INT>(pSprite->m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_RANGER)) / 5 + 1
+                    - pSprite->GetNextHatedRacesSlot()
+                > 0
+            && pSprite->GetNextHatedRacesSlot() < MAX_HATED_RACES;
+    default:
+        return FALSE;
+    }
+}
+
+// 0x5E1910
+BOOL CScreenCharacter::AdvanceLevelUp(DWORD dwPanelId, CGameSprite* pSprite)
+{
+    DWORD dwNextPanel = reinterpret_cast<DWORD>(pSprite);
+    do {
+        switch (dwPanelId) {
+        case 2: dwNextPanel = 54; break;
+        case 54: dwNextPanel = 6; break;
+        case 6: dwNextPanel = 7; break;
+        case 7: dwNextPanel = 55; break;
+        case 55: dwNextPanel = 56; break;
+        case 56: dwNextPanel = 8; break;
+        case 8: dwNextPanel = 16; break;
+        case 16: dwNextPanel = 2; break;
+        default:
+            UTIL_ASSERT(FALSE);
+            break;
+        }
+        if (IsLevelUpPanelNeeded(dwNextPanel, pSprite)) {
+            SummonPopup(dwNextPanel, pSprite, 1);
+            return TRUE;
+        }
+        dwPanelId = dwNextPanel;
+    } while (dwPanelId != 2);
+
+    LevelUp(pSprite);
+    while (!m_lPopupStack.IsEmpty()) {
+        DismissPopup(pSprite);
+    }
+    if (g_pChitin->cNetwork.m_bIsHost == FALSE
+        && g_pChitin->cNetwork.m_nServiceProvider != CNetwork::SERV_PROV_NULL) {
+        CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+        UTIL_ASSERT(pGame != NULL);
+        LONG nId = pGame->GetCharacterId(static_cast<SHORT>(m_nSelectedCharacter));
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(
+            new CMessage120(g_pChitin->cNetwork.m_idLocalPlayer, FALSE, nId, nId), FALSE);
+    } else if (g_pChitin->cNetwork.m_bIsHost == TRUE) {
+        g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->SetPlayerReady(
+            g_pChitin->cNetwork.m_idLocalPlayer, FALSE);
+    }
+    return FALSE;
+}
+
 // 0x5E1DF0
 void CScreenCharacter::DismissPopup(CGameSprite* pSprite)
 {
@@ -4163,10 +4327,69 @@ void CScreenCharacter::OnExportButtonClick()
     renderLock.Unlock();
 }
 
+// 0x5E4E80
+BOOL CScreenCharacter::IsLevelUpButtonClickable(CGameSprite* pSprite)
+{
+    if (!m_bMultiPlayerViewable
+        || (g_pChitin->cNetwork.m_nServiceProvider != 0
+            && g_pChitin->cNetwork.m_idLocalPlayer != pSprite->m_remotePlayerID)) {
+        return FALSE;
+    }
+    CDerivedStats stats;
+    stats = pSprite->m_derivedStats;
+    g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetNextLevel(
+        pSprite->m_startTypeAI.m_nClass, stats, pSprite);
+    return stats.m_nLevel != pSprite->m_derivedStats.m_nLevel
+        && (pSprite->m_derivedStats.m_generalState & STATE_DEAD) == 0;
+}
+
 // 0x5E5330
 void CScreenCharacter::OnLevelUpButtonClick()
 {
-    // TODO: Incomplete.
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    UTIL_ASSERT(pGame != NULL);
+    CSingleLock lock(&m_cUIManager.m_critSect, FALSE);
+    lock.Lock(INFINITE);
+    LONG nCharacterId = pGame->GetCharacterId(static_cast<SHORT>(GetSelectedCharacter()));
+    CGameSprite* pSprite;
+    BYTE rc;
+    do {
+        rc = pGame->GetObjectArray()->GetDeny(nCharacterId,
+            CGameObjectArray::THREAD_ASYNCH,
+            reinterpret_cast<CGameObject**>(&pSprite), INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc == CGameObjectArray::SUCCESS) {
+        if (IsLevelUpButtonClickable(pSprite)) {
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                new CMessageStopActions(pSprite->m_id, pSprite->m_id, pSprite), FALSE);
+            if (g_pChitin->cNetwork.m_bIsHost == FALSE
+                && g_pChitin->cNetwork.m_nServiceProvider != CNetwork::SERV_PROV_NULL) {
+                LONG nId = pGame->GetCharacterId(static_cast<SHORT>(m_nSelectedCharacter));
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                    new CMessage120(g_pChitin->cNetwork.m_idLocalPlayer, TRUE, nId, nId), FALSE);
+            } else if (g_pChitin->cNetwork.m_bIsHost == TRUE) {
+                g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->SetPlayerReady(
+                    g_pChitin->cNetwork.m_idLocalPlayer, TRUE);
+            }
+            pSprite->field_562C = 1;
+            pSprite->ProcessEffectList();
+            m_typeAI.Set(pSprite->m_startTypeAI);
+            field_77C = pSprite->m_baseStats.m_specialization;
+            m_nSpecialization = pSprite->m_baseStats.m_specialization;
+            UTIL_ASSERT(m_pTempBaseStats == NULL && m_pTempDerivedStats == NULL);
+            UTIL_ASSERT(m_pBeforeLevelUpDerivedStats == NULL);
+            m_pTempBaseStats = new CCreatureFileHeader();
+            *m_pTempBaseStats = pSprite->m_baseStats;
+            m_pTempDerivedStats = new CDerivedStats();
+            *m_pTempDerivedStats = pSprite->m_derivedStats;
+            m_pBeforeLevelUpDerivedStats = new CDerivedStats();
+            *m_pBeforeLevelUpDerivedStats = pSprite->m_derivedStats;
+            field_866 = pSprite->m_nHPCONBonusTotalOld;
+            AdvanceLevelUp(2, pSprite);
+        }
+        pGame->GetObjectArray()->ReleaseDeny(nCharacterId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+    lock.Unlock();
 }
 
 // 0x5D72D0

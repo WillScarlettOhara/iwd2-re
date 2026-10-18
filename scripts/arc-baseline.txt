@@ -12,4 +12,4 @@
 src/CSpawn.cpp:949: lint_stuck_loop_index   # bit-shift loop; the binary genuinely has no advance in the body
 src/CResBinary.cpp:4: lint_uninit_member   # 0x4028F0..0x402908 clears only +0x54; the version pointer at +0x50 is first written by Demand (0x402940), not the constructor
 src/CProjectile.cpp:3589: lint_uninit_member   # full ctor 0x52AD60..0x52B006 never writes +0x286 (m_pTravelPaletteRes) or +0x298 (field_298); SetTravelPalette owns their initialization, preserve native omission
-src/CScreenCharacter.cpp:419: lint_uninit_member   # ctor 0x5D5220..0x5D62ED never writes +0x1840; OnDoneButtonClick writes the value at 0x5E3313, preserve the native omission
+src/CScreenCharacter.cpp:419: lint_uninit_member   # full ctor 0x5D5220..0x5D62ED never writes +0x2BC, +0x64C, +0x77C or +0x1840; level-up paths initialize these later (5E558C, 5E3313); preserve the native omissions

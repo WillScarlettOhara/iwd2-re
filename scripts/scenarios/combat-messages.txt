@@ -38,6 +38,7 @@ classabilitychecks
 chargencompletionchecks
 levelupchecks
 characterkeychecks
+beginlevelupchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

@@ -109,6 +109,8 @@ public:
     void ShowPopupPanel(DWORD dwPanelId, BOOL bShow);
     void EnablePopupPanel(DWORD dwPanelId, BOOL bEnable);
     void SummonPopup(DWORD dwPopupId, CGameSprite* pSprite, int a3);
+    BOOL IsLevelUpPanelNeeded(DWORD dwPanelId, CGameSprite* pSprite); /*#guess*/
+    BOOL AdvanceLevelUp(DWORD dwPanelId, CGameSprite* pSprite); /*#guess*/
     void DismissPopup(CGameSprite* pSprite);
     BOOL IsDoneButtonClickable(CGameSprite* pSprite);
     void OnDoneButtonClick();
@@ -122,6 +124,7 @@ public:
     void OnScriptButtonClick();
     void OnExportButtonClick();
     void OnLevelUpButtonClick();
+    BOOL IsLevelUpButtonClickable(CGameSprite* pSprite);
     void LevelUp(CGameSprite* pSprite);
     void UpdateHelp(DWORD dwPanelId, DWORD dwTextId, DWORD dwStrId);
     void CheckDropEquipment();
@@ -168,17 +171,16 @@ public:
     /* 01B8 */ BOOLEAN field_1B8;
     /* 01BA */ CGameSpriteGroupedSpellList m_spells;
     /* 02BA */ SHORT m_nTopSkill;
-    /* 02BC */ BYTE field_2BC[4];
+    /* 02BC */ INT field_2BC;
     /* 02C0 */ INT m_storedSkills[16];
     /* 0300 */ CKeyInfo m_pVirtualKeys[CSCREENCHARACTER_VIRTUAL_KEYS];
     /* 05D0 */ BYTE m_pVirtualKeysFlags[CSCREENCHARACTER_VIRTUAL_KEYS];
     /* 062A */ CTypedPtrList<CPtrList, CUIPanel*> m_lPopupStack;
     /* 0646 */ INT m_nExtraFeats;
     /* 064A */ SHORT m_nTopFeat;
-    /* 064C */ BYTE field_64C[4];
+    /* 064C */ INT field_64C;
     /* 0650 */ INT m_storedFeats[75];
-    /* 077C */ WORD field_77C;
-    /* 077E */ WORD field_77E;
+    /* 077C */ DWORD field_77C;
     /* 0780 */ int field_780;
     /* 0784 */ BYTE field_784[20];
     /* 0798 */ INT m_nExtraSkillPoints;

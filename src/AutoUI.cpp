@@ -141,6 +141,7 @@
 //   chargencompletionchecks     replay initial equipment, racial abilities and
 //                                spell refill; restore party and resources in one tick.
 //   levelupchecks               replay level-up transfers and equipment rejection.
+//   beginlevelupchecks          replay panel predicates and open the real class popup.
 //   characterkeychecks          replay character-screen virtual keyboard routing.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
@@ -223,6 +224,7 @@ struct CallLightningAccess : CProjectileCallLightning {
 #include "ClassAbilityTableFixture.h"
 #include "ChargenTableFixture.h"
 #include "LevelUpTableFixture.h"
+#include "BeginLevelUpTableFixture.h"
 #include "CScreenCreateChar.h"
 
 namespace Iwd2AutoUI {
@@ -1744,6 +1746,7 @@ struct MasterPaletteFixture {
 #include "ChargenCompletionChecks.h"
 #include "LevelUpChecks.h"
 #include "CharacterKeyChecks.h"
+#include "BeginLevelUpChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5625,6 +5628,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "characterkeychecks") == 0) {
         CharacterKeyChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "beginlevelupchecks") == 0) {
+        BeginLevelUpChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

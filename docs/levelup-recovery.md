@@ -54,5 +54,5 @@ remain unproven; manual native-fixture scope is stated above. First run
 2026-10-17T20-10-37-454604-batch stopped on a cleric-without-domain fixture;
 inputs were corrected and recaptured, without weakening production behavior.
 
-Next: OnLevelUpButtonClick 5E4E80 / caller 5E1910 to expose the recovered
-completion through the normal level-up UI. Keep the complete combat profile.
+Follow-up: begin-levelup-recovery.md covers entry 5E5330, eligibility 5E4E80
+and panel selection/progression. Completion UI remains partial; keep the profile.

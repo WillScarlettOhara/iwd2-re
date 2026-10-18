@@ -125,22 +125,44 @@ def header_offset_map(class_name: str) -> dict[str, int]:
     Walks the class header and its transitive base-class headers.
     """
     out: dict[str, int] = {}
-    seen: set[Path] = set()
+    seen: set[tuple[Path, str]] = set()
 
-    def absorb(hpath: Path):
-        if hpath in seen or not hpath.exists():
+    def absorb(hpath: Path, name: str):
+        key = (hpath, name)
+        if key in seen or not hpath.exists():
             return
-        seen.add(hpath)
+        seen.add(key)
         text = hpath.read_text(errors="replace")
-        for m in DECL_RE.finditer(text):
+        # Headers can define several unrelated classes. Follow only this class's
+        # definition and bases; a sibling control's CVidCell is not an engine base.
+        masked = re.sub(r'//[^\n]*|/\*[\s\S]*?\*/|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'',
+                        lambda m: re.sub(r"[^\n]", " ", m.group()), text)
+        definition = re.search(rf"\b(?:class|struct)\s+{re.escape(name)}\b([^;{{]*)\{{", masked)
+        if definition is None:
+            return
+        depth = 1
+        direct = []
+        for i in range(definition.end(), len(text)):
+            char = masked[i]
+            if char == "}" and depth == 1:
+                break
+            direct.append(text[i] if depth == 1 else ("\n" if char == "\n" else " "))
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+        for m in DECL_RE.finditer("".join(direct)):
             out.setdefault(f"m_{m.group(2)}", int(m.group(1), 16))
-        for bm in re.finditer(r":\s*(?:public|protected|private)?\s*(\w+)", text):
-            absorb(SRC / f"{bm.group(1)}.h")
+        bases = definition.group(1).partition(":")[2]
+        for base in bases.split(","):
+            bm = re.match(r"\s*(?:(?:public|protected|private|virtual)\s+)*(\w+)", base)
+            if bm:
+                absorb(SRC / f"{bm.group(1)}.h", bm.group(1))
 
     # primary header
     cands = list(SRC.glob(f"{class_name}.h"))
     for c in cands:
-        absorb(c)
+        absorb(c, class_name)
     return out
 
 

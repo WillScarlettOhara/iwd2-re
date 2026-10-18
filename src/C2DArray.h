@@ -7,11 +7,13 @@
 namespace Iwd2AutoUI { struct ClassAbilityTableFixture; }
 namespace Iwd2AutoUI { struct ChargenTableFixture; }
 namespace Iwd2AutoUI { struct LevelUpTableFixture; }
+namespace Iwd2AutoUI { struct BeginLevelUpTableFixture; }
 
 class C2DArray : public CResHelper<CResText, 1012> {
     friend struct Iwd2AutoUI::ClassAbilityTableFixture;
     friend struct Iwd2AutoUI::ChargenTableFixture;
     friend struct Iwd2AutoUI::LevelUpTableFixture;
+    friend struct Iwd2AutoUI::BeginLevelUpTableFixture;
 public:
     C2DArray();
     ~C2DArray();
