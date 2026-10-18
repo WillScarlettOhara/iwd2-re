@@ -5,6 +5,7 @@
 #include "CBaldurChitin.h"
 #include "CGameEffect.h"
 #include "CGameSprite.h"
+#include "CGameAnimationType.h"
 #include "CInfCursor.h"
 #include "CInfGame.h"
 #include "CItem.h"
@@ -584,7 +585,7 @@ CScreenCharacter::CScreenCharacter()
     }
     m_spells.m_nHighestLevel = 0;
 
-    field_2B6 = 0;
+    m_spells.m_nHighestLevel = 0;
     field_866 = 0;
     field_1776 = 0;
     field_86A = 0;
@@ -4168,10 +4169,280 @@ void CScreenCharacter::OnLevelUpButtonClick()
     // TODO: Incomplete.
 }
 
+// 0x5D72D0
+void CScreenCharacter::OnKeyDown(SHORT nKeys)
+{
+    CInfGame* game = g_pBaldurChitin->GetObjectGame();
+    for (INT index = 0; index < nKeys; ++index) {
+        BYTE key = m_pVirtualKeysFlags[index];
+        if (key == VK_ESCAPE) {
+            if (GetTopPopup() != NULL) OnCancelButtonClick();
+            else SelectEngine(g_pBaldurChitin->m_pEngineWorld);
+            continue;
+        }
+        if (key == VK_RETURN) {
+            if (GetTopPopup() != NULL && GetTopPopup()->m_nID != 51) {
+                OnDoneButtonClick();
+                continue;
+            }
+        } else if (m_cUIManager.OnKeyDown(key)) {
+            continue;
+        }
+
+        switch (key) {
+        case VK_TAB:
+            m_cUIManager.ForceToolTip();
+            break;
+        case VK_LEFT:
+        case VK_NUMPAD4:
+        case VK_RIGHT:
+        case VK_NUMPAD6:
+            if (GetTopPopup() != NULL && GetTopPopup()->m_nID == 18) {
+                CUIControlButton* button = static_cast<CUIControlButton*>(GetManager()->GetPanel(18)->GetControl(
+                    key == VK_LEFT || key == VK_NUMPAD4 ? 1 : 2));
+                if (button != NULL) button->OnLButtonClick(CPoint(0, 0));
+            }
+            break;
+        case VK_SNAPSHOT:
+            g_pBaldurChitin->GetActiveEngine()->pVidMode->PrintScreen();
+            break;
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+            if (GetTopPopup() == NULL) OnPortraitLClick(key - '1');
+            break;
+        default:
+            if (GetTopPopup() == NULL) {
+                for (SHORT binding = 0; binding < CINFGAME_KEYMAP_SIZE; ++binding) {
+                    if (game->GetKeymap(binding) == key && game->GetKeymapFlag(binding) == m_bCtrlKeyDown) {
+                        switch (binding) {
+                        case 0: g_pBaldurChitin->GetActiveEngine()->OnLeftPanelButtonClick(5); break;
+                        case 1: g_pBaldurChitin->GetActiveEngine()->OnLeftPanelButtonClick(8); break;
+                        case 2: g_pBaldurChitin->GetActiveEngine()->OnLeftPanelButtonClick(0); break;
+                        case 3: g_pBaldurChitin->GetActiveEngine()->OnLeftPanelButtonClick(6); break;
+                        case 4: g_pBaldurChitin->GetActiveEngine()->OnLeftPanelButtonClick(7); break;
+                        case 5: g_pBaldurChitin->GetActiveEngine()->OnLeftPanelButtonClick(4); break;
+                        case 6: g_pBaldurChitin->GetActiveEngine()->OnLeftPanelButtonClick(9); break;
+                        case 7: g_pBaldurChitin->GetActiveEngine()->OnLeftPanelButtonClick(13); break;
+                        case 29: OnRestButtonClick(); break;
+                        }
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+    }
+}
+
 // 0x5E56F0
 void CScreenCharacter::LevelUp(CGameSprite* pSprite)
 {
-    // TODO: Incomplete.
+    UTIL_ASSERT(m_pBeforeLevelUpDerivedStats != NULL);
+    UTIL_ASSERT(m_pTempBaseStats != NULL && m_pTempDerivedStats != NULL);
+
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    const CRuleTables& rules = pGame->GetRuleTables();
+    pSprite->ApplyNewFeatBonuses(*m_pTempBaseStats, *m_pTempDerivedStats);
+    pSprite->ApplyNewSkillBonuses(*m_pTempBaseStats, *m_pTempDerivedStats);
+    pSprite->m_baseStats.field_2FF = static_cast<BYTE>(m_nExtraSkillPoints);
+    pSprite->AddNewSpecialAbilities(*m_pTempDerivedStats, TRUE);
+    pSprite->AddKnownDivineSpells(CAIOBJECTTYPE_C_CLERIC);
+    pSprite->AddKnownDivineSpells(CAIOBJECTTYPE_C_DRUID);
+    pSprite->AddKnownDivineSpells(CAIOBJECTTYPE_C_PALADIN);
+    pSprite->AddKnownDivineSpells(CAIOBJECTTYPE_C_RANGER);
+
+    if (m_nClass == CAIOBJECTTYPE_C_SORCERER || m_nClass == CAIOBJECTTYPE_C_BARD) {
+        CAbilityId ability;
+        ability.m_itemType = 1;
+        ability.m_nClass = m_nClass;
+        INT currentBonus = 0;
+        INT previousBonus = 0;
+        for (UINT level = 0; level < CSPELLLIST_MAX_LEVELS; ++level) {
+            ability.m_bCanUse = static_cast<BYTE>(level + 1);
+            INT current = rules.GetMaxKnownSpells(m_nClass, pSprite->GetAIType(),
+                pSprite->m_derivedStats, pSprite->GetSpecialization(), level + 1, currentBonus);
+            current += currentBonus;
+            INT previous = rules.GetMaxKnownSpells(m_nClass, pSprite->GetAIType(),
+                *m_pTempDerivedStats, pSprite->GetSpecialization(), level + 1, previousBonus);
+            previous += previousBonus;
+            CGameSpriteSpellList* list = pSprite->GetSpellsAtLevel(m_nClass, level);
+            if (!list->m_List.empty()) {
+                list->m_nSharedMax = current;
+                UINT delta = current - previous;
+                for (UINT index = 0; index < list->m_List.size(); ++index) {
+                    UINT id = list->Get(index)->m_nID;
+                    pSprite->GetSpells(m_nClass)->Add(id, level, delta, 0, 0);
+                    ability.m_res = pGame->m_spells.Get(id);
+                    pSprite->UpdateQuickButtons(ability, delta, FALSE, FALSE);
+                }
+                pSprite->GetSpells(m_nClass)->AddToSharedCurrentCountAtLevel(level, delta, FALSE);
+            }
+        }
+    }
+
+    if (pSprite->m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_BARBARIAN) >= 15) {
+        UINT oldId = 0, newId = 0, index = 0;
+        if (pGame->GetInnateSpells()->Find(CGameSprite::SPIN236, oldId) == TRUE
+            && pGame->GetInnateSpells()->Find(CGameSprite::SPIN260, newId) == TRUE
+            && pSprite->m_innateSpells.Find(oldId, index) == TRUE) {
+            CGameSpriteSpellListEntry oldEntry = *pSprite->m_innateSpells.Get(index);
+            pSprite->AddInnateSpell(CGameSprite::SPIN260, oldEntry.m_nMax, 0, oldEntry.m_nShared);
+            pSprite->AddToInnateSpellCount(CGameSprite::SPIN260, oldEntry.m_nCurrent, FALSE);
+            pSprite->SubtractFromInnateSpellCount(CGameSprite::SPIN236, 0, TRUE);
+            pSprite->RemoveInnateSpell(CGameSprite::SPIN236, TRUE, 0, 0);
+            if (pSprite->m_innateSpells.Find(newId, index) == TRUE) {
+                CGameSpriteSpellListEntry newEntry = *pSprite->m_innateSpells.Get(index);
+                CButtonData button;
+                CSpell* spell = new CSpell(CGameSprite::SPIN260);
+                UTIL_ASSERT(spell != NULL);
+                if (spell->Demand()) {
+                    if (spell->pRes != NULL) {
+                        SHORT casterLevel = pSprite->GetCasterLevel(spell, 0, 0);
+                        if (casterLevel < 2) casterLevel = 1;
+                        SPELL_ABILITY* selected = NULL;
+                        for (INT ability = 0; ability < spell->GetAbilityCount(); ++ability) {
+                            if (spell->GetAbility(ability)->minCasterLevel > casterLevel) break;
+                            selected = spell->GetAbility(ability);
+                        }
+                        if (selected != NULL && selected->quickSlotType == 4) {
+                            button.m_icon = CString(selected->quickSlotIcon);
+                            button.m_name = spell->GetGenericName();
+                            button.m_abilityId.m_itemType = 1;
+                            button.m_abilityId.m_res = CGameSprite::SPIN260;
+                            button.m_abilityId.m_targetType = selected->actionType;
+                            button.m_abilityId.m_strDescription = spell->GetGenericName();
+                            CDerivedStats& stats = pSprite->m_bAllowEffectListCall
+                                ? pSprite->m_derivedStats : pSprite->m_tempStats;
+                            button.m_bDisabled = static_cast<BYTE>(stats.m_disabledSpellTypes[2]);
+                            button.m_count = static_cast<SHORT>(newEntry.m_nCurrent);
+                            if (button.m_count < 1) button.m_bDisabled = TRUE;
+                        }
+                    }
+                    spell->Release();
+                }
+                delete spell;
+                for (BYTE slot = 0; slot < 9; ++slot) {
+                    CButtonData oldButton = pSprite->m_quickInnates[slot];
+                    if (oldButton.m_abilityId.m_res == CGameSprite::SPIN236) {
+                        pSprite->m_quickInnates[slot] = button;
+                    }
+                }
+            }
+        }
+    }
+
+    if (m_nClass == CAIOBJECTTYPE_C_DRUID) {
+        INT current = rules.GetMaxDruidShapeshifts(pSprite->m_baseStats,
+            pSprite->m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_DRUID));
+        INT previous = rules.GetMaxDruidShapeshifts(*m_pTempBaseStats,
+            m_pTempDerivedStats->GetClassLevel(m_nClass));
+        if (current > previous) {
+            pSprite->AllocateShapeshiftSlots(current - previous);
+            pSprite->m_shapeshifts.AddToSharedCurrentCount(current - previous, FALSE);
+        }
+    }
+    if (m_nClass == CAIOBJECTTYPE_C_CLERIC && (m_nSpecialization & 0xFF8000) == 0x800000
+        && m_pBeforeLevelUpDerivedStats->GetClassLevel(CAIOBJECTTYPE_C_CLERIC) == 0) {
+        pSprite->m_baseStats.m_resistElectricityBase += 5;
+    }
+
+    delete m_pTempBaseStats;
+    m_pTempBaseStats = NULL;
+    delete m_pTempDerivedStats;
+    m_pTempDerivedStats = NULL;
+    field_866 = 0;
+    field_86A = 0;
+    delete m_pBeforeLevelUpDerivedStats;
+    m_pBeforeLevelUpDerivedStats = NULL;
+    CheckDropEquipment();
+    pSprite->field_562C = 1;
+    pSprite->ProcessEffectList();
+
+    if (m_nClass == CAIOBJECTTYPE_C_CLERIC) {
+        UINT maxLevel = rules.GetMaxSpellLevel(CAIOBJECTTYPE_C_CLERIC,
+            pSprite->m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_CLERIC));
+        CGroupedSpellList* domain = &pGame->m_spellsByDomain[
+            pGame->GetSpellcasterDomainIndex(m_nSpecialization & 0xFF8000)];
+        for (UINT level = 0; level < maxLevel; ++level) {
+            for (UINT index = 0; index < domain->m_lists[level].m_nCount; ++index) {
+                UINT id = domain->m_lists[level].Get(index);
+                CResRef res = pGame->m_spells.Get(id);
+                CSpell spell(res);
+                DWORD unusable = spell.GetNotUsableBy();
+                if (spell.pRes != NULL && (unusable & 0x40000000) == 0) {
+                    if (((unusable & 4) && IcewindMisc::IsGood(pSprite))
+                        || ((unusable & 2) && IcewindMisc::IsEvil(pSprite))
+                        || ((unusable & 8) && !IcewindMisc::IsGood(pSprite) && !IcewindMisc::IsEvil(pSprite))
+                        || ((unusable & 0x10) && IcewindMisc::IsLawful(pSprite))
+                        || ((unusable & 1) && IcewindMisc::IsChaotic(pSprite))
+                        || ((unusable & 0x20) && !IcewindMisc::IsLawful(pSprite) && !IcewindMisc::IsChaotic(pSprite))) continue;
+                }
+                pSprite->AddDomainSpell(level, res, 0, 0, 0);
+            }
+        }
+    }
+
+    if (m_nClass != CAIOBJECTTYPE_C_PALADIN
+        && pSprite->m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_PALADIN) > 0
+        && (pSprite->m_baseStats.m_specFlags & 4) == 0) {
+        switch (pSprite->GetSpecialization() & 7) {
+        case 1:
+            if (m_nClass != CAIOBJECTTYPE_C_CLERIC || (pSprite->GetSpecialization() & 0xFF8000) != 0x8000)
+                pSprite->m_baseStats.m_specFlags |= 4;
+            break;
+        case 2:
+            if (m_nClass != CAIOBJECTTYPE_C_FIGHTER) pSprite->m_baseStats.m_specFlags |= 4;
+            break;
+        case 4:
+            if (m_nClass != CAIOBJECTTYPE_C_WIZARD) pSprite->m_baseStats.m_specFlags |= 4;
+            break;
+        }
+    }
+    if (m_nClass != CAIOBJECTTYPE_C_MONK
+        && pSprite->m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_MONK) > 0
+        && (pSprite->m_baseStats.m_specFlags & 8) == 0) {
+        switch (pSprite->GetSpecialization() & 0x38) {
+        case 8:
+            if (m_nClass != CAIOBJECTTYPE_C_ROGUE) pSprite->m_baseStats.m_specFlags |= 8;
+            break;
+        case 0x10:
+            if (m_nClass != CAIOBJECTTYPE_C_CLERIC || (pSprite->GetSpecialization() & 0xFF8000) != 0x8000)
+                pSprite->m_baseStats.m_specFlags |= 8;
+            break;
+        case 0x20:
+            if (m_nClass != CAIOBJECTTYPE_C_SORCERER) pSprite->m_baseStats.m_specFlags |= 8;
+            break;
+        }
+    }
+
+    WORD classBits;
+    switch (pSprite->m_derivedStats.GetBestClass()) {
+    case CAIOBJECTTYPE_C_BARBARIAN:
+    case CAIOBJECTTYPE_C_FIGHTER:
+    case CAIOBJECTTYPE_C_MONK:
+    case CAIOBJECTTYPE_C_PALADIN:
+    case CAIOBJECTTYPE_C_RANGER: classBits = 0x100; break;
+    case CAIOBJECTTYPE_C_BARD:
+    case CAIOBJECTTYPE_C_ROGUE: classBits = 0x300; break;
+    case CAIOBJECTTYPE_C_CLERIC:
+    case CAIOBJECTTYPE_C_DRUID: classBits = 0; break;
+    case CAIOBJECTTYPE_C_SORCERER:
+    case CAIOBJECTTYPE_C_WIZARD: classBits = 0x200; break;
+    default: return;
+    }
+    WORD animation = (static_cast<WORD>(pSprite->m_baseStats.m_animationType) & 0xFCFF) | classBits;
+    if (static_cast<WORD>(pSprite->m_baseStats.m_animationType) != animation || pSprite->m_baseStats.field_22 != 0) {
+        pSprite->UnequipAll(FALSE);
+        pSprite->m_baseStats.m_animationType = animation;
+        pSprite->m_baseStats.field_22 = 0;
+        delete pSprite->m_animation.m_animation;
+        pSprite->m_animation.m_animation = CGameAnimationType::SetAnimationType(animation, pSprite->m_baseStats.m_colors, 0);
+        pSprite->EquipAll(FALSE);
+    }
 }
 
 // 0x5E6840
@@ -4228,7 +4499,60 @@ void CScreenCharacter::CheckDropEquipment()
 // 0x5E6A30
 void CScreenCharacter::CheckDropSlot(INT nSlot)
 {
-    // TODO: Incomplete.
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    UTIL_ASSERT(pGame != NULL);
+    CItem* item;
+    STRREF error = -1;
+    CResRef icon(""), res("");
+    WORD count = 0;
+    SHORT portrait = static_cast<SHORT>(m_nSelectedCharacter);
+    pGame->InventoryInfoPersonal(portrait, nSlot, item, error, icon, res, count, TRUE);
+    if (item == NULL) return;
+    if ((nSlot < 43 || nSlot > 50 || nSlot - 43 < pGame->GetNumQuickWeaponSlots(portrait))
+        && pGame->CanCharacterUseItem(portrait, item, error, TRUE)) return;
+
+    LONG id = portrait < pGame->GetNumCharacters()
+        ? pGame->GetCharacterId(portrait) : CGameObjectArray::INVALID_INDEX;
+    CButtonData empty;
+    if (nSlot >= 43 && nSlot <= 50) {
+        CGameSprite* sprite;
+        BYTE result;
+        do {
+            result = pGame->GetObjectArray()->GetDeny(id, CGameObjectArray::THREAD_ASYNCH,
+                reinterpret_cast<CGameObject**>(&sprite), INFINITE);
+        } while (result == CGameObjectArray::SHARED || result == CGameObjectArray::DENIED);
+        if (result == CGameObjectArray::SUCCESS) {
+            BYTE slot = static_cast<BYTE>(nSlot - CGameSpriteEquipment::SLOT_WEAPON);
+            sprite->SetQuickWeapon(slot, empty);
+            sprite->SetQuickWeapon(slot, static_cast<BYTE>(0));
+            pGame->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+    }
+    if (nSlot >= 11 && nSlot <= 13) {
+        CGameSprite* sprite;
+        BYTE result;
+        do {
+            result = pGame->GetObjectArray()->GetDeny(id, CGameObjectArray::THREAD_ASYNCH,
+                reinterpret_cast<CGameObject**>(&sprite), INFINITE);
+        } while (result == CGameObjectArray::SHARED || result == CGameObjectArray::DENIED);
+        if (result == CGameObjectArray::SUCCESS) {
+            SHORT launcher = sprite->GetLauncherSlot(nSlot, 0);
+            if (launcher != -1) {
+                BYTE slot = static_cast<BYTE>(launcher - CGameSpriteEquipment::SLOT_WEAPON);
+                sprite->SetQuickWeapon(slot, empty);
+                sprite->SetQuickWeapon(slot, static_cast<BYTE>(0));
+            }
+            pGame->GetObjectArray()->ReleaseDeny(id, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+        }
+    }
+    item = NULL;
+    if (pGame->SwapItemPersonal(portrait, nSlot, item, error, 0xFFFF, FALSE) && item != NULL
+        && !pGame->SwapItemPersonalInventory(portrait, item, 0x7FFF, error, 0xFFFF, FALSE, TRUE)) {
+        LONG pile = pGame->GetGroundPile(id);
+        pGame->SwapItemGround(pile, 0x7FFF, item, error, 0xFFFF, FALSE);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(
+            new CMessageContainerAddItem(CItem(), 0x7FFF, TRUE, pile, pile), FALSE);
+    }
 }
 
 // 0x5E7020

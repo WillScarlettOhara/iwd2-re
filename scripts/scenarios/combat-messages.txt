@@ -36,6 +36,8 @@ tstringsharingchecks
 specialabilitychecks
 classabilitychecks
 chargencompletionchecks
+levelupchecks
+characterkeychecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks
