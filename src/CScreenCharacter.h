@@ -96,6 +96,10 @@ public:
     void UpdateSpecializationPanel(CGameSprite* pSprite);
     void UpdateAbilitiesPanel(CGameSprite* pSprite);
     void UpdateSpellsPanel(CGameSprite* pSprite);
+    void UpdateStatisticsPanel(CGameSprite* pSprite); // #guess
+    void UpdateInformationPanel(); // #guess
+    void UpdateSkillsPanel(CGameSprite* pSprite); // #guess
+    void UpdateFeatsPanel(CGameSprite* pSprite); // #guess
     void GetPartyInformation(DWORD& nPartyChapterKillsXPValue, DWORD& nPartyChapterKillsNumber, DWORD& nPartyGameKillsXPValue, DWORD& nPartyGameKillsNumber);
     void EnableMainPanel(BOOL bEnable);
     STRREF GetRangerHatedRaceStrref(BYTE nRace);

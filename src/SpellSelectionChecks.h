@@ -113,6 +113,9 @@ void SpellSelectionChecks(INT nStep)
                 check("canonical-real-click-and-owned-list",same && screen.m_nExtraMageSpells==row.budget);
                 // An exhausted click keeps the unselected button unselected.
                 check("canonical-click-selection",button->m_bSelected==(row.selected?FALSE:row.extra>0));
+                CString budget; budget.Format(_T("%d"),screen.m_nExtraMageSpells);
+                check("popup-refreshes-budget-label",static_cast<CUIControlLabel*>(panel->GetControl(0x10000022))->GetText()==budget);
+                check("popup-refreshes-done",static_cast<CUIControlButton*>(panel->GetControl(33))->m_bEnabled==(screen.m_nExtraMageSpells==0));
                 Emit("{\"op\":\"spell-selection-result\",\"case\":%d,\"kind\":3,\"budget\":%d,\"selected\":%d,\"entries\":[%s],\"totals\":[%u,%u,%u],\"highest\":%u}",index,screen.m_nExtraMageSpells,button->m_bSelected,static_cast<LPCTSTR>(data),list.m_nSharedCurrent,list.m_nSharedMax,list.m_nSharedTotal,group->m_nHighestLevel);
             }
         }

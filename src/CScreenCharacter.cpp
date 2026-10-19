@@ -3798,52 +3798,255 @@ void CScreenCharacter::ResetPopupPanel(DWORD dwPanelId, CGameSprite* pSprite, in
     }
 }
 
+// 0x5DAF30
+void CScreenCharacter::UpdateInformationPanel()
+{
+    CUIPanel* pPanel = m_cUIManager.GetPanel(57);
+
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
+    // __LINE__: 6807
+    UTIL_ASSERT(pPanel != NULL);
+
+    UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START, "%s", FetchString(17088));
+    UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START + 1, "%s", FetchString(23998));
+    UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START + 2, "%s", FetchString(36361));
+    UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START + 3, "%s", FetchString(41403));
+    UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START + 4, "%s", FetchString(41393));
+    UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START + 5, "%s", FetchString(11983));
+
+    for (INT nLabel = 0; nLabel < 5; nLabel++) {
+        UpdateLabel(pPanel, INFORMATION_PANEL_UNUSED_LABEL_START + nLabel, "");
+    }
+
+    for (DWORD nControlID = INFORMATION_PANEL_UNUSED_HOTAREA_START; nControlID <= INFORMATION_PANEL_UNUSED_HOTAREA_END; nControlID++) {
+        CUIControlButton* pButton = static_cast<CUIControlButton*>(pPanel->GetControl(nControlID));
+
+        pButton->SetEnabled(FALSE);
+    }
+
+    SelectInformationCategory(m_nInfoCategory);
+    SelectInformationItem(m_nInfoSelectedItem);
+
+    CUIControlScrollBar* pScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(4));
+
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
+    // __LINE__: 6837
+    UTIL_ASSERT(pScrollBar != NULL);
+
+    CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;
+    UTIL_ASSERT(pCharacter != NULL);
+    pScrollBar->AdjustScrollBar(pCharacter->m_nInfoScrollPos, pCharacter->m_nInfoItemCount, INFORMATION_PANEL_ITEM_COUNT);
+}
+
+// 0x5DB200
+void CScreenCharacter::UpdateStatisticsPanel(CGameSprite* pSprite)
+{
+    CResRef resRef;
+    CString sSpell, sWeapon;
+    DWORD nChapterXP, nChapterKills, nGameXP, nGameKills;
+    GetPartyInformation(nChapterXP, nChapterKills, nGameXP, nGameKills);
+    ULONG nTime;
+    STRREF nStrongest;
+    CGameStatsSprite& stats = pSprite->m_cGameStats;
+    stats.GetTimeWithParty(nTime);
+    stats.GetStrongestKill(nStrongest);
+    CUIPanel* pPanel = m_cUIManager.GetPanel(4);
+    UTIL_ASSERT(pPanel != NULL);
+    UpdateLabel(pPanel, 0x10000000, "%s", pSprite->m_baseStats.m_name == -1
+        ? pSprite->GetName() : FetchString(pSprite->m_baseStats.m_name));
+    CString sClass;
+    g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetClassStringLower(pSprite->m_startTypeAI.m_nClass,
+        pSprite->m_baseStats.m_specialization, pSprite->m_baseStats.m_flags, sClass, 1);
+    UpdateLabel(pPanel, 0x10000018, "%s", sClass);
+    UpdateLabel(pPanel, 0x10000005, "%s", FetchString(nStrongest));
+    CTimerWorld::GetCurrentTimeString(nTime, 16043, sSpell);
+    UpdateLabel(pPanel, 0x10000006, "%s", sSpell);
+    stats.GetFavouriteSpell(resRef);
+    if (resRef != "") {
+        CSpell spell;
+        spell.SetResRef(resRef, TRUE, TRUE);
+        spell.Demand();
+        sSpell = spell.pRes != NULL ? FetchString(spell.GetGenericName()) : CString(_T("Bad spell resref"));
+        spell.Release();
+    } else {
+        sSpell = "";
+    }
+    UpdateLabel(pPanel, 0x10000007, "%s", sSpell);
+    sWeapon = "";
+    stats.GetFavouriteWeapon(resRef);
+    if (resRef != "") {
+        CItem weapon(resRef, 0, 0, 0, 0, 0);
+        if (weapon.GetRes() != NULL) {
+            STRREF nFormat;
+            switch (weapon.GetItemType()) {
+            case 5: nFormat = 10476; break;
+            case 14: nFormat = 10478; break;
+            case 31: nFormat = 10477; break;
+            default: nFormat = 10479; break;
+            }
+            g_pBaldurChitin->GetTlkTable().SetToken(TOKEN_WEAPONNAME, FetchString(weapon.GetGenericName()));
+            sWeapon = FetchString(nFormat);
+        }
+    }
+    UpdateLabel(pPanel, 0x10000008, "%s", sWeapon);
+    UpdateLabel(pPanel, 0x10000011, "%d", stats.m_nChapterKillsXPValue);
+    UpdateLabel(pPanel, 0x10000012, "%d", stats.m_nChapterKillsNumber);
+    UpdateLabel(pPanel, 0x10000015, "%d", stats.m_nGameKillsXPValue);
+    UpdateLabel(pPanel, 0x10000016, "%d", stats.m_nGameKillsNumber);
+    UpdateLabel(pPanel, 0x1000000F, "%d%%", nChapterXP ? 100u * stats.m_nChapterKillsXPValue / nChapterXP : 0);
+    UpdateLabel(pPanel, 0x10000010, "%d%%", nChapterKills ? 100u * stats.m_nChapterKillsNumber / nChapterKills : 0);
+    UpdateLabel(pPanel, 0x10000013, "%d%%", nGameXP ? 100u * stats.m_nGameKillsXPValue / nGameXP : 0);
+    UpdateLabel(pPanel, 0x10000014, "%d%%", nGameKills ? 100u * stats.m_nGameKillsNumber / nGameKills : 0);
+    CUIControlButton* pDone = static_cast<CUIControlButton*>(pPanel->GetControl(24));
+    UTIL_ASSERT(pDone != NULL);
+    pDone->SetEnabled(IsDoneButtonClickable(pSprite));
+}
+
+// 0x5E87E0
+void CScreenCharacter::UpdateFeatsPanel(CGameSprite* pSprite)
+{
+    CUIPanel* pPanel = m_cUIManager.GetPanel(56);
+    const CRuleTables& rules = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
+    HighlightLabel(pPanel, 0x1000000C, m_nExtraFeats != 0, COLOR_LABEL_HIGHLIGHT_BONUS);
+    UpdateLabel(pPanel, 0x1000000C, "%d", m_nExtraFeats);
+    SHORT nHP = pSprite->m_baseStats.m_hitPoints, nMaxHP = pSprite->m_derivedStats.m_nMaxHitPoints;
+    WORD nBaseMaxHP = pSprite->m_baseStats.m_maxHitPointsBase;
+    LONG nBonus = pSprite->m_nHPCONBonusTotalOld;
+    pSprite->field_562C = TRUE;
+    pSprite->ProcessEffectList();
+    pSprite->m_baseStats.m_hitPoints = nHP;
+    pSprite->m_derivedStats.m_nMaxHitPoints = nMaxHP;
+    pSprite->m_baseStats.m_maxHitPointsBase = nBaseMaxHP;
+    pSprite->m_nHPCONBonusTotalOld = nBonus;
+    m_nTopFeat = static_cast<SHORT>(max(0, min(static_cast<INT>(static_cast<USHORT>(m_nTopFeat)), FEAT_COUNT - FEAT_SLOTS)));
+    for (INT row = 0; row < FEAT_SLOTS; ++row)
+        UpdateLabel(pPanel, 0x10000001 + row, "%s", FetchString(rules.GetFeatName(rules.GetFeatId(static_cast<USHORT>(m_nTopFeat) + row))));
+    static_cast<CUIControlButton*>(pPanel->GetControl(0))->SetEnabled(IsDoneButtonClickable(pSprite));
+    CUIControlScrollBar* pScroll = static_cast<CUIControlScrollBar*>(pPanel->GetControl(104));
+    UTIL_ASSERT(pScroll != NULL);
+    CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;
+    UTIL_ASSERT(pCharacter != NULL);
+    pScroll->AdjustScrollBar(static_cast<USHORT>(pCharacter->m_nTopFeat), FEAT_COUNT, FEAT_SLOTS);
+    for (INT row = 0; row < FEAT_SLOTS; ++row) {
+        UINT nIndex = static_cast<USHORT>(m_nTopFeat) + row;
+        BOOL bAdd = pSprite->CanSelectFeat(rules.GetFeatId(nIndex), TRUE) && m_nExtraFeats > 0;
+        CUIControlButton* pAdd = static_cast<CUIControlButton*>(pPanel->GetControl(14 + 2 * row));
+        UTIL_ASSERT(pAdd != NULL);
+        pAdd->SetActive(static_cast<BOOLEAN>(bAdd));
+        pAdd->SetEnabled(bAdd);
+        HighlightLabel(pPanel, 0x10000001 + row, !bAdd, COLOR_LABEL_DISABLE);
+        BOOL bRemove = m_storedFeats[nIndex] < pSprite->GetFeatValue(nIndex);
+        CUIControlButton* pRemove = static_cast<CUIControlButton*>(pPanel->GetControl(15 + 2 * row));
+        UTIL_ASSERT(pRemove != NULL);
+        pRemove->SetActive(static_cast<BOOLEAN>(bRemove));
+        pRemove->SetEnabled(bRemove);
+    }
+    pPanel->InvalidateRect(NULL);
+}
+
+// 0x5F7B00
+void CScreenCharacter::UpdateSkillsPanel(CGameSprite* pSprite)
+{
+    CUIPanel* pPanel = m_cUIManager.GetPanel(55);
+    m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(104));
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    const CRuleTables& rules = pGame->GetRuleTables();
+    SHORT nHP = pSprite->m_baseStats.m_hitPoints, nMaxHP = pSprite->m_derivedStats.m_nMaxHitPoints;
+    WORD nBaseMaxHP = pSprite->m_baseStats.m_maxHitPointsBase;
+    LONG nBonus = pSprite->m_nHPCONBonusTotalOld;
+    pSprite->field_562C = TRUE;
+    pSprite->ProcessEffectList();
+    pSprite->m_baseStats.m_hitPoints = nHP;
+    pSprite->m_derivedStats.m_nMaxHitPoints = nMaxHP;
+    pSprite->m_baseStats.m_maxHitPointsBase = nBaseMaxHP;
+    pSprite->m_nHPCONBonusTotalOld = nBonus;
+    HighlightLabel(pPanel, 0x1000000C, m_nExtraSkillPoints != 0, COLOR_LABEL_HIGHLIGHT_BONUS);
+    UpdateLabel(pPanel, 0x1000000C, "%d", m_nExtraSkillPoints);
+    m_nTopSkill = static_cast<SHORT>(max(0, min(static_cast<INT>(static_cast<USHORT>(m_nTopSkill)), SKILL_COUNT - SKILL_SLOTS)));
+    for (INT row = 0; row < SKILL_SLOTS; ++row) {
+        UINT nID = rules.GetSkillId(static_cast<USHORT>(m_nTopSkill) + row);
+        INT nCost = pSprite->GetSkillCost(rules.GetSkillId(nID), m_nClass); // Native label path maps twice.
+        if (nCost > 0) UpdateLabel(pPanel, 0x10000001 + row, "%s (%d)", FetchString(rules.GetSkillName(nID)), nCost);
+        else UpdateLabel(pPanel, 0x10000001 + row, "%s", FetchString(rules.GetSkillName(nID)));
+        UpdateLabel(pPanel, 0x10000069 + row, "");
+    }
+    static_cast<CUIControlButton*>(pPanel->GetControl(0))->SetEnabled(IsDoneButtonClickable(pSprite));
+    CUIControlScrollBar* pScroll = static_cast<CUIControlScrollBar*>(pPanel->GetControl(104));
+    UTIL_ASSERT(pScroll != NULL);
+    CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;
+    UTIL_ASSERT(pCharacter != NULL);
+    pScroll->AdjustScrollBar(static_cast<USHORT>(pCharacter->m_nTopSkill), SKILL_COUNT, SKILL_SLOTS);
+    for (INT row = 0; row < SKILL_SLOTS; ++row) {
+        UINT nIndex = static_cast<USHORT>(m_nTopSkill) + row;
+        INT nCost = pSprite->GetSkillCost(rules.GetSkillId(nIndex), m_nClass);
+        BOOL bAdd = nCost != 0 && m_nExtraSkillPoints >= nCost;
+        CUIControlButton* pAdd = static_cast<CUIControlButton*>(pPanel->GetControl(14 + 2 * row));
+        UTIL_ASSERT(pAdd != NULL);
+        pAdd->SetActive(static_cast<BOOLEAN>(bAdd));
+        pAdd->SetEnabled(bAdd);
+        HighlightLabel(pPanel, 0x10000001 + row, !bAdd, COLOR_LABEL_DISABLE);
+        BOOL bRemove = m_storedSkills[nIndex] < pSprite->GetSkillValue(nIndex);
+        CUIControlButton* pRemove = static_cast<CUIControlButton*>(pPanel->GetControl(15 + 2 * row));
+        UTIL_ASSERT(pRemove != NULL);
+        pRemove->SetActive(static_cast<BOOLEAN>(bRemove));
+        pRemove->SetEnabled(bRemove);
+        UpdateLabel(pPanel, 0x10000069 + row, "%d", pSprite->GetSkillValue(nIndex));
+        HighlightLabel(pPanel, 0x10000069 + row, TRUE,
+            bRemove ? RGB(0, 255, 255) : bAdd ? COLOR_LABEL_NORMAL : COLOR_LABEL_DISABLE);
+    }
+    pPanel->InvalidateRect(NULL);
+}
+
 // 0x5E0B20
 void CScreenCharacter::UpdatePopupPanel(DWORD dwPanelId, CGameSprite* pSprite)
 {
     switch (dwPanelId) {
-    case 57: {
-        CUIPanel* pPanel = m_cUIManager.GetPanel(57);
-
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
-        // __LINE__: 6807
+    case 4: UpdateStatisticsPanel(pSprite); return;
+    case 6: UpdateSpecializationPanel(pSprite); return;
+    case 7: UpdateAbilitiesPanel(pSprite); return;
+    case 8: UpdateSpellsPanel(pSprite); return;
+    case 9: case 10: case 50: return;
+    case 11: {
+        CUIPanel* pPanel = m_cUIManager.GetPanel(11);
         UTIL_ASSERT(pPanel != NULL);
-
-        UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START, "%s", (LPCSTR)FetchString(17088)); // "Abilities"
-        UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START + 1, "%s", (LPCSTR)FetchString(23998)); // "Classes"
-        UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START + 2, "%s", (LPCSTR)FetchString(36361)); // "Feats"
-        UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START + 3, "%s", (LPCSTR)FetchString(41403)); // "Orders"
-        UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START + 4, "%s", (LPCSTR)FetchString(41393)); // "Races"
-        UpdateLabel(pPanel, INFORMATION_PANEL_CATEGORY_LABEL_START + 5, "%s", (LPCSTR)FetchString(11983)); // "Skills"
-
-        for (INT nLabel = 0; nLabel < 5; nLabel++) {
-            UpdateLabel(pPanel, INFORMATION_PANEL_UNUSED_LABEL_START + nLabel, "");
-        }
-
-        for (DWORD nControlID = INFORMATION_PANEL_UNUSED_HOTAREA_START; nControlID <= INFORMATION_PANEL_UNUSED_HOTAREA_END; nControlID++) {
-            CUIControlButton* pButton = static_cast<CUIControlButton*>(pPanel->GetControl(nControlID));
-
-            // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
-            // __LINE__: 6830
-            UTIL_ASSERT(pButton != NULL);
-
-            pButton->SetEnabled(FALSE);
-        }
-
-        SelectInformationCategory(m_nInfoCategory);
-        SelectInformationItem(m_nInfoSelectedItem);
-
-        CUIControlScrollBar* pScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(4));
-
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
-        // __LINE__: 6837
-        UTIL_ASSERT(pScrollBar != NULL);
-
-        pScrollBar->AdjustScrollBar(m_nInfoScrollPos, m_nInfoItemCount, INFORMATION_PANEL_ITEM_COUNT);
-        break;
+        if (m_pCurrentScrollBar == NULL) m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(3));
+        CUIControlButton* pDone = static_cast<CUIControlButton*>(pPanel->GetControl(5));
+        UTIL_ASSERT(pDone != NULL);
+        pDone->SetEnabled(IsDoneButtonClickable(pSprite));
+        return;
     }
-    default:
-        break;
+    case 12: case 51: case 52: case 53: {
+        CUIPanel* pPanel = m_cUIManager.GetPanel(dwPanelId);
+        m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(dwPanelId == 51 ? 3 : 1));
+        return;
+    }
+    case 13: {
+        CUIPanel* pPanel = m_cUIManager.GetPanel(13);
+        UTIL_ASSERT(pPanel != NULL);
+        m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(1));
+        CUIControlButton* pDone = static_cast<CUIControlButton*>(pPanel->GetControl(4));
+        UTIL_ASSERT(pDone != NULL);
+        pDone->SetEnabled(IsDoneButtonClickable(pSprite));
+        return;
+    }
+    case 16: UpdateHatedRacePanel(pSprite); return;
+    case 17: UpdateCustomizePanel(pSprite); return;
+    case 18: UpdateAppearancePanel(pSprite); return;
+    case 19: UpdateCustomPortraitsPanel(pSprite); return;
+    case 20: {
+        CUIPanel* pPanel = m_cUIManager.GetPanel(20);
+        m_pCurrentScrollBar = static_cast<CUIControlScrollBar*>(pPanel->GetControl(6));
+        if (pPanel != NULL) {
+            static_cast<CUIControlButton*>(pPanel->GetControl(7))->SetEnabled(m_nCustomSoundSetIndex >= 0);
+            static_cast<CUIControlButton*>(pPanel->GetControl(10))->SetEnabled(IsDoneButtonClickable(pSprite));
+        }
+        return;
+    }
+    case 54: UpdateClassSelectionPanel(pSprite); return;
+    case 55: UpdateSkillsPanel(pSprite); return;
+    case 56: UpdateFeatsPanel(pSprite); return;
+    case 57: UpdateInformationPanel(); return;
+    default: UTIL_ASSERT(FALSE); return;
     }
 }
 

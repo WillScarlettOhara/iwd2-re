@@ -20,6 +20,9 @@ void AllocationChecks(INT nStep)
     auto* timer=game->GetWorldTimer(); auto clock=timer->m_gameTime;
     auto& rules=const_cast<CRuleTables&>(game->GetRuleTables()); auto& tlk=g_pBaldurChitin->GetTlkTable();
     CString oldToken; BOOL hadToken=tlk.m_mapTokens.Lookup(CScreenCharacter::TOKEN_NUMBER,oldToken);
+    const CString* extraTokens[]={&CRuleTables::TOKEN_FIGHTERTYPE,&CRuleTables::TOKEN_MAGESCHOOL,&CScreenCharacter::TOKEN_WEAPONNAME};
+    CString savedTokens[3]; BOOL hadExtraTokens[3];
+    for (INT i=0;i<3;++i) hadExtraTokens[i]=tlk.m_mapTokens.Lookup(*extraTokens[i],savedTokens[i]);
     auto* oldCharacter=g_pBaldurChitin->m_pEngineCharacter;
     {
         CScreenCharacter screen; screen.EngineGameInit();
@@ -91,6 +94,44 @@ void AllocationChecks(INT nStep)
                 actor->m_baseStats.m_hitPoints,actor->m_baseStats.m_maxHitPointsBase,actor->m_derivedStats.m_nMaxHitPoints,
                 actor->m_nHPCONBonusTotalOld,static_cast<LPCTSTR>(token));
         }
+        // Exercise the popup dispatcher through the actual allocation controls.
+        for (INT i=0;i<16;++i) { skills.cells[i].Format(_T("%d"),15-i); actor->m_baseStats.m_skills[i]=1; screen.m_storedSkills[i]=1;
+            for (INT cls=0;cls<11;++cls) costs.cells[11*i+cls]=cls==4?(i<8?"1":"2"):"0"; }
+        for (INT i=0;i<75;++i) { feats.cells[i].Format(_T("%d"),i); screen.m_storedFeats[i]=actor->GetFeatValue(i); }
+        actor->m_baseStats.m_feats[0]&=~(1u<<6);
+        screen.m_storedSkills[7]=0;
+        actor->m_startTypeAI.m_nClass=CAIOBJECTTYPE_C_FIGHTER;
+        for (INT kind : {0,1}) for (INT budget : {0,2}) {
+            auto* panel=screen.m_cUIManager.GetPanel(kind?56:55); screen.m_lPopupStack.AddTail(panel);
+            screen.m_nTopSkill=-1; screen.m_nTopFeat=0;
+            screen.m_nExtraSkillPoints=screen.m_nExtraFeats=budget;
+            screen.UpdatePopupPanel(panel->m_nID,actor);
+            auto* done=static_cast<CUIControlButton*>(panel->GetControl(0));
+            check("allocation-refresh-done",done->m_bEnabled==(kind?budget==0:budget<=1));
+            if (kind) {
+                check("feat-refresh-budget-gates",static_cast<CUIControlButton*>(panel->GetControl(26))->m_bEnabled==(budget>0));
+                check("feat-refresh-no-baseline-removal",!static_cast<CUIControlButton*>(panel->GetControl(27))->m_bEnabled);
+            } else {
+                check("skill-refresh-unsigned-top-clamped",screen.m_nTopSkill==7);
+                check("skill-refresh-baseline-removal",static_cast<CUIControlButton*>(panel->GetControl(15))->m_bEnabled);
+                check("skill-refresh-cost-gates",static_cast<CUIControlButton*>(panel->GetControl(14))->m_bEnabled==(budget>=2));
+                check("skill-refresh-double-mapped-label",static_cast<CUIControlLabel*>(panel->GetControl(0x10000001))->GetText().Find(_T("(1)"))>=0);
+                check("skill-refresh-displayed-rank",static_cast<CUIControlLabel*>(panel->GetControl(0x10000069))->GetText()==_T("1"));
+            }
+            check("refresh-preserves-hp",actor->m_baseStats.m_hitPoints==-32768 && actor->m_baseStats.m_maxHitPointsBase==65535
+                && actor->m_derivedStats.m_nMaxHitPoints==32767 && actor->m_nHPCONBonusTotalOld==-77);
+            screen.m_lPopupStack.RemoveAll();
+        }
+        for (DWORD id : {4u,57u,12u,51u,52u,53u}) {
+            auto* panel=screen.m_cUIManager.GetPanel(id); screen.m_lPopupStack.AddTail(panel);
+            screen.m_nInfoCategory=screen.m_nInfoSelectedItem=screen.m_nInfoScrollPos=0;
+            screen.UpdatePopupPanel(id,actor);
+            if (id==4) { CString count; count.Format(_T("%d"),actor->m_cGameStats.m_nGameKillsNumber);
+                check("statistics-panel-live-count",static_cast<CUIControlLabel*>(panel->GetControl(0x10000016))->GetText()==count); }
+            else if (id==57) check("information-panel-category",static_cast<CUIControlLabel*>(panel->GetControl(0x10000004))->GetText()==screen.FetchString(17088));
+            else check("description-panel-scroll-route",screen.m_pCurrentScrollBar==panel->GetControl(id==51?3:1));
+            screen.m_lPopupStack.RemoveAll();
+        }
         BeginLevelUpTableFixture raceReq(rules.m_tAbilityRaceReq,2,1),raceAdj(rules.m_tAbilityRaceAdj,1,1),classReq(rules.m_tAbilityClassReq,1,1);
         actor->m_startTypeAI.m_nRace=CAIOBJECTTYPE_R_HUMAN; actor->m_startTypeAI.m_nSubRace=0;
         actor->m_baseStats.m_specialization=0;
@@ -109,6 +150,7 @@ void AllocationChecks(INT nStep)
         g_pBaldurChitin->m_pEngineCharacter=oldCharacter;
     }
     if (hadToken) tlk.SetToken(CScreenCharacter::TOKEN_NUMBER,oldToken); else tlk.m_mapTokens.RemoveKey(CScreenCharacter::TOKEN_NUMBER);
+    for (INT i=0;i<3;++i) { if (hadExtraTokens[i]) tlk.SetToken(*extraTokens[i],savedTokens[i]); else tlk.m_mapTokens.RemoveKey(*extraTokens[i]); }
     actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp; actor->m_startTypeAI=start;
     actor->m_bAllowEffectListCall=allow; actor->field_562C=dirty; actor->field_72A2=deferred; actor->m_nHPCONBonusTotalOld=bonus;
     check("same-tick-clock-and-queue-preserved",timer->m_gameTime==clock && handler->m_messageList.GetCount()==messages);
