@@ -4498,6 +4498,59 @@ void CScreenCharacter::OnDoneButtonClick()
                 AdvanceLevelUp(dwPanelId, pSprite);
             }
             break;
+        case 11: {
+            POSITION pos = m_pScripts->FindIndex(m_nScriptIndex);
+            UTIL_ASSERT(pos != NULL);
+            CString sScript = m_pScripts->GetAt(pos);
+            CAIScript* pScript = new CAIScript;
+            pScript->SetResRef(CResRef(sScript));
+            pScript->Read(CResRef(sScript), TRUE);
+            pSprite->SetScript(3, pScript);
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(
+                new CMessage97(pSprite->GetId(), pSprite->GetId(), 3, pScript->m_cResRef), FALSE);
+            DismissPopup(pSprite);
+            delete m_pScripts;
+            m_pScripts = NULL;
+            break;
+        }
+        case 13: {
+            CUIControlEdit* pEdit = static_cast<CUIControlEdit*>(pPanel->GetControl(6));
+            UTIL_ASSERT(pEdit != NULL);
+            CString sName = pEdit->GetText();
+            sName.TrimLeft();
+            sName.TrimRight();
+            CString sInvalid(_T(".?:<>|*/\\\""));
+            for (INT nIndex = 0; nIndex < sName.GetLength(); nIndex++) {
+                if (sInvalid.Find(sName[nIndex]) >= 0) sName.SetAt(nIndex, '_');
+            }
+            if (_stricmp(sName, "aux") == 0 || _stricmp(sName, "con") == 0 || _stricmp(sName, "prn") == 0) {
+                sName += "_";
+            }
+            if (IsNameOnExportList(sName)) {
+                field_176E = sName;
+                m_nErrorState = 7;
+                m_dwErrorTextId = 0x685D;
+                m_strErrorButtonText[0] = 0x3BCA;
+                m_strErrorButtonText[1] = 0x359F;
+                SummonPopup(10, pSprite, 1);
+            } else if (pSprite->HaveUnexportableItems()) {
+                field_176E = sName;
+                m_nErrorState = 6;
+                m_dwErrorTextId = 0x67DA;
+                m_strErrorButtonText[0] = 0x3658;
+                m_strErrorButtonText[1] = 0x3659;
+                SummonPopup(10, pSprite, 1);
+            } else {
+                LONG nCharacterId = pGame->GetCharacterId(static_cast<SHORT>(m_nSelectedCharacter));
+                UTIL_ASSERT(nCharacterId != CGameObjectArray::INVALID_INDEX);
+                pGame->CharacterExport(nCharacterId, sName);
+                UTIL_ASSERT(m_pCharacters != NULL);
+                delete m_pCharacters;
+                m_pCharacters = NULL;
+                DismissPopup(pSprite);
+            }
+            break;
+        }
         case 17:
             m_cResPortraitSmallTemp.GetResRef(pSprite->m_baseStats.m_portraitSmall);
             m_cResPortraitLargeTemp.GetResRef(pSprite->m_baseStats.m_portraitLarge);
@@ -4520,6 +4573,47 @@ void CScreenCharacter::OnDoneButtonClick()
             DismissPopup(pSprite);
             break;
         }
+        case 20: {
+            UTIL_ASSERT(m_nCustomSoundSetIndex >= 0);
+            CString sName;
+            if (m_nCustomSoundSetIndex != -1) {
+                POSITION pos = m_pSounds->FindIndex(m_nCustomSoundSetIndex);
+                if (pos != NULL) sName = m_pSounds->GetAt(pos);
+            }
+            DWORD nLength = sName.GetAllocLength();
+            memcpy(pSprite->field_725A, sName.GetBuffer(static_cast<INT>(nLength)), min(nLength, 32UL));
+            if (nLength < 32) pSprite->field_725A[nLength] = '\0';
+            CString sDir = pGame->GetDirSounds() + sName + '\\';
+            g_pBaldurChitin->cDimm.AddToDirectoryList(sDir, TRUE);
+            CString sPattern = pGame->GetDirSounds() + "\\" + sName + "\\*.wav";
+            WIN32_FIND_DATA findData;
+            HANDLE hFind = FindFirstFile(sPattern, &findData);
+            if (hFind != INVALID_HANDLE_VALUE) {
+                CString sFile = findData.cFileName;
+                if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+                    sFile.MakeUpper();
+                    sFile = sFile.SpanExcluding(".");
+                    sFile = sFile.Left(sFile.GetLength() - 2);
+                    pSprite->m_secondarySounds = CResRef(sFile);
+                }
+                // FIXME: The native branch also leaks the find handle.
+            }
+            UTIL_ASSERT(m_pSounds != NULL);
+            delete m_pSounds;
+            m_pSounds = NULL;
+            DismissPopup(pSprite);
+            break;
+        }
+        case 51: {
+            CUIControlEditMultiLine* pEdit = static_cast<CUIControlEditMultiLine*>(m_cUIManager.GetPanel(51)->GetControl(4));
+            pGame->GetObjectArray()->ReleaseDeny(nId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+            CString sBiography = pEdit->GetText();
+            BYTE nFixedPartyId = static_cast<BYTE>(pGame->GetFixedOrderCharacterPortraitNum(pSprite->GetId()));
+            pGame->ChangeBiography(nFixedPartyId, sBiography);
+            DismissPopup(pSprite);
+            renderLock.Unlock();
+            return;
+        }
         case 55: case 56:
             DismissPopup(pSprite);
             switch (m_nClass) {
@@ -4540,9 +4634,6 @@ void CScreenCharacter::OnDoneButtonClick()
         case 54:
             // TODO: Native 0x5D8EA0 reads uninitialized stack data on an HP-cache hit.
             // Keep class confirmation unresolved rather than inventing its HP result.
-            break;
-        case 11: case 13: case 20: case 51:
-            // TODO: Script, export, sound-set and biography confirmation.
             break;
         default:
             UTIL_ASSERT(FALSE);
@@ -5512,7 +5603,7 @@ void CScreenCharacter::ResetErrorPanel(CUIPanel* pPanel)
     strRes.cSound.SetFireForget(TRUE);
     strRes.cSound.Play(FALSE);
 
-    CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(pPanel->GetControl(0));
+    CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(pPanel->GetControl(3));
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
     // __LINE__: 9842

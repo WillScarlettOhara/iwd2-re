@@ -290,6 +290,91 @@ void CancelLevelUpChecks(INT nStep)
             delete screen.m_pTempDerivedStats; screen.m_pTempDerivedStats=NULL;
             delete screen.m_pBeforeLevelUpDerivedStats; screen.m_pBeforeLevelUpDerivedStats=NULL;
         }
+        // Remaining Done paths: real script ownership/wire format and export prompts.
+        actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp;
+        actor->m_typeAI=type; actor->m_startTypeAI=start; actor->m_liveTypeAI=live;
+        screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(12));
+        screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(11));
+        screen.m_pScripts=new CStringList; screen.m_pScripts->AddTail(""); screen.m_nScriptIndex=0;
+        screen.OnDoneButtonClick();
+        check("done-script-installs-and-retires-list",!screen.m_pScripts && screen.GetTopPopup()->m_nID==12
+            && actor->m_special2Script && !actor->m_special2Script->m_cResRef.IsValid());
+        {
+            auto* remotes=game->GetRemoteObjectArray(); remotes->m_critSect.Lock();
+            CGameRemoteObjectListEntry mapping; mapping.remotePlayerID=0x89ABCDEF; mapping.remoteObjectID=0x1234;
+            mapping.localObjectID=id; mapping.pNext=remotes->m_pArray[0]; remotes->m_pArray[0]=&mapping;
+            auto remotePlayer=actor->m_remotePlayerID; auto remoteId=actor->m_remoteObjectID;
+            actor->m_remotePlayerID=mapping.remotePlayerID; actor->m_remoteObjectID=mapping.remoteObjectID;
+            BYTE packet[64]={}; BYTE* payload=packet+CNetwork::SPEC_MSG_HEADER_LENGTH;
+            CResRef mixed; memcpy(&mixed,"aBcDeFgH",8);
+            CMessage97 sent(id,id,0x12340003,mixed); CMessage* message=&sent; DWORD size=0;
+            message->MarshalMessage(&payload,&size);
+            check("script-message-native-packet",size==20 && sent.GetCommType()==CMessage::BROADCAST_OTHERS
+                && sent.GetMsgType()==CBaldurMessage::MSG_TYPE_CMESSAGE && sent.GetMsgSubType()==97
+                && *reinterpret_cast<DWORD*>(payload)==0x89ABCDEF && *reinterpret_cast<LONG*>(payload+4)==0x1234
+                && *reinterpret_cast<INT*>(payload+8)==0x12340003 && memcmp(payload+12,"aBcDeFgH",8)==0 && payload[20]==0);
+            for (DWORD declared : {0u,1u,20u,64u}) {
+                CMessage97 received(-77,-1,0,CResRef());
+                check("script-message-ignores-declared-size",received.UnmarshalMessage(packet,declared)
+                    && received.GetTarget()==id && received.GetSource()==-77 && received.m_nScript==0x12340003
+                    && memcmp(received.m_resScript.GetResRef(),"aBcDeFgH",8)==0);
+            }
+            CMessage97 replace(id,id,0x12340003,CResRef()); replace.Run();
+            check("script-message-runs-with-low-word-slot",actor->m_special2Script && !actor->m_special2Script->m_cResRef.IsValid());
+            remotes->m_pArray[0]=mapping.pNext;
+            CMessage97 missing(-77,-1,0,CResRef());
+            check("script-message-unmapped-preserves-state",!missing.UnmarshalMessage(packet,0)
+                && missing.GetSource()==-77 && missing.GetTarget()==-1);
+            CMessage* absent=&missing; size=99; absent->MarshalMessage(&payload,&size); absent->Run();
+            check("script-message-missing-target-empty",size==0);
+            actor->m_remotePlayerID=remotePlayer; actor->m_remoteObjectID=remoteId; remotes->m_critSect.Unlock();
+        }
+        const char* names[]={"  A.B?:<>|*/\\\"  "," AuX ","CON","prn","COM1"};
+        const char* exported[]={"A_B_________","AuX_","CON_","prn_","COM1"};
+        for (INT i=0;i<5;++i) {
+            screen.m_lPopupStack.RemoveAll(); screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(13));
+            screen.m_pCharacters=new CStringList; screen.m_pCharacters->AddTail(exported[i]);
+            static_cast<CUIControlEdit*>(screen.GetTopPopup()->GetControl(6))->SetText(names[i]);
+            screen.OnDoneButtonClick();
+            check("done-export-sanitizes-before-overwrite-prompt",screen.GetTopPopup()->m_nID==10
+                && screen.m_nErrorState==7 && screen.field_176E==exported[i]
+                && screen.m_dwErrorTextId==0x685D && screen.m_strErrorButtonText[0]==0x3BCA && screen.m_strErrorButtonText[1]==0x359F);
+            screen.OnErrorButtonClick(1); screen.OnCancelButtonClick();
+            check("done-export-prompt-cancel-retires-list",!screen.m_pCharacters && screen.m_lPopupStack.IsEmpty());
+        }
+        for (CString name : {CString(_T("_IWD2_RE_MISSING_VOICE_")),CString('X',40)}) {
+            auto& directories=g_pBaldurChitin->cDimm.m_lDirectories; INT count=directories.GetCount();
+            check("sound-fixture-directory-absent",GetFileAttributes(game->GetDirSounds()+name)==INVALID_FILE_ATTRIBUTES);
+            screen.m_lPopupStack.RemoveAll(); screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(20));
+            screen.m_pSounds=new CStringList; screen.m_pSounds->AddTail(name); screen.m_nCustomSoundSetIndex=0;
+            memset(actor->field_725A,0xa5,32); actor->m_secondarySounds=CResRef("OLD");
+            BYTE expected[32]; memset(expected,0xa5,32); DWORD length=name.GetAllocLength();
+            memcpy(expected,name.GetString(),min(length,32UL)); if (length<32) expected[length]=0;
+            screen.OnDoneButtonClick();
+            check("done-sound-name-cap-and-missing-wave",!screen.m_pSounds && screen.m_lPopupStack.IsEmpty()
+                && memcmp(actor->field_725A,expected,32)==0 && actor->m_secondarySounds==CResRef("OLD"));
+            while (directories.GetCount()>count) directories.RemoveTail();
+        }
+        {
+            auto& overrideFile=g_pBaldurChitin->GetTlkTable().m_override;
+            BYTE slot=static_cast<BYTE>(game->GetFixedOrderCharacterPortraitNum(id));
+            STRREF oldId=actor->m_baseStats.m_biography,newId=0xF240+slot;
+            STR_RES oldText,newText,result; BOOL hadOld=overrideFile.Fetch(oldId,oldText),hadNew=overrideFile.Fetch(newId,newText);
+            auto connected=network.m_bConnectionEstablished; network.m_bConnectionEstablished=FALSE;
+            screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(12));
+            screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(51));
+            auto* edit=static_cast<CUIControlEditMultiLine*>(screen.GetTopPopup()->GetControl(4));
+            edit->SetText(_T("Recovered biography\r\nSecond line"));
+            check("biography-editor-normalizes-carriage-returns",edit->GetText()==_T("Recovered biography\nSecond line"));
+            screen.OnDoneButtonClick();
+            check("done-biography-commits-fixed-slot",screen.GetTopPopup()->m_nID==12 && actor->m_baseStats.m_biography==newId);
+            check("done-biography-stores-override",overrideFile.Fetch(newId,result));
+            check("done-biography-commits-editor-text",result.szText==_T("Recovered biography\nSecond line"));
+            overrideFile.Remove(newId); if (hadNew) overrideFile.AddUserEntry(newId,newText);
+            if (hadOld && oldId!=newId) overrideFile.AddUserEntry(oldId,oldText);
+            actor->m_baseStats.m_biography=oldId; network.m_bConnectionEstablished=connected;
+            screen.m_lPopupStack.RemoveAll();
+        }
         // Exercise the actual GUIREC Cancel control with independent snapshots.
         actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp;
         actor->m_typeAI=type; actor->m_startTypeAI=start; actor->m_liveTypeAI=live;

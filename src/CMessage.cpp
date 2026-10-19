@@ -1,5 +1,6 @@
 #include "CMessage.h"
 
+#include "CAIScript.h"
 #include "CBaldurChitin.h"
 #include "CGameAIBase.h"
 #include "CGameArea.h"
@@ -5327,6 +5328,16 @@ void CMessageHandler::AsynchronousUpdate()
                     if (message.UnmarshalMessage(data, size)) message.Run();
                 } else {
                     CMessage* message = new CMessageProjectileTrailingVFX(CResRef(), CString(), CPoint(0, 0), CPoint(0, 0), 0, 0, 0);
+                    if (message->UnmarshalMessage(data, size)) m_messageList.AddTail(message);
+                    else delete message;
+                }
+                break;
+            case 97:
+                if (immediate) {
+                    CMessage97 message(0, 0, 0, CResRef());
+                    if (message.UnmarshalMessage(data, size)) message.Run();
+                } else {
+                    CMessage* message = new CMessage97(0, 0, 0, CResRef());
                     if (message->UnmarshalMessage(data, size)) m_messageList.AddTail(message);
                     else delete message;
                 }
@@ -16594,6 +16605,98 @@ void CMessageStartCombatMusic::Run()
 }
 
 // -----------------------------------------------------------------------------
+
+// 0x4F6C50
+CMessage97::CMessage97(LONG caller, LONG target, INT nScript, const CResRef& resScript)
+    : CMessage(caller, target)
+    , m_nScript(nScript)
+    , m_resScript(resScript)
+{
+}
+
+// 0x4088A0
+SHORT CMessage97::GetCommType()
+{
+    return BROADCAST_OTHERS;
+}
+
+// 0x40A0E0
+BYTE CMessage97::GetMsgType()
+{
+    return CBaldurMessage::MSG_TYPE_CMESSAGE;
+}
+
+// 0x4F6C80
+BYTE CMessage97::GetMsgSubType()
+{
+    return 97;
+}
+
+// 0x513F00
+void CMessage97::MarshalMessage(BYTE** pData, DWORD* dwSize)
+{
+    UTIL_ASSERT(pData != NULL && dwSize != NULL);
+    CGameObject* pObject;
+    BYTE rc;
+    do {
+        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &pObject, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) {
+        *dwSize = 0;
+        return;
+    }
+    PLAYER_ID player = pObject->m_remotePlayerID;
+    LONG remote = pObject->m_remoteObjectID;
+    g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+        CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    *dwSize = 20;
+    UTIL_ASSERT(*dwSize <= STATICBUFFERSIZE);
+    *reinterpret_cast<PLAYER_ID*>(*pData) = player;
+    *reinterpret_cast<LONG*>(*pData + 4) = remote;
+    *reinterpret_cast<INT*>(*pData + 8) = m_nScript;
+    memcpy(*pData + 12, m_resScript.GetResRef(), RESREF_SIZE);
+    UTIL_ASSERT(*dwSize == 20);
+}
+
+// 0x514040
+BOOL CMessage97::UnmarshalMessage(BYTE* pData, DWORD dwSize)
+{
+    UTIL_ASSERT(pData != NULL);
+    DWORD cnt = CNetwork::SPEC_MSG_HEADER_LENGTH;
+    PLAYER_ID player = *reinterpret_cast<PLAYER_ID*>(pData + cnt);
+    LONG remote = *reinterpret_cast<LONG*>(pData + cnt + 4);
+    LONG local;
+    if (g_pBaldurChitin->GetObjectGame()->GetRemoteObjectArray()->Find(player, remote, local) != TRUE) {
+        return FALSE;
+    }
+    m_targetId = local;
+    m_nScript = *reinterpret_cast<INT*>(pData + cnt + 8);
+    memcpy(&m_resScript, pData + cnt + 12, RESREF_SIZE);
+    // Native code ignores dwSize and keeps the caller's source ID.
+    return TRUE;
+}
+
+// 0x5140D0
+void CMessage97::Run()
+{
+    CGameObject* pObject;
+    BYTE rc;
+    do {
+        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, &pObject, INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc == CGameObjectArray::SUCCESS) {
+        if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
+            CAIScript* pScript = new CAIScript;
+            pScript->SetResRef(m_resScript);
+            pScript->Read(m_resScript, TRUE);
+            static_cast<CGameSprite*>(pObject)->SetScript(static_cast<WORD>(m_nScript), pScript);
+        }
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(m_targetId,
+            CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+}
 
 // 0x4F6CC0
 CMessageStoreDemand::CMessageStoreDemand(const CResRef& store, LONG caller, LONG target)

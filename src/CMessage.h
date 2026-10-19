@@ -1712,6 +1712,23 @@ public:
     /* 000C */ int m_slot;
 };
 
+#pragma pack(push, 2)
+// Native subtype 97: replace an AI script on a sprite.
+class CMessage97 : public CMessage {
+public:
+    CMessage97(LONG caller, LONG target, INT nScript, const CResRef& resScript);
+    SHORT GetCommType() override;
+    BYTE GetMsgType() override;
+    BYTE GetMsgSubType() override;
+    void MarshalMessage(BYTE** pData, DWORD* dwSize) override;
+    BOOL UnmarshalMessage(BYTE* pData, DWORD dwSize) override;
+    void Run() override;
+
+    /* 000C */ INT m_nScript;
+    /* 0010 */ CResRef m_resScript;
+};
+#pragma pack(pop)
+
 class CMessageStoreDemand : public CMessage {
 public:
     CMessageStoreDemand(const CResRef& store, LONG caller, LONG target);

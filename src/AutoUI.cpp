@@ -206,6 +206,7 @@
 #include "CInfinity.h"
 #include "CScreenWorld.h"
 #include "CUIControlBase.h"
+#include "CUIControlEditMultiLine.h"
 #include "CUIControlLabel.h"
 #include "CUIManager.h"
 #include "CUIPanel.h"
