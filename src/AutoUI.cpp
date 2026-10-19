@@ -142,6 +142,7 @@
 //                                spell refill; restore party and resources in one tick.
 //   levelupchecks               replay level-up transfers and equipment rejection.
 //   beginlevelupchecks          replay panel predicates and open the real class popup.
+//   cancellevelupchecks         replay done gates and cancel all character popups.
 //   characterkeychecks          replay character-screen virtual keyboard routing.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
@@ -1747,6 +1748,7 @@ struct MasterPaletteFixture {
 #include "LevelUpChecks.h"
 #include "CharacterKeyChecks.h"
 #include "BeginLevelUpChecks.h"
+#include "CancelLevelUpChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5631,6 +5633,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "beginlevelupchecks") == 0) {
         BeginLevelUpChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "cancellevelupchecks") == 0) {
+        CancelLevelUpChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();
@@ -10204,7 +10209,9 @@ void Tick(CWarp* pActiveEngine)
                     LONG id=(slot<<16)|USHORT(entry.m_objectId);
                     if (entry.m_objectId!=-1 && !beforeIds.count(id) && before.count(entry.m_objectPtr))
                         Emit("{\"step\":%d,\"op\":\"projectile-reused-address\",\"flags\":%lu,\"id\":%ld,\"pointer\":%lu}",nStep,flags[index],id,DWORD(entry.m_objectPtr));
-                    if (entry.m_objectId == -1 || before.count(entry.m_objectPtr)) continue;
+                    // A retired object's address can be reused by this launch.
+                    // The object-array ID includes the new generation.
+                    if (entry.m_objectId == -1 || beforeIds.count(id)) continue;
                     CProjectile* candidate = dynamic_cast<CProjectile*>(entry.m_objectPtr);
                     if (candidate) { projectile = candidate; ++created; }
                 }

@@ -111,6 +111,7 @@ public:
     void SummonPopup(DWORD dwPopupId, CGameSprite* pSprite, int a3);
     BOOL IsLevelUpPanelNeeded(DWORD dwPanelId, CGameSprite* pSprite); /*#guess*/
     BOOL AdvanceLevelUp(DWORD dwPanelId, CGameSprite* pSprite); /*#guess*/
+    BOOL RewindLevelUp(DWORD dwPanelId, CGameSprite* pSprite); /*#guess*/
     void DismissPopup(CGameSprite* pSprite);
     BOOL IsDoneButtonClickable(CGameSprite* pSprite);
     void OnDoneButtonClick();

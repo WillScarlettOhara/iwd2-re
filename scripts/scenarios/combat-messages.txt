@@ -39,6 +39,7 @@ chargencompletionchecks
 levelupchecks
 characterkeychecks
 beginlevelupchecks
+cancellevelupchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

@@ -57,6 +57,5 @@ ARC 2026-10-18T15-18-57-842656-batch PASS (3 warnings): 89/89 steps,
 9,696 checks, all five hits, 60s CLEAN; cleanup restored=true/errors[].
 Melee 6HP, ranged 12HP/ammo 3->2; arrivals 3HP/source 0.
 Generic static/differential unproven; manual scope above.
-OnDoneButtonClick, OnCancelButtonClick, IsDoneButtonClickable and skill reset
-remain partial: this opens the real path, not a finished UI wizard. Next:
-5E1F50, 5E2210 and 5E3B80 with reverse progression 5E1B20; retain full profile.
+Cancellation, done gates and reverse progression: see cancel-levelup-recovery.md.
+Done dispatch and skill/feat resets remain incomplete; retain the full profile.

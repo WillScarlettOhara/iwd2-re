@@ -25,6 +25,7 @@ public:
     ~CAINonPlayerScript();
 };
 
+#pragma pack(push, 2)
 class CAIScript {
 public:
     CAIScript();
@@ -34,6 +35,7 @@ public:
     CAIResponse* Find(CTypedPtrList<CPtrList, CAITrigger*>& triggerList, CGameAIBase* caller);
     void Add(const CAICondition& condition, const CAIResponseSet& responseSet);
     void Read(CResRef cNewResRef, BOOL playerScript);
+    void SetResRef(CResRef cNewResRef);
 
     BOOL IsEmpty();
 
@@ -41,5 +43,6 @@ public:
     /* 0008 */ int field_8;
     /* 000C */ CTypedPtrList<CPtrList, CAIConditionResponse*> m_caList;
 };
+#pragma pack(pop)
 
 #endif /* CAISCRIPT_H_ */

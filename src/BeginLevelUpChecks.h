@@ -10,6 +10,7 @@ void BeginLevelUpChecks(INT nStep)
         Fail(nStep,"beginlevelupchecks","actor unavailable"); return;
     }
     auto* actor=static_cast<CGameSprite*>(object);
+    SimulatedTransportPause transportPause(g_pChitin->cNetwork);
     CSpell guards[]={CSpell(CResRef("ZRCHIT")),CSpell(CResRef("SPIN260"))};
     BOOL loaded[2]={guards[0].Demand(),guards[1].Demand()};
     if (!loaded[0] || !loaded[1]) {
@@ -104,8 +105,10 @@ void BeginLevelUpChecks(INT nStep)
         screen.m_pTempDerivedStats=NULL; screen.m_pBeforeLevelUpDerivedStats=NULL;
         // A private GUIREC uses the actual control, popup stack and snapshot path.
         screen.EngineGameInit(); screen.m_nSelectedCharacter=0;
-        auto* oldCharacter=g_pBaldurChitin->m_pEngineCharacter; auto* engine=g_pBaldurChitin->pActiveEngine;
-        g_pBaldurChitin->m_pEngineCharacter=&screen; g_pBaldurChitin->pActiveEngine=&screen;
+        auto* oldCharacter=g_pBaldurChitin->m_pEngineCharacter;
+        // Controls route through m_pEngineCharacter. Never expose this stack fixture
+        // to the independent synchronous renderer through pActiveEngine.
+        g_pBaldurChitin->m_pEngineCharacter=&screen;
         auto* animation=actor->m_animation.m_animation; auto* area=actor->m_pArea;
         auto* path=actor->m_pPath; auto* search=actor->m_currentSearchRequest;
         auto target=actor->m_targetPoint; auto action=actor->m_curAction;
@@ -162,6 +165,10 @@ void BeginLevelUpChecks(INT nStep)
                 check("stop-message-is-other-station-only",handler->m_messageList.GetCount()==messages
                     && descriptor.GetCommType()==CMessage::BROADCAST_OTHERS
                     && descriptor.GetMsgSubType()==CBaldurMessage::MSG_SUBTYPE_CMESSAGE_STOP_ACTIONS);
+                screen.m_bMultiPlayerViewable=FALSE;
+                check("real-entry-can-be-cancelled",screen.OnCancelButtonClick()
+                    && screen.m_lPopupStack.IsEmpty() && !screen.m_pTempBaseStats
+                    && !screen.m_pTempDerivedStats && !screen.m_pBeforeLevelUpDerivedStats);
                 screen.m_lPopupStack.RemoveAll();
                 delete screen.m_pTempBaseStats; screen.m_pTempBaseStats=NULL;
                 delete screen.m_pTempDerivedStats; screen.m_pTempDerivedStats=NULL;
@@ -184,7 +191,7 @@ void BeginLevelUpChecks(INT nStep)
         for (auto* entry : queued) actor->m_queuedActions.AddTail(entry);
         memcpy(actor->m_equipment.m_items,items,sizeof(items));
         actor->m_equipment.m_selectedWeapon=weapon; actor->m_equipment.m_selectedWeaponAbility=ability;
-        g_pBaldurChitin->m_pEngineCharacter=oldCharacter; g_pBaldurChitin->pActiveEngine=engine;
+        g_pBaldurChitin->m_pEngineCharacter=oldCharacter;
     }
     actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp;
     actor->m_typeAI=type; actor->m_startTypeAI=start; actor->m_liveTypeAI=live; actor->m_spells=spells; actor->m_domainSpells=domains;

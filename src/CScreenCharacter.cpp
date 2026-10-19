@@ -3979,6 +3979,66 @@ BOOL CScreenCharacter::AdvanceLevelUp(DWORD dwPanelId, CGameSprite* pSprite)
     return FALSE;
 }
 
+// 0x5E1B20
+BOOL CScreenCharacter::RewindLevelUp(DWORD dwPanelId, CGameSprite* pSprite)
+{
+    DWORD dwPreviousPanel = reinterpret_cast<DWORD>(pSprite);
+    do {
+        switch (dwPanelId) {
+        case 6: {
+            BOOL bDead = (pSprite->m_derivedStats.m_generalState & STATE_DEAD) != 0;
+            pSprite->m_baseStats = *m_pTempBaseStats;
+            pSprite->m_derivedStats = *m_pTempDerivedStats;
+            pSprite->m_nHPCONBonusTotalOld = field_866;
+            SHORT nHP = pSprite->m_baseStats.m_hitPoints;
+            SHORT nMaxHP = pSprite->m_derivedStats.m_nMaxHitPoints;
+            WORD nBaseMaxHP = pSprite->m_baseStats.m_maxHitPointsBase;
+            LONG nCONBonus = pSprite->m_nHPCONBonusTotalOld;
+            pSprite->field_562C = TRUE;
+            pSprite->ProcessEffectList();
+            pSprite->m_baseStats.m_hitPoints = nHP;
+            pSprite->m_derivedStats.m_nMaxHitPoints = nMaxHP;
+            pSprite->m_baseStats.m_maxHitPointsBase = nBaseMaxHP;
+            pSprite->m_nHPCONBonusTotalOld = nCONBonus;
+            if (bDead) {
+                pSprite->m_baseStats.m_generalState |= STATE_DEAD;
+                pSprite->m_derivedStats.m_generalState |= STATE_DEAD;
+            }
+            dwPreviousPanel = 54;
+            break;
+        }
+        case 7: dwPreviousPanel = 6; break;
+        case 8: dwPreviousPanel = 56; break;
+        case 16: dwPreviousPanel = 8; break;
+        case 54: dwPreviousPanel = 2; break;
+        case 55: dwPreviousPanel = 7; break;
+        case 56: dwPreviousPanel = 55; break;
+        default: UTIL_ASSERT(FALSE); break;
+        }
+        if (IsLevelUpPanelNeeded(dwPreviousPanel, pSprite)) {
+            SummonPopup(dwPreviousPanel, pSprite, 0);
+            return TRUE;
+        }
+        dwPanelId = dwPreviousPanel;
+    } while (dwPanelId != 2);
+
+    while (!m_lPopupStack.IsEmpty()) {
+        DismissPopup(pSprite);
+    }
+    if (g_pChitin->cNetwork.m_bIsHost == FALSE
+        && g_pChitin->cNetwork.m_nServiceProvider != CNetwork::SERV_PROV_NULL) {
+        CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+        UTIL_ASSERT(pGame != NULL);
+        LONG nId = pGame->GetCharacterId(static_cast<SHORT>(m_nSelectedCharacter));
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(
+            new CMessage120(g_pChitin->cNetwork.m_idLocalPlayer, FALSE, nId, nId), FALSE);
+    } else if (g_pChitin->cNetwork.m_bIsHost == TRUE) {
+        g_pBaldurChitin->GetObjectGame()->GetMultiplayerSettings()->SetPlayerReady(
+            g_pChitin->cNetwork.m_idLocalPlayer, FALSE);
+    }
+    return FALSE;
+}
+
 // 0x5E1DF0
 void CScreenCharacter::DismissPopup(CGameSprite* pSprite)
 {
@@ -4025,9 +4085,43 @@ void CScreenCharacter::DismissPopup(CGameSprite* pSprite)
 // 0x5E1F50
 BOOL CScreenCharacter::IsDoneButtonClickable(CGameSprite* pSprite)
 {
-    // TODO: Incomplete.
-
-    return FALSE;
+    CUIPanel* pPanel = GetTopPopup();
+    UTIL_ASSERT(pPanel != NULL);
+    CString sText;
+    switch (pPanel->m_nID) {
+    case 6: {
+        DWORD dwSpecialization = 0;
+        switch (m_nClass) {
+        case CAIOBJECTTYPE_C_WIZARD: dwSpecialization = m_nSpecialization & 0x7FC0; break;
+        case CAIOBJECTTYPE_C_PALADIN: dwSpecialization = m_nSpecialization & 7; break;
+        case CAIOBJECTTYPE_C_MONK: dwSpecialization = m_nSpecialization & 0x38; break;
+        case CAIOBJECTTYPE_C_CLERIC: dwSpecialization = m_nSpecialization & 0xFF8000; break;
+        }
+        return dwSpecialization != 0;
+    }
+    case 7: return m_nExtraAbilityPoints == 0;
+    case 8: return m_nExtraMageSpells == 0;
+    case 11: return m_nScriptIndex >= 0;
+    case 13: {
+        CUIControlEdit* pEdit = static_cast<CUIControlEdit*>(pPanel->GetControl(6));
+        UTIL_ASSERT(pEdit != NULL);
+        sText = pEdit->GetText();
+        sText.TrimLeft();
+        sText.TrimRight();
+        return sText != "";
+    }
+    case 16: return pSprite->m_baseStats.m_favoredEnemies[m_nHatedRaceIndex] != CAIOBJECTTYPE_R_NO_RACE;
+    case 19:
+        if (m_nPortraitSmallIndex < 0 || m_nPortraitLargeIndex < 0) return FALSE;
+        // FALLTHROUGH
+    case 4: case 12: case 17: case 18: case 51: case 52: case 53: case 57:
+        return TRUE;
+    case 20: return m_nCustomSoundSetIndex >= 0;
+    case 54: return m_nClass != 0;
+    case 55: return m_nExtraSkillPoints <= 1;
+    case 56: return m_nExtraFeats == 0;
+    default: UTIL_ASSERT(FALSE); return FALSE;
+    }
 }
 
 // 0x5E2210
@@ -4043,26 +4137,171 @@ void CScreenCharacter::OnDoneButtonClick()
 // 0x5E3B80
 BOOL CScreenCharacter::OnCancelButtonClick()
 {
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    UTIL_ASSERT(pGame != NULL);
     CUIPanel* pPanel = GetTopPopup();
-
-    if (pPanel != NULL && (pPanel->m_nID == 57 || pPanel->m_nID == 12)) {
-        DismissPopup(NULL);
-        m_cUIManager.InvalidateRect(NULL);
-        return TRUE;
+    UTIL_ASSERT(pPanel != NULL);
+    CSingleLock renderLock(&m_cUIManager.m_critSect, FALSE);
+    renderLock.Lock(INFINITE);
+    LONG nId = pGame->GetCharacterId(static_cast<SHORT>(m_nSelectedCharacter));
+    CGameSprite* pSprite;
+    BYTE rc;
+    do {
+        rc = pGame->GetObjectArray()->GetDeny(nId, CGameObjectArray::THREAD_ASYNCH,
+            reinterpret_cast<CGameObject**>(&pSprite), INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) {
+        renderLock.Unlock();
+        return FALSE;
     }
 
-    if (pPanel != NULL && pPanel->m_nID == 13) {
+    switch (pPanel->m_nID) {
+    case 6:
+        pSprite->m_baseStats.m_specialization = field_77C;
+        m_nSpecialization = field_77C;
+        DismissPopup(pSprite);
+        RewindLevelUp(pPanel->m_nID, pSprite);
+        break;
+    case 7:
+        pSprite->m_baseStats.m_STRBase = m_pTempBaseStats->m_STRBase;
+        pSprite->m_baseStats.m_DEXBase = m_pTempBaseStats->m_DEXBase;
+        pSprite->m_baseStats.m_CONBase = m_pTempBaseStats->m_CONBase;
+        pSprite->m_baseStats.m_INTBase = m_pTempBaseStats->m_INTBase;
+        pSprite->m_baseStats.m_WISBase = m_pTempBaseStats->m_WISBase;
+        pSprite->m_baseStats.m_CHRBase = m_pTempBaseStats->m_CHRBase;
+        DismissPopup(pSprite);
+        RewindLevelUp(pPanel->m_nID, pSprite);
+        break;
+    case 8:
+        for (auto& list : m_spells.m_lists) {
+            if (!list.m_List.empty()) {
+                list.m_List.clear();
+                list.m_nSharedMax = 0;
+                list.m_nSharedTotal = 0;
+            }
+        }
+        m_spells.m_nHighestLevel = 0;
+        pSprite->m_spells = m_pTempDerivedStats->m_spells;
+        pSprite->m_domainSpells = m_pTempDerivedStats->field_CAC;
+        DismissPopup(pSprite);
+        RewindLevelUp(pPanel->m_nID, pSprite);
+        break;
+    case 11:
+        DismissPopup(pSprite);
+        if (m_pScripts != NULL) {
+            delete m_pScripts;
+            m_pScripts = NULL;
+        }
+        break;
+    case 13:
         UTIL_ASSERT(m_pCharacters != NULL);
-
         delete m_pCharacters;
         m_pCharacters = NULL;
-
-        DismissPopup(NULL);
-        m_cUIManager.InvalidateRect(NULL);
-        return TRUE;
+        DismissPopup(pSprite);
+        break;
+    case 16:
+        if (m_pTempBaseStats != NULL) {
+            memcpy(pSprite->m_baseStats.m_favoredEnemies, m_pTempBaseStats->m_favoredEnemies, 8);
+        }
+        DismissPopup(pSprite);
+        RewindLevelUp(pPanel->m_nID, pSprite);
+        break;
+    case 17: {
+        m_cResPortraitSmall.GetResRef(pSprite->m_baseStats.m_portraitSmall);
+        m_cResPortraitLarge.GetResRef(pSprite->m_baseStats.m_portraitLarge);
+        m_cResPortraitSmallTemp = m_cResPortraitSmall;
+        m_cResPortraitLargeTemp = m_cResPortraitLarge;
+        pSprite->m_secondarySounds = m_cResSoundSet;
+        DWORD nLength = field_856.GetAllocLength();
+        memcpy(pSprite->field_725A, field_856.GetBuffer(static_cast<INT>(nLength)), min(nLength, 32UL));
+        if (nLength < 32) pSprite->field_725A[nLength] = '\0';
+        CAIScript* pScript = new CAIScript;
+        pScript->SetResRef(CResRef(field_832));
+        pScript->Read(CResRef(field_832), TRUE);
+        pSprite->SetScript(3, pScript);
+        DismissPopup(pSprite);
+        break;
     }
-
-    return FALSE;
+    case 18:
+        m_cResPortraitSmall.GetResRef(pSprite->m_baseStats.m_portraitSmall);
+        m_cResPortraitLarge.GetResRef(pSprite->m_baseStats.m_portraitLarge);
+        m_cResPortraitSmallTemp = m_cResPortraitSmall;
+        m_cResPortraitLargeTemp = m_cResPortraitLarge;
+        DismissPopup(pSprite);
+        break;
+    case 19:
+        UTIL_ASSERT(m_pPortraits != NULL);
+        delete m_pPortraits;
+        m_pPortraits = NULL;
+        // FALLTHROUGH
+    case 4: case 9: case 10: case 12: case 50: case 51: case 52: case 53: case 57:
+        DismissPopup(pSprite);
+        break;
+    case 20: {
+        UTIL_ASSERT(m_pSounds != NULL);
+        delete m_pSounds;
+        m_pSounds = NULL;
+        pSprite->m_secondarySounds = m_cResSoundSet;
+        DWORD nLength = field_856.GetAllocLength();
+        memcpy(pSprite->field_725A, field_856.GetBuffer(static_cast<INT>(nLength)), min(nLength, 32UL));
+        if (nLength < 32) pSprite->field_725A[nLength] = '\0';
+        DismissPopup(pSprite);
+        break;
+    }
+    case 54: {
+        g_pBaldurChitin->m_pEngineCharacter->m_nSpecialization = field_77C;
+        pSprite->SetAIType(m_typeAI, TRUE, TRUE);
+        UTIL_ASSERT(m_pTempBaseStats != NULL && m_pTempDerivedStats != NULL);
+        UTIL_ASSERT(m_pBeforeLevelUpDerivedStats != NULL);
+        BOOL bDead = (pSprite->m_derivedStats.m_generalState & STATE_DEAD) != 0;
+        pSprite->m_baseStats = *m_pTempBaseStats;
+        pSprite->m_derivedStats = *m_pTempDerivedStats;
+        pSprite->m_nHPCONBonusTotalOld = field_866;
+        field_866 = 0;
+        SHORT nHP = pSprite->m_baseStats.m_hitPoints;
+        SHORT nMaxHP = pSprite->m_derivedStats.m_nMaxHitPoints;
+        WORD nBaseMaxHP = pSprite->m_baseStats.m_maxHitPointsBase;
+        LONG nCONBonus = pSprite->m_nHPCONBonusTotalOld;
+        pSprite->field_562C = TRUE;
+        pSprite->ProcessEffectList();
+        pSprite->m_baseStats.m_hitPoints = nHP;
+        pSprite->m_derivedStats.m_nMaxHitPoints = nMaxHP;
+        pSprite->m_baseStats.m_maxHitPointsBase = nBaseMaxHP;
+        pSprite->m_nHPCONBonusTotalOld = nCONBonus;
+        if (bDead) {
+            pSprite->m_baseStats.m_generalState |= STATE_DEAD;
+            pSprite->m_derivedStats.m_generalState |= STATE_DEAD;
+        }
+        delete m_pTempBaseStats;
+        m_pTempBaseStats = NULL;
+        delete m_pTempDerivedStats;
+        m_pTempDerivedStats = NULL;
+        delete m_pBeforeLevelUpDerivedStats;
+        m_pBeforeLevelUpDerivedStats = NULL;
+        DismissPopup(pSprite);
+        RewindLevelUp(pPanel->m_nID, pSprite);
+        break;
+    }
+    case 55:
+        for (m_nTopSkill = 0; static_cast<USHORT>(m_nTopSkill) < SKILL_COUNT; ++m_nTopSkill) {
+            pSprite->SetSkillValue(static_cast<USHORT>(m_nTopSkill), m_storedSkills[static_cast<USHORT>(m_nTopSkill)]);
+        }
+        DismissPopup(pSprite);
+        RewindLevelUp(pPanel->m_nID, pSprite);
+        break;
+    case 56:
+        for (UINT nFeat = 0; nFeat < FEAT_COUNT; ++nFeat) {
+            pSprite->SetFeatValue(pGame->GetRuleTables().GetFeatId(nFeat), m_storedFeats[nFeat]);
+        }
+        DismissPopup(pSprite);
+        RewindLevelUp(pPanel->m_nID, pSprite);
+        break;
+    default: UTIL_ASSERT(FALSE); break;
+    }
+    pGame->GetObjectArray()->ReleaseDeny(nId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    renderLock.Unlock();
+    m_cUIManager.InvalidateRect(NULL);
+    return TRUE;
 }
 
 // 0x5E4560
