@@ -13,6 +13,7 @@ class CDerivedStats;
 class CGameSprite;
 class CItem;
 
+#pragma pack(push, 2)
 class CRuleTables {
 public:
     static const DWORD TIME_RESTING;
@@ -385,7 +386,10 @@ public:
     INT FindSavingThrow(CDerivedStats& stats, const CString& sSavingThrow) const;
     INT GetSavingThrow(const CAIObjectType& typeAI, CDerivedStats& DStats, BYTE nCON, const CString& sSavingThrow) const;
     INT GetHPCONBonusTotal(const CAIObjectType& typeAI, CDerivedStats& DStats, BYTE nCON) const;
-    INT GetStartingHitPoints(const CAIObjectType& typeAI, CDerivedStats& DStats, BYTE nCON) const;
+    INT RollHitPoints(INT nSides, INT nRolls, INT nLevel, INT nMinRoll, INT nModifier) const;
+    INT RollHitPoints(const C2DArray& table, BYTE nOldLevel, BYTE nNewLevel, INT nMinRoll, INT nDivisor, BOOL bOverrideSides, INT nSides) const;
+    INT RollHitPoints(INT nClass, CDerivedStats& oldStats, CDerivedStats& newStats, INT nMinRoll, INT nDivisor) const;
+    INT GetStartingHitPoints(const CAIObjectType& typeAI, CDerivedStats& oldStats, CDerivedStats& newStats, BYTE nCON) const;
     INT GetStartingGold(CGameSprite* pSprite) const;
     INT GetStartingExperiencePoints(CGameSprite* pSprite) const;
     INT GetMaxKnownSpells(const BYTE& nClass, const CAIObjectType& typeAI, CDerivedStats& DStats, DWORD nSpecialization, UINT nLevel, INT& nMaxSpells) const;
@@ -644,5 +648,6 @@ public:
     /* 1B10 */ C2DArray m_tHelp03;
     /* 1B34 */ C2DArray m_tHelp04;
 };
+#pragma pack(pop)
 
 #endif /* CRULETABLES_H_ */

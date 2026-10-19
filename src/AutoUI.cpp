@@ -143,6 +143,7 @@
 //   levelupchecks               replay level-up transfers and equipment rejection.
 //   beginlevelupchecks          replay panel predicates and open the real class popup.
 //   cancellevelupchecks         replay done gates and cancel all character popups.
+//   hitpointchecks              replay native HP/RNG calculations and creation caller.
 //   characterkeychecks          replay character-screen virtual keyboard routing.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
@@ -1749,6 +1750,7 @@ struct MasterPaletteFixture {
 #include "CharacterKeyChecks.h"
 #include "BeginLevelUpChecks.h"
 #include "CancelLevelUpChecks.h"
+#include "HitPointsChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5636,6 +5638,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "cancellevelupchecks") == 0) {
         CancelLevelUpChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "hitpointchecks") == 0) {
+        HitPointsChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

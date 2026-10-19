@@ -1930,6 +1930,104 @@ INT CRuleTables::GetSavingThrow(const CAIObjectType& typeAI, CDerivedStats& DSta
     return nSavingThrow;
 }
 
+// 0x542A90
+INT CRuleTables::RollHitPoints(INT nSides, INT nRolls, INT nLevel, INT nMinRoll, INT nModifier) const
+{
+    UTIL_ASSERT(nSides != 0);
+    INT nHitPoints = 0;
+    if (nLevel <= 1) {
+        nHitPoints = nSides * nRolls;
+    } else {
+        for (INT nRoll = 0; nRoll < nRolls; ++nRoll) {
+            rand();
+            rand();
+            INT nValue = rand() % nSides + 1;
+            if (nMinRoll > nValue) {
+                nValue = nMinRoll;
+            } else {
+                rand();
+                rand();
+                nValue = rand() % nSides + 1;
+            }
+            nHitPoints += nValue;
+        }
+    }
+    if (nRolls == 0) {
+        nHitPoints += nModifier;
+    }
+    return nHitPoints;
+}
+
+// 0x542B40
+INT CRuleTables::RollHitPoints(const C2DArray& table, BYTE nOldLevel, BYTE nNewLevel, INT nMinRoll, INT nDivisor, BOOL bOverrideSides, INT nSides) const
+{
+    CString sLevel;
+    INT nHitPoints = 0;
+    for (INT nLevel = nOldLevel + 1; nLevel <= nNewLevel; ++nLevel) {
+        sLevel.Format(_T("%d"), nLevel);
+        INT nDieSides = atol(table.GetAt(SIDES, sLevel));
+        INT nRolls = atol(table.GetAt(ROLLS, sLevel));
+        INT nValue = atol(table.GetAt(MODIFIER, sLevel));
+        if (bOverrideSides) {
+            nDieSides = nSides;
+        }
+        if (!g_pBaldurChitin->GetObjectGame()->GetOptions()->m_bMaxHP) {
+            nValue = RollHitPoints(nDieSides, nRolls, nLevel, nMinRoll, nValue);
+        } else if (nRolls != 0) {
+            nValue = nRolls * nDieSides;
+        }
+        nValue /= nDivisor;
+        nHitPoints += max(nValue, 1);
+    }
+    if (nOldLevel < nNewLevel && nHitPoints < 1) {
+        nHitPoints = 1;
+    }
+    return nHitPoints;
+}
+
+// 0x542CB0
+INT CRuleTables::RollHitPoints(INT nClass, CDerivedStats& oldStats, CDerivedStats& newStats, INT nMinRoll, INT nDivisor) const
+{
+    oldStats.GetClassLevel(nClass);
+    if (static_cast<BYTE>(newStats.GetClassLevel(nClass)) == 0) {
+        return 0;
+    }
+    BOOL bOverrideSides = FALSE;
+    INT nSides = 0;
+    const C2DArray* pTable;
+    switch (nClass) {
+    case CAIOBJECTTYPE_C_BARBARIAN:
+        bOverrideSides = TRUE;
+        nSides = 12;
+        // FALLTHROUGH
+    case CAIOBJECTTYPE_C_FIGHTER:
+    case CAIOBJECTTYPE_C_PALADIN:
+    case CAIOBJECTTYPE_C_RANGER:
+        pTable = &m_tHitPointsWarrior;
+        break;
+    case CAIOBJECTTYPE_C_BARD:
+    case CAIOBJECTTYPE_C_ROGUE:
+        pTable = &m_tHitPointsRogue;
+        break;
+    case CAIOBJECTTYPE_C_CLERIC:
+    case CAIOBJECTTYPE_C_DRUID:
+        pTable = &m_tHitPointsPriest;
+        break;
+    case CAIOBJECTTYPE_C_MONK:
+        pTable = &m_tHitPointsMonk;
+        break;
+    case CAIOBJECTTYPE_C_SORCERER:
+    case CAIOBJECTTYPE_C_WIZARD:
+        pTable = &m_tHitPointsWizard;
+        break;
+    default:
+        return 0;
+    }
+    BYTE nOldLevel = static_cast<BYTE>(oldStats.GetClassLevel(nClass));
+    BYTE nNewLevel = static_cast<BYTE>(newStats.GetClassLevel(nClass));
+    return RollHitPoints(*pTable, nOldLevel, nNewLevel, nMinRoll, nDivisor, bOverrideSides, nSides);
+}
+
 // 0x542F20
 INT CRuleTables::GetHPCONBonusTotal(const CAIObjectType& typeAI, CDerivedStats& DStats, BYTE nCON) const
 {
@@ -1948,11 +2046,15 @@ INT CRuleTables::GetHPCONBonusTotal(const CAIObjectType& typeAI, CDerivedStats& 
 }
 
 // 0x542FA0
-INT CRuleTables::GetStartingHitPoints(const CAIObjectType& typeAI, CDerivedStats& DStats, BYTE nCON) const
+INT CRuleTables::GetStartingHitPoints(const CAIObjectType& typeAI, CDerivedStats& oldStats, CDerivedStats& newStats, BYTE nCON) const
 {
-    // TODO: Incomplete.
-
-    return 0;
+    INT nHitPoints = 0;
+    for (INT nClass = 1; nClass <= CAIOBJECT_CLASS_MAX; ++nClass) {
+        if (newStats.GetClassLevel(nClass) > 0) {
+            nHitPoints += RollHitPoints(nClass, oldStats, newStats, 1, 1);
+        }
+    }
+    return nHitPoints;
 }
 
 // 0x542FE0

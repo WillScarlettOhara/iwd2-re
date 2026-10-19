@@ -54,8 +54,7 @@ cancel-levelup-pair/. Other behavior is outside that differential proof.
 Static evidence remains unproven: skipped layout/offset checks, call-count and
 short-body warnings. Source lints/class audits pass.
 
-Next: OnDoneButtonClick 5E2210 needs GetStartingHitPoints 542FA0 (stub; wrong
-signature: native takes old/new stats and CON), helpers 542CB0/542B40, then
-level-stat helper 5D8EA0. Its native HP-cache-hit branch reads an uninitialized
-local; do not invent a deterministic replacement. Skills reset 5F7850 and feats
-reset 5DA200 also remain incomplete. Keep the full combat profile.
+HP prerequisites 542A90/542B40/542CB0/542FA0: see hitpoints-recovery.md.
+Next: level-stat helper 5D8EA0, then OnDoneButtonClick 5E2210. Its native
+HP-cache-hit branch reads an uninitialized local; do not invent deterministic HP.
+Skills reset 5F7850 and feats reset 5DA200 remain incomplete. Keep the full profile.

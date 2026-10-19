@@ -4307,6 +4307,7 @@ void CScreenCreateChar::CompleteCharacterAbilities(CGameSprite* pSprite)
     pSprite->ProcessEffectList();
 
     INT nHitPoints = ruleTables.GetStartingHitPoints(typeAI,
+        DStats,
         *pSprite->GetDerivedStats(),
         pSprite->GetBaseStats()->m_CONBase);
 
@@ -4321,14 +4322,18 @@ void CScreenCreateChar::CompleteCharacterAbilities(CGameSprite* pSprite)
         CRuleTables::FORTITUDE);
     pSprite->GetBaseStats()->m_saveVSReflexBase = ruleTables.GetSavingThrow(typeAI,
         *pSprite->GetDerivedStats(),
-        pSprite->GetBaseStats()->m_CONBase,
+        pSprite->GetBaseStats()->m_DEXBase,
         CRuleTables::REFLEX);
     pSprite->GetBaseStats()->m_saveVSWillBase = ruleTables.GetSavingThrow(typeAI,
         *pSprite->GetDerivedStats(),
-        pSprite->GetBaseStats()->m_CONBase,
+        pSprite->GetBaseStats()->m_WISBase,
         CRuleTables::WILL);
 
-    pSprite->m_innateSpells.Clear();
+    if (!pSprite->m_innateSpells.m_List.empty()) {
+        pSprite->m_innateSpells.m_List.clear();
+        pSprite->m_innateSpells.m_nSharedMax = 0;
+        pSprite->m_innateSpells.m_nSharedTotal = 0;
+    }
 
     pSprite->AddNewSpecialAbilities(DStats, TRUE);
 
