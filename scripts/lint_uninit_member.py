@@ -100,9 +100,14 @@ def _cppcheck(files: list[Path]) -> list[tuple[Path, int, str]]:
         return []
     import os
 
+    # Reuse cppcheck's own dependency-aware analysis between ARC and pre-commit.
+    # Findings are still read and filtered every time; this is not a cached PASS.
+    build_dir = ROOT / ".cache" / "cppcheck-uninit"
+    build_dir.mkdir(parents=True, exist_ok=True)
     proc = subprocess.run(
         [
             cppcheck_executable(), "--enable=warning", "--std=c++17", "--quiet",
+            f"--cppcheck-build-dir={build_dir}",
             f"-j{os.cpu_count() or 1}", f"-I{SRC}", *[str(f) for f in files],
         ],
         cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
