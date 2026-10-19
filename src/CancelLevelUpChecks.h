@@ -197,6 +197,99 @@ void CancelLevelUpChecks(INT nStep)
             delete screen.m_pTempDerivedStats; screen.m_pTempDerivedStats=NULL;
             delete screen.m_pBeforeLevelUpDerivedStats; screen.m_pBeforeLevelUpDerivedStats=NULL;
         }
+        // Done uses the same loaded actor, locks and GUIREC panels as Cancel.
+        actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp;
+        screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(12));
+        screen.m_nSelectedCharacter=game->GetNumCharacters();
+        screen.OnDoneButtonClick();
+        check("done-failed-deny-keeps-popup",screen.m_lPopupStack.GetCount()==1);
+        screen.m_nSelectedCharacter=0; screen.m_lPopupStack.RemoveAll();
+        for (DWORD panel : {4u,12u,18u,52u,53u,57u,9u,10u,50u}) {
+            screen.m_lPopupStack.RemoveAll(); screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(12));
+            screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(panel));
+            screen.m_nErrorState=0; screen.m_nNumErrorButtons=1;
+            screen.OnDoneButtonClick();
+            check("done-simple-and-error-return-to-parent",screen.m_lPopupStack.GetCount()==1 && screen.GetTopPopup()->m_nID==12);
+        }
+        for (DWORD panel : {6u,7u,8u,16u,55u,56u}) {
+            screen.m_lPopupStack.RemoveAll(); screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(panel));
+            screen.m_nClass=CAIOBJECTTYPE_C_WIZARD; screen.m_nSpecialization=0;
+            screen.m_nExtraAbilityPoints=screen.m_nExtraMageSpells=screen.m_nExtraFeats=1;
+            screen.m_nExtraSkillPoints=2; screen.m_nHatedRaceIndex=0;
+            actor->m_baseStats.m_favoredEnemies[0]=CAIOBJECTTYPE_R_NO_RACE;
+            screen.OnDoneButtonClick();
+            check("done-unspent-budget-gates-dispatch",screen.m_lPopupStack.GetCount()==1 && screen.GetTopPopup()->m_nID==panel);
+        }
+        screen.m_lPopupStack.RemoveAll();
+        screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(12));
+        screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(17));
+        screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(18));
+        screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(19));
+        screen.m_pPortraits=new CStringList; screen.m_pPortraits->AddTail("SMALL"); screen.m_pPortraits->AddTail("LARGE");
+        screen.m_nPortraitSmallIndex=0; screen.m_nPortraitLargeIndex=1;
+        screen.OnDoneButtonClick();
+        check("done-portraits-close-two-panels-and-retire-list",!screen.m_pPortraits && screen.m_lPopupStack.GetCount()==2
+            && screen.GetTopPopup()->m_nID==17 && screen.m_cResPortraitSmallTemp==CResRef("SMALL")
+            && screen.m_cResPortraitLargeTemp==CResRef("LARGE"));
+        screen.OnDoneButtonClick();
+        check("done-customize-commits-portraits",screen.m_lPopupStack.GetCount()==1
+            && memcmp(actor->m_baseStats.m_portraitSmall,"SMALL\0\0",8)==0
+            && memcmp(actor->m_baseStats.m_portraitLarge,"LARGE\0\0",8)==0);
+        screen.m_lPopupStack.RemoveAll();
+        {
+            auto& rules=const_cast<CRuleTables&>(game->GetRuleTables());
+            BeginLevelUpTableFixture levelFeats(rules.m_tFeatLevel,1,6),classFeats(rules.m_tFeatClass,11,6);
+            ChargenTableFixture skillPoints(rules.m_tSkillPoints); skillPoints.Set("3");
+            levelFeats.cells[2]="2"; levelFeats.cells[3]="7";
+            classFeats.cells[2*11+4]="3"; classFeats.cells[3*11+4]="11";
+            screen.m_pTempBaseStats=new CCreatureFileHeader(base);
+            screen.m_pTempDerivedStats=new CDerivedStats; screen.m_pBeforeLevelUpDerivedStats=new CDerivedStats;
+            *screen.m_pBeforeLevelUpDerivedStats=derived;
+            *screen.m_pTempDerivedStats=derived;
+            for (INT previousLevel : {2,4,5}) {
+                actor->m_baseStats=base; actor->m_baseStats.m_INTBase=18; actor->m_baseStats.field_2FF=5;
+                actor->m_typeAI=type; actor->m_typeAI.m_nRace=CAIOBJECTTYPE_R_ELF;
+                actor->m_derivedStats=derived; memset(actor->m_derivedStats.m_nClassLevels,0,11);
+                actor->m_derivedStats.m_fighterLevel=4; actor->m_derivedStats.m_nLevel=4;
+                actor->m_derivedStats.m_classMask=CLASSMASK_FIGHTER; actor->m_derivedStats.m_nSTR=29;
+                *screen.m_pTempDerivedStats=actor->m_derivedStats;
+                screen.m_pTempDerivedStats->m_fighterLevel=screen.m_pTempDerivedStats->m_nLevel=previousLevel;
+                screen.m_nClass=CAIOBJECTTYPE_C_FIGHTER; screen.m_nExtraAbilityPoints=0;
+                screen.field_2BC=screen.field_64C=-99;
+                screen.m_lPopupStack.RemoveAll(); screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(7));
+                screen.OnDoneButtonClick();
+                check("done-abilities-recompute-budgets",screen.field_2BC==(previousLevel==2?19:5)
+                    && screen.field_64C==(previousLevel==2?23:0) && screen.GetTopPopup()->m_nID==55);
+                check("done-abilities-restore-derived-snapshot",actor->m_derivedStats.m_nLevel==4
+                    && actor->m_derivedStats.m_fighterLevel==4 && actor->m_derivedStats.m_nSTR==29
+                    && actor->m_derivedStats.m_classMask==CLASSMASK_FIGHTER);
+            }
+            screen.m_nClass=CAIOBJECTTYPE_C_WIZARD; screen.m_nSpecialization=SPECMASK_WIZARD_UNIVERSAL;
+            screen.field_77C=0x10000000; screen.m_lPopupStack.RemoveAll();
+            screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(6));
+            screen.m_pTempDerivedStats->m_nLevel=3;
+            screen.OnDoneButtonClick();
+            check("done-specialization-merges-and-advances",actor->m_baseStats.m_specialization==(0x10000000|SPECMASK_WIZARD_UNIVERSAL)
+                && screen.GetTopPopup()->m_nID==7);
+            screen.m_lPopupStack.RemoveAll(); screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(55));
+            screen.m_nExtraSkillPoints=1; screen.field_64C=1; screen.field_1776=7;
+            screen.OnDoneButtonClick();
+            check("done-skills-retain-spell-tier-for-wizard",screen.GetTopPopup()->m_nID==56 && screen.field_1776==7);
+            screen.m_lPopupStack.RemoveAll(); screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(56));
+            screen.m_nClass=CAIOBJECTTYPE_C_RANGER; screen.m_nExtraFeats=0; screen.field_1776=9;
+            actor->m_derivedStats.m_rangerLevel=5;
+            memset(actor->m_baseStats.m_favoredEnemies,CAIOBJECTTYPE_R_NO_RACE,MAX_HATED_RACES);
+            screen.OnDoneButtonClick();
+            check("done-feats-skip-spells-to-favored-enemy",screen.GetTopPopup()->m_nID==16 && screen.field_1776==9);
+            actor->m_baseStats.m_favoredEnemies[0]=CAIOBJECTTYPE_R_HUMAN;
+            screen.OnDoneButtonClick();
+            check("done-ranger-requests-second-favored-enemy",screen.GetTopPopup()->m_nID==16
+                && screen.m_nHatedRaceIndex==1 && actor->m_baseStats.m_favoredEnemies[0]==CAIOBJECTTYPE_R_HUMAN);
+            screen.m_lPopupStack.RemoveAll();
+            delete screen.m_pTempBaseStats; screen.m_pTempBaseStats=NULL;
+            delete screen.m_pTempDerivedStats; screen.m_pTempDerivedStats=NULL;
+            delete screen.m_pBeforeLevelUpDerivedStats; screen.m_pBeforeLevelUpDerivedStats=NULL;
+        }
         // Exercise the actual GUIREC Cancel control with independent snapshots.
         actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp;
         actor->m_typeAI=type; actor->m_startTypeAI=start; actor->m_liveTypeAI=live;

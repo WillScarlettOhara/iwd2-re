@@ -4436,10 +4436,122 @@ BOOL CScreenCharacter::IsDoneButtonClickable(CGameSprite* pSprite)
 void CScreenCharacter::OnDoneButtonClick()
 {
     CUIPanel* pPanel = GetTopPopup();
-
-    if (pPanel != NULL && (pPanel->m_nID == 57 || pPanel->m_nID == 12)) {
-        DismissPopup(NULL);
+    if (pPanel != NULL && (pPanel->m_nID == 9 || pPanel->m_nID == 10 || pPanel->m_nID == 50)) {
+        OnErrorButtonClick(0);
+        return;
     }
+
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    UTIL_ASSERT(pGame != NULL);
+    CSingleLock renderLock(&m_cUIManager.m_critSect, FALSE);
+    renderLock.Lock(INFINITE);
+    LONG nId = pGame->GetCharacterId(static_cast<SHORT>(m_nSelectedCharacter));
+    CGameSprite* pSprite;
+    BYTE rc;
+    do {
+        rc = pGame->GetObjectArray()->GetDeny(nId, CGameObjectArray::THREAD_ASYNCH,
+            reinterpret_cast<CGameObject**>(&pSprite), INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) {
+        renderLock.Unlock();
+        return;
+    }
+
+    if (IsDoneButtonClickable(pSprite)) {
+        pPanel = GetTopPopup();
+        UTIL_ASSERT(pPanel != NULL);
+        DWORD dwPanelId = pPanel->m_nID;
+        switch (dwPanelId) {
+        case 4: case 12: case 18: case 52: case 53: case 57:
+            DismissPopup(pSprite);
+            break;
+        case 6:
+            pSprite->m_baseStats.m_specialization = field_77C | m_nSpecialization;
+            DismissPopup(pSprite);
+            AdvanceLevelUp(dwPanelId, pSprite);
+            break;
+        case 7: {
+            {
+                CDerivedStats current;
+                current = pSprite->m_derivedStats;
+                INT nLevels = static_cast<INT>(current.m_nLevel) - m_pTempDerivedStats->m_nLevel;
+                pSprite->m_derivedStats = *m_pTempDerivedStats;
+                field_64C = 0;
+                field_2BC = pSprite->m_baseStats.field_2FF;
+                while (nLevels-- > 0) {
+                    pSprite->m_derivedStats.SetClassLevel(m_nClass,
+                        pSprite->m_derivedStats.GetClassLevel(m_nClass) + 1);
+                    field_64C += pSprite->GetExtraFeats(m_nClass);
+                    field_2BC += pSprite->GetExtraSkillPoints(m_nClass);
+                }
+                pSprite->m_derivedStats = current;
+            }
+            DismissPopup(pSprite);
+            AdvanceLevelUp(dwPanelId, pSprite);
+            break;
+        }
+        case 8: case 16:
+            DismissPopup(pSprite);
+            if (IsLevelUpPanelNeeded(dwPanelId, pSprite)) {
+                SummonPopup(dwPanelId, pSprite, 1);
+            } else {
+                AdvanceLevelUp(dwPanelId, pSprite);
+            }
+            break;
+        case 17:
+            m_cResPortraitSmallTemp.GetResRef(pSprite->m_baseStats.m_portraitSmall);
+            m_cResPortraitLargeTemp.GetResRef(pSprite->m_baseStats.m_portraitLarge);
+            DismissPopup(pSprite);
+            g_pBaldurChitin->GetBaldurMessage()->BroadcastUpdateCharacterSlot(FALSE,
+                pGame->GetCharacterSlotFromId(pSprite->GetId()), FALSE);
+            break;
+        case 19: {
+            UTIL_ASSERT(m_nPortraitSmallIndex >= 0 && m_nPortraitLargeIndex >= 0);
+            POSITION pos = m_pPortraits->FindIndex(m_nPortraitSmallIndex);
+            UTIL_ASSERT(pos != NULL);
+            m_cResPortraitSmallTemp = CResRef(m_pPortraits->GetAt(pos));
+            pos = m_pPortraits->FindIndex(m_nPortraitLargeIndex);
+            UTIL_ASSERT(pos != NULL);
+            m_cResPortraitLargeTemp = CResRef(m_pPortraits->GetAt(pos));
+            UTIL_ASSERT(m_pPortraits != NULL);
+            delete m_pPortraits;
+            m_pPortraits = NULL;
+            DismissPopup(pSprite);
+            DismissPopup(pSprite);
+            break;
+        }
+        case 55: case 56:
+            DismissPopup(pSprite);
+            switch (m_nClass) {
+            case CAIOBJECTTYPE_C_BARD: case CAIOBJECTTYPE_C_SORCERER:
+                field_1776 = 0;
+                // FALLTHROUGH
+            case CAIOBJECTTYPE_C_BARBARIAN: case CAIOBJECTTYPE_C_CLERIC:
+            case CAIOBJECTTYPE_C_DRUID: case CAIOBJECTTYPE_C_FIGHTER:
+            case CAIOBJECTTYPE_C_MONK: case CAIOBJECTTYPE_C_PALADIN:
+            case CAIOBJECTTYPE_C_RANGER: case CAIOBJECTTYPE_C_ROGUE:
+            case CAIOBJECTTYPE_C_WIZARD:
+                AdvanceLevelUp(dwPanelId, pSprite);
+                break;
+            default:
+                UTIL_ASSERT(FALSE);
+            }
+            break;
+        case 54:
+            // TODO: Native 0x5D8EA0 reads uninitialized stack data on an HP-cache hit.
+            // Keep class confirmation unresolved rather than inventing its HP result.
+            break;
+        case 11: case 13: case 20: case 51:
+            // TODO: Script, export, sound-set and biography confirmation.
+            break;
+        default:
+            UTIL_ASSERT(FALSE);
+        }
+    }
+
+    pGame->GetObjectArray()->ReleaseDeny(nId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    renderLock.Unlock();
+    m_cUIManager.InvalidateRect(NULL);
 }
 
 // 0x5E3B80

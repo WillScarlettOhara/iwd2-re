@@ -173,6 +173,52 @@ void SpellSelectionChecks(INT nStep)
             }
             if (res) res->CancelRequest(); // Retire the guard loader's extra request.
         }
+        // Continue a real Done sequence across skills, feats and two spell tiers.
+        {
+            auto allow=actor->m_bAllowEffectListCall; auto dirty=actor->field_562C; auto deferred=actor->field_72A2;
+            // Feat-panel initialization must retain the synthetic class progression.
+            actor->m_bAllowEffectListCall=FALSE;
+            BeginLevelUpTableFixture bardProgress(rules.m_tKnownSpellsBard,2,2),sorcProgress(rules.m_tKnownSpellsSorcerer,2,2);
+            for (auto* fixture : {&bardProgress,&sorcProgress}) {
+                fixture->cells[0]=fixture->cells[1]="0"; fixture->cells[2]=fixture->cells[3]="1";
+            }
+            screen.m_pTempDerivedStats=new CDerivedStats;
+            for (BYTE cls : {BYTE(CAIOBJECTTYPE_C_BARD),BYTE(CAIOBJECTTYPE_C_SORCERER)}) {
+                actor->m_baseStats=base; actor->m_derivedStats=derived;
+                memset(actor->m_derivedStats.m_nClassLevels,0,11);
+                actor->m_derivedStats.m_nClassLevels[cls-1]=2; actor->m_derivedStats.m_nLevel=2;
+                actor->m_derivedStats.m_classMask=game->GetClassMask(cls);
+                actor->m_typeAI=type; actor->m_typeAI.m_nClass=cls; actor->m_typeAI.m_nClassMask=game->GetClassMask(cls);
+                actor->m_startTypeAI=actor->m_liveTypeAI=actor->m_typeAI;
+                *screen.m_pTempDerivedStats=actor->m_derivedStats;
+                screen.m_pTempDerivedStats->m_nClassLevels[cls-1]=screen.m_pTempDerivedStats->m_nLevel=1;
+                for (auto& group : actor->m_spells.m_spellsByClass) group.Clear();
+                entries[0].m_nID=0; headers[0].notUsableBy=0x4000;
+                UINT caster=game->GetSpellcasterIndex(cls);
+                game->m_spellsByClass[caster].m_lists[0].m_nCount=game->m_spellsByClass[caster].m_lists[1].m_nCount=1;
+                screen.m_nClass=cls; screen.field_1776=7; screen.field_64C=1; screen.m_nExtraSkillPoints=1;
+                screen.m_lPopupStack.RemoveAll(); screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(55));
+                screen.OnDoneButtonClick();
+                BOOL ready=screen.GetTopPopup()->m_nID==56 && screen.field_1776==0
+                    && actor->m_derivedStats.GetClassLevel(cls)==2;
+                check("done-caster-skills-restart-spell-tier",ready);
+                if (!ready) break;
+                screen.m_nExtraFeats=0; screen.OnDoneButtonClick();
+                check("done-caster-feats-open-first-tier",screen.GetTopPopup()->m_nID==8 && screen.field_1776==1
+                    && screen.m_nExtraMageSpells==1 && button->field_676==CResRef("ZRCHIT"));
+                button->OnLButtonClick(CPoint(0,0));
+                check("done-sequence-first-spell-selected",screen.m_nExtraMageSpells==0);
+                auto* done=dynamic_cast<CUIControlButtonCharacterPopupDone*>(panel->GetControl(33));
+                check("actual-spell-done-control-present",done!=NULL);
+                if (done) done->OnLButtonClick(CPoint(0,0));
+                check("done-spell-reopens-next-tier",screen.GetTopPopup()->m_nID==8 && screen.field_1776==2
+                    && screen.m_nExtraMageSpells==1 && !button->m_bSelected
+                    && actor->GetSpellsAtLevel(cls,0)->m_List.size()==1
+                    && actor->GetSpellsAtLevel(cls,1)->m_List.empty());
+            }
+            screen.m_lPopupStack.RemoveAll(); delete screen.m_pTempDerivedStats; screen.m_pTempDerivedStats=NULL;
+            actor->m_bAllowEffectListCall=allow; actor->field_562C=dirty; actor->field_72A2=deferred;
+        }
         screen.m_lPopupStack.RemoveAll(); g_pBaldurChitin->m_pEngineCharacter=oldCharacter;
     }
     if (hadToken) tlk.SetToken(CScreenCharacter::TOKEN_NUMBER,oldToken); else tlk.m_mapTokens.RemoveKey(CScreenCharacter::TOKEN_NUMBER);
