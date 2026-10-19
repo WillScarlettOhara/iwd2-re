@@ -26767,7 +26767,7 @@ INT CGameSprite::GetSkillValue(UINT iSkillNumber)
     // __LINE__: 30444
     UTIL_ASSERT(iSkillNumber < CGAMESPRITE_SKILL_NUMSKILLS);
 
-    return m_baseStats.m_skills[iSkillNumber];
+    return static_cast<signed char>(m_baseStats.m_skills[iSkillNumber]);
 }
 
 // 0x764310
@@ -26839,7 +26839,7 @@ INT CGameSprite::GetSkillCost(UINT iSkillNumber, BYTE nClass)
         }
     }
 
-    if (m_baseStats.m_skills[iSkillNumber] < (nLevels + 3) / v3) {
+    if (static_cast<signed char>(m_baseStats.m_skills[iSkillNumber]) < (nLevels + 3) / v3) {
         return v2;
     }
 

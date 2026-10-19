@@ -52,6 +52,7 @@ aggregate parity GREEN; class 17-vs-5 calls and caller 46-vs-27 YELLOW (native
 switch duplication and automatic lifetime/inlined operations need manual scope).
 Source lints and class audits pass; the caller is not a complete paired capture.
 
-Next: character level-stat helper 5D8EA0, then OnDoneButtonClick 5E2210. The native
-HP-cache-hit branch reads an uninitialized local; investigate without inventing
-deterministic HP. Skill/feat panel reset bodies remain incomplete.
+Next: level-stat helper 5D8EA0 and OnDoneButtonClick 5E2210. The native cache-hit
+stack read is now confirmed by twelve controlled original cases. Skill/feat
+resets are recovered; continue from allocation-recovery.md, without repeating
+the cache investigation or inventing deterministic HP.

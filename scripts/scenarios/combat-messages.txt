@@ -41,6 +41,7 @@ characterkeychecks
 beginlevelupchecks
 cancellevelupchecks
 hitpointchecks
+allocationchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

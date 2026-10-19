@@ -1468,7 +1468,7 @@ BOOL CScreenCharacter::ResetAbility(CGameSprite* pSprite, const CString& sMin, c
     CString sRace = ruleTables.GetRaceString(pSprite->m_startTypeAI.m_nRace, pSprite->m_startTypeAI.m_nSubRace);
     BYTE nMinRaceReq = static_cast<BYTE>(atol(ruleTables.m_tAbilityRaceReq.GetAt(sMin, sRace)));
     BYTE nMaxRaceReq = static_cast<BYTE>(atol(ruleTables.m_tAbilityRaceReq.GetAt(sMax, sRace)));
-    BYTE nRaceAdj = static_cast<BYTE>(atol(ruleTables.m_tAbilityRaceAdj.GetAt(sMod, sRace)));
+    INT nRaceAdj = atol(ruleTables.m_tAbilityRaceAdj.GetAt(sMod, sRace));
 
     CString sClass = ruleTables.GetClassString(nBestClass, pSprite->m_baseStats.m_specialization);
     BYTE nMinClassReq = static_cast<BYTE>(atol(ruleTables.m_tAbilityClassReq.GetAt(sMin, sClass)));
@@ -1571,7 +1571,42 @@ void CScreenCharacter::ResetClassSelectionPanel(CUIPanel* pPanel, CGameSprite* p
 // 0x5DA200
 void CScreenCharacter::ResetFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite, int a3)
 {
-    // TODO: Incomplete.
+    const CRuleTables& rules = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
+    if (a3) {
+        SHORT nHP = pSprite->m_baseStats.m_hitPoints;
+        WORD nBaseMaxHP = pSprite->m_baseStats.m_maxHitPointsBase;
+        SHORT nMaxHP = pSprite->m_derivedStats.m_nMaxHitPoints;
+        LONG nCONBonus = pSprite->m_nHPCONBonusTotalOld;
+        pSprite->field_562C = TRUE;
+        pSprite->ProcessEffectList();
+        pSprite->m_baseStats.m_hitPoints = nHP;
+        pSprite->m_derivedStats.m_nMaxHitPoints = nMaxHP;
+        pSprite->m_baseStats.m_maxHitPointsBase = nBaseMaxHP;
+        pSprite->m_nHPCONBonusTotalOld = nCONBonus;
+        m_nExtraFeats = field_64C;
+        for (m_nTopFeat = 0; static_cast<USHORT>(m_nTopFeat) < FEAT_COUNT; ++m_nTopFeat) {
+            m_storedFeats[static_cast<USHORT>(m_nTopFeat)] = pSprite->GetFeatValue(static_cast<USHORT>(m_nTopFeat));
+        }
+        for (m_nTopFeat = 0; static_cast<USHORT>(m_nTopFeat) < FEAT_COUNT; ++m_nTopFeat) {
+            rules.GetFeatId(static_cast<USHORT>(m_nTopFeat));
+            if (pSprite->CanSelectFeat(static_cast<USHORT>(m_nTopFeat), TRUE)) break;
+        }
+    } else {
+        m_nTopFeat = 0;
+    }
+    CString sNumber;
+    sNumber.Format(_T("%d"), m_nExtraFeats);
+    g_pBaldurChitin->GetTlkTable().SetToken(TOKEN_NUMBER, sNumber);
+    UpdateHelp(pPanel->m_nID, 92, 36476);
+    for (UINT nRow = 0; nRow < FEAT_SLOTS; ++nRow) {
+        BOOL bEnabled = pSprite->CanSelectFeat(rules.GetFeatId(nRow), TRUE) != FALSE;
+        for (DWORD nControl = 14 + 2 * nRow; nControl <= 15 + 2 * nRow; ++nControl) {
+            CUIControlButton* pButton = static_cast<CUIControlButton*>(pPanel->GetControl(nControl));
+            UTIL_ASSERT(pButton != NULL);
+            pButton->SetEnabled(bEnabled);
+            pButton->SetActive(static_cast<BOOLEAN>(bEnabled));
+        }
+    }
 }
 
 // 0x5DA490
@@ -6405,7 +6440,42 @@ void CScreenCharacter::ResetCustomizeBiographyPanel(CUIPanel* pPanel, CGameSprit
 // 0x5F7850
 void CScreenCharacter::ResetSkillsPanel(CUIPanel* pPanel, CGameSprite* pSprite, int a3)
 {
-    // TODO: Incomplete.
+    const CRuleTables& rules = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
+    if (a3) {
+        SHORT nHP = pSprite->m_baseStats.m_hitPoints;
+        WORD nBaseMaxHP = pSprite->m_baseStats.m_maxHitPointsBase;
+        SHORT nMaxHP = pSprite->m_derivedStats.m_nMaxHitPoints;
+        LONG nCONBonus = pSprite->m_nHPCONBonusTotalOld;
+        pSprite->field_562C = TRUE;
+        pSprite->ProcessEffectList();
+        pSprite->m_baseStats.m_hitPoints = nHP;
+        pSprite->m_derivedStats.m_nMaxHitPoints = nMaxHP;
+        pSprite->m_baseStats.m_maxHitPointsBase = nBaseMaxHP;
+        pSprite->m_nHPCONBonusTotalOld = nCONBonus;
+        m_nExtraSkillPoints = field_2BC;
+        for (m_nTopSkill = 0; static_cast<USHORT>(m_nTopSkill) < SKILL_COUNT; ++m_nTopSkill) {
+            m_storedSkills[static_cast<USHORT>(m_nTopSkill)] = pSprite->GetSkillValue(static_cast<USHORT>(m_nTopSkill));
+        }
+        for (m_nTopSkill = 0; static_cast<USHORT>(m_nTopSkill) < SKILL_COUNT; ++m_nTopSkill) {
+            if (pSprite->GetSkillCost(rules.GetSkillId(static_cast<USHORT>(m_nTopSkill)), m_nClass) != 0) break;
+        }
+    } else {
+        m_nTopSkill = 0;
+    }
+    CString sNumber;
+    sNumber.Format(_T("%d"), m_nExtraSkillPoints);
+    g_pBaldurChitin->GetTlkTable().SetToken(TOKEN_NUMBER, sNumber);
+    UpdateHelp(pPanel->m_nID, 92, 17248);
+    for (UINT nRow = 0; nRow < SKILL_SLOTS; ++nRow) {
+        INT nCost = pSprite->GetSkillCost(rules.GetSkillId(nRow), m_nClass);
+        BOOL bEnabled = nCost != 0 && m_nExtraSkillPoints >= nCost;
+        for (DWORD nControl = 14 + 2 * nRow; nControl <= 15 + 2 * nRow; ++nControl) {
+            CUIControlButton* pButton = static_cast<CUIControlButton*>(pPanel->GetControl(nControl));
+            UTIL_ASSERT(pButton != NULL);
+            pButton->SetEnabled(bEnabled);
+            pButton->SetActive(static_cast<BOOLEAN>(bEnabled));
+        }
+    }
 }
 
 // 0x5F89B0
