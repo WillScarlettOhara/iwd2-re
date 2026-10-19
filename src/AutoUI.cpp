@@ -145,6 +145,7 @@
 //   cancellevelupchecks         replay done gates and cancel all character popups.
 //   hitpointchecks              replay native HP/RNG calculations and creation caller.
 //   allocationchecks            replay skills/feats resets and signed ability limits.
+//   spellselectionchecks        replay spell-panel choices and real selection controls.
 //   characterkeychecks          replay character-screen virtual keyboard routing.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
@@ -183,6 +184,7 @@
 #include "CGameDoor.h"
 #include "CGameEffect.h"
 #include "CItem.h"
+#include "CIcon.h"
 #include "CMessage.h"
 #include "CMessageDoorOpen.h"
 #include "CProjectileSPBOOM.h"
@@ -1753,6 +1755,7 @@ struct MasterPaletteFixture {
 #include "CancelLevelUpChecks.h"
 #include "HitPointsChecks.h"
 #include "AllocationChecks.h"
+#include "SpellSelectionChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5646,6 +5649,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "allocationchecks") == 0) {
         AllocationChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "spellselectionchecks") == 0) {
+        SpellSelectionChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

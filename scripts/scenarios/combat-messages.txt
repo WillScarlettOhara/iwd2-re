@@ -42,6 +42,7 @@ beginlevelupchecks
 cancellevelupchecks
 hitpointchecks
 allocationchecks
+spellselectionchecks
 weaponsoundchecks
 damagearrowchecks
 itemreceivechecks

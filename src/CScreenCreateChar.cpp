@@ -5873,6 +5873,31 @@ void CScreenCreateChar::sub_617D80()
     // TODO: Incomplete.
 }
 
+// 0x618D10
+BOOL CScreenCreateChar::HasSpecialistSpell(BYTE nLevel, CGameSprite* pSprite)
+{
+    CResRef resRef;
+    UINT nSpellLevel = nLevel - 1;
+    for (BYTE nIndex = 0;; ++nIndex) {
+        CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+        BYTE nClass = CAIOBJECTTYPE_C_WIZARD;
+        UINT nClassIndex = pGame->GetSpellcasterIndex(nClass);
+        UTIL_ASSERT(nSpellLevel < CSPELLLIST_MAX_LEVELS);
+        if (nIndex >= pGame->m_spellsByClass[nClassIndex].m_lists[nSpellLevel].m_nCount) return FALSE;
+        nClassIndex = pGame->GetSpellcasterIndex(nClass);
+        UTIL_ASSERT(nSpellLevel < CSPELLLIST_MAX_LEVELS);
+        UINT nId = pGame->m_spellsByClass[nClassIndex].m_lists[nSpellLevel].Get(nIndex);
+        resRef = pGame->m_spells.Get(nId);
+        CSpell spell;
+        spell.SetResRef(resRef, TRUE, TRUE);
+        if (spell.Demand()) {
+            BOOL bSchool = pSprite->IsSpellSchool(spell.GetSchool());
+            spell.Release();
+            if (bSchool) return TRUE;
+        }
+    }
+}
+
 // 0x619030
 void CScreenCreateChar::UpdateClassEntry(CUIControlTextDisplay* pText, const CAIObjectType& typeAI, CDerivedStats* DStats, DWORD nSpecialization, BYTE nClass, DWORD dwFlags)
 {

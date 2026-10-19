@@ -86,10 +86,10 @@ public:
     BOOLEAN IsNameOnExportList(CString sName);
     void ResetBiographyPanel(CGameSprite* pSprite);
     void ResetClassDescriptionPanel(CGameSprite* pSprite);
-    void sub_5D8B50(CGameSprite* pSprite);
+    void ResetRaceDescriptionPanel(CGameSprite* pSprite); // #guess
     BOOL ResetAbility(CGameSprite* pSprite, const CString& sMin, const CString& sMax, const CString& sMod, BYTE& nAbility, BYTE& nMin, BYTE& nMax, INT& nMod);
     void ResetAbilitiesPanel(CGameSprite* pSprite, int a2);
-    void ResetSpellsPanel(CGameSprite* pSprite, int a2);
+    void ResetSpellsPanel(CGameSprite* pSprite);
     void ResetClassSelectionPanel(CUIPanel* pPanel, CGameSprite* pSprite);
     void ResetFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite, int a3);
     void UpdateHatedRacePanel(CGameSprite* pSprite);
@@ -385,6 +385,7 @@ public:
     ~CUIControlButtonCharacter5EBC60() override;
     BOOL Render(BOOL bForce) override;
     void OnLButtonClick(CPoint pt) override;
+    void SetSpell(CResRef cResRef); /*#guess: descriptive name*/
 
     /* 066E */ CResRef field_66E;
     /* 0676 */ CResRef field_676;

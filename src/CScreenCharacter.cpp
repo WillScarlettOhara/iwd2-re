@@ -9,6 +9,7 @@
 #include "CInfCursor.h"
 #include "CInfGame.h"
 #include "CItem.h"
+#include "CIcon.h"
 #include "CScreenCreateChar.h"
 #include "CScreenWorld.h"
 #include "CSpell.h"
@@ -1454,9 +1455,22 @@ void CScreenCharacter::ResetClassDescriptionPanel(CGameSprite* pSprite)
 }
 
 // 0x5D8B50
-void CScreenCharacter::sub_5D8B50(CGameSprite* pSprite)
+void CScreenCharacter::ResetRaceDescriptionPanel(CGameSprite* pSprite)
 {
-    // TODO: Incomplete.
+    CUIPanel* pPanel = m_cUIManager.GetPanel(53);
+    UTIL_ASSERT(pPanel != NULL);
+    CUIControlTextDisplay* pText = static_cast<CUIControlTextDisplay*>(pPanel->GetControl(0));
+    UTIL_ASSERT(pText != NULL);
+    pText->RemoveAll();
+    const CRuleTables& rules = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
+    CString sRace = rules.GetRaceString(pSprite->m_startTypeAI.m_nRace, 0);
+    CString sTable = rules.m_tSrTable.GetAt(CString(_T("SRFILE")), sRace);
+    C2DArray subRaces;
+    subRaces.Load(CResRef(sTable));
+    BYTE nRace = static_cast<BYTE>(atol(subRaces.GetAt(CPoint(0, pSprite->m_startTypeAI.m_nSubRace))));
+    STRREF nDescription = atol(rules.m_tSrList.GetAt(CPoint(3, nRace)));
+    CString sDescription = FetchString(nDescription);
+    pText->DisplayString(CString(_T("")), sDescription, pText->m_rgbLabelColor, pText->m_rgbTextColor, -1, FALSE, TRUE);
 }
 
 // 0x5D9610
@@ -1542,9 +1556,65 @@ void CScreenCharacter::ResetAbilitiesPanel(CGameSprite* pSprite, int a2)
 }
 
 // 0x5D9970
-void CScreenCharacter::ResetSpellsPanel(CGameSprite* pSprite, int a2)
+void CScreenCharacter::ResetSpellsPanel(CGameSprite* pSprite)
 {
-    // TODO: Incomplete.
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    CUIPanel* pPanel = m_cUIManager.GetPanel(8);
+    UTIL_ASSERT(pPanel != NULL);
+    UINT nLevel = field_1776 - 1;
+    if (m_nClass == CAIOBJECTTYPE_C_BARD || m_nClass == CAIOBJECTTYPE_C_SORCERER) {
+        const CRuleTables& rules = pGame->GetRuleTables();
+        const C2DArray& known = m_nClass == CAIOBJECTTYPE_C_BARD ? rules.m_tKnownSpellsBard : rules.m_tKnownSpellsSorcerer;
+        INT nClassLevel = pSprite->m_derivedStats.GetClassLevel(m_nClass);
+        m_nExtraMageSpells = atoi(known.GetAt(CPoint(nLevel, nClassLevel - 1)))
+            - static_cast<INT>(pSprite->GetSpellsAtLevel(m_nClass, nLevel)->m_List.size());
+        UTIL_ASSERT(m_nExtraMageSpells > 0);
+    } else {
+        m_nExtraMageSpells = (m_nSpecialization & SPECMASK_WIZARD_UNIVERSAL) != 0 ? 2 : 3;
+    }
+    UTIL_ASSERT(nLevel < CSPELLLIST_MAX_LEVELS);
+    UINT nCount = pGame->m_spellsByClass[pGame->GetSpellcasterIndex(m_nClass)].m_lists[nLevel].m_nCount;
+    INT nIndex = 0, nEnabled = 0;
+    CResRef resRef;
+    for (DWORD nButton = 0; nButton < 30; ++nButton) {
+        CUIControlButtonCharacter5EBC60* pButton = static_cast<CUIControlButtonCharacter5EBC60*>(pPanel->GetControl(nButton));
+        UTIL_ASSERT(pButton != NULL);
+        while (nIndex < static_cast<INT>(nCount)) {
+            UINT nID = pGame->m_spellsByClass[pGame->GetSpellcasterIndex(m_nClass)].m_lists[nLevel].Get(nIndex);
+            resRef = pGame->m_spells.Get(nID);
+            CSpell spell;
+            spell.SetResRef(resRef, TRUE, TRUE);
+            if (spell.pRes != NULL) break;
+            ++nIndex;
+        }
+        if (nIndex < static_cast<INT>(nCount)) {
+            pButton->SetSpell(resRef);
+            CSpell spell;
+            spell.SetResRef(resRef, TRUE, TRUE);
+            spell.Demand();
+            DWORD nClassMask = pGame->GetClassMask(m_nClass);
+            BOOL bEnabled = spell.pRes != NULL && spell.CheckUsableBy(pSprite) == TRUE
+                && !pSprite->HasSpell(resRef, nClassMask, nLevel, FALSE);
+            pButton->SetEnabled(bEnabled);
+            spell.Release();
+            ++nIndex;
+            if (bEnabled) ++nEnabled;
+        } else {
+            pButton->SetSpell(CResRef(""));
+            pButton->SetEnabled(FALSE);
+        }
+    }
+    m_nExtraMageSpells = min(m_nExtraMageSpells, nEnabled);
+    for (DWORD nButton = 0; nButton < 30; ++nButton) {
+        CUIControlButton3State* pButton = static_cast<CUIControlButton3State*>(pPanel->GetControl(nButton));
+        UTIL_ASSERT(pButton != NULL);
+        pButton->SetSelected(FALSE);
+    }
+    UpdateLabel(pPanel, 0x10000021, "%s: %s %d", FetchString(31614), FetchString(7192), field_1776);
+    CString sNumber;
+    sNumber.Format(_T("%d"), m_nExtraMageSpells);
+    g_pBaldurChitin->GetTlkTable().SetToken(TOKEN_NUMBER, sNumber);
+    UpdateHelp(pPanel->m_nID, 30, m_nClass == CAIOBJECTTYPE_C_BARD || m_nClass == CAIOBJECTTYPE_C_SORCERER ? 119 : 17250);
 }
 
 // 0x5DA120
@@ -3671,7 +3741,7 @@ void CScreenCharacter::ResetPopupPanel(DWORD dwPanelId, CGameSprite* pSprite, in
         ResetAbilitiesPanel(pSprite, a3);
         break;
     case 8:
-        ResetSpellsPanel(pSprite, a3);
+        ResetSpellsPanel(pSprite);
         break;
     case 9:
     case 10:
@@ -3710,7 +3780,7 @@ void CScreenCharacter::ResetPopupPanel(DWORD dwPanelId, CGameSprite* pSprite, in
         ResetClassDescriptionPanel(pSprite);
         break;
     case 53:
-        sub_5D8B50(pSprite);
+        ResetRaceDescriptionPanel(pSprite);
         break;
     case 54:
         ResetClassSelectionPanel(pPanel, pSprite);
@@ -7846,15 +7916,98 @@ CUIControlButtonCharacter5EBC60::~CUIControlButtonCharacter5EBC60()
 // 0x5EBFA0
 void CUIControlButtonCharacter5EBC60::OnLButtonClick(CPoint pt)
 {
-    // TODO: Incomplete.
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    CScreenCharacter* pScreen = g_pBaldurChitin->m_pEngineCharacter;
+    UTIL_ASSERT(pGame != NULL);
+    LONG nId = pGame->GetCharacterId(static_cast<SHORT>(pScreen->GetSelectedCharacter()));
+    CGameSprite* pSprite;
+    BYTE rc;
+    do {
+        rc = pGame->GetObjectArray()->GetDeny(nId, CGameObjectArray::THREAD_ASYNCH,
+            reinterpret_cast<CGameObject**>(&pSprite), INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+    if (rc != CGameObjectArray::SUCCESS) return;
+    INT nExtra = pScreen->m_nExtraMageSpells;
+    BYTE nClass = pScreen->m_nClass;
+    BYTE nSpellLevel = pScreen->field_1776;
+    UINT nLevel = nSpellLevel - 1;
+    CSpell spell;
+    spell.SetResRef(field_676, TRUE, TRUE);
+    spell.Demand();
+    spell.GetDescription();
+    if ((pSprite->GetSpecialization() & SPECMASK_WIZARD_UNIVERSAL) == 0
+        && !pSprite->IsSpellSchool(spell.GetSchool())) {
+        g_pBaldurChitin->m_pEngineCreateChar->HasSpecialistSpell(nSpellLevel, pSprite);
+    }
+    spell.Release();
+    INT nBonus = 0;
+    UINT nMax = 1;
+    if (nClass == CAIOBJECTTYPE_C_BARD || nClass == CAIOBJECTTYPE_C_SORCERER) {
+        nMax = pGame->GetRuleTables().GetMaxKnownSpells(nClass, pSprite->m_startTypeAI,
+            pSprite->m_derivedStats, pSprite->m_baseStats.m_specialization, nSpellLevel, nBonus);
+        nMax += nBonus;
+    }
+    UINT nClassIndex = pGame->GetSpellcasterIndex(nClass);
+    UINT nSpellId = 0;
+    BOOL bFound = pGame->m_spells.Find(field_676, nSpellId);
+    UTIL_ASSERT(bFound);
+    if (m_bSelected) {
+        SetSelected(FALSE);
+        pScreen->m_nExtraMageSpells = nExtra + 1;
+        pSprite->m_spells.Get(nClassIndex)->Remove(nSpellId, nLevel, 1, 0, 0);
+    } else if (nExtra > 0 && spell.pRes != NULL && spell.CheckUsableBy(pSprite) == TRUE) {
+        SetSelected(TRUE);
+        pScreen->m_nExtraMageSpells = nExtra - 1;
+        pSprite->m_spells.Get(nClassIndex)->Add(nSpellId, nLevel, nMax, 0, 0);
+    }
+    pScreen->UpdateHelp(m_pPanel->m_nID, 30, spell.GetDescription());
+    pScreen->UpdatePopupPanel(m_pPanel->m_nID, pSprite);
+    pGame->GetObjectArray()->ReleaseDeny(nId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+}
+
+// 0x5EBDD0
+void CUIControlButtonCharacter5EBC60::SetSpell(CResRef cResRef)
+{
+    CString sIcon;
+    if (field_676 != cResRef) {
+        field_676 = cResRef;
+        field_66E = "";
+        if (field_676 != "") {
+            CSpell spell;
+            spell.SetResRef(field_676, TRUE, TRUE);
+            spell.Demand();
+            if (spell.pRes != NULL) {
+                RESREF icon;
+                spell.GetIcon(icon);
+                field_66E = icon;
+                field_66E.CopyToString(sIcon);
+                sIcon.SetAt(sIcon.GetLength() - 1, 'B');
+                field_66E = sIcon;
+            }
+            SetToolTipStrRef(spell.GetGenericName(), -1, -1);
+            spell.Release();
+        } else {
+            SetToolTipStrRef(-1, -1, -1);
+        }
+    }
 }
 
 // 0x5EC420
 BOOL CUIControlButtonCharacter5EBC60::Render(BOOL bForce)
 {
-    // TODO: Incomplete.
-
-    return FALSE;
+    if (!m_bActive && !m_bInactiveRender) return FALSE;
+    if (m_nRenderCount == 0 && !bForce) return FALSE;
+    if (!CUIControlButton3State::Render(bForce)) return FALSE;
+    if (field_676 != "" && field_66E != "") {
+        CRect rFrame(m_pPanel->m_ptOrigin + m_ptOrigin, m_size);
+        if (m_bPressed) rFrame.OffsetRect(field_63E, field_642);
+        CPoint pos = rFrame.TopLeft();
+        CRect rClip;
+        rClip.IntersectRect(rFrame, m_rDirty);
+        CIcon::RenderIcon(0, pos, m_size, rClip, field_66E, m_pPanel->m_pManager->m_bDoubleSize,
+            m_bEnabled ? 0 : 2, 0, FALSE, 0, FALSE, 0);
+    }
+    return TRUE;
 }
 
 // -----------------------------------------------------------------------------

@@ -160,6 +160,7 @@ public:
     void SummonPopup(DWORD dwPopupId, CGameSprite* pSprite);
     void DismissPopup(CGameSprite* pSprite);
     void sub_617D80();
+    BOOL HasSpecialistSpell(BYTE nLevel, CGameSprite* pSprite); /*#guess: descriptive name*/
     void UpdateClassEntry(CUIControlTextDisplay* pText, const CAIObjectType& typeAI, CDerivedStats* DStats, DWORD nSpecialization, BYTE nClass, DWORD dwFlags);
     int GetRaceFeatColumn(BYTE nRace, BYTE nSubRace);
 
