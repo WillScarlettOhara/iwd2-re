@@ -191,6 +191,7 @@
 #include "CNetwork.h"
 #include "CPathSearch.h"
 #include "CVariableHash.h"
+#include "CResBIO.h"
 #include "CProjectile.h"
 #include "IcewindCGameAnimationTypeEffect.h"
 #include "CGameTemporal.h"

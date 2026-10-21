@@ -458,7 +458,9 @@ void CancelLevelUpChecks(INT nStep)
             auto& dimm=g_pChitin->cDimm; CString directory=game->m_sTempDir+"_chr_export\\";
             CResRef ref("ZRCHREX"); CString previousDirectory=game->m_sCharactersDir;
             BOOL isolated=GetFileAttributes(directory)==INVALID_FILE_ATTRIBUTES
-                && !dimm.m_cKeyTable.FindKey(ref,1018,1) && !dimm.m_cKeyTable.FindKey(ref,1022,1);
+                && !dimm.m_cKeyTable.FindKey(ref,1018,1) && !dimm.m_cKeyTable.FindKey(ref,1022,1)
+                && !dimm.m_cKeyTable.FindKey(CResRef("ZRCHRNOB"),1018,1) && !dimm.m_cKeyTable.FindKey(CResRef("ZRCHRNOB"),1022,1)
+                && !dimm.m_cKeyTable.FindKey(CResRef("ZRBADCHR"),1018,1) && !dimm.m_cKeyTable.FindKey(CResRef("ZRMISS"),1018,1);
             check("character-export-fixture-isolated",isolated);
             if (isolated) {
                 game->m_sCharactersDir=directory;
@@ -549,6 +551,113 @@ void CancelLevelUpChecks(INT nStep)
                 game->CharacterExport(CGameObjectArray::INVALID_INDEX,"ZRMISS");
                 check("character-export-missing-actor-no-file",GetFileAttributes(directory+"ZRMISS.CHR")==INVALID_FILE_ATTRIBUTES
                     && GetFileAttributes(directory+"ZRMISS.RES")==INVALID_FILE_ATTRIBUTES);
+                {
+                    CFile file; std::vector<BYTE> data;
+                    BOOL loaded=file.Open(directory+"ZRCHREX.CHR",CFile::modeRead|CFile::typeBinary,NULL);
+                    if (loaded) {
+                        data.resize(static_cast<size_t>(file.GetLength()));
+                        loaded=file.Read(data.data(),static_cast<UINT>(data.size()))==data.size(); file.Close();
+                    }
+                    check("character-import-fixture-export-loaded",loaded && data.size()>0x224);
+                    if (loaded && data.size()>0x224) {
+                        auto write=[&](const CString& name,const void* bytes,UINT size)->BOOL {
+                            CFile output;
+                            if (!output.Open(directory+name,CFile::modeCreate|CFile::modeWrite|CFile::typeBinary,NULL)) return FALSE;
+                            if (size) output.Write(bytes,size); output.Close(); return TRUE;
+                        };
+                        auto* header=reinterpret_cast<CCharacterFileHeader*>(data.data());
+                        memset(header->m_quickSpellsSpellId,0,sizeof(header->m_quickSpellsSpellId));
+                        memset(header->m_quickInnatesSpellId,0,sizeof(header->m_quickInnatesSpellId));
+                        memset(header->m_quickSongsSpellId,0,sizeof(header->m_quickSongsSpellId));
+                        memset(header->m_quickWeaponsItemNum,0xFF,sizeof(header->m_quickWeaponsItemNum));
+                        memset(header->m_quickWeaponsAbilityNum,0xFF,sizeof(header->m_quickWeaponsAbilityNum));
+                        memset(header->m_quickItemsItemNum,0xFF,sizeof(header->m_quickItemsItemNum));
+                        memset(header->m_quickItemsAbilityNum,0xFF,sizeof(header->m_quickItemsAbilityNum));
+                        memset(header->m_name,' ',32); memcpy(header->m_name,"  Import name",13);
+                        memcpy(header->m_secondarySounds,"vOiCe123",8);
+                        SHORT weapon=-1;
+                        for (SHORT slot=CGameSpriteEquipment::SLOT_WEAPON;slot<CGameSpriteEquipment::NUM_SLOT && weapon==-1;++slot) {
+                            CItem* item=actor->m_equipment.m_items[slot];
+                            if (!item || item->GetItemType()==0x3A) continue;
+                            item->Demand(); ITEM_ABILITY* ability=item->GetAbility(0);
+                            if (ability && ability->type!=4 && ability->type!=2) weapon=slot;
+                            item->Release();
+                        }
+                        check("character-import-fixture-has-melee-shortcut",weapon!=-1);
+                        header->m_quickWeaponsItemNum[0]=weapon; header->m_quickWeaponsAbilityNum[0]=0;
+                        auto& rules=const_cast<CRuleTables&>(game->GetRuleTables());
+                        BeginLevelUpTableFixture gold(rules.m_tStartingGold,5,11);
+                        gold.x[0]=CRuleTables::SIDES; gold.x[1]=CRuleTables::ROLLS; gold.x[2]=CRuleTables::MODIFIER;
+                        gold.x[3]=CRuleTables::MULTIPLIER; gold.x[4]=CRuleTables::BONUS_PER_LEVEL;
+                        for (INT cl=0;cl<11;++cl) {
+                            gold.y[cl]=rules.GetClassString(cl+1,0);
+                            gold.cells[5*cl]="1"; gold.cells[5*cl+1]="1"; gold.cells[5*cl+2]="6";
+                            gold.cells[5*cl+3]="10"; gold.cells[5*cl+4]="0";
+                        }
+                        auto oldGold=game->m_gameSave.m_nPartyGold; auto connected=network.m_bConnectionEstablished;
+                        network.m_bConnectionEstablished=FALSE;
+                        const STRREF strref=0xF242; STR_RES oldBiography,importedBiography;
+                        BOOL hadBiography=overrides.Fetch(strref,oldBiography);
+                        auto& directories=dimm.m_lDirectories; INT beforeDirectories=directories.GetCount();
+                        const char biography[]="Imported biography\r\nSecond line\0ignored tail";
+                        check("character-import-fixture-biography-written",write("ZRCHREX.RES",biography,sizeof(biography)));
+                        {
+                            CResHelper<CResBIO,1022> resource; resource.SetResRef(ref,TRUE,TRUE);
+                            BOOL correct=resource.pRes!=NULL && dynamic_cast<CResBIO*>(static_cast<CRes*>(resource.pRes))==resource.pRes;
+                            check("biography-resource-native-factory",correct);
+                            if (correct) {
+                                auto* raw=resource.pRes->Demand();
+                                check("biography-resource-first-demand",raw && resource.pRes->m_bParsed && resource.pRes->GetDemands()==1);
+                                check("biography-resource-nested-demand",resource.pRes->Demand()==raw && resource.pRes->GetDemands()==2);
+                                resource.pRes->Release(); check("biography-resource-retains-parse-while-demanded",resource.pRes->m_bParsed);
+                                resource.pRes->Release(); check("biography-resource-last-release",!resource.pRes->m_bParsed && resource.pRes->GetDemands()==0);
+                            }
+                        }
+                        for (INT pass=0;pass<2;++pass) {
+                            CString name=pass?"ZRCHRNOB":"ZRCHREX";
+                            memset(header->m_soundSet,0,32);
+                            memcpy(header->m_soundSet,pass?"_IMPORT_LONG_VOICE_MISSING_12345":"_IMPORT_MISSING",pass?31:15);
+                            CString sounds(reinterpret_cast<const char*>(header->m_soundSet));
+                            DWORD capacity=sounds.GetAllocLength(); BYTE expectedSound[32]={};
+                            memcpy(expectedSound,sounds.GetBuffer(capacity),min(capacity,32UL)); if (capacity<32) expectedSound[capacity]=0;
+                            game->m_gameSave.m_nPartyGold=1000;
+                            BOOL written=write(name+".CHR",data.data(),static_cast<UINT>(data.size()));
+                            check("character-import-fixture-chr-written",written);
+                            if (!written) continue;
+                            INT beforeMessages=handler->m_messageList.GetCount();
+                            LONG imported=game->ImportCharacter(name,0x102); CGameObject* object=NULL;
+                            BOOL found=imported!=0 && objects->GetDeny(imported,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS;
+                            check("character-import-registers-disposable-actor",found);
+                            if (found) {
+                                auto* sprite=static_cast<CGameSprite*>(object);
+                                check("character-import-name-keeps-all-32-bytes",sprite->m_sName==CString(header->m_name,32));
+                                check("character-import-custom-shortcuts-and-bookmark",memcmp(sprite->field_3D14,header->field_13E,sizeof(sprite->field_3D14))==0
+                                    && sprite->m_nLastSpellbookClassIndex==header->m_nLastSpellbookClassIndex
+                                    && sprite->m_nLastSpellbookSpellLevel==header->m_nLastSpellbookSpellLevel);
+                                check("character-import-rebinds-weapon-shortcut",weapon==-1 || (sprite->m_quickWeapons[0].m_abilityId.m_itemNum==weapon
+                                    && sprite->m_quickWeapons[0].m_abilityId.m_abilityNum==0 && sprite->m_quickWeapons[0].m_abilityId.m_itemType==2));
+                                check("character-import-sound-identity-and-capacity-copy",sprite->m_secondarySounds==CResRef(header->m_secondarySounds)
+                                    && memcmp(sprite->field_725A,expectedSound,32)==0);
+                                check("character-import-global-unplaced-and-starting-gold",sprite->m_bGlobal && sprite->m_pArea==NULL
+                                    && sprite->m_resRef==CResRef(name) && game->m_gameSave.m_nPartyGold==1070);
+                                check("character-import-biography-slot-byte-and-missing",sprite->m_baseStats.m_biography==(pass?-1:strref));
+                                if (!pass) check("character-import-biography-nul-terminated",overrides.Fetch(strref,importedBiography)
+                                    && importedBiography.szText==CString(biography));
+                                objects->ReleaseDeny(imported,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                                check("character-import-disposable-actor-retired",objects->Delete(imported,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE)==CGameObjectArray::SUCCESS);
+                                delete sprite;
+                            }
+                            while (handler->m_messageList.GetCount()>beforeMessages) delete handler->m_messageList.RemoveTail();
+                            check("character-import-temporary-key-balanced",!dimm.m_bTemporaryKeyAdd);
+                        }
+                        check("character-import-missing-file-returns-zero",game->ImportCharacter("ZRMISS",0)==0 && !dimm.m_bTemporaryKeyAdd);
+                        const char bad[]="NOPE0000";
+                        if (write("ZRBADCHR.CHR",bad,8)) check("character-import-bad-signature-returns-zero",game->ImportCharacter("ZRBADCHR",0)==0 && !dimm.m_bTemporaryKeyAdd);
+                        game->m_gameSave.m_nPartyGold=oldGold; network.m_bConnectionEstablished=connected;
+                        overrides.Remove(strref); if (hadBiography) overrides.AddUserEntry(strref,oldBiography);
+                        while (directories.GetCount()>beforeDirectories) directories.RemoveTail();
+                    }
+                }
                 dimm.RemoveFromDirectoryList(directory,TRUE);
                 game->m_sCharactersDir=previousDirectory; actor->m_sName=oldName;
                 memcpy(actor->m_quickWeapons,weapons,sizeof(weapons)); memcpy(actor->m_quickSpells,spells,sizeof(spells));

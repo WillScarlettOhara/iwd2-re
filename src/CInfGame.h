@@ -175,7 +175,7 @@ public:
     void ValidateCache();
     LONG CachingRequirements(const CString& areaName);
     BOOL CacheResFileWithResource(const CString& areaName);
-    LONG ImportCharacter(const CString& sFileName, INT nIndex);
+    LONG ImportCharacter(CString sFileName, INT nIndex);
     CString GetDirSounds();
     void CharacterExport(LONG nCharacterId, CString sFileName);
     CGameArea* LoadArea(CString areaName, BYTE nTravelScreenImageToUse, BOOLEAN bProgressBarRequired, BOOLEAN bProgressBarInPlace);

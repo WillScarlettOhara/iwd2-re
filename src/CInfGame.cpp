@@ -18,7 +18,7 @@
 #include "CPathSearch.h"
 #include "CResFile.h"
 #include "CResCHR.h"
-#include "CResText.h"
+#include "CResBIO.h"
 #include "CScreenChapter.h"
 #include "CScreenCharacter.h"
 #include "CScreenCreateChar.h"
@@ -1601,118 +1601,105 @@ BOOL CInfGame::CacheResFileWithResource(const CString& areaName)
 }
 
 // 0x5A0F50
-LONG CInfGame::ImportCharacter(const CString& sFileName, INT nIndex)
+LONG CInfGame::ImportCharacter(CString sFileName, INT nIndex)
 {
-    CString sPath = sFileName;
-    if (sPath.Right(4).CompareNoCase(".chr") != 0) {
-        sPath += ".chr";
+    CResHelper<CResCHR, 1018> character;
+    CResHelper<CResBIO, 1022> biography;
+    STR_RES text;
+    character.SetResRef(CResRef(sFileName), TRUE, TRUE);
+    BOOLEAN bTemporaryKey = character.GetResRef() == "";
+    if (bTemporaryKey) {
+        g_pChitin->cDimm.AddTemporaryKey(m_sCharactersDir, CResRef(sFileName), 1018);
+        character.SetResRef(CResRef(sFileName), TRUE, TRUE);
     }
-
-    FILE* stream = fopen(GetDirCharacters() + sPath, "rb");
-    if (stream == NULL) {
-        stream = fopen(sPath, "rb");
+    BYTE* pData = character.pRes != NULL ? static_cast<BYTE*>(character.pRes->Demand()) : NULL;
+    DWORD nSize = 0;
+    if (character.pRes != NULL && character.pRes->Demand() != NULL) {
+        nSize = character.pRes->m_nResSizeActual;
+        character.pRes->Release();
     }
-
-    if (stream == NULL) {
-        return 0;
-    }
-
-    fseek(stream, 0, SEEK_END);
-    LONG nChrSize = ftell(stream);
-    fseek(stream, 0, SEEK_SET);
-
-    if (nChrSize <= 0) {
-        fclose(stream);
-        return 0;
-    }
-
-    BYTE* pChrData = new BYTE[nChrSize];
-    size_t nRead = fread(pChrData, 1, nChrSize, stream);
-    fclose(stream);
-
-    if (nRead != static_cast<size_t>(nChrSize)) {
-        delete[] pChrData;
-        return 0;
-    }
-
-    if (nChrSize < 0x30 || memcmp(pChrData, "CHR V2.2", 8) != 0) {
-        delete[] pChrData;
-        return 0;
-    }
-
-    DWORD nCreatureOffset = *reinterpret_cast<DWORD*>(pChrData + 0x28);
-    DWORD nCreatureSize = *reinterpret_cast<DWORD*>(pChrData + 0x2C);
-
-    if (nCreatureOffset == 0 || nCreatureSize == 0 || nCreatureOffset + nCreatureSize > static_cast<DWORD>(nChrSize)) {
-        if (nChrSize > 0x224) {
-            nCreatureOffset = 0x224;
-            nCreatureSize = nChrSize - 0x224;
-        } else {
-            delete[] pChrData;
-            return 0;
+    if (pData == NULL || memcmp(pData, "CHR V2.2", 8) != 0) {
+        if (character.pRes != NULL) character.pRes->Release();
+        if (bTemporaryKey) {
+            g_pChitin->cDimm.RemoveTemporaryKey(m_sCharactersDir, CResRef(sFileName), 1018);
+            if (character.pRes != NULL) character.pRes->Release();
         }
-    }
-
-    if (nCreatureSize < 8 || memcmp(pChrData + nCreatureOffset, "CRE V2.2", 8) != 0) {
-        delete[] pChrData;
         return 0;
     }
 
-    CGameSprite* pSprite = new CGameSprite(pChrData + nCreatureOffset,
-        nCreatureSize,
-        0,
-        0,
-        -1,
-        0,
-        0,
-        INT_MAX,
-        CPoint(-1, -1),
-        0);
-
-    if (pSprite == NULL) {
-        delete[] pChrData;
-        return 0;
-    }
-
-    char szName[33];
-    memcpy(szName, pChrData + 0x8, 32);
-    szName[32] = '\0';
-    for (INT nIndex = 31; nIndex >= 0; nIndex--) {
-        if (szName[nIndex] == '\0' || szName[nIndex] == ' ') {
-            szName[nIndex] = '\0';
-        } else {
-            break;
-        }
-    }
-
-    if (pSprite->m_baseStats.m_name == -1 && szName[0] != '\0') {
-        pSprite->m_sName = szName;
-    }
-
-    if (nChrSize >= 0x164) {
-        memcpy(pSprite->field_3D14, pChrData + 0x13E, sizeof(pSprite->field_3D14));
-        pSprite->m_nLastSpellbookClassIndex = pChrData[0x162];
-        pSprite->m_nLastSpellbookSpellLevel = pChrData[0x163];
-    }
-
-    if (nChrSize >= 0x1A4) {
-        pSprite->m_secondarySounds = CResRef(pChrData + 0x17C);
-        memcpy(pSprite->field_725A, pChrData + 0x184, sizeof(pSprite->field_725A));
-        pSprite->field_725A[sizeof(pSprite->field_725A) - 1] = '\0';
-    }
-
-    pSprite->m_bGlobal = TRUE;
+    CCharacterFileHeader* pHeader = reinterpret_cast<CCharacterFileHeader*>(pData);
+    LONG nRemaining = nSize - sizeof(CCharacterFileHeader);
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
+    // __LINE__: 4172
+    UTIL_ASSERT(nRemaining > 0);
+    nRemaining -= pHeader->m_creatureSize;
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
+    // __LINE__: 4175
+    UTIL_ASSERT(nRemaining >= 0);
+    CGameSprite* pSprite = new CGameSprite(pData + pHeader->m_creatureOffset,
+        pHeader->m_creatureSize, 0, 0, -1, 0, 0, INT_MAX, CPoint(-1, -1), 0);
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
+    // __LINE__: 4180
+    UTIL_ASSERT(pSprite != NULL);
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
+    // __LINE__: 4181
+    UTIL_ASSERT(nRemaining == 0);
     pSprite->SetResRef(CResRef(sFileName));
+    char name[33] = {};
+    strncpy(name, pHeader->m_name, SCRIPTNAME_SIZE);
+    pSprite->m_sName = CString(name);
+    for (INT nSlot = 0; nSlot < 8; nSlot++) {
+        pSprite->InitQuickItemData(pHeader->m_quickWeaponsItemNum[nSlot],
+            pHeader->m_quickWeaponsAbilityNum[nSlot], pHeader->field_1A4[nSlot], pSprite->m_quickWeapons[nSlot]);
+    }
+    for (INT nSlot = 0; nSlot < 9; nSlot++) {
+        pSprite->InitQuickSpellData(CResRef(pHeader->m_quickSpellsSpellId[nSlot]), 1,
+            pSprite->m_quickSpells[nSlot], pHeader->m_quickSpellsClass[nSlot],
+            pHeader->field_164[nSlot], pHeader->field_16D[nSlot]);
+    }
+    for (INT nSlot = 0; nSlot < 3; nSlot++) {
+        pSprite->InitQuickItemData(pHeader->m_quickItemsItemNum[nSlot],
+            pHeader->m_quickItemsAbilityNum[nSlot], 0, pSprite->m_quickItems[nSlot]);
+    }
+    for (INT nSlot = 0; nSlot < 9; nSlot++) {
+        pSprite->InitQuickSpellData(CResRef(pHeader->m_quickInnatesSpellId[nSlot]), 2, pSprite->m_quickInnates[nSlot], 0, 0, 0);
+    }
+    for (INT nSlot = 0; nSlot < 9; nSlot++) {
+        pSprite->InitQuickSpellData(CResRef(pHeader->m_quickSongsSpellId[nSlot]), 3, pSprite->m_quickSongs[nSlot], 0, 0, 0);
+    }
+    memcpy(pSprite->field_3D14, pHeader->field_13E, sizeof(pSprite->field_3D14));
+    pSprite->m_nLastSpellbookClassIndex = pHeader->m_nLastSpellbookClassIndex;
+    pSprite->m_nLastSpellbookSpellLevel = pHeader->m_nLastSpellbookSpellLevel;
+    if (bTemporaryKey) {
+        g_pChitin->cDimm.RemoveTemporaryKey(m_sCharactersDir, CResRef(sFileName), 1018);
+    }
+    biography.SetResRef(CResRef(sFileName), TRUE, TRUE);
+    if (biography.GetResRef() != "") {
+        STRREF strref = 0xF240 + static_cast<BYTE>(nIndex);
+        text.szText = CString(static_cast<const char*>(biography.pRes->Demand()));
+        text.szText = text.szText.Left(biography.pRes->nSize);
+        g_pBaldurChitin->GetTlkTable().m_override.AddUserEntry(strref, text);
+        pSprite->m_baseStats.m_biography = strref;
+        biography.pRes->Release();
+    } else {
+        pSprite->m_baseStats.m_biography = -1;
+    }
     pSprite->AddKnownDivineSpells(CAIObjectType::C_CLERIC);
     pSprite->AddKnownDivineSpells(CAIObjectType::C_DRUID);
     pSprite->AddKnownDivineSpells(CAIObjectType::C_PALADIN);
     pSprite->AddKnownDivineSpells(CAIObjectType::C_RANGER);
-    AddPartyGold(GetRuleTables().GetStartingGold(pSprite));
-
-    LONG nCharacterId = pSprite->m_id;
-    delete[] pChrData;
-
-    return nCharacterId;
+    AddPartyGold(g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetStartingGold(pSprite));
+    CString sounds(reinterpret_cast<const char*>(pHeader->m_soundSet));
+    DWORD nSoundsLength = sounds.GetAllocLength();
+    memcpy(pSprite->field_725A, sounds.GetBuffer(nSoundsLength), min(nSoundsLength, 32UL));
+    if (nSoundsLength < 32) pSprite->field_725A[nSoundsLength] = 0;
+    g_pChitin->cDimm.AddToDirectoryList(g_pBaldurChitin->GetObjectGame()->GetDirSounds() + sounds + "\\", TRUE);
+    pSprite->m_secondarySounds = CResRef(pHeader->m_secondarySounds);
+    character.pRes->dwFlags |= CRes::RES_FLAG_0x100;
+    character.pRes->Release();
+    pSprite->m_bGlobal = TRUE;
+    pSprite->SetWeaponSet(pSprite->m_nWeaponSet);
+    return pSprite->m_id;
 }
 
 // 0x5A1A80
@@ -1725,7 +1712,7 @@ CString CInfGame::GetDirSounds()
 void CInfGame::CharacterExport(LONG nCharacterId, CString sFileName)
 {
     CResHelper<CResCHR, 1018> character;
-    CResHelper<CResText, 1022> biography;
+    CResHelper<CResBIO, 1022> biography;
     CGameSprite* pSprite;
     if (m_cObjectArray.GetShare(nCharacterId, CGameObjectArray::THREAD_ASYNCH,
             reinterpret_cast<CGameObject**>(&pSprite), INFINITE) != CGameObjectArray::SUCCESS) {

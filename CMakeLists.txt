@@ -253,6 +253,8 @@ target_sources(${EXECUTABLE_NAME} PUBLIC
     "src/CResCellHeader.h"
     "src/CResCHR.cpp"
     "src/CResCHR.h"
+    "src/CResBIO.cpp"
+    "src/CResBIO.h"
     "src/CResCRE.cpp"
     "src/CResCRE.h"
     "src/CResDLG.cpp"
