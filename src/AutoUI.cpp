@@ -234,6 +234,7 @@ struct CallLightningAccess : CProjectileCallLightning {
 #include "LevelUpTableFixture.h"
 #include "BeginLevelUpTableFixture.h"
 #include "CScreenCreateChar.h"
+#include "CUIControlFactory.h"
 
 namespace Iwd2AutoUI {
 

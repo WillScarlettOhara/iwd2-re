@@ -653,6 +653,96 @@ void CancelLevelUpChecks(INT nStep)
                         check("character-import-missing-file-returns-zero",game->ImportCharacter("ZRMISS",0)==0 && !dimm.m_bTemporaryKeyAdd);
                         const char bad[]="NOPE0000";
                         if (write("ZRBADCHR.CHR",bad,8)) check("character-import-bad-signature-returns-zero",game->ImportCharacter("ZRBADCHR",0)==0 && !dimm.m_bTemporaryKeyAdd);
+                        {
+                            CScreenCreateChar preview;
+                            preview.m_cUIManager.fInit(&preview,CResRef("GUICG"),g_pBaldurChitin->m_bUseNewGui);
+                            auto* display=static_cast<CUIControlTextDisplay*>(preview.m_cUIManager.GetPanel(20)->GetControl(4));
+                            auto* portrait=static_cast<CUIControlButtonCharGenPortrait*>(preview.m_cUIManager.GetPanel(0)->GetControl(12));
+                            auto& tlk=g_pBaldurChitin->GetTlkTable(); CString oldClass,oldLevel;
+                            BOOL hadClass=tlk.m_mapTokens.Lookup(CRuleTables::TOKEN_CLASS,oldClass);
+                            BOOL hadLevel=tlk.m_mapTokens.Lookup(CRuleTables::TOKEN_LEVEL,oldLevel);
+                            auto rows=[&]() {
+                                std::vector<CString> result; POSITION pos=display->m_plstStrings->GetHeadPosition();
+                                while (pos) {
+                                    auto* line=display->m_plstStrings->GetNext(pos);
+                                    if (line->m_nLine==0) result.push_back(line->m_sString);
+                                    else if (!result.empty()) result.back()+=" "+line->m_sString;
+                                }
+                                for (auto& row:result) row.Trim();
+                                return result;
+                            };
+                            auto* creature=reinterpret_cast<CCreatureFileHeader*>(data.data()+header->m_creatureOffset+8);
+                            creature->m_STRBase=3; creature->m_DEXBase=12; creature->m_CONBase=19;
+                            creature->m_INTBase=8; creature->m_WISBase=17; creature->m_CHRBase=20;
+                            memset(header->m_name,0,32); memcpy(header->m_name,"Preview character",17);
+                            for (INT pass=0;pass<3;++pass) {
+                                CString name=pass==1?"ZRCHRNOB":"ZRCHREX";
+                                creature->m_name=pass==1?1145:-1;
+                                check("character-preview-fixture-written",write(name+".CHR",data.data(),static_cast<UINT>(data.size())));
+                                if (pass<2) portrait->m_portraitResRef=CResRef("OLD");
+                                SHORT first=objects->m_nNextObjectId; INT before=handler->m_messageList.GetCount();
+                                preview.UpdateCharacterSummary(name,display);
+                                LONG previewId=objects->FindObjectId(first); CGameObject* object=NULL;
+                                BOOL found=objects->GetDeny(previewId,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS;
+                                check("character-preview-native-registration",found && objects->m_nNextObjectId==first+1);
+                                if (found) {
+                                    auto* sprite=static_cast<CGameSprite*>(object); std::vector<CString> expected;
+                                    auto fetch=[&](STRREF strref) { return CBaldurEngine::FetchString(strref); };
+                                    expected.push_back(fetch(1047)); expected.push_back(pass==1?fetch(1145):CString(_T("Preview character")));
+                                    expected.push_back(""); expected.push_back(fetch(1048)); CString value;
+                                    rules.GetRaceStringMixed(sprite->m_startTypeAI.m_nRace,value,sprite->m_startTypeAI.m_nSubRace);
+                                    expected.push_back(value); expected.push_back(""); expected.push_back(fetch(12136));
+                                    CString actualClass,actualLevel;
+                                    tlk.m_mapTokens.Lookup(CRuleTables::TOKEN_CLASS,actualClass); tlk.m_mapTokens.Lookup(CRuleTables::TOKEN_LEVEL,actualLevel);
+                                    INT classes=0;
+                                    for (BYTE cl=1;cl<=CAIOBJECT_CLASS_MAX;++cl) {
+                                        INT level=sprite->GetClassLevel(cl); if (level<=0) continue;
+                                        ++classes; rules.GetClassStringMixed(cl,sprite->GetSpecialization(),sprite->m_baseStats.m_flags,
+                                            value,sprite->m_startTypeAI.m_nGender!=CAIOBJECTTYPE_SEX_FEMALE);
+                                        tlk.SetToken(CRuleTables::TOKEN_CLASS,value); CString number; number.Format(_T("%d"),level);
+                                        tlk.SetToken(CRuleTables::TOKEN_LEVEL,number); expected.push_back(fetch(16480));
+                                    }
+                                    CString expectedClass,expectedLevel;
+                                    tlk.m_mapTokens.Lookup(CRuleTables::TOKEN_CLASS,expectedClass); tlk.m_mapTokens.Lookup(CRuleTables::TOKEN_LEVEL,expectedLevel);
+                                    check("character-preview-class-tokens",classes>0 && actualClass==expectedClass && actualLevel==expectedLevel);
+                                    expected.push_back(""); expected.push_back(fetch(1049));
+                                    rules.GetAlignmentStringMixed(sprite->m_startTypeAI.m_nAlignment,value); expected.push_back(value);
+                                    expected.push_back(""); expected.push_back(fetch(17088));
+                                    const STRREF labels[]={1145,1151,1178,1179,1180,1181};
+                                    const INT scores[]={3,12,19,8,17,20},modifiers[]={-4,1,4,-1,3,5};
+                                    for (INT i=0;i<6;++i) {
+                                        value.Format(_T("%s: %d  (%+d)"),fetch(labels[i]).GetString(),scores[i],modifiers[i]); expected.push_back(value);
+                                    }
+                                    expected.push_back(""); for (auto& row:expected) row.Trim();
+                                    check("character-preview-complete-summary-order-and-values",rows()==expected);
+                                    INT row=0,headings=0; BOOL colors=TRUE; POSITION pos=display->m_plstStrings->GetHeadPosition();
+                                    while (pos) {
+                                        auto* line=display->m_plstStrings->GetNext(pos); if (line->m_nLine) continue;
+                                        BOOL heading=row==0 || row==3 || row==6 || row==8+classes || row==11+classes;
+                                        if (heading) ++headings;
+                                        colors=colors && line->m_rgbTextColor==(heading?RGB(200,200,0):display->m_rgbTextColor); ++row;
+                                    }
+                                    check("character-preview-five-colored-headings",colors && headings==5);
+                                    check("character-preview-large-portrait",portrait->m_portraitResRef==CResRef(sprite->m_baseStats.m_portraitLarge));
+                                    check("character-preview-no-import-gold-or-placement",game->m_gameSave.m_nPartyGold==1070 && !sprite->m_bGlobal && !sprite->m_pArea);
+                                    objects->ReleaseDeny(previewId,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                                    check("character-preview-disposable-actor-retired",objects->Delete(previewId,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE)==CGameObjectArray::SUCCESS);
+                                    delete sprite;
+                                }
+                                while (handler->m_messageList.GetCount()>before) delete handler->m_messageList.RemoveTail();
+                                check("character-preview-temporary-key-balanced",!dimm.m_bTemporaryKeyAdd);
+                            }
+                            CResRef previousPortrait=portrait->m_portraitResRef;
+                            for (CString name:{CString(_T("ZRMISS")),CString(_T("ZRBADCHR"))}) {
+                                SHORT next=objects->m_nNextObjectId; preview.UpdateCharacterSummary(name,display);
+                                auto result=rows(); CString error=CBaldurEngine::FetchString(39695); error.Trim();
+                                check("character-preview-failure-replaces-old-summary",result.size()==1 && result[0]==error);
+                                check("character-preview-failure-preserves-portrait-and-register",portrait->m_portraitResRef==previousPortrait
+                                    && objects->m_nNextObjectId==next && !dimm.m_bTemporaryKeyAdd);
+                            }
+                            if (hadClass) tlk.SetToken(CRuleTables::TOKEN_CLASS,oldClass); else tlk.m_mapTokens.RemoveKey(CRuleTables::TOKEN_CLASS);
+                            if (hadLevel) tlk.SetToken(CRuleTables::TOKEN_LEVEL,oldLevel); else tlk.m_mapTokens.RemoveKey(CRuleTables::TOKEN_LEVEL);
+                        }
                         game->m_gameSave.m_nPartyGold=oldGold; network.m_bConnectionEstablished=connected;
                         overrides.Remove(strref); if (hadBiography) overrides.AddUserEntry(strref,oldBiography);
                         while (directories.GetCount()>beforeDirectories) directories.RemoveTail();
