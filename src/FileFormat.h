@@ -81,6 +81,37 @@ public:
 #pragma pack(push)
 #pragma pack(2)
 
+class CCharacterFileHeader {
+public:
+    /* 0000 */ EXPORT_CHARACTER_HEADER m_header;
+    /* 0008 */ SCRIPTNAME m_name;
+    /* 0028 */ DWORD m_creatureOffset;
+    /* 002C */ DWORD m_creatureSize;
+    /* 0030 */ SHORT m_quickWeaponsItemNum[8];
+    /* 0040 */ SHORT m_quickWeaponsAbilityNum[8];
+    /* 0050 */ RESREF m_quickSpellsSpellId[9];
+    /* 0098 */ BYTE m_quickSpellsClass[9];
+    /* 00A1 */ BYTE field_A1;
+    /* 00A2 */ SHORT m_quickItemsItemNum[3];
+    /* 00A8 */ SHORT m_quickItemsAbilityNum[3];
+    /* 00AE */ RESREF m_quickInnatesSpellId[9];
+    /* 00F6 */ RESREF m_quickSongsSpellId[9];
+    /* 013E */ INT field_13E[9];
+    /* 0162 */ BYTE m_nLastSpellbookClassIndex;
+    /* 0163 */ BYTE m_nLastSpellbookSpellLevel;
+    /* 0164 */ BYTE field_164[9];
+    /* 016D */ BYTE field_16D[9];
+    /* 0176 */ BYTE field_176[2];
+    /* 0178 */ BYTE m_nLastSong;
+    /* 0179 */ BYTE field_179[3];
+    /* 017C */ RESREF m_secondarySounds;
+    /* 0184 */ BYTE m_soundSet[32];
+    /* 01A4 */ BYTE field_1A4[8];
+    /* 01AC */ BYTE field_1AC[120];
+};
+
+static_assert(sizeof(CCharacterFileHeader) == 0x224, "CHR V2.2 header size");
+
 class CSavedGamePartyCreature {
 public:
     CSavedGamePartyCreature()

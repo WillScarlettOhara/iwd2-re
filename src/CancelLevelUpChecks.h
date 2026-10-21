@@ -342,6 +342,113 @@ void CancelLevelUpChecks(INT nStep)
             screen.OnErrorButtonClick(1); screen.OnCancelButtonClick();
             check("done-export-prompt-cancel-retires-list",!screen.m_pCharacters && screen.m_lPopupStack.IsEmpty());
         }
+        {
+            // The existing profile owns temp, including cleanup after a crash.
+            auto& dimm=g_pChitin->cDimm; CString directory=game->m_sTempDir+"_chr_export\\";
+            CResRef ref("ZRCHREX"); CString previousDirectory=game->m_sCharactersDir;
+            BOOL isolated=GetFileAttributes(directory)==INVALID_FILE_ATTRIBUTES
+                && !dimm.m_cKeyTable.FindKey(ref,1018,1) && !dimm.m_cKeyTable.FindKey(ref,1022,1);
+            check("character-export-fixture-isolated",isolated);
+            if (isolated) {
+                game->m_sCharactersDir=directory;
+                auto& overrides=g_pBaldurChitin->GetTlkTable().m_override;
+                const STRREF biographyId=0xF2AA; STR_RES previousText,text;
+                BOOL hadText=overrides.Fetch(biographyId,previousText);
+                auto oldName=actor->m_sName;
+                CButtonData weapons[8],spells[9],items[3],innates[9],songs[9];
+                memcpy(weapons,actor->m_quickWeapons,sizeof(weapons)); memcpy(spells,actor->m_quickSpells,sizeof(spells));
+                memcpy(items,actor->m_quickItems,sizeof(items)); memcpy(innates,actor->m_quickInnates,sizeof(innates));
+                memcpy(songs,actor->m_quickSongs,sizeof(songs));
+                INT customButtons[9]; BYTE weaponButtons[8];
+                memcpy(customButtons,actor->field_3D14,sizeof(customButtons)); memcpy(weaponButtons,actor->field_3D3A,sizeof(weaponButtons));
+                auto lastClass=actor->m_nLastSpellbookClassIndex,lastLevel=actor->m_nLastSpellbookSpellLevel,lastSong=actor->m_nLastSong;
+                for (INT pass=0;pass<2;++pass) {
+                    actor->m_baseStats=base; actor->m_baseStats.m_name=-1; actor->m_baseStats.m_biography=biographyId;
+                    actor->m_sName=pass?CString('N',40):CString(_T("Export test"));
+                    text.szText=pass?CString():CString(_T("Export biography\r\nSecond line"));
+                    overrides.AddUserEntry(biographyId,text);
+                    actor->m_secondarySounds=CResRef("VOICE"); memset(actor->field_725A,0,32);
+                    memset(actor->field_725A,'V',pass?31:5);
+                    BYTE expected[0x224]={}; memcpy(expected,"CHR V2.2",8);
+                    memcpy(expected+8,actor->m_sName.GetString(),min(actor->m_sName.GetLength(),32));
+                    for (INT i=0;i<9;++i) {
+                        char resource[9]; sprintf(resource,"SpElL%03d",i);
+                        auto& ability=actor->m_quickSpells[i].m_abilityId; memcpy(&ability.m_res,resource,8);
+                        ability.m_nClass=static_cast<BYTE>(0xE0+i); ability.m_bCanUse=static_cast<BYTE>(0x80+i);
+                        ability.m_nTooltip=static_cast<SHORT>(0xABF0+i);
+                        memcpy(&actor->m_quickInnates[i].m_abilityId.m_res,"InNaTe12",8);
+                        memcpy(&actor->m_quickSongs[i].m_abilityId.m_res,"SoNg1234",8);
+                        actor->field_3D14[i]=0x12340000+i;
+                        memcpy(expected+0x50+8*i,resource,8); expected[0x98+i]=static_cast<BYTE>(0xE0+i);
+                        expected[0x164+i]=static_cast<BYTE>(0x80+i); expected[0x16D+i]=static_cast<BYTE>(0xF0+i);
+                        memcpy(expected+0xAE+8*i,"InNaTe12",8); memcpy(expected+0xF6+8*i,"SoNg1234",8);
+                        *reinterpret_cast<INT*>(expected+0x13E+4*i)=0x12340000+i;
+                        if (i<8) {
+                            actor->m_quickWeapons[i].m_abilityId.m_itemNum=static_cast<SHORT>(-300+i);
+                            actor->m_quickWeapons[i].m_abilityId.m_abilityNum=static_cast<SHORT>(0x7FF0+i);
+                            actor->field_3D3A[i]=static_cast<BYTE>(0xA0+i);
+                            *reinterpret_cast<SHORT*>(expected+0x30+2*i)=static_cast<SHORT>(-300+i);
+                            *reinterpret_cast<SHORT*>(expected+0x40+2*i)=static_cast<SHORT>(0x7FF0+i);
+                            expected[0x1A4+i]=static_cast<BYTE>(0xA0+i);
+                        }
+                        if (i<3) {
+                            actor->m_quickItems[i].m_abilityId.m_itemNum=static_cast<SHORT>(-20+i);
+                            actor->m_quickItems[i].m_abilityId.m_abilityNum=static_cast<SHORT>(0xFFF0+i);
+                            *reinterpret_cast<SHORT*>(expected+0xA2+2*i)=static_cast<SHORT>(-20+i);
+                            *reinterpret_cast<SHORT*>(expected+0xA8+2*i)=static_cast<SHORT>(0xFFF0+i);
+                        }
+                    }
+                    actor->m_nLastSpellbookClassIndex=0xFA; actor->m_nLastSpellbookSpellLevel=0xFB; actor->m_nLastSong=0xFC;
+                    expected[0x162]=0xFA; expected[0x163]=0xFB; expected[0x178]=0xFC;
+                    memcpy(expected+0x17C,"VOICE",5); memcpy(expected+0x184,actor->field_725A,32);
+                    BYTE* creature=NULL; LONG size=0; WORD facing=0;
+                    actor->Marshal(&creature,&size,&facing,FALSE,FALSE);
+                    *reinterpret_cast<DWORD*>(expected+0x28)=0x224; *reinterpret_cast<DWORD*>(expected+0x2C)=size;
+                    if (!pass) {
+                        screen.m_lPopupStack.RemoveAll(); screen.m_lPopupStack.AddTail(screen.m_cUIManager.GetPanel(13));
+                        screen.m_pCharacters=new CStringList;
+                        static_cast<CUIControlEdit*>(screen.GetTopPopup()->GetControl(6))->SetText("zrChReX");
+                        screen.OnDoneButtonClick();
+                        if (screen.m_nErrorState==6 && screen.GetTopPopup() && screen.GetTopPopup()->m_nID==10) screen.OnErrorButtonClick(0);
+                        check("done-export-writes-and-retires-list",!screen.m_pCharacters && screen.m_lPopupStack.IsEmpty());
+                    } else {
+                        check("character-export-existing-resource-keys",dimm.m_cKeyTable.FindKey(ref,1018,1)!=NULL
+                            && dimm.m_cKeyTable.FindKey(ref,1022,1)!=NULL);
+                        game->CharacterExport(id,"zrChReX");
+                    }
+                    auto read=[&](const char* extension,std::vector<BYTE>& bytes)->BOOL {
+                        CFile file; if (!file.Open(directory+"ZRCHREX."+extension,CFile::modeRead|CFile::typeBinary,NULL)) return FALSE;
+                        bytes.resize(static_cast<size_t>(file.GetLength()));
+                        UINT count=bytes.empty()?0:file.Read(bytes.data(),static_cast<UINT>(bytes.size())); file.Close();
+                        return count==bytes.size();
+                    };
+                    std::vector<BYTE> chr,bio;
+                    BOOL readChr=read("CHR",chr),readBio=read("RES",bio);
+                    check("character-export-complete-golden-header",readChr && chr.size()==0x224+size
+                        && memcmp(chr.data(),expected,sizeof(expected))==0);
+                    check("character-export-complete-creature-payload",readChr && chr.size()==0x224+size
+                        && memcmp(chr.data()+0x224,creature,size)==0 && memcmp(chr.data()+0x224,"CRE V2.2",8)==0);
+                    check("character-export-biography-terminator-and-empty-truncation",readBio
+                        && bio.size()==(pass?0:text.szText.GetLength()+1)
+                        && (pass || memcmp(bio.data(),text.szText.GetString(),bio.size())==0));
+                    check("character-export-temporary-key-balanced",!dimm.m_bTemporaryKeyAdd);
+                    delete[] creature;
+                    if (!pass) check("character-export-rescan",dimm.AddToDirectoryList(directory,TRUE));
+                }
+                game->CharacterExport(CGameObjectArray::INVALID_INDEX,"ZRMISS");
+                check("character-export-missing-actor-no-file",GetFileAttributes(directory+"ZRMISS.CHR")==INVALID_FILE_ATTRIBUTES
+                    && GetFileAttributes(directory+"ZRMISS.RES")==INVALID_FILE_ATTRIBUTES);
+                dimm.RemoveFromDirectoryList(directory,TRUE);
+                game->m_sCharactersDir=previousDirectory; actor->m_sName=oldName;
+                memcpy(actor->m_quickWeapons,weapons,sizeof(weapons)); memcpy(actor->m_quickSpells,spells,sizeof(spells));
+                memcpy(actor->m_quickItems,items,sizeof(items)); memcpy(actor->m_quickInnates,innates,sizeof(innates));
+                memcpy(actor->m_quickSongs,songs,sizeof(songs)); memcpy(actor->field_3D14,customButtons,sizeof(customButtons));
+                memcpy(actor->field_3D3A,weaponButtons,sizeof(weaponButtons));
+                actor->m_nLastSpellbookClassIndex=lastClass; actor->m_nLastSpellbookSpellLevel=lastLevel; actor->m_nLastSong=lastSong;
+                actor->m_baseStats=base; actor->m_secondarySounds=secondary; memcpy(actor->field_725A,sound,32);
+                overrides.Remove(biographyId); if (hadText) overrides.AddUserEntry(biographyId,previousText);
+            }
+        }
         for (CString name : {CString(_T("_IWD2_RE_MISSING_VOICE_")),CString('X',40)}) {
             auto& directories=g_pBaldurChitin->cDimm.m_lDirectories; INT count=directories.GetCount();
             check("sound-fixture-directory-absent",GetFileAttributes(game->GetDirSounds()+name)==INVALID_FILE_ATTRIBUTES);
