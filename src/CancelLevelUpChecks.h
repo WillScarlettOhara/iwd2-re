@@ -343,6 +343,117 @@ void CancelLevelUpChecks(INT nStep)
             check("done-export-prompt-cancel-retires-list",!screen.m_pCharacters && screen.m_lPopupStack.IsEmpty());
         }
         {
+            // Park the owning objects intact; only fixture effects may be retired.
+            std::vector<BYTE> eqBytes(sizeof(CGameEffectList)),timeBytes(sizeof(CGameEffectList)),statsBytes(sizeof(CDerivedStats));
+            memcpy(eqBytes.data(),&actor->m_equipedEffectList,eqBytes.size());
+            memcpy(timeBytes.data(),&actor->m_timedEffectList,timeBytes.size());
+            memcpy(statsBytes.data(),&actor->m_derivedStats,statsBytes.size());
+            new (&actor->m_equipedEffectList) CGameEffectList;
+            new (&actor->m_timedEffectList) CGameEffectList;
+            new (&actor->m_derivedStats) CDerivedStats;
+            auto* oldVariables=actor->m_pLocalVariables; auto removed=actor->m_removeFromArea;
+            BYTE saves[5]; memcpy(saves,&actor->field_70F6,sizeof(saves));
+            auto* oldMisc=actor->m_equipment.m_items[CGameSpriteEquipment::SLOT_MISC+27];
+            CItem* borrowed=NULL;
+            for (INT i=0;i<CGameSpriteEquipment::NUM_SLOT && !borrowed;++i) {
+                if (i!=CGameSpriteEquipment::SLOT_FIST) borrowed=actor->m_equipment.m_items[i];
+            }
+            check("cre-fixture-has-item-for-last-misc-slot",borrowed!=NULL);
+            actor->m_equipment.m_items[CGameSpriteEquipment::SLOT_MISC+27]=borrowed;
+            const LONG bonuses[]={0x12340007,static_cast<LONG>(0xFFFF8000),0x00010001};
+            const SHORT hitPoints[]={-32760,32760,-1},maxPoints[]={32760,-32760,0};
+            const WORD baseMax[]={4,65535,0};
+            for (INT pass=0;pass<3;++pass) {
+                actor->m_baseStats=base; actor->m_startTypeAI=start; actor->m_startTypeAI.SetSubRace(0xD7);
+                actor->m_startTypeAI.m_nGeneral=0x45; actor->m_liveTypeAI=live; actor->m_liveTypeAI.m_nGeneral=0xA5;
+                actor->m_removeFromArea=0x12340002; actor->m_nHPCONBonusTotalOld=bonuses[pass];
+                actor->m_baseStats.m_hitPoints=hitPoints[pass]; actor->m_baseStats.m_maxHitPointsBase=baseMax[pass];
+                actor->m_derivedStats.m_nMaxHitPoints=maxPoints[pass]; actor->m_typeAI=type;
+                CVariableHash locals(8); actor->m_pLocalVariables=&locals;
+                locals.m_hashEntries[0].m_intValue=123; // Empty names are skipped without clearing their data.
+                const char* value="AbCdEfGhIjKlMnOpQrStUvWxYz12345";
+                for (INT i=0;i<4;++i) {
+                    auto& variable=locals.m_hashEntries[2*i+1]; CString name; name.Format(_T("LOCAL%d"),i);
+                    variable.SetName(name); variable.m_type=static_cast<WORD>(0xFFF0+i);
+                    variable.m_resRefType=static_cast<WORD>(0xFED0+i); variable.m_dwValue=0x89ABCDEF+i;
+                    variable.m_intValue=-12345-i; variable.m_floatValue=i==3?4294967297.75:-7.75;
+                    memcpy(variable.m_stringValue,value,i==0?8:(i==1?9:(i==2?17:31)));
+                }
+                std::vector<BYTE> variables(8*sizeof(CVariable)); memcpy(variables.data(),locals.m_hashEntries,variables.size());
+                auto add=[&](CGameEffectList& list,WORD opcode,DWORD duration)->POSITION {
+                    auto* effect=new CGameEffect; effect->m_effectID=opcode; effect->m_durationType=duration;
+                    return list.AddTail(effect);
+                };
+                add(actor->m_equipedEffectList,CGAMEEFFECT_JUMPTOAREA,9);
+                auto eqCurrent=add(actor->m_equipedEffectList,CGAMEEFFECT_JUMPTOAREA,9);
+                actor->m_equipedEffectList.m_posCurrent=eqCurrent;
+                actor->m_equipedEffectList.m_posNext=actor->m_equipedEffectList.GetHeadPosition();
+                add(actor->m_timedEffectList,CGAMEEFFECT_JUMPTOAREA,9);
+                auto timeCurrent=add(actor->m_timedEffectList,CGAMEEFFECT_JUMPTOAREA,9);
+                add(actor->m_timedEffectList,CGAMEEFFECT_DAMAGE,9); add(actor->m_timedEffectList,CGAMEEFFECT_DAMAGE,0);
+                actor->m_timedEffectList.m_posCurrent=timeCurrent;
+                actor->m_timedEffectList.m_posNext=actor->m_timedEffectList.GetHeadPosition();
+                CCreatureFileEquipment equipment; CCreatureFileItem* items=NULL; LONG itemCount=0;
+                actor->m_equipment.Marshal(&equipment,&items,&itemCount,TRUE); delete[] items;
+                if (!pass) equipment.m_miscItem[27]=0xFFFF;
+                BYTE* creature=NULL; LONG size=0; WORD facing=0;
+                actor->Marshal(&creature,&size,&facing,static_cast<BYTE>(pass),TRUE);
+                auto* header=reinterpret_cast<CCreatureFileHeader*>(creature+8);
+                auto* offsets=reinterpret_cast<CCreatureFileOffsets*>(creature+0x384);
+                SHORT bonus=static_cast<SHORT>(bonuses[pass]);
+                check("cre-hp-bonus-short-subtraction-and-wrap",header->m_hitPoints==static_cast<SHORT>(hitPoints[pass]-bonus)
+                    && header->m_maxHitPointsBase==static_cast<WORD>(baseMax[pass]-bonus));
+                check("cre-live-hp-restored",actor->m_baseStats.m_hitPoints==hitPoints[pass]
+                    && actor->m_baseStats.m_maxHitPointsBase==baseMax[pass] && actor->m_derivedStats.m_nMaxHitPoints==maxPoints[pass]);
+                check("cre-header-mutations-and-facing",header->m_effectVersion==1 && header->m_subrace==0xD7
+                    && header->m_bRemoveFromArea==2 && actor->m_baseStats.m_subrace==0xD7
+                    && actor->m_baseStats.m_bRemoveFromArea==2 && facing==actor->m_nDirection);
+                check("cre-general-from-live-ai",offsets->m_general==0xA5
+                    && offsets->m_enemyAlly==start.m_nEnemyAlly && offsets->m_race==start.m_nRace);
+                check("cre-equipment-export-last-slot-quirk",memcmp(creature+offsets->m_equipmentListOffset,&equipment,sizeof(equipment))==0);
+                check("cre-effects-filtered-before-cleanup",offsets->m_effectListCount==(pass?8u:3u)
+                    && offsets->m_effectListOffset+offsets->m_effectListCount*sizeof(CGameEffectBase)==static_cast<DWORD>(size));
+                check("cre-jump-effects-retired-except-current",actor->m_equipedEffectList.GetCount()==1
+                    && actor->m_timedEffectList.GetCount()==(pass?7:3)
+                    && actor->m_equipedEffectList.m_posCurrent==eqCurrent && actor->m_equipedEffectList.m_posNext==eqCurrent
+                    && actor->m_timedEffectList.m_posCurrent==timeCurrent && actor->m_timedEffectList.m_posNext==timeCurrent);
+                if (!pass) {
+                    check("cre-export-preserves-local-table",memcmp(variables.data(),locals.m_hashEntries,variables.size())==0);
+                } else {
+                    CVariable empty;
+                    for (INT i=0;i<4;++i) {
+                        const auto* effect=reinterpret_cast<const CGameEffectBase*>(creature+offsets->m_effectListOffset)+(4+i);
+                        char name[32]={}; sprintf(name,"LOCAL%d",i);
+                        BYTE resources[24]={}; memcpy(resources,value,i==0?8:(i==1?9:(i==2?17:24)));
+                        for (auto& ch : resources) if (ch>='a' && ch<='z') ch-=32;
+                        check("cre-local-effect-full-width-values",effect->m_effectID==CGAMEEFFECT_SETLOCALVARIABLE
+                            && effect->m_durationType==1 && effect->m_flags==static_cast<WORD>(0xFFF0+i)
+                            && effect->m_effectAmount2==static_cast<WORD>(0xFED0+i) && effect->m_dwFlags==0x89ABCDEF+i
+                            && effect->m_effectAmount==-12345-i && effect->m_effectAmount3==(i==3?1:-7)
+                            && memcmp(effect->m_scriptName,name,32)==0);
+                        check("cre-local-effect-three-uppercase-resource-chunks",memcmp(effect->m_res.GetResRef(),resources,8)==0
+                            && memcmp(effect->m_res2.GetResRef(),resources+8,8)==0 && memcmp(effect->m_res3.GetResRef(),resources+16,8)==0);
+                        check("cre-local-table-slot-consumed",memcmp(&locals.m_hashEntries[2*i+1],&empty,sizeof(empty))==0);
+                    }
+                    check("cre-empty-local-name-data-retained",locals.m_hashEntries[0].m_intValue==123);
+                    INT count=actor->m_timedEffectList.GetCount(); locals.MarshalToCharacter(actor);
+                    check("cre-consumed-locals-not-duplicated",actor->m_timedEffectList.GetCount()==count);
+                }
+                delete[] creature;
+                while (!actor->m_equipedEffectList.IsEmpty()) delete actor->m_equipedEffectList.RemoveHead();
+                while (!actor->m_timedEffectList.IsEmpty()) delete actor->m_timedEffectList.RemoveHead();
+                actor->m_equipedEffectList.m_posCurrent=actor->m_equipedEffectList.m_posNext=NULL;
+                actor->m_timedEffectList.m_posCurrent=actor->m_timedEffectList.m_posNext=NULL;
+                actor->m_pLocalVariables=oldVariables;
+            }
+            actor->m_equipment.m_items[CGameSpriteEquipment::SLOT_MISC+27]=oldMisc;
+            actor->m_removeFromArea=removed; actor->m_nHPCONBonusTotalOld=hpBonus; memcpy(&actor->field_70F6,saves,sizeof(saves));
+            actor->m_equipedEffectList.~CGameEffectList(); actor->m_timedEffectList.~CGameEffectList(); actor->m_derivedStats.~CDerivedStats();
+            memcpy(&actor->m_equipedEffectList,eqBytes.data(),eqBytes.size());
+            memcpy(&actor->m_timedEffectList,timeBytes.data(),timeBytes.size()); memcpy(&actor->m_derivedStats,statsBytes.data(),statsBytes.size());
+            actor->m_baseStats=base; actor->m_startTypeAI=start; actor->m_liveTypeAI=live;
+        }
+        {
             // The existing profile owns temp, including cleanup after a crash.
             auto& dimm=g_pChitin->cDimm; CString directory=game->m_sTempDir+"_chr_export\\";
             CResRef ref("ZRCHREX"); CString previousDirectory=game->m_sCharactersDir;

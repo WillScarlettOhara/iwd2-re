@@ -1,6 +1,8 @@
 #include "CVariableHash.h"
 
 #include "CBaldurChitin.h"
+#include "CGameEffect.h"
+#include "CGameSprite.h"
 #include "CInfGame.h"
 
 // 0x84EC4C
@@ -326,7 +328,35 @@ void CVariableHash::Marshal(CVariable** pList, WORD* pCount)
 // 0x550600
 void CVariableHash::MarshalToCharacter(CGameSprite* pSprite)
 {
-    // TODO: Incomplete.
+    ITEM_EFFECT* pItemEffect = new ITEM_EFFECT();
+    CGameEffect::ClearItemEffect(pItemEffect, CGAMEEFFECT_SETLOCALVARIABLE);
+    CVariable empty;
+    for (LONG nIndex = 0; nIndex < m_nTableEntries; nIndex++) {
+        CVariable& variable = m_hashEntries[nIndex];
+        if (variable.GetName() != "") {
+            CGameEffect* pEffect = CGameEffect::DecodeEffect(pItemEffect,
+                pSprite->GetPos(), pSprite->m_id, CPoint(-1, -1));
+            memcpy(pEffect->m_scriptName, variable.m_name, SCRIPTNAME_SIZE);
+            pEffect->m_flags = variable.m_type;
+            pEffect->m_effectAmount2 = variable.m_resRefType;
+            pEffect->m_dwFlags = variable.m_dwValue;
+            pEffect->m_effectAmount = variable.m_intValue;
+            // The native x87 __ftol truncates to 64 bits, then stores EAX.
+            pEffect->m_effectAmount3 = static_cast<LONG>(static_cast<LONGLONG>(variable.m_floatValue));
+            pEffect->m_durationType = 1;
+            CString value(variable.m_stringValue);
+            pEffect->m_res = value.Left(8);
+            if (value.GetLength() > 8) {
+                pEffect->m_res2 = value.Mid(8, 8);
+                if (value.GetLength() > 16) {
+                    pEffect->m_res3 = value.Mid(16, 8);
+                }
+            }
+            pSprite->AddEffect(pEffect, 1, TRUE, FALSE);
+            variable = empty;
+        }
+    }
+    delete pItemEffect;
 }
 
 // 0x550920

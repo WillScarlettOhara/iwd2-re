@@ -7698,10 +7698,17 @@ void CGameSprite::Marshal(BYTE** pCreature, LONG* creatureSize, WORD* facing, BO
 {
     UTIL_ASSERT(pCreature != NULL && creatureSize != NULL && facing != NULL);
 
+    SHORT nHPBonus = static_cast<SHORT>(m_nHPCONBonusTotalOld);
+    m_baseStats.m_hitPoints = static_cast<SHORT>(m_baseStats.m_hitPoints - nHPBonus);
+    m_baseStats.m_maxHitPointsBase = static_cast<WORD>(m_baseStats.m_maxHitPointsBase - nHPBonus);
+    m_derivedStats.m_nMaxHitPoints = static_cast<SHORT>(m_derivedStats.m_nMaxHitPoints - nHPBonus);
     // CRE V2.2 stores CGameEffectBase records. The original sets this byte at
     // 0x70B354 before copying m_baseStats into the file header; without it the
     // original loader interprets each 0x108-byte record as ITEM_EFFECT data.
     m_baseStats.m_effectVersion = 1;
+    *pCreature = NULL;
+    *creatureSize = 0;
+    *facing = m_nDirection;
 
     const DWORD CRE_V22_HEADER_SIZE = 0x37C;
     const DWORD CRE_V22_OFFSETS_OFFSET = 8 + CRE_V22_HEADER_SIZE;
@@ -7733,11 +7740,18 @@ void CGameSprite::Marshal(BYTE** pCreature, LONG* creatureSize, WORD* facing, BO
     m_equipment.Marshal(&equipment, &pItems, &nItemCount, a5);
     nSize += sizeof(CCreatureFileEquipment) + nItemCount * sizeof(CCreatureFileItem);
 
+    if (a4 != FALSE) {
+        m_pLocalVariables->MarshalToCharacter(this);
+    } else {
+        // 0x70B539 writes equipment+0x62 (the last miscellaneous slot).
+        equipment.m_miscItem[27] = 0xFFFF;
+    }
     // Active (timed) effects, serialised as version-2 (0x108-byte) records.
     BYTE* pEffectData = NULL;
     ULONG nEffectBytes = m_timedEffectList.Marshal(&pEffectData, 1, a4 == FALSE);
     DWORD nEffectCount = nEffectBytes / CRE_EFFECT_SIZE;
     nSize += nEffectCount * CRE_EFFECT_SIZE;
+    m_baseStats.m_bRemoveFromArea = static_cast<BYTE>(m_removeFromArea);
 
     *pCreature = new BYTE[nSize];
     *creatureSize = nSize;
@@ -7745,18 +7759,12 @@ void CGameSprite::Marshal(BYTE** pCreature, LONG* creatureSize, WORD* facing, BO
 
     memcpy(*pCreature, "CRE V2.2", 8);
 
-    CCreatureFileHeader header = m_baseStats;
-    header.m_subrace = m_startTypeAI.GetSubRace();
-    header.m_bRemoveFromArea = m_removeFromArea;
-    DWORD nHeaderCopySize = sizeof(header);
-    if (nHeaderCopySize > CRE_V22_HEADER_SIZE) {
-        nHeaderCopySize = CRE_V22_HEADER_SIZE;
-    }
-    memcpy(*pCreature + 8, &header, nHeaderCopySize);
+    m_baseStats.m_subrace = m_startTypeAI.GetSubRace();
+    memcpy(*pCreature + 8, &m_baseStats, CRE_V22_HEADER_SIZE);
 
     CCreatureFileOffsets* offsets = reinterpret_cast<CCreatureFileOffsets*>(*pCreature + CRE_V22_OFFSETS_OFFSET);
     offsets->m_enemyAlly = m_startTypeAI.m_nEnemyAlly;
-    offsets->m_general = m_startTypeAI.m_nGeneral;
+    offsets->m_general = m_liveTypeAI.m_nGeneral;
     offsets->m_race = m_startTypeAI.m_nRace;
     offsets->m_class = m_startTypeAI.m_nClass;
     offsets->m_specifics = m_startTypeAI.m_nSpecific;
@@ -7768,8 +7776,6 @@ void CGameSprite::Marshal(BYTE** pCreature, LONG* creatureSize, WORD* facing, BO
     offsets->m_avClass = m_startTypeAI.m_nAvClass;
     offsets->m_classMask = m_startTypeAI.m_nClassMask;
     m_dialog.GetResRef(offsets->m_dialog);
-
-    *facing = m_nDirection;
 
     DWORD nOffset = CRE_V22_DATA_OFFSET;
 
@@ -7861,9 +7867,12 @@ void CGameSprite::Marshal(BYTE** pCreature, LONG* creatureSize, WORD* facing, BO
 
     UTIL_ASSERT(nOffset == static_cast<DWORD>(*creatureSize));
 
-    // TODO: 0x70B2F0 also temporarily shifts the sprite position fields around
-    // the body and calls RemoveAllOfType(0xBA) on the equiped + timed effect
-    // lists afterwards; not yet ported (does not affect the saved size).
+    nHPBonus = static_cast<SHORT>(m_nHPCONBonusTotalOld);
+    m_baseStats.m_hitPoints = static_cast<SHORT>(m_baseStats.m_hitPoints + nHPBonus);
+    m_baseStats.m_maxHitPointsBase = static_cast<WORD>(m_baseStats.m_maxHitPointsBase + nHPBonus);
+    m_derivedStats.m_nMaxHitPoints = static_cast<SHORT>(m_derivedStats.m_nMaxHitPoints + nHPBonus);
+    m_equipedEffectList.RemoveAllOfType(this, CGAMEEFFECT_JUMPTOAREA, m_equipedEffectList.m_posCurrent, -1);
+    m_timedEffectList.RemoveAllOfType(this, CGAMEEFFECT_JUMPTOAREA, m_timedEffectList.m_posCurrent, -1);
 }
 
 // 0x70BEE0
