@@ -1,4 +1,4 @@
-"""Compare 278 exact spell selection outputs from canonical and typed loaded-world replay.
+"""Compare 287 exact spell selection outputs from canonical and typed loaded-world replay.
 
 Case IDs refer to the fingerprinted input grid and generated C++ header. Only
 spell-selection-result events are selected. Rename op to tag on both sides; no ignored
@@ -34,7 +34,7 @@ def main():
         if hashlib.sha256(path.read_bytes()).hexdigest()!=expected:raise SystemExit('Reference input changed: '+name)
     inputs=json.loads((reference/'inputs.json').read_text());captured=json.loads((reference/'capture.json').read_text())
     original=read(reference/'original.jsonl')
-    if inputs!=cases() or original!=captured['events'] or len(original)!=278:raise SystemExit('Reference events/inputs changed')
+    if inputs!=cases() or original!=captured['events'] or len(original)!=287:raise SystemExit('Reference events/inputs changed')
     if header(inputs,original)!=(REPO/'src/SpellSelectionGolden.h').read_text():raise SystemExit('Generated replay inputs changed')
     ui=run/'profile-runtime/ui.jsonl';events=read(ui)
     if not events or events[-1].get('verdict')!='PASS' or events[-1].get('steps')!=93 or events[-1].get('failed')!=0:

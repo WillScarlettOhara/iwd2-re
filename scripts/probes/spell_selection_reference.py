@@ -1,4 +1,4 @@
-"""Frozen native spell panel, button binding/click and specialist scan.
+"""Frozen native spell panel, button binding/click, specialist scan and chargen auto-pick.
 
 Target bodies, catalogue access and click list Add/Remove execute unchanged.
 UI/locks/resource/CString services, usability and known-spell queries are explicit
@@ -26,6 +26,10 @@ def cases():
              for l in [1,9] for n in [0,1,3,255]]
     rows += [dict(kind=3,cls=c,spec=s,extra=e,selected=b) for c in [2,10,11]
              for s in [0,0x4000] for e in [-1,0,1,3] for b in [0,1]]
+    # Auto-pick: budget in extra, last spell tier in level, pre-known spell count in known.
+    rows += [dict(kind=4,cls=c,spec=s,extra=b,level=t,known=k) for c,s,b,t,k in
+             [(2,0,2,1,0),(10,0,2,1,1),(2,0,0,1,0),(11,0x40,2,1,0),(11,0x40,0,1,2),
+              (11,0x40,1,1,1),(2,0,2,2,0),(11,0,2,2,0),(10,0,1,2,0)]]
     return rows
 
 
@@ -42,8 +46,11 @@ rpc.exports.run=function(){
  function cs(s){const p=alloc(4);p.writePointer(string(s));return p;}
  function cb(ret,args,fn){const f=new NativeCallback(fn,ret,args,'thiscall');callbacks.push(f);return f;}
  const chitin=alloc(0x6000),game=alloc(0x6000),screen=alloc(0x2000),actor=alloc(0x9e00),panel=alloc(0x100),svt=alloc(0x100),bvt=alloc(0x100),master=alloc(24),entries=alloc(255*8),known=alloc(32),knownData=alloc(64),cells=alloc(9*10*4),token=alloc(4),creator=alloc(0x2000);
- const buttons=Array.from({length:30},()=>alloc(0x700)),resources=[alloc(128),alloc(128)];
- const names=['ZRCHIT','SPIN260',''];names.forEach((s,i)=>ref(master.add(i*8),s));
+ const buttons=Array.from({length:30},()=>alloc(0x700)),resources=Array.from({length:5},()=>alloc(128)),master5=alloc(40);
+ let names=['ZRCHIT','SPIN260',''];names.forEach((s,i)=>ref(master.add(i*8),s));
+ let seed=1,autopickReady=false;
+ function nextRand(){seed=(Math.imul(seed,214013)+2531011)>>>0;return(seed>>>16)&0x7fff;}
+ function notUsable(j){return j===1&&c.spec?0x40:0;}
  function id(p){return names.indexOf(res(p));}
  function spellId(p){return id(p.add(8));}
  function vector(p,selected){const data=alloc(256);if(selected){data.writeU32(0);data.add(4).writeU32(3);}p.writeU32(0);p.add(4).writePointer(data);p.add(8).writePointer(data.add(selected?16:0));p.add(12).writePointer(data.add(256));p.add(16).writeU32(0);p.add(20).writeU32(selected?3:0);p.add(24).writeU32(selected?3:0);}
@@ -54,6 +61,8 @@ rpc.exports.run=function(){
  const bind=new NativeFunction(ptr(0x5ebdd0),'void',['pointer','uint','uint'],'thiscall');
  const specialist=new NativeFunction(ptr(0x618d10),'int',['pointer','uint8','pointer'],'thiscall');
  const click=new NativeFunction(ptr(0x5ebfa0),'void',['pointer','int','int'],'thiscall');
+ const autopick=new NativeFunction(ptr(0x617d80),'void',['pointer'],'thiscall');
+ const addKnown=new NativeFunction(ptr(0x724930),'uint8',['pointer','pointer','pointer','pointer','pointer','pointer','pointer'],'thiscall');
  try{
   save(0x8cf6dc).writePointer(chitin);save(0x8cf6d8).writePointer(chitin);save(0x8f333c).writePointer(str('number'));
   chitin.add(0x1c54).writePointer(game);chitin.add(0x1c60).writePointer(screen);chitin.add(0x1c64).writePointer(creator);
@@ -74,20 +83,20 @@ rpc.exports.run=function(){
   replace(0x7fcd57,'pointer',['pointer','pointer'],'thiscall',(p,s)=>{e.token=s.readUtf8String();return p;});
   replace(0x427b60,'pointer',['pointer','uint'],'mscdecl',(out,n)=>{out.writePointer(string('tlk'+n));return out;});
   replace(0x427fe0,'void',['pointer','pointer','uint','pointer','pointer','pointer','int'],'mscdecl',(p,pan,n,fmt,a,b,l)=>{e.label=[n,fmt.readUtf8String(),a.readUtf8String(),b.readUtf8String(),l];});
-  replace(0x4d4000,'pointer',['pointer','uint'],'thiscall',(p,n)=>{if(n!==8)throw Error('panel');return panel;});
+  replace(0x4d4000,'pointer',['pointer','uint'],'thiscall',(p,n)=>{if(n!==(mode==='autopick'?7:8))throw Error('panel');return panel;});
   replace(0x4d2ca0,'pointer',['pointer','uint'],'thiscall',(p,n)=>{if(n>=30)throw Error('button index');return buttons[n];});
   replace(0x4d57c0,'void',['pointer','int'],'thiscall',(p,b)=>{p.add(0x646).writeS32(b);p.add(0x1e).writeU8(b?1:0);});
   replace(0x4d5ae0,'void',['pointer','int'],'thiscall',(p,b)=>p.add(0x66a).writeS32(b));
   replace(0x5e6840,'void',['pointer','uint','uint','uint'],'thiscall',(p,pan,n,t)=>{e.help=[pan,n,t];});
   replace(0x5e0b20,'void',['pointer','uint','pointer'],'thiscall',()=>{e.updates++;});
-  replace(0x4699f0,'void',['pointer','pointer','int','int'],'thiscall',(p,r,a,b)=>{const j=id(r);if(a!==1||b!==1)throw Error('resource flags');p.writeS32(j>=0&&j<2?1:0);p.add(4).writePointer(j>=0&&j<2?resources[j]:ptr(0));p.add(8).writeByteArray(r.readByteArray(8));});
-  replace(0x54a380,'int',['pointer'],'thiscall',p=>+(spellId(p)>=0&&spellId(p)<2));
+  replace(0x4699f0,'void',['pointer','pointer','int','int'],'thiscall',(p,r,a,b)=>{const j=id(r),ok=j>=0&&names[j]!=='';if(a!==1||b!==1)throw Error('resource flags');p.writeS32(ok?1:0);p.add(4).writePointer(ok?resources[j]:ptr(0));p.add(8).writeByteArray(r.readByteArray(8));});
+  replace(0x54a380,'int',['pointer'],'thiscall',p=>+(spellId(p)>=0&&names[spellId(p)]!==''));
   replace(0x54a3c0,'int',['pointer'],'thiscall',()=>1);
   replace(0x54a430,'int',['pointer','pointer'],'thiscall',(p,out)=>{ref(out,spellId(p)===0?'GUIBTNA':'GUIBTNB');return 0;});
   replace(0x54acd0,'int',['pointer'],'thiscall',p=>p.add(4).readPointer().isNull()?0:10453+spellId(p));
   replace(0x54ad30,'int',['pointer'],'thiscall',()=>7192);
-  replace(0x54b000,'uint8',['pointer'],'thiscall',p=>spellId(p)+1);
-  replace(0x54aa40,'int',['pointer','pointer'],'thiscall',p=>mode!=='panel'||c.cls!==11||!c.profile||spellId(p)===0?1:0);
+  replace(0x54b000,'uint8',['pointer'],'thiscall',p=>mode==='autopick'?[1,2,2,1,0][spellId(p)]:spellId(p)+1);
+  replace(0x54aa40,'int',['pointer','pointer'],'thiscall',p=>mode==='autopick'?+((notUsable(spellId(p))&c.spec)===0):mode!=='panel'||c.cls!==11||!c.profile||spellId(p)===0?1:0);
   replace(0x77e370,'int',['pointer'],'thiscall',()=>1);replace(0x787ce0,'void',['pointer','pointer'],'thiscall',()=>{});
   replace(0x724790,'pointer',['pointer','pointer','pointer'],'thiscall',()=>known);
   replace(0x725330,'uint8',['pointer','pointer','pointer','uint','uint8'],'thiscall',(p,r)=>+(c.known&&res(r)==='ZRCHIT'));
@@ -98,7 +107,39 @@ rpc.exports.run=function(){
   Interceptor.flush();
   let previousKind=-1;
   for(let i=0;i<__CASES__.length;i++){
-   c=__CASES__[i];e={updates:0,releases:0};mode=c.kind===0?'panel':c.kind===1?'bind':c.kind===2?'helper':'click';
+   c=__CASES__[i];e={updates:0,releases:0,rands:0};mode=c.kind===0?'panel':c.kind===1?'bind':c.kind===2?'helper':c.kind===3?'click':'autopick';
+   if(c.kind===4){
+    if(!autopickReady){autopickReady=true;
+     // Real lists, catalogue lookup, picker table and specialist scan; heap and rand are doubled.
+     names=['ZRCHIT','SPIN260','SPWI101','SPWI102','SPWI402'];names.forEach((s,j)=>ref(master5.add(j*8),s));
+     game.add(0x4bf8).writePointer(master5);game.add(0x4bfc).writeU32(5);
+     replace(0x54a9e0,'uint',['pointer'],'thiscall',p=>notUsable(spellId(p)));
+     replace(0x40b6e0,'void',['pointer','pointer'],'thiscall',(p,s)=>{p.add(4).writeByteArray(s.add(4).readByteArray(0x38));if(p.add(7).readU8()===0xff)p.add(7).writeU8(0);});
+     replace(0x60ceb0,'void',['pointer','uint','pointer'],'thiscall',(p,n,a)=>{if(n!==7||!a.equals(actor))throw Error('popup');e.updates++;});
+     replace(0x78a970,'pointer',['pointer','pointer'],'thiscall',(p,s)=>{ref(p,s.readPointer().readUtf8String());return p;});
+     replace(0x7fc95b,'pointer',['uint'],'mscdecl',n=>alloc(Math.max(n,1)));replace(0x7fc984,'void',['pointer'],'mscdecl',()=>{});
+     replace(0x7e8160,'int',[],'mscdecl',()=>{e.rands++;return nextRand();});
+     Interceptor.revert(ptr(0x724790));Interceptor.flush();
+     const priority=['SPWI402','ZRCHIT','ZRCHIT','SPIN260','SPWI101','SPWI102'],picker=alloc(9*6*4);
+     for(let y=0;y<6;y++)for(let x=0;x<9;x++)picker.add((y*9+x)*4).writePointer(string(priority[y]));
+     game.add(0x1870).writePointer(picker);game.add(0x1874).writePointer(string('0'));game.add(0x1878).writeS16(9);game.add(0x187a).writeS16(6);
+     const node=alloc(12);node.add(8).writePointer(panel);creator.add(0x53e).writePointer(node);panel.add(0x20).writeU32(7);
+    }
+    for(let j=0;j<5;j++)entries.add(j*8).writeU32(j);
+    for(let cl=0;cl<7;cl++)for(let l=0;l<9;l++){const p=game.add(0x4c18+cl*0x4c+l*8);p.writePointer(entries);p.add(4).writeU32(5);}
+    actor.writeByteArray(new Uint8Array(0x9e00));actor.add(0x80c).writeU32(c.spec>>>0);actor.add(0x3e3e).writeU8(c.cls);
+    const cls=alloc(1),lvl=alloc(4),max=alloc(4),zero=alloc(4),r=alloc(8);cls.writeU8(c.cls);lvl.writeU32(0);max.writeU32(5);zero.writeU32(0);
+    for(let j=0;j<c.known;j++){ref(r,names[c.known===2?j+1:0]);if(addKnown(actor,cls,lvl,r,max,zero,zero)!==1)throw Error('known setup');}
+    buttons.forEach((p,j)=>{p.add(0x66a).writeS32(0);p.add(0x646).writeS32(j>=2&&j<7?1:0);ref(p.add(0x676),j>=2&&j<7?names[j-2]:'');});
+    creator.add(0x4e2).writeS32(77);creator.add(0x4ee).writeS32(c.extra);creator.add(0x14a2).writeU8(9);creator.add(0x14a3).writeU8(c.level);
+    seed=1;autopick(creator);const next=nextRand();
+    if(e.updates!==1||e.releases!==1)throw Error('autopick cleanup');
+    const group=actor.add(0x4284+clsIndex(c.cls)*0x100),first=lists(group),second=lists(group.add(0x1c));
+    const selected=buttons.reduce((v,p,j)=>v|(j>=2&&j<=25&&p.add(0x66a).readS32()?1<<j:0),0)>>>0;
+    const packed=second.entries.reduce((v,x,j)=>v+x[0]*Math.pow(16,j),0);
+    events.push({op:'spell-selection-result',case:i,kind:4,budget:creator.add(0x4ee).readS32(),selected,next,entries:first.entries,totals:[creator.add(0x14a2).readU8(),second.entries.length,packed]});
+    continue;
+   }
    if(c.kind!==previousKind&&c.kind===1){Interceptor.revert(setPatch);Interceptor.flush();ref(buttons[0].add(0x676),'');ref(buttons[0].add(0x66e),'');buttons[0].add(0x3e).writeS32(-999);}previousKind=c.kind;
    if(c.kind===1){const r=alloc(8);ref(r,c.ref);bind(buttons[0],r.readU32(),r.add(4).readU32());events.push({op:'spell-selection-result',case:i,kind:1,spell:res(buttons[0].add(0x676)),icon:res(buttons[0].add(0x66e)),tooltip:buttons[0].add(0x3e).readS32()});continue;}
    actor.writeByteArray(new Uint8Array(0x9e00));actor.add(0x80c).writeU32((c.spec||0)>>>0);
@@ -135,10 +176,11 @@ def header(inputs,events):
            'struct SpellSelectionGolden { INT kind,cls,spec,level,count,profile,known,extra,selected; INT budget,result; DWORD enabled; const char* spells[30]; const char *spell,*icon; INT tooltip; UINT entryCount,entries[4][4],totals[3],highest; };',
            'static const SpellSelectionGolden SPELL_SELECTION_CASES[] = {']
     for c,e in zip(inputs,events):
-        vals=[c.get(k,0) for k in ['kind','cls','spec','level','count','profile','known','extra','selected']]+[e.get('budget',0),e.get('result',0)]
+        autopick=c['kind']==4
+        vals=[c.get(k,0) for k in ['kind','cls','spec','level','count','profile','known','extra','selected']]+[e.get('budget',0),e.get('next' if autopick else 'result',0)]
         quoted=lambda s:json.dumps(s)
         entries='{'+','.join('{'+','.join(map(str,r))+'}' for r in e.get('entries',[]))+'}'
-        lines.append('    {'+','.join(map(str,vals))+','+str(e.get('enabled',0))+'u,{'+','.join(map(quoted,e.get('spells',[])))+'},'+quoted(e.get('spell',c.get('ref','')))+','+quoted(e.get('icon',''))+','+str(e.get('tooltip',0))+','+str(len(e.get('entries',[])))+','+entries+',{'+','.join(map(str,e.get('totals',[0,0,0])))+'},'+str(e.get('highest',0))+'},')
+        lines.append('    {'+','.join(map(str,vals))+','+str(e.get('selected' if autopick else 'enabled',0))+'u,{'+','.join(map(quoted,e.get('spells',[])))+'},'+quoted(e.get('spell',c.get('ref','')))+','+quoted(e.get('icon',''))+','+str(e.get('tooltip',0))+','+str(len(e.get('entries',[])))+','+entries+',{'+','.join(map(str,e.get('totals',[0,0,0])))+'},'+str(e.get('highest',0))+'},')
     return '\n'.join(lines+['};','#endif',''])
 
 

@@ -55,6 +55,7 @@ void SpellSelectionChecks(INT nStep)
         INT previousKind=-1;
         for (const auto& row : SPELL_SELECTION_CASES) {
             ++index;
+            if (row.kind==4) continue; // Replayed by the auto-pick fixture below.
             if (row.kind==1) {
                 if (previousKind!=1) { button->field_676=""; button->field_66E=""; button->m_nToolTipStrRef=-999; }
                 button->SetSpell(CResRef(row.spell));
@@ -84,7 +85,7 @@ void SpellSelectionChecks(INT nStep)
                 Emit("{\"op\":\"spell-selection-result\",\"case\":%d,\"kind\":2,\"result\":%d}",index,result); continue;
             }
             screen.m_nClass=cls; screen.field_1776=static_cast<BYTE>(row.kind==3?1:row.level); screen.m_nSpecialization=row.spec;
-            headers[0].notUsableBy=0x4000; headers[1].notUsableBy=row.kind==0 && row.profile?0:0x4000;
+            headers[0].notUsableBy=0; headers[1].notUsableBy=row.kind==0 && row.profile?0x4000:0;
             UINT classIndex=game->GetSpellcasterIndex(cls);
             if (row.kind==0) {
                 if (row.known) { CGameSpriteSpellListEntry entry={0,1,1,0};
@@ -157,66 +158,53 @@ void SpellSelectionChecks(INT nStep)
                 create.m_nGameSprite=id; auto* spellPanel=create.m_cUIManager.GetPanel(7); create.m_lPopupStack.AddTail(spellPanel);
                 auto* autoButton=dynamic_cast<CUIControlButtonCharGen61A130*>(spellPanel->GetControl(30));
                 check("autopick-actual-control-present",autoButton!=NULL);
-                struct PickCase { BYTE cls; DWORD spec; INT budget; BYTE tiers; INT known; INT count; UINT ids[4]; INT rng; };
-                const PickCase cases[]={
-                    {2,0,2,1,0,2,{0,1},41},
-                    {10,0,2,1,1,3,{0,1,2},41},
-                    {2,0,0,1,0,0,{},41},
-                    {11,SPECMASK_WIZARD_ABJURER,2,1,0,2,{3,0},18467},
-                    {11,SPECMASK_WIZARD_ABJURER,0,1,2,2,{1,3},18467},
-                    {11,SPECMASK_WIZARD_ABJURER,1,1,1,2,{0,2},41},
-                    {2,0,2,2,0,2,{0,1},41},
-                };
-                for (const auto& row:cases) {
+                for (INT i=0;i<static_cast<INT>(_countof(SPELL_SELECTION_CASES));++i) {
+                    const auto& row=SPELL_SELECTION_CASES[i];
+                    if (row.kind!=4) continue;
+                    index=i; BYTE rowClass=static_cast<BYTE>(row.cls);
                     actor->m_baseStats=base; actor->m_baseStats.m_specialization=row.spec;
-                    actor->m_typeAI=type; actor->m_typeAI.m_nClass=row.cls; actor->m_typeAI.m_nClassMask=game->GetClassMask(row.cls);
+                    actor->m_typeAI=type; actor->m_typeAI.m_nClass=rowClass; actor->m_typeAI.m_nClassMask=game->GetClassMask(rowClass);
                     actor->m_startTypeAI=actor->m_liveTypeAI=actor->m_typeAI;
-                    memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_nClassLevels[row.cls-1]=5;
+                    memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_nClassLevels[rowClass-1]=5;
                     actor->m_derivedStats.m_nLevel=5; actor->m_derivedStats.m_nCHR=18;
-                    actor->m_derivedStats.m_classMask=game->GetClassMask(row.cls);
+                    actor->m_derivedStats.m_classMask=game->GetClassMask(rowClass);
                     for (auto& group:actor->m_spells.m_spellsByClass) {
                         group.Clear(); group.m_nHighestLevel=0;
                         for (auto& list:group.m_lists) list.m_nSharedCurrent=list.m_nSharedMax=list.m_nSharedTotal=0;
                     }
                     patchPick(0,0); patchPick(1,row.spec?SPECMASK_WIZARD_ABJURER:0); patchPick(2,0); patchPick(3,0);
                     for (INT j=0;j<row.known;++j) {
-                        UINT known=row.known==2?j+1:0; actor->AddKnownSpell(row.cls,0,picks[known],5,0,0);
+                        UINT known=row.known==2?j+1:0; actor->AddKnownSpell(rowClass,0,picks[known],5,0,0);
                     }
                     for (DWORD j=2;j<=25;++j) {
                         auto* slot=static_cast<CUIControlButtonCharGenKnownArcaneSpellSelection*>(spellPanel->GetControl(j));
                         slot->SetSelected(FALSE); slot->SetEnabled(j<7); slot->m_spellResRef=j<7?picks[j-2]:CResRef("");
                     }
-                    create.m_nExtraSpells=row.budget; create.m_nSpellLevel=9; create.field_14A3=row.tiers;
+                    create.m_nExtraSpells=row.extra; create.m_nSpellLevel=9; create.field_14A3=static_cast<BYTE>(row.level);
                     INT before[3][2]; for (INT j=0;j<3;++j) { before[j][0]=guards[j].pRes->GetDemands(); before[j][1]=guards[j].pRes->m_nLockCount; }
                     srand(1); if (autoButton) autoButton->OnLButtonClick(CPoint(0,0)); INT next=rand();
                     BOOL balanced=TRUE;
                     for (INT j=0;j<3;++j) balanced=balanced && guards[j].pRes->GetDemands()==before[j][0] && guards[j].pRes->m_nLockCount==before[j][1];
                     check("autopick-spell-resources-balanced",balanced);
-                    auto* list=actor->GetSpellsAtLevel(row.cls,0);
-                    UINT got[4]={9,9,9,9};
-                    for (UINT j=0;j<4 && j<list->m_List.size();++j) got[j]=list->m_List[j].m_nID;
-                    Emit("{\"op\":\"autopick-result\",\"cls\":%d,\"spec\":%u,\"known\":%d,\"count\":%u,\"ids\":[%u,%u,%u,%u],\"extra\":%d,\"level\":%d,\"next\":%d,\"schools\":[%d,%d,%d,%d]}",
-                        row.cls,row.spec,row.known,static_cast<UINT>(list->m_List.size()),got[0],got[1],got[2],got[3],
-                        create.m_nExtraSpells,create.m_nSpellLevel,next,
-                        guards[0].GetSchool(),guards[1].GetSchool(),guards[2].GetSchool(),extra[0].GetSchool());
-                    BOOL correct=list->m_List.size()==row.count;
-                    for (INT j=0;j<row.count && j<static_cast<INT>(list->m_List.size());++j)
-                        correct=correct && list->m_List[j].m_nID==row.ids[j];
-                    check("autopick-ordered-known-spells-and-budget",correct && create.m_nExtraSpells==(row.known==2?-1:0)
-                        && create.m_nSpellLevel==row.tiers+1);
-                    check("autopick-exact-random-consumption",next==row.rng);
-                    if (row.spec) {
-                        UINT selected=row.known==2?3:row.known==1?2:3;
-                        auto* slot=static_cast<CUIControlButtonCharGenKnownArcaneSpellSelection*>(spellPanel->GetControl(2+selected));
-                        check("autopick-marks-chosen-visible-button",slot->m_bSelected);
-                    }
-                    if (row.tiers==2) {
-                        auto* second=actor->GetSpellsAtLevel(row.cls,1);
-                        check("autopick-next-tier-native-four-spell-budget",second->m_List.size()==4
-                            && second->m_List[0].m_nID==0 && second->m_List[1].m_nID==1
-                            && second->m_List[2].m_nID==2 && second->m_List[3].m_nID==3);
-                    }
-                    check("autopick-popup-refreshes-budget",static_cast<CUIControlLabel*>(spellPanel->GetControl(0x1000001B))->GetText()==(row.known==2?"-1":"0"));
+                    DWORD selected=0;
+                    for (DWORD j=2;j<=25;++j)
+                        if (static_cast<CUIControlButtonCharGenKnownArcaneSpellSelection*>(spellPanel->GetControl(j))->m_bSelected) selected|=1u<<j;
+                    auto* list=actor->GetSpellsAtLevel(rowClass,0); auto* second=actor->GetSpellsAtLevel(rowClass,1);
+                    BOOL same=list->m_List.size()==row.entryCount; CString data;
+                    for (UINT j=0;j<list->m_List.size();++j) { auto& a=list->m_List[j];
+                        same=same && j<4 && a.m_nID==row.entries[j][0] && a.m_nMax==row.entries[j][1] && a.m_nCurrent==row.entries[j][2] && a.m_nShared==row.entries[j][3];
+                        CString value; value.Format(_T("%s[%u,%u,%u,%u]"),j?",":"",a.m_nID,a.m_nMax,a.m_nCurrent,a.m_nShared); data+=value; }
+                    UINT packed=0,scale=1;
+                    for (UINT j=0;j<second->m_List.size();++j,scale*=16) packed+=second->m_List[j].m_nID*scale;
+                    UINT tiers[3]={create.m_nSpellLevel,static_cast<UINT>(second->m_List.size()),packed};
+                    check("canonical-autopick-known-spells-and-budget",same && create.m_nExtraSpells==row.budget
+                        && tiers[0]==row.totals[0] && tiers[1]==row.totals[1] && tiers[2]==row.totals[2]);
+                    check("canonical-autopick-random-consumption",next==row.result);
+                    check("canonical-autopick-selected-buttons",selected==row.enabled);
+                    CString budget; budget.Format(_T("%d"),create.m_nExtraSpells);
+                    check("autopick-popup-refreshes-budget",static_cast<CUIControlLabel*>(spellPanel->GetControl(0x1000001B))->GetText()==budget);
+                    Emit("{\"op\":\"spell-selection-result\",\"case\":%d,\"kind\":4,\"budget\":%d,\"selected\":%u,\"next\":%d,\"entries\":[%s],\"totals\":[%u,%u,%u]}",
+                        index,create.m_nExtraSpells,selected,next,static_cast<LPCTSTR>(data),tiers[0],tiers[1],tiers[2]);
                 }
                 {
                     INT demands0=guards[0].pRes->GetDemands(),locks0=guards[0].pRes->m_nLockCount;
@@ -298,7 +286,7 @@ void SpellSelectionChecks(INT nStep)
             for (INT j=0;j<2;++j) {
                 pointers[j]=guards[j].pRes->m_pHeader;
                 auto* file=reinterpret_cast<SPELL_HEADER*>(guards[j].pRes->m_pData); fileCopies[j]=*file;
-                headers[j].notUsableBy=j?0x4000:0; *file=headers[j]; guards[j].pRes->m_pHeader=&headers[j];
+                headers[j].notUsableBy=j?0:0x4000; *file=headers[j]; guards[j].pRes->m_pHeader=&headers[j];
             }
             actor->m_baseStats=base; actor->m_baseStats.m_specialization=SPECMASK_WIZARD_UNIVERSAL;
             actor->m_typeAI=type; actor->m_typeAI.m_nClass=CAIOBJECTTYPE_C_WIZARD;
@@ -401,7 +389,7 @@ void SpellSelectionChecks(INT nStep)
                 *screen.m_pTempDerivedStats=actor->m_derivedStats;
                 screen.m_pTempDerivedStats->m_nClassLevels[cls-1]=screen.m_pTempDerivedStats->m_nLevel=1;
                 for (auto& group : actor->m_spells.m_spellsByClass) group.Clear();
-                entries[0].m_nID=0; headers[0].notUsableBy=0x4000;
+                entries[0].m_nID=0; headers[0].notUsableBy=0;
                 UINT caster=game->GetSpellcasterIndex(cls);
                 game->m_spellsByClass[caster].m_lists[0].m_nCount=game->m_spellsByClass[caster].m_lists[1].m_nCount=1;
                 screen.m_nClass=cls; screen.field_1776=7; screen.field_64C=1; screen.m_nExtraSkillPoints=1;

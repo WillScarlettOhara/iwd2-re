@@ -331,7 +331,7 @@ BOOL CSpell::CheckUsableBy(CGameSprite* pSprite) const
     }
 
     if ((dwClassMask & CLASSMASK_SORCERER) != 0
-        && (dwNotUsableBy & 0x80000000) == 0) {
+        && (dwNotUsableBy & 0x20000000) == 0) {
         return TRUE;
     }
 
@@ -377,7 +377,7 @@ BOOL CSpell::CheckUsableBy(CGameSprite* pSprite) const
                 : FALSE;
         }
 
-        return (dwNotUsableBy & 0x4000) != 0;
+        return (dwNotUsableBy & 0x4000) == 0;
     }
 
     if ((dwNotUsableBy & 0x0) == 0) {
