@@ -3286,13 +3286,8 @@ void CScreenCreateChar::UpdateMemorizeArcaneSpellsPanel(CUIPanel* pPanel, CGameS
         // __LINE__: 4781
         UTIL_ASSERT(pButton != NULL);
 
-        // NOTE: Implementation is different. Original code has many inlined
-        // stuff which is likely impossible to replicate one to one.
         while (nIndex < nSpells) {
-            // TODO: Unclear.
-            pSpells->CheckF8(nIndex);
-
-            UINT nID = pSpells->m_List[nIndex].m_nID;
+            UINT nID = pSpells->Get(nIndex)->m_nID;
             resRef = g_pBaldurChitin->GetObjectGame()->m_spells.Get(nID);
 
             CSpell cSpell;
@@ -9773,7 +9768,7 @@ void CUIControlButtonCharGenMemorizedArcaneSpellSelection::OnLButtonClick(CPoint
     } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
     if (rc == CGameObjectArray::SUCCESS) {
-        CDerivedStats& DStats = *pSprite->GetDerivedStats();
+        INT nExtraSpells = pCreateChar->m_nExtraSpells;
         CAIObjectType& typeAI = pSprite->m_startTypeAI;
 
         CSpell cSpell;
@@ -9790,11 +9785,7 @@ void CUIControlButtonCharGenMemorizedArcaneSpellSelection::OnLButtonClick(CPoint
         if (nButtonIndex < pList->m_List.size()) {
             UINT nID = pList->Get(nButtonIndex)->m_nID;
 
-            // NOTE: Original code is an unreadable mess consisting mostly of
-            // inlined functions.
-            //
-            // TODO: The code looks unsafe as checking for resref is the only
-            // way to stop this loop.
+            // Filtering can move this button past its original list index.
             while (m_spellResRef != g_pBaldurChitin->GetObjectGame()->m_spells.Get(nID)) {
                 nButtonIndex++;
                 nID = pList->Get(nButtonIndex)->m_nID;
@@ -9802,14 +9793,14 @@ void CUIControlButtonCharGenMemorizedArcaneSpellSelection::OnLButtonClick(CPoint
 
             if (m_bSelected) {
                 pSprite->GetSpells(typeAI.m_nClass)->Remove(nID, 0, 0, 1, 0);
-                pCreateChar->m_nExtraSpells++;
+                pCreateChar->m_nExtraSpells = nExtraSpells + 1;
                 SetSelected(FALSE);
             } else {
-                if (pCreateChar->m_nExtraSpells > 0
+                if (nExtraSpells > 0
                     && cSpell.pRes != NULL
                     && cSpell.CheckUsableBy(pSprite) == TRUE) {
                     pSprite->GetSpells(typeAI.m_nClass)->Add(nID, 0, 1, 0, 0);
-                    pCreateChar->m_nExtraSpells--;
+                    pCreateChar->m_nExtraSpells = nExtraSpells - 1;
                     SetSelected(TRUE);
                 }
             }
@@ -9856,8 +9847,8 @@ BOOL CUIControlButtonCharGenMemorizedArcaneSpellSelection::Render(BOOL bForce)
             m_size,
             rClip,
             m_iconResRef,
-            m_pPanel->m_pManager->m_bDoubleSize,
-            m_bEnabled ? 0x1 : 0,
+            m_bEnabled ? FALSE : TRUE,
+            0,
             0,
             FALSE,
             0,
@@ -9865,7 +9856,7 @@ BOOL CUIControlButtonCharGenMemorizedArcaneSpellSelection::Render(BOOL bForce)
             0);
     }
 
-    return TRUE;
+    return FALSE;
 }
 
 // -----------------------------------------------------------------------------
@@ -9937,15 +9928,14 @@ void CUIControlButtonCharGenMemorizedDivineSpellSelection::OnLButtonClick(CPoint
     } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
     if (rc == CGameObjectArray::SUCCESS) {
+        INT nExtraSpells = pCreateChar->m_nExtraSpells;
         BOOLEAN bPickingDomainSpells = pCreateChar->m_bPickingDomainSpells;
         UINT nButtonIndex = m_nID - 2;
-        STRREF strDescription;
+        STRREF strDescription = -1;
         CResRef resRef;
         CAIObjectType& typeAI = pSprite->m_startTypeAI;
 
-        // FIXME: This is a **copy**. Obviously this should be a pointer or
-        // reference, since there is no need for a copy. I bet they simply
-        // forgot to add a star.
+        // The native handler takes an owned copy before updating the live list.
         CGameSpriteSpellList spells = bPickingDomainSpells
             ? pSprite->m_domainSpells.m_lists[0]
             : *pSprite->GetSpellsAtLevel(pSprite->GetAIType().m_nClass, 0);
@@ -9971,16 +9961,16 @@ void CUIControlButtonCharGenMemorizedDivineSpellSelection::OnLButtonClick(CPoint
                 } else {
                     pSprite->GetSpells(typeAI.m_nClass)->Remove(nID, 0, 0, 1, 0);
                 }
-                pCreateChar->m_nExtraSpells++;
+                pCreateChar->m_nExtraSpells = nExtraSpells + 1;
                 SetSelected(FALSE);
             } else {
-                if (pCreateChar->m_nExtraSpells > 0) {
+                if (nExtraSpells > 0) {
                     if (bPickingDomainSpells) {
                         pSprite->AddDomainSpell(0, resRef, 1, 0, 0);
                     } else {
                         pSprite->GetSpells(typeAI.m_nClass)->Add(nID, 0, 1, 0, 0);
                     }
-                    pCreateChar->m_nExtraSpells--;
+                    pCreateChar->m_nExtraSpells = nExtraSpells - 1;
                     SetSelected(TRUE);
                 }
             }
@@ -10027,8 +10017,8 @@ BOOL CUIControlButtonCharGenMemorizedDivineSpellSelection::Render(BOOL bForce)
             m_size,
             rClip,
             m_iconResRef,
-            m_pPanel->m_pManager->m_bDoubleSize,
-            m_bEnabled ? 0x1 : 0,
+            m_bEnabled ? FALSE : TRUE,
+            0,
             0,
             FALSE,
             0,

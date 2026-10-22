@@ -22,6 +22,7 @@ void SpellSelectionChecks(INT nStep)
         if (!ok) Emit("{\"step\":%d,\"op\":\"spell-selection-case\",\"row\":%d,\"case\":\"%s\",\"passed\":false}",nStep,index,name); };
     auto base=actor->m_baseStats; CDerivedStats derived,temp; derived=actor->m_derivedStats; temp=actor->m_tempStats;
     auto type=actor->m_typeAI,start=actor->m_startTypeAI,live=actor->m_liveTypeAI; auto spells=actor->m_spells;
+    auto domains=actor->m_domainSpells;
     auto* oldRefs=game->m_spells.m_pList; UINT oldCount=game->m_spells.m_nCount;
     CResRef refs[]={CResRef("ZRCHIT"),CResRef("SPIN260"),CResRef("")}; CSpellListEntry entries[255]={};
     CSpellListEntry* oldData[7][9]; UINT oldCounts[7][9];
@@ -289,6 +290,97 @@ void SpellSelectionChecks(INT nStep)
             }
             if (res) res->CancelRequest(); // Retire the guard loader's extra request.
         }
+        {
+            auto* oldCreate=g_pBaldurChitin->m_pEngineCreateChar;
+            CScreenCreateChar create; g_pBaldurChitin->m_pEngineCreateChar=&create;
+            create.m_cUIManager.fInit(&create,CResRef("GUICG"),g_pBaldurChitin->m_bUseNewGui); create.m_nGameSprite=id;
+            SPELL_HEADER copies[2]={headers[0],headers[1]},fileCopies[2]; SPELL_HEADER* pointers[2];
+            for (INT j=0;j<2;++j) {
+                pointers[j]=guards[j].pRes->m_pHeader;
+                auto* file=reinterpret_cast<SPELL_HEADER*>(guards[j].pRes->m_pData); fileCopies[j]=*file;
+                headers[j].notUsableBy=j?0x4000:0; *file=headers[j]; guards[j].pRes->m_pHeader=&headers[j];
+            }
+            actor->m_baseStats=base; actor->m_baseStats.m_specialization=SPECMASK_WIZARD_UNIVERSAL;
+            actor->m_typeAI=type; actor->m_typeAI.m_nClass=CAIOBJECTTYPE_C_WIZARD;
+            actor->m_typeAI.m_nClassMask=game->GetClassMask(CAIOBJECTTYPE_C_WIZARD);
+            actor->m_startTypeAI=actor->m_liveTypeAI=actor->m_typeAI;
+            for (auto& group:actor->m_spells.m_spellsByClass) group.Clear();
+            actor->GetSpells(CAIOBJECTTYPE_C_WIZARD)->m_nHighestLevel=1;
+            auto* known=actor->GetSpellsAtLevel(CAIOBJECTTYPE_C_WIZARD,0);
+            known->m_List.push_back(CGameSpriteSpellListEntry{0,3,2,0}); known->m_List.push_back(CGameSpriteSpellListEntry{1,3,1,0});
+            create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(16)); create.m_nSpellLevel=9; create.m_nExtraSpells=1;
+            auto* arcane=static_cast<CUIControlButtonCharGenMemorizedArcaneSpellSelection*>(create.GetTopPopup()->GetControl(2));
+            arcane->SetSelected(FALSE); create.UpdatePopupPanel(16,actor);
+            check("memorize-arcane-filters-to-real-known-index",arcane->m_spellResRef==refs[1] && arcane->m_bEnabled
+                && !static_cast<CUIControlButton*>(create.GetTopPopup()->GetControl(3))->m_bEnabled);
+            arcane->OnLButtonClick(CPoint(0,0));
+            check("memorize-arcane-adds-filtered-spell",known->m_List.size()==2 && known->m_List[0].m_nMax==3
+                && known->m_List[1].m_nMax==4 && known->m_List[1].m_nCurrent==1 && arcane->m_bSelected && create.m_nExtraSpells==0);
+            arcane->OnLButtonClick(CPoint(0,0));
+            check("memorize-arcane-removes-without-forgetting",known->m_List.size()==2 && known->m_List[1].m_nMax==3
+                && known->m_List[1].m_nCurrent==1 && !arcane->m_bSelected && create.m_nExtraSpells==1);
+            create.m_nExtraSpells=0; arcane->OnLButtonClick(CPoint(0,0));
+            check("memorize-arcane-exhausted-budget",known->m_List[1].m_nMax==3 && !arcane->m_bSelected && create.m_nExtraSpells==0);
+            auto* unused=static_cast<CUIControlButtonCharGenMemorizedArcaneSpellSelection*>(create.GetTopPopup()->GetControl(13));
+            unused->OnLButtonClick(CPoint(0,0)); check("memorize-arcane-outside-list",create.m_nExtraSpells==0 && known->m_List.size()==2);
+            create.m_lPopupStack.RemoveAll(); create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(17));
+            actor->m_typeAI.m_nClass=CAIOBJECTTYPE_C_CLERIC; actor->m_typeAI.m_nClassMask=game->GetClassMask(CAIOBJECTTYPE_C_CLERIC);
+            actor->m_startTypeAI=actor->m_liveTypeAI=actor->m_typeAI;
+            actor->m_derivedStats.m_nClassLevels[CAIOBJECTTYPE_C_CLERIC-1]=1;
+            actor->m_derivedStats.m_classMask=game->GetClassMask(CAIOBJECTTYPE_C_CLERIC);
+            auto* divine=static_cast<CUIControlButtonCharGenMemorizedDivineSpellSelection*>(create.GetTopPopup()->GetControl(2));
+            for (INT mode=0;mode<3;++mode) {
+                create.m_bPickingDomainSpells=mode!=0;
+                actor->GetSpells(CAIOBJECTTYPE_C_CLERIC)->Clear(); actor->m_domainSpells.Clear();
+                auto* group=mode?&actor->m_domainSpells:actor->GetSpells(CAIOBJECTTYPE_C_CLERIC);
+                group->m_nHighestLevel=1; auto& list=group->m_lists[0];
+                list.m_List.push_back(CGameSpriteSpellListEntry{mode==2?2u:0u,3,1,0});
+                create.m_nExtraSpells=1; divine->SetSelected(FALSE); create.UpdatePopupPanel(17,actor);
+                // Unlike the arcane handler, the native divine handler uses the list index.
+                divine->m_spellResRef=refs[1]; divine->OnLButtonClick(CPoint(0,0));
+                check("memorize-divine-and-domain-add-live-list",list.m_List.size()==1 && list.m_List[0].m_nMax==4
+                    && list.m_List[0].m_nCurrent==1 && divine->m_bSelected && create.m_nExtraSpells==0);
+                auto* help=static_cast<CUIControlTextDisplay*>(create.GetTopPopup()->GetControl(27)); CString description;
+                if (!help->m_plstStrings->IsEmpty()) help->GetString(0,description);
+                if (mode==2) check("memorize-empty-domain-description-is-empty",description.IsEmpty());
+                divine->OnLButtonClick(CPoint(0,0));
+                check("memorize-divine-and-domain-remove-live-list",list.m_List.size()==1 && list.m_List[0].m_nMax==3
+                    && list.m_List[0].m_nCurrent==1 && !divine->m_bSelected && create.m_nExtraSpells==1);
+                create.m_nExtraSpells=0; divine->OnLButtonClick(CPoint(0,0));
+                check("memorize-divine-and-domain-exhausted-budget",list.m_List[0].m_nMax==3 && !divine->m_bSelected && create.m_nExtraSpells==0);
+                check("memorize-done-refreshes",static_cast<CUIControlButton*>(create.GetTopPopup()->GetControl(0))->m_bEnabled);
+            }
+            // Both renderers use the enabled state as the native icon-size argument, with no tint flags.
+            patch=CRect(24,24,176,176); std::vector<BYTE> savedMemoPixels;
+            BOOL memoBacked=pixels(&savedMemoPixels,NULL,FALSE); check("memorize-pixels-backed-up",memoBacked);
+            auto render=[&](auto* slot,BOOL isArcane) {
+                slot->SetSpell(CResRef("SPWI101")); slot->m_pPanel->m_ptOrigin=CPoint(64,64); slot->m_ptOrigin=CPoint(0,0);
+                struct RenderCase { BOOL enabled,pressed,clipped,doubled; };
+                const RenderCase cases[]={{TRUE,FALSE,FALSE,FALSE},{FALSE,FALSE,FALSE,FALSE},{TRUE,TRUE,TRUE,TRUE},{FALSE,TRUE,TRUE,TRUE}};
+                for (const auto& row:cases) {
+                    slot->m_pPanel->m_pManager->m_bDoubleSize=row.doubled; slot->SetEnabled(row.enabled);
+                    slot->m_bActive=TRUE; slot->m_bPressed=row.pressed;
+                    CRect frame(slot->m_pPanel->m_ptOrigin+slot->m_ptOrigin,slot->m_size);
+                    if (row.pressed) frame.OffsetRect(slot->field_63E,slot->field_642);
+                    slot->m_rDirty=frame; if (row.clipped) slot->m_rDirty.right=frame.left+slot->m_size.cx/2;
+                    std::vector<BYTE> expected,actual,background; BOOL ok=memoBacked && pixels(NULL,NULL,TRUE);
+                    slot->m_nRenderCount=1; BOOL baseResult=slot->CUIControlButton3State::Render(TRUE); ok=pixels(&background,NULL,FALSE) && ok;
+                    if (baseResult) { CRect clip; clip.IntersectRect(frame,slot->m_rDirty);
+                        CIcon::RenderIcon(0,frame.TopLeft(),slot->m_size,clip,slot->m_iconResRef,!row.enabled,0,0,FALSE,0,FALSE,0); }
+                    ok=pixels(&expected,NULL,TRUE) && ok; slot->m_nRenderCount=1; BOOL result=slot->Render(TRUE);
+                    ok=pixels(&actual,NULL,FALSE) && ok;
+                    check("memorize-software-render-and-native-return",ok && baseResult && result==!isArcane && expected==actual);
+                    if (!row.clipped) check("memorize-icon-visible",background!=expected);
+                }
+                slot->m_bActive=FALSE; slot->m_bInactiveRender=FALSE; check("memorize-inactive-render-rejected",!slot->Render(TRUE));
+                slot->m_bActive=TRUE; slot->m_nRenderCount=0; check("memorize-clean-render-rejected",!slot->Render(FALSE));
+            };
+            render(arcane,TRUE); render(divine,FALSE);
+            check("memorize-pixels-restored",memoBacked && pixels(NULL,&savedMemoPixels,FALSE));
+            create.m_lPopupStack.RemoveAll(); g_pBaldurChitin->m_pEngineCreateChar=oldCreate;
+            for (INT j=0;j<2;++j) { headers[j]=copies[j]; *reinterpret_cast<SPELL_HEADER*>(guards[j].pRes->m_pData)=fileCopies[j];
+                guards[j].pRes->m_pHeader=pointers[j]; }
+        }
         // Continue a real Done sequence across skills, feats and two spell tiers.
         {
             auto allow=actor->m_bAllowEffectListCall; auto dirty=actor->field_562C; auto deferred=actor->field_72A2;
@@ -340,7 +432,7 @@ void SpellSelectionChecks(INT nStep)
     if (hadToken) tlk.SetToken(CScreenCharacter::TOKEN_NUMBER,oldToken); else tlk.m_mapTokens.RemoveKey(CScreenCharacter::TOKEN_NUMBER);
     for (INT c=0;c<7;++c) for (INT l=0;l<9;++l) { auto& list=game->m_spellsByClass[c].m_lists[l]; list.m_pList=oldData[c][l]; list.m_nCount=oldCounts[c][l]; }
     game->m_spells.m_pList=oldRefs; game->m_spells.m_nCount=oldCount;
-    actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp; actor->m_spells=spells;
+    actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp; actor->m_spells=spells; actor->m_domainSpells=domains;
     actor->m_typeAI=type; actor->m_startTypeAI=start; actor->m_liveTypeAI=live;
     for (INT i=0;i<2;++i) if (guardFile[i]) *guardFile[i]=guardSaved[i];
     for (INT i=0;i<3;++i) { if (i<2) guards[i].pRes->m_pHeader=oldHeaders[i];
