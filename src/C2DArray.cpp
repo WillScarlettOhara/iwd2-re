@@ -297,7 +297,7 @@ BOOLEAN C2DArray::Find(CString& sSearchString, CPoint& ptLocation) const
     sString.MakeUpper();
 
     for (SHORT y = 0; y < m_nSizeY; y++) {
-        if (m_pNamesY->Compare(sString) == 0) {
+        if (m_pNamesY[y].CompareNoCase(sString) == 0) {
             ptLocation.x = -1;
             ptLocation.y = y;
             return TRUE;

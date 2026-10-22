@@ -27,6 +27,7 @@ public:
     BOOL Release();
     BOOL ReleaseAll();
     void SetResRef(const CResRef& cNewResRef, BOOL bSetAutoRequest);
+    void RandomizeUseCount(CString& sResRef); /*#guess: descriptive name*/
     INT GetAbilityCount();
     WORD GetUsageCount(INT nAbility);
     WORD GetMaxUsageCount(INT nAbility);

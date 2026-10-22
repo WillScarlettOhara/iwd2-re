@@ -146,6 +146,7 @@
 //   hitpointchecks              replay native HP/RNG calculations and creation caller.
 //   allocationchecks            replay skills/feats resets and signed ability limits.
 //   spellselectionchecks        replay spell-panel choices and real selection controls.
+//   itemcreationchecks          replay random treasure rows, grade upgrades and charge rolls.
 //   characterkeychecks          replay character-screen virtual keyboard routing.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
@@ -1760,6 +1761,7 @@ struct MasterPaletteFixture {
 #include "HitPointsChecks.h"
 #include "AllocationChecks.h"
 #include "SpellSelectionChecks.h"
+#include "ItemCreationChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5656,6 +5658,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "spellselectionchecks") == 0) {
         SpellSelectionChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "itemcreationchecks") == 0) {
+        ItemCreationChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

@@ -275,6 +275,10 @@ const CString CRuleTables::RT_NORM("RT_NORM");
 // 0x8DEF14
 const CString CRuleTables::RT_FURY("RT_FURY");
 
+// #guess
+// 0x8DE8C8
+const CString CRuleTables::ITEM_GRADES("lmrvvvvv");
+
 // 0x8DF234
 const CString CRuleTables::INTERACTION_DIALOG("INTERDIA");
 
@@ -3429,10 +3433,100 @@ const C2DArray* CRuleTables::GetClassAbilityTable(BYTE nClass, DWORD nSpecialist
     UTIL_ASSERT_MSG(FALSE, "GetClassAbilityTable Being  called incorrectly");
 }
 
-// 0x5463E0
-void CRuleTables::GetRandomItem(CString& sResRef) const
+// 0x5461E0
+CString CRuleTables::GetUpgradedItem(const CString& sItem, const CString& sUpgrade) const
 {
-    // TODO: Incomplete.
+    CString sResult(sItem);
+
+    if (sItem.GetLength() > 2
+        && sItem[sItem.GetLength() - 2] == '_'
+        && sUpgrade.GetLength() > 1
+        && tolower(sUpgrade[0]) == 'u'
+        && tolower(sUpgrade[1]) == 'p') {
+        INT nGrade = ITEM_GRADES.Find(static_cast<TCHAR>(tolower(sItem[sItem.GetLength() - 1])));
+        if (nGrade >= 0) {
+            INT nStep;
+            switch (tolower(sUpgrade[sUpgrade.GetLength() - 1])) {
+            case 'p':
+                if (sUpgrade.GetLength() > 2) {
+                    return sResult;
+                }
+                // FALLTHROUGH
+            case '1':
+                nStep = 1;
+                break;
+            case '2':
+                nStep = 2;
+                break;
+            case '3':
+                nStep = 3;
+                break;
+            default:
+                return sResult;
+            }
+
+            // NOTE: The grade index is not bounds checked; the trailing 'v's
+            // keep every three-step upgrade inside the string.
+            TCHAR chGrade = static_cast<LPCTSTR>(ITEM_GRADES)[nGrade + nStep];
+            if (sItem[sItem.GetLength() - 1] != chGrade) {
+                sResult = sItem.Left(sItem.GetLength() - 1);
+                sResult += chGrade;
+            }
+        }
+    }
+
+    return sResult;
+}
+
+// 0x5463E0
+BOOL CRuleTables::GetRandomItem(CString& sResRef) const
+{
+    CString sKey(sResRef);
+
+    const C2DArray* pTable = &m_tRtNorm;
+    if (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nNightmareMode == 1) {
+        pTable = &m_tRtFury;
+    }
+
+    CPoint ptLocation;
+    if (pTable->Find(sKey, ptLocation) != TRUE || ptLocation.x != -1) {
+        return FALSE;
+    }
+
+    // NOTE: The count is the index of the last usable column, so the last
+    // entry of a row is never picked and a single entry consumes no rand().
+    INT nCount = 0;
+    for (INT nColumn = 0; nColumn < pTable->GetWidth(); nColumn++) {
+        CString sCell = pTable->GetAt(CPoint(nColumn, ptLocation.y));
+        if (sCell.GetLength() == 0 || sCell.CompareNoCase("*") == 0) {
+            break;
+        }
+        nCount = nColumn;
+    }
+
+    INT nPick = nCount != 0 ? rand() % nCount : 0;
+    CString sPick = pTable->GetAt(CPoint(nPick, ptLocation.y));
+
+    if (sPick.GetLength() > 1
+        && tolower(sPick[0]) == 'u'
+        && tolower(sPick[1]) == 'p') {
+        CString sUpgraded = GetUpgradedItem(sKey, sPick);
+        if (sUpgraded.CompareNoCase(sResRef) == 0) {
+            sResRef = "no_drop";
+        } else {
+            GetRandomItem(sUpgraded);
+            sResRef = sUpgraded;
+        }
+        return TRUE;
+    }
+
+    sResRef = sPick;
+    if (sResRef.CompareNoCase("") == 0) {
+        return FALSE;
+    }
+
+    GetRandomItem(sResRef);
+    return TRUE;
 }
 
 // 0x546680

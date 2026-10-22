@@ -93,6 +93,7 @@ public:
     static const CString CHARACTER_SOUNDS;
     static const CString RT_NORM;
     static const CString RT_FURY;
+    static const CString ITEM_GRADES;
     static const CString INTERACTION_DIALOG;
     static const CString INTELLIGENCE_MODIFIERS;
     static const CString DONATE_RUMOR;
@@ -440,7 +441,8 @@ public:
     INT GetLoadingHint(INT nHintNumber) const;
     INT GetNumLoadingHints() const;
     const C2DArray* GetClassAbilityTable(BYTE nClass, DWORD nSpecialist) const;
-    void GetRandomItem(CString& sResRef) const;
+    CString GetUpgradedItem(const CString& sItem, const CString& sUpgrade) const; /*#guess: descriptive name*/
+    BOOL GetRandomItem(CString& sResRef) const;
     STRREF GetSpeechStringRef(CString& sSoundSet, INT nSpeech) const;
     BOOLEAN IsHatedRace(const CAIObjectType& typeAI, const CCreatureFileHeader& BStats) const;
     BOOLEAN IsHatedRace(BYTE& nRace, const CCreatureFileHeader& BStats) const;

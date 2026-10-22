@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/item-creation.txt",
+  "hold": 20,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Run only the typed item creation checks: RT_NORM/RT_FURY row picks, grade upgrades, CItem constructor re-rolls and charge randomization.",
+    "Never save the disposable process; restore save, config and fixture paths transactionally."
+  ]
+}

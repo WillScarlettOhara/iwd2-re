@@ -214,17 +214,43 @@ CItem::CItem()
 // 0x4E7900
 CItem::CItem(const CItem& item)
 {
-    m_flags = 0;
     m_nAbilities = 0;
-    m_numSounds = 0;
-    m_wear = 0;
-    m_useCount1 = 0;
-    m_useCount2 = 0;
-    m_useCount3 = 0;
+    m_useCount1 = item.m_useCount1;
+    m_useCount2 = item.m_useCount2;
+    m_useCount3 = item.m_useCount3;
+    m_numSounds = item.m_numSounds;
+    m_wear = item.m_wear;
+    m_flags = item.m_flags;
 
-    *this = item;
+    CResRef resRef;
+    resRef = item.GetResRef();
+
+    CString sResRef;
+    resRef.CopyToString(sResRef);
+
+    // A copied item is re-rolled like a newly created one.
+    RandomizeUseCount(sResRef);
+    g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetRandomItem(sResRef);
+
+    if (sResRef.CompareNoCase("no_drop") == 0) {
+        sResRef = "";
+    }
+
+    if (sResRef.CompareNoCase("MISC07") == 0) {
+        if (m_useCount1 == 0) {
+            m_useCount1 = 1;
+        } else if (m_useCount2 != 0) {
+            m_useCount1 = static_cast<WORD>(m_useCount1 + rand() % m_useCount2);
+        }
+        m_useCount2 = 0;
+    }
+
+    SetResRef(CResRef(sResRef), TRUE);
+
+    // NOTE: Uninline.
     GetAbilityCount();
 
+    // NOTE: Uninline.
     if (GetLoreValue() == 0) {
         m_flags |= 0x1;
     }
@@ -244,7 +270,10 @@ CItem::CItem(const CCreatureFileItem& item)
     m_useCount2 = item.m_usageCount[1];
     m_useCount3 = item.m_usageCount[2];
 
-    if (sResRef.CompareNoCase("NO_DROP") == 0) {
+    RandomizeUseCount(sResRef);
+    g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetRandomItem(sResRef);
+
+    if (sResRef.CompareNoCase("no_drop") == 0) {
         sResRef = "";
     }
 
@@ -291,7 +320,10 @@ CItem::CItem(CResRef id, WORD useCount1, WORD useCount2, WORD useCount3, int wea
     m_useCount2 = useCount2;
     m_useCount3 = useCount3;
 
-    if (sResRef.CompareNoCase("NO_DROP") == 0) {
+    RandomizeUseCount(sResRef);
+    g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetRandomItem(sResRef);
+
+    if (sResRef.CompareNoCase("no_drop") == 0) {
         sResRef = "";
     }
 
@@ -1366,6 +1398,32 @@ BYTE CItem::GetMinCHRRequired()
     }
 
     return nValue;
+}
+
+// 0x4EA4A0
+void CItem::RandomizeUseCount(CString& sResRef)
+{
+    if (sResRef.GetLength() == 7 && strncmp(sResRef.GetBuffer(1), "00RIITM", 7) == 0) {
+        // NOTE: Byte 7 of a seven-character name is its terminator, so this
+        // digit test always fails and 00RIITM names are never randomized.
+        TCHAR chDigit = static_cast<LPCTSTR>(sResRef)[7];
+        if (chDigit < '1' || chDigit > '9') {
+            return;
+        }
+    } else if (sResRef.GetLength() != 8 || strncmp(sResRef.GetBuffer(1), "00RTAVE1", 8) != 0) {
+        return;
+    }
+
+    if (m_useCount1 == 0) {
+        m_useCount2 = 0;
+        m_useCount1 = 1;
+        return;
+    }
+
+    if (m_useCount2 != 0) {
+        m_useCount1 = static_cast<WORD>(rand() % m_useCount2 + m_useCount1);
+    }
+    m_useCount2 = 0;
 }
 
 // 0x4EA580
