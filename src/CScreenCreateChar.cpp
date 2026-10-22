@@ -1665,7 +1665,8 @@ void CScreenCreateChar::ResetMemorizeArcaneSpellsPanel(CUIPanel* pPanel, CGameSp
         for (nLevel = 0; nLevel < CSPELLLIST_MAX_LEVELS; nLevel++) {
             if (typeAI.m_nClass == CAIOBJECTTYPE_C_BARD
                 || typeAI.m_nClass == CAIOBJECTTYPE_C_SORCERER) {
-                nMaxKnownSpellsBase = ruleTables.GetMaxKnownSpells(typeAI.m_nClass,
+                BYTE nClass = g_pBaldurChitin->GetObjectGame()->GetSpellcasterClass(nClassIndex);
+                nMaxKnownSpellsBase = ruleTables.GetMaxKnownSpells(nClass,
                     typeAI,
                     DStats,
                     pSprite->GetSpecialization(),
@@ -1802,7 +1803,7 @@ void CScreenCreateChar::ResetMemorizeDivineSpellsPanel(CUIPanel* pPanel, CGameSp
     pSprite->AddKnownDivineSpells(CAIOBJECTTYPE_C_PALADIN);
     pSprite->AddKnownDivineSpells(CAIOBJECTTYPE_C_RANGER);
 
-    INT nMaxKnownSpellsBonus;
+    INT nMaxKnownSpellsBonus = 0;
     UINT nMaxKnownSpellsBase = ruleTables.GetMaxKnownSpells(pSprite->m_startTypeAI.m_nClass,
         pSprite->m_startTypeAI,
         *pSprite->GetDerivedStats(),
@@ -1853,8 +1854,15 @@ void CScreenCreateChar::ResetMemorizeDomainSpellsPanel(CUIPanel* pPanel, CGameSp
         }
     }
 
-    // NOTE: Uninline.
-    pSprite->m_domainSpells.Clear();
+    for (UINT nLevel = 0; nLevel < CSPELLLIST_MAX_LEVELS; nLevel++) {
+        CGameSpriteSpellList* pList = pSprite->m_domainSpells.GetSpellsAtLevel(nLevel);
+        if (!pList->m_List.empty()) {
+            pList->Clear();
+            pList->m_nSharedMax = 0;
+            pList->m_nSharedTotal = 0;
+        }
+    }
+    pSprite->m_domainSpells.m_nHighestLevel = 0;
 
     DWORD dwClericSpecialization = pSprite->GetSpecialization() & SPECMASK_CLERIC;
     UINT nDomainIndex = g_pBaldurChitin->GetObjectGame()->GetSpellcasterDomainIndex(dwClericSpecialization);

@@ -341,6 +341,86 @@ void SpellSelectionChecks(INT nStep)
                 check("chargen-summary-spell-resources-balanced",balanced);
                 clear(); game->m_spells.m_pList=refs; game->m_spells.m_nCount=3;
             }
+            {
+                auto allow=actor->m_bAllowEffectListCall; auto dirty=actor->field_562C; auto deferred=actor->field_72A2;
+                actor->m_bAllowEffectListCall=FALSE; actor->field_72A2=0;
+                BeginLevelUpTableFixture bard(rules.m_tMaxSpellsBard,9,1),sorc(rules.m_tMaxSpellsSorcerer,9,1),
+                    cleric(rules.m_tMaxSpellsCleric,9,1),wizard(rules.m_tMaxSpellsWizard,9,1);
+                INT tableIndex=0;
+                for (auto* table:{&bard,&sorc,&cleric,&wizard}) {
+                    const INT values[]={3,6,2,4}; table->y[0]="5";
+                    for (INT level=0;level<9;++level) { table->x[level].Format(_T("%d"),level+1); table->cells[level].Format(_T("%d"),values[tableIndex]); }
+                    ++tableIndex;
+                }
+                UINT savedCounts[7][9];
+                for (INT c=0;c<7;++c) for (INT l=0;l<9;++l) { savedCounts[c][l]=game->m_spellsByClass[c].m_lists[l].m_nCount;
+                    game->m_spellsByClass[c].m_lists[l].m_nCount=0; }
+                auto seed=[&](BYTE cls) {
+                    actor->m_baseStats=base; actor->m_baseStats.m_specialization=SPECMASK_WIZARD_UNIVERSAL;
+                    actor->m_typeAI=type; actor->m_typeAI.m_nClass=cls;
+                    actor->m_typeAI.m_nClassMask=CLASSMASK_BARD|CLASSMASK_CLERIC|CLASSMASK_SORCERER|CLASSMASK_WIZARD;
+                    actor->m_startTypeAI=actor->m_liveTypeAI=actor->m_typeAI;
+                    memset(actor->m_derivedStats.m_nClassLevels,0,11);
+                    for (BYTE c:{BYTE(2),BYTE(3),BYTE(10),BYTE(11)}) actor->m_derivedStats.m_nClassLevels[c-1]=5;
+                    actor->m_derivedStats.m_nLevel=20; actor->m_derivedStats.m_classMask=actor->m_typeAI.m_nClassMask;
+                    actor->m_derivedStats.m_nINT=actor->m_derivedStats.m_nWIS=actor->m_derivedStats.m_nCHR=18;
+                    for (auto& group:actor->m_spells.m_spellsByClass) {
+                        group.Clear(); group.m_nHighestLevel=9;
+                        for (UINT l=0;l<9;++l) { auto& list=group.m_lists[l]; list.m_nSharedMax=55; list.m_nSharedTotal=56;
+                            list.m_nSharedCurrent=l==0 || l==8?3:21;
+                            if (l==0 || l==8) { list.m_List.push_back(CGameSpriteSpellListEntry{0,3,1,0}); list.m_List.push_back(CGameSpriteSpellListEntry{1,4,2,0}); }
+                        }
+                    }
+                    create.m_nSpellLevel=3; create.m_nExtraSpells=-7;
+                };
+                auto ui=[&](UINT panel,STRREF title,STRREF help) {
+                    CUIPanel* p=create.m_cUIManager.GetPanel(panel); BOOL unselected=TRUE;
+                    for (DWORD button=2;button<=13;++button) unselected=unselected && !static_cast<CUIControlButton3State*>(p->GetControl(button))->m_bSelected;
+                    CString token,number,caption; tlk.m_mapTokens.Lookup(CScreenCreateChar::TOKEN_NUMBER,token); number.Format(_T("%d"),create.m_nExtraSpells);
+                    caption.Format(_T("%s: %s 3"),create.FetchString(title).GetString(),create.FetchString(7192).GetString());
+                    auto* text=static_cast<CUIControlTextDisplay*>(p->GetControl(27)); CString shown; POSITION pos=text->m_plstStrings->GetHeadPosition();
+                    while (pos) shown+=" "+text->m_plstStrings->GetNext(pos)->m_sString;
+                    auto normalized=[](CString value) { value.Replace(_T("\r"),_T("")); value.Replace(_T("\n"),_T(" "));
+                        while (value.Find(_T("  "))!=-1) value.Replace(_T("  "),_T(" ")); value.Trim(); return value; };
+                    check("memorize-reset-ui-budget-selection-and-help",unselected && token==number
+                        && static_cast<CUIControlLabel*>(p->GetControl(0x10000000))->GetText()==caption && normalized(shown)==normalized(create.FetchString(help)));
+                };
+                for (BYTE cls:{BYTE(2),BYTE(10),BYTE(11)}) {
+                    seed(cls); for (DWORD button=2;button<=13;++button) static_cast<CUIControlButton3State*>(create.m_cUIManager.GetPanel(16)->GetControl(button))->SetSelected(TRUE);
+                    create.ResetPopupPanel(16,actor); BOOL correct=TRUE; const UINT quotas[]={5,4,0,0,0,8,6};
+                    for (UINT c=0;c<7;++c) for (UINT l=0;l<9;++l) { auto& list=actor->m_spells.m_spellsByClass[c].m_lists[l];
+                        correct=correct && list.m_nSharedMax==(cls==11?0:quotas[c]) && list.m_nSharedTotal==0;
+                        if (l==0 || l==8) correct=correct && list.m_List.size()==2 && list.m_List[0].m_nCurrent==0 && list.m_List[1].m_nCurrent==0
+                            && list.m_List[0].m_nMax==3 && list.m_List[1].m_nMax==4 && list.m_nSharedCurrent==0;
+                    }
+                    check("memorize-reset-arcane-per-class-quotas-and-current-counts",correct && create.m_nExtraSpells==2);
+                    ui(16,17189,17253);
+                }
+                seed(3); create.m_bPickingDomainSpells=FALSE; create.ResetPopupPanel(17,actor); BOOL divineReset=TRUE;
+                for (auto& group:actor->m_spells.m_spellsByClass) for (UINT l=0;l<9;++l) { auto& list=group.m_lists[l];
+                    divineReset=divineReset && list.m_nSharedMax==0 && list.m_nSharedTotal==0;
+                    if (l==0 || l==8) divineReset=divineReset && list.m_List.size()==2 && list.m_List[0].m_nMax==2 && list.m_List[1].m_nMax==3
+                        && list.m_List[0].m_nCurrent==0 && list.m_List[1].m_nCurrent==0;
+                }
+                check("memorize-reset-divine-keeps-known-entries",divineReset && create.m_nExtraSpells==2); ui(17,17224,17254);
+                auto& domain=actor->m_domainSpells; domain.Clear(); domain.m_nHighestLevel=9;
+                domain.m_lists[0].m_List.push_back(CGameSpriteSpellListEntry{0,3,1,0}); domain.m_lists[8].m_List.push_back(CGameSpriteSpellListEntry{1,4,2,0});
+                domain.m_lists[0].m_nSharedCurrent=7; domain.m_lists[8].m_nSharedCurrent=17;
+                for (UINT l:{0u,4u,8u}) { domain.m_lists[l].m_nSharedMax=91; domain.m_lists[l].m_nSharedTotal=92; }
+                auto& catalog=game->m_spellsByDomain[1].m_lists[0]; auto* oldDomain=catalog.m_pList; UINT oldDomainCount=catalog.m_nCount;
+                entries[0].m_nID=0; entries[1].m_nID=1; catalog.m_pList=entries; catalog.m_nCount=2;
+                actor->m_baseStats.m_specialization=SPECMASK_CLERIC_LATHANDER; create.m_bPickingDomainSpells=TRUE; create.ResetPopupPanel(17,actor);
+                check("memorize-reset-domain-rebuilds-and-clears-nonempty-caches",domain.m_nHighestLevel==1 && domain.m_lists[0].m_List.size()==2
+                    && domain.m_lists[0].m_List[0].m_nID==0 && domain.m_lists[0].m_List[1].m_nID==1
+                    && domain.m_lists[0].m_nSharedMax==0 && domain.m_lists[0].m_nSharedTotal==0
+                    && domain.m_lists[8].m_List.empty() && domain.m_lists[8].m_nSharedMax==0 && domain.m_lists[8].m_nSharedTotal==0);
+                check("memorize-reset-domain-preserves-empty-caches-and-native-level-zero-subtraction",domain.m_lists[4].m_nSharedMax==91
+                    && domain.m_lists[4].m_nSharedTotal==92 && domain.m_lists[0].m_nSharedCurrent==6 && domain.m_lists[8].m_nSharedCurrent==17);
+                ui(17,39848,39852); catalog.m_pList=oldDomain; catalog.m_nCount=oldDomainCount;
+                check("memorize-reset-requests-deferred-effects",actor->field_562C==1 && actor->field_72A2==4);
+                actor->m_bAllowEffectListCall=allow; actor->field_562C=dirty; actor->field_72A2=deferred;
+                for (INT c=0;c<7;++c) for (INT l=0;l<9;++l) game->m_spellsByClass[c].m_lists[l].m_nCount=savedCounts[c][l];
+            }
             SPELL_HEADER copies[2]={headers[0],headers[1]},fileCopies[2]; SPELL_HEADER* pointers[2];
             for (INT j=0;j<2;++j) {
                 pointers[j]=guards[j].pRes->m_pHeader;
