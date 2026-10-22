@@ -7709,10 +7709,9 @@ void CUIControlButtonCharGenKnownArcaneSpellSelection::SetSpell(CResRef cResRef)
                 m_iconResRef.CopyToString(sIconResRef);
                 sIconResRef.SetAt(sIconResRef.GetLength() - 1, 'B');
                 m_iconResRef = sIconResRef;
-
-                SetToolTipStrRef(cSpell.GetGenericName(), -1, -1);
             }
 
+            SetToolTipStrRef(cSpell.GetGenericName(), -1, -1);
             cSpell.Release();
         } else {
             SetToolTipStrRef(-1, -1, -1);
@@ -7738,6 +7737,7 @@ void CUIControlButtonCharGenKnownArcaneSpellSelection::OnLButtonClick(CPoint pt)
     } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
     if (rc == CGameObjectArray::SUCCESS) {
+        INT nExtraSpells = pCreateChar->m_nExtraSpells;
         CDerivedStats& DStats = *pSprite->GetDerivedStats();
         CAIObjectType& typeAI = pSprite->m_startTypeAI;
 
@@ -7763,14 +7763,14 @@ void CUIControlButtonCharGenKnownArcaneSpellSelection::OnLButtonClick(CPoint pt)
 
         if (m_bSelected) {
             SetSelected(FALSE);
-            pCreateChar->m_nExtraSpells++;
+            pCreateChar->m_nExtraSpells = nExtraSpells + 1;
             pSprite->RemoveKnownSpell(typeAI.m_nClass, 0, m_spellResRef, 1, 0, 0);
         } else {
-            if (pCreateChar->m_nExtraSpells > 0
+            if (nExtraSpells > 0
                 && cSpell.pRes != NULL
                 && cSpell.CheckUsableBy(pSprite) == TRUE) {
                 SetSelected(TRUE);
-                pCreateChar->m_nExtraSpells--;
+                pCreateChar->m_nExtraSpells = nExtraSpells - 1;
                 pSprite->AddKnownSpell(typeAI.m_nClass, 0, m_spellResRef, nMaxKnownSpells, 0, 0);
             }
         }
@@ -7817,7 +7817,7 @@ BOOL CUIControlButtonCharGenKnownArcaneSpellSelection::Render(BOOL bForce)
             rClip,
             m_iconResRef,
             m_pPanel->m_pManager->m_bDoubleSize,
-            m_bEnabled ? 0x1 : 0,
+            m_bEnabled ? 0 : 0x1,
             0,
             FALSE,
             0,

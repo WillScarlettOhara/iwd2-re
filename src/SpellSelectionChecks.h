@@ -467,6 +467,51 @@ void SpellSelectionChecks(INT nStep)
                 auto* file=reinterpret_cast<SPELL_HEADER*>(guards[j].pRes->m_pData); fileCopies[j]=*file;
                 headers[j].notUsableBy=j?0:0x4000; *file=headers[j]; guards[j].pRes->m_pHeader=&headers[j];
             }
+            auto* knownSlot=static_cast<CUIControlButtonCharGenKnownArcaneSpellSelection*>(create.m_cUIManager.GetPanel(7)->GetControl(2));
+            knownSlot->SetSpell(CResRef("")); knownSlot->SetSpell(refs[1]);
+            check("chargen-known-binding-icon-and-tooltip",knownSlot->m_iconResRef==CResRef("GUIBTNB") && knownSlot->m_nToolTipStrRef==10454);
+            knownSlot->m_nToolTipStrRef=-99; knownSlot->SetSpell(refs[1]);
+            check("chargen-known-unchanged-binding-keeps-tooltip",knownSlot->m_nToolTipStrRef==-99);
+            knownSlot->SetSpell(CResRef("ZRNOSPL"));
+            check("chargen-known-missing-resource-clears-stale-tooltip",knownSlot->m_iconResRef==CResRef("") && knownSlot->m_nToolTipStrRef==0);
+            knownSlot->SetSpell(CResRef(""));
+            check("chargen-known-empty-binding-clears-tooltip",knownSlot->m_nToolTipStrRef==-1);
+            create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(7));
+            for (BYTE cls:{BYTE(2),BYTE(10),BYTE(11)}) {
+                actor->m_baseStats=base; actor->m_baseStats.m_specialization=SPECMASK_WIZARD_UNIVERSAL;
+                actor->m_typeAI=type; actor->m_typeAI.m_nClass=cls; actor->m_typeAI.m_nClassMask=game->GetClassMask(cls);
+                actor->m_startTypeAI=actor->m_liveTypeAI=actor->m_typeAI;
+                memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_nClassLevels[cls-1]=5;
+                actor->m_derivedStats.m_classMask=actor->m_typeAI.m_nClassMask;
+                actor->m_derivedStats.m_nCHR=actor->m_derivedStats.m_nINT=18;
+                actor->GetSpells(cls)->Clear(); auto* list=actor->GetSpellsAtLevel(cls,0);
+                auto& catalog=game->m_spellsByClass[game->GetSpellcasterIndex(cls)].m_lists[0]; UINT savedCount=catalog.m_nCount;
+                catalog.m_nCount=2; entries[0].m_nID=0; entries[1].m_nID=1;
+                create.m_nSpellLevel=1; create.m_nExtraSpells=1;
+                for (DWORD button=2;button<=25;++button) static_cast<CUIControlButton3State*>(create.GetTopPopup()->GetControl(button))->SetSelected(FALSE);
+                create.UpdatePopupPanel(7,actor);
+                auto* slot=static_cast<CUIControlButtonCharGenKnownArcaneSpellSelection*>(create.GetTopPopup()->GetControl(cls==11?2:3));
+                auto* after=static_cast<CUIControlButtonCharGenKnownArcaneSpellSelection*>(create.GetTopPopup()->GetControl(cls==11?3:4));
+                check("chargen-known-list-filters-usability",slot->m_spellResRef==refs[1] && slot->m_bEnabled && !after->m_bEnabled && after->m_spellResRef==CResRef(""));
+                slot->OnLButtonClick(CPoint(0,0));
+                check("chargen-known-click-adds-class-quota",list->m_List.size()==1 && list->m_List[0].m_nID==1
+                    && list->m_List[0].m_nMax==(cls==11?0u:5u) && list->m_List[0].m_nCurrent==0
+                    && slot->m_bSelected && create.m_nExtraSpells==0);
+                check("chargen-known-done-and-autopick-refresh",static_cast<CUIControlButton*>(create.GetTopPopup()->GetControl(0))->m_bEnabled
+                    && !static_cast<CUIControlButton*>(create.GetTopPopup()->GetControl(30))->m_bEnabled);
+                slot->OnLButtonClick(CPoint(0,0));
+                check("chargen-known-click-forgets-and-refunds",list->m_List.empty() && !slot->m_bSelected && create.m_nExtraSpells==1);
+                create.m_nExtraSpells=0; slot->OnLButtonClick(CPoint(0,0));
+                check("chargen-known-click-exhausted-budget",list->m_List.empty() && !slot->m_bSelected && create.m_nExtraSpells==0);
+                create.m_nExtraSpells=1; slot->SetSpell(CResRef("")); slot->OnLButtonClick(CPoint(0,0));
+                check("chargen-known-click-empty-resource",list->m_List.empty() && create.m_nExtraSpells==1);
+                if (cls==11) {
+                    slot->SetSpell(refs[0]); slot->OnLButtonClick(CPoint(0,0));
+                    check("chargen-known-click-rejects-unusable",list->m_List.empty() && !slot->m_bSelected && create.m_nExtraSpells==1);
+                }
+                catalog.m_nCount=savedCount;
+            }
+            create.m_lPopupStack.RemoveAll();
             actor->m_baseStats=base; actor->m_baseStats.m_specialization=SPECMASK_WIZARD_UNIVERSAL;
             actor->m_typeAI=type; actor->m_typeAI.m_nClass=CAIOBJECTTYPE_C_WIZARD;
             actor->m_typeAI.m_nClassMask=game->GetClassMask(CAIOBJECTTYPE_C_WIZARD);
@@ -517,10 +562,10 @@ void SpellSelectionChecks(INT nStep)
                 check("memorize-divine-and-domain-exhausted-budget",list.m_List[0].m_nMax==3 && !divine->m_bSelected && create.m_nExtraSpells==0);
                 check("memorize-done-refreshes",static_cast<CUIControlButton*>(create.GetTopPopup()->GetControl(0))->m_bEnabled);
             }
-            // Both renderers use the enabled state as the native icon-size argument, with no tint flags.
+            // Memorization uses enabled state as icon size; known spells use UI scale and disabled tint.
             patch=CRect(24,24,176,176); std::vector<BYTE> savedMemoPixels;
             BOOL memoBacked=pixels(&savedMemoPixels,NULL,FALSE); check("memorize-pixels-backed-up",memoBacked);
-            auto render=[&](auto* slot,BOOL isArcane) {
+            auto render=[&](auto* slot,BOOL isArcane,BOOL isKnown=FALSE) {
                 slot->SetSpell(CResRef("SPWI101")); slot->m_pPanel->m_ptOrigin=CPoint(64,64); slot->m_ptOrigin=CPoint(0,0);
                 struct RenderCase { BOOL enabled,pressed,clipped,doubled; };
                 const RenderCase cases[]={{TRUE,FALSE,FALSE,FALSE},{FALSE,FALSE,FALSE,FALSE},{TRUE,TRUE,TRUE,TRUE},{FALSE,TRUE,TRUE,TRUE}};
@@ -533,16 +578,17 @@ void SpellSelectionChecks(INT nStep)
                     std::vector<BYTE> expected,actual,background; BOOL ok=memoBacked && pixels(NULL,NULL,TRUE);
                     slot->m_nRenderCount=1; BOOL baseResult=slot->CUIControlButton3State::Render(TRUE); ok=pixels(&background,NULL,FALSE) && ok;
                     if (baseResult) { CRect clip; clip.IntersectRect(frame,slot->m_rDirty);
-                        CIcon::RenderIcon(0,frame.TopLeft(),slot->m_size,clip,slot->m_iconResRef,!row.enabled,0,0,FALSE,0,FALSE,0); }
+                        CIcon::RenderIcon(0,frame.TopLeft(),slot->m_size,clip,slot->m_iconResRef,
+                            isKnown?row.doubled:!row.enabled,isKnown && !row.enabled?1:0,0,FALSE,0,FALSE,0); }
                     ok=pixels(&expected,NULL,TRUE) && ok; slot->m_nRenderCount=1; BOOL result=slot->Render(TRUE);
                     ok=pixels(&actual,NULL,FALSE) && ok;
-                    check("memorize-software-render-and-native-return",ok && baseResult && result==!isArcane && expected==actual);
+                    check("spell-slot-software-render-and-native-return",ok && baseResult && result==(isKnown || !isArcane) && expected==actual);
                     if (!row.clipped) check("memorize-icon-visible",background!=expected);
                 }
                 slot->m_bActive=FALSE; slot->m_bInactiveRender=FALSE; check("memorize-inactive-render-rejected",!slot->Render(TRUE));
                 slot->m_bActive=TRUE; slot->m_nRenderCount=0; check("memorize-clean-render-rejected",!slot->Render(FALSE));
             };
-            render(arcane,TRUE); render(divine,FALSE);
+            render(arcane,TRUE); render(divine,FALSE); render(knownSlot,FALSE,TRUE);
             check("memorize-pixels-restored",memoBacked && pixels(NULL,&savedMemoPixels,FALSE));
             create.m_lPopupStack.RemoveAll(); g_pBaldurChitin->m_pEngineCreateChar=oldCreate;
             for (INT j=0;j<2;++j) { headers[j]=copies[j]; *reinterpret_cast<SPELL_HEADER*>(guards[j].pRes->m_pData)=fileCopies[j];
