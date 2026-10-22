@@ -37,6 +37,13 @@ when the current task needs them; do not reload all documentation on each `go`.
 4. Validate with `arc batch` and an existing suitable scenario/profile. Keep its
    gates and save restoration intact. Build once and prove the changed path ran.
    Add a small targeted check when existing coverage cannot observe the change.
+   Use the smallest scenario covering the changed behavior and its immediate
+   dependencies. For chargen spells, use `scripts/profiles/chargen-spells.json`.
+   Do not automatically append every new check to `combat-messages.txt` or rerun
+   its full integration suite for a local UI change. Keep new checks in their
+   focused domain; split an oversized fixture when it prevents focused coverage.
+   Run the full combat suite for changes affecting shared combat behavior,
+   cross-domain integration, a suspected regression or an explicit milestone.
    Use paired original/reconstruction captures for uncertain rules/RNG/ownership
    or an actual equivalence claim; otherwise say what remains unproven.
 5. Inspect the compact verdict; open detailed output only to diagnose a finding.
@@ -62,7 +69,8 @@ On Linux use `.venv-reagent/bin/python` and the existing `scripts/vm.sh` route.
 | Batch context | `scripts/reagent_assemble_context.py --address 0xA --address 0xB --out tmp_context.md` |
 | ASM, bytes, vtable, crash | `scripts/sym.py --help` then its relevant subcommand |
 | BG2 names/layout | `scripts/bg2_find.py NAME` |
-| Recovery gate | `scripts/arc.py batch 0xA 0xB --profile scripts/profiles/combat-messages.json` |
+| Focused recovery gate (chargen spells) | `scripts/arc.py batch 0xA 0xB --profile scripts/profiles/chargen-spells.json` |
+| Combat integration gate | `scripts/arc.py batch 0xA 0xB --profile scripts/profiles/combat-messages.json` |
 | Logs for one failed gate | `scripts/arc.py explain STEP --run RUN_ID` |
 | Build / scenario / processes | `scripts/native.py build`, `smoke`, `status`, `ps`, `kill ours` |
 | Next candidates | `scripts/arc.py targets --near CLASS --top 10` |
