@@ -282,6 +282,24 @@ void SpellSelectionChecks(INT nStep)
             auto* oldCreate=g_pBaldurChitin->m_pEngineCreateChar;
             CScreenCreateChar create; g_pBaldurChitin->m_pEngineCreateChar=&create;
             create.m_cUIManager.fInit(&create,CResRef("GUICG"),g_pBaldurChitin->m_bUseNewGui); create.m_nGameSprite=id;
+            for (INT side=0;side<4;++side) create.m_cUIManager.AddPanel(&g_pBaldurChitin->m_aBorderPanels[side]);
+            actor->m_baseStats=base; actor->m_startTypeAI=start;
+            for (auto& group:actor->m_spells.m_spellsByClass) group.Clear();
+            actor->m_domainSpells.Clear();
+            for (INT step:{7,8}) {
+                create.m_pPortraits=new CStringList;
+                create.m_pPortraits->AddTail(CResRef(base.m_portraitLarge).GetResRefStr());
+                create.m_pPortraits->AddTail(CResRef(base.m_portraitSmall).GetResRefStr());
+                create.m_nPortraitSmallIndex=1; create.m_nPortraitLargeIndex=0; create.m_nCurrentStep=step;
+                create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(14));
+                create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(18));
+                create.OnDoneButtonClick();
+                check("chargen-done-portraits-retire-list-close-both-and-cap-step",!create.m_pPortraits
+                    && create.m_lPopupStack.IsEmpty() && create.m_nCurrentStep==8
+                    && memcmp(actor->m_baseStats.m_portraitSmall,base.m_portraitSmall,8)==0
+                    && memcmp(actor->m_baseStats.m_portraitLarge,base.m_portraitLarge,8)==0);
+                if (create.m_pPortraits) { delete create.m_pPortraits; create.m_pPortraits=NULL; }
+            }
             {
                 CResRef summaryRefs[]={refs[0],refs[1],CResRef(""),CResRef("ZRMSPL99")};
                 check("chargen-summary-missing-spell-isolated",!g_pChitin->cDimm.m_cKeyTable.FindKey(summaryRefs[3],1006,1));
@@ -458,6 +476,22 @@ void SpellSelectionChecks(INT nStep)
                     && domain.m_lists[4].m_nSharedTotal==92 && domain.m_lists[0].m_nSharedCurrent==6 && domain.m_lists[8].m_nSharedCurrent==17);
                 ui(17,39848,39852); catalog.m_pList=oldDomain; catalog.m_nCount=oldDomainCount;
                 check("memorize-reset-requests-deferred-effects",actor->field_562C==1 && actor->field_72A2==4);
+                seed(11); actor->m_startTypeAI.m_nClassMask=CLASSMASK_WIZARD;
+                create.m_nCurrentStep=6; create.m_nExtraSpells=1; create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(7));
+                create.OnDoneButtonClick();
+                check("chargen-known-done-rejects-unspent-budget",create.GetTopPopup()->m_nID==7 && create.m_nCurrentStep==6);
+                create.m_nExtraSpells=0; create.OnDoneButtonClick();
+                check("chargen-known-done-opens-wizard-memorization",create.GetTopPopup()->m_nID==16
+                    && create.m_lPopupStack.GetCount()==1 && create.m_nCurrentStep==6 && create.m_nExtraSpells==2);
+                create.m_lPopupStack.RemoveAll();
+                seed(3); actor->m_startTypeAI.m_nClassMask=CLASSMASK_CLERIC;
+                actor->m_baseStats.m_specialization=SPECMASK_CLERIC_LATHANDER;
+                catalog.m_pList=entries; catalog.m_nCount=2;
+                create.m_nCurrentStep=6; create.m_nExtraSpells=0; create.m_bPickingDomainSpells=FALSE;
+                create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(17)); create.OnDoneButtonClick();
+                check("chargen-divine-done-opens-domain-before-advancing",create.m_bPickingDomainSpells && create.GetTopPopup()->m_nID==17
+                    && create.m_lPopupStack.GetCount()==1 && create.m_nCurrentStep==6 && create.m_nExtraSpells==1);
+                create.m_lPopupStack.RemoveAll(); catalog.m_pList=oldDomain; catalog.m_nCount=oldDomainCount;
                 actor->m_bAllowEffectListCall=allow; actor->field_562C=dirty; actor->field_72A2=deferred;
                 for (INT c=0;c<7;++c) for (INT l=0;l<9;++l) game->m_spellsByClass[c].m_lists[l].m_nCount=savedCounts[c][l];
             }

@@ -5310,6 +5310,7 @@ void CScreenCreateChar::OnDoneButtonClick()
                     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
                     // __LINE__: 9205
                     UTIL_ASSERT(FALSE);
+                    break;
                 }
 
                 if (m_nCurrentStep < 8) {
@@ -5377,6 +5378,12 @@ void CScreenCreateChar::OnDoneButtonClick()
                 cResRef = m_pPortraits->GetAt(pos);
                 cResRef.GetResRef(pSprite->m_baseStats.m_portraitLarge);
 
+                // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
+                // __LINE__: 9339
+                UTIL_ASSERT(m_pPortraits != NULL);
+                delete m_pPortraits;
+                m_pPortraits = NULL;
+
                 DismissPopup(pSprite);
                 DismissPopup(pSprite);
 
@@ -5401,10 +5408,11 @@ void CScreenCreateChar::OnDoneButtonClick()
                         }
                     }
 
-                    memcpy(pSprite->field_725A, sSound.GetBuffer(sSound.GetLength()), min(sSound.GetLength(), 32));
+                    DWORD nSoundCapacity = sSound.GetAllocLength();
+                    memcpy(pSprite->field_725A, sSound.GetBuffer(static_cast<INT>(nSoundCapacity)), min(nSoundCapacity, 32UL));
 
-                    if (sSound.GetLength() < 32) {
-                        pSprite->field_725A[sSound.GetLength()] = '\0';
+                    if (nSoundCapacity < 32) {
+                        pSprite->field_725A[nSoundCapacity] = '\0';
                     }
 
                     sSoundSetDir = g_pBaldurChitin->GetObjectGame()->GetDirSounds() + sSound + '\\';
@@ -5454,7 +5462,7 @@ void CScreenCreateChar::OnDoneButtonClick()
                 break;
             case 20:
                 if (1) {
-                    g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(m_nGameSprite,
+                    g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(nGameSprite,
                         CGameObjectArray::THREAD_ASYNCH,
                         INFINITE);
 
@@ -5471,9 +5479,10 @@ void CScreenCreateChar::OnDoneButtonClick()
                     delete m_pCharacters;
                     m_pCharacters = NULL;
 
+                    nGameSprite = m_nGameSprite;
                     BYTE rc;
                     do {
-                        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(m_nGameSprite,
+                        rc = g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(nGameSprite,
                             CGameObjectArray::THREAD_ASYNCH,
                             reinterpret_cast<CGameObject**>(&pSprite),
                             INFINITE);

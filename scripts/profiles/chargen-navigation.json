@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/chargen-navigation.txt",
+  "hold": 20,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Exercise chargen spell navigation and import completion using the existing typed fixtures.",
+    "Never save the disposable process; restore save, config and fixture paths transactionally."
+  ]
+}

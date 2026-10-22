@@ -656,6 +656,7 @@ void CancelLevelUpChecks(INT nStep)
                         {
                             CScreenCreateChar preview;
                             preview.m_cUIManager.fInit(&preview,CResRef("GUICG"),g_pBaldurChitin->m_bUseNewGui);
+                            for (INT side=0;side<4;++side) preview.m_cUIManager.AddPanel(&g_pBaldurChitin->m_aBorderPanels[side]);
                             auto* display=static_cast<CUIControlTextDisplay*>(preview.m_cUIManager.GetPanel(20)->GetControl(4));
                             auto* portrait=static_cast<CUIControlButtonCharGenPortrait*>(preview.m_cUIManager.GetPanel(0)->GetControl(12));
                             auto& tlk=g_pBaldurChitin->GetTlkTable(); CString oldClass,oldLevel;
@@ -739,6 +740,62 @@ void CancelLevelUpChecks(INT nStep)
                                 check("character-preview-failure-replaces-old-summary",result.size()==1 && result[0]==error);
                                 check("character-preview-failure-preserves-portrait-and-register",portrait->m_portraitResRef==previousPortrait
                                     && objects->m_nNextObjectId==next && !dimm.m_bTemporaryKeyAdd);
+                            }
+                            {
+                                INT before=handler->m_messageList.GetCount();
+                                LONG initial=game->ImportCharacter("ZRCHRNOB",0x102);
+                                check("chargen-import-done-disposable-source-created",initial!=0);
+                                if (initial!=0) {
+                                    auto provider=network.m_nServiceProvider; network.m_nServiceProvider=CNetwork::SERV_PROV_NULL;
+                                    auto* oldCreate=g_pBaldurChitin->m_pEngineCreateChar; g_pBaldurChitin->m_pEngineCreateChar=&preview;
+                                    preview.m_nGameSprite=initial; preview.m_nCharacterSlot=2; preview.m_nCurrentStep=6;
+                                    preview.m_pCharacters=new CStringList; preview.m_pCharacters->AddTail("ZRCHRNOB"); preview.m_nCharacterIndex=0;
+                                    preview.m_lPopupStack.AddTail(preview.m_cUIManager.GetPanel(20)); preview.OnDoneButtonClick();
+                                    LONG imported=preview.m_nGameSprite; CGameObject* object=NULL;
+                                    check("chargen-import-done-replaces-source-and-retires-list",imported!=0 && imported!=initial
+                                        && !preview.m_pCharacters && preview.m_lPopupStack.IsEmpty());
+                                    if (imported!=0) {
+                                        auto& entry=objects->m_pArray[(imported>>16)&0x7FFF];
+                                        check("chargen-import-done-releases-replacement-deny",entry.m_objectId==static_cast<SHORT>(imported)
+                                            && entry.m_denyCounts[CGameObjectArray::THREAD_ASYNCH]==0);
+                                        BOOL found=objects->GetDeny(imported,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)==CGameObjectArray::SUCCESS;
+                                        check("chargen-import-done-replacement-registered",found);
+                                        if (found) {
+                                            objects->ReleaseDeny(imported,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                                            check("chargen-import-done-replacement-retired",objects->Delete(imported,CGameObjectArray::THREAD_ASYNCH,NULL,INFINITE)==CGameObjectArray::SUCCESS);
+                                            delete static_cast<CGameSprite*>(object);
+                                        }
+                                    }
+                                    preview.m_nGameSprite=CGameObjectArray::INVALID_INDEX;
+                                    g_pBaldurChitin->m_pEngineCreateChar=oldCreate; network.m_nServiceProvider=provider;
+                                }
+                                while (handler->m_messageList.GetCount()>before) delete handler->m_messageList.RemoveTail();
+                                check("chargen-import-done-temporary-key-balanced",!dimm.m_bTemporaryKeyAdd);
+                            }
+                            {
+                                auto* oldCreate=g_pBaldurChitin->m_pEngineCreateChar; g_pBaldurChitin->m_pEngineCreateChar=&preview;
+                                preview.m_nGameSprite=id; STRREF biography=actor->m_baseStats.m_biography; actor->m_baseStats.m_biography=1145;
+                                CString names[]={CString(_T("_IWD2_RE_MISSING_VOICE_")),CString('X',40),CString('X',31)};
+                                char* shortName=names[2].GetBuffer(31); memcpy(shortName,"ZRVOICE",7); names[2].ReleaseBuffer(7);
+                                check("chargen-sound-fixture-retains-capacity",names[2].GetAllocLength()>names[2].GetLength() && names[2].GetAllocLength()<32);
+                                for (const auto& name:names) {
+                                    check("chargen-sound-fixture-directory-absent",GetFileAttributes(game->GetDirSounds()+name)==INVALID_FILE_ATTRIBUTES);
+                                    INT count=directories.GetCount(); DWORD capacity=name.GetAllocLength();
+                                    memset(actor->field_725A,0xA5,32); actor->m_secondarySounds=CResRef("OLD");
+                                    preview.m_pSounds=new CStringList; preview.m_pSounds->AddTail(name); preview.m_nCustomSoundSetIndex=0;
+                                    preview.m_nCurrentStep=7; preview.m_lPopupStack.AddTail(preview.m_cUIManager.GetPanel(19));
+                                    preview.OnDoneButtonClick();
+                                    BOOL copied=memcmp(actor->field_725A,name.GetString(),min(name.GetLength(),32))==0;
+                                    if (capacity<32) {
+                                        copied=copied && actor->field_725A[capacity]==0;
+                                        for (UINT i=capacity+1;i<32;++i) copied=copied && static_cast<BYTE>(actor->field_725A[i])==0xA5;
+                                    }
+                                    check("chargen-sound-done-native-capacity-copy-and-list-retirement",copied && !preview.m_pSounds
+                                        && preview.m_lPopupStack.IsEmpty() && preview.m_nCurrentStep==8 && actor->m_secondarySounds==CResRef("OLD"));
+                                    while (directories.GetCount()>count) directories.RemoveTail();
+                                }
+                                actor->m_baseStats.m_biography=biography; preview.m_nGameSprite=CGameObjectArray::INVALID_INDEX;
+                                g_pBaldurChitin->m_pEngineCreateChar=oldCreate;
                             }
                             if (hadClass) tlk.SetToken(CRuleTables::TOKEN_CLASS,oldClass); else tlk.m_mapTokens.RemoveKey(CRuleTables::TOKEN_CLASS);
                             if (hadLevel) tlk.SetToken(CRuleTables::TOKEN_LEVEL,oldLevel); else tlk.m_mapTokens.RemoveKey(CRuleTables::TOKEN_LEVEL);
