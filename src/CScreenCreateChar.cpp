@@ -4216,8 +4216,7 @@ void CScreenCreateChar::UpdateCharacterStats(CGameSprite* pSprite)
     pSprite->GetDerivedStats()->m_classMask = 0;
     pSprite->GetDerivedStats()->m_nXP = 0;
 
-    // TODO: Incomplete.
-    // DStats = *pSprite->GetDerivedStats();
+    DStats = *pSprite->GetDerivedStats();
 
     ruleTables.GetNextLevel(typeAI.m_nClass, *pSprite->GetDerivedStats(), pSprite);
 
@@ -4252,22 +4251,27 @@ void CScreenCreateChar::UpdateCharacterStats(CGameSprite* pSprite)
     pSprite->GetBaseStats()->m_colors[5] = 30;
     pSprite->GetBaseStats()->m_colors[6] = 0;
 
+    // The asserting defaults fall through to the zero-ID case.
     DWORD genderID;
     switch (typeAI.m_nGender) {
+    default:
+        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
+        // __LINE__: 6653
+        UTIL_ASSERT(FALSE);
     case CAIOBJECTTYPE_SEX_MALE:
         genderID = 0x0;
         break;
     case CAIOBJECTTYPE_SEX_FEMALE:
         genderID = 0x10;
         break;
-    default:
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
-        // __LINE__: 6653
-        UTIL_ASSERT(FALSE);
     }
 
     DWORD raceID;
     switch (typeAI.m_nRace) {
+    default:
+        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
+        // __LINE__: 6686
+        UTIL_ASSERT(FALSE);
     case CAIOBJECTTYPE_R_HUMAN:
         raceID = 0x0;
         break;
@@ -4287,10 +4291,6 @@ void CScreenCreateChar::UpdateCharacterStats(CGameSprite* pSprite)
     case CAIOBJECTTYPE_R_HALF_ORC:
         raceID = 0x5;
         break;
-    default:
-        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
-        // __LINE__: 6686
-        UTIL_ASSERT(FALSE);
     }
 
     DWORD classID;
@@ -4306,10 +4306,6 @@ void CScreenCreateChar::UpdateCharacterStats(CGameSprite* pSprite)
     case CAIOBJECTTYPE_C_ROGUE:
         classID = 0x300;
         break;
-    case CAIOBJECTTYPE_C_CLERIC:
-    case CAIOBJECTTYPE_C_DRUID:
-        classID = 0x000;
-        break;
     case CAIOBJECTTYPE_C_SORCERER:
     case CAIOBJECTTYPE_C_WIZARD:
         classID = 0x200;
@@ -4318,6 +4314,10 @@ void CScreenCreateChar::UpdateCharacterStats(CGameSprite* pSprite)
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
         // __LINE__: 6721
         UTIL_ASSERT(FALSE);
+    case CAIOBJECTTYPE_C_CLERIC:
+    case CAIOBJECTTYPE_C_DRUID:
+        classID = 0x000;
+        break;
     }
 
     USHORT animationID = static_cast<USHORT>(genderID | raceID | classID | 0x6000);
@@ -4356,7 +4356,52 @@ void CScreenCreateChar::UpdateCharacterStats(CGameSprite* pSprite)
     pSprite->GetBaseStats()->m_resistCrushingBase += static_cast<BYTE>(atol(ruleTables.m_tClassRsMd.GetAt(CRuleTables::BLUDGEONING, sClass)));
     pSprite->GetBaseStats()->m_resistPiercingBase += static_cast<BYTE>(atol(ruleTables.m_tClassRsMd.GetAt(CRuleTables::PIERCING, sClass)));
 
-    // TODO: Incomplete (base skills).
+    if (typeAI.m_nClass == CAIOBJECTTYPE_C_CLERIC) {
+        INT nDomain;
+        switch (pSprite->GetSpecialization()) {
+        case SPECMASK_CLERIC_ILMATER:
+            nDomain = 0;
+            break;
+        case SPECMASK_CLERIC_LATHANDER:
+            nDomain = 1;
+            break;
+        case SPECMASK_CLERIC_SELUNE:
+            nDomain = 2;
+            break;
+        case SPECMASK_CLERIC_HELM:
+            nDomain = 3;
+            break;
+        case SPECMASK_CLERIC_OGHMA:
+            nDomain = 4;
+            break;
+        case SPECMASK_CLERIC_TEMPUS:
+            nDomain = 5;
+            break;
+        case SPECMASK_CLERIC_BANE:
+            nDomain = 6;
+            break;
+        case SPECMASK_CLERIC_MASK:
+            nDomain = 7;
+            break;
+        case SPECMASK_CLERIC_TALOS:
+            nDomain = 8;
+            break;
+        default:
+            // NOTE: The binary leaves the domain unset here and reads the
+            // stack slot GetBaseCombatValues filled with its second output.
+            nDomain = v2;
+            break;
+        }
+
+        // Domain skill floors are read from m_tSkills column 15 + domain.
+        for (INT nSkill = 0; nSkill < ruleTables.m_tSkills.GetHeight(); nSkill++) {
+            INT nDomainSkill = atol(ruleTables.m_tSkills.GetAt(CPoint(nDomain + 15, nSkill)));
+            INT nSkillValue = pSprite->GetSkillValue(nSkill);
+            if (nDomainSkill > 0) {
+                pSprite->SetSkillValue(nSkill, max(nSkillValue, nDomainSkill));
+            }
+        }
+    }
 
     UpdateCharacterAppearance();
 }

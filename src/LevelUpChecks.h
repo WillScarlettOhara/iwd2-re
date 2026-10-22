@@ -187,6 +187,38 @@ void LevelUpChecks(INT nStep)
             itemResource->m_pHeader=originalHeader; itemGuard.Release();
         }
     }
+    {
+        // Chargen stats: cleric domain skill floors; an invalid sprite id skips the appearance refresh.
+        CScreenCreateChar create; create.m_nGameSprite=CGameObjectArray::INVALID_INDEX;
+        BeginLevelUpTableFixture skillTable(rules.m_tSkills,24,3);
+        for (auto& cell : skillTable.cells) cell="0";
+        skillTable.cells[0*24+15]="9"; skillTable.cells[0*24+16]="4"; skillTable.cells[1*24+16]="3";
+        struct StatsCase { BYTE cls; DWORD spec; BYTE gender,race; BYTE skills[3]; WORD animation; };
+        const StatsCase statsCases[]={
+            {CAIOBJECTTYPE_C_CLERIC,SPECMASK_CLERIC_LATHANDER,CAIOBJECTTYPE_SEX_MALE,CAIOBJECTTYPE_R_HUMAN,{4,6,0},0x6000},
+            {CAIOBJECTTYPE_C_CLERIC,SPECMASK_CLERIC_ILMATER,CAIOBJECTTYPE_SEX_FEMALE,CAIOBJECTTYPE_R_DWARF,{9,6,0},0x6012},
+            {CAIOBJECTTYPE_C_WIZARD,0,CAIOBJECTTYPE_SEX_MALE,CAIOBJECTTYPE_R_ELF,{1,6,0},0x6201},
+        };
+        for (const auto& row : statsCases) {
+            ++index;
+            actor->m_baseStats=CCreatureFileHeader(); actor->m_baseStats.m_specialization=row.spec;
+            actor->m_baseStats.m_skills[0]=1; actor->m_baseStats.m_skills[1]=6; actor->m_baseStats.m_skills[2]=0;
+            actor->m_derivedStats=empty; actor->m_tempStats=empty;
+            actor->m_typeAI=type; actor->m_typeAI.m_nClass=row.cls; actor->m_typeAI.m_nGender=row.gender;
+            actor->m_typeAI.m_nRace=row.race; actor->m_typeAI.m_nSubRace=0; actor->m_startTypeAI=actor->m_typeAI;
+            actor->field_562C=0;
+            create.UpdateCharacterStats(actor);
+            const auto& stats=actor->m_baseStats;
+            check("chargen-stats-domain-skill-floors",stats.m_skills[0]==row.skills[0] && stats.m_skills[1]==row.skills[1]
+                && stats.m_skills[2]==row.skills[2]);
+            check("chargen-stats-animation-id",static_cast<WORD>(stats.m_animationType)==row.animation && actor->m_animation.m_animation!=NULL);
+            check("chargen-stats-base-levels-copied",stats.m_clericLevel==actor->m_derivedStats.m_clericLevel
+                && stats.m_wizardLevel==actor->m_derivedStats.m_wizardLevel && stats.m_characterLevel==actor->m_derivedStats.m_nLevel);
+            check("chargen-stats-effect-processing-requested",actor->field_562C==1);
+            delete actor->m_animation.m_animation; actor->m_animation.m_animation=NULL;
+            while (handler->m_messageList.GetCount()>messages) delete handler->m_messageList.RemoveTail();
+        }
+    }
     for (INT d=0;d<9;++d) for (INT l=0;l<9;++l) { game->m_spellsByDomain[d].m_lists[l].m_pList=domainData[d][l]; game->m_spellsByDomain[d].m_lists[l].m_nCount=domainCounts[d][l]; }
     for (INT i=0;i<4;++i) { catalogues[i]->m_pList=oldData[i]; catalogues[i]->m_nCount=oldCounts[i]; }
     actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp; actor->m_typeAI=type; actor->m_startTypeAI=start;
