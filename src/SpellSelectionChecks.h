@@ -282,6 +282,65 @@ void SpellSelectionChecks(INT nStep)
             auto* oldCreate=g_pBaldurChitin->m_pEngineCreateChar;
             CScreenCreateChar create; g_pBaldurChitin->m_pEngineCreateChar=&create;
             create.m_cUIManager.fInit(&create,CResRef("GUICG"),g_pBaldurChitin->m_bUseNewGui); create.m_nGameSprite=id;
+            {
+                CResRef summaryRefs[]={refs[0],refs[1],CResRef(""),CResRef("ZRMSPL99")};
+                check("chargen-summary-missing-spell-isolated",!g_pChitin->cDimm.m_cKeyTable.FindKey(summaryRefs[3],1006,1));
+                game->m_spells.m_pList=summaryRefs; game->m_spells.m_nCount=4;
+                auto* text=static_cast<CUIControlTextDisplay*>(create.m_cUIManager.GetPanel(0)->GetControl(9));
+                std::vector<COLORREF> colors;
+                auto rows=[&]() {
+                    std::vector<CString> result; colors.clear(); POSITION pos=text->m_plstStrings->GetHeadPosition();
+                    while (pos) {
+                        auto* line=text->m_plstStrings->GetNext(pos);
+                        if (line->m_nLine==0) { result.push_back(line->m_sString); colors.push_back(line->m_rgbTextColor); }
+                        else if (!result.empty()) result.back()+=" "+line->m_sString;
+                    }
+                    for (auto& row:result) row.Trim(); return result;
+                };
+                auto clear=[&]() { for (auto& group:actor->m_spells.m_spellsByClass) { group.Clear(); group.m_nHighestLevel=0; }
+                    actor->m_domainSpells.Clear(); actor->m_domainSpells.m_nHighestLevel=0; };
+                auto entry=[&](UINT cls,UINT level,UINT spell) {
+                    actor->m_spells.m_spellsByClass[cls].m_lists[level].m_List.push_back(CGameSpriteSpellListEntry{spell,0,0,0});
+                };
+                const STRREF headingIds[]={0x99AD,0x2B14,0x99AE,0x99AF,0x99B0,0x99B1,0x2B13};
+                CString names[]={create.FetchString(guards[0].GetGenericName()),create.FetchString(guards[1].GetGenericName())};
+                for (auto& name:names) name.Trim();
+                INT before[3][2]; for (INT j=0;j<3;++j) { before[j][0]=guards[j].pRes->GetDemands(); before[j][1]=guards[j].pRes->m_nLockCount; }
+                clear(); create.m_nCurrentStep=5; create.UpdateMainPanel(actor); auto early=rows();
+                entry(6,0,0); actor->m_spells.m_spellsByClass[6].m_nHighestLevel=1;
+                create.UpdateMainPanel(actor); check("chargen-summary-before-spell-step",rows()==early);
+                clear(); create.m_nCurrentStep=6; create.UpdateMainPanel(actor); auto prefix=rows(); auto prefixColors=colors;
+                for (UINT cls=0;cls<7;++cls) { actor->m_spells.m_spellsByClass[cls].m_nHighestLevel=1; entry(cls,0,cls%2); }
+                actor->m_spells.m_spellsByClass[1].m_lists[0].m_List.clear(); entry(1,0,2); entry(1,0,3);
+                entry(0,8,1); // The summary scans all nine levels after the group's count gate succeeds.
+                create.UpdateMainPanel(actor); auto actual=rows(); auto expected=prefix; auto expectedColors=prefixColors;
+                auto append=[&](const CString& value,COLORREF color) { CString row=value; row.Trim(); expected.push_back(row); expectedColors.push_back(color); };
+                for (UINT cls=0;cls<7;++cls) {
+                    append("",text->m_rgbTextColor); append(create.FetchString(headingIds[cls]),RGB(200,200,0));
+                    if (cls!=1) append(names[cls%2],text->m_rgbTextColor);
+                    if (cls==0) append(names[1],text->m_rgbTextColor);
+                }
+                check("chargen-summary-seven-classes-nine-levels-and-missing-resources",actual==expected && colors==expectedColors);
+                check("chargen-summary-top-restored",text->m_posTopString==text->m_plstStrings->GetHeadPosition());
+                actor->m_spells.m_spellsByClass[3].m_nHighestLevel=0; create.UpdateMainPanel(actor);
+                auto hidden=rows(); BOOL hiddenGroup=hidden.size()+3==actual.size();
+                CString hiddenHeading=create.FetchString(headingIds[3]); hiddenHeading.Trim();
+                for (const auto& row:hidden) hiddenGroup=hiddenGroup && row!=hiddenHeading;
+                check("chargen-summary-empty-count-suppresses-class",hiddenGroup);
+                clear(); actor->m_domainSpells.m_nHighestLevel=1;
+                actor->m_domainSpells.m_lists[0].m_List.push_back(CGameSpriteSpellListEntry{1,2,1,0});
+                create.UpdateMainPanel(actor); check("chargen-summary-domain-only-has-no-class-section",rows()==prefix);
+                clear(); create.m_nCurrentStep=8; create.UpdateMainPanel(actor); expected=rows(); expectedColors=colors;
+                entry(6,0,1); entry(6,8,1); actor->m_spells.m_spellsByClass[6].m_nHighestLevel=9;
+                append("",text->m_rgbTextColor); append(create.FetchString(headingIds[6]),RGB(200,200,0));
+                append(names[1],text->m_rgbTextColor); append(names[1],text->m_rgbTextColor);
+                create.UpdateMainPanel(actor); actual=rows();
+                check("chargen-summary-final-step-keeps-level-order-and-duplicates",actual==expected && colors==expectedColors);
+                BOOL balanced=TRUE; for (INT j=0;j<3;++j) balanced=balanced && guards[j].pRes->GetDemands()==before[j][0]
+                    && guards[j].pRes->m_nLockCount==before[j][1];
+                check("chargen-summary-spell-resources-balanced",balanced);
+                clear(); game->m_spells.m_pList=refs; game->m_spells.m_nCount=3;
+            }
             SPELL_HEADER copies[2]={headers[0],headers[1]},fileCopies[2]; SPELL_HEADER* pointers[2];
             for (INT j=0;j<2;++j) {
                 pointers[j]=guards[j].pRes->m_pHeader;

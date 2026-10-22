@@ -982,7 +982,32 @@ void CScreenCreateChar::UpdateMainPanel(CGameSprite* pSprite)
 
             pSprite->DisplayFeats(pText);
 
-            // TODO: Incomplete (spells).
+            if (pSprite->GetNumSpells() != 0) {
+                static const STRREF headings[CSPELLLIST_NUM_CLASSES] = {
+                    0x99AD, 0x2B14, 0x99AE, 0x99AF, 0x99B0, 0x99B1, 0x2B13
+                };
+                for (UINT nClassIndex = 0; nClassIndex < CSPELLLIST_NUM_CLASSES; nClassIndex++) {
+                    CGameSpriteGroupedSpellList* pClassSpells = pSprite->m_spells.Get(nClassIndex);
+                    if (pClassSpells->GetNumSpells() == 0) continue;
+
+                    UpdateText(pText, "");
+                    UpdateTextForceColor(pText, RGB(200, 200, 0), "%s", FetchString(headings[nClassIndex]).GetString());
+                    for (UINT nLevel = 0; nLevel < CSPELLLIST_MAX_LEVELS; nLevel++) {
+                        CGameSpriteSpellList* pSpells = pSprite->m_spells.GetSpellsAtLevel(nClassIndex, nLevel);
+                        for (UINT nIndex = 0; nIndex < pSpells->m_List.size(); nIndex++) {
+                            CResRef resRef = g_pBaldurChitin->GetObjectGame()->m_spells.Get(pSpells->Get(nIndex)->m_nID);
+                            CSpell spell;
+                            spell.SetResRef(resRef, TRUE, TRUE);
+                            if (spell.pRes != NULL) {
+                                spell.Demand();
+                                STRREF strName = spell.GetGenericName();
+                                spell.Release();
+                                UpdateText(pText, "%s", FetchString(strName).GetString());
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         pText->SetTopString(pText->m_plstStrings->FindIndex(0));
