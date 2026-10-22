@@ -31,6 +31,7 @@ void SpellSelectionChecks(INT nStep)
     }
     game->m_spells.m_pList=refs; game->m_spells.m_nCount=3;
     SPELL_HEADER headers[2]; SPELL_HEADER* oldHeaders[2]; INT demands[3],requests[3];
+    SPELL_HEADER* guardFile[2]={}; SPELL_HEADER guardSaved[2];
     for (INT i=0;i<3;++i) {
         demands[i]=guards[i].pRes->GetDemands(); requests[i]=guards[i].pRes->m_nLockCount;
         if (i<2) { oldHeaders[i]=guards[i].pRes->m_pHeader; headers[i]=*oldHeaders[i];
@@ -118,6 +119,121 @@ void SpellSelectionChecks(INT nStep)
                 check("popup-refreshes-done",static_cast<CUIControlButton*>(panel->GetControl(33))->m_bEnabled==(screen.m_nExtraMageSpells==0));
                 Emit("{\"op\":\"spell-selection-result\",\"case\":%d,\"kind\":3,\"budget\":%d,\"selected\":%d,\"entries\":[%s],\"totals\":[%u,%u,%u],\"highest\":%u}",index,screen.m_nExtraMageSpells,button->m_bSelected,static_cast<LPCTSTR>(data),list.m_nSharedCurrent,list.m_nSharedMax,list.m_nSharedTotal,group->m_nHighestLevel);
             }
+        }
+        {
+            BeginLevelUpTableFixture picker(rules.m_tSpellAutomaticPicker,9,6);
+            for (INT y=0;y<6;++y) for (INT x=0;x<9;++x) picker.cells[y*9+x].Format(_T("L%dR%03d"),x,y);
+            check("autopick-rule-level-clamps",rules.GetAutoPickSpell(0,0)==CResRef("L0R000")
+                && rules.GetAutoPickSpell(1,1)==CResRef("L0R001") && rules.GetAutoPickSpell(9,5)==CResRef("L8R005")
+                && rules.GetAutoPickSpell(255,0)==CResRef("L8R000"));
+            check("autopick-rule-end-uses-default",rules.GetAutoPickSpell(1,6)==CResRef("0")
+                && rules.GetAutoPickSpell(1,7)==CResRef("0") && rules.GetAutoPickSpell(1,255)==CResRef("0"));
+            CSpell extra[]={CSpell(CResRef("SPWI102")),CSpell(CResRef("SPWI402"))};
+            BOOL loadedExtra[]={extra[0].Demand(),extra[1].Demand()};
+            check("autopick-extra-resources-loaded",loadedExtra[0] && loadedExtra[1]);
+            if (loadedExtra[0] && loadedExtra[1]) {
+                CResRef picks[]={CResRef("ZRCHIT"),CResRef("SPIN260"),CResRef("SPWI101"),CResRef("SPWI102"),CResRef("SPWI402")};
+                game->m_spells.m_pList=picks; game->m_spells.m_nCount=5;
+                SPELL_HEADER* oldThird=guards[2].pRes->m_pHeader; SPELL_HEADER third=*oldThird;
+                SPELL_HEADER* oldFourth=extra[0].pRes->m_pHeader; SPELL_HEADER fourth=*oldFourth;
+                third.school=2; fourth.school=1; guards[2].pRes->m_pHeader=&third; extra[0].pRes->m_pHeader=&fourth;
+                // A nested Demand can re-parse and point m_pHeader back at the loaded bytes; patch both.
+                CResSpell* pickRes[]={guards[0].pRes,guards[1].pRes,guards[2].pRes,extra[0].pRes};
+                SPELL_HEADER* pickFile[4]; SPELL_HEADER savedFile[4]; const BYTE pickSchools[]={1,2,2,1};
+                for (INT j=0;j<4;++j) { pickFile[j]=reinterpret_cast<SPELL_HEADER*>(pickRes[j]->m_pData); savedFile[j]=*pickFile[j]; }
+                auto patchPick=[&](INT j,DWORD notUsable) {
+                    for (SPELL_HEADER* h:{pickRes[j]->m_pHeader,pickFile[j]}) if (h) { h->school=pickSchools[j]; h->notUsableBy=notUsable; }
+                };
+                decltype(game->m_spellsByClass[0].m_lists[0].m_nCount) savedCounts[7][9];
+                for (INT c=0;c<7;++c) for (INT l=0;l<9;++l) savedCounts[c][l]=game->m_spellsByClass[c].m_lists[l].m_nCount;
+                const char* priority[]={"SPWI402","ZRCHIT","ZRCHIT","SPIN260","SPWI101","SPWI102"};
+                for (INT y=0;y<6;++y) for (INT x=0;x<9;++x) picker.cells[y*9+x]=priority[y];
+                for (INT j=0;j<5;++j) entries[j].m_nID=j;
+                for (INT c=0;c<7;++c) for (INT l=0;l<9;++l) game->m_spellsByClass[c].m_lists[l].m_nCount=5;
+                auto* oldCreate=g_pBaldurChitin->m_pEngineCreateChar;
+                CScreenCreateChar create; g_pBaldurChitin->m_pEngineCreateChar=&create;
+                create.m_cUIManager.fInit(&create,CResRef("GUICG"),g_pBaldurChitin->m_bUseNewGui);
+                create.m_nGameSprite=id; auto* spellPanel=create.m_cUIManager.GetPanel(7); create.m_lPopupStack.AddTail(spellPanel);
+                auto* autoButton=dynamic_cast<CUIControlButtonCharGen61A130*>(spellPanel->GetControl(30));
+                check("autopick-actual-control-present",autoButton!=NULL);
+                struct PickCase { BYTE cls; DWORD spec; INT budget; BYTE tiers; INT known; INT count; UINT ids[4]; INT rng; };
+                const PickCase cases[]={
+                    {2,0,2,1,0,2,{0,1},41},
+                    {10,0,2,1,1,3,{0,1,2},41},
+                    {2,0,0,1,0,0,{},41},
+                    {11,SPECMASK_WIZARD_ABJURER,2,1,0,2,{3,0},18467},
+                    {11,SPECMASK_WIZARD_ABJURER,0,1,2,2,{1,3},18467},
+                    {11,SPECMASK_WIZARD_ABJURER,1,1,1,2,{0,2},41},
+                    {2,0,2,2,0,2,{0,1},41},
+                };
+                for (const auto& row:cases) {
+                    actor->m_baseStats=base; actor->m_baseStats.m_specialization=row.spec;
+                    actor->m_typeAI=type; actor->m_typeAI.m_nClass=row.cls; actor->m_typeAI.m_nClassMask=game->GetClassMask(row.cls);
+                    actor->m_startTypeAI=actor->m_liveTypeAI=actor->m_typeAI;
+                    memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_nClassLevels[row.cls-1]=5;
+                    actor->m_derivedStats.m_nLevel=5; actor->m_derivedStats.m_nCHR=18;
+                    actor->m_derivedStats.m_classMask=game->GetClassMask(row.cls);
+                    for (auto& group:actor->m_spells.m_spellsByClass) {
+                        group.Clear(); group.m_nHighestLevel=0;
+                        for (auto& list:group.m_lists) list.m_nSharedCurrent=list.m_nSharedMax=list.m_nSharedTotal=0;
+                    }
+                    patchPick(0,0); patchPick(1,row.spec?SPECMASK_WIZARD_ABJURER:0); patchPick(2,0); patchPick(3,0);
+                    for (INT j=0;j<row.known;++j) {
+                        UINT known=row.known==2?j+1:0; actor->AddKnownSpell(row.cls,0,picks[known],5,0,0);
+                    }
+                    for (DWORD j=2;j<=25;++j) {
+                        auto* slot=static_cast<CUIControlButtonCharGenKnownArcaneSpellSelection*>(spellPanel->GetControl(j));
+                        slot->SetSelected(FALSE); slot->SetEnabled(j<7); slot->m_spellResRef=j<7?picks[j-2]:CResRef("");
+                    }
+                    create.m_nExtraSpells=row.budget; create.m_nSpellLevel=9; create.field_14A3=row.tiers;
+                    INT before[3][2]; for (INT j=0;j<3;++j) { before[j][0]=guards[j].pRes->GetDemands(); before[j][1]=guards[j].pRes->m_nLockCount; }
+                    srand(1); if (autoButton) autoButton->OnLButtonClick(CPoint(0,0)); INT next=rand();
+                    BOOL balanced=TRUE;
+                    for (INT j=0;j<3;++j) balanced=balanced && guards[j].pRes->GetDemands()==before[j][0] && guards[j].pRes->m_nLockCount==before[j][1];
+                    check("autopick-spell-resources-balanced",balanced);
+                    auto* list=actor->GetSpellsAtLevel(row.cls,0);
+                    UINT got[4]={9,9,9,9};
+                    for (UINT j=0;j<4 && j<list->m_List.size();++j) got[j]=list->m_List[j].m_nID;
+                    Emit("{\"op\":\"autopick-result\",\"cls\":%d,\"spec\":%u,\"known\":%d,\"count\":%u,\"ids\":[%u,%u,%u,%u],\"extra\":%d,\"level\":%d,\"next\":%d,\"schools\":[%d,%d,%d,%d]}",
+                        row.cls,row.spec,row.known,static_cast<UINT>(list->m_List.size()),got[0],got[1],got[2],got[3],
+                        create.m_nExtraSpells,create.m_nSpellLevel,next,
+                        guards[0].GetSchool(),guards[1].GetSchool(),guards[2].GetSchool(),extra[0].GetSchool());
+                    BOOL correct=list->m_List.size()==row.count;
+                    for (INT j=0;j<row.count && j<static_cast<INT>(list->m_List.size());++j)
+                        correct=correct && list->m_List[j].m_nID==row.ids[j];
+                    check("autopick-ordered-known-spells-and-budget",correct && create.m_nExtraSpells==(row.known==2?-1:0)
+                        && create.m_nSpellLevel==row.tiers+1);
+                    check("autopick-exact-random-consumption",next==row.rng);
+                    if (row.spec) {
+                        UINT selected=row.known==2?3:row.known==1?2:3;
+                        auto* slot=static_cast<CUIControlButtonCharGenKnownArcaneSpellSelection*>(spellPanel->GetControl(2+selected));
+                        check("autopick-marks-chosen-visible-button",slot->m_bSelected);
+                    }
+                    if (row.tiers==2) {
+                        auto* second=actor->GetSpellsAtLevel(row.cls,1);
+                        check("autopick-next-tier-native-four-spell-budget",second->m_List.size()==4
+                            && second->m_List[0].m_nID==0 && second->m_List[1].m_nID==1
+                            && second->m_List[2].m_nID==2 && second->m_List[3].m_nID==3);
+                    }
+                    check("autopick-popup-refreshes-budget",static_cast<CUIControlLabel*>(spellPanel->GetControl(0x1000001B))->GetText()==(row.known==2?"-1":"0"));
+                }
+                {
+                    INT demands0=guards[0].pRes->GetDemands(),locks0=guards[0].pRes->m_nLockCount;
+                    create.UpdatePopupPanel(7,actor);
+                    check("arcane-spell-panel-refresh-balanced",guards[0].pRes->GetDemands()==demands0 && guards[0].pRes->m_nLockCount==locks0);
+                }
+                create.m_nGameSprite=CGameObjectArray::INVALID_INDEX; create.m_nSpellLevel=7; create.m_nExtraSpells=12;
+                create.AutoPickSpells(); check("autopick-missing-actor-preserves-screen",create.m_nSpellLevel==7 && create.m_nExtraSpells==12);
+                create.m_lPopupStack.RemoveAll(); g_pBaldurChitin->m_pEngineCreateChar=oldCreate;
+                guards[2].pRes->m_pHeader=oldThird; extra[0].pRes->m_pHeader=oldFourth;
+                for (INT j=0;j<4;++j) *pickFile[j]=savedFile[j];
+                // Later re-parses would expose the file headers, so they carry the copies until final cleanup.
+                for (INT j=0;j<2;++j) { guardFile[j]=pickFile[j]; guardSaved[j]=*pickFile[j]; *pickFile[j]=headers[j];
+                    guards[j].pRes->m_pHeader=&headers[j]; }
+                for (INT c=0;c<7;++c) for (INT l=0;l<9;++l) game->m_spellsByClass[c].m_lists[l].m_nCount=savedCounts[c][l];
+                game->m_spells.m_pList=refs; game->m_spells.m_nCount=3; srand(1);
+            }
+            for (INT j=0;j<2;++j) if (loadedExtra[j]) extra[j].Release();
         }
         // Exercise the recovered icon renderer on the software back surface.
         auto* video=static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode());
@@ -226,6 +342,7 @@ void SpellSelectionChecks(INT nStep)
     game->m_spells.m_pList=oldRefs; game->m_spells.m_nCount=oldCount;
     actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp; actor->m_spells=spells;
     actor->m_typeAI=type; actor->m_startTypeAI=start; actor->m_liveTypeAI=live;
+    for (INT i=0;i<2;++i) if (guardFile[i]) *guardFile[i]=guardSaved[i];
     for (INT i=0;i<3;++i) { if (i<2) guards[i].pRes->m_pHeader=oldHeaders[i];
         check("spell-resources-balanced",guards[i].pRes->GetDemands()==demands[i] && guards[i].pRes->m_nLockCount==requests[i]); }
     check("same-tick-clock-and-queue-preserved",game->GetWorldTimer()->m_gameTime==clock && handler->m_messageList.GetCount()==messages);

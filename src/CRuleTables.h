@@ -436,6 +436,7 @@ public:
     DWORD GetSkillName(DWORD id) const;
     DWORD GetSkillId(DWORD index) const;
     DWORD GetSkillDescription(DWORD id) const;
+    CResRef GetAutoPickSpell(BYTE nLevel, BYTE nIndex) const;
     INT GetLoadingHint(INT nHintNumber) const;
     INT GetNumLoadingHints() const;
     const C2DArray* GetClassAbilityTable(BYTE nClass, DWORD nSpecialist) const;
