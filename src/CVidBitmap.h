@@ -27,6 +27,9 @@ public:
     BOOL BltBmp8To32(DWORD* pSurface, LONG lPitch, BYTE* pData, const CSize& bmpSize, LONG nDataJump, DWORD dwFlags);
     BOOL BltBmp24To16(WORD* pSurface, LONG lPitch, BYTE* pData, const CSize& bmpSize, LONG nDataJump, DWORD dwFlags);
     BOOL BltBmp24To16Tint(WORD* pSurface, LONG lPitch, BYTE* pData, const CSize& bmpSize, LONG nDataJump, DWORD dwFlags);
+    BOOL GetTintValues(INT& nRed, INT& nGreen, INT& nBlue, INT& nShift, DWORD dwFlags); /*#guess: descriptive name*/
+    BOOL GetAddValues(INT& nRed, INT& nGreen, INT& nBlue, INT& nShift, DWORD dwFlags); /*#guess: descriptive name*/
+    BOOL GetLightValues(INT& nRed, INT& nGreen, INT& nBlue, DWORD dwFlags); /*#guess: descriptive name*/
     BOOL BltBmp24To24(BYTE* pSurface, LONG lPitch, BYTE* pData, const CSize& bmpSize, LONG nDataJump, DWORD dwFlags);
     BOOL BltBmp24To24Tint(BYTE* pSurface, LONG lPitch, BYTE* pData, const CSize& bmpSize, LONG nDataJump, DWORD dwFlags);
     BOOL BltBmp24To32(DWORD* pSurface, LONG lPitch, BYTE* pData, const CSize& bmpSize, LONG nDataJump, DWORD dwFlags);

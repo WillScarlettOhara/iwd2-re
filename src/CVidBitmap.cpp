@@ -372,6 +372,209 @@ BOOL CVidBitmap::BltBmp24To16Tint(WORD* pSurface, LONG lPitch, BYTE* pData, cons
     return FALSE;
 }
 
+// 0x7B4230
+BOOL CVidBitmap::GetTintValues(INT& nRed, INT& nGreen, INT& nBlue, INT& nShift, DWORD dwFlags)
+{
+    INT nMax = 255;
+    BOOL bTint = FALSE;
+    INT nLightPercentage = 0;
+    INT nAddPercentage = 0;
+
+    COLORREF rgbGlobalTint = g_pChitin->GetCurrentVideoMode()->GetGlobalTintColor();
+    LONG nAUCounter = g_pChitin->nAUCounter + reinterpret_cast<LONG>(this);
+
+    if ((dwFlags & 0x20000) != 0) {
+        if ((dwFlags & 0x10000) != 0) {
+            nMax = 255 * 255;
+            nRed = GetRValue(m_paletteAffects.rgbTintColor) * GetRValue(rgbGlobalTint);
+            nGreen = GetGValue(m_paletteAffects.rgbTintColor) * GetGValue(rgbGlobalTint);
+            nBlue = GetBValue(m_paletteAffects.rgbTintColor) * GetBValue(rgbGlobalTint);
+            nShift = 16;
+        } else {
+            nMax = 255;
+            nRed = GetRValue(m_paletteAffects.rgbTintColor);
+            nGreen = GetGValue(m_paletteAffects.rgbTintColor);
+            nBlue = GetBValue(m_paletteAffects.rgbTintColor);
+            nShift = 8;
+        }
+        bTint = TRUE;
+    } else if ((dwFlags & 0x10000) != 0) {
+        nMax = 255;
+        nRed = GetRValue(rgbGlobalTint);
+        nGreen = GetGValue(rgbGlobalTint);
+        nBlue = GetBValue(rgbGlobalTint);
+        nShift = 8;
+        bTint = TRUE;
+    }
+
+    if (m_paletteAffects.pRangeTints[0] != NULL) {
+        COLORREF rgbRange = *m_paletteAffects.pRangeTints[0];
+        INT nPeriod = m_paletteAffects.aRangeTintPeriods[0];
+        if (nPeriod == 1) {
+            nRed *= GetRValue(rgbRange);
+            nGreen *= GetGValue(rgbRange);
+            nBlue *= GetBValue(rgbRange);
+        } else {
+            INT nPercentage = nAUCounter % (2 * nPeriod);
+            if (nPercentage > nPeriod) {
+                nPercentage = 2 * nPeriod - nPercentage;
+            }
+
+            nRed *= CVidPalette::NO_TINT - (CVidPalette::NO_TINT - GetRValue(rgbRange)) * nPercentage / nPeriod;
+            nGreen *= CVidPalette::NO_TINT - (CVidPalette::NO_TINT - GetGValue(rgbRange)) * nPercentage / nPeriod;
+            nBlue *= CVidPalette::NO_TINT - (CVidPalette::NO_TINT - GetBValue(rgbRange)) * nPercentage / nPeriod;
+        }
+
+        bTint = TRUE;
+        nShift += 8;
+        nMax *= 255;
+    }
+
+    if (m_paletteAffects.pRangeAdds[0] != NULL) {
+        INT nPeriod = m_paletteAffects.aRangeAddPeriods[0];
+        if (nPeriod == 1 || nPeriod == 0) {
+            nAddPercentage = nPeriod;
+        } else {
+            nAddPercentage = nAUCounter % (2 * nPeriod);
+            if (nAddPercentage > nPeriod) {
+                nAddPercentage = 2 * nPeriod - nAddPercentage;
+            }
+        }
+    }
+
+    if (m_paletteAffects.pRangeLights[0] != NULL) {
+        INT nPeriod = m_paletteAffects.aRangeLightPeriods[0];
+        if (nPeriod == 1) {
+            nLightPercentage = 1;
+        } else {
+            nLightPercentage = nAUCounter % (2 * nPeriod);
+            if (nLightPercentage > nPeriod) {
+                nLightPercentage = 2 * nPeriod - nLightPercentage;
+            }
+        }
+    }
+
+    // Pulsing adds and lights wash the tint towards white for suppressed ranges.
+    if ((CVidPalette::m_SuppressTintMasks[0] & m_paletteAffects.suppressTints) != 0
+        && (nLightPercentage != 0 || nAddPercentage != 0)) {
+        if (nAddPercentage < nLightPercentage) {
+            INT nPeriod = m_paletteAffects.aRangeLightPeriods[0];
+            nRed += (nMax - nRed) * nLightPercentage / nPeriod;
+            nGreen += (nMax - nGreen) * nLightPercentage / nPeriod;
+            nBlue += (nMax - nBlue) * nLightPercentage / nPeriod;
+        } else {
+            INT nPeriod = m_paletteAffects.aRangeAddPeriods[0];
+            nRed += (nMax - nRed) * nAddPercentage / nPeriod;
+            nGreen += (nMax - nGreen) * nAddPercentage / nPeriod;
+            nBlue += (nMax - nBlue) * nAddPercentage / nPeriod;
+        }
+    }
+
+    return bTint;
+}
+
+// 0x7B4600
+BOOL CVidBitmap::GetAddValues(INT& nRed, INT& nGreen, INT& nBlue, INT& nShift, DWORD dwFlags)
+{
+    BYTE nBrightness = g_pChitin->GetCurrentVideoMode()->m_nBrightnessCorrection;
+    BOOL bAdd = FALSE;
+
+    if ((dwFlags & 0x40000) != 0) {
+        if (nBrightness == 0) {
+            nRed = static_cast<BYTE>(~GetRValue(m_paletteAffects.rgbAddColor));
+            nGreen = static_cast<BYTE>(~GetGValue(m_paletteAffects.rgbAddColor));
+            nBlue = static_cast<BYTE>(~GetBValue(m_paletteAffects.rgbAddColor));
+            nShift = 8;
+        } else {
+            INT nInverse = static_cast<BYTE>(~nBrightness);
+            nRed = static_cast<BYTE>(~GetRValue(m_paletteAffects.rgbAddColor)) * nInverse;
+            nGreen = static_cast<BYTE>(~GetGValue(m_paletteAffects.rgbAddColor)) * nInverse;
+            nBlue = static_cast<BYTE>(~GetBValue(m_paletteAffects.rgbAddColor)) * nInverse;
+            nShift = 16;
+        }
+        bAdd = TRUE;
+    } else if (nBrightness != 0) {
+        nRed = static_cast<BYTE>(~nBrightness);
+        nGreen = static_cast<BYTE>(~nBrightness);
+        nBlue = static_cast<BYTE>(~nBrightness);
+        nShift = 8;
+        bAdd = TRUE;
+    }
+
+    if (m_paletteAffects.pRangeAdds[0] != NULL) {
+        COLORREF rgbRange = *m_paletteAffects.pRangeAdds[0];
+        INT nPeriod = m_paletteAffects.aRangeAddPeriods[0];
+        if (nPeriod == 1 || nPeriod == 0) {
+            nRed *= static_cast<BYTE>(~GetRValue(rgbRange));
+            nGreen *= static_cast<BYTE>(~GetGValue(rgbRange));
+            nBlue *= static_cast<BYTE>(~GetBValue(rgbRange));
+        } else {
+            INT nPercentage = (g_pChitin->nAUCounter + reinterpret_cast<LONG>(this)) % (2 * nPeriod);
+            if (nPercentage > nPeriod) {
+                nPercentage = 2 * nPeriod - nPercentage;
+            }
+
+            nRed *= static_cast<BYTE>(~static_cast<BYTE>(GetRValue(rgbRange) * nPercentage / nPeriod));
+            nGreen *= static_cast<BYTE>(~static_cast<BYTE>(GetGValue(rgbRange) * nPercentage / nPeriod));
+            nBlue *= static_cast<BYTE>(~static_cast<BYTE>(GetBValue(rgbRange) * nPercentage / nPeriod));
+        }
+
+        nShift += 8;
+        return TRUE;
+    }
+
+    return bAdd;
+}
+
+// 0x7B4800
+BOOL CVidBitmap::GetLightValues(INT& nRed, INT& nGreen, INT& nBlue, DWORD dwFlags)
+{
+    INT nGamma = g_pChitin->GetCurrentVideoMode()->m_nGammaCorrection;
+    BOOL bLight = FALSE;
+
+    if ((dwFlags & 0x200000) != 0) {
+        if (nGamma == 0) {
+            nRed += GetRValue(m_paletteAffects.rgbLightColor);
+            nGreen += GetGValue(m_paletteAffects.rgbLightColor);
+            nBlue += GetBValue(m_paletteAffects.rgbLightColor);
+        } else {
+            nRed += GetRValue(m_paletteAffects.rgbLightColor) + nGamma;
+            nGreen += GetGValue(m_paletteAffects.rgbLightColor) + nGamma;
+            nBlue += GetBValue(m_paletteAffects.rgbLightColor) + nGamma;
+        }
+        bLight = TRUE;
+    } else if (nGamma != 0) {
+        nRed += nGamma;
+        nGreen += nGamma;
+        nBlue += nGamma;
+        bLight = TRUE;
+    }
+
+    if (m_paletteAffects.pRangeLights[0] == NULL) {
+        return bLight;
+    }
+
+    COLORREF rgbRange = *m_paletteAffects.pRangeLights[0];
+    INT nPeriod = m_paletteAffects.aRangeLightPeriods[0];
+    if (nPeriod != 1) {
+        // NOTE: A zero period divides by zero here, as in the original.
+        INT nPercentage = (g_pChitin->nAUCounter + reinterpret_cast<LONG>(this)) % (2 * nPeriod);
+        if (nPercentage > nPeriod) {
+            nPercentage = 2 * nPeriod - nPercentage;
+        }
+
+        nRed += GetRValue(rgbRange) * nPercentage / nPeriod;
+        nGreen += GetGValue(rgbRange) * nPercentage / nPeriod;
+        nBlue += GetBValue(rgbRange) * nPercentage / nPeriod;
+        return TRUE;
+    }
+
+    nRed += GetRValue(rgbRange);
+    nGreen += GetGValue(rgbRange);
+    nBlue += GetBValue(rgbRange);
+    return TRUE;
+}
+
 // 0x7CCB20
 BOOL CVidBitmap::BltBmp8To24(BYTE* pSurface, LONG lPitch, BYTE* pData, const CSize& bmpSize, LONG nDataJump, DWORD dwFlags)
 {
@@ -471,172 +674,142 @@ BOOL CVidBitmap::BltBmp24To32Tint(DWORD* pSurface, LONG lPitch, BYTE* pData, con
 {
     CVidMode* pVidMode = g_pChitin->GetCurrentVideoMode();
 
-    DWORD dwRBitShift = pVidMode->m_dwRBitShift;
-    DWORD dwGBitShift = pVidMode->m_dwGBitShift;
-    DWORD dwBBitShift = pVidMode->m_dwBBitShift;
+    INT nTintRed = 255;
+    INT nTintGreen = 255;
+    INT nTintBlue = 255;
+    INT nTintShift = 0;
+    INT nAddRed = 1;
+    INT nAddGreen = 1;
+    INT nAddBlue = 1;
+    INT nAddShift = 0;
+    INT nLightRed = 1 << CVidPalette::LIGHT_SCALE;
+    INT nLightGreen = 1 << CVidPalette::LIGHT_SCALE;
+    INT nLightBlue = 1 << CVidPalette::LIGHT_SCALE;
 
-    LONG nAUCounter = g_pChitin->nAUCounter + reinterpret_cast<LONG>(this);
+    BYTE nRShift = static_cast<BYTE>(pVidMode->m_dwRBitShift);
+    BYTE nGShift = static_cast<BYTE>(pVidMode->m_dwGBitShift);
+    BYTE nBShift = static_cast<BYTE>(pVidMode->m_dwBBitShift);
 
-    CVIDPALETTE_COLOR rgbTint;
-    INT nTintShift;
-    INT nTintMax;
-    USHORT nTintPercentage = 0;
-    BOOL bTint = m_cPalette.GetTint(rgbTint, &m_paletteAffects, nTintShift, nTintMax, dwFlags);
-    if (m_paletteAffects.pRangeTints[0] != NULL) {
-        if (m_paletteAffects.aRangeTintPeriods[0] == 1) {
-            rgbTint.rgbRed *= GetRValue(*m_paletteAffects.pRangeTints[0]);
-            rgbTint.rgbGreen *= GetGValue(*m_paletteAffects.pRangeTints[0]);
-            rgbTint.rgbBlue *= GetBValue(*m_paletteAffects.pRangeTints[0]);
-        } else {
-            nTintPercentage = nAUCounter % (2 * m_paletteAffects.aRangeTintPeriods[0]);
-            if (nTintPercentage > m_paletteAffects.aRangeTintPeriods[0]) {
-                nTintPercentage = 2 * m_paletteAffects.aRangeTintPeriods[0] - nTintPercentage;
-            }
+    BOOL bTint = GetTintValues(nTintRed, nTintGreen, nTintBlue, nTintShift, dwFlags);
+    BOOL bAdd = GetAddValues(nAddRed, nAddGreen, nAddBlue, nAddShift, dwFlags);
+    BOOL bLight = GetLightValues(nLightRed, nLightGreen, nLightBlue, dwFlags);
 
-            rgbTint.rgbRed *= CVidPalette::NO_TINT - nTintPercentage * (CVidPalette::NO_TINT - GetRValue(*m_paletteAffects.pRangeTints[0])) / m_paletteAffects.aRangeTintPeriods[0];
-            rgbTint.rgbGreen *= CVidPalette::NO_TINT - nTintPercentage * (CVidPalette::NO_TINT - GetGValue(*m_paletteAffects.pRangeTints[0])) / m_paletteAffects.aRangeTintPeriods[0];
-            rgbTint.rgbBlue *= CVidPalette::NO_TINT - nTintPercentage * (CVidPalette::NO_TINT - GetBValue(*m_paletteAffects.pRangeTints[0])) / m_paletteAffects.aRangeTintPeriods[0];
-        }
+    if ((dwFlags & 0x1) == 0) {
+        // NOTE: The original is inline assembly on 32-bit registers. The add
+        // inversions and the light clamp only touch the low byte, so any higher
+        // bits survive into the packed pixel.
+        for (LONG y = 0; y < bmpSize.cy; y++) {
+            for (LONG x = 0; x < bmpSize.cx; x++) {
+                DWORD r = pData[2];
+                DWORD g = pData[1];
+                DWORD b = pData[0];
 
-        bTint = TRUE;
-        nTintShift += 8;
-        nTintMax *= 255;
-    }
-
-    CVIDPALETTE_COLOR rgbInv;
-    INT nAddShift;
-    USHORT nAddPercentage = 0;
-    BOOL bAdd = m_cPalette.GetAdd(rgbInv, &m_paletteAffects, nAddShift, dwFlags);
-    if (m_paletteAffects.pRangeAdds[0] != NULL) {
-        if (m_paletteAffects.aRangeAddPeriods[0] == 1 || m_paletteAffects.aRangeAddPeriods[0] == 0) {
-            rgbInv.rgbRed *= static_cast<BYTE>(~GetRValue(*m_paletteAffects.pRangeAdds[0]));
-            rgbInv.rgbGreen *= static_cast<BYTE>(~GetGValue(*m_paletteAffects.pRangeAdds[0]));
-            rgbInv.rgbBlue *= static_cast<BYTE>(~GetBValue(*m_paletteAffects.pRangeAdds[0]));
-        } else {
-            nAddPercentage = nAUCounter % (2 * m_paletteAffects.aRangeAddPeriods[0]);
-            if (nAddPercentage > m_paletteAffects.aRangeAddPeriods[0]) {
-                nAddPercentage = 2 * m_paletteAffects.aRangeAddPeriods[0] - nAddPercentage;
-            }
-
-            rgbInv.rgbRed *= static_cast<BYTE>(~(nAddPercentage * GetRValue(*m_paletteAffects.pRangeAdds[0]) / m_paletteAffects.aRangeAddPeriods[0]));
-            rgbInv.rgbGreen *= static_cast<BYTE>(~(nAddPercentage * GetGValue(*m_paletteAffects.pRangeAdds[0]) / m_paletteAffects.aRangeAddPeriods[0]));
-            rgbInv.rgbBlue *= static_cast<BYTE>(~(nAddPercentage * GetBValue(*m_paletteAffects.pRangeAdds[0]) / m_paletteAffects.aRangeAddPeriods[0]));
-        }
-
-        bAdd = TRUE;
-        nAddShift += 8;
-    }
-
-    CVIDPALETTE_COLOR rgbLight;
-    USHORT nLightPercentage = 0;
-    BOOL bLight = m_cPalette.GetLight(rgbLight, &m_paletteAffects, dwFlags);
-    if (m_paletteAffects.pRangeLights[0] != NULL) {
-        if (m_paletteAffects.aRangeLightPeriods[0] == 1) {
-            rgbLight.rgbRed += GetRValue(*m_paletteAffects.pRangeLights[0]);
-            rgbLight.rgbGreen += GetGValue(*m_paletteAffects.pRangeLights[0]);
-            rgbLight.rgbBlue += GetBValue(*m_paletteAffects.pRangeLights[0]);
-            nLightPercentage = 1;
-        } else {
-            nLightPercentage = nAUCounter % (2 * m_paletteAffects.aRangeLightPeriods[0]);
-            if (nLightPercentage > m_paletteAffects.aRangeLightPeriods[0]) {
-                nLightPercentage = 2 * m_paletteAffects.aRangeLightPeriods[0] - nLightPercentage;
-            }
-
-            rgbLight.rgbRed += nLightPercentage * GetRValue(*m_paletteAffects.pRangeLights[0]) / m_paletteAffects.aRangeLightPeriods[0];
-            rgbLight.rgbGreen += nLightPercentage * GetGValue(*m_paletteAffects.pRangeLights[0]) / m_paletteAffects.aRangeLightPeriods[0];
-            rgbLight.rgbBlue += nLightPercentage * GetBValue(*m_paletteAffects.pRangeLights[0]) / m_paletteAffects.aRangeLightPeriods[0];
-        }
-
-        bLight = TRUE;
-
-        if ((m_paletteAffects.suppressTints & CVidPalette::m_SuppressTintMasks[0]) != 0) {
-            if (nLightPercentage != 0 || nAddPercentage != 0) {
-                if (nLightPercentage > nAddPercentage) {
-                    rgbTint.rgbRed += nLightPercentage * (nTintMax - rgbTint.rgbRed) / m_paletteAffects.aRangeLightPeriods[0];
-                    rgbTint.rgbGreen += nLightPercentage * (nTintMax - rgbTint.rgbGreen) / m_paletteAffects.aRangeLightPeriods[0];
-                    rgbTint.rgbBlue += nLightPercentage * (nTintMax - rgbTint.rgbBlue) / m_paletteAffects.aRangeLightPeriods[0];
-                } else {
-                    rgbTint.rgbRed += nAddPercentage * (nTintMax - rgbTint.rgbRed) / m_paletteAffects.aRangeAddPeriods[0];
-                    rgbTint.rgbGreen += nAddPercentage * (nTintMax - rgbTint.rgbGreen) / m_paletteAffects.aRangeAddPeriods[0];
-                    rgbTint.rgbBlue += nAddPercentage * (nTintMax - rgbTint.rgbBlue) / m_paletteAffects.aRangeAddPeriods[0];
+                if ((dwFlags & 0x80000) != 0) {
+                    r = (r + g + b) >> 2;
+                    g = r;
+                    b = r;
                 }
 
-                if (pVidMode->m_nFade != CVidMode::NUM_FADE_FRAMES) {
-                    rgbTint.rgbRed = pVidMode->ApplyFadeAmount(rgbTint.rgbRed);
-                    rgbTint.rgbGreen = pVidMode->ApplyFadeAmount(rgbTint.rgbGreen);
-                    rgbTint.rgbBlue = pVidMode->ApplyFadeAmount(rgbTint.rgbBlue);
+                if (bTint) {
+                    r = (r * nTintRed) >> nTintShift;
+                    g = (g * nTintGreen) >> nTintShift;
+                    b = (b * nTintBlue) >> nTintShift;
                 }
+
+                if (bAdd) {
+                    r = (((r ^ 0xFF) * nAddRed) >> nAddShift) ^ 0xFF;
+                    g = (((g ^ 0xFF) * nAddGreen) >> nAddShift) ^ 0xFF;
+                    b = (((b ^ 0xFF) * nAddBlue) >> nAddShift) ^ 0xFF;
+                }
+
+                if (bLight) {
+                    r = (r * nLightRed) >> 3;
+                    g = (g * nLightGreen) >> 3;
+                    b = (b * nLightBlue) >> 3;
+
+                    if ((r & 0xFF00) != 0) {
+                        r |= 0xFF;
+                    }
+                    if ((g & 0xFF00) != 0) {
+                        g |= 0xFF;
+                    }
+                    if ((b & 0xFF00) != 0) {
+                        b |= 0xFF;
+                    }
+                }
+
+                *pSurface = (r << nRShift) | (g << nGShift) | (b << nBShift);
+
+                pSurface++;
+                pData += 3;
             }
+
+            pSurface = reinterpret_cast<DWORD*>(reinterpret_cast<BYTE*>(pSurface) - (lPitch + bmpSize.cx * 4));
+            pData += nDataJump;
         }
+
+        return TRUE;
     }
 
     COLORREF rgbBrightnessContrast = pVidMode->ApplyBrightnessContrast(RGB(0, 0, 0));
 
     for (LONG y = 0; y < bmpSize.cy; y++) {
         for (LONG x = 0; x < bmpSize.cx; x++) {
-            BYTE r = pData[2];
-            BYTE g = pData[1];
-            BYTE b = pData[0];
+            INT r = pData[2];
+            INT g = pData[1];
+            INT b = pData[0];
 
-            if ((dwFlags & 0x1) == 0
-                || r != 0
-                || g != 255
-                || b != 0) {
-                BYTE a = 255;
+            if (r != 0 || g != 255 || b != 0) {
+                DWORD a;
+                if ((dwFlags & 0x4) == 0 || r != 0 || g != 0 || b != 0) {
+                    a = 255;
 
-                if ((dwFlags & 0x1) != 0
-                    && (dwFlags & 0x4) != 0
-                    && r == 0
-                    && g == 0
-                    && b == 0) {
-                    DWORD dwColor = *pSurface;
-                    a = 128;
-                    r = static_cast<BYTE>((((dwColor >> dwRBitShift) & 0xFF) + GetRValue(rgbBrightnessContrast)) * 128 >> 8);
-                    g = static_cast<BYTE>((((dwColor >> dwGBitShift) & 0xFF) + GetGValue(rgbBrightnessContrast)) * 128 >> 8);
-                    b = static_cast<BYTE>((((dwColor >> dwBBitShift) & 0xFF) + GetBValue(rgbBrightnessContrast)) * 128 >> 8);
-                } else {
                     if ((dwFlags & 0x80000) != 0) {
-                        BYTE v = static_cast<BYTE>((r + g + b) / 4);
-                        r = v;
-                        g = v;
-                        b = v;
+                        r = static_cast<BYTE>((b + g + r) >> 2);
+                        g = r;
+                        b = r;
                     }
 
                     if (bTint) {
-                        r = static_cast<BYTE>((rgbTint.rgbRed * r) >> nTintShift);
-                        g = static_cast<BYTE>((rgbTint.rgbGreen * g) >> nTintShift);
-                        b = static_cast<BYTE>((rgbTint.rgbBlue * b) >> nTintShift);
+                        r = static_cast<BYTE>((r * nTintRed) >> nTintShift);
+                        g = static_cast<BYTE>((g * nTintGreen) >> nTintShift);
+                        b = static_cast<BYTE>((b * nTintBlue) >> nTintShift);
                     }
 
                     if (bAdd) {
-                        r = static_cast<BYTE>(~static_cast<BYTE>((rgbInv.rgbRed * static_cast<BYTE>(~r)) >> nAddShift));
-                        g = static_cast<BYTE>(~static_cast<BYTE>((rgbInv.rgbGreen * static_cast<BYTE>(~g)) >> nAddShift));
-                        b = static_cast<BYTE>(~static_cast<BYTE>((rgbInv.rgbBlue * static_cast<BYTE>(~b)) >> nAddShift));
+                        r = static_cast<BYTE>(~static_cast<BYTE>((static_cast<BYTE>(~r) * nAddRed) >> nAddShift));
+                        g = static_cast<BYTE>(~static_cast<BYTE>((static_cast<BYTE>(~g) * nAddGreen) >> nAddShift));
+                        b = static_cast<BYTE>(~static_cast<BYTE>((static_cast<BYTE>(~b) * nAddBlue) >> nAddShift));
                     }
 
                     if (bLight) {
-                        r = static_cast<BYTE>(min(rgbLight.rgbRed * r / (1 << CVidPalette::LIGHT_SCALE), 255));
-                        g = static_cast<BYTE>(min(rgbLight.rgbGreen * g / (1 << CVidPalette::LIGHT_SCALE), 255));
-                        b = static_cast<BYTE>(min(rgbLight.rgbBlue * b / (1 << CVidPalette::LIGHT_SCALE), 255));
+                        r = min((r * nLightRed) >> CVidPalette::LIGHT_SCALE, 255);
+                        g = min((g * nLightGreen) >> CVidPalette::LIGHT_SCALE, 255);
+                        b = min((b * nLightBlue) >> CVidPalette::LIGHT_SCALE, 255);
 
-                        if ((dwFlags & 0x1) != 0 && r == 0 && g == 255 && b == 0) {
+                        // Keep a tinted pixel from becoming the transparent key.
+                        if (r == 0 && g == 255 && b == 0) {
                             g = 254;
                         }
                     }
+                } else {
+                    // 0x85E6F2
+                    a = 128;
+
+                    DWORD dwColor = *pSurface;
+                    r = (((dwColor >> nRShift) & 0xFF) + GetRValue(rgbBrightnessContrast)) >> 1;
+                    g = (((dwColor >> nGShift) & 0xFF) + GetGValue(rgbBrightnessContrast)) >> 1;
+                    b = (((dwColor >> nBShift) & 0xFF) + GetBValue(rgbBrightnessContrast)) >> 1;
                 }
 
-                DWORD dwColor = (r << dwRBitShift) | (g << dwGBitShift) | (b << dwBBitShift);
-                if ((dwFlags & 0x1) != 0) {
-                    dwColor |= a << 24;
-                }
-                *pSurface = dwColor;
+                *pSurface = (b << nBShift) | (g << nGShift) | (r << nRShift) | (a << 24);
             }
 
             pSurface++;
             pData += 3;
         }
 
-        pSurface += -bmpSize.cx - lPitch / 4;
+        pSurface -= (lPitch >> 2) + bmpSize.cx;
         pData += nDataJump;
     }
 

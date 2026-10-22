@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/bitmap-tint.txt",
+  "hold": 20,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Run only the typed 24-bit tinted bitmap blit checks on private one-pixel buffers; restore the video mode's brightness and gamma corrections.",
+    "Never save the disposable process; restore save, config and fixture paths transactionally."
+  ]
+}
