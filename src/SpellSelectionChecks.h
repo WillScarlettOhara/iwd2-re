@@ -373,18 +373,58 @@ void SpellSelectionChecks(INT nStep)
                     }
                     create.m_nSpellLevel=3; create.m_nExtraSpells=-7;
                 };
-                auto ui=[&](UINT panel,STRREF title,STRREF help) {
+                auto ui=[&](UINT panel,STRREF title,STRREF help,BYTE level=3) {
                     CUIPanel* p=create.m_cUIManager.GetPanel(panel); BOOL unselected=TRUE;
-                    for (DWORD button=2;button<=13;++button) unselected=unselected && !static_cast<CUIControlButton3State*>(p->GetControl(button))->m_bSelected;
+                    for (DWORD button=2;button<=(panel==7?25u:13u);++button) unselected=unselected && !static_cast<CUIControlButton3State*>(p->GetControl(button))->m_bSelected;
                     CString token,number,caption; tlk.m_mapTokens.Lookup(CScreenCreateChar::TOKEN_NUMBER,token); number.Format(_T("%d"),create.m_nExtraSpells);
-                    caption.Format(_T("%s: %s 3"),create.FetchString(title).GetString(),create.FetchString(7192).GetString());
+                    caption.Format(_T("%s: %s %d"),create.FetchString(title).GetString(),create.FetchString(7192).GetString(),level);
                     auto* text=static_cast<CUIControlTextDisplay*>(p->GetControl(27)); CString shown; POSITION pos=text->m_plstStrings->GetHeadPosition();
                     while (pos) shown+=" "+text->m_plstStrings->GetNext(pos)->m_sString;
                     auto normalized=[](CString value) { value.Replace(_T("\r"),_T("")); value.Replace(_T("\n"),_T(" "));
                         while (value.Find(_T("  "))!=-1) value.Replace(_T("  "),_T(" ")); value.Trim(); return value; };
-                    check("memorize-reset-ui-budget-selection-and-help",unselected && token==number
+                    check("spell-reset-ui-budget-selection-and-help",unselected && token==number
                         && static_cast<CUIControlLabel*>(p->GetControl(0x10000000))->GetText()==caption && normalized(shown)==normalized(create.FetchString(help)));
                 };
+                {
+                    BeginLevelUpTableFixture knownBardRows(rules.m_tKnownSpellsBard,1,4),knownSorcRows(rules.m_tKnownSpellsSorcerer,1,4);
+                    for (INT row=0;row<4;++row) {
+                        knownBardRows.cells[row].Format(_T("%d"),11+row); knownSorcRows.cells[row].Format(_T("%d"),21+row);
+                    }
+                    knownSorc.Set("27");
+                    struct KnownResetCase { BYTE cls; DWORD mask,spec; BYTE sorcererLevel; INT budget; };
+                    const KnownResetCase cases[]={
+                        {2,CLASSMASK_BARD,SPECMASK_WIZARD_UNIVERSAL,4,12},
+                        {10,CLASSMASK_SORCERER,SPECMASK_WIZARD_UNIVERSAL,4,24},
+                        {10,CLASSMASK_BARD|CLASSMASK_SORCERER,SPECMASK_WIZARD_UNIVERSAL,4,12},
+                        {11,CLASSMASK_WIZARD,SPECMASK_WIZARD_UNIVERSAL,4,4},
+                        {11,CLASSMASK_WIZARD,SPECMASK_WIZARD_ABJURER,4,5},
+                        {10,CLASSMASK_SORCERER,SPECMASK_WIZARD_UNIVERSAL,0,27}
+                    };
+                    for (const auto& row:cases) {
+                        seed(row.cls); actor->m_startTypeAI.m_nClassMask=row.mask;
+                        actor->m_baseStats.m_specialization=row.spec;
+                        actor->m_derivedStats.m_nClassLevels[1]=2; actor->m_derivedStats.m_nClassLevels[9]=row.sorcererLevel;
+                        actor->m_domainSpells=actor->m_spells.m_spellsByClass[0];
+                        auto* panel=create.m_cUIManager.GetPanel(7);
+                        for (DWORD button=2;button<=25;++button) static_cast<CUIControlButton3State*>(panel->GetControl(button))->SetSelected(TRUE);
+                        create.ResetPopupPanel(7,actor);
+                        BOOL cleared=TRUE; auto* selected=actor->GetSpells(row.cls);
+                        for (UINT c=0;c<8;++c) {
+                            auto* group=c==7?&actor->m_domainSpells:&actor->m_spells.m_spellsByClass[c];
+                            BOOL reset=group==selected || c==7;
+                            cleared=cleared && group->m_nHighestLevel==(reset?0u:9u);
+                            for (UINT l=0;l<9;++l) {
+                                auto& list=group->m_lists[l]; BOOL populated=l==0 || l==8;
+                                cleared=cleared && list.m_List.size()==(populated && !reset?2u:0u)
+                                    && list.m_nSharedMax==(populated && reset?0u:55u)
+                                    && list.m_nSharedTotal==(populated && reset?0u:56u)
+                                    && list.m_nSharedCurrent==(populated?3u:21u);
+                            }
+                        }
+                        check("known-reset-class-level-budget-and-isolated-cache-clearing",cleared && create.m_nSpellLevel==1 && create.m_nExtraSpells==row.budget);
+                        ui(7,31614,17250,1);
+                    }
+                }
                 for (BYTE cls:{BYTE(2),BYTE(10),BYTE(11)}) {
                     seed(cls); for (DWORD button=2;button<=13;++button) static_cast<CUIControlButton3State*>(create.m_cUIManager.GetPanel(16)->GetControl(button))->SetSelected(TRUE);
                     create.ResetPopupPanel(16,actor); BOOL correct=TRUE; const UINT quotas[]={5,4,0,0,0,8,6};

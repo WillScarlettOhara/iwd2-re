@@ -1589,12 +1589,12 @@ void CScreenCreateChar::ResetArcaneSpellsPanel(CUIPanel* pPanel, CGameSprite* pS
 
     m_nSpellLevel = 1;
 
-    if ((typeAI.m_nClassMask & CAIOBJECTTYPE_C_BARD) != 0) {
+    if ((typeAI.m_nClassMask & CLASSMASK_BARD) != 0) {
         INT nBardClass = pSprite->GetDerivedStats()->GetClassLevel(CAIObjectType::C_BARD);
         m_nExtraSpells = atol(ruleTables.m_tKnownSpellsBard.GetAt(CPoint(m_nSpellLevel - 1, nBardClass - 1)));
-    } else if ((typeAI.m_nClassMask & CAIOBJECTTYPE_C_SORCERER) != 0) {
-        INT nBardClass = pSprite->GetDerivedStats()->GetClassLevel(CAIObjectType::C_BARD);
-        m_nExtraSpells = atol(ruleTables.m_tKnownSpellsSorcerer.GetAt(CPoint(m_nSpellLevel - 1, nBardClass - 1)));
+    } else if ((typeAI.m_nClassMask & CLASSMASK_SORCERER) != 0) {
+        INT nSorcererClass = pSprite->GetDerivedStats()->GetClassLevel(CAIObjectType::C_SORCERER);
+        m_nExtraSpells = atol(ruleTables.m_tKnownSpellsSorcerer.GetAt(CPoint(m_nSpellLevel - 1, nSorcererClass - 1)));
     } else {
         INT nBonus = 0;
         ruleTables.GetMaxKnownSpells(typeAI.m_nClass,
@@ -1612,11 +1612,18 @@ void CScreenCreateChar::ResetArcaneSpellsPanel(CUIPanel* pPanel, CGameSprite* pS
 
     CGameSpriteGroupedSpellList* pSpells = pSprite->GetSpells(typeAI.m_nClass);
 
-    // NOTE: Uninline.
-    pSpells->Clear();
-
-    // NOTE: Uninline.
-    pSprite->m_domainSpells.Clear();
+    for (CGameSpriteGroupedSpellList* pGroup : { pSpells, &pSprite->m_domainSpells }) {
+        for (UINT nLevel = 0; nLevel < CSPELLLIST_MAX_LEVELS; nLevel++) {
+            CGameSpriteSpellList* pList = pGroup->GetSpellsAtLevel(nLevel);
+            // Native clearing resets these caches only for nonempty lists.
+            if (!pList->m_List.empty()) {
+                pList->Clear();
+                pList->m_nSharedMax = 0;
+                pList->m_nSharedTotal = 0;
+            }
+        }
+        pGroup->m_nHighestLevel = 0;
+    }
 
     for (DWORD nButtonID = 2; nButtonID <= 25; nButtonID++) {
         CUIControlButton3State* pButton = static_cast<CUIControlButton3State*>(pPanel->GetControl(nButtonID));
