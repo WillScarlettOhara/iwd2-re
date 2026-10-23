@@ -8316,13 +8316,81 @@ DWORD CInfGame::GetScrollSpeed()
 // 0x5BDBA0
 void CInfGame::SetReputation(int a1, BOOL a2)
 {
-    // TODO: Incomplete.
+    m_nReputation = static_cast<SHORT>(a1 * 10);
+    if (a2) {
+        m_nReputation = min(m_nReputation, 200);
+        m_nReputation = max(m_nReputation, 10);
+    }
 }
 
 // 0x5BDC00
 void CInfGame::ReputationAdjustment(SHORT reputationAdjustment, BOOL set)
 {
-    // TODO: Incomplete.
+    if (set) {
+        reputationAdjustment -= m_nReputation;
+    }
+
+    if (!g_pBaldurChitin->GetBaldurMessage()->m_bInReputationChange) {
+        CMessageReputationChange* pMessage = new CMessageReputationChange(reputationAdjustment,
+            GetProtagonist(),
+            GetProtagonist());
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
+    }
+
+    m_nReputation += reputationAdjustment;
+    m_nReputation = min(m_nReputation, 200);
+    m_nReputation = max(m_nReputation, 10);
+
+    ITEM_EFFECT effect;
+    CGameEffect::ClearItemEffect(&effect, CGAMEEFFECT_REPUTATION);
+    effect.effectAmount = m_nReputation;
+    effect.dwFlags = 1;
+    // 0x8491AA
+    effect.durationType = 1;
+
+    for (INT nIndex = 0; nIndex < m_nCharacters; nIndex++) {
+        LONG nCharacterId = GetCharacterId(static_cast<SHORT>(nIndex));
+
+        CGameSprite* pSprite;
+        BYTE rc;
+        do {
+            rc = m_cObjectArray.GetDeny(nCharacterId,
+                CGameObjectArray::THREAD_ASYNCH,
+                reinterpret_cast<CGameObject**>(&pSprite),
+                INFINITE);
+        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+
+        if (rc != CGameObjectArray::SUCCESS) {
+            continue;
+        }
+
+        if (g_pChitin->cNetwork.m_nServiceProvider == CNetwork::SERV_PROV_NULL
+            || g_pChitin->cNetwork.m_idLocalPlayer == pSprite->m_remotePlayerID) {
+            // Happiness columns: good, neutral, evil.
+            SHORT nColumn = 0;
+            if ((pSprite->GetAIType().m_nAlignment & 0xF) == 2) {
+                nColumn = 1;
+            } else if ((pSprite->GetAIType().m_nAlignment & 0xF) == 3) {
+                nColumn = 2;
+            }
+
+            INT nRow = static_cast<SHORT>(m_nReputation / REPUTATION_MULTIPLIER - 1);
+            SHORT nHappiness = static_cast<SHORT>(atol(m_ruleTables.m_tHappiness.GetAt(CPoint(nColumn, nRow))));
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetHappiness(nHappiness, nCharacterId, nCharacterId), FALSE);
+
+            CGameEffect* pEffect = CGameEffect::DecodeEffect(&effect, CPoint(-1, -1), -1, CPoint(-1, -1));
+            LONG nTargetId = GetCharacterId(static_cast<SHORT>(nIndex));
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(pEffect, nTargetId, nTargetId), FALSE);
+
+            pSprite->ApplyFallenStatus();
+        }
+
+        m_cObjectArray.ReleaseDeny(nCharacterId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+
+    if (!g_pChitin->cNetwork.m_bConnectionEstablished || g_pChitin->cNetwork.m_bIsHost == TRUE) {
+        FeedBack(FEEDBACK_REPUTATION, reputationAdjustment / 10, TRUE);
+    }
 }
 
 // 0x5BDF80

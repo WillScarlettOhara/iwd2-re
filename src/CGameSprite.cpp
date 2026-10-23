@@ -17631,7 +17631,7 @@ BOOL CGameSprite::ProcessPersistantEffects(LONG deltaT)
 // follow-up to avoid applying the derivation twice.
 void CGameSprite::sub_71C0C0()
 {
-    sub_737990();
+    ApplyFallenStatus();
 
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     const CRuleTables& ruleTables = pGame->GetRuleTables();
@@ -17796,7 +17796,7 @@ void CGameSprite::sub_71C0C0()
 // stripped, the class levels are folded into Fighter, the experience is reset
 // to the start of the current level and the improved saving throws are added to
 // the base saves.  Shared with CInfGame::ReputationAdjustment.
-void CGameSprite::sub_737990()
+void CGameSprite::ApplyFallenStatus()
 {
     CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
     UTIL_ASSERT(pGame != NULL);

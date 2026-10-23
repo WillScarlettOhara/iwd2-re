@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/reputation.txt",
+  "hold": 20,
+  "fixtures": ["combat-payload"],
+  "preconditions": [
+    "Run only the typed reputation checks: SetReputation scaling/clamps and ReputationAdjustment announcements, happiness and reputation effects; reputation stays at or above 70 so no member falls.",
+    "Restore reputation, the happiness table, the replay flag and queued messages in the same tick; never save the disposable process."
+  ],
+  "preserve": []
+}
