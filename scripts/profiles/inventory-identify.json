@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/inventory-identify.txt",
+  "hold": 20,
+  "fixtures": ["combat-payload"],
+  "preconditions": [
+    "Run only the typed identify/scribe checks on fixture items placed in two empty pack slots of the selected character.",
+    "Remove the fixture items, restore popup fields and discard queued messages in the same tick; never save the disposable process."
+  ],
+  "preserve": []
+}
