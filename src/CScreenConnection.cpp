@@ -813,7 +813,10 @@ void CScreenConnection::TimerAsynchronousUpdate()
         m_cUIManager.TimerAsynchronousUpdate();
         g_pBaldurChitin->GetObjectCursor()->CursorUpdate(pVidMode);
 
-        if (!s_autoLoadOriginalStarted && m_bAllowInput && GetTopPopup() == NULL && Iwd2AutoLoad::IsEnabled()) {
+        // Let the main thread finish a pending DirectPlay teardown before an
+        // automatic load sends it a synchronous DirectPlay creation message.
+        if (!s_autoLoadOriginalStarted && m_bAllowInput && !m_bEliminateInitialize
+            && GetTopPopup() == NULL && Iwd2AutoLoad::IsEnabled()) {
             s_autoLoadOriginalStarted = TRUE;
             if (Iwd2AutoLoad::IsAction("load")) {
                 OnLoadGameButtonClick(FALSE);

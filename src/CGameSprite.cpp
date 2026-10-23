@@ -26670,62 +26670,62 @@ BOOL CGameSprite::CanSelectFeat(UINT nFeatNumber, INT a2)
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_AXE:
         return (m_baseStats.m_featAxe != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featAxe < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_BOW:
         return (m_baseStats.m_featBow != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featBow < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_FLAIL:
         return (m_baseStats.m_featFlail != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featFlail < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_GREATSWORD:
         return (m_baseStats.m_featGreatSword != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featGreatSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_HAMMER:
         return (m_baseStats.m_featHammer != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featHammer < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_LARGESWORD:
         return (m_baseStats.m_featLargeSword != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featLargeSword < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_MARTIAL_POLEARM:
         return (m_baseStats.m_featPolearm != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featPolearm < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_CROSSBOW:
         return (m_baseStats.m_featCrossbow != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featCrossbow < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_MACE:
         return (m_baseStats.m_featMace != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featMace < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_MISSILE:
         return (m_baseStats.m_featMissile != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featMissile < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_QUARTERSTAFF:
         return (m_baseStats.m_featQuarterStaff != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featQuarterStaff < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SIMPLE_SMALLBLADE:
         return (m_baseStats.m_featSmallBlade != CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE - 1
-                   || m_baseStats.m_attackBase >= 4)
+                   || m_baseStats.m_fighterLevel >= 4)
             && m_baseStats.m_featSmallBlade < CGAMESPRITE_FEAT_MAX_WEAPON_UPGRADE
             && CheckFeatPrerequisites(nFeatNumber, 1);
     case CGAMESPRITE_FEAT_SPELL_FOCUS_ENCHANTMENT:

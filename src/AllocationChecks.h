@@ -241,6 +241,68 @@ void AllocationChecks(INT nStep)
             auto help=[&](CUIPanel* panel) { CString text; auto* display=static_cast<CUIControlTextDisplay*>(panel->GetControl(92));
                 POSITION pos=display->m_plstStrings->GetHeadPosition(); while (pos) text+=" "+display->m_plstStrings->GetNext(pos)->m_sString;
                 return normalized(text); };
+            {
+                auto savedBase=actor->m_baseStats; CDerivedStats savedDerived; savedDerived=actor->m_derivedStats;
+                auto* levelPanel=screen.m_cUIManager.GetPanel(56); screen.field_1840=id;
+                for (UINT feat:{38u,39u,40u,41u,42u,43u,44u,53u,54u,55u,56u,57u,18u}) {
+                    actor->SetFeatValue(feat,2); actor->m_baseStats.m_fighterLevel=3; actor->m_baseStats.m_attackBase=20;
+                    actor->m_derivedStats.m_fighterLevel=20;
+                    check("weapon-specialization-requires-four-base-fighter-levels",!actor->CanSelectFeat(feat,1) && !actor->CanSelectFeat(feat,0));
+                    actor->m_baseStats.m_fighterLevel=4; actor->m_baseStats.m_attackBase=0; actor->m_derivedStats.m_fighterLevel=0;
+                    check("weapon-specialization-does-not-require-base-attack-four",actor->CanSelectFeat(feat,1));
+                    actor->SetFeatValue(feat,3);
+                    check("weapon-specialization-stops-at-rank-three",!actor->CanSelectFeat(feat,1));
+                    actor->SetFeatValue(feat,1); actor->m_baseStats.m_fighterLevel=0;
+                    check("earlier-weapon-ranks-do-not-require-fighter",actor->CanSelectFeat(feat,1));
+                    actor->SetFeatValue(feat,0);
+                }
+                for (auto& value:screen.m_storedFeats) value=0;
+                for (INT kind:{0,1}) {
+                    auto* panel=kind?featPanel:levelPanel;
+                    auto& manager=kind?create.m_cUIManager:screen.m_cUIManager;
+                    screen.m_lPopupStack.RemoveAll(); create.m_lPopupStack.RemoveAll();
+                    if (kind) create.m_lPopupStack.AddTail(panel); else screen.m_lPopupStack.AddTail(panel);
+                    auto refresh=[&]() { if (kind) create.UpdatePopupPanel(55,actor); else screen.UpdatePopupPanel(56,actor); };
+                    auto click=[&](DWORD control) { auto* button=static_cast<CUIControlButtonPlusMinus*>(panel->GetControl(control));
+                        button->SetActive(TRUE); button->field_662=0; BOOL result=button->OnLButtonDown(CPoint(0,0)); manager.KillCapture(); return result; };
+                    INT& budget=kind?create.m_nExtraFeats:screen.m_nExtraFeats;
+                    for (UINT feat:{38u,39u,53u,55u}) {
+                        cgFeats.cells[3*8].Format(_T("%u"),feat); cgFeats.cells[3*feat]="8";
+                        actor->SetFeatValue(feat,2); actor->m_baseStats.m_fighterLevel=3; actor->m_baseStats.m_attackBase=20;
+                        screen.m_nTopFeat=create.m_nTopFeat=0; budget=1; refresh();
+                        check("weapon-specialization-disabled-in-both-panels",!static_cast<CUIControlButton*>(panel->GetControl(30))->m_bEnabled);
+                        BOOL down=click(30);
+                        check("weapon-specialization-click-cannot-bypass-fighter-gate",down && actor->GetFeatValue(feat)==2 && budget==1);
+                        actor->m_baseStats.m_fighterLevel=4; actor->m_baseStats.m_attackBase=0; refresh();
+                        check("weapon-specialization-enabled-at-fighter-four",static_cast<CUIControlButton*>(panel->GetControl(30))->m_bEnabled);
+                        down=click(30); check("weapon-specialization-purchase-through-real-controls",down && actor->GetFeatValue(feat)==3 && budget==0);
+                        down=click(31); check("last-visible-feat-minus-refunds-specialization",down && actor->GetFeatValue(feat)==2 && budget==1);
+                        actor->SetFeatValue(feat,0); cgFeats.cells[3*8]="8"; cgFeats.cells[3*feat].Format(_T("%u"),feat);
+                    }
+                    if (!kind) {
+                        cgFeats.cells[0]="69"; cgFeats.cells[3*69]="0"; cgFeats.cells[2]="11982";
+                        screen.m_nTopFeat=-1; budget=1; BOOL down=click(16);
+                        check("levelup-feat-click-zero-extends-scroll-word-before-help-and-purchase",down && screen.m_nTopFeat==66
+                            && actor->GetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS)==0 && budget==1 && help(panel)==normalized(create.FetchString(7192)));
+                        cgFeats.cells[0]="0"; cgFeats.cells[3*69]="69"; cgFeats.cells[2]="7192";
+                        auto* scroll=static_cast<CUIControlScrollBar*>(panel->GetControl(104));
+                        screen.m_nTopFeat=0; scroll->OnScrollUp(); check("levelup-feat-scroll-stops-at-start",screen.m_nTopFeat==0);
+                        scroll->OnScrollDown(); check("levelup-feat-scroll-advances-one-row",screen.m_nTopFeat==1);
+                        scroll->OnPageDown(999); check("levelup-feat-page-down-uses-eight-rows",screen.m_nTopFeat==9);
+                        scroll->OnPageUp(3); check("levelup-feat-page-up-uses-requested-count",screen.m_nTopFeat==6);
+                        scroll->OnPageDown(3); check("levelup-feat-page-down-uses-requested-count",screen.m_nTopFeat==9);
+                        scroll->OnPageUp(999); check("levelup-feat-page-up-limits-step-to-eight",screen.m_nTopFeat==1);
+                        screen.m_nTopFeat=-1; scroll->OnScrollUp(); check("levelup-feat-scroll-up-zero-extends-word",screen.m_nTopFeat==66);
+                        screen.m_nTopFeat=-1; scroll->OnPageUp(1); check("levelup-feat-page-up-zero-extends-word",screen.m_nTopFeat==66);
+                        screen.m_nTopFeat=-1; scroll->OnScrollDown(); check("levelup-feat-scroll-down-preserves-upper-limit",screen.m_nTopFeat==66);
+                        for (SHORT position:{0,50,100}) { scroll->field_142=100; scroll->field_144=position; scroll->OnScroll();
+                            check("levelup-feat-thumb-has-no-visible-row-offset",screen.m_nTopFeat==min(75*position/100,66)); }
+                    }
+                }
+                screen.m_cUIManager.KillCapture(); screen.m_lPopupStack.RemoveAll();
+                create.m_lPopupStack.RemoveAll(); create.m_lPopupStack.AddTail(skillPanel);
+                actor->m_baseStats=savedBase; actor->m_derivedStats=savedDerived;
+            }
             UI_CONTROL_BUTTON hotInfo={}; hotInfo.base.nWidth=80; hotInfo.base.nHeight=40; memcpy(hotInfo.refBam,"GUIBTNA",7);
             for (INT row=0;row<11;++row) {
                 hotInfo.base.nID=93+row;
@@ -410,6 +472,34 @@ void AllocationChecks(INT nStep)
                     && create.m_nTopFeat==-1 && actor->field_72A2==effects);
                 create.m_nGameSprite=CGameObjectArray::INVALID_INDEX; circle->m_nRenderCount=1;
                 check("chargen-rank-render-missing-actor-rejected",!circle->Render(TRUE)); create.m_nGameSprite=id;
+                auto* levelPanel=screen.m_cUIManager.GetPanel(56); levelPanel->m_ptOrigin=CPoint(48,48);
+                screen.m_nTopFeat=0; screen.field_1840=id; create.m_nGameSprite=CGameObjectArray::INVALID_INDEX;
+                INT levelBudget=screen.m_nExtraFeats;
+                for (const auto& row:renderCases) {
+                    cgFeats.cells[0]="47"; cgFeats.cells[3*47].Format(_T("%u"),row.feat);
+                    screen.m_cUIManager.m_bDoubleSize=row.doubled; reference.SetResRef(CResRef("GUIPFC"),row.doubled,TRUE,TRUE);
+                    auto* rank=static_cast<CUIControlButtonCharacterFeatsCircle*>(levelPanel->GetControl(row.control));
+                    rank->m_ptOrigin=CPoint(8,8); rank->m_size=CSize(24,24); rank->m_bActive=TRUE; rank->m_bInactiveRender=FALSE;
+                    CRect rect(levelPanel->m_ptOrigin+rank->m_ptOrigin,rank->m_size); rank->m_rDirty=rect;
+                    if (row.clipped) rank->m_rDirty.right=rect.left+4;
+                    BOOL ok=pixels(NULL,&blank);
+                    if (row.drawn) { reference.FrameSet(row.frame); ok=ok && reference.Render(0,rect.left,rect.top,rank->m_rDirty,NULL,0,0,-1); }
+                    ok=ok && pixels(&expectedPixels,NULL) && pixels(NULL,&blank); rank->m_nRenderCount=row.count;
+                    BOOL result=rank->Render(row.force); ok=ok && pixels(&actualPixels,NULL);
+                    check("levelup-rank-render-uses-character-actor-and-native-pixels",ok && result==row.drawn && actualPixels==expectedPixels
+                        && rank->m_nRenderCount==(row.count>0?row.count-1:row.count));
+                    check("levelup-rank-render-does-not-refresh-or-process-effects",actor->field_72A2==effects && actor->field_562C==dirtyBefore
+                        && screen.m_nExtraFeats==levelBudget && screen.m_nTopFeat==0 && create.m_nGameSprite==CGameObjectArray::INVALID_INDEX);
+                }
+                auto* rank=static_cast<CUIControlButtonCharacterFeatsCircle*>(levelPanel->GetControl(40));
+                rank->m_bActive=FALSE; rank->m_nRenderCount=1;
+                check("levelup-inactive-rank-render-preserves-dirty-count",!rank->Render(TRUE) && rank->m_nRenderCount==1);
+                screen.m_nTopFeat=-1; cgFeats.cells[0]="0"; cgFeats.cells[3]="47"; cgFeats.cells[3*47]="69";
+                rank=static_cast<CUIControlButtonCharacterFeatsCircle*>(levelPanel->GetControl(50)); rank->m_bActive=TRUE; rank->m_nRenderCount=1;
+                rank->m_ptOrigin=CPoint(8,8); rank->m_size=CSize(24,24); rank->m_rDirty=CRect(levelPanel->m_ptOrigin+rank->m_ptOrigin,rank->m_size);
+                check("levelup-rank-render-zero-extends-scroll-word",!rank->Render(TRUE) && screen.m_nTopFeat==-1 && actor->field_72A2==effects);
+                screen.field_1840=CGameObjectArray::INVALID_INDEX; rank->m_nRenderCount=1;
+                check("levelup-rank-render-missing-character-rejected",!rank->Render(TRUE)); screen.field_1840=id; create.m_nGameSprite=id;
                 check("chargen-rank-render-balances-shares-and-resource-requests",objects->m_pArray[(id>>16)&0x7FFF].m_shareCounts[CGameObjectArray::THREAD_1]==shares
                     && resource && resource->GetDemands()==demands && resource->m_nLockCount==requests);
                 check("chargen-rank-pixels-restored",pixels(NULL,&savedPixels));
