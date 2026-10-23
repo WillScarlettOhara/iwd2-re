@@ -9470,15 +9470,16 @@ void CUIControlButtonCharGenSkillsHotArea::OnHotAreaClick(CPoint pt)
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
         // __LINE__: 14993
         UTIL_ASSERT(FALSE);
+        offset = static_cast<DWORD>(-1);
     }
 
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
-    DWORD id = ruleTables.GetSkillId(offset + g_pBaldurChitin->m_pEngineCreateChar->m_nTopSkill);
+    DWORD id = ruleTables.GetSkillId(offset + static_cast<USHORT>(g_pBaldurChitin->m_pEngineCreateChar->m_nTopSkill));
     STRREF strDescription = ruleTables.GetSkillDescription(id);
     g_pBaldurChitin->m_pEngineCreateChar->UpdateHelp(m_pPanel->m_nID, 92, strDescription);
 
-    // FIXME: Same call, what for?
+    // The original refreshes this help control twice.
     g_pBaldurChitin->m_pEngineCreateChar->UpdateHelp(m_pPanel->m_nID, 92, strDescription);
 }
 
@@ -10714,11 +10715,12 @@ void CUIControlButtonCharGenFeatsHotArea::OnHotAreaClick(CPoint pt)
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
         // __LINE__: 17069
         UTIL_ASSERT(FALSE);
+        offset = static_cast<DWORD>(-1);
     }
 
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
-    DWORD id = ruleTables.GetFeatId(offset + g_pBaldurChitin->m_pEngineCreateChar->m_nTopFeat);
+    DWORD id = ruleTables.GetFeatId(offset + static_cast<USHORT>(g_pBaldurChitin->m_pEngineCreateChar->m_nTopFeat));
     STRREF strDescription = ruleTables.GetFeatDescription(id);
     g_pBaldurChitin->m_pEngineCreateChar->UpdateHelp(m_pPanel->m_nID, 92, strDescription);
 }

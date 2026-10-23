@@ -26455,8 +26455,8 @@ BOOL CGameSprite::CheckFeatPrerequisites(UINT nFeatNumber, INT a2)
                    || m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_WIZARD) >= 7
                    || m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_PALADIN) >= 15
                    || m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_RANGER) >= 15
-                   || m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_RANGER) >= 8)
-            && m_derivedStats.m_nSkills[13] >= 10;
+                   || m_derivedStats.GetClassLevel(CAIOBJECTTYPE_C_SORCERER) >= 8)
+            && static_cast<signed char>(m_derivedStats.m_nSkills[13]) >= 10;
     case CGAMESPRITE_FEAT_AMBIDEXTERITY:
         return nDEX >= 15;
     case CGAMESPRITE_FEAT_ARMOR_PROF:
@@ -26483,7 +26483,7 @@ BOOL CGameSprite::CheckFeatPrerequisites(UINT nFeatNumber, INT a2)
     case CGAMESPRITE_FEAT_ARMORED_ARCANA:
         return m_derivedStats.HasClassMask(CLASSMASK_WIZARD | CLASSMASK_SORCERER | CLASSMASK_BARD);
     case CGAMESPRITE_FEAT_ARTERIAL_STRIKE:
-        return m_baseStats.m_rogueLevel > 0 && m_baseStats.m_attackBase >= 4;
+        return m_baseStats.m_rogueLevel > 0 && static_cast<signed char>(m_baseStats.m_attackBase) >= 4;
     case CGAMESPRITE_FEAT_BULLHEADED:
         return m_typeAI.m_nRace == CAIOBJECTTYPE_R_HUMAN
             || m_typeAI.m_nRace == CAIOBJECTTYPE_R_DWARF;
@@ -26493,7 +26493,7 @@ BOOL CGameSprite::CheckFeatPrerequisites(UINT nFeatNumber, INT a2)
         }
 
         if (GetFeatValue(CGAMESPRITE_FEAT_CLEAVE) >= 1) {
-            return m_baseStats.m_attackBase >= 4;
+            return static_cast<signed char>(m_baseStats.m_attackBase) >= 4;
         }
 
         return TRUE;
@@ -26501,16 +26501,17 @@ BOOL CGameSprite::CheckFeatPrerequisites(UINT nFeatNumber, INT a2)
         return m_derivedStats.HasClassMask(CLASSMASK_WIZARD | CLASSMASK_SORCERER | CLASSMASK_BARD)
             || m_derivedStats.HasClassMask(CLASSMASK_RANGER | CLASSMASK_PALADIN | CLASSMASK_DRUID | CLASSMASK_CLERIC);
     case CGAMESPRITE_FEAT_CRIPPLING_STRIKE:
+    case CGAMESPRITE_FEAT_SLIPPERY_MIND:
         return m_baseStats.m_rogueLevel >= 10;
     case CGAMESPRITE_FEAT_DEFLECT_ARROWS:
     case CGAMESPRITE_FEAT_DODGE:
     case CGAMESPRITE_FEAT_RAPID_SHOT:
         return nDEX >= 13;
     case CGAMESPRITE_FEAT_DIRTY_FIGHTING:
-        return nDEX >= 13 && m_baseStats.m_attackBase >= 2;
+        return nDEX >= 13 && static_cast<signed char>(m_baseStats.m_attackBase) >= 2;
     case CGAMESPRITE_FEAT_ENVENOM_WEAPON:
         return m_baseStats.m_rogueLevel > 0
-            && m_baseStats.m_skills[CGAMESPRITE_SKILL_ALCHEMY] >= 8;
+            && static_cast<signed char>(m_baseStats.m_skills[CGAMESPRITE_SKILL_ALCHEMY]) >= 8;
     case CGAMESPRITE_FEAT_EXOTIC_BASTARD:
         return GetFeatValue(CGAMESPRITE_FEAT_EXOTIC_BASTARD) != 2
             || m_baseStats.m_fighterLevel >= 4;
@@ -26528,18 +26529,18 @@ BOOL CGameSprite::CheckFeatPrerequisites(UINT nFeatNumber, INT a2)
     case CGAMESPRITE_FEAT_FIENDSLAYER:
         return (GetFeatValue(CGAMESPRITE_FEAT_MARTIAL_LARGESWORD) >= 2
                    || GetFeatValue(CGAMESPRITE_FEAT_MARTIAL_GREATSWORD) >= 2)
-            && m_baseStats.m_paladinLevel >= 3;
+            && m_baseStats.m_paladinLevel >= 8;
     case CGAMESPRITE_FEAT_HAMSTRING:
         return m_baseStats.m_rogueLevel >= 3;
     case CGAMESPRITE_FEAT_HERETICS_BANE:
-        return m_baseStats.m_attackBase >= 4
+        return static_cast<signed char>(m_baseStats.m_attackBase) >= 4
             && m_derivedStats.HasClassMask(CLASSMASK_RANGER | CLASSMASK_PALADIN | CLASSMASK_DRUID | CLASSMASK_CLERIC);
     case CGAMESPRITE_FEAT_HEROIC_INSPIRATION:
         return m_baseStats.m_barbarianLevel > 0
-            || m_baseStats.m_barbarianLevel > 0
+            || m_baseStats.m_bardLevel > 0
             || m_baseStats.m_paladinLevel > 0;
     case CGAMESPRITE_FEAT_IMPROVED_CRITICAL:
-        return m_baseStats.m_attackBase >= 8;
+        return static_cast<signed char>(m_baseStats.m_attackBase) >= 8;
     case CGAMESPRITE_FEAT_IMPROVED_EVASION:
         return m_baseStats.m_rogueLevel >= 10
             || m_baseStats.m_monkLevel >= 9;
@@ -26580,29 +26581,51 @@ BOOL CGameSprite::CheckFeatPrerequisites(UINT nFeatNumber, INT a2)
             }
 
             return nWeaponSpecializations >= 2
-                && m_baseStats.m_skills[CGAMESPRITE_SKILL_CONCENTRATION] >= 4;
+                && static_cast<signed char>(m_baseStats.m_skills[CGAMESPRITE_SKILL_CONCENTRATION]) >= 4;
         }
     case CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND:
-        // TODO: Incomplete.
-        return FALSE;
+        return m_typeAI.m_nRace == CAIOBJECTTYPE_R_HUMAN
+            || (m_typeAI.m_nRace == CAIOBJECTTYPE_R_DWARF && m_typeAI.m_nSubRace == CAIOBJECTTYPE_SUBRACE_DWARF_GRAY)
+            || (m_typeAI.m_nRace == CAIOBJECTTYPE_R_GNOME && m_typeAI.m_nSubRace == CAIOBJECTTYPE_SUBRACE_GNOME_DEEP);
+    case CGAMESPRITE_FEAT_POWER_ATTACK:
+        return nSTR >= 13;
     case CGAMESPRITE_FEAT_SIMPLE_CROSSBOW:
     case CGAMESPRITE_FEAT_SIMPLE_MACE:
     case CGAMESPRITE_FEAT_SIMPLE_MISSILE:
     case CGAMESPRITE_FEAT_SIMPLE_QUARTERSTAFF:
     case CGAMESPRITE_FEAT_SIMPLE_SMALLBLADE:
         return GetFeatValue(nFeatNumber) != 3 || m_baseStats.m_fighterLevel >= 4;
+    case CGAMESPRITE_FEAT_RESIST_POISON:
     case CGAMESPRITE_FEAT_SNAKE_BLOOD:
-        // TODO: Incomplete.
-        return FALSE;
+        {
+            if (nFeatNumber == CGAMESPRITE_FEAT_RESIST_POISON) {
+                if (!(m_typeAI.m_nRace == CAIOBJECTTYPE_R_DWARF && m_typeAI.m_nSubRace == CAIOBJECTTYPE_SUBRACE_DWARF_GRAY)
+                    && m_typeAI.m_nRace != CAIOBJECTTYPE_R_HALF_ORC) {
+                    return FALSE;
+                }
+            } else if (m_typeAI.m_nRace != CAIOBJECTTYPE_R_HUMAN) {
+                return FALSE;
+            }
+
+            // The binary sums only base class levels selected by the current AI mask.
+            UINT classMask = GetAIType().m_nClassMask & 0xFFF;
+            INT levels = 0;
+            for (INT cls = 0, bit = 1; cls < 11; ++cls, bit <<= 1) {
+                if ((classMask & bit) != 0) {
+                    levels += m_baseStats.m_classLevels[cls];
+                }
+            }
+            return levels == 1;
+        }
     case CGAMESPRITE_FEAT_STUNNING_FIST:
-        return (nDEX >= 13 && nWIS >= 13 && m_baseStats.m_attackBase >= 8)
+        return (nDEX >= 13 && nWIS >= 13 && static_cast<signed char>(m_baseStats.m_attackBase) >= 8)
             || m_baseStats.m_monkLevel > 0;
     case CGAMESPRITE_FEAT_SUBVOCAL_CASTING:
         return m_derivedStats.HasClassMask(CLASSMASK_WIZARD | CLASSMASK_SORCERER | CLASSMASK_BARD)
             || m_derivedStats.HasClassMask(CLASSMASK_RANGER | CLASSMASK_PALADIN | CLASSMASK_DRUID | CLASSMASK_CLERIC);
     case CGAMESPRITE_FEAT_WEAPON_FINESSE:
-        return GetFeatValue(CGAMESPRITE_FEAT_SIMPLE_SMALLBLADE)
-            && m_baseStats.m_attackBase >= 1;
+        return GetFeatValue(CGAMESPRITE_FEAT_SIMPLE_SMALLBLADE) >= 1
+            && static_cast<signed char>(m_baseStats.m_attackBase) >= 1;
     case CGAMESPRITE_FEAT_WILDSHAPE_BOAR:
     case CGAMESPRITE_FEAT_WILDSHAPE_PANTHER:
         return m_baseStats.m_druidLevel >= 5;

@@ -14,7 +14,7 @@ void AllocationChecks(INT nStep)
     auto check=[&](const char* name,BOOL ok) { ++checks; valid=valid && ok;
         if (!ok) Emit("{\"step\":%d,\"op\":\"allocation-case\",\"row\":%d,\"case\":\"%s\",\"passed\":false}",nStep,index,name); };
     auto base=actor->m_baseStats; CDerivedStats derived,temp; derived=actor->m_derivedStats; temp=actor->m_tempStats;
-    auto start=actor->m_startTypeAI; auto allow=actor->m_bAllowEffectListCall;
+    auto start=actor->m_startTypeAI; auto ai=actor->m_typeAI; auto allow=actor->m_bAllowEffectListCall;
     auto dirty=actor->field_562C; auto deferred=actor->field_72A2; auto bonus=actor->m_nHPCONBonusTotalOld;
     auto* handler=g_pBaldurChitin->GetMessageHandler(); INT messages=handler->m_messageList.GetCount();
     auto* timer=game->GetWorldTimer(); auto clock=timer->m_gameTime;
@@ -132,6 +132,88 @@ void AllocationChecks(INT nStep)
             else check("description-panel-scroll-route",screen.m_pCurrentScrollBar==panel->GetControl(id==51?3:1));
             screen.m_lPopupStack.RemoveAll();
         }
+        // Prerequisites are also used by HasFeat during play, not just by the selection UI.
+        {
+            auto savedBase=actor->m_baseStats; CDerivedStats savedDerived; savedDerived=actor->m_derivedStats;
+            auto reset=[&]() { actor->m_baseStats=CCreatureFileHeader(); actor->m_typeAI=ai;
+                actor->m_baseStats.m_STRBase=actor->m_baseStats.m_DEXBase=actor->m_baseStats.m_WISBase=18;
+                memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_classMask=0;
+                actor->m_derivedStats.m_nSTR=actor->m_derivedStats.m_nDEX=actor->m_derivedStats.m_nWIS=18; };
+            reset(); actor->m_baseStats.m_STRBase=12; actor->m_derivedStats.m_nSTR=13;
+            check("power-attack-base-versus-derived-exact-selector",!actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_POWER_ATTACK,1)
+                && actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_POWER_ATTACK,0) && actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_POWER_ATTACK,2));
+            check("power-attack-selection-uses-base-strength",!actor->CanSelectFeat(CGAMESPRITE_FEAT_POWER_ATTACK,1)
+                && actor->CanSelectFeat(CGAMESPRITE_FEAT_POWER_ATTACK,0));
+            actor->SetFeatValue(CGAMESPRITE_FEAT_POWER_ATTACK,1);
+            check("owned-power-attack-uses-derived-strength",actor->HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)
+                && !actor->CanSelectFeat(CGAMESPRITE_FEAT_POWER_ATTACK,0));
+            actor->m_derivedStats.m_nSTR=12; actor->m_baseStats.m_STRBase=13;
+            check("power-attack-strength-threshold-in-both-directions",!actor->HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK)
+                && actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_POWER_ATTACK,1));
+            reset(); actor->m_baseStats.m_bardLevel=1;
+            check("heroic-inspiration-allows-bard",actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_HEROIC_INSPIRATION,1));
+            actor->m_baseStats.m_bardLevel=0;
+            check("heroic-inspiration-requires-eligible-class",!actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_HEROIC_INSPIRATION,1));
+            actor->SetFeatValue(CGAMESPRITE_FEAT_MARTIAL_LARGESWORD,2); actor->m_baseStats.m_paladinLevel=7;
+            check("fiendslayer-rejects-paladin-below-eight",!actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_FIENDSLAYER,1));
+            actor->m_baseStats.m_paladinLevel=8;
+            check("fiendslayer-allows-paladin-eight",actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_FIENDSLAYER,1));
+            actor->SetFeatValue(CGAMESPRITE_FEAT_MARTIAL_LARGESWORD,1);
+            check("fiendslayer-still-requires-weapon-rank",!actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_FIENDSLAYER,1));
+            for (INT level:{9,10}) { actor->m_baseStats.m_rogueLevel=level;
+                check("slippery-mind-rogue-threshold",actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_SLIPPERY_MIND,1)==(level==10)); }
+            reset(); actor->m_derivedStats.m_sorcererLevel=8; actor->m_derivedStats.m_classMask=CLASSMASK_SORCERER;
+            for (INT feat:{CGAMESPRITE_FEAT_AEGIS_OF_RIME,CGAMESPRITE_FEAT_AQUA_MORTIS,CGAMESPRITE_FEAT_SCION_OF_STORMS,CGAMESPRITE_FEAT_SPIRIT_OF_FLAME}) {
+                for (INT skill:{9,10,255}) { actor->m_derivedStats.m_nSkills[13]=skill;
+                    check("elemental-feats-allow-sorcerer-eight-with-signed-skill",actor->CheckFeatPrerequisites(feat,1)==(skill==10)); }
+            }
+            actor->m_derivedStats.m_nSkills[13]=10; actor->m_derivedStats.m_sorcererLevel=0;
+            actor->m_derivedStats.m_rangerLevel=8; actor->m_derivedStats.m_classMask=CLASSMASK_RANGER;
+            check("ranger-eight-does-not-substitute-for-sorcerer",!actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_AEGIS_OF_RIME,1));
+            actor->m_derivedStats.m_rangerLevel=15;
+            check("elemental-feats-allow-ranger-fifteen",actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_AEGIS_OF_RIME,1));
+            struct RaceCase { BYTE race,subrace; BOOL mercantile,poison,snake; };
+            for (const RaceCase& row:{RaceCase{1,0,TRUE,FALSE,TRUE},RaceCase{4,0,FALSE,FALSE,FALSE},
+                RaceCase{4,2,TRUE,TRUE,FALSE},RaceCase{6,0,FALSE,FALSE,FALSE},RaceCase{6,1,TRUE,FALSE,FALSE},RaceCase{7,0,FALSE,TRUE,FALSE}}) {
+                reset(); actor->m_typeAI.m_nRace=row.race; actor->m_typeAI.m_nSubRace=row.subrace;
+                actor->m_typeAI.m_nClassMask=CLASSMASK_FIGHTER; actor->m_baseStats.m_fighterLevel=1;
+                check("mercantile-background-race-and-subrace",actor->CanSelectFeat(CGAMESPRITE_FEAT_MERCANTILE_BACKGROUND,1)==row.mercantile);
+                check("resist-poison-race-and-masked-first-level",actor->CanSelectFeat(CGAMESPRITE_FEAT_RESIST_POISON,1)==row.poison);
+                check("snake-blood-race-and-masked-first-level",actor->CanSelectFeat(CGAMESPRITE_FEAT_SNAKE_BLOOD,1)==row.snake);
+            }
+            for (INT feat:{CGAMESPRITE_FEAT_RESIST_POISON,CGAMESPRITE_FEAT_SNAKE_BLOOD}) {
+                reset(); actor->m_typeAI.m_nRace=feat==CGAMESPRITE_FEAT_RESIST_POISON?7:1;
+                actor->m_typeAI.m_nClassMask=CLASSMASK_FIGHTER; actor->m_baseStats.m_fighterLevel=1; actor->m_baseStats.m_wizardLevel=9;
+                check("background-feat-ignores-unmasked-levels",actor->CheckFeatPrerequisites(feat,1));
+                actor->m_typeAI.m_nClassMask|=CLASSMASK_WIZARD;
+                check("background-feat-counts-all-masked-levels",!actor->CheckFeatPrerequisites(feat,1));
+                actor->m_typeAI.m_nClassMask=0;
+                check("background-feat-rejects-empty-mask",!actor->CheckFeatPrerequisites(feat,1));
+                actor->m_typeAI.m_nClassMask=CLASSMASK_FIGHTER|0x1000;
+                check("background-feat-ignores-high-mask-bits",actor->CheckFeatPrerequisites(feat,1));
+                actor->m_typeAI.m_nClassMask=0x800;
+                check("background-feat-has-only-eleven-level-bytes",!actor->CheckFeatPrerequisites(feat,1));
+                actor->m_typeAI.m_nClassMask=CLASSMASK_FIGHTER; actor->m_baseStats.m_fighterLevel=2;
+                check("background-feat-rejects-second-level",!actor->CheckFeatPrerequisites(feat,1));
+            }
+            reset(); actor->m_baseStats.m_rogueLevel=1; actor->m_baseStats.m_fighterLevel=4;
+            actor->m_derivedStats.m_classMask=CLASSMASK_CLERIC;
+            actor->SetFeatValue(CGAMESPRITE_FEAT_POWER_ATTACK,1); actor->SetFeatValue(CGAMESPRITE_FEAT_CLEAVE,1);
+            actor->SetFeatValue(CGAMESPRITE_FEAT_SIMPLE_SMALLBLADE,1);
+            struct AttackCase { INT feat,minimum; };
+            for (const AttackCase& row:{AttackCase{CGAMESPRITE_FEAT_ARTERIAL_STRIKE,4},AttackCase{CGAMESPRITE_FEAT_CLEAVE,4},
+                AttackCase{CGAMESPRITE_FEAT_DIRTY_FIGHTING,2},AttackCase{CGAMESPRITE_FEAT_HERETICS_BANE,4},
+                AttackCase{CGAMESPRITE_FEAT_IMPROVED_CRITICAL,8},AttackCase{CGAMESPRITE_FEAT_STUNNING_FIST,8},AttackCase{CGAMESPRITE_FEAT_WEAPON_FINESSE,1}}) {
+                for (INT attack:{row.minimum-1,row.minimum,255}) { actor->m_baseStats.m_attackBase=attack;
+                    check("feat-prerequisite-signed-base-attack-threshold",actor->CheckFeatPrerequisites(row.feat,1)==(attack==row.minimum)); }
+            }
+            actor->SetFeatValue(CGAMESPRITE_FEAT_MARTIAL_AXE,3); actor->SetFeatValue(CGAMESPRITE_FEAT_SIMPLE_CROSSBOW,3);
+            for (INT skill:{3,4,255}) { actor->m_baseStats.m_skills[CGAMESPRITE_SKILL_CONCENTRATION]=skill;
+                check("maximized-attacks-signed-concentration",actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_MAXIMIZED_ATTACKS,1)==(skill==4)); }
+            for (INT skill:{7,8,255}) { actor->m_baseStats.m_skills[CGAMESPRITE_SKILL_ALCHEMY]=skill;
+                check("envenom-weapon-signed-alchemy",actor->CheckFeatPrerequisites(CGAMESPRITE_FEAT_ENVENOM_WEAPON,1)==(skill==8)); }
+            actor->m_baseStats=savedBase; actor->m_derivedStats=savedDerived; actor->m_typeAI=ai;
+        }
         // The chargen controls share these rules, but have their own row mappings and budgets.
         {
             BeginLevelUpTableFixture cgSkills(rules.m_tSkills,3,16),cgFeats(rules.m_tFeats,3,75);
@@ -159,6 +241,27 @@ void AllocationChecks(INT nStep)
             auto help=[&](CUIPanel* panel) { CString text; auto* display=static_cast<CUIControlTextDisplay*>(panel->GetControl(92));
                 POSITION pos=display->m_plstStrings->GetHeadPosition(); while (pos) text+=" "+display->m_plstStrings->GetNext(pos)->m_sString;
                 return normalized(text); };
+            UI_CONTROL_BUTTON hotInfo={}; hotInfo.base.nWidth=80; hotInfo.base.nHeight=40; memcpy(hotInfo.refBam,"GUIBTNA",7);
+            for (INT row=0;row<11;++row) {
+                hotInfo.base.nID=93+row;
+                CUIControlButtonCharGenSkillsHotArea skillHelp(skillPanel,&hotInfo);
+                CUIControlButtonCharGenFeatsHotArea featHelp(featPanel,&hotInfo);
+                create.m_nTopSkill=3; create.m_nTopFeat=4;
+                cgSkills.cells[3*(3+row)+2]="11982"; cgFeats.cells[3*(4+row)+2]="11982";
+                skillHelp.OnHotAreaClick(CPoint(0,0)); featHelp.OnHotAreaClick(CPoint(0,0));
+                check("chargen-help-hotareas-map-all-eleven-scrolled-rows",help(skillPanel)==normalized(create.FetchString(11982))
+                    && help(featPanel)==normalized(create.FetchString(11982)));
+                cgSkills.cells[3*(3+row)+2]="7192"; cgFeats.cells[3*(4+row)+2]="7192";
+            }
+            hotInfo.base.nID=94;
+            CUIControlButtonCharGenSkillsHotArea wrappedSkillHelp(skillPanel,&hotInfo);
+            CUIControlButtonCharGenFeatsHotArea wrappedFeatHelp(featPanel,&hotInfo);
+            cgSkills.cells[2]=cgFeats.cells[2]="11982";
+            create.m_nTopSkill=create.m_nTopFeat=-1;
+            wrappedSkillHelp.OnHotAreaClick(CPoint(0,0)); wrappedFeatHelp.OnHotAreaClick(CPoint(0,0));
+            check("chargen-help-zero-extends-scroll-word-before-row-offset",help(skillPanel)==normalized(create.FetchString(7192))
+                && help(featPanel)==normalized(create.FetchString(11982)));
+            cgSkills.cells[2]="11982"; cgFeats.cells[2]="7192";
             for (INT row=0;row<10;++row) {
                 auto* plus=static_cast<CUIControlButtonCharGenSkillsPlusMinus*>(skillPanel->GetControl(14+2*row));
                 auto* minus=static_cast<CUIControlButtonCharGenSkillsPlusMinus*>(skillPanel->GetControl(15+2*row));
@@ -222,6 +325,18 @@ void AllocationChecks(INT nStep)
             featMinus->AdjustValue();
             check("chargen-feat-removal-refunds-all-invalid-dependent-ranks-even-in-snapshot",actor->GetFeatValue(CGAMESPRITE_FEAT_POWER_ATTACK)==0
                 && actor->GetFeatValue(CGAMESPRITE_FEAT_CLEAVE)==0 && actor->GetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS)==1 && create.m_nExtraFeats==3);
+            actor->m_derivedStats.m_nSTR=18; create.m_storedFeats[CGAMESPRITE_FEAT_CLEAVE]=0;
+            featPlus->AdjustValue();
+            check("chargen-can-purchase-recovered-power-attack",actor->GetFeatValue(CGAMESPRITE_FEAT_POWER_ATTACK)==1
+                && actor->HasFeat(CGAMESPRITE_FEAT_POWER_ATTACK) && create.m_nExtraFeats==2);
+            cgFeats.cells[3*9]="8"; cgFeats.cells[3*8]="47";
+            featPlus->AdjustValue(); featPlus->AdjustValue();
+            check("chargen-power-attack-unlocks-both-cleave-ranks",actor->GetFeatValue(CGAMESPRITE_FEAT_CLEAVE)==2
+                && actor->HasFeat(CGAMESPRITE_FEAT_CLEAVE) && create.m_nExtraFeats==0);
+            cgFeats.cells[3*9]="47"; cgFeats.cells[3*8]="8";
+            featMinus->AdjustValue();
+            check("chargen-removing-purchased-power-attack-refunds-cleave-chain",actor->GetFeatValue(CGAMESPRITE_FEAT_POWER_ATTACK)==0
+                && actor->GetFeatValue(CGAMESPRITE_FEAT_CLEAVE)==0 && create.m_nExtraFeats==3);
             for (INT kind:{0,1}) {
                 auto* panel=kind?featPanel:skillPanel; create.m_lPopupStack.RemoveAll(); create.m_lPopupStack.AddTail(panel);
                 auto* scroll=static_cast<CUIControlScrollBar*>(panel->GetControl(104));
@@ -325,7 +440,7 @@ void AllocationChecks(INT nStep)
     }
     if (hadToken) tlk.SetToken(CScreenCharacter::TOKEN_NUMBER,oldToken); else tlk.m_mapTokens.RemoveKey(CScreenCharacter::TOKEN_NUMBER);
     for (INT i=0;i<3;++i) { if (hadExtraTokens[i]) tlk.SetToken(*extraTokens[i],savedTokens[i]); else tlk.m_mapTokens.RemoveKey(*extraTokens[i]); }
-    actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp; actor->m_startTypeAI=start;
+    actor->m_baseStats=base; actor->m_derivedStats=derived; actor->m_tempStats=temp; actor->m_startTypeAI=start; actor->m_typeAI=ai;
     actor->m_bAllowEffectListCall=allow; actor->field_562C=dirty; actor->field_72A2=deferred; actor->m_nHPCONBonusTotalOld=bonus;
     check("same-tick-clock-and-queue-preserved",timer->m_gameTime==clock && handler->m_messageList.GetCount()==messages);
     LeaveCriticalSection(&g_pChitin->m_critSectService); LeaveCriticalSection(&g_pChitin->m_critSectDimm);
