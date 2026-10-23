@@ -286,6 +286,50 @@ void SpellSelectionChecks(INT nStep)
             actor->m_baseStats=base; actor->m_startTypeAI=start;
             for (auto& group:actor->m_spells.m_spellsByClass) group.Clear();
             actor->m_domainSpells.Clear();
+            {
+                BeginLevelUpTableFixture raceReq(rules.m_tAbilityRaceReq,12,1),raceAdj(rules.m_tAbilityRaceAdj,6,1),classReq(rules.m_tAbilityClassReq,6,1);
+                const CString* mins[]={&CRuleTables::MIN_STR,&CRuleTables::MIN_DEX,&CRuleTables::MIN_CON,&CRuleTables::MIN_INT,&CRuleTables::MIN_WIS,&CRuleTables::MIN_CHR};
+                const CString* maxs[]={&CRuleTables::MAX_STR,&CRuleTables::MAX_DEX,&CRuleTables::MAX_CON,&CRuleTables::MAX_INT,&CRuleTables::MAX_WIS,&CRuleTables::MAX_CHR};
+                const CString* mods[]={&CRuleTables::MOD_STR,&CRuleTables::MOD_DEX,&CRuleTables::MOD_CON,&CRuleTables::MOD_INT,&CRuleTables::MOD_WIS,&CRuleTables::MOD_CHR};
+                raceReq.y[0]=raceAdj.y[0]=rules.GetRaceString(CAIOBJECTTYPE_R_HUMAN,0); classReq.y[0]=rules.GetClassString(5,0);
+                for (INT i=0;i<6;++i) { raceReq.x[2*i]=*mins[i]; raceReq.x[2*i+1]=*maxs[i]; raceAdj.x[i]=*mods[i]; classReq.x[i]=*mins[i]; }
+                actor->m_baseStats.m_specialization=0; actor->m_startTypeAI.m_nRace=CAIOBJECTTYPE_R_HUMAN; actor->m_startTypeAI.m_nSubRace=0;
+                memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_fighterLevel=5;
+                actor->m_derivedStats.m_nLevel=5; actor->m_derivedStats.m_classMask=CLASSMASK_FIGHTER;
+                auto* options=game->GetOptions(); auto points=options->m_nDefaultCharGenPoints,pool=options->m_nDefaultCharGenPointsPool;
+                struct AbilityCase { INT lo,hi,adj,cls,points,random; BOOL result; BYTE score,minimum,maximum; };
+                const AbilityCase cases[]={
+                    {3,18,-2,3,10,0,TRUE,8,3,16}, {8,18,-2,12,6,0,TRUE,12,12,16},
+                    {3,18,2,3,30,0,TRUE,20,5,20}, {3,18,258,3,10,0,TRUE,12,5,20},
+                    {3,18,-258,3,10,0,TRUE,3,3,16}, {0,255,-1,0,0,0,TRUE,0,1,254},
+                    {3,18,0,18,10,1,FALSE,17,18,18}, {3,18,-2,3,10,1,TRUE,15,3,16},
+                    {3,18,-2,12,6,2,FALSE,4,12,16}
+                };
+                for (const auto& row:cases) {
+                    raceReq.cells[0].Format(_T("%d"),row.lo); raceReq.cells[1].Format(_T("%d"),row.hi);
+                    raceAdj.cells[0].Format(_T("%d"),row.adj); classReq.cells[0].Format(_T("%d"),row.cls);
+                    options->m_nDefaultCharGenPoints=row.points; srand(1);
+                    if (row.random==1) for (INT draw=0;draw<3;++draw) rand(); INT next=rand(); srand(1);
+                    BYTE value=165,minimum=165,maximum=165; INT modifier=0;
+                    BOOL result=create.ResetAbility(actor,*mins[0],*maxs[0],*mods[0],value,minimum,maximum,modifier,row.random);
+                    check("chargen-ability-signed-modifier-clamps-byte-results-and-three-draws",result==row.result && value==row.score
+                        && minimum==row.minimum && maximum==row.maximum && modifier==row.adj && rand()==next);
+                }
+                for (INT i=0;i<6;++i) { raceReq.cells[2*i]="3"; raceReq.cells[2*i+1]="18"; raceAdj.cells[i]="0"; classReq.cells[i]="3"; }
+                raceAdj.cells[0]="-2"; raceAdj.cells[1]="2"; options->m_nDefaultCharGenPoints=10; options->m_nDefaultCharGenPointsPool=16;
+                create.AllocateAbilities(actor);
+                check("chargen-allocation-applies-six-bounds-and-preserves-point-pool",actor->m_baseStats.m_STRBase==8 && actor->m_baseStats.m_DEXBase==12
+                    && actor->m_baseStats.m_CONBase==10 && actor->m_baseStats.m_INTBase==10 && actor->m_baseStats.m_WISBase==10 && actor->m_baseStats.m_CHRBase==10
+                    && create.m_nMinSTR==3 && create.m_nMaxSTR==16 && create.m_nModSTR==-2 && create.m_nExtraAbilityPoints==16);
+                raceAdj.cells[0]=raceAdj.cells[1]="0"; INT expected[6],total;
+                srand(1); do { total=0; for (auto& value:expected) { value=0; for (INT draw=0;draw<3;++draw) value+=rand()%6+1; total+=value; } } while (total<75);
+                INT next=rand(); srand(1); create.ResetAbilities(actor);
+                BYTE actual[]={actor->m_baseStats.m_STRBase,actor->m_baseStats.m_DEXBase,actor->m_baseStats.m_CONBase,
+                    actor->m_baseStats.m_INTBase,actor->m_baseStats.m_WISBase,actor->m_baseStats.m_CHRBase};
+                BOOL rolled=TRUE; for (INT i=0;i<6;++i) rolled=rolled && actual[i]==expected[i];
+                check("chargen-reroll-retries-total-until-seventy-five",rolled && create.m_nExtraAbilityPoints==0 && rand()==next);
+                options->m_nDefaultCharGenPoints=points; options->m_nDefaultCharGenPointsPool=pool;
+            }
             for (INT step:{7,8}) {
                 create.m_pPortraits=new CStringList;
                 create.m_pPortraits->AddTail(CResRef(base.m_portraitLarge).GetResRefStr());
@@ -299,6 +343,36 @@ void SpellSelectionChecks(INT nStep)
                     && memcmp(actor->m_baseStats.m_portraitSmall,base.m_portraitSmall,8)==0
                     && memcmp(actor->m_baseStats.m_portraitLarge,base.m_portraitLarge,8)==0);
                 if (create.m_pPortraits) { delete create.m_pPortraits; create.m_pPortraits=NULL; }
+            }
+            {
+                auto normalized=[](CString value) {
+                    value.Replace(_T("\r"),_T("")); value.Replace(_T("\n"),_T(" "));
+                    while (value.Find(_T("  "))!=-1) value.Replace(_T("  "),_T(" ")); value.Trim(); return value;
+                };
+                auto text=[&]() {
+                    auto* display=static_cast<CUIControlTextDisplay*>(create.m_cUIManager.GetPanel(53)->GetControl(2));
+                    CString value; POSITION pos=display->m_plstStrings->GetHeadPosition();
+                    while (pos) value+=" "+display->m_plstStrings->GetNext(pos)->m_sString;
+                    return normalized(value);
+                };
+                create.m_nCurrentStep=6; create.m_nErrorState=4;
+                BYTE shares=objects->m_pArray[(id>>16)&0x7FFF].m_shareCounts[CGameObjectArray::THREAD_ASYNCH];
+                auto* cancel=static_cast<CUIControlButton*>(create.m_cUIManager.GetPanel(0)->GetControl(15)); cancel->OnLButtonClick(CPoint(0,0));
+                CString prompt=normalized(create.FetchString(40275));
+                check("chargen-main-cancel-opens-start-over-and-balances-share",create.GetTopPopup() && create.GetTopPopup()->m_nID==53
+                    && create.m_nErrorState==0 && create.m_nCurrentStep==6 && text()==prompt
+                    && objects->m_pArray[(id>>16)&0x7FFF].m_shareCounts[CGameObjectArray::THREAD_ASYNCH]==shares);
+                static_cast<CUIControlButton*>(create.m_cUIManager.GetPanel(53)->GetControl(1))->OnLButtonClick(CPoint(0,0));
+                check("chargen-start-over-no-keeps-character",create.m_lPopupStack.IsEmpty() && create.m_nGameSprite==id && create.m_nCurrentStep==6);
+                create.m_nCurrentStep=4; create.m_nExtraAbilityPoints=3;
+                create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(4)); create.OnDoneButtonClick();
+                prompt=normalized(create.FetchString(1552));
+                check("chargen-unspent-points-done-opens-distinct-warning",create.GetTopPopup() && create.GetTopPopup()->m_nID==53
+                    && create.m_lPopupStack.GetCount()==2 && create.m_nErrorState==4 && text()==prompt);
+                static_cast<CUIControlButton*>(create.m_cUIManager.GetPanel(53)->GetControl(1))->OnLButtonClick(CPoint(0,0));
+                check("chargen-unspent-points-no-restores-allocation",create.GetTopPopup() && create.GetTopPopup()->m_nID==4
+                    && create.m_nExtraAbilityPoints==3 && create.m_nCurrentStep==4);
+                create.OnCancelButtonClick();
             }
             {
                 CResRef summaryRefs[]={refs[0],refs[1],CResRef(""),CResRef("ZRMSPL99")};

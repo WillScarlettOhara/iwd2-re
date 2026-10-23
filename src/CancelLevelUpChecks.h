@@ -654,7 +654,10 @@ void CancelLevelUpChecks(INT nStep)
                         const char bad[]="NOPE0000";
                         if (write("ZRBADCHR.CHR",bad,8)) check("character-import-bad-signature-returns-zero",game->ImportCharacter("ZRBADCHR",0)==0 && !dimm.m_bTemporaryKeyAdd);
                         {
-                            CScreenCreateChar preview;
+                            struct CreatePreview : CScreenCreateChar {
+                                CWarp* selectedForCheck=NULL;
+                                void SelectEngine(CWarp* engine) override { selectedForCheck=engine; }
+                            } preview;
                             preview.m_cUIManager.fInit(&preview,CResRef("GUICG"),g_pBaldurChitin->m_bUseNewGui);
                             for (INT side=0;side<4;++side) preview.m_cUIManager.AddPanel(&g_pBaldurChitin->m_aBorderPanels[side]);
                             auto* display=static_cast<CUIControlTextDisplay*>(preview.m_cUIManager.GetPanel(20)->GetControl(4));
@@ -771,6 +774,22 @@ void CancelLevelUpChecks(INT nStep)
                                 }
                                 while (handler->m_messageList.GetCount()>before) delete handler->m_messageList.RemoveTail();
                                 check("chargen-import-done-temporary-key-balanced",!dimm.m_bTemporaryKeyAdd);
+                            }
+                            {
+                                INT before=handler->m_messageList.GetCount(); LONG disposable=game->ImportCharacter("ZRCHRNOB",0x102);
+                                check("chargen-abort-fixture-created",disposable!=0);
+                                if (disposable!=0) {
+                                    auto* activeEngine=g_pBaldurChitin->GetActiveEngine(); INT party=game->GetNumCharacters();
+                                    preview.m_nGameSprite=disposable; preview.m_nCharacterSlot=2; preview.m_nEngineState=4; preview.m_nCurrentStep=0;
+                                    preview.OnMainCancelButtonClick(); CGameObject* remaining=NULL;
+                                    BYTE status=objects->GetShare(disposable,CGameObjectArray::THREAD_ASYNCH,&remaining,INFINITE);
+                                    check("chargen-abort-deletes-private-character-and-clears-engine-state",status!=CGameObjectArray::SUCCESS
+                                        && preview.m_nGameSprite==CGameObjectArray::INVALID_INDEX && preview.m_nCharacterSlot==-1 && preview.m_nEngineState==0);
+                                    if (status==CGameObjectArray::SUCCESS) objects->ReleaseShare(disposable,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                                    check("chargen-abort-selects-connection-without-changing-loaded-fixture",static_cast<void*>(preview.selectedForCheck)==static_cast<void*>(g_pBaldurChitin->m_pEngineConnection)
+                                        && g_pBaldurChitin->GetActiveEngine()==activeEngine && game->GetNumCharacters()==party);
+                                }
+                                while (handler->m_messageList.GetCount()>before) delete handler->m_messageList.RemoveTail();
                             }
                             {
                                 auto* oldCreate=g_pBaldurChitin->m_pEngineCreateChar; g_pBaldurChitin->m_pEngineCreateChar=&preview;

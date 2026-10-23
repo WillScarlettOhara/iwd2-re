@@ -163,6 +163,7 @@ def check_inline_wrapper(source: SourceMatch | None, **_kw: object) -> Finding |
 # to a member via the header `/* 0xNNN */` comments and diff vs what the source names.
 
 _MOV_THIS_RE = re.compile(r"\bMOV\s+([A-Z]{3}),ECX\b")
+_ECX_WRITE_RE = re.compile(r"\b(?:MOV|LEA|XOR|AND|OR|ADD|SUB|POP|INC|DEC)\s+(?:ECX|CX|CL|CH)\b")
 _ECX_OBJ_RE = re.compile(r"\b(?:LEA|MOV)\s+ECX,(?:[a-z]+ ptr )?\[([A-Z]{3}) \+ (0x[0-9a-fA-F]+)\]")
 _ECX_OTHER_RE = re.compile(r"\bMOV\s+ECX,")
 _CALL_TGT_RE = re.compile(r"\bCALL\s+(\S+)")
@@ -253,12 +254,16 @@ def _ghidra_call_pairs(asm: str, fn_names: dict[str, str]) -> Counter:
     """(this_offset, method) for each thiscall in a Ghidra dump-asm listing. CALL targets
     are raw addresses (`CALL 0x007acd60`) resolved via fn_names, or named `Class::Method`."""
     lines = asm.splitlines()
-    this_reg = "ESI"
-    for ln in lines[:16]:
+    this_reg = None
+    for ln in lines[:32]:
         m = _MOV_THIS_RE.search(ln)
-        if m:
+        if m and m.group(1) in ("ESI", "EDI", "EBX", "EBP"):
             this_reg = m.group(1)
             break
+        if _ECX_WRITE_RE.search(ln) or re.search(r"\b(?:CALL|RET)\b", ln):
+            break
+    if this_reg is None:
+        return Counter()
     pairs: Counter = Counter()
     pending: int | None = None
     for ln in lines:

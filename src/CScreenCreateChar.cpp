@@ -1975,7 +1975,7 @@ BOOL CScreenCreateChar::ResetAbility(CGameSprite* pSprite, const CString& sMin, 
     const CString& sRace = ruleTables.GetRaceString(pSprite->m_startTypeAI.m_nRace, pSprite->m_startTypeAI.m_nSubRace);
     BYTE nMinRaceReq = static_cast<BYTE>(atol(ruleTables.m_tAbilityRaceReq.GetAt(sMin, sRace)));
     BYTE nMaxRaceReq = static_cast<BYTE>(atol(ruleTables.m_tAbilityRaceReq.GetAt(sMax, sRace)));
-    BYTE nRaceAdj = static_cast<BYTE>(atol(ruleTables.m_tAbilityRaceAdj.GetAt(sMod, sRace)));
+    INT nRaceAdj = atol(ruleTables.m_tAbilityRaceAdj.GetAt(sMod, sRace));
 
     const CString& sClass = ruleTables.GetClassString(nBestClass, pSprite->m_baseStats.m_specialization);
     BYTE nMinClassReq = static_cast<BYTE>(atol(ruleTables.m_tAbilityClassReq.GetAt(sMin, sClass)));
@@ -1993,15 +1993,21 @@ BOOL CScreenCreateChar::ResetAbility(CGameSprite* pSprite, const CString& sMin, 
             }
             nRolls--;
         }
+        nAbility = static_cast<BYTE>(nValue);
     } else {
         nAbility = static_cast<BYTE>(g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nDefaultCharGenPoints);
     }
 
+    // The native comparisons use the full signed modifier; output scores wrap
+    // to bytes only after those comparisons and the optional class clamp.
+    auto adjusted = [nRaceAdj](BYTE value) {
+        return static_cast<INT>(static_cast<DWORD>(value) + static_cast<DWORD>(nRaceAdj));
+    };
     BOOL bResult;
     if (nMinRaceReq > nAbility || nAbility > nMaxRaceReq) {
         bResult = FALSE;
     } else {
-        bResult = nAbility + nRaceAdj >= nMinClassReq;
+        bResult = adjusted(nAbility) >= nMinClassReq;
     }
 
     if (!bResult) {
@@ -2014,17 +2020,17 @@ BOOL CScreenCreateChar::ResetAbility(CGameSprite* pSprite, const CString& sMin, 
                 nAbility = nMaxRaceReq;
             }
 
-            if (nAbility + nRaceAdj < nMinClassReq) {
-                nAbility = nMinClassReq - nRaceAdj;
+            if (adjusted(nAbility) < nMinClassReq) {
+                nAbility = static_cast<BYTE>(static_cast<DWORD>(nMinClassReq) - static_cast<DWORD>(nRaceAdj));
             }
 
             bResult = TRUE;
         }
     }
 
-    nAbility += nRaceAdj;
-    nMax = nMaxRaceReq + nRaceAdj;
-    nMin = max(nMinRaceReq + nRaceAdj, nMinClassReq);
+    nAbility = static_cast<BYTE>(adjusted(nAbility));
+    nMax = static_cast<BYTE>(adjusted(nMaxRaceReq));
+    nMin = static_cast<BYTE>(max(adjusted(nMinRaceReq), static_cast<INT>(nMinClassReq)));
     nMin = max(nMin, 1);
     nMod = nRaceAdj;
 

@@ -55,6 +55,7 @@ CALL_RE = re.compile(r"\bcall\b.*?;\s*(\S+)")        # call ... ; Class::Method
 LINE_ADDR_RE = re.compile(r"^0x([0-9a-fA-F]+):")     # disasm line address
 ADDR_COMMENT_RE = re.compile(r"//\s*0x([0-9A-Fa-f]+)\b")  # `// 0xADDR` recovery markers
 MOV_THIS_RE = re.compile(r"\bmov\s+(e[a-z][a-z]),\s+ecx\b")
+ECX_WRITE_RE = re.compile(r"\b(?:mov|lea|xor|and|or|add|sub|pop|inc|dec)\s+(?:ecx|cx|cl|ch)\b")
 DECL_RE = re.compile(r"/\*\s*([0-9A-Fa-f]+)\s*\*/\s*[^;{]*?\bm_(\w+)\s*(?:\[[^\]]*\])?\s*;")
 # member method call: m_foo.Bar(  /  m_foo->Bar(
 MEMBER_CALL_RE = re.compile(r"\bm_(\w+)\s*(?:\.|->)\s*(\w+)\s*\(")
@@ -76,12 +77,21 @@ def binary_call_pairs(addr: int, count: int, end_addr: int | None) -> tuple[Coun
     function and invents pairs it never makes.
     """
     lines = disasm(addr, count)
-    this_reg = "esi"
-    for ln in lines[:14]:
+    this_reg = None
+    for ln in lines[:32]:
+        am = LINE_ADDR_RE.match(ln)
+        if end_addr is not None and am and int(am.group(1), 16) >= end_addr:
+            break
         m = MOV_THIS_RE.search(ln)
         if m and m.group(1) in THIS_REGS:
             this_reg = m.group(1)
             break
+        if ECX_WRITE_RE.search(ln) or re.search(r"\b(?:call|ret)\b", ln):
+            break
+    if this_reg is None:
+        # An unused receiver need not be saved. ESI may hold an unrelated game
+        # object, as in ResetAbility; guessing it invents wrong-member findings.
+        return Counter(), "unknown"
 
     pairs: Counter = Counter()
     pending = None  # this-offset staged for the next call
