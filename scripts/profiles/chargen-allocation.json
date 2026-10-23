@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/chargen-allocation.txt",
+  "hold": 20,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Exercise the existing typed allocation fixture for character and chargen skill/feat controls.",
+    "Never save the disposable process; restore save, config and fixture paths transactionally."
+  ]
+}

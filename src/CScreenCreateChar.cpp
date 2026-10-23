@@ -2938,7 +2938,7 @@ void CScreenCreateChar::UpdateFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
     pSprite->field_562C = 1;
     pSprite->sub_72DE60();
 
-    m_nTopFeat = min(m_nTopFeat, FEAT_COUNT - FEAT_SLOTS);
+    m_nTopFeat = min(static_cast<USHORT>(m_nTopFeat), FEAT_COUNT - FEAT_SLOTS);
 
     for (dwButtonId = 14; dwButtonId <= 32; dwButtonId += 2) {
         DWORD index = (dwButtonId - 14) / 2;
@@ -2954,10 +2954,6 @@ void CScreenCreateChar::UpdateFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
     pDone->SetEnabled(IsDoneButtonClickable(pSprite));
 
     CUIControlScrollBarCharGenFeats* pScroll = static_cast<CUIControlScrollBarCharGenFeats*>(pPanel->GetControl(104));
-
-    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
-    // __LINE__: 4268
-    UTIL_ASSERT(pScroll != NULL);
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
     // __LINE__: 4268
@@ -3154,14 +3150,14 @@ void CScreenCreateChar::UpdateSkillsPanel(CUIPanel* pPanel, CGameSprite* pSprite
 
     UpdateLabel(pPanel, 0x1000000C, "%d", m_nExtraSkillPoints);
 
-    m_nTopSkill = min(m_nTopSkill, 6);
+    m_nTopSkill = min(static_cast<USHORT>(m_nTopSkill), CGAMESPRITE_SKILL_NUMSKILLS - 10);
 
     for (nButtonID = 14; nButtonID < 33; nButtonID += 2) {
         DWORD nIndex = (nButtonID - 14) / 2;
         UINT nSkillID = ruleTables.GetSkillId(m_nTopSkill + nIndex);
 
-        // FIXME: Why `GetSkillId` second time? It is not present in the code
-        // path below.
+        // Native remaps the ID a second time for the displayed cost, but not
+        // for the button's availability check below (0x60EC6A / 0x60EDC3).
         INT nCost = pSprite->GetSkillCost(ruleTables.GetSkillId(nSkillID), pSprite->m_startTypeAI.m_nClass);
 
         CString sName = FetchString(ruleTables.GetSkillName(nSkillID));
@@ -7394,6 +7390,7 @@ BOOL CUIControlButtonCharGenSkillsPlusMinus::OnLButtonDown(CPoint pt)
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
         // __LINE__: 11586
         UTIL_ASSERT(FALSE);
+        offset = -1;
     }
 
     if (!m_bActive) {
@@ -7406,7 +7403,7 @@ BOOL CUIControlButtonCharGenSkillsPlusMinus::OnLButtonDown(CPoint pt)
 
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
-    DWORD id = ruleTables.GetSkillId(g_pBaldurChitin->m_pEngineCreateChar->m_nTopSkill + offset);
+    DWORD id = ruleTables.GetSkillId(static_cast<USHORT>(g_pBaldurChitin->m_pEngineCreateChar->m_nTopSkill) + offset);
     STRREF strDescription = ruleTables.GetSkillDescription(id);
     g_pBaldurChitin->m_pEngineCreateChar->UpdateHelp(m_pPanel->m_nID, 92, strDescription);
 
@@ -7500,6 +7497,7 @@ void CUIControlButtonCharGenSkillsPlusMinus::AdjustValue()
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
         // __LINE__: 11731
         UTIL_ASSERT(FALSE);
+        offset = -1;
     }
 
     CScreenCreateChar* pCreateChar = g_pBaldurChitin->m_pEngineCreateChar;
@@ -7520,10 +7518,10 @@ void CUIControlButtonCharGenSkillsPlusMinus::AdjustValue()
 
         const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
-        DWORD id = ruleTables.GetSkillId(pCreateChar->m_nTopSkill + offset);
+        DWORD id = ruleTables.GetSkillId(static_cast<USHORT>(pCreateChar->m_nTopSkill) + offset);
         INT nValue = pSprite->GetSkillValue(id);
 
-        // FIXME: Looks wrong (obtaining id from id).
+        // Native performs this second row-to-ID lookup for the cost (0x61AB1C).
         INT nCost = pSprite->GetSkillCost(ruleTables.GetSkillId(id),
             typeAI.m_nClass);
 
@@ -7536,7 +7534,8 @@ void CUIControlButtonCharGenSkillsPlusMinus::AdjustValue()
             if (nValue > 0 && pCreateChar->m_storedSkills[id] < pSprite->GetSkillValue(id)) {
                 pSprite->SetSkillValue(id, nValue - 1);
 
-                // FIXME: Looks wrong (obtaining id from id).
+                // Recompute after decrementing: a skill at its cap may have
+                // had a zero cost before removal (0x61AB8D).
                 pCreateChar->m_nExtraSkillPoints += pSprite->GetSkillCost(ruleTables.GetSkillId(id),
                     typeAI.m_nClass);
             }
@@ -10937,8 +10936,9 @@ BOOL CUIControlButtonCharGenFeatsPlusMinus::OnLButtonDown(CPoint pt)
         break;
     default:
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
-        // __LINE__: 11586
+        // __LINE__: 17425
         UTIL_ASSERT(FALSE);
+        offset = -1;
     }
 
     if (!m_bActive) {
@@ -10951,7 +10951,7 @@ BOOL CUIControlButtonCharGenFeatsPlusMinus::OnLButtonDown(CPoint pt)
 
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
-    DWORD id = ruleTables.GetFeatId(g_pBaldurChitin->m_pEngineCreateChar->m_nTopFeat + offset);
+    DWORD id = ruleTables.GetFeatId(static_cast<USHORT>(g_pBaldurChitin->m_pEngineCreateChar->m_nTopFeat) + offset);
     STRREF strDescription = ruleTables.GetFeatDescription(id);
     g_pBaldurChitin->m_pEngineCreateChar->UpdateHelp(m_pPanel->m_nID, 92, strDescription);
 
@@ -10985,6 +10985,7 @@ void CUIControlButtonCharGenFeatsPlusMinus::AdjustValue()
     case 27:
     case 29:
     case 31:
+    case 33:
     case 35:
         bInc = FALSE;
         break;
@@ -11044,6 +11045,7 @@ void CUIControlButtonCharGenFeatsPlusMinus::AdjustValue()
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
         // __LINE__: 17570
         UTIL_ASSERT(FALSE);
+        offset = -1;
     }
 
     CScreenCreateChar* pCreateChar = g_pBaldurChitin->m_pEngineCreateChar;
@@ -11060,7 +11062,7 @@ void CUIControlButtonCharGenFeatsPlusMinus::AdjustValue()
     } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
     if (rc == CGameObjectArray::SUCCESS) {
-        DWORD id = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetFeatId(pCreateChar->m_nTopFeat + offset);
+        DWORD id = g_pBaldurChitin->GetObjectGame()->GetRuleTables().GetFeatId(static_cast<USHORT>(pCreateChar->m_nTopFeat) + offset);
         INT nValue = pSprite->GetFeatValue(id);
 
         if (bInc) {

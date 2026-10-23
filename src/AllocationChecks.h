@@ -132,6 +132,99 @@ void AllocationChecks(INT nStep)
             else check("description-panel-scroll-route",screen.m_pCurrentScrollBar==panel->GetControl(id==51?3:1));
             screen.m_lPopupStack.RemoveAll();
         }
+        // The chargen controls share these rules, but have their own row mappings and budgets.
+        {
+            BeginLevelUpTableFixture cgSkills(rules.m_tSkills,3,16),cgFeats(rules.m_tFeats,3,75);
+            for (INT i=0;i<16;++i) { cgSkills.cells[3*i].Format(_T("%d"),15-i);
+                cgSkills.cells[3*i+1]="7192"; cgSkills.cells[3*i+2]=i==0?"11982":"7192";
+                for (INT cls=0;cls<11;++cls) costs.cells[11*i+cls]=cls==4?(i%2?"2":"1"):"0"; }
+            for (INT i=0;i<75;++i) { cgFeats.cells[3*i].Format(_T("%d"),i); cgFeats.cells[3*i+1]=cgFeats.cells[3*i+2]="7192"; }
+            actor->m_baseStats=CCreatureFileHeader(); actor->m_baseStats.m_fighterLevel=5; actor->m_baseStats.m_attackBase=4;
+            actor->m_baseStats.m_STRBase=actor->m_baseStats.m_DEXBase=actor->m_baseStats.m_INTBase=actor->m_baseStats.m_WISBase=18;
+            memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_fighterLevel=5;
+            actor->m_derivedStats.m_nLevel=5; actor->m_derivedStats.m_classMask=CLASSMASK_FIGHTER;
+            actor->m_startTypeAI.m_nClass=CAIOBJECTTYPE_C_FIGHTER; actor->m_bAllowEffectListCall=FALSE;
+            auto* oldCreate=g_pBaldurChitin->m_pEngineCreateChar;
+            CScreenCreateChar create; g_pBaldurChitin->m_pEngineCreateChar=&create;
+            create.m_cUIManager.fInit(&create,CResRef("GUICG"),g_pBaldurChitin->m_bUseNewGui); create.m_nGameSprite=id;
+            auto* skillPanel=create.m_cUIManager.GetPanel(6); auto* featPanel=create.m_cUIManager.GetPanel(55);
+            create.m_lPopupStack.AddTail(skillPanel);
+            for (auto& value:create.m_storedSkills) value=0;
+            for (auto& value:create.m_storedFeats) value=0;
+            auto denies=objects->m_pArray[(id>>16)&0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH];
+            auto press=[&](CUIControlButtonPlusMinus* button) { button->SetActive(TRUE); button->field_662=0;
+                BOOL result=button->OnLButtonDown(CPoint(0,0)); create.m_cUIManager.KillCapture(); return result; };
+            auto normalized=[](CString value) { value.Replace(_T("\r"),_T("")); value.Replace(_T("\n"),_T(" "));
+                while (value.Find(_T("  "))!=-1) value.Replace(_T("  "),_T(" ")); value.Trim(); return value; };
+            auto help=[&](CUIPanel* panel) { CString text; auto* display=static_cast<CUIControlTextDisplay*>(panel->GetControl(92));
+                POSITION pos=display->m_plstStrings->GetHeadPosition(); while (pos) text+=" "+display->m_plstStrings->GetNext(pos)->m_sString;
+                return normalized(text); };
+            for (INT row=0;row<10;++row) {
+                auto* plus=static_cast<CUIControlButtonCharGenSkillsPlusMinus*>(skillPanel->GetControl(14+2*row));
+                auto* minus=static_cast<CUIControlButtonCharGenSkillsPlusMinus*>(skillPanel->GetControl(15+2*row));
+                create.m_nTopSkill=0; create.m_nExtraSkillPoints=4; BOOL down=press(plus); INT selected=15-row;
+                check("chargen-skill-purchase-maps-all-ten-rows-and-charges-native-remapped-cost",down
+                    && actor->GetSkillValue(selected)==1 && create.m_nExtraSkillPoints==4-(1+row%2));
+                minus->AdjustValue(); check("chargen-skill-refund-maps-all-ten-rows",actor->GetSkillValue(selected)==0 && create.m_nExtraSkillPoints==4);
+            }
+            auto* skillPlus=static_cast<CUIControlButtonCharGenSkillsPlusMinus*>(skillPanel->GetControl(14));
+            auto* skillMinus=static_cast<CUIControlButtonCharGenSkillsPlusMinus*>(skillPanel->GetControl(15));
+            create.m_nTopSkill=-1; create.m_nExtraSkillPoints=4;
+            BOOL down=press(static_cast<CUIControlButtonCharGenSkillsPlusMinus*>(skillPanel->GetControl(16)));
+            check("chargen-skill-mouse-down-zero-extends-top-before-help-and-purchase",down && create.m_nTopSkill==6
+                && actor->GetSkillValue(0)==1 && actor->GetSkillValue(15)==0 && create.m_nExtraSkillPoints==2
+                && help(skillPanel)==normalized(create.FetchString(7192)));
+            actor->SetSkillValue(0,0); costs.cells[4]="2"; costs.cells[11*15+4]="1";
+            create.m_nTopSkill=0; create.m_nExtraSkillPoints=1; create.UpdatePopupPanel(6,actor);
+            check("chargen-skill-label-and-availability-use-different-native-cost-lookups",skillPlus->m_bEnabled
+                && static_cast<CUIControlLabel*>(skillPanel->GetControl(0x10000001))->GetText().Find(_T("(2)"))>=0);
+            skillPlus->AdjustValue(); check("chargen-skill-adjust-rejects-insufficient-remapped-cost",actor->GetSkillValue(15)==0 && create.m_nExtraSkillPoints==1);
+            for (INT i=0;i<16;++i) { cgSkills.cells[3*i].Format(_T("%d"),i); costs.cells[11*i+4]="2"; }
+            actor->SetSkillValue(0,4); create.m_nExtraSkillPoints=0; skillMinus->AdjustValue();
+            check("chargen-skill-at-cap-refunds-cost-recomputed-after-decrement",actor->GetSkillValue(0)==3 && create.m_nExtraSkillPoints==2);
+            skillPlus->AdjustValue(); skillPlus->AdjustValue();
+            check("chargen-skill-cap-blocks-further-purchase",actor->GetSkillValue(0)==4 && create.m_nExtraSkillPoints==0);
+            create.m_storedSkills[0]=4; skillMinus->AdjustValue();
+            check("chargen-skill-cannot-refund-original-ranks",actor->GetSkillValue(0)==4 && create.m_nExtraSkillPoints==0);
+            create.m_nTopSkill=-32768; create.UpdatePopupPanel(6,actor);
+            check("chargen-skill-refresh-clamps-unsigned-scroll-position",create.m_nTopSkill==6);
+            create.m_lPopupStack.RemoveAll(); create.m_lPopupStack.AddTail(featPanel);
+            cgFeats.cells[0]="69"; cgFeats.cells[3*69]="0"; cgFeats.cells[2]="11982";
+            create.m_nTopFeat=-1; create.m_nExtraFeats=2;
+            down=press(static_cast<CUIControlButtonCharGenFeatsPlusMinus*>(featPanel->GetControl(16)));
+            check("chargen-feat-mouse-down-zero-extends-top-before-help-and-purchase",down && create.m_nTopFeat==65
+                && actor->GetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS)==0 && create.m_nExtraFeats==2
+                && help(featPanel)==normalized(create.FetchString(7192)));
+            create.m_nTopFeat=-32768; create.UpdatePopupPanel(55,actor);
+            check("chargen-feat-refresh-clamps-unsigned-scroll-position",create.m_nTopFeat==65);
+            cgFeats.cells[0]="0"; cgFeats.cells[3*9]="69"; cgFeats.cells[3*69]="9"; cgFeats.cells[3*9+2]="11982";
+            create.m_nTopFeat=0; create.m_nExtraFeats=0; actor->SetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS,1);
+            auto* featPlus=static_cast<CUIControlButtonCharGenFeatsPlusMinus*>(featPanel->GetControl(32));
+            auto* featMinus=static_cast<CUIControlButtonCharGenFeatsPlusMinus*>(featPanel->GetControl(33));
+            down=press(featMinus);
+            check("chargen-tenth-feat-minus-button-refunds-mapped-rank-without-asserting",down
+                && actor->GetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS)==0 && create.m_nExtraFeats==1
+                && help(featPanel)==normalized(create.FetchString(11982)));
+            down=press(featPlus); check("chargen-feat-purchase-spends-one-point",down
+                && actor->GetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS)==1 && create.m_nExtraFeats==0);
+            create.m_storedFeats[CGAMESPRITE_FEAT_TOUGHNESS]=1; featMinus->AdjustValue();
+            check("chargen-feat-cannot-refund-original-ranks",actor->GetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS)==1 && create.m_nExtraFeats==0);
+            featPlus->AdjustValue(); check("chargen-feat-no-points-blocks-purchase",actor->GetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS)==1);
+            actor->SetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS,5); create.m_nExtraFeats=2; featPlus->AdjustValue();
+            check("chargen-feat-max-rank-blocks-purchase",actor->GetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS)==5 && create.m_nExtraFeats==2);
+            cgFeats.cells[0]="0"; cgFeats.cells[2]="7192";
+            static_cast<CUIControlButtonCharGenFeatsPlusMinus*>(featPanel->GetControl(14))->AdjustValue();
+            check("chargen-feat-prerequisites-block-purchase",actor->GetFeatValue(0)==0 && create.m_nExtraFeats==2);
+            for (INT i=0;i<75;++i) { cgFeats.cells[3*i].Format(_T("%d"),i); actor->SetFeatValue(i,0); }
+            cgFeats.cells[3*9]="47"; cgFeats.cells[3*47]="9";
+            actor->SetFeatValue(CGAMESPRITE_FEAT_POWER_ATTACK,1); actor->SetFeatValue(CGAMESPRITE_FEAT_CLEAVE,2);
+            actor->SetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS,1); create.m_storedFeats[CGAMESPRITE_FEAT_CLEAVE]=2; create.m_nExtraFeats=0;
+            featMinus->AdjustValue();
+            check("chargen-feat-removal-refunds-all-invalid-dependent-ranks-even-in-snapshot",actor->GetFeatValue(CGAMESPRITE_FEAT_POWER_ATTACK)==0
+                && actor->GetFeatValue(CGAMESPRITE_FEAT_CLEAVE)==0 && actor->GetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS)==1 && create.m_nExtraFeats==3);
+            check("chargen-allocation-controls-balance-object-locks",objects->m_pArray[(id>>16)&0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH]==denies);
+            create.m_cUIManager.KillCapture(); create.m_lPopupStack.RemoveAll(); g_pBaldurChitin->m_pEngineCreateChar=oldCreate;
+        }
         BeginLevelUpTableFixture raceReq(rules.m_tAbilityRaceReq,2,1),raceAdj(rules.m_tAbilityRaceAdj,1,1),classReq(rules.m_tAbilityClassReq,1,1);
         actor->m_startTypeAI.m_nRace=CAIOBJECTTYPE_R_HUMAN; actor->m_startTypeAI.m_nSubRace=0;
         actor->m_baseStats.m_specialization=0;
