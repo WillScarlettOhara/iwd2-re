@@ -222,6 +222,87 @@ void AllocationChecks(INT nStep)
             featMinus->AdjustValue();
             check("chargen-feat-removal-refunds-all-invalid-dependent-ranks-even-in-snapshot",actor->GetFeatValue(CGAMESPRITE_FEAT_POWER_ATTACK)==0
                 && actor->GetFeatValue(CGAMESPRITE_FEAT_CLEAVE)==0 && actor->GetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS)==1 && create.m_nExtraFeats==3);
+            for (INT kind:{0,1}) {
+                auto* panel=kind?featPanel:skillPanel; create.m_lPopupStack.RemoveAll(); create.m_lPopupStack.AddTail(panel);
+                auto* scroll=static_cast<CUIControlScrollBar*>(panel->GetControl(104));
+                SHORT& top=kind?create.m_nTopFeat:create.m_nTopSkill; INT limit=kind?65:6,total=kind?75:16;
+                top=0; scroll->OnScrollUp(); check("chargen-scroll-up-stops-at-start",top==0);
+                scroll->OnScrollDown(); check("chargen-scroll-down-advances-one-row",top==1);
+                scroll->OnPageDown(999); check("chargen-page-down-is-limited-to-nine-rows",top==min(10,limit));
+                top=5; scroll->OnPageUp(3); check("chargen-page-up-uses-requested-row-count",top==2);
+                scroll->OnPageDown(3); check("chargen-page-down-uses-requested-row-count",top==5);
+                scroll->OnPageUp(999); check("chargen-page-up-clamps-at-start",top==0);
+                top=-1; scroll->OnScrollUp(); check("chargen-scroll-up-zero-extends-stored-word",top==limit);
+                top=-1; scroll->OnPageUp(1); check("chargen-page-up-zero-extends-stored-word",top==limit);
+                top=-1; scroll->OnScrollDown(); check("chargen-scroll-down-preserves-native-wrap-and-upper-limit",top==(kind?65:0));
+                top=limit; scroll->OnScrollDown(); check("chargen-scroll-down-stops-at-last-page",top==limit);
+                for (INT position:{0,25,50,100}) {
+                    scroll->field_142=100; scroll->field_144=position; scroll->OnScroll();
+                    check("chargen-thumb-position-uses-full-list-without-subtracting-visible-rows",top==min(total*position/100,limit));
+                }
+            }
+            // Render under THREAD_1 shares, as the real renderer does; the outer fixture owns an ASYNCH deny.
+            auto* video=static_cast<CVidInf*>(g_pChitin->GetCurrentVideoMode()); CRect patch(32,32,128,128);
+            auto pixels=[&](std::vector<BYTE>* read,const std::vector<BYTE>* write) {
+                if (!video->BKLock(patch)) return FALSE;
+                DWORD bytes=video->m_SurfaceDesc.ddpfPixelFormat.dwRGBBitCount/8; INT row=patch.Width()*bytes;
+                BOOL ok=bytes>=2 && bytes<=4 && video->m_SurfaceDesc.lpSurface!=NULL;
+                if (ok && read) read->resize(row*patch.Height());
+                if (ok) for (INT y=0;y<patch.Height();++y) { BYTE* p=static_cast<BYTE*>(video->m_SurfaceDesc.lpSurface)+y*video->m_SurfaceDesc.lPitch;
+                    if (read) memcpy(read->data()+row*y,p,row); if (write) memcpy(p,write->data()+row*y,row); }
+                video->BKUnlock(); return ok;
+            };
+            std::vector<BYTE> savedPixels; BOOL backed=pixels(&savedPixels,NULL); check("chargen-rank-pixels-backed-up",backed);
+            if (backed) {
+                std::vector<BYTE> blank(savedPixels.size(),0),expectedPixels,actualPixels;
+                featPanel->m_ptOrigin=CPoint(48,48); create.m_nTopFeat=0; actor->SetFeatValue(CGAMESPRITE_FEAT_TOUGHNESS,2);
+                auto effects=actor->field_72A2; auto dirtyBefore=actor->field_562C; INT budgetBefore=create.m_nExtraFeats;
+                CVidCell reference; reference.SetResRef(CResRef("GUIPFC"),FALSE,TRUE,TRUE);
+                auto* resource=reference.pRes; INT demands=resource?resource->GetDemands():0,requests=resource?resource->m_nLockCount:0;
+                auto shares=objects->m_pArray[(id>>16)&0x7FFF].m_shareCounts[CGameObjectArray::THREAD_1];
+                objects->ReleaseDeny(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+                struct RankRenderCase { DWORD control; UINT feat; BOOL doubled,clipped; SHORT count; BOOL force,drawn; SHORT frame; };
+                const RankRenderCase renderCases[]={
+                    {40,69,FALSE,FALSE,1,FALSE,TRUE,0}, {36,69,TRUE,TRUE,1,FALSE,TRUE,1},
+                    {36,6,FALSE,FALSE,1,FALSE,FALSE,0}, {40,0,FALSE,FALSE,1,FALSE,FALSE,0},
+                    {40,69,FALSE,FALSE,0,FALSE,FALSE,0}, {40,69,FALSE,FALSE,-1,FALSE,TRUE,0}
+                };
+                for (const auto& row:renderCases) {
+                    cgFeats.cells[0]="47"; cgFeats.cells[3*47].Format(_T("%u"),row.feat);
+                    create.m_cUIManager.m_bDoubleSize=row.doubled; reference.SetResRef(CResRef("GUIPFC"),row.doubled,TRUE,TRUE);
+                    auto* circle=static_cast<CUIControlButtonCharGenFeatsCircle*>(featPanel->GetControl(row.control));
+                    circle->m_ptOrigin=CPoint(8,8); circle->m_size=CSize(24,24); circle->m_bActive=TRUE; circle->m_bInactiveRender=FALSE;
+                    CRect rect(featPanel->m_ptOrigin+circle->m_ptOrigin,circle->m_size); circle->m_rDirty=rect;
+                    if (row.clipped) circle->m_rDirty.right=rect.left+4;
+                    BOOL ok=pixels(NULL,&blank);
+                    if (row.drawn) { reference.FrameSet(row.frame); ok=ok && reference.Render(0,rect.left,rect.top,circle->m_rDirty,NULL,0,0,-1); }
+                    ok=ok && pixels(&expectedPixels,NULL) && pixels(NULL,&blank); circle->m_nRenderCount=row.count;
+                    BOOL result=circle->Render(row.force); ok=ok && pixels(&actualPixels,NULL);
+                    check("chargen-rank-render-matches-native-frame-scale-clip-and-return",ok && result==row.drawn && actualPixels==expectedPixels
+                        && circle->m_nRenderCount==(row.count>0?row.count-1:row.count));
+                    if (row.drawn && !row.clipped) check("chargen-rank-render-produces-visible-pixels",actualPixels!=blank);
+                    check("chargen-rank-render-does-not-refresh-or-process-effects",actor->field_72A2==effects
+                        && actor->field_562C==dirtyBefore && create.m_nExtraFeats==budgetBefore && create.m_nTopFeat==0);
+                }
+                auto* circle=static_cast<CUIControlButtonCharGenFeatsCircle*>(featPanel->GetControl(40));
+                circle->m_bActive=FALSE; circle->m_nRenderCount=1;
+                check("chargen-inactive-rank-render-rejected-without-consuming-dirty-count",!circle->Render(TRUE) && circle->m_nRenderCount==1);
+                create.m_nTopFeat=-1; cgFeats.cells[0]="0"; cgFeats.cells[3]="47"; cgFeats.cells[3*47]="69";
+                circle=static_cast<CUIControlButtonCharGenFeatsCircle*>(featPanel->GetControl(50)); circle->m_bActive=TRUE; circle->m_nRenderCount=1;
+                circle->m_ptOrigin=CPoint(8,8); circle->m_size=CSize(24,24);
+                circle->m_rDirty=CRect(featPanel->m_ptOrigin+circle->m_ptOrigin,circle->m_size);
+                check("chargen-rank-render-zero-extends-scroll-word-without-mutating-panel",!circle->Render(TRUE)
+                    && create.m_nTopFeat==-1 && actor->field_72A2==effects);
+                create.m_nGameSprite=CGameObjectArray::INVALID_INDEX; circle->m_nRenderCount=1;
+                check("chargen-rank-render-missing-actor-rejected",!circle->Render(TRUE)); create.m_nGameSprite=id;
+                check("chargen-rank-render-balances-shares-and-resource-requests",objects->m_pArray[(id>>16)&0x7FFF].m_shareCounts[CGameObjectArray::THREAD_1]==shares
+                    && resource && resource->GetDemands()==demands && resource->m_nLockCount==requests);
+                check("chargen-rank-pixels-restored",pixels(NULL,&savedPixels));
+                CGameObject* reacquired=NULL; BYTE rc;
+                do { rc=objects->GetDeny(id,CGameObjectArray::THREAD_ASYNCH,&reacquired,INFINITE); }
+                while (rc==CGameObjectArray::SHARED || rc==CGameObjectArray::DENIED);
+                check("chargen-rank-render-fixture-reacquires-original-actor",rc==CGameObjectArray::SUCCESS && reacquired==actor);
+            }
             check("chargen-allocation-controls-balance-object-locks",objects->m_pArray[(id>>16)&0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH]==denies);
             create.m_cUIManager.KillCapture(); create.m_lPopupStack.RemoveAll(); g_pBaldurChitin->m_pEngineCreateChar=oldCreate;
         }

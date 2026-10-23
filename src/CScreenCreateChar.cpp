@@ -7212,7 +7212,7 @@ void CUIControlScrollBarCharGenSkills::OnScrollUp()
     // __LINE__: 11314
     UTIL_ASSERT(pCreateChar != NULL);
 
-    pCreateChar->m_nTopSkill = max(pCreateChar->m_nTopSkill - 1, 0);
+    pCreateChar->m_nTopSkill = max(static_cast<USHORT>(pCreateChar->m_nTopSkill) - 1, 0);
 
     InvalidateItems();
 
@@ -7247,7 +7247,7 @@ void CUIControlScrollBarCharGenSkills::OnPageUp(DWORD nLines)
     UTIL_ASSERT(pCreateChar != NULL);
 
     INT nStep = min(nLines, SKILL_SLOTS - 1);
-    pCreateChar->m_nTopSkill = max(pCreateChar->m_nTopSkill - nStep, 0);
+    pCreateChar->m_nTopSkill = max(static_cast<USHORT>(pCreateChar->m_nTopSkill) - nStep, 0);
 
     InvalidateItems();
 
@@ -10757,7 +10757,7 @@ void CUIControlScrollBarCharGenFeats::OnScrollUp()
     // __LINE__: 17144
     UTIL_ASSERT(pCreateChar != NULL);
 
-    pCreateChar->m_nTopFeat = max(pCreateChar->m_nTopFeat - 1, 0);
+    pCreateChar->m_nTopFeat = max(static_cast<USHORT>(pCreateChar->m_nTopFeat) - 1, 0);
 
     InvalidateItems();
 
@@ -10774,7 +10774,7 @@ void CUIControlScrollBarCharGenFeats::OnScrollDown()
     // __LINE__: 17168
     UTIL_ASSERT(pCreateChar != NULL);
 
-    if (pCreateChar->m_nTopFeat < FEAT_COUNT - FEAT_SLOTS) {
+    if (static_cast<USHORT>(pCreateChar->m_nTopFeat) < FEAT_COUNT - FEAT_SLOTS) {
         pCreateChar->m_nTopFeat++;
     }
 
@@ -10794,7 +10794,7 @@ void CUIControlScrollBarCharGenFeats::OnPageUp(DWORD nLines)
     UTIL_ASSERT(pCreateChar != NULL);
 
     INT nStep = min(nLines, FEAT_SLOTS - 1);
-    pCreateChar->m_nTopFeat = max(pCreateChar->m_nTopFeat - nStep, 0);
+    pCreateChar->m_nTopFeat = max(static_cast<USHORT>(pCreateChar->m_nTopFeat) - nStep, 0);
 
     InvalidateItems();
 
@@ -10830,7 +10830,7 @@ void CUIControlScrollBarCharGenFeats::OnScroll()
     UTIL_ASSERT(pCreateChar != NULL);
 
     INT nTopFeat = max(FEAT_COUNT * field_144, 0) / field_142;
-    pCreateChar->m_nTopFeat = max(min(nTopFeat - FEAT_SLOTS, FEAT_COUNT - FEAT_SLOTS), 0);
+    pCreateChar->m_nTopFeat = max(min(nTopFeat, FEAT_COUNT - FEAT_SLOTS), 0);
 
     InvalidateItems();
 
@@ -11124,7 +11124,7 @@ BOOL CUIControlButtonCharGenFeatsCircle::Render(BOOL bForce)
         return FALSE;
     }
 
-    if (m_nRenderCount != 0) {
+    if (m_nRenderCount > 0) {
         CSingleLock lock(&(m_pPanel->m_pManager->field_56), FALSE);
         lock.Lock(INFINITE);
         m_nRenderCount--;
@@ -11246,11 +11246,12 @@ BOOL CUIControlButtonCharGenFeatsCircle::Render(BOOL bForce)
     }
 
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
-    DWORD v1 = ruleTables.GetFeatId(nIndex + pCreateChar->m_nTopFeat);
+    DWORD v1 = ruleTables.GetFeatId(nIndex + static_cast<USHORT>(pCreateChar->m_nTopFeat));
     INT nFeatNumber = ruleTables.GetFeatId(v1);
     INT nValue = pSprite->GetFeatValue(nFeatNumber);
     INT nMaxValue = pSprite->GetMaxFeatValue(nFeatNumber);
     INT nKnobValue = nFirstID - m_nID + 4;
+    BOOL bRendered = FALSE;
 
     if ((nValue > 0 || pSprite->CanSelectFeat(nFeatNumber, 1))
         && nKnobValue < nMaxValue) {
@@ -11281,13 +11282,12 @@ BOOL CUIControlButtonCharGenFeatsCircle::Render(BOOL bForce)
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
         // __LINE__: 17848
         UTIL_ASSERT(bResult);
+        bRendered = TRUE;
     }
-
-    pCreateChar->UpdatePopupPanel(pCreateChar->GetTopPopup()->m_nID, pSprite);
 
     g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseShare(nGameSprite,
         CGameObjectArray::THREAD_1,
         INFINITE);
 
-    return TRUE;
+    return bRendered;
 }
