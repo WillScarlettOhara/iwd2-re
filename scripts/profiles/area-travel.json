@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/area-travel.txt",
+  "hold": 20,
+  "fixtures": ["combat-payload"],
+  "preconditions": [
+    "Run only the typed area travel checks: MoveGlobal, delayed and immediate JumpToArea, MoveOntoArea, and the summon-link cleanup of an off-area move.",
+    "Return the second party member to its start point and discard queued messages, limbo entries and summon links in the same tick; never save the disposable process."
+  ],
+  "preserve": []
+}

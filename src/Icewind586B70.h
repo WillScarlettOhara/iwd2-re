@@ -25,11 +25,13 @@ public:
     bool CanJoinParty(CGameSprite* sprite);
     bool CanAddSummoned(CGameSprite* sprite1, CGameSprite* sprite2);
     void AddSummoned(CGameSprite* sprite1, CGameSprite* sprite2);
+    void Unsummon(CGameSprite* sprite);
     void AddDismissedSummoned(CGameSprite* sprite1, CGameSprite* sprite2);
     void Remove(CGameSprite* sprite);
     void RestoreSummonLinks(CGameSprite* sprite);
     void SaveSummonLinks();
     void Clear();
+    void UnsummonAllOf(CGameSprite* sprite);
     int GetCount();
 
     static Icewind586B70* mInstance;

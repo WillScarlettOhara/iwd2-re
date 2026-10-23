@@ -152,6 +152,7 @@
 //   restchecks                  replay party rest permission, time, heal and queued orders.
 //   reputationchecks            replay reputation set/adjust clamps, happiness and effects.
 //   partyorderchecks            replay portrait swaps, leader announcements and toolbar state.
+//   areatravelchecks            replay MoveGlobal, JumpToArea, MoveOntoArea and summon link cleanup.
 //   characterkeychecks          replay character-screen virtual keyboard routing.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
@@ -204,6 +205,7 @@
 #include "CSpell.h"
 #include "CScreenCharacter.h"
 #include "IcewindCGameEffects.h"
+#include "Icewind586B70.h"
 #include "IcewindMisc.h"
 #include "CDimmKeyTable.h"
 #include "CInfGame.h"
@@ -1772,6 +1774,7 @@ struct MasterPaletteFixture {
 #include "RestChecks.h"
 #include "ReputationChecks.h"
 #include "PartyOrderChecks.h"
+#include "AreaTravelChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5686,6 +5689,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "partyorderchecks") == 0) {
         PartyOrderChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "areatravelchecks") == 0) {
+        AreaTravelChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

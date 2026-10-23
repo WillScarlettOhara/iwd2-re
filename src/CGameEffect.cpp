@@ -18,6 +18,7 @@
 #include "CSpell.h"
 #include "CUtil.h"
 #include "CVidPalette.h"
+#include "Icewind586B70.h"
 #include "IcewindCGameEffects.h"
 #include "IcewindMisc.h"
 
@@ -6519,11 +6520,8 @@ BOOL CGameEffectSkillUnsummon::ApplyEffect(CGameSprite* pSprite)
     // creatures are.
     LONG portraitNum = g_pBaldurChitin->GetObjectGame()->GetCharacterPortraitNum(pSprite->GetId());
     if (portraitNum == -1) {
-        // The binary also dismisses the creature through Icewind586B70 (0x586DC0:
-        // clears the summon-registry entry and fires the poof VFX) and posts a
-        // removal message (vtable 0x84C3A8); neither helper is recovered yet.
-        // m_removeFromArea is what unlinks the sprite from the area on the next
-        // update (cf. CGameEffectDestroySelf at 0x4BDDE0).
+        Icewind586B70::Instance()->Unsummon(pSprite);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageUnsummon(pSprite->GetId(), pSprite->GetId(), pSprite->GetId()), FALSE);
         pSprite->m_removeFromArea = TRUE;
     }
 

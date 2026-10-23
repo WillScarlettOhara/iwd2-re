@@ -3,6 +3,8 @@
 #include "CBaldurChitin.h"
 #include "CGameSprite.h"
 #include "CInfGame.h"
+#include "CMessage.h"
+#include "CProjectile.h"
 #include "IcewindMisc.h"
 
 // 0x8E6400
@@ -83,6 +85,40 @@ void Icewind586B70::AddSummoned(CGameSprite* sprite1, CGameSprite* sprite2)
             }
         }
     }
+}
+
+// 0x586DC0
+void Icewind586B70::Unsummon(CGameSprite* sprite)
+{
+    std::vector<Entry>::iterator it;
+    for (it = mEntries.begin(); it != mEntries.end(); it++) {
+        if (sprite->GetId() == it->field_0) {
+            break;
+        }
+    }
+
+    // Dismissed summons leave without the poof; their link stays for the caller.
+    if (it == mEntries.end() || it->field_8 == true) {
+        return;
+    }
+
+    it->field_0 = 0;
+    it->field_4 = 0;
+    it->field_8 = false;
+
+    CProjectile* projectile = CProjectileSummonVFX::DecodeSpellHitProjectile(0x15, NULL, FALSE);
+    CMessage* message = new CMessageFireProjectile(0x1015,
+        sprite->GetId(), sprite->GetPos(), 0, sprite->GetId(), sprite->GetId(), 0);
+    g_pBaldurChitin->GetMessageHandler()->AddMessage(message, FALSE);
+    projectile->Fire(sprite->GetArea(), sprite->GetId(), sprite->GetId(), sprite->GetPos(), 0, 0);
+
+    sprite->SetStealthState(1);
+
+    if (g_pChitin->cNetwork.GetServiceProvider() != CNetwork::SERV_PROV_NULL) {
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessage90(sprite->GetId(), sprite->GetId(), 1), FALSE);
+    }
+
+    sprite->m_removeFromArea = TRUE;
 }
 
 // 0x586F20
@@ -201,6 +237,54 @@ void Icewind586B70::Clear()
         mEntries[index].field_0 = 0;
         mEntries[index].field_4 = 0;
         mEntries[index].field_8 = false;
+    }
+}
+
+// 0x5872C0
+void Icewind586B70::UnsummonAllOf(CGameSprite* sprite)
+{
+    for (std::vector<Entry>::iterator it = mEntries.begin(); it != mEntries.end(); it++) {
+        while (it != mEntries.end() && it->field_4 != sprite->GetId()) {
+            it++;
+        }
+        if (it == mEntries.end()) {
+            break;
+        }
+
+        LONG summonedId = it->field_0;
+        if (summonedId == 0) {
+            continue;
+        }
+
+        // A single attempt: a busy summon keeps its link.
+        CGameSprite* summoned;
+        if (g_pBaldurChitin->GetObjectGame()->GetObjectArray()->GetDeny(summonedId,
+                CGameObjectArray::THREAD_ASYNCH,
+                reinterpret_cast<CGameObject**>(&summoned),
+                INFINITE) != CGameObjectArray::SUCCESS) {
+            continue;
+        }
+
+        Instance()->Unsummon(summoned);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageUnsummon(summoned->GetId(), summoned->GetId(), summoned->GetId()), FALSE);
+
+        Icewind586B70* instance = Instance();
+        LONG id = summoned->GetId();
+        std::vector<Entry>::iterator link;
+        for (link = instance->mEntries.begin(); link != instance->mEntries.end(); link++) {
+            if (id == link->field_0) {
+                break;
+            }
+        }
+        if (link != instance->mEntries.end() && link->field_8) {
+            link->Clear();
+        }
+
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageRemoveSummonLink(summoned->GetId(), summoned->GetId(), summoned->GetId()), FALSE);
+
+        g_pBaldurChitin->GetObjectGame()->GetObjectArray()->ReleaseDeny(summonedId,
+            CGameObjectArray::THREAD_ASYNCH,
+            INFINITE);
     }
 }
 

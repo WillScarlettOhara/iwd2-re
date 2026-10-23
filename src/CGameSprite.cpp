@@ -24231,7 +24231,39 @@ SHORT CGameSprite::LeaveParty()
 // 0x74F6D0
 void CGameSprite::MoveGlobal(const CString& sArea, const CPoint& ptStart)
 {
-    // TODO: Incomplete.
+    if (!m_bGlobal) {
+        return;
+    }
+
+    if (m_pArea != NULL) {
+        if (m_pArea->m_resRef == sArea) {
+            JumpToPoint(ptStart, TRUE);
+            return;
+        }
+
+        if (m_bSelected) {
+            Unselect();
+            g_pBaldurChitin->GetObjectGame()->SelectToolbar();
+        }
+
+        RemoveFromArea();
+    }
+
+    CGameArea* pArea = g_pBaldurChitin->GetObjectGame()->GetArea(CString(sArea));
+    if (pArea != NULL) {
+        if ((m_baseStats.m_generalState & STATE_DEAD) != 0 && GetAnimation()->CanLieDown()) {
+            AddToArea(pArea, ptStart, 0, CGameObject::LIST_BACK);
+        } else {
+            AddToArea(pArea, ptStart, 0, CGameObject::LIST_FRONT);
+        }
+        return;
+    }
+
+    // The destination is not loaded: the creature waits off-area, without
+    // the summons it brought along.
+    Icewind586B70::Instance()->UnsummonAllOf(this);
+    m_currentArea = CResRef(sArea);
+    m_pos = ptStart;
 }
 
 // 0x74FC50
@@ -27160,15 +27192,81 @@ void CGameSprite::DisplaySkills(CUIControlTextDisplay* pText)
 // 0x766140
 SHORT CGameSprite::JumpToArea(CString areaName, const CPoint& dest, SHORT facingDirection, SHORT delay)
 {
-    // TODO: Incomplete.
+    areaName.MakeUpper();
 
-    return ACTION_ERROR;
+    if (m_bGlobal) {
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageMoveGlobal(areaName, dest, m_id, m_id), FALSE);
+    }
+
+    if (m_pArea == NULL) {
+        return ACTION_ERROR;
+    }
+
+    CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+    if (delay > 0) {
+        CMoveListEntry* pEntry = new CMoveListEntry();
+        pEntry->m_nDelay = delay;
+        pEntry->m_nFacing = static_cast<BYTE>(facingDirection);
+        pEntry->m_nSpriteId = m_id;
+        pEntry->m_ptDestination = dest;
+        pEntry->m_areaResRef = areaName;
+        pGame->m_cLimboList.AddTail(pEntry);
+    } else {
+        CGameArea* pArea = g_pBaldurChitin->GetObjectGame()->GetArea(CString(areaName));
+        if (pArea != NULL) {
+            m_clearAIOnRemoveFromArea = FALSE;
+            m_bDeleteOnRemove = FALSE;
+            RemoveFromArea();
+            m_bDeleteOnRemove = TRUE;
+            MoveOntoArea(pArea, dest, facingDirection);
+            return ACTION_DONE;
+        }
+
+        // The area is not loaded yet; the move list carries the sprite over.
+        CMoveListEntry* pEntry = new CMoveListEntry();
+        pEntry->m_nFacing = static_cast<BYTE>(facingDirection);
+        pEntry->m_nDelay = 0;
+        pEntry->m_nSpriteId = m_id;
+        pEntry->m_ptDestination = dest;
+        pEntry->m_areaResRef = areaName;
+        g_pBaldurChitin->GetObjectGame()->m_cMoveList.AddTail(pEntry);
+    }
+
+    m_bDeleteOnRemove = FALSE;
+    RemoveFromArea();
+    m_bDeleteOnRemove = TRUE;
+
+    return ACTION_DONE;
 }
 
 // 0x766380
 void CGameSprite::MoveOntoArea(CGameArea* pArea, const CPoint& dest, SHORT facingDirection)
 {
-    // TODO: Incomplete.
+    LONG gridX = dest.x / CPathSearch::GRID_SQUARE_SIZEX;
+    LONG gridY = dest.y / CPathSearch::GRID_SQUARE_SIZEY;
+    BYTE personalSpace = GetAnimation()->GetPersonalSpace();
+
+    POINT grid;
+    pArea->m_search.FindNearbyPassablePoint(&grid, gridX, gridY, GetTerrainTable(), personalSpace, facingDirection);
+
+    CPoint pos(CPathSearch::GRID_SQUARE_SIZEX * grid.x + CPathSearch::GRID_SQUARE_SIZEX / 2,
+        CPathSearch::GRID_SQUARE_SIZEY * grid.y + CPathSearch::GRID_SQUARE_SIZEY / 2);
+    AddToArea(pArea, pos, 0, CGameObject::LIST_FRONT);
+    SetFacing(facingDirection);
+
+    if (GetPos().x != -1 || GetPos().y != -1 || m_pArea != NULL) {
+        if (g_pChitin->cNetwork.GetServiceProvider() == CNetwork::SERV_PROV_NULL
+            || g_pChitin->cNetwork.m_idLocalPlayer == m_remotePlayerID) {
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSpriteUpdate(this, m_id, m_id), FALSE);
+        }
+    }
+
+    CVariable var;
+    var.SetName(CString(GetScriptName()));
+    var.m_intValue = m_id;
+    pArea->m_namedCreatures.AddKey(var);
+
+    m_posStart = m_pos;
 }
 
 // 0x42FDC0
