@@ -2280,10 +2280,11 @@ void CScreenCreateChar::ResetSkillsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
         m_nTopSkill++;
     }
 
-    // Scroll to first available skill.
+    // Native scrolling repeatedly looks up row 16, whose shipped default maps to
+    // skill 0, rather than looking up the current scroll position.
     m_nTopSkill = 0;
     while (m_nTopSkill < CGAMESPRITE_SKILL_NUMSKILLS) {
-        if (pSprite->GetSkillCost(ruleTables.GetSkillId(m_nTopSkill), pSprite->m_startTypeAI.m_nClass) != 0) {
+        if (pSprite->GetSkillCost(ruleTables.GetSkillId(CGAMESPRITE_SKILL_NUMSKILLS), pSprite->m_startTypeAI.m_nClass) != 0) {
             break;
         }
         m_nTopSkill++;
@@ -2325,7 +2326,7 @@ void CScreenCreateChar::ResetFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
     CString sNumber;
 
     for (int index = 0; index < CGAMESPRITE_FEAT_NUMFEATS; index++) {
-        pSprite->SetFeatValue(ruleTables.GetSkillId(index), 0);
+        pSprite->SetFeatValue(ruleTables.GetFeatId(index), 0);
     }
 
     pSprite->field_562C = 1;
@@ -2341,7 +2342,7 @@ void CScreenCreateChar::ResetFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
     }
 
     if (pSprite->m_startTypeAI.m_nClass == CAIOBJECTTYPE_C_CLERIC) {
-        int offset;
+        DWORD offset;
         switch (pSprite->GetSpecialization()) {
         case SPECMASK_CLERIC_ILMATER:
             offset = 0;
@@ -2370,12 +2371,17 @@ void CScreenCreateChar::ResetFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
         case SPECMASK_CLERIC_TALOS:
             offset = 8;
             break;
+        default:
+            // Native reuses the panel pointer as the column offset in this case.
+            offset = static_cast<DWORD>(reinterpret_cast<ULONG_PTR>(pPanel));
+            break;
         }
 
         for (nFeatNumber = 0; nFeatNumber < ruleTables.m_tFeats.GetHeight(); nFeatNumber++) {
-            int value = atol(ruleTables.m_tFeats.GetAt(CPoint(offset + 14, nFeatNumber)));
-            if (value > 0 && value > pSprite->GetFeatValue(nFeatNumber)) {
-                pSprite->SetFeatValue(nFeatNumber, value);
+            int value = atol(ruleTables.m_tFeats.GetAt(CPoint(static_cast<INT>(offset + 14), nFeatNumber)));
+            int current = pSprite->GetFeatValue(nFeatNumber);
+            if (value > 0) {
+                pSprite->SetFeatValue(nFeatNumber, max(value, current));
             }
         }
     }
@@ -2383,8 +2389,9 @@ void CScreenCreateChar::ResetFeatsPanel(CUIPanel* pPanel, CGameSprite* pSprite)
     for (nFeatNumber = 0; nFeatNumber < ruleTables.m_tFeats.GetHeight(); nFeatNumber++) {
         int offset = GetRaceFeatColumn(pSprite->m_startTypeAI.m_nRace, pSprite->m_startTypeAI.m_nSubRace);
         int value = atol(ruleTables.m_tFeats.GetAt(CPoint(offset + 23, nFeatNumber)));
-        if (value > 0 && value > pSprite->GetFeatValue(nFeatNumber)) {
-            pSprite->SetFeatValue(nFeatNumber, value);
+        int current = pSprite->GetFeatValue(nFeatNumber);
+        if (value > 0) {
+            pSprite->SetFeatValue(nFeatNumber, max(value, current));
         }
     }
 

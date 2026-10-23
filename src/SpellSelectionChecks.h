@@ -362,6 +362,86 @@ void SpellSelectionChecks(INT nStep)
             {
                 auto allow=actor->m_bAllowEffectListCall; auto dirty=actor->field_562C; auto deferred=actor->field_72A2;
                 actor->m_bAllowEffectListCall=FALSE; actor->field_72A2=0;
+                BeginLevelUpTableFixture feats(rules.m_tFeats,39,75),skills(rules.m_tSkills,15,16);
+                ChargenTableFixture featLevel(rules.m_tFeatLevel),featClass(rules.m_tFeatClass);
+                featLevel.Set("2"); featClass.Set("1");
+                for (auto& cell:feats.cells) cell="0";
+                for (auto& cell:skills.cells) cell="0";
+                for (INT i=0;i<16;++i) skills.cells[i*15].Format(_T("%d"),15-i);
+                for (INT i=0;i<75;++i) { feats.cells[i*39].Format(_T("%d"),74-i); feats.cells[i*39+1]="7192"; }
+                auto cell=[&](UINT feat,UINT col)->CString& { return feats.cells[feat*39+col]; };
+                cell(CGAMESPRITE_FEAT_TOUGHNESS,7)="1"; cell(CGAMESPRITE_FEAT_TOUGHNESS,5)="2";
+                cell(CGAMESPRITE_FEAT_ARMOR_PROF,7)=cell(CGAMESPRITE_FEAT_ARMOR_PROF,5)="2";
+                cell(CGAMESPRITE_FEAT_TOUGHNESS,14)="3"; cell(CGAMESPRITE_FEAT_TOUGHNESS,15)="1";
+                cell(CGAMESPRITE_FEAT_ARMOR_PROF,14)=cell(CGAMESPRITE_FEAT_ARMOR_PROF,15)="1";
+                cell(CGAMESPRITE_FEAT_TOUGHNESS,23)="4";
+                struct FeatResetCase { BYTE cls,race; DWORD spec; INT toughness; };
+                const FeatResetCase cases[]={
+                    {5,CAIOBJECTTYPE_R_HUMAN,0,4},
+                    {3,CAIOBJECTTYPE_R_ELF,SPECMASK_CLERIC_ILMATER,3},
+                    {3,CAIOBJECTTYPE_R_ELF,SPECMASK_CLERIC_LATHANDER,2},
+                    {3,CAIOBJECTTYPE_R_ELF,0,2}
+                };
+                for (const auto& row:cases) {
+                    actor->m_baseStats=CCreatureFileHeader(); actor->m_baseStats.m_specialization=row.spec;
+                    actor->m_baseStats.m_STRBase=actor->m_baseStats.m_DEXBase=actor->m_baseStats.m_INTBase=18;
+                    actor->m_startTypeAI=start; actor->m_startTypeAI.m_nClass=row.cls; actor->m_startTypeAI.m_nRace=row.race;
+                    actor->m_startTypeAI.m_nSubRace=0; actor->m_startTypeAI.m_nClassMask=game->GetClassMask(row.cls);
+                    actor->m_typeAI=actor->m_liveTypeAI=actor->m_startTypeAI;
+                    memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_nClassLevels[row.cls-1]=5;
+                    actor->m_derivedStats.m_nLevel=5; actor->m_derivedStats.m_classMask=actor->m_startTypeAI.m_nClassMask;
+                    for (UINT i=0;i<75;++i) actor->SetFeatValue(i,1);
+                    create.ResetPopupPanel(55,actor); BOOL correct=TRUE;
+                    for (UINT i=0;i<75;++i) {
+                        INT expected=i==CGAMESPRITE_FEAT_TOUGHNESS?row.toughness:i==CGAMESPRITE_FEAT_ARMOR_PROF?2:0;
+                        correct=correct && actor->GetFeatValue(i)==expected && create.m_storedFeats[i]==expected;
+                    }
+                    check("chargen-feat-reset-clears-mapped-ids-and-applies-class-domain-race-floors",correct && create.m_nTopFeat==1
+                        && create.m_nExtraFeats==3 && create.field_14AE==3);
+                    auto* panel=create.m_cUIManager.GetPanel(55); BOOL buttons=TRUE;
+                    for (UINT i=0;i<10;++i) for (UINT side=0;side<2;++side) {
+                        auto* button=static_cast<CUIControlButton*>(panel->GetControl(14+2*i+side));
+                        BOOL expected=actor->CanSelectFeat(74-i,1);
+                        buttons=buttons && button->m_bEnabled==expected && button->m_bActive==expected;
+                    }
+                    CString token; tlk.m_mapTokens.Lookup(CScreenCreateChar::TOKEN_NUMBER,token);
+                    check("chargen-feat-reset-controls-token-help-and-deferred-effects",buttons && token=="3"
+                        && !static_cast<CUIControlTextDisplay*>(panel->GetControl(92))->m_plstStrings->IsEmpty());
+                }
+                {
+                    BeginLevelUpTableFixture shortened(rules.m_tFeats,39,3);
+                    for (auto& value:shortened.cells) value="0";
+                    for (INT i=0;i<3;++i) { shortened.cells[39*i].Format(_T("%d"),74-i); shortened.cells[39*i+1]="7192"; }
+                    actor->m_startTypeAI.m_nClass=5; actor->m_startTypeAI.m_nRace=CAIOBJECTTYPE_R_HUMAN;
+                    for (UINT i=0;i<75;++i) actor->SetFeatValue(i,1);
+                    create.ResetPopupPanel(55,actor);
+                    check("chargen-feat-reset-clears-mapped-ids-beyond-shortened-base-rows",actor->GetFeatValue(72)==0 && actor->GetFeatValue(73)==0
+                        && actor->GetFeatValue(74)==0 && actor->GetFeatValue(71)==1 && create.m_storedFeats[74]==0);
+                }
+                check("chargen-feat-reset-effect-request-count",actor->field_562C==1 && actor->field_72A2==5);
+                {
+                    BeginLevelUpTableFixture costs(rules.m_tSkillCosts,11,16);
+                    for (auto& cost:costs.cells) cost="1";
+                    actor->m_startTypeAI.m_nClass=5; actor->m_startTypeAI.m_nClassMask=CLASSMASK_FIGHTER;
+                    actor->m_typeAI=actor->m_liveTypeAI=actor->m_startTypeAI;
+                    memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_fighterLevel=5;
+                    actor->m_derivedStats.m_nLevel=5; actor->m_derivedStats.m_classMask=CLASSMASK_FIGHTER;
+                    for (BOOL available:{FALSE,TRUE}) {
+                        for (INT cls=0;cls<11;++cls) costs.cells[cls]=available?"1":"0";
+                        create.ResetPopupPanel(6,actor); BOOL snapshot=TRUE;
+                        for (INT skill=0;skill<16;++skill) snapshot=snapshot && create.m_storedSkills[skill]==0 && actor->GetSkillValue(skill)==0;
+                        check("chargen-skill-reset-scroll-tests-row-sixteen-default-not-first-mapped-row",snapshot
+                            && create.m_nTopSkill==(available?0:16) && create.m_nExtraSkillPoints==actor->GetExtraSkillPoints(5)
+                            && create.field_15E0==create.m_nExtraSkillPoints);
+                    }
+                    check("chargen-skill-reset-effect-request-count",actor->field_72A2==7);
+                }
+                actor->m_bAllowEffectListCall=allow; actor->field_562C=dirty; actor->field_72A2=deferred;
+                actor->m_baseStats=base; actor->m_typeAI=type; actor->m_startTypeAI=start; actor->m_liveTypeAI=live;
+            }
+            {
+                auto allow=actor->m_bAllowEffectListCall; auto dirty=actor->field_562C; auto deferred=actor->field_72A2;
+                actor->m_bAllowEffectListCall=FALSE; actor->field_72A2=0;
                 BeginLevelUpTableFixture bard(rules.m_tMaxSpellsBard,9,1),sorc(rules.m_tMaxSpellsSorcerer,9,1),
                     cleric(rules.m_tMaxSpellsCleric,9,1),wizard(rules.m_tMaxSpellsWizard,9,1);
                 INT tableIndex=0;
@@ -491,7 +571,41 @@ void SpellSelectionChecks(INT nStep)
                 create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(17)); create.OnDoneButtonClick();
                 check("chargen-divine-done-opens-domain-before-advancing",create.m_bPickingDomainSpells && create.GetTopPopup()->m_nID==17
                     && create.m_lPopupStack.GetCount()==1 && create.m_nCurrentStep==6 && create.m_nExtraSpells==1);
-                create.m_lPopupStack.RemoveAll(); catalog.m_pList=oldDomain; catalog.m_nCount=oldDomainCount;
+                create.OnCancelButtonClick();
+                check("chargen-domain-cancel-returns-to-divine",!create.m_bPickingDomainSpells && create.GetTopPopup()->m_nID==17
+                    && create.m_lPopupStack.GetCount()==1 && create.m_nCurrentStep==6);
+                create.CancelEngine();
+                check("chargen-cancel-engine-unwinds-domain-feats-and-skills",create.m_lPopupStack.IsEmpty() && create.m_nCurrentStep==6);
+                catalog.m_pList=oldDomain; catalog.m_nCount=oldDomainCount;
+                for (UINT panel:{12u,52u,54u}) {
+                    actor->m_baseStats=base; actor->m_baseStats.m_specialization=SPECMASK_CLERIC_LATHANDER;
+                    actor->m_startTypeAI=start; actor->m_startTypeAI.m_nSubRace=1; DWORD mask=actor->m_startTypeAI.m_nClassMask;
+                    create.m_nCurrentStep=1; create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(14));
+                    create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(panel)); create.OnCancelButtonClick();
+                    check("chargen-cancel-specialization-or-subrace-preserves-other-ai",create.GetTopPopup()->m_nID==14
+                        && actor->m_startTypeAI.m_nClassMask==mask && (panel==54
+                            ?actor->m_startTypeAI.m_nSubRace==0 && actor->m_baseStats.m_specialization==SPECMASK_CLERIC_LATHANDER
+                            :actor->m_startTypeAI.m_nClass==0 && actor->m_startTypeAI.m_nSubRace==1 && actor->m_baseStats.m_specialization==0));
+                    actor->m_startTypeAI=start; create.CancelEngine();
+                }
+                for (UINT panel:{18u,19u,20u,21u}) {
+                    auto** list=panel==18?&create.m_pPortraits:panel==19?&create.m_pSounds:&create.m_pCharacters;
+                    *list=new CStringList; (*list)->AddTail("FIXTURE");
+                    create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(14));
+                    create.m_lPopupStack.AddTail(create.m_cUIManager.GetPanel(panel)); create.OnCancelButtonClick();
+                    check("chargen-cancel-retires-owned-selection-list",!*list && create.GetTopPopup()->m_nID==14);
+                    create.CancelEngine();
+                }
+                actor->m_baseStats=base; actor->m_startTypeAI=start;
+                for (auto& group:actor->m_spells.m_spellsByClass) group.Clear();
+                create.m_nFirstStep=6; create.m_nCurrentStep=8;
+                auto* back=dynamic_cast<CUIControlButtonCharGenBack*>(create.m_cUIManager.GetPanel(0)->GetControl(11));
+                check("chargen-back-control-present",back!=NULL);
+                if (back) for (INT expected:{7,6,6}) {
+                    back->OnLButtonClick(CPoint(0,0));
+                    check("chargen-back-stops-at-imported-first-step",create.m_nCurrentStep==expected);
+                }
+                create.m_nFirstStep=0;
                 actor->m_bAllowEffectListCall=allow; actor->field_562C=dirty; actor->field_72A2=deferred;
                 for (INT c=0;c<7;++c) for (INT l=0;l<9;++l) game->m_spellsByClass[c].m_lists[l].m_nCount=savedCounts[c][l];
             }
