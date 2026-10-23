@@ -1,3 +1,162 @@
+// AutoUI-only ability allocation replay, independent of the spell catalogue checks.
+void ChargenAbilitiesChecks(INT nStep)
+{
+    auto* game=g_pBaldurChitin->GetObjectGame(); auto* objects=game->GetObjectArray();
+    LONG id=game->GetCharacterId(0); CGameObject* object=NULL;
+    if (objects->GetDeny(id,CGameObjectArray::THREAD_ASYNCH,&object,INFINITE)!=CGameObjectArray::SUCCESS) {
+        Fail(nStep,"chargenabilitieschecks","requires party actor"); return;
+    }
+    auto* actor=static_cast<CGameSprite*>(object); auto base=actor->m_baseStats; auto start=actor->m_startTypeAI;
+    CDerivedStats derived; derived=actor->m_derivedStats;
+    auto& rules=const_cast<CRuleTables&>(game->GetRuleTables()); auto& tlk=g_pBaldurChitin->GetTlkTable();
+    const CString* tokens[]={&CScreenCreateChar::TOKEN_MINIMUM,&CScreenCreateChar::TOKEN_MAXIMUM};
+    CString oldTokens[2]; BOOL hadTokens[2];
+    for (INT i=0;i<2;++i) hadTokens[i]=tlk.m_mapTokens.Lookup(*tokens[i],oldTokens[i]);
+    INT checks=0; BOOL valid=TRUE;
+    auto check=[&](const char* name,BOOL ok) { ++checks; valid=valid && ok;
+        if (!ok) Emit("{\"step\":%d,\"op\":\"chargen-ability-case\",\"case\":\"%s\",\"passed\":false}",nStep,name); };
+    auto* handler=g_pBaldurChitin->GetMessageHandler(); INT messages=handler->m_messageList.GetCount();
+    auto clock=game->GetWorldTimer()->m_gameTime;
+    auto denies=objects->m_pArray[(id>>16)&0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH];
+    EnterCriticalSection(&g_pChitin->m_critSectDimm); EnterCriticalSection(&g_pChitin->m_critSectService);
+    auto* oldCreate=g_pBaldurChitin->m_pEngineCreateChar;
+    {
+        CScreenCreateChar create; g_pBaldurChitin->m_pEngineCreateChar=&create;
+        create.m_cUIManager.fInit(&create,CResRef("GUICG"),g_pBaldurChitin->m_bUseNewGui); create.m_nGameSprite=id;
+        auto* panel=create.m_cUIManager.GetPanel(4); create.m_lPopupStack.AddTail(panel);
+        {
+            BeginLevelUpTableFixture raceReq(rules.m_tAbilityRaceReq,12,1),raceAdj(rules.m_tAbilityRaceAdj,6,1),classReq(rules.m_tAbilityClassReq,6,1);
+            const CString* mins[]={&CRuleTables::MIN_STR,&CRuleTables::MIN_DEX,&CRuleTables::MIN_CON,&CRuleTables::MIN_INT,&CRuleTables::MIN_WIS,&CRuleTables::MIN_CHR};
+            const CString* maxs[]={&CRuleTables::MAX_STR,&CRuleTables::MAX_DEX,&CRuleTables::MAX_CON,&CRuleTables::MAX_INT,&CRuleTables::MAX_WIS,&CRuleTables::MAX_CHR};
+            const CString* mods[]={&CRuleTables::MOD_STR,&CRuleTables::MOD_DEX,&CRuleTables::MOD_CON,&CRuleTables::MOD_INT,&CRuleTables::MOD_WIS,&CRuleTables::MOD_CHR};
+            raceReq.y[0]=raceAdj.y[0]=rules.GetRaceString(CAIOBJECTTYPE_R_HUMAN,0); classReq.y[0]=rules.GetClassString(5,0);
+            for (INT i=0;i<6;++i) { raceReq.x[2*i]=*mins[i]; raceReq.x[2*i+1]=*maxs[i]; raceAdj.x[i]=*mods[i]; classReq.x[i]=*mins[i]; }
+            actor->m_baseStats.m_specialization=0; actor->m_startTypeAI.m_nRace=CAIOBJECTTYPE_R_HUMAN; actor->m_startTypeAI.m_nSubRace=0;
+            memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_fighterLevel=5;
+            actor->m_derivedStats.m_nLevel=5; actor->m_derivedStats.m_classMask=CLASSMASK_FIGHTER;
+            auto* options=game->GetOptions(); auto points=options->m_nDefaultCharGenPoints,pool=options->m_nDefaultCharGenPointsPool;
+            struct AbilityCase { INT lo,hi,adj,cls,points,random; BOOL result; BYTE score,minimum,maximum; };
+            const AbilityCase cases[]={
+                {3,18,-2,3,10,0,TRUE,8,3,16}, {8,18,-2,12,6,0,TRUE,12,12,16},
+                {3,18,2,3,30,0,TRUE,20,5,20}, {3,18,258,3,10,0,TRUE,12,5,20},
+                {3,18,-258,3,10,0,TRUE,3,3,16}, {0,255,-1,0,0,0,TRUE,0,1,254},
+                {3,18,0,18,10,1,FALSE,17,18,18}, {3,18,-2,3,10,1,TRUE,15,3,16},
+                {3,18,-2,12,6,2,FALSE,4,12,16}
+            };
+            for (const auto& row:cases) {
+                raceReq.cells[0].Format(_T("%d"),row.lo); raceReq.cells[1].Format(_T("%d"),row.hi);
+                raceAdj.cells[0].Format(_T("%d"),row.adj); classReq.cells[0].Format(_T("%d"),row.cls);
+                options->m_nDefaultCharGenPoints=row.points; srand(1);
+                if (row.random==1) for (INT draw=0;draw<3;++draw) rand(); INT next=rand(); srand(1);
+                BYTE value=165,minimum=165,maximum=165; INT modifier=0;
+                BOOL result=create.ResetAbility(actor,*mins[0],*maxs[0],*mods[0],value,minimum,maximum,modifier,row.random);
+                check("chargen-ability-signed-modifier-clamps-byte-results-and-three-draws",result==row.result && value==row.score
+                    && minimum==row.minimum && maximum==row.maximum && modifier==row.adj && rand()==next);
+            }
+            for (INT i=0;i<6;++i) { raceReq.cells[2*i]="3"; raceReq.cells[2*i+1]="18"; raceAdj.cells[i]="0"; classReq.cells[i]="3"; }
+            raceAdj.cells[0]="-2"; raceAdj.cells[1]="2"; options->m_nDefaultCharGenPoints=10; options->m_nDefaultCharGenPointsPool=16;
+            // The installed GUICG omits these optional controls; exercise their real classes privately.
+            UI_CONTROL_BUTTON buttonInfo={}; buttonInfo.base.nID=43;
+            buttonInfo.base.nWidth=80; buttonInfo.base.nHeight=40; memcpy(buttonInfo.refBam,"GUIBTNA",7);
+            CUIControlButtonCharGenAbilitiesAllocate allocate(panel,&buttonInfo);
+            buttonInfo.base.nID=2; CUIControlButtonCharGenAbilitiesReroll reroll(panel,&buttonInfo);
+            buttonInfo.base.nID=37; CUIControlButtonCharGenAbilitiesStore store(panel,&buttonInfo);
+            buttonInfo.base.nID=38; CUIControlButtonCharGenAbilitiesRecall recall(panel,&buttonInfo);
+            allocate.OnLButtonClick(CPoint(0,0));
+            check("chargen-allocation-applies-six-bounds-and-preserves-point-pool",actor->m_baseStats.m_STRBase==8 && actor->m_baseStats.m_DEXBase==12
+                && actor->m_baseStats.m_CONBase==10 && actor->m_baseStats.m_INTBase==10 && actor->m_baseStats.m_WISBase==10 && actor->m_baseStats.m_CHRBase==10
+                && create.m_nMinSTR==3 && create.m_nMaxSTR==16 && create.m_nModSTR==-2 && create.m_nExtraAbilityPoints==16);
+            raceAdj.cells[0]=raceAdj.cells[1]="0"; INT expected[6],total;
+            srand(1); do { total=0; for (auto& value:expected) { value=0; for (INT draw=0;draw<3;++draw) value+=rand()%6+1; total+=value; } } while (total<75);
+            INT next=rand(); srand(1); reroll.OnLButtonClick(CPoint(0,0));
+            BYTE actual[]={actor->m_baseStats.m_STRBase,actor->m_baseStats.m_DEXBase,actor->m_baseStats.m_CONBase,
+                actor->m_baseStats.m_INTBase,actor->m_baseStats.m_WISBase,actor->m_baseStats.m_CHRBase};
+            BOOL rolled=TRUE; for (INT i=0;i<6;++i) rolled=rolled && actual[i]==expected[i];
+            check("chargen-reroll-retries-total-until-seventy-five",rolled && create.m_nExtraAbilityPoints==0 && rand()==next);
+            BYTE* scores[]={&actor->m_baseStats.m_STRBase,&actor->m_baseStats.m_DEXBase,&actor->m_baseStats.m_CONBase,
+                &actor->m_baseStats.m_INTBase,&actor->m_baseStats.m_WISBase,&actor->m_baseStats.m_CHRBase};
+            BYTE* memory[]={&create.m_nMemorySTR,&create.m_nMemoryDEX,&create.m_nMemoryCON,
+                &create.m_nMemoryINT,&create.m_nMemoryWIS,&create.m_nMemoryCHR};
+            auto* budget=static_cast<CUIControlLabel*>(panel->GetControl(0x10000002));
+            auto* help=static_cast<CUIControlTextDisplay*>(panel->GetControl(29));
+            auto normalized=[](CString value) { value.Replace(_T("\r"),_T("")); value.Replace(_T("\n"),_T(" "));
+                while (value.Find(_T("  "))!=-1) value.Replace(_T("  "),_T(" ")); value.Trim(); return value; };
+            auto helpText=[&]() { CString text; POSITION pos=help->m_plstStrings->GetHeadPosition();
+                while (pos) text+=" "+help->m_plstStrings->GetNext(pos)->m_sString; return normalized(text); };
+            for (auto* value:scores) *value=10;
+            for (auto* value:memory) *value=BYTE(-1);
+            create.m_nMemoryExtra=-1; create.m_nExtraAbilityPoints=7; budget->SetText("untouched");
+            CString untouched=budget->GetText();
+            recall.OnLButtonClick(CPoint(0,0)); BOOL same=TRUE;
+            for (auto* value:scores) same=same && *value==10;
+            check("chargen-empty-memory-recall-does-not-write-or-refresh",same && create.m_nExtraAbilityPoints==7 && budget->GetText()==untouched);
+            const BYTE remembered[]={0,128,254,7,18,19};
+            for (INT i=0;i<6;++i) {
+                for (auto* value:memory) *value=BYTE(-1);
+                *memory[i]=remembered[i]; INT extra=77;
+                create.RecallMemoryAbilities(*scores[0],*scores[1],*scores[2],*scores[3],*scores[4],*scores[5],extra);
+                same=extra==77;
+                for (INT j=0;j<6;++j) same=same && *scores[j]==(j<=i?remembered[j]:10);
+                check("chargen-partial-memory-preserves-each-unset-score-and-negative-budget",same);
+            }
+            for (auto* value:memory) *value=BYTE(-1);
+            create.m_nMemoryExtra=0; recall.OnLButtonClick(CPoint(0,0));
+            same=create.m_nExtraAbilityPoints==0 && budget->GetText()=="0";
+            for (INT i=0;i<6;++i) same=same && *scores[i]==remembered[i];
+            check("chargen-budget-only-memory-recall-leaves-six-scores",same);
+            for (INT i=0;i<6;++i) *scores[i]=BYTE(8+i);
+            create.m_nExtraAbilityPoints=5;
+            store.OnLButtonClick(CPoint(0,0));
+            for (auto* value:scores) *value=18;
+            create.m_nExtraAbilityPoints=0; recall.OnLButtonClick(CPoint(0,0));
+            same=create.m_nExtraAbilityPoints==5 && budget->GetText()=="5";
+            for (INT i=0;i<6;++i) {
+                CString expected; expected.Format(_T("%d"),8+i);
+                same=same && *scores[i]==8+i && *memory[i]==8+i
+                    && static_cast<CUIControlLabel*>(panel->GetControl(0x10000003+i))->GetText()==expected;
+            }
+            check("chargen-store-recall-restores-six-scores-including-charisma-and-budget",same);
+            const STRREF descriptions[]={9582,9584,9583,9585,9586,9587};
+            for (INT i=0;i<6;++i) {
+                auto* plus=static_cast<CUIControlButtonCharGenAbilitiesPlusMinus*>(panel->GetControl(16+2*i));
+                auto* minus=static_cast<CUIControlButtonCharGenAbilitiesPlusMinus*>(panel->GetControl(17+2*i));
+                *scores[i]=10; create.m_nExtraAbilityPoints=2;
+                plus->SetActive(TRUE); BOOL down=plus->OnLButtonDown(CPoint(0,0)); create.m_cUIManager.KillCapture();
+                CString minimum,maximum; tlk.m_mapTokens.Lookup(*tokens[0],minimum); tlk.m_mapTokens.Lookup(*tokens[1],maximum);
+                check("chargen-six-plus-controls-spend-point-and-show-bounds",down && *scores[i]==11 && create.m_nExtraAbilityPoints==1
+                    && budget->GetText()=="1" && minimum=="3" && maximum=="18" && helpText()==normalized(create.FetchString(descriptions[i])));
+                minus->AdjustValue();
+                check("chargen-six-minus-controls-refund-point",*scores[i]==10 && create.m_nExtraAbilityPoints==2 && budget->GetText()=="2");
+                *scores[i]=18; plus->AdjustValue();
+                check("chargen-maximum-rejects-spend-and-explains",*scores[i]==18 && create.m_nExtraAbilityPoints==2
+                    && helpText()==normalized(create.FetchString(14838)));
+                *scores[i]=3; minus->AdjustValue();
+                check("chargen-minimum-rejects-refund-and-explains",*scores[i]==3 && create.m_nExtraAbilityPoints==2
+                    && helpText()==normalized(create.FetchString(14840)));
+                for (INT available:{0,-1}) {
+                    create.m_nExtraAbilityPoints=available; budget->SetText("untouched"); CString before=helpText(),beforeBudget=budget->GetText(); plus->AdjustValue();
+                    check("chargen-no-positive-points-plus-does-nothing",*scores[i]==3 && create.m_nExtraAbilityPoints==available
+                        && budget->GetText()==beforeBudget && helpText()==before);
+                }
+                plus->SetActive(FALSE); check("chargen-inactive-plus-rejects-mouse",!plus->OnLButtonDown(CPoint(0,0)) && *scores[i]==3);
+                plus->SetActive(TRUE); auto buttons=plus->m_nMouseButtons; plus->m_nMouseButtons=0;
+                check("chargen-plus-requires-left-button",!plus->OnLButtonDown(CPoint(0,0)) && *scores[i]==3); plus->m_nMouseButtons=buttons;
+            }
+            options->m_nDefaultCharGenPoints=points; options->m_nDefaultCharGenPointsPool=pool;
+        }
+        create.m_cUIManager.KillCapture(); create.m_lPopupStack.RemoveAll();
+        g_pBaldurChitin->m_pEngineCreateChar=oldCreate;
+    }
+    actor->m_baseStats=base; actor->m_startTypeAI=start; actor->m_derivedStats=derived;
+    for (INT i=0;i<2;++i) { if (hadTokens[i]) tlk.SetToken(*tokens[i],oldTokens[i]); else tlk.m_mapTokens.RemoveKey(*tokens[i]); }
+    check("ability-controls-balance-object-locks-clock-and-queue",objects->m_pArray[(id>>16)&0x7FFF].m_denyCounts[CGameObjectArray::THREAD_ASYNCH]==denies
+        && game->GetWorldTimer()->m_gameTime==clock && handler->m_messageList.GetCount()==messages);
+    LeaveCriticalSection(&g_pChitin->m_critSectService); LeaveCriticalSection(&g_pChitin->m_critSectDimm);
+    objects->ReleaseDeny(id,CGameObjectArray::THREAD_ASYNCH,INFINITE);
+    Emit("{\"step\":%d,\"op\":\"chargenabilitieschecks\",\"checks\":%d,\"passed\":%s}",nStep,checks,valid?"true":"false");
+    if (!valid) Fail(nStep,"chargenabilitieschecks","ability allocation/memory/control mismatch");
+}
+
 // AutoUI-only spell-panel replay with borrowed catalogues and loaded resources.
 #include "SpellSelectionGolden.h"
 
@@ -286,50 +445,6 @@ void SpellSelectionChecks(INT nStep)
             actor->m_baseStats=base; actor->m_startTypeAI=start;
             for (auto& group:actor->m_spells.m_spellsByClass) group.Clear();
             actor->m_domainSpells.Clear();
-            {
-                BeginLevelUpTableFixture raceReq(rules.m_tAbilityRaceReq,12,1),raceAdj(rules.m_tAbilityRaceAdj,6,1),classReq(rules.m_tAbilityClassReq,6,1);
-                const CString* mins[]={&CRuleTables::MIN_STR,&CRuleTables::MIN_DEX,&CRuleTables::MIN_CON,&CRuleTables::MIN_INT,&CRuleTables::MIN_WIS,&CRuleTables::MIN_CHR};
-                const CString* maxs[]={&CRuleTables::MAX_STR,&CRuleTables::MAX_DEX,&CRuleTables::MAX_CON,&CRuleTables::MAX_INT,&CRuleTables::MAX_WIS,&CRuleTables::MAX_CHR};
-                const CString* mods[]={&CRuleTables::MOD_STR,&CRuleTables::MOD_DEX,&CRuleTables::MOD_CON,&CRuleTables::MOD_INT,&CRuleTables::MOD_WIS,&CRuleTables::MOD_CHR};
-                raceReq.y[0]=raceAdj.y[0]=rules.GetRaceString(CAIOBJECTTYPE_R_HUMAN,0); classReq.y[0]=rules.GetClassString(5,0);
-                for (INT i=0;i<6;++i) { raceReq.x[2*i]=*mins[i]; raceReq.x[2*i+1]=*maxs[i]; raceAdj.x[i]=*mods[i]; classReq.x[i]=*mins[i]; }
-                actor->m_baseStats.m_specialization=0; actor->m_startTypeAI.m_nRace=CAIOBJECTTYPE_R_HUMAN; actor->m_startTypeAI.m_nSubRace=0;
-                memset(actor->m_derivedStats.m_nClassLevels,0,11); actor->m_derivedStats.m_fighterLevel=5;
-                actor->m_derivedStats.m_nLevel=5; actor->m_derivedStats.m_classMask=CLASSMASK_FIGHTER;
-                auto* options=game->GetOptions(); auto points=options->m_nDefaultCharGenPoints,pool=options->m_nDefaultCharGenPointsPool;
-                struct AbilityCase { INT lo,hi,adj,cls,points,random; BOOL result; BYTE score,minimum,maximum; };
-                const AbilityCase cases[]={
-                    {3,18,-2,3,10,0,TRUE,8,3,16}, {8,18,-2,12,6,0,TRUE,12,12,16},
-                    {3,18,2,3,30,0,TRUE,20,5,20}, {3,18,258,3,10,0,TRUE,12,5,20},
-                    {3,18,-258,3,10,0,TRUE,3,3,16}, {0,255,-1,0,0,0,TRUE,0,1,254},
-                    {3,18,0,18,10,1,FALSE,17,18,18}, {3,18,-2,3,10,1,TRUE,15,3,16},
-                    {3,18,-2,12,6,2,FALSE,4,12,16}
-                };
-                for (const auto& row:cases) {
-                    raceReq.cells[0].Format(_T("%d"),row.lo); raceReq.cells[1].Format(_T("%d"),row.hi);
-                    raceAdj.cells[0].Format(_T("%d"),row.adj); classReq.cells[0].Format(_T("%d"),row.cls);
-                    options->m_nDefaultCharGenPoints=row.points; srand(1);
-                    if (row.random==1) for (INT draw=0;draw<3;++draw) rand(); INT next=rand(); srand(1);
-                    BYTE value=165,minimum=165,maximum=165; INT modifier=0;
-                    BOOL result=create.ResetAbility(actor,*mins[0],*maxs[0],*mods[0],value,minimum,maximum,modifier,row.random);
-                    check("chargen-ability-signed-modifier-clamps-byte-results-and-three-draws",result==row.result && value==row.score
-                        && minimum==row.minimum && maximum==row.maximum && modifier==row.adj && rand()==next);
-                }
-                for (INT i=0;i<6;++i) { raceReq.cells[2*i]="3"; raceReq.cells[2*i+1]="18"; raceAdj.cells[i]="0"; classReq.cells[i]="3"; }
-                raceAdj.cells[0]="-2"; raceAdj.cells[1]="2"; options->m_nDefaultCharGenPoints=10; options->m_nDefaultCharGenPointsPool=16;
-                create.AllocateAbilities(actor);
-                check("chargen-allocation-applies-six-bounds-and-preserves-point-pool",actor->m_baseStats.m_STRBase==8 && actor->m_baseStats.m_DEXBase==12
-                    && actor->m_baseStats.m_CONBase==10 && actor->m_baseStats.m_INTBase==10 && actor->m_baseStats.m_WISBase==10 && actor->m_baseStats.m_CHRBase==10
-                    && create.m_nMinSTR==3 && create.m_nMaxSTR==16 && create.m_nModSTR==-2 && create.m_nExtraAbilityPoints==16);
-                raceAdj.cells[0]=raceAdj.cells[1]="0"; INT expected[6],total;
-                srand(1); do { total=0; for (auto& value:expected) { value=0; for (INT draw=0;draw<3;++draw) value+=rand()%6+1; total+=value; } } while (total<75);
-                INT next=rand(); srand(1); create.ResetAbilities(actor);
-                BYTE actual[]={actor->m_baseStats.m_STRBase,actor->m_baseStats.m_DEXBase,actor->m_baseStats.m_CONBase,
-                    actor->m_baseStats.m_INTBase,actor->m_baseStats.m_WISBase,actor->m_baseStats.m_CHRBase};
-                BOOL rolled=TRUE; for (INT i=0;i<6;++i) rolled=rolled && actual[i]==expected[i];
-                check("chargen-reroll-retries-total-until-seventy-five",rolled && create.m_nExtraAbilityPoints==0 && rand()==next);
-                options->m_nDefaultCharGenPoints=points; options->m_nDefaultCharGenPointsPool=pool;
-            }
             for (INT step:{7,8}) {
                 create.m_pPortraits=new CStringList;
                 create.m_pPortraits->AddTail(CResRef(base.m_portraitLarge).GetResRefStr());

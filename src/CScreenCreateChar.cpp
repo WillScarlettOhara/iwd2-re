@@ -3843,24 +3843,28 @@ void CScreenCreateChar::CancelCreateChar()
 // 0x610850
 void CScreenCreateChar::RecallMemoryAbilities(BYTE& nSTR, BYTE& nDEX, BYTE& nCON, BYTE& nINT, BYTE& nWIS, BYTE& nCHR, INT& nExtra)
 {
-    if (m_nMemorySTR != -1) {
+    if (m_nMemorySTR != BYTE(-1)) {
         nSTR = m_nMemorySTR;
     }
 
-    if (m_nMemoryDEX != -1) {
+    if (m_nMemoryDEX != BYTE(-1)) {
         nDEX = m_nMemoryDEX;
     }
 
-    if (m_nMemoryCON != -1) {
+    if (m_nMemoryCON != BYTE(-1)) {
         nCON = m_nMemoryCON;
     }
 
-    if (m_nMemoryINT != -1) {
+    if (m_nMemoryINT != BYTE(-1)) {
         nINT = m_nMemoryINT;
     }
 
-    if (m_nMemoryWIS != -1) {
+    if (m_nMemoryWIS != BYTE(-1)) {
         nWIS = m_nMemoryWIS;
+    }
+
+    if (m_nMemoryCHR != BYTE(-1)) {
+        nCHR = m_nMemoryCHR;
     }
 
     if (m_nMemoryExtra >= 0) {
@@ -6822,6 +6826,9 @@ BOOL CUIControlButtonCharGenAbilitiesPlusMinus::OnLButtonDown(CPoint pt)
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCreateChar.cpp
         // __LINE__: 10641
         UTIL_ASSERT(FALSE);
+        strHelp = -1;
+        nMin = 0;
+        nMax = 0;
     }
 
     if (!m_bActive) {
@@ -7027,12 +7034,12 @@ void CUIControlButtonCharGenAbilitiesRecall::OnLButtonClick(CPoint pt)
     } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
 
     if (rc == CGameObjectArray::SUCCESS) {
-        if (pCreateChar->m_nMemorySTR != -1
-            || pCreateChar->m_nMemoryDEX != -1
-            || pCreateChar->m_nMemoryCON != -1
-            || pCreateChar->m_nMemoryINT != -1
-            || pCreateChar->m_nMemoryWIS != -1
-            || pCreateChar->m_nMemoryCHR != -1
+        if (pCreateChar->m_nMemorySTR != BYTE(-1)
+            || pCreateChar->m_nMemoryDEX != BYTE(-1)
+            || pCreateChar->m_nMemoryCON != BYTE(-1)
+            || pCreateChar->m_nMemoryINT != BYTE(-1)
+            || pCreateChar->m_nMemoryWIS != BYTE(-1)
+            || pCreateChar->m_nMemoryCHR != BYTE(-1)
             || pCreateChar->m_nMemoryExtra >= 0) {
             CCreatureFileHeader* pBStats = &(pSprite->m_baseStats);
 

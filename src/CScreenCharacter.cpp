@@ -7361,7 +7361,7 @@ CUIControlButtonCharacterAbilitiesPlusMinus::~CUIControlButtonCharacterAbilities
 {
 }
 
-// 0x619220
+// 0x5EDAB0
 BOOL CUIControlButtonCharacterAbilitiesPlusMinus::OnLButtonDown(CPoint pt)
 {
     CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;

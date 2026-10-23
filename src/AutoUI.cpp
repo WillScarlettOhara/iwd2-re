@@ -146,6 +146,7 @@
 //   hitpointchecks              replay native HP/RNG calculations and creation caller.
 //   allocationchecks            replay skills/feats resets and signed ability limits.
 //   spellselectionchecks        replay spell-panel choices and real selection controls.
+//   chargenabilitieschecks      replay ability rolls, point allocation and score memory.
 //   itemcreationchecks          replay random treasure rows, grade upgrades and charge rolls.
 //   bitmaptintchecks            replay 24-bit tinted bitmap blits on private buffers.
 //   restchecks                  replay party rest permission, time, heal and queued orders.
@@ -5662,6 +5663,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "spellselectionchecks") == 0) {
         SpellSelectionChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "chargenabilitieschecks") == 0) {
+        ChargenAbilitiesChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "itemcreationchecks") == 0) {
         ItemCreationChecks(nStep); ++s_pc; return;
