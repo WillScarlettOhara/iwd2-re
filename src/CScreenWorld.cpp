@@ -2701,6 +2701,12 @@ void CScreenWorld::CancelPopup()
     }
 }
 
+// 0x691130
+INT CScreenWorld::GetPopupState()
+{
+    return m_nPopupState;
+}
+
 // 0x691140
 void CScreenWorld::StartCommand()
 {

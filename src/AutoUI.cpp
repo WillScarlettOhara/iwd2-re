@@ -151,6 +151,7 @@
 //   bitmaptintchecks            replay 24-bit tinted bitmap blits on private buffers.
 //   restchecks                  replay party rest permission, time, heal and queued orders.
 //   reputationchecks            replay reputation set/adjust clamps, happiness and effects.
+//   partyorderchecks            replay portrait swaps, leader announcements and toolbar state.
 //   characterkeychecks          replay character-screen virtual keyboard routing.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
@@ -203,6 +204,7 @@
 #include "CSpell.h"
 #include "CScreenCharacter.h"
 #include "IcewindCGameEffects.h"
+#include "IcewindMisc.h"
 #include "CDimmKeyTable.h"
 #include "CInfGame.h"
 #include "CInfButtonArray.h"
@@ -1769,6 +1771,7 @@ struct MasterPaletteFixture {
 #include "BitmapTintChecks.h"
 #include "RestChecks.h"
 #include "ReputationChecks.h"
+#include "PartyOrderChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5680,6 +5683,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "reputationchecks") == 0) {
         ReputationChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "partyorderchecks") == 0) {
+        PartyOrderChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

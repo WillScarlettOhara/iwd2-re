@@ -4420,66 +4420,59 @@ BOOL CInfGame::SelectCharacter(LONG characterId, BOOLEAN bPlaySelectSound)
 // 0x5ADAE0
 void CInfGame::SelectToolbar()
 {
-    // TODO: Incomplete.
-
     m_nState = 0;
     m_cButtonArray.SetSelectedButton(100);
 
     BYTE nGroupCount = m_group.GetCount();
-    if (nGroupCount == 0) {
-        m_cButtonArray.SetState(CInfButtonArray::STATE_NONE, 0);
-        return;
-    }
-
-    if (nGroupCount > 1) {
-        m_cButtonArray.SetState(0x6E, 0);
-        return;
-    }
-
-    LONG* pGroupList = m_group.GetGroupList();
-    if (pGroupList == NULL) {
-        m_cButtonArray.SetState(CInfButtonArray::STATE_NONE, 0);
-        return;
-    }
-
-    LONG nCharacterId = pGroupList[0];
-    delete[] pGroupList;
-
-    CGameSprite* pSprite = NULL;
-    BYTE rc;
-    do {
-        rc = m_cObjectArray.GetShare(nCharacterId,
-            CGameObjectArray::THREAD_ASYNCH,
-            reinterpret_cast<CGameObject**>(&pSprite),
-            INFINITE);
-    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
-
-    if (rc != CGameObjectArray::SUCCESS || pSprite == NULL) {
-        m_cButtonArray.SetState(CInfButtonArray::STATE_NONE, 0);
-        return;
-    }
-
-    if (IcewindMisc::IsPC(pSprite)) {
-        // Matches Ghidra SelectToolbar (0x5ADAE0): the nine custom button slots
-        // come straight from the sprite (offset 0x3D14, read via
-        // GetCustomButtonValue).  No ResetQuickSlots / fallback here — the slots
-        // are populated at character creation.
-        INT customButtons[9];
-        for (BYTE nButton = 0; nButton < 9; nButton++) {
-            customButtons[nButton] = pSprite->GetCustomButtonValue(nButton);
+    if (nGroupCount != 1) {
+        m_cButtonArray.SetState(nGroupCount == 0 ? CInfButtonArray::STATE_NONE : 0x6E, 0);
+    } else {
+        LONG* pGroupList = m_group.GetGroupList();
+        if (pGroupList == NULL) {
+            m_cButtonArray.SetState(CInfButtonArray::STATE_NONE, 0);
+            delete[] pGroupList;
+            return;
         }
 
-        m_cButtonArray.SetCustomButtonTypes(customButtons);
-        m_cButtonArray.SetQuickWeaponSlot(pSprite->m_nWeaponSet);
-        m_cButtonArray.SetState(0x72, 0);
-    } else {
-        m_cButtonArray.SetQuickWeaponSlot(pSprite->m_nWeaponSet);
-        m_cButtonArray.SetState(0x6E, 0);
+        CGameSprite* pSprite = NULL;
+        BYTE rc;
+        do {
+            rc = m_cObjectArray.GetShare(pGroupList[0],
+                CGameObjectArray::THREAD_ASYNCH,
+                reinterpret_cast<CGameObject**>(&pSprite),
+                INFINITE);
+        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+
+        if (rc != CGameObjectArray::SUCCESS) {
+            m_cButtonArray.SetState(CInfButtonArray::STATE_NONE, 0);
+            delete[] pGroupList;
+            return;
+        }
+
+        if (IcewindMisc::IsPC(pSprite)) {
+            // The nine custom button slots come straight from the sprite.
+            INT customButtons[9];
+            for (BYTE nButton = 0; nButton < 9; nButton++) {
+                customButtons[nButton] = pSprite->GetCustomButtonValue(nButton);
+            }
+
+            m_cButtonArray.SetCustomButtonTypes(customButtons);
+            m_cButtonArray.SetQuickWeaponSlot(pSprite->m_nWeaponSet);
+            m_cButtonArray.SetState(0x72, 0);
+        } else {
+            m_cButtonArray.SetQuickWeaponSlot(pSprite->m_nWeaponSet);
+            m_cButtonArray.SetState(0x6E, 0);
+        }
+
+        m_cObjectArray.ReleaseShare(pGroupList[0],
+            CGameObjectArray::THREAD_ASYNCH,
+            INFINITE);
+        delete[] pGroupList;
     }
 
-    m_cObjectArray.ReleaseShare(nCharacterId,
-        CGameObjectArray::THREAD_ASYNCH,
-        INFINITE);
+    if (g_pBaldurChitin->m_pEngineWorld->GetPopupState() == 8) {
+        g_pBaldurChitin->m_pEngineWorld->StopContainer();
+    }
 }
 
 // 0x5ADC90
@@ -4575,7 +4568,57 @@ CStore* CInfGame::GetServerStore(const CResRef& store)
 // 0x5AF160
 void CInfGame::SwapCharacters(DWORD pos1, DWORD pos2)
 {
-    // TODO: Incomplete.
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
+    // __LINE__: 10546
+    UTIL_ASSERT(pos1 < (DWORD)m_nCharacters && pos2 < (DWORD)m_nCharacters);
+
+    LONG nFirstId = m_characterPortraits[pos2];
+    LONG nSecondId = m_characterPortraits[pos1];
+    m_characterPortraits[pos1] = nFirstId;
+    m_characterPortraits[pos2] = nSecondId;
+
+    CGameSprite* pSprite;
+    BYTE rc;
+    do {
+        rc = m_cObjectArray.GetDeny(nSecondId,
+            CGameObjectArray::THREAD_ASYNCH,
+            reinterpret_cast<CGameObject**>(&pSprite),
+            INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+
+    if (rc != CGameObjectArray::SUCCESS) {
+        return;
+    }
+
+    pSprite->FetchCommonStrings();
+    UpdatePortraitToolTip(pos2, pSprite->GetNameRef());
+    m_cObjectArray.ReleaseDeny(nSecondId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+
+    do {
+        rc = m_cObjectArray.GetDeny(nFirstId,
+            CGameObjectArray::THREAD_ASYNCH,
+            reinterpret_cast<CGameObject**>(&pSprite),
+            INFINITE);
+    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+
+    if (rc != CGameObjectArray::SUCCESS) {
+        return;
+    }
+
+    pSprite->FetchCommonStrings();
+    UpdatePortraitToolTip(pos1, pSprite->GetNameRef());
+    m_cObjectArray.ReleaseDeny(nFirstId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+
+    // A new leader announces itself.
+    if (pos1 == 0 || pos2 == 0) {
+        // 0x85BB65
+        CMessagePlaySound* pMessage = new CMessagePlaySound(2,
+            TRUE,
+            FALSE,
+            m_characterPortraits[0],
+            m_characterPortraits[0]);
+        g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
+    }
 }
 
 // 0x5AF360

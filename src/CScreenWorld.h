@@ -82,6 +82,7 @@ public:
     void SetCurrentXP(DWORD dwCurrentXP);
     void AddGold(DWORD dwGold);
     void StopContainer();
+    INT GetPopupState();
     void ConfigureContainer();
     void UpdateContainerEncumbrance();
     void CancelPopup();
