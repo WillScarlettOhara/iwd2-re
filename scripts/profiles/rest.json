@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/rest.txt",
+  "hold": 20,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Run only the typed party rest checks: CanRestParty permission/danger/distance/spell-state gates and renting RestPartyPrivate time, heal and queued orders.",
+    "Restore party positions, HP, derived stats, area flags, leader permission, heal-on-rest flag, world time and queued messages in the same tick.",
+    "Never save the disposable process; restore save, config and fixture paths transactionally."
+  ]
+}

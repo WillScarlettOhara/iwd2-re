@@ -2194,6 +2194,15 @@ DWORD CInfinity::Render(CVidMode* pNewVidMode, INT nSurface, INT nScrollState, C
             wedResRef += NIGHT_RESREF_SUFFIX;
             pNewResWED = static_cast<CResWED*>(g_pChitin->cDimm.GetResObject(wedResRef, 1001, TRUE));
         } else {
+            CString sResRef;
+            pResWED->GetResRef().CopyToString(sResRef);
+
+            // Drop the night suffix to get back to the day WED.
+            if (CString(sResRef[sResRef.GetLength() - 1], 1).CompareNoCase(NIGHT_RESREF_SUFFIX) == 0) {
+                sResRef = sResRef.Left(sResRef.GetLength() - 1);
+            }
+
+            pNewResWED = static_cast<CResWED*>(g_pChitin->cDimm.GetResObject(CResRef(sResRef), 1001, TRUE));
         }
 
         if (pNewResWED != NULL) {

@@ -225,6 +225,7 @@ public:
     CInfinity* GetInfinity();
     CVariableHash* GetVariables();
     CAreaFileRestEncounter* GetHeaderRestEncounter();
+    BOOLEAN CheckRestEncounter();
     CNamedCreatureVariableHash* GetNamedCreatures();
     CGameAreaNotes* GetAreaNotes();
     LONG GetBattleSongCounter();

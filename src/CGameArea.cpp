@@ -2212,6 +2212,259 @@ void CGameArea::ClearInput()
     m_selectSquare.bottom = -1;
 }
 
+// 0x46FEA0
+BOOLEAN CGameArea::CheckRestEncounter()
+{
+    CAreaFileRestEncounter& encounter = m_headerRestEncounter;
+
+    if (encounter.m_activated == 0) {
+        return FALSE;
+    }
+
+    BYTE nHour = 0;
+    UINT nOffset = 0;
+    do {
+        UINT nTimeOfDay = (m_pGame->m_worldTime.m_gameTime + nOffset) % CTimerWorld::TIMESCALE_MSEC_PER_DAY;
+        if (nTimeOfDay < CTimerWorld::TIME_NIGHT && nTimeOfDay >= CTimerWorld::TIME_DAWN) {
+            if (rand() % 100 <= encounter.m_probDay) {
+                break;
+            }
+        } else {
+            if (rand() % 100 <= encounter.m_probNight) {
+                break;
+            }
+        }
+
+        nOffset += CTimerWorld::TIMESCALE_MSEC_PER_HOUR;
+        nHour++;
+    } while (nHour < 1);
+
+    if (nHour == 1) {
+        return FALSE;
+    }
+
+    if (encounter.m_randomCreatureNum == 0) {
+        return FALSE;
+    }
+
+    if (encounter.m_maxTypeNum == 0) {
+        return FALSE;
+    }
+
+    nOffset += CTimerWorld::TIMESCALE_MSEC_PER_HOUR != 0 ? rand() % CTimerWorld::TIMESCALE_MSEC_PER_HOUR : 0;
+    m_pGame->m_worldTime.AddCurrentTime(nOffset);
+    m_pGame->FeedBack(CInfGame::FEEDBACK_TIMEPASSEDREST, nOffset, TRUE);
+
+    CCreatureFile creatureFile;
+    SHORT nBestDistance = 0;
+
+    // NOTE: The binary also sums the party's levels into a byte that is never
+    // read. The protagonist position stays unset when no member matches.
+    LONG nProtagonist = g_pBaldurChitin->GetObjectGame()->GetProtagonist();
+    CPoint ptProtagonist;
+    LONG nLastCharacterId;
+    for (SHORT nIndex = 0; nIndex < m_pGame->m_nCharacters; nIndex++) {
+        nLastCharacterId = m_pGame->GetCharacterId(nIndex);
+
+        CGameSprite* pSprite;
+        if (m_pGame->GetObjectArray()->GetShare(nLastCharacterId,
+                CGameObjectArray::THREAD_ASYNCH,
+                reinterpret_cast<CGameObject**>(&pSprite),
+                INFINITE) == CGameObjectArray::SUCCESS) {
+            if (pSprite->GetId() == nProtagonist) {
+                ptProtagonist = pSprite->GetPos();
+            }
+
+            m_pGame->GetObjectArray()->ReleaseShare(nLastCharacterId,
+                CGameObjectArray::THREAD_ASYNCH,
+                INFINITE);
+        }
+    }
+
+    // Walk out from the protagonist in eight grid directions, stopping at the
+    // map edge, impassable squares or squares the party can see.
+    SHORT nRange = static_cast<SHORT>(m_visibility.m_nSearchRangeH * CVisibilityMap::SQUARE_SIZEX / CPathSearch::GRID_SQUARE_SIZEX / 2);
+    LONG nStartX = ptProtagonist.x / CPathSearch::GRID_SQUARE_SIZEX;
+    LONG nStartY = ptProtagonist.y / CPathSearch::GRID_SQUARE_SIZEY;
+    CPoint ptBest(nStartX, nStartY);
+    BYTE nBestDirection = 0;
+
+    for (BYTE nDirection = 0; nDirection < 9; nDirection++) {
+        if (nDirection == 4) {
+            continue;
+        }
+
+        CPoint pt(nStartX, nStartY);
+        SHORT nDistance = 0;
+        BOOL bStopped = FALSE;
+        if (nRange > 0) {
+            INT nDeltaX = nDirection % 3;
+            INT nDeltaY = nDirection / 3;
+            do {
+                pt.x += nDeltaX - 1;
+                pt.y += nDeltaY - 1;
+
+                if (pt.x < 0 || pt.x >= m_search.m_GridSquareDimensions.cx
+                    || pt.y < 0 || pt.y >= m_search.m_GridSquareDimensions.cy) {
+                    pt.x += 1 - nDeltaX;
+                    pt.y += 1 - nDeltaY;
+                    nDistance--;
+                    bStopped = TRUE;
+                    break;
+                }
+
+                SHORT nTableIndex;
+                if (m_search.GetLOSCost(pt, CGameObject::DEFAULT_VISIBLE_TERRAIN_TABLE, nTableIndex, FALSE) == CPathSearch::COST_IMPASSABLE) {
+                    bStopped = TRUE;
+                    break;
+                }
+
+                SHORT nTile = static_cast<SHORT>(
+                    static_cast<SHORT>((CPathSearch::GRID_SQUARE_SIZEY * pt.y + CPathSearch::GRID_SQUARE_SIZEY / 2) / CVisibilityMap::SQUARE_SIZEY) * m_visibility.m_nWidth
+                    + (CPathSearch::GRID_SQUARE_SIZEX * pt.x + CPathSearch::GRID_SQUARE_SIZEX / 2) / CVisibilityMap::SQUARE_SIZEX);
+                if (!m_visibility.IsTileVisible(nTile)) {
+                    bStopped = TRUE;
+                    break;
+                }
+
+                nDistance++;
+            } while (nDistance < nRange);
+        }
+
+        if (bStopped) {
+            if (nDistance > nBestDistance || (nDistance == nBestDistance && rand() % 7 == 0)) {
+                nBestDistance = nDistance;
+                ptBest = pt;
+                nBestDirection = nDirection;
+            }
+        }
+
+        if (nDistance == nRange) {
+            if (nDistance > nBestDistance || rand() % 7 == 0) {
+                nBestDistance = nDistance;
+                ptBest = pt;
+                nBestDirection = nDirection;
+            }
+        }
+    }
+
+    BOOL bFormation = static_cast<BYTE>(rand() % 10) != 0;
+    INT nCreature = encounter.m_randomCreatureNum != 0 ? rand() % encounter.m_randomCreatureNum : 0;
+    INT nCount = encounter.m_maxTypeNum + rand() % 5 - 2;
+    if (nCount < 1) {
+        nCount = 1;
+    }
+    if (g_pBaldurChitin->GetObjectGame()->GetOptions()->m_nNightmareMode == 1) {
+        nCount++;
+    }
+
+    INT nDropped = 0;
+    CPoint* pOffsets = NULL;
+    for (BYTE nSpawn = 0; nSpawn < nCount; nSpawn++) {
+        creatureFile.SetResRef(CResRef(encounter.m_randomCreature[nCreature]), TRUE, TRUE);
+
+        DWORD nSize = creatureFile.GetDataSize();
+        BYTE* pData = creatureFile.GetData();
+        CGameSprite* pSprite = new CGameSprite(pData,
+            nSize,
+            0,
+            1,
+            encounter.m_lifeSpan * CTimerWorld::TIMESCALE_MSEC_PER_SEC + m_pGame->m_worldTime.m_gameTime,
+            encounter.m_huntingRange,
+            encounter.m_followRange,
+            0x7FFFFFFF,
+            ptProtagonist,
+            0);
+        pSprite->SetResRef(CResRef(creatureFile.GetResRef().GetResRefStr()));
+        creatureFile.ReleaseData();
+
+        if (pSprite == NULL) {
+            // __FILE__: C:\Projects\Icewind2\src\Baldur\CGameArea.cpp
+            // __LINE__: 3611
+            UTIL_ASSERT(FALSE);
+            continue;
+        }
+
+        pSprite->SetResRef(CResRef(CString(reinterpret_cast<const char*>(encounter.m_randomCreature[nCreature]))));
+
+        CPoint ptSpawn;
+        BOOL bPlaced = FALSE;
+        for (INT nAttempt = 0;;) {
+            if (nAttempt >= 5) {
+                nDropped++;
+                break;
+            }
+
+            POINT grid;
+            if (bFormation) {
+                if (nSpawn == 0) {
+                    INT nShape = rand() % 9;
+                    SHORT nDirection = pSprite->GetDirection(ptProtagonist);
+                    pOffsets = m_pGame->GetGroup()->GetFormationOffsets(static_cast<SHORT>(nShape + 1),
+                        static_cast<SHORT>(nDirection * 360 / 16 % 360),
+                        TRUE);
+                }
+
+                INT nSlot = nSpawn % CAIGroup::FORMATION_MAX_SIZE;
+                ptSpawn.x = pOffsets[nSlot].x / CAIGroup::OFFSET_MULTIPLIER + ptBest.x;
+                ptSpawn.y = pOffsets[nSlot].y / CAIGroup::OFFSET_MULTIPLIER + ptBest.y;
+
+                BYTE nPersonalSpace = pSprite->GetAnimation()->GetPersonalSpace();
+                m_search.FindNearbyPassablePoint(&grid, ptSpawn.x, ptSpawn.y, pSprite->GetTerrainTable(), nPersonalSpace, -1);
+                ptSpawn.x = CPathSearch::GRID_SQUARE_SIZEX * grid.x + CPathSearch::GRID_SQUARE_SIZEX / 2;
+                ptSpawn.y = CPathSearch::GRID_SQUARE_SIZEY * grid.y + CPathSearch::GRID_SQUARE_SIZEY / 2;
+            } else {
+                BYTE nPersonalSpace = pSprite->GetAnimation()->GetPersonalSpace();
+                m_search.FindNearbyPassablePoint(&grid, ptBest.x, ptBest.y, pSprite->GetTerrainTable(), nPersonalSpace, -1);
+                ptSpawn.x = CPathSearch::GRID_SQUARE_SIZEX * grid.x + CPathSearch::GRID_SQUARE_SIZEX / 2;
+                ptSpawn.y = CPathSearch::GRID_SQUARE_SIZEY * grid.y + CPathSearch::GRID_SQUARE_SIZEY / 2;
+
+                // Scattered creatures step back towards the party half of the time.
+                if (rand() % 2 == 0) {
+                    ptBest.x += 1 - nBestDirection % 3;
+                    ptBest.y += 1 - nBestDirection / 3;
+                }
+            }
+
+            nAttempt++;
+
+            SHORT nTile = static_cast<SHORT>(ptSpawn.y / CVisibilityMap::SQUARE_SIZEY * static_cast<WORD>(m_visibility.m_nWidth)
+                + ptSpawn.x / CVisibilityMap::SQUARE_SIZEX);
+            if (nTile < m_visibility.m_nWidth * m_visibility.m_nHeight) {
+                bPlaced = TRUE;
+                break;
+            }
+        }
+
+        if (bPlaced) {
+            BYTE nListType = pSprite->GetAnimation()->GetListType();
+            pSprite->AddToArea(this, ptSpawn, 0, nListType);
+            pSprite->SetFacing(pSprite->GetDirection(ptProtagonist));
+        }
+    }
+
+    if (nDropped > 0) {
+        char* szMessage = new char[200];
+        std::sprintf(szMessage, "Spawned creatures dropped due to invalid positions: %d of %d\n", nDropped, nCount);
+        delete[] szMessage;
+    }
+
+    if (pOffsets != NULL) {
+        delete[] pOffsets;
+    }
+
+    // 0x84C960
+    g_pBaldurChitin->GetBaldurMessage()->DisplayTextRef(-1,
+        encounter.m_randomCreatureString[nCreature],
+        0,
+        0x590A5,
+        -1,
+        nLastCharacterId,
+        nLastCharacterId);
+
+    return TRUE;
+}
+
 // 0x470960
 void CGameArea::ClearMarshal()
 {

@@ -148,6 +148,7 @@
 //   spellselectionchecks        replay spell-panel choices and real selection controls.
 //   itemcreationchecks          replay random treasure rows, grade upgrades and charge rolls.
 //   bitmaptintchecks            replay 24-bit tinted bitmap blits on private buffers.
+//   restchecks                  replay party rest permission, time, heal and queued orders.
 //   characterkeychecks          replay character-screen virtual keyboard routing.
 //
 // Results are one JSON object per line to IWD2_RE_UI_RESULT, last line the
@@ -1764,6 +1765,7 @@ struct MasterPaletteFixture {
 #include "SpellSelectionChecks.h"
 #include "ItemCreationChecks.h"
 #include "BitmapTintChecks.h"
+#include "RestChecks.h"
 
 void CallLightningChecks(INT nStep)
 {
@@ -5666,6 +5668,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "bitmaptintchecks") == 0) {
         BitmapTintChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "restchecks") == 0) {
+        RestChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "sparklewait") == 0) {
         CInfGame* game=g_pBaldurChitin->GetObjectGame(); CGameArea* area=game->GetVisibleArea();

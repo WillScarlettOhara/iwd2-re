@@ -48,6 +48,7 @@ public:
     BYTE ChangeEntry(LONG index, BYTE threadNum, CGameObject* ptr, DWORD dwTimeOut);
     void Clean();
     LONG FindObjectId(SHORT id);
+    BOOL HasNoRestBlockingSpellStates(); /*#guess: descriptive name*/
 
     /* 0000 */ CCriticalSection m_cs;
     /* 0020 */ CGameObjectArrayEntry* m_pArray;

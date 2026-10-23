@@ -9217,7 +9217,51 @@ BYTE CInfGame::GetCharactersControlled()
 // 0x5C1160
 BOOLEAN CInfGame::RestParty(int a2, unsigned char a3)
 {
-    // TODO: Incomplete.
+    if (a3) {
+        for (INT nPortrait = 0; nPortrait < m_nCharacters; nPortrait++) {
+            LONG nCharacterId = GetCharacterId(static_cast<SHORT>(nPortrait));
+            CMessage101* pMessage = new CMessage101(FALSE, nCharacterId, nCharacterId, TRUE);
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(pMessage, FALSE);
+        }
+    }
+
+    if (!g_pChitin->cNetwork.m_bConnectionEstablished) {
+        return RestPartyPrivate(a2, a3);
+    }
+
+    if (g_pChitin->cNetwork.m_bConnectionEstablished == TRUE) {
+        if (!g_pChitin->cNetwork.m_bIsHost) {
+            if (g_pBaldurChitin->GetBaldurMessage()->m_bInOnRestAnnounce) {
+                return RestPartyPrivate(a2, a3);
+            }
+
+            // TODO: Multiplayer only. 0x436290 sends the client rest request
+            // (a2, a3, m_bHealPartyOnRest) to the host and is not recovered.
+            return TRUE;
+        }
+
+        if (g_pChitin->cNetwork.m_bIsHost == TRUE) {
+            CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+
+            BOOLEAN bStartNow = TRUE;
+            if (pGame->m_gameSave.m_mode == 0x182 || pGame->m_gameSave.m_mode == 0x502) {
+                bStartNow = FALSE;
+            }
+
+            if (pGame->m_multiplayerSettings.m_bHostPermittedDialog == TRUE) {
+                bStartNow = FALSE;
+            }
+
+            CScreenWorld* pWorld = g_pBaldurChitin->m_pEngineWorld;
+            if (static_cast<BYTE>(pWorld->m_bHardPaused) != TRUE && bStartNow) {
+                pWorld->StartRestMultiplayerHost(a2, a3, static_cast<BOOLEAN>(m_bHealPartyOnRest));
+                return TRUE;
+            }
+
+            pWorld->SetPendingRest(a2, a3, FALSE);
+            return TRUE;
+        }
+    }
 
     return FALSE;
 }
@@ -9225,17 +9269,248 @@ BOOLEAN CInfGame::RestParty(int a2, unsigned char a3)
 // 0x5C1350
 BOOLEAN CInfGame::RestPartyPrivate(INT nHP, BOOLEAN bRenting)
 {
-    // TODO: Incomplete.
+    BOOLEAN bAllHealed = TRUE;
 
-    return FALSE;
+    CAIAction restAction;
+    // 0x847834
+    restAction.m_actionID = 96;
+
+    CAITrigger restTrigger(0x93, 0);
+
+    g_pBaldurChitin->GetObjectGame()->MarkAliveCharacters();
+
+    if (!g_pChitin->cNetwork.m_bConnectionEstablished || g_pChitin->cNetwork.m_bIsHost == TRUE) {
+        // The chapter lookup's result is never used.
+        g_pBaldurChitin->GetObjectGame()->GetVariables()->FindKey(CHAPTER_GLOBAL);
+
+        // TODO: Multiplayer only. 0x436500 sends the host rest announcement
+        // (nHP, bRenting, FALSE) and returns FALSE without a hosted session;
+        // it is not recovered.
+
+        if (bRenting || !m_gameAreas[m_visibleArea]->CheckRestEncounter()) {
+            INT nCharacters = m_nCharacters;
+            INT nTotal = 0;
+            INT nRate = nHP;
+
+            if (m_bHealPartyOnRest) {
+                CInfGame* pGame = g_pBaldurChitin->GetObjectGame();
+                for (INT nIndex = 0; nIndex < nCharacters; nIndex++) {
+                    LONG nCharacterId = pGame->GetCharacterId(static_cast<SHORT>(nIndex));
+
+                    CGameSprite* pSprite;
+                    BYTE rc;
+                    do {
+                        rc = pGame->GetObjectArray()->GetShare(nCharacterId,
+                            CGameObjectArray::THREAD_ASYNCH,
+                            reinterpret_cast<CGameObject**>(&pSprite),
+                            INFINITE);
+                    } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+
+                    if (rc == CGameObjectArray::SUCCESS) {
+                        if ((pSprite->m_baseStats.m_generalState & 0x800) == 0) {
+                            INT nMissing = static_cast<WORD>(pSprite->m_baseStats.m_maxHitPointsBase)
+                                - pSprite->m_baseStats.m_hitPoints;
+                            if (nMissing > 1) {
+                                bAllHealed = FALSE;
+                            }
+                            nTotal += nMissing;
+
+                            INT nLevel = static_cast<INT>(pSprite->m_derivedStats.GetClassMaskLevel(CLASSMASK_CLERIC | CLASSMASK_DRUID));
+                            if (nLevel > 0) {
+                                nRate += nLevel * 19 + 5;
+                            }
+
+                            nLevel = static_cast<INT>(pSprite->m_derivedStats.GetClassMaskLevel(CLASSMASK_PALADIN | CLASSMASK_RANGER));
+                            if (nLevel > 9) {
+                                nRate += nLevel * 19 - 147;
+                            }
+                        }
+
+                        pGame->GetObjectArray()->ReleaseShare(nCharacterId,
+                            CGameObjectArray::THREAD_ASYNCH,
+                            INFINITE);
+                    }
+                }
+            } else {
+                nTotal = nHP;
+            }
+
+            if (nRate > 0) {
+                INT nUnits = nTotal / nRate;
+                if (nTotal % nRate != 0) {
+                    nUnits++;
+                }
+                nTotal = nUnits * nRate;
+            }
+
+            if (!m_bHealPartyOnRest || (nTotal <= nRate && bAllHealed == TRUE)) {
+                m_worldTime.AddCurrentTime(CRuleTables::TIME_RESTING);
+                FeedBack(FEEDBACK_TIMEPASSEDREST, CRuleTables::TIME_RESTING, TRUE);
+            } else if (nTotal <= nRate) {
+                m_worldTime.AddCurrentTime(2 * CRuleTables::TIME_RESTING);
+                FeedBack(FEEDBACK_TIMEPASSEDREST, 2 * CRuleTables::TIME_RESTING, TRUE);
+            } else {
+                DWORD nDivisor = static_cast<DWORD>(nRate) * 100;
+                m_worldTime.AddCurrentTime(CRuleTables::TIME_RESTING * static_cast<DWORD>(nTotal) * 100 / nDivisor
+                    + CRuleTables::TIME_RESTING);
+                FeedBack(FEEDBACK_TIMEPASSEDREST,
+                    CRuleTables::TIME_RESTING * static_cast<DWORD>(nTotal) * 100 / nDivisor + CRuleTables::TIME_RESTING,
+                    TRUE);
+            }
+
+            for (INT nIndex = 0; nIndex < nCharacters; nIndex++) {
+                LONG nCharacterId = GetCharacterId(static_cast<SHORT>(nIndex));
+
+                CGameEffectHeal* pHeal = new CGameEffectHeal();
+                pHeal->m_effectAmount = m_bHealPartyOnRest ? 1000 : nTotal;
+
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(pHeal, nCharacterId, nCharacterId), FALSE);
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddAction(restAction, nCharacterId, nCharacterId), FALSE);
+                g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageSetTrigger(restTrigger, nCharacterId, nCharacterId), FALSE);
+            }
+
+            // 0x847908, 0x847F84
+            CAIAction leaderAction(203, CPoint(0x23, 0), 0, -1);
+            g_pBaldurChitin->GetObjectGame()->GetGroup()->GroupAction(CAIAction(CAIAction::NO_ACTION, CPoint(-1, -1), 0, -1),
+                TRUE,
+                &leaderAction);
+        }
+    }
+
+    BOOLEAN bResult = FALSE;
+    if (!bRenting) {
+        CScreenWorld* pWorld = g_pBaldurChitin->m_pEngineWorld;
+
+        // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
+        // __LINE__: 18368
+        UTIL_ASSERT(pWorld != NULL);
+
+        if (g_pBaldurChitin->GetActiveEngine() != pWorld) {
+            g_pBaldurChitin->GetActiveEngine()->SelectEngine(pWorld);
+        }
+    } else {
+        bResult = TRUE;
+    }
+
+    if (g_pChitin->cNetwork.m_bConnectionEstablished == TRUE && !bRenting) {
+        g_pBaldurChitin->GetBaldurMessage()->SendSignal(CBaldurMessage::SIGNAL_SERVER,
+            CBaldurMessage::SIGNAL_END_MAJOR_EVENT);
+    }
+
+    CScreenWorld* pWorld = g_pBaldurChitin->m_pEngineWorld;
+
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\InfGame.cpp
+    // __LINE__: 18481
+    UTIL_ASSERT(pWorld != NULL);
+
+    if (g_pBaldurChitin->GetActiveEngine() != pWorld) {
+        CCacheStatus::dword_8D0BA8 = TRUE;
+        g_pBaldurChitin->GetActiveEngine()->SelectEngine(pWorld);
+
+        if (bRenting
+            && !g_pChitin->cNetwork.m_bIsHost
+            && g_pChitin->cNetwork.m_nServiceProvider != CNetwork::SERV_PROV_NULL) {
+            // TODO: Multiplayer only. 0x436C00 (m_cBaldurMessage) is not recovered.
+        }
+    }
+
+    g_pBaldurChitin->GetObjectGame()->m_cButtonArray.ResetState();
+
+    return bResult;
 }
 
 // 0x5C1E30
 BOOL CInfGame::CanRestParty(STRREF& strError, unsigned char a2, unsigned char a3, unsigned char a4)
 {
-    // TODO: Incomplete.
+    BOOL bResult = FALSE;
+    BOOL bBlocked = FALSE;
+    BOOL bDangerous = FALSE;
+    BOOL bNobodyActive = TRUE;
+    CResRef areaResRef("");
+    CPoint ptFirst;
 
-    return FALSE;
+    // NOTE: The binary also folds every active member's area type bit 0x20
+    // into a flag that is never read afterwards.
+
+    strError = 10309;
+
+    for (SHORT nIndex = 0; nIndex < m_nCharacters && !bBlocked; nIndex++) {
+        LONG nCharacterId = GetCharacterId(nIndex);
+
+        CGameSprite* pSprite;
+        BYTE rc;
+        do {
+            rc = m_cObjectArray.GetDeny(nCharacterId,
+                CGameObjectArray::THREAD_ASYNCH,
+                reinterpret_cast<CGameObject**>(&pSprite),
+                INFINITE);
+        } while (rc == CGameObjectArray::SHARED || rc == CGameObjectArray::DENIED);
+
+        if (rc != CGameObjectArray::SUCCESS) {
+            bBlocked = TRUE;
+            continue;
+        }
+
+        CGameArea* pArea = pSprite->GetArea();
+        if (pArea != NULL && (pArea->m_header.m_flags & 0x2) != 0 && !a2 && !a4) {
+            bDangerous = TRUE;
+        }
+
+        if (pSprite->Animate()) {
+            bNobodyActive = FALSE;
+
+            CPoint pt = pSprite->GetPos();
+            if (areaResRef == "") {
+                areaResRef = pArea->m_resRef;
+                ptFirst = pt;
+            } else {
+                LONG dy = ptFirst.y - pt.y;
+                LONG dx = ptFirst.x - pt.x;
+                if (((pSprite->m_baseStats.m_generalState & 0x800) == 0 && areaResRef != pArea->m_resRef)
+                    || dy * dy * 16 / 9 + dx * dx > CScreenInventory::RANGE_SWAPITEM) {
+                    bBlocked = TRUE;
+                }
+            }
+        }
+
+        m_cObjectArray.ReleaseDeny(nCharacterId, CGameObjectArray::THREAD_ASYNCH, INFINITE);
+    }
+
+    if (bDangerous == TRUE) {
+        strError = 10309;
+        return FALSE;
+    }
+
+    if (a3 == TRUE && !bBlocked) {
+        return TRUE;
+    }
+
+    if (!bNobodyActive) {
+        if (!CanSaveGame(strError, TRUE, FALSE)) {
+            if (strError == 16501) {
+                strError = 16500;
+            } else {
+                strError = 10309;
+            }
+            bResult = FALSE;
+        } else if (bBlocked) {
+            strError = 16457;
+            bResult = FALSE;
+        } else if (!g_pBaldurChitin->GetObjectGame()->m_singlePlayerPermissions.m_bPermissions[CGamePermission::LEADER]) {
+            strError = 17198;
+            bResult = FALSE;
+        } else {
+            strError = 15358;
+            bResult = TRUE;
+        }
+    }
+
+    if (!m_cObjectArray.HasNoRestBlockingSpellStates()) {
+        bResult = FALSE;
+        strError = 10309;
+    }
+
+    return bResult;
 }
 
 // 0x5C3010
@@ -9933,6 +10208,32 @@ void CInfGame::ResetMultiPlayerPermissions()
         CMultiplayerSettings::IMPORT_ALL,
         g_pBaldurChitin->GetIniFileName()));
     pSettings->SetImportingCharacterOption(nImportingBitField);
+}
+
+// 0x5C9300
+BOOL CGameObjectArray::HasNoRestBlockingSpellStates()
+{
+    CSingleLock lock(&m_cs, FALSE);
+    lock.Lock(INFINITE);
+
+    for (INT nIndex = 0; nIndex < m_nMaxArrayIndex; nIndex++) {
+        CGameObjectArrayEntry* pEntry = &(m_pArray[nIndex]);
+        if (pEntry->m_objectId != -1
+            && pEntry->m_objectPtr != reinterpret_cast<CGameObject*>(-1)) {
+            CGameObject* pObject = pEntry->m_objectPtr;
+            if (pObject->GetObjectType() == CGameObject::TYPE_SPRITE) {
+                CGameSprite* pSprite = static_cast<CGameSprite*>(pObject);
+                if (pSprite->m_derivedStats.m_spellStates.test(SPLSTATE_MOLD_TOUCH)
+                    || pSprite->m_derivedStats.m_spellStates.test(SPLSTATE_SHROUD_OF_FLAME)) {
+                    lock.Unlock();
+                    return FALSE;
+                }
+            }
+        }
+    }
+
+    lock.Unlock();
+    return TRUE;
 }
 
 // 0x5C9720
