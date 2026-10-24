@@ -303,6 +303,82 @@ void AllocationChecks(INT nStep)
                 create.m_lPopupStack.RemoveAll(); create.m_lPopupStack.AddTail(skillPanel);
                 actor->m_baseStats=savedBase; actor->m_derivedStats=savedDerived;
             }
+            {
+                auto savedBase=actor->m_baseStats; CDerivedStats savedDerived; savedDerived=actor->m_derivedStats;
+                BeginLevelUpTableFixture levelSkills(rules.m_tSkills,3,16),levelCosts(rules.m_tSkillCosts,11,16);
+                for (INT i=0;i<16;++i) { levelSkills.cells[3*i].Format(_T("%d"),15-i);
+                    levelSkills.cells[3*i+1]="7192"; levelSkills.cells[3*i+2]=i==0?"11982":"7192";
+                    for (INT cls=0;cls<11;++cls) levelCosts.cells[11*i+cls]=cls==4?(i%2?"2":"1"):"0"; }
+                auto* panel=screen.m_cUIManager.GetPanel(55); auto* featsPanel=screen.m_cUIManager.GetPanel(56);
+                screen.field_1840=id; screen.m_nClass=CAIOBJECTTYPE_C_FIGHTER; screen.m_lPopupStack.AddTail(panel);
+                for (auto& value:screen.m_storedSkills) value=0;
+                auto click=[&](DWORD control) { auto* button=static_cast<CUIControlButtonPlusMinus*>(panel->GetControl(control));
+                    button->SetActive(TRUE); button->field_662=0; BOOL down=button->OnLButtonDown(CPoint(0,0)); screen.m_cUIManager.KillCapture(); return down; };
+                for (INT row=0;row<9;++row) {
+                    screen.m_nTopSkill=0; screen.m_nExtraSkillPoints=4; BOOL down=click(14+2*row);
+                    check("levelup-skill-purchase-maps-all-nine-rows-and-remaps-cost",down && actor->GetSkillValue(15-row)==1
+                        && screen.m_nExtraSkillPoints==4-(1+row%2));
+                    down=click(15+2*row); check("levelup-skill-refund-maps-all-nine-rows",down
+                        && actor->GetSkillValue(15-row)==0 && screen.m_nExtraSkillPoints==4);
+                }
+                screen.m_nTopSkill=-1; screen.m_nExtraSkillPoints=4; BOOL down=click(16);
+                check("levelup-skill-mouse-down-zero-extends-word-before-help-and-purchase",down && screen.m_nTopSkill==7
+                    && actor->GetSkillValue(0)==1 && actor->GetSkillValue(15)==0 && screen.m_nExtraSkillPoints==2
+                    && help(panel)==normalized(create.FetchString(7192)));
+                actor->SetSkillValue(0,0); screen.m_nTopSkill=-1; screen.m_nExtraSkillPoints=4;
+                static_cast<CUIControlButtonCharacterSkillsPlusMinus*>(panel->GetControl(16))->AdjustValue();
+                check("levelup-skill-repeat-adjust-zero-extends-word",actor->GetSkillValue(0)==1 && actor->GetSkillValue(15)==0
+                    && screen.m_nTopSkill==7 && screen.m_nExtraSkillPoints==2);
+                actor->SetSkillValue(0,0); screen.m_nTopSkill=0; screen.m_nExtraSkillPoints=1;
+                levelCosts.cells[4]="2"; levelCosts.cells[11*15+4]="1"; screen.UpdatePopupPanel(55,actor);
+                check("levelup-skill-label-remaps-cost-while-availability-maps-once",static_cast<CUIControlButton*>(panel->GetControl(14))->m_bEnabled
+                    && static_cast<CUIControlLabel*>(panel->GetControl(0x10000001))->GetText().Find(_T("(2)"))>=0);
+                down=click(14); check("levelup-skill-purchase-checks-remapped-cost",down && actor->GetSkillValue(15)==0 && screen.m_nExtraSkillPoints==1);
+                for (INT i=0;i<16;++i) { levelSkills.cells[3*i].Format(_T("%d"),i); levelCosts.cells[11*i+4]="2"; }
+                actor->SetSkillValue(0,4); screen.m_nExtraSkillPoints=0; down=click(15);
+                check("levelup-skill-at-cap-refunds-cost-after-decrement",down && actor->GetSkillValue(0)==3 && screen.m_nExtraSkillPoints==2);
+                click(14); click(14); check("levelup-skill-cap-and-budget-block-extra-purchase",actor->GetSkillValue(0)==4 && screen.m_nExtraSkillPoints==0);
+                screen.m_storedSkills[0]=4; click(15);
+                check("levelup-skill-cannot-refund-baseline-ranks",actor->GetSkillValue(0)==4 && screen.m_nExtraSkillPoints==0);
+                auto* plus=static_cast<CUIControlButtonCharacterSkillsPlusMinus*>(panel->GetControl(14));
+                plus->SetActive(FALSE); check("levelup-inactive-skill-click-rejected",!plus->OnLButtonDown(CPoint(0,0)));
+                plus->SetActive(TRUE); auto buttons=plus->m_nMouseButtons; plus->m_nMouseButtons=0;
+                check("levelup-skill-click-requires-left-button-mask",!plus->OnLButtonDown(CPoint(0,0))); plus->m_nMouseButtons=buttons;
+                screen.field_1840=CGameObjectArray::INVALID_INDEX; plus->AdjustValue(); screen.field_1840=id;
+                check("levelup-skill-adjust-rejects-missing-actor",actor->GetSkillValue(0)==4 && screen.m_nExtraSkillPoints==0);
+                for (INT i=0;i<16;++i) { actor->SetSkillValue(i,0); screen.m_storedSkills[i]=0; levelSkills.cells[3*i].Format(_T("%d"),15-i); }
+                UI_CONTROL_BUTTON info={}; info.base.nWidth=80; info.base.nHeight=40; memcpy(info.refBam,"GUIBTNA",7);
+                for (INT row=0;row<9;++row) {
+                    info.base.nID=93+row; CUIControlButtonCharacterSkillsHotArea skillHelp(panel,&info);
+                    CUIControlButtonCharacterFeatsHotArea featHelp(featsPanel,&info);
+                    screen.m_nTopSkill=3; screen.m_nTopFeat=4;
+                    levelSkills.cells[3*(3+row)+2]="11982"; cgFeats.cells[3*(4+row)+2]="11982";
+                    skillHelp.OnHotAreaClick(CPoint(0,0)); featHelp.OnHotAreaClick(CPoint(0,0));
+                    check("levelup-help-maps-all-nine-scrolled-skill-and-feat-rows",help(panel)==normalized(create.FetchString(11982))
+                        && help(featsPanel)==normalized(create.FetchString(11982)));
+                    levelSkills.cells[3*(3+row)+2]="7192"; cgFeats.cells[3*(4+row)+2]="7192";
+                }
+                info.base.nID=94; CUIControlButtonCharacterSkillsHotArea skillHelp(panel,&info); CUIControlButtonCharacterFeatsHotArea featHelp(featsPanel,&info);
+                cgFeats.cells[0]="69"; cgFeats.cells[3*69]="0"; cgFeats.cells[2]="11982";
+                screen.m_nTopSkill=screen.m_nTopFeat=-1; skillHelp.OnHotAreaClick(CPoint(0,0)); featHelp.OnHotAreaClick(CPoint(0,0));
+                check("levelup-help-zero-extends-scroll-word-without-clamping-panel",help(panel)==normalized(create.FetchString(7192))
+                    && help(featsPanel)==normalized(create.FetchString(7192)) && screen.m_nTopSkill==-1 && screen.m_nTopFeat==-1);
+                cgFeats.cells[0]="0"; cgFeats.cells[3*69]="69"; cgFeats.cells[2]="7192";
+                auto* scroll=static_cast<CUIControlScrollBar*>(panel->GetControl(104));
+                screen.m_nTopSkill=0; scroll->OnScrollUp(); check("levelup-skill-scroll-stops-at-start",screen.m_nTopSkill==0);
+                scroll->OnScrollDown(); check("levelup-skill-scroll-advances-one-row",screen.m_nTopSkill==1);
+                scroll->OnPageDown(999); check("levelup-skill-page-down-clamps-to-last-page",screen.m_nTopSkill==7);
+                scroll->OnPageUp(3); check("levelup-skill-page-up-uses-requested-count",screen.m_nTopSkill==4);
+                scroll->OnPageDown(2); check("levelup-skill-page-down-uses-requested-count",screen.m_nTopSkill==6);
+                scroll->OnPageUp(999); check("levelup-skill-page-up-clamps-at-start",screen.m_nTopSkill==0);
+                screen.m_nTopSkill=-1; scroll->OnScrollUp(); check("levelup-skill-scroll-up-zero-extends-word",screen.m_nTopSkill==7);
+                screen.m_nTopSkill=-1; scroll->OnPageUp(1); check("levelup-skill-page-up-zero-extends-word",screen.m_nTopSkill==7);
+                screen.m_nTopSkill=-1; scroll->OnScrollDown(); check("levelup-skill-scroll-down-wraps-stored-word",screen.m_nTopSkill==0);
+                screen.m_nTopSkill=-1; scroll->OnPageDown(2); check("levelup-skill-page-down-wraps-stored-word",screen.m_nTopSkill==1);
+                for (SHORT position:{-50,0,25,50,100}) { scroll->field_142=100; scroll->field_144=position; scroll->OnScroll();
+                    check("levelup-skill-thumb-clamps-through-panel-refresh",screen.m_nTopSkill==min(max(16*position,0)/100,7)); }
+                screen.m_cUIManager.KillCapture(); screen.m_lPopupStack.RemoveAll(); actor->m_baseStats=savedBase; actor->m_derivedStats=savedDerived;
+            }
             UI_CONTROL_BUTTON hotInfo={}; hotInfo.base.nWidth=80; hotInfo.base.nHeight=40; memcpy(hotInfo.refBam,"GUIBTNA",7);
             for (INT row=0;row<11;++row) {
                 hotInfo.base.nID=93+row;

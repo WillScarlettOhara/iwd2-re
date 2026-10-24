@@ -9062,11 +9062,12 @@ void CUIControlButtonCharacterFeatsHotArea::OnHotAreaClick(CPoint pt)
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
         // __LINE__: 17020
         UTIL_ASSERT(FALSE);
+        offset = static_cast<DWORD>(-1);
     }
 
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
-    DWORD id = ruleTables.GetFeatId(offset + g_pBaldurChitin->m_pEngineCharacter->m_nTopFeat);
+    DWORD id = ruleTables.GetFeatId(offset + static_cast<USHORT>(g_pBaldurChitin->m_pEngineCharacter->m_nTopFeat));
     STRREF strDescription = ruleTables.GetFeatDescription(id);
     g_pBaldurChitin->m_pEngineCharacter->UpdateHelp(m_pPanel->m_nID, 92, strDescription);
 }
@@ -9629,7 +9630,7 @@ void CUIControlScrollBarCharacterSkills::OnScrollUp()
     // __LINE__: 18187
     UTIL_ASSERT(pCharacter != NULL);
 
-    pCharacter->m_nTopSkill = max(pCharacter->m_nTopSkill - 1, 0);
+    pCharacter->m_nTopSkill = max(static_cast<INT>(static_cast<USHORT>(pCharacter->m_nTopSkill)) - 1, 0);
 
     InvalidateItems();
 
@@ -9664,7 +9665,7 @@ void CUIControlScrollBarCharacterSkills::OnPageUp(DWORD nLines)
     UTIL_ASSERT(pCharacter != NULL);
 
     INT nStep = min(nLines, SKILL_SLOTS - 1);
-    pCharacter->m_nTopSkill = max(pCharacter->m_nTopSkill - nStep, 0);
+    pCharacter->m_nTopSkill = max(static_cast<INT>(static_cast<USHORT>(pCharacter->m_nTopSkill)) - nStep, 0);
 
     InvalidateItems();
 
@@ -9678,7 +9679,7 @@ void CUIControlScrollBarCharacterSkills::OnPageDown(DWORD nLines)
     CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;
 
     // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
-    // __LINE__: 11362
+    // __LINE__: 18263
     UTIL_ASSERT(pCharacter != NULL);
 
     INT nStep = min(nLines, SKILL_SLOTS - 1);
@@ -9799,6 +9800,7 @@ BOOL CUIControlButtonCharacterSkillsPlusMinus::OnLButtonDown(CPoint pt)
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
         // __LINE__: 18449
         UTIL_ASSERT(FALSE);
+        offset = static_cast<DWORD>(-1);
     }
 
     if (!m_bActive) {
@@ -9811,7 +9813,7 @@ BOOL CUIControlButtonCharacterSkillsPlusMinus::OnLButtonDown(CPoint pt)
 
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
-    DWORD id = ruleTables.GetSkillId(g_pBaldurChitin->m_pEngineCharacter->m_nTopSkill + offset);
+    DWORD id = ruleTables.GetSkillId(static_cast<USHORT>(g_pBaldurChitin->m_pEngineCharacter->m_nTopSkill) + offset);
     STRREF strDescription = ruleTables.GetSkillDescription(id);
     g_pBaldurChitin->m_pEngineCharacter->UpdateHelp(m_pPanel->m_nID, 92, strDescription);
 
@@ -9893,6 +9895,7 @@ void CUIControlButtonCharacterSkillsPlusMinus::AdjustValue()
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
         // __LINE__: 18580
         UTIL_ASSERT(FALSE);
+        offset = static_cast<DWORD>(-1);
     }
 
     CScreenCharacter* pCharacter = g_pBaldurChitin->m_pEngineCharacter;
@@ -9911,10 +9914,10 @@ void CUIControlButtonCharacterSkillsPlusMinus::AdjustValue()
     if (rc == CGameObjectArray::SUCCESS) {
         const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
-        DWORD id = ruleTables.GetSkillId(pCharacter->m_nTopSkill + offset);
+        DWORD id = ruleTables.GetSkillId(static_cast<USHORT>(pCharacter->m_nTopSkill) + offset);
         INT nValue = pSprite->GetSkillValue(id);
 
-        // FIXME: Looks wrong (obtaining id from id).
+        // The native cost path maps the selected skill ID a second time.
         INT nCost = pSprite->GetSkillCost(ruleTables.GetSkillId(id),
             pCharacter->m_nClass);
 
@@ -9927,7 +9930,7 @@ void CUIControlButtonCharacterSkillsPlusMinus::AdjustValue()
             if (nValue > 0 && pCharacter->m_storedSkills[id] < pSprite->GetSkillValue(id)) {
                 pSprite->SetSkillValue(id, nValue - 1);
 
-                // FIXME: Looks wrong (obtaining id from id).
+                // Recompute after decrement: leaving the cap can change the cost.
                 pCharacter->m_nExtraSkillPoints += pSprite->GetSkillCost(ruleTables.GetSkillId(id),
                     pCharacter->m_nClass);
             }
@@ -9982,11 +9985,12 @@ void CUIControlButtonCharacterSkillsHotArea::OnHotAreaClick(CPoint pt)
         // __FILE__: C:\Projects\Icewind2\src\Baldur\InfScreenCharacter.cpp
         // __LINE__: 18703
         UTIL_ASSERT(FALSE);
+        offset = static_cast<DWORD>(-1);
     }
 
     const CRuleTables& ruleTables = g_pBaldurChitin->GetObjectGame()->GetRuleTables();
 
-    DWORD id = ruleTables.GetSkillId(offset + g_pBaldurChitin->m_pEngineCharacter->m_nTopSkill);
+    DWORD id = ruleTables.GetSkillId(offset + static_cast<USHORT>(g_pBaldurChitin->m_pEngineCharacter->m_nTopSkill));
     STRREF strDescription = ruleTables.GetSkillDescription(id);
     g_pBaldurChitin->m_pEngineCharacter->UpdateHelp(m_pPanel->m_nID, 92, strDescription);
 }
