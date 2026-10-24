@@ -131,6 +131,8 @@ void BeginLevelUpChecks(INT nStep)
         actor->m_pArea=NULL; actor->m_pPath=NULL; actor->m_currentSearchRequest=NULL;
         actor->m_animation.m_animation=CGameAnimationType::SetAnimationType(0x6100,base.m_colors,0);
         actor->m_nSequence=actor->m_animation.SetSequence(CGAMESPRITE_SEQ_HEAD_TURN);
+        // Idle can choose its last frame randomly; this private fixture needs an unfinished sequence.
+        for (SHORT frame=actor->m_animation.GetCurrentFrame();frame>0;--frame) actor->m_animation.DecrementFrame();
         actor->m_curAction=CAIAction::NULL_ACTION; actor->m_targetId=CGameObjectArray::INVALID_INDEX;
         actor->m_curSpell=NULL; actor->m_curItem=NULL; actor->m_currentActionId=0;
         for (auto& item : actor->m_equipment.m_items) item=NULL;

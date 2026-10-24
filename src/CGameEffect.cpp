@@ -4328,6 +4328,89 @@ CGameEffect* CGameEffectPoison::Copy()
     return copy;
 }
 
+// 0x4AF610
+BOOL CGameEffectPoison::ApplyEffect(CGameSprite* pSprite)
+{
+    pSprite->GetDerivedStats()->m_generalState |= STATE_POISONED;
+    if (m_secondaryType != 0) {
+        DisplayStringRef(pSprite, m_dwFlags == 8 ? 37696 : 14662);
+    }
+    AddPortraitIcon(pSprite, 6);
+
+    if (m_secondaryType != 0 && m_dwFlags != 8) {
+        m_special = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
+    }
+    DWORD duration = m_durationType == 1 ? 0 : m_duration;
+    CPersistantEffect84C420* pEffect = NULL;
+    switch (m_dwFlags) {
+    case 2:
+        pEffect = new CPersistantEffect84C420(0x200000, m_effectAmount, 15, m_special, duration);
+        break;
+    case 3:
+        pEffect = new CPersistantEffect84C420(0x200000, 1, 15 * m_effectAmount, m_special, duration);
+        break;
+    case 6:
+        if (m_secondaryType != 0) {
+            DisplayStringRef(pSprite, 14102);
+        }
+        pSprite->field_9D15 = 1;
+        AddPortraitIcon(pSprite, 13);
+        pSprite->GetDerivedStats()->m_spellStates.set(7, true);
+        pSprite->GetDerivedStats()->m_generalState |= STATE_HELPLESS;
+        // This poison has the same damage cadence as mode four.
+    case 4:
+        pEffect = new CPersistantEffect84C420(0x200000, m_effectAmount, 105, m_special, duration);
+        break;
+    case 5:
+        pEffect = new CPersistantEffect84C420(0x200000, m_effectAmount, 735, m_special, duration);
+        break;
+    case 7:
+        pEffect = new CPersistantEffect84C420(0x200000, m_effectAmount, m_effectAmount2, m_special, duration);
+        break;
+    case 8:
+        if (m_secondaryType != 0) {
+            // The original initializes these fields only, as in OnRemove.
+            ITEM_EFFECT effect;
+            effect.effectID = CGAMEEFFECT_CON;
+            effect.spellLevel = 10;
+            effect.effectAmount = m_effectAmount;
+            effect.probabilityUpper = 100;
+            effect.probabilityLower = 0;
+            effect.numDice = 0;
+            effect.diceSize = 0;
+            effect.saveMod = 0;
+            effect.special = 0;
+            effect.targetType = 2;
+            effect.dwFlags = 0;
+            effect.durationType = 0;
+            effect.duration = 70;
+            effect.savingThrow = 0;
+            CGameEffect* pConstitution = DecodeEffect(&effect, CPoint(-1, -1), -1, CPoint(-1, -1));
+            pConstitution->SetSource(pSprite->GetPos());
+            pConstitution->SetSourceId(pSprite->GetId());
+            pConstitution->m_flags &= ~1;
+            g_pBaldurChitin->GetMessageHandler()->AddMessage(new CMessageAddEffect(pConstitution,
+                pSprite->GetId(), pSprite->GetId()), FALSE);
+        }
+        return TRUE;
+    default:
+        // __FILE__: C:\Projects\Icewind2\src\Baldur\CGameEffect.cpp
+        // __LINE__: 9490
+        UTIL_ASSERT(FALSE);
+        return TRUE;
+    }
+
+    // __FILE__: C:\Projects\Icewind2\src\Baldur\CGameEffect.cpp
+    // The binary has an allocation assertion in each periodic-mode branch.
+    UTIL_ASSERT(pEffect != NULL);
+    if (pEffect != NULL) {
+        pEffect->m_sourceID = m_sourceID;
+        strcpy(reinterpret_cast<char*>(pEffect->field_29), m_sourceRes.GetResRefStr());
+        pSprite->GetDerivedStats()->m_cRegeneratedPersistantEffectList.AddTail(pEffect);
+    }
+    return TRUE;
+}
+
 // 0x4AFBF0
 void CGameEffectPoison::OnRemove(CGameSprite* pSprite)
 {
@@ -13380,7 +13463,7 @@ CPersistantEffect84C4A4::CPersistantEffect84C4A4(int a1, int a2, int a3)
     field_24 = a1;
     field_28 = 1;
 
-    ULONG delta = g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime - a2;
+    LONG delta = static_cast<LONG>(g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime - static_cast<ULONG>(a2));
     if (delta == 0 || delta == 1) {
         field_20 = a2;
     } else {

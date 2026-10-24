@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "save": "000000037-testSpells",
+  "ui": "scripts/scenarios/persistent-effects.txt",
+  "hold": 20,
+  "fixtures": ["combat-payload"],
+  "preserve": [],
+  "preconditions": [
+    "Exercise poison decoding, periodic damage, slowing and cure with parked owning lists and temporary actor state.",
+    "Never save the disposable process; restore save, config and fixture paths transactionally."
+  ]
+}

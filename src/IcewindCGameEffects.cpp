@@ -624,7 +624,7 @@ BOOL IcewindCGameEffectSlowPoison::ApplyEffect(CGameSprite* pSprite)
     while (pos != NULL) {
         CGameEffect* pEffect = pSprite->GetTimedEffectList()->GetNext(pos);
         if (pEffect->m_effectID == CGAMEEFFECT_POISON) {
-            switch (m_dwFlags) {
+            switch (pEffect->m_dwFlags) {
             case 2:
                 pEffect->m_dwFlags = 4;
                 pEffect->m_duration = 8 * pEffect->m_duration
@@ -636,7 +636,7 @@ BOOL IcewindCGameEffectSlowPoison::ApplyEffect(CGameSprite* pSprite)
                     - 7 * g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
                 break;
             case 4:
-                m_dwFlags = 5;
+                pEffect->m_dwFlags = 5;
                 pEffect->m_duration = 8 * pEffect->m_duration
                     - 7 * g_pBaldurChitin->GetObjectGame()->GetWorldTimer()->m_gameTime;
                 break;

@@ -2156,6 +2156,13 @@ void CChitin::ShutDown(int nLineNumber, const char* szFileName, const char* text
 // 0x790B70
 void CChitin::SynchronousUpdate()
 {
+    // TEST SCAFFOLDING (AutoUI.h): fixtures and normal frames share surfaces
+    // and live UI pointers. Never block the window thread on a running fixture.
+    Iwd2AutoUI::SynchronousUpdateGuard testFrame;
+    if (!testFrame) {
+        return;
+    }
+
     if (!cVideo.Is3dAccelerated()) {
         if (m_nNextFullscreen != m_bFullscreen) {
             if (cVideo.m_nNextBpp != cVideo.m_nBpp) {

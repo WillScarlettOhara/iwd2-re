@@ -163,6 +163,7 @@
 
 #include "CVisualEffect.h"
 #include <new>
+#include <mutex>
 
 #include <cmath>
 #include <algorithm>
@@ -250,6 +251,8 @@ struct CallLightningAccess : CProjectileCallLightning {
 namespace Iwd2AutoUI {
 
 namespace {
+
+std::recursive_mutex s_frameMutex;
 
 const int MAX_STEPS = 128;
 const int MAX_TOKEN = 48;
@@ -1774,6 +1777,7 @@ struct MasterPaletteFixture {
 #include "ItemCreationChecks.h"
 #include "BitmapTintChecks.h"
 #include "RestChecks.h"
+#include "PersistentEffectChecks.h"
 #include "ReputationChecks.h"
 #include "PartyOrderChecks.h"
 #include "AreaTravelChecks.h"
@@ -5516,8 +5520,27 @@ bool IsEnabled()
     return GetEnv("IWD2_RE_UI_SCRIPT", szPath, sizeof(szPath)) > 0;
 }
 
+SynchronousUpdateGuard::SynchronousUpdateGuard() // re-lint: disable RE006 -- test scaffolding
+    : m_enabled(IsEnabled())
+    , m_acquired(!m_enabled || s_frameMutex.try_lock())
+{
+}
+
+SynchronousUpdateGuard::~SynchronousUpdateGuard() // re-lint: disable RE006 -- test scaffolding
+{
+    if (m_enabled && m_acquired) {
+        s_frameMutex.unlock();
+    }
+}
+
 void Tick(CWarp* pActiveEngine)
 {
+    // A normal frame can wait for an object held by this AI update. Yield the
+    // scripted step instead of blocking the AI behind that frame.
+    std::unique_lock<std::recursive_mutex> frameLock(s_frameMutex, std::try_to_lock);
+    if (!frameLock.owns_lock()) {
+        return;
+    }
     if (!s_loaded) {
         LoadScript();
     }
@@ -5686,6 +5709,9 @@ void Tick(CWarp* pActiveEngine)
     }
     if (strcmp(step.op, "restchecks") == 0) {
         RestChecks(nStep); ++s_pc; return;
+    }
+    if (strcmp(step.op, "persistenteffectchecks") == 0) {
+        PersistentEffectChecks(nStep); ++s_pc; return;
     }
     if (strcmp(step.op, "reputationchecks") == 0) {
         ReputationChecks(nStep); ++s_pc; return;
